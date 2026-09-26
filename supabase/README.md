@@ -48,11 +48,13 @@ With the Auth stack, runtime role and configured production app already running 
 - `app_runtime` is `NOLOGIN`, cannot bypass row-level security (RLS), and has only the data privileges that forced RLS permits.
 - `anon`, `authenticated` and `service_role` have no `app` schema usage. The `app` schema is absent from the local Data API schema list.
 
-## Legacy private membership catalogue foundation
+## Private membership catalogue foundation
 
-The additive DEV0067 migration creates `app.membership_products` for stable gym/product identity and `app.membership_product_versions` for frozen offer terms. The deterministic seed contains Annual Unlimited and Six-Month Flex 12 as private drafts with `NULL` purchase prices. They are not public offers, paid customer memberships or access entitlements, and their single-gym transfer model is no longer the current product contract.
+DEV0067 created the initial `app.membership_products` identities and immutable `app.membership_product_versions`. DEV0078 preserves that migration history and adds the current platform-scoped monthly contract: published Basic at 80 EURC with ten included check-ins, published Classic at 150 EURC with daily-uncapped included access, four required core gyms, one included check-in per venue-local day and the 15-EURC eligible non-core visit amount. The obsolete single-gym fixture drafts are not part of the revised seed.
 
-The existing schema still enforces the former duration/access shapes, 10-EURC transfer fee and 30-day transfer thresholds, plus a single currently published version and one-way retirement. Both tables force row-level security and deliberately have no feature policy, so `app_runtime` sees no rows. Do not publish or reuse these drafts as the focused Basic/Classic multi-gym product. A future COR0006 development ticket must add a forward migration for plan pricing, ten-versus-unlimited access and gym eligibility before adding allowlisted services or product screens; shared migration history is not squashed.
+`app.participating_gyms` adds catalogue metadata over canonical venue identities; `app.membership_product_gym_eligibility` maps stable plan products to those venues. The deterministic seed contains seven fictional Berlin gyms, five Basic eligibility rows and seven Classic rows. These tables describe catalogue configuration only: they do not create a partnership claim, member selection, purchased entitlement, payment, reservation or check-in.
+
+All four catalogue tables are owned by `app_owner`, force row-level security and deliberately have no feature policy, so `app_runtime` sees no rows. A later COR0006 service ticket must expose narrow published projections and authorized mutations; browser roles must never receive direct table access. Shared migration history is not squashed.
 
 For local development, `npm run db:runtime` provisions the legacy `repx_runtime_login` described above. Hosted environments use a distinct login outside migrations so a password rotation never rewrites schema history.
 

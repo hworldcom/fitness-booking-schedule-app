@@ -67,7 +67,7 @@ async function prepareClub(email, walletAddress) {
       const clubs = await transaction`
         select id, run_id
         from app.organizations
-        where slug = 'kru-tiger'
+        where slug = 'northside-combat'
           and status = 'active'
           and run_id = ${people[0].run_id}::uuid
       `;
@@ -201,7 +201,9 @@ try {
   await prepareClub(email, clubSigner.address);
 
   await page.reload({ waitUntil: "networkidle" });
-  await page.getByText("Prepared access: Kru Tiger", { exact: true }).waitFor();
+  await page
+    .getByText("Prepared access: Northside Combat", { exact: true })
+    .waitFor();
   await page.getByText("Connect the prepared club wallet.").waitFor();
   await page.getByText(clubSigner.address).waitFor();
   await page.getByRole("button", { name: "Connect Phantom wallet" }).click();
@@ -209,7 +211,7 @@ try {
     name: "Your club. Your wallet.",
   });
   const clubTab = dialog.getByRole("tab", {
-    name: "Kru Tiger club wallet",
+    name: "Northside Combat club wallet",
   });
   await clubTab.focus();
   assert.equal(
@@ -229,7 +231,7 @@ try {
   assert.equal(response.status(), 200);
   let result = await response.json();
   assert.equal(result.status, "eligible");
-  assert.equal(result.club.name, "Kru Tiger");
+  assert.equal(result.club.name, "Northside Combat");
   assert.equal(result.club.wallet.address, clubSigner.address);
 
   response = await page.request.post(`${siteUrl}/api/wallet/club/challenge`, {
@@ -273,7 +275,7 @@ try {
   assert.equal(response.status(), 200);
   result = await response.json();
   assert.equal(result.status, "authorized");
-  assert.equal(result.club.name, "Kru Tiger");
+  assert.equal(result.club.name, "Northside Combat");
   assert.equal(
     new Date(result.authority.expiresAt).getTime() -
       new Date(result.authority.grantedAt).getTime(),

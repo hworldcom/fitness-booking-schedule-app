@@ -6,7 +6,7 @@ const databaseUrl =
   "postgresql://postgres:postgres@127.0.0.1:55322/postgres";
 const email = process.env.CLUB_ADMIN_EMAIL?.trim().toLowerCase();
 const walletInput = process.env.CLUB_WALLET_ADDRESS?.trim();
-const organizationSlug = process.env.CLUB_SLUG?.trim() || "kru-tiger";
+const organizationSlug = process.env.CLUB_SLUG?.trim() || "northside-combat";
 
 if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
   throw new Error("CLUB_ADMIN_EMAIL must name an existing local account.");

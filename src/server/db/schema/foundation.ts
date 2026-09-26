@@ -329,7 +329,7 @@ export const venues = app.table(
     ),
     check(
       "venues_activity_tags_check",
-      sql`cardinality(${table.activityTags}) > 0 and ${table.activityTags} <@ array['Running', 'Strength', 'Muay Thai', 'Yoga']::text[]`,
+      sql`cardinality(${table.activityTags}) > 0 and ${table.activityTags} <@ array['Grappling', 'Kickboxing', 'Massage', 'MMA', 'Muay Thai', 'Running', 'Strength', 'Wellness', 'Yoga']::text[]`,
     ),
     index("venues_run_kind_status_idx").on(
       table.runId,

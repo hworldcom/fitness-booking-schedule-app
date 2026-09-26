@@ -18,8 +18,8 @@ test("club wallet messages bind the administrator, club and security context", (
     email: "admin@movx.club",
     origin: "https://movx.club",
     organizationId: "30000000-0000-4000-8000-000000000001",
-    clubSlug: "kru-tiger",
-    clubName: "Kru Tiger",
+    clubSlug: "northside-combat",
+    clubName: "Northside Combat",
     address: walletAddress,
     challengeId,
     nonce: "a-random-base64url-nonce",
@@ -31,7 +31,7 @@ test("club wallet messages bind the administrator, club and security context", (
     "MovX Club club wallet authority proof",
     "Action: Authorize club wallet",
     "Administrator: admin@movx.club",
-    "Club: Kru Tiger (kru-tiger)",
+    "Club: Northside Combat (northside-combat)",
     "Club ID: 30000000-0000-4000-8000-000000000001",
     "Origin: https://movx.club",
     "Network: solana:devnet",
@@ -50,8 +50,8 @@ test("club wallet transport validators reject expanded or malformed state", () =
   const eligible = {
     status: "eligible",
     club: {
-      slug: "kru-tiger",
-      name: "Kru Tiger",
+      slug: "northside-combat",
+      name: "Northside Combat",
       wallet: {
         address: walletAddress,
         cluster: "solana:devnet",

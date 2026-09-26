@@ -15,8 +15,8 @@ const actor = {
 } as const satisfies ActorSnapshot;
 
 const club = {
-  slug: "kru-tiger",
-  name: "Kru Tiger",
+  slug: "northside-combat",
+  name: "Northside Combat",
   wallet: {
     address: "GgBaCs3N8PpqJm1nT6CywU4wzEq7h4HfZ8C9K6E7Y8xQ",
     cluster: "solana:devnet",

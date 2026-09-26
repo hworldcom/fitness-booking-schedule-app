@@ -2,10 +2,10 @@
 
 - Status: In progress
 - Created: 2026-09-24
-- Last updated: 2026-09-25
+- Last updated: 2026-09-26
 - Milestone: M1 participating gym and membership-plan catalogue
 - Converted from: Retired `DEV0017`
-- Tracked development tickets: completed [DEV0067 — Add membership catalogue schema](../../archive/backend/DEV0067-membership-catalogue-schema.md); two required direct peer tickets identified below have not yet been created
+- Tracked development tickets: completed [DEV0067 — Add membership catalogue schema](../../archive/backend/DEV0067-membership-catalogue-schema.md) and [DEV0078 — Revise the multi-gym catalogue schema](../../archive/backend/DEV0078-revise-multigym-catalogue-schema.md); one required direct peer ticket identified below has not yet been created
 - Related records: planned by [DEV0014](../../archive/backend/DEV0014-database-and-backend-plan.md); depends on completed database, identity and protected-context work; current contract adopted by [DEV0069](../../archive/organisatory/DEV0069-adopt-core-multigym-membership-mvp.md) and amended by [DEV0070](../../archive/organisatory/DEV0070-revise-multigym-plan-pricing.md); downstream membership delivery [COR0007](COR0007-core-multigym-membership-mvp.md); historical contracts [DEV0058](../../archive/organisatory/DEV0058-fitness-access-mvp-contract.md), [DEV0066](../../archive/organisatory/DEV0066-freeze-membership-product-rules.md) and [DEV0068](../../archive/organisatory/DEV0068-revise-subscription-and-pass-resale-contract.md)
 
 ## Objective and boundaries
@@ -21,7 +21,7 @@ Catalogue publication never implies payment, membership ownership, reservation, 
 | Implementation part                                           | Development ticket                                                                                                  | Owned deliverable                                                                                                                                                               | Start condition or dependency                                          |
 | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | Initial membership product storage                            | Completed [DEV0067 — Add membership catalogue schema](../../archive/backend/DEV0067-membership-catalogue-schema.md) | Historical product/version foundation, two obsolete private drafts, Drizzle mappings and database tests; no entitlement or UI                                                   | Delivered under the superseded DEV0066 contract                        |
-| Multi-gym plan and gym-eligibility schema revision            | Required backend peer ticket not yet created                                                                        | Additive Basic/Classic version fields, participating-gym eligibility, fictional fixtures and retirement of obsolete draft publication paths without rewriting migration history | After DEV0069; before any offer is published                           |
+| Multi-gym plan and gym-eligibility schema revision            | Completed [DEV0078 — Revise the multi-gym catalogue schema](../../archive/backend/DEV0078-revise-multigym-catalogue-schema.md) | Additive Basic/Classic version fields, participating-gym eligibility, fictional fixtures and retirement of obsolete draft publication paths without rewriting migration history | Delivered after DEV0069 and completed DEV0074/DEV0075 contracts        |
 | Persistent catalogue services and preview-adapter replacement | Required backend-primary peer ticket not yet created                                                                | Safe public gym/plan projections, authorized catalogue mutations and replacement of DEV0074's preview adapter without redesigning its Explore/detail presentation               | After the schema revision and reviewed DEV0074 frontend read contracts |
 
 Every direct ticket must link back to COR0006. No pass/event or social schema may be added under this record.
@@ -51,6 +51,8 @@ Final integration must include anonymous/private-ID probes, two independent auth
 - 2026-09-25: DEV0068 revised those intended offers toward fixed-term subscription/pass-resale behavior, leaving an additive schema update necessary before publication.
 - 2026-09-25: DEV0069 replaced that direction with Basic/Classic four-gym membership only. Pass/event and follow/bookmark rows were removed; membership operations and social moved to COR0007.
 - 2026-09-25: DEV0074 was created under COR0007 to own preview discovery and stable frontend read contracts. COR0006 now limits its uncreated service peer to persistence, authority and adapter integration rather than duplicating the screen.
+- 2026-09-26: DEV0078 began the forward Basic/Classic plan revision and seven-fictional-gym database representation after the user approved the seed scope. Public services and frontend adapter replacement remain a separate peer.
+- 2026-09-26: DEV0078 completed the additive revision with published Basic/Classic terms, seven canonical fictional gym fixtures, explicit 5/7 eligibility, default-deny security and clean-replay/idempotency evidence. COR0006 remains open for the uncreated public service and preview-adapter peer.
 
 ## Validation results
 
@@ -58,12 +60,12 @@ DEV0069 checks the revised work map and links. Direct implementation validation 
 
 ## Risks, limitations, and follow-ups
 
-The public catalogue cannot be populated honestly until the additive plan/eligibility revision lands. €80 Basic, €150 Classic, €15 non-core access and four core gyms remain configurable hypotheses, not production commitments. DEV0074's fixtures must stay visibly preview-only. Later services must not expose private obsolete drafts or silently fall back to those fixtures during backend failure.
+The private catalogue now represents €80 Basic, €150 Classic, €15 non-core access and four core gyms as configurable demo hypotheses, not production commitments. DEV0074's adapter must stay visibly preview-only until the service peer replaces it. Later services must not expose retired legacy rows or silently fall back to frontend fixtures during backend failure.
 
 ## Completion and review references
 
 - Completed: Not completed.
-- Direct development tickets: DEV0067 Completed; two required peers not yet created.
+- Direct development tickets: DEV0067 and DEV0078 Completed; one required service peer not yet created.
 - Commit: Not applicable — coordination-record IDs are not used in commit subjects.
 - Review: Work-map revision reviewed under DEV0069; no independent implementation review.
 - Deployment or release: None.

@@ -1,11 +1,13 @@
 import test, { after } from "node:test";
 import assert from "node:assert/strict";
-import { asc, eq } from "drizzle-orm";
+import { asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
+  membershipProductGymEligibility,
   membershipProducts,
   membershipProductVersions,
+  participatingGyms,
 } from "@/server/db/schema";
 
 const connectionString = process.env.DATABASE_TEST_URL;
@@ -34,73 +36,160 @@ function hasDatabaseCode(code: string) {
     error.code === code;
 }
 
-test("Drizzle mappings expose the two price-pending membership drafts", async () => {
+test("Drizzle mappings expose the published Basic and Classic catalogue", async () => {
   const products = await db
-    .select({ slug: membershipProducts.slug })
+    .select({
+      slug: membershipProducts.slug,
+      scope: membershipProducts.scope,
+      organizationId: membershipProducts.organizationId,
+    })
     .from(membershipProducts)
     .orderBy(asc(membershipProducts.slug));
+
   assert.deepEqual(products, [
-    { slug: "annual-unlimited" },
-    { slug: "six-month-flex-12" },
+    { slug: "basic", scope: "platform", organizationId: null },
+    { slug: "classic", scope: "platform", organizationId: null },
   ]);
 
   const versions = await db
     .select({
-      name: membershipProductVersions.name,
+      planCode: membershipProductVersions.planCode,
       priceBaseUnits: membershipProductVersions.priceBaseUnits,
+      periodPolicy: membershipProductVersions.periodPolicy,
       durationSeconds: membershipProductVersions.durationSeconds,
       accessModel: membershipProductVersions.accessModel,
-      initialEntryAllowance: membershipProductVersions.initialEntryAllowance,
-      transferFeeBaseUnits: membershipProductVersions.transferFeeBaseUnits,
-      minimumHoldSeconds: membershipProductVersions.minimumHoldSeconds,
-      minimumRemainingTransferSeconds:
-        membershipProductVersions.minimumRemainingTransferSeconds,
+      includedCheckins: membershipProductVersions.includedCheckins,
+      maxIncludedCheckinsPerDay:
+        membershipProductVersions.maxIncludedCheckinsPerDay,
+      requiredCoreGymCount: membershipProductVersions.requiredCoreGymCount,
+      nonCoreVisitPriceBaseUnits:
+        membershipProductVersions.nonCoreVisitPriceBaseUnits,
+      transferable: membershipProductVersions.transferable,
       status: membershipProductVersions.status,
     })
     .from(membershipProductVersions)
-    .orderBy(asc(membershipProductVersions.name));
+    .orderBy(asc(membershipProductVersions.planCode));
 
   assert.deepEqual(versions, [
     {
-      name: "Annual Unlimited",
-      priceBaseUnits: null,
-      durationSeconds: 31_536_000,
-      accessModel: "unlimited",
-      initialEntryAllowance: null,
-      transferFeeBaseUnits: "10000000",
-      minimumHoldSeconds: 2_592_000,
-      minimumRemainingTransferSeconds: 2_592_000,
-      status: "draft",
+      planCode: "basic",
+      priceBaseUnits: "80000000",
+      periodPolicy: "calendar_month",
+      durationSeconds: null,
+      accessModel: "limited",
+      includedCheckins: 10,
+      maxIncludedCheckinsPerDay: 1,
+      requiredCoreGymCount: 4,
+      nonCoreVisitPriceBaseUnits: "15000000",
+      transferable: false,
+      status: "published",
     },
     {
-      name: "Six-Month Flex 12",
-      priceBaseUnits: null,
-      durationSeconds: 15_811_200,
-      accessModel: "entry_limited",
-      initialEntryAllowance: 12,
-      transferFeeBaseUnits: "10000000",
-      minimumHoldSeconds: 2_592_000,
-      minimumRemainingTransferSeconds: 2_592_000,
-      status: "draft",
+      planCode: "classic",
+      priceBaseUnits: "150000000",
+      periodPolicy: "calendar_month",
+      durationSeconds: null,
+      accessModel: "daily_uncapped",
+      includedCheckins: null,
+      maxIncludedCheckinsPerDay: 1,
+      requiredCoreGymCount: 4,
+      nonCoreVisitPriceBaseUnits: "15000000",
+      transferable: false,
+      status: "published",
     },
   ]);
 });
 
-test("database checks reject invalid membership access and transfer terms", async () => {
+test("seven fictional participating gyms and plan eligibility are seeded", async () => {
+  const gymMetadata = await db
+    .select({
+      artworkKey: participatingGyms.artworkKey,
+      coachNames: participatingGyms.coachNames,
+      mapAddress: participatingGyms.mapAddress,
+      supportsNonCoreVisit: participatingGyms.supportsNonCoreVisit,
+    })
+    .from(participatingGyms);
+  assert.equal(gymMetadata.length, 7);
+  assert.ok(
+    gymMetadata.every(
+      (gym) =>
+        gym.artworkKey.length > 0 &&
+        gym.coachNames.length > 0 &&
+        gym.mapAddress.includes("Berlin"),
+    ),
+  );
+
+  const fixtureGyms = await queryClient<
+    { name: string; supports_non_core_visit: boolean }[]
+  >`
+    select v.name, g.supports_non_core_visit
+    from app.participating_gyms g
+    join app.venues v on v.run_id = g.run_id and v.id = g.venue_id
+    order by v.name
+  `;
+  assert.deepEqual(
+    fixtureGyms.map(({ name }) => name),
+    [
+      "Fabrik Training",
+      "Groundline MMA",
+      "Kiezstrike Club",
+      "Nightshift Athletic Club",
+      "Northside Combat",
+      "Quiet Current Recovery",
+      "Studio Vela",
+    ],
+  );
+  assert.deepEqual(
+    fixtureGyms
+      .filter(({ supports_non_core_visit }) => !supports_non_core_visit)
+      .map(({ name }) => name),
+    ["Nightshift Athletic Club"],
+  );
+
+  const eligibility = await db
+    .select({
+      productId: membershipProductGymEligibility.productId,
+      status: membershipProductGymEligibility.status,
+    })
+    .from(membershipProductGymEligibility);
+  assert.equal(eligibility.length, 12);
+
+  const eligibilityCounts = await queryClient<
+    { plan_code: string; gym_count: number }[]
+  >`
+    select v.plan_code, count(*)::integer as gym_count
+    from app.membership_product_gym_eligibility e
+    join app.membership_product_versions v
+      on v.run_id = e.run_id and v.product_id = e.product_id
+    where e.status = 'active' and v.status = 'published'
+    group by v.plan_code
+    order by v.plan_code
+  `;
+  assert.deepEqual(Array.from(eligibilityCounts), [
+    { plan_code: "basic", gym_count: 5 },
+    { plan_code: "classic", gym_count: 7 },
+  ]);
+});
+
+test("current plan constraints reject prices and allowances outside the contract", async () => {
   await assert.rejects(
     queryClient.begin(async (transaction) => {
       await transaction.unsafe(`
         insert into app.membership_product_versions (
-          id, run_id, product_id, version_number, name, description,
-          currency_code, price_base_units, duration_seconds, access_model,
-          initial_entry_allowance, transferable, transfer_fee_base_units,
-          minimum_hold_seconds, minimum_remaining_transfer_seconds, status
+          id, run_id, product_id, version_number, plan_code, name,
+          description, currency_code, price_base_units, period_policy,
+          duration_seconds, access_model, included_checkins,
+          max_included_checkins_per_day, required_core_gym_count,
+          non_core_visit_price_base_units, transferable,
+          transfer_fee_base_units, minimum_hold_seconds,
+          minimum_remaining_transfer_seconds, status
         ) values (
           '62000000-0000-4000-8000-000000000001',
           '20000000-0000-4000-8000-000000000001',
-          '60000000-0000-4000-8000-000000000001',
-          2, 'Invalid unlimited', 'Must fail', 'EURC', null, 31536000,
-          'unlimited', 12, true, 10000000, 2592000, 2592000, 'draft'
+          '60000000-0000-4000-8000-000000000101',
+          2, 'basic', 'Bad Basic price', 'Must fail', 'EURC', 81000000,
+          'calendar_month', null, 'limited', 10, 1, 4, 15000000,
+          false, 0, 0, 0, 'draft'
         )
       `);
     }),
@@ -111,191 +200,173 @@ test("database checks reject invalid membership access and transfer terms", asyn
     queryClient.begin(async (transaction) => {
       await transaction.unsafe(`
         insert into app.membership_product_versions (
-          id, run_id, product_id, version_number, name, description,
-          currency_code, price_base_units, duration_seconds, access_model,
-          initial_entry_allowance, transferable, transfer_fee_base_units,
-          minimum_hold_seconds, minimum_remaining_transfer_seconds, status
+          id, run_id, product_id, version_number, plan_code, name,
+          description, currency_code, price_base_units, period_policy,
+          duration_seconds, access_model, included_checkins,
+          max_included_checkins_per_day, required_core_gym_count,
+          non_core_visit_price_base_units, transferable,
+          transfer_fee_base_units, minimum_hold_seconds,
+          minimum_remaining_transfer_seconds, status
         ) values (
           '62000000-0000-4000-8000-000000000002',
           '20000000-0000-4000-8000-000000000001',
-          '60000000-0000-4000-8000-000000000001',
-          2, 'Invalid fee', 'Must fail', 'EURC', null, 31536000,
-          'unlimited', null, true, 9000000, 2592000, 2592000, 'draft'
+          '60000000-0000-4000-8000-000000000102',
+          2, 'classic', 'Bad Classic allowance', 'Must fail', 'EURC',
+          150000000, 'calendar_month', null, 'daily_uncapped', 99, 1, 4,
+          15000000, false, 0, 0, 0, 'draft'
         )
       `);
     }),
     hasDatabaseCode("23514"),
   );
 
-  await queryClient.begin(async (transaction) => {
-    await transaction.unsafe(`
-      insert into app.membership_product_versions (
-        id, run_id, product_id, version_number, name, description,
-        currency_code, price_base_units, duration_seconds, access_model,
-        initial_entry_allowance, transferable, transfer_fee_base_units,
-        minimum_hold_seconds, minimum_remaining_transfer_seconds, status
-      ) values (
-        '62000000-0000-4000-8000-000000000005',
-        '20000000-0000-4000-8000-000000000001',
-        '60000000-0000-4000-8000-000000000001',
-        2, 'Non-transferable annual', 'Accepted rule combination', 'EURC',
-        null, 31536000, 'unlimited', null, false, 0, 0, 0, 'draft'
-      )
-    `);
-    const inserted = await transaction<{ count: string }[]>`
-      select count(*)::text as count
-      from app.membership_product_versions
-      where id = '62000000-0000-4000-8000-000000000005'
-    `;
-    assert.equal(inserted[0]?.count, "1");
-    await transaction.unsafe(`
-      delete from app.membership_product_versions
-      where id = '62000000-0000-4000-8000-000000000005'
-    `);
-  });
-});
-
-test("publication requires a price and freezes version terms", async () => {
   await assert.rejects(
     queryClient.begin(async (transaction) => {
-      await transaction.unsafe(`
-        update app.membership_product_versions
-        set status = 'published', published_at = statement_timestamp()
-        where id = '61000000-0000-4000-8000-000000000001'
-      `);
-    }),
-    hasDatabaseCode("23514"),
-  );
-
-  await assert.rejects(
-    queryClient.begin(async (transaction) => {
-      await transaction.unsafe(`
-        update app.membership_product_versions
-        set price_base_units = 600000000,
-            status = 'published',
-            published_at = statement_timestamp()
-        where id = '61000000-0000-4000-8000-000000000001'
-      `);
-      await transaction.unsafe(`
-        update app.membership_product_versions
-        set price_base_units = 650000000
-        where id = '61000000-0000-4000-8000-000000000001'
-      `);
-    }),
-    hasDatabaseCode("23514"),
-  );
-});
-
-test("only one version can be published and retirement is final", async () => {
-  await assert.rejects(
-    queryClient.begin(async (transaction) => {
-      await transaction.unsafe(`
-        update app.membership_product_versions
-        set price_base_units = 600000000,
-            status = 'published',
-            published_at = statement_timestamp()
-        where id = '61000000-0000-4000-8000-000000000001'
-      `);
       await transaction.unsafe(`
         insert into app.membership_product_versions (
-          id, run_id, product_id, version_number, name, description,
-          currency_code, price_base_units, duration_seconds, access_model,
-          initial_entry_allowance, transferable, transfer_fee_base_units,
-          minimum_hold_seconds, minimum_remaining_transfer_seconds, status
+          id, run_id, product_id, version_number, plan_code, name,
+          description, currency_code, price_base_units, period_policy,
+          duration_seconds, access_model, included_checkins,
+          max_included_checkins_per_day, required_core_gym_count,
+          non_core_visit_price_base_units, transferable,
+          transfer_fee_base_units, minimum_hold_seconds,
+          minimum_remaining_transfer_seconds, status
         ) values (
           '62000000-0000-4000-8000-000000000003',
           '20000000-0000-4000-8000-000000000001',
-          '60000000-0000-4000-8000-000000000001',
-          2, 'Annual Unlimited v2', 'Second version', 'EURC', null,
-          31536000, 'unlimited', null, true, 10000000, 2592000,
-          2592000, 'draft'
+          '60000000-0000-4000-8000-000000000101',
+          2, 'basic', 'Bad currency', 'Must fail', 'EUR', 80000000,
+          'calendar_month', null, 'limited', 10, 1, 4, 15000000,
+          false, 0, 0, 0, 'draft'
         )
       `);
-      await transaction.unsafe(`
-        update app.membership_product_versions
-        set price_base_units = 650000000,
-            status = 'published',
-            published_at = statement_timestamp()
-        where id = '62000000-0000-4000-8000-000000000003'
-      `);
     }),
-    hasDatabaseCode("23505"),
+    hasDatabaseCode("23514"),
   );
 
   await assert.rejects(
     queryClient.begin(async (transaction) => {
       await transaction.unsafe(`
-        update app.membership_product_versions
-        set price_base_units = 600000000,
-            status = 'published',
-            published_at = statement_timestamp()
-        where id = '61000000-0000-4000-8000-000000000001'
-      `);
-      await transaction.unsafe(`
-        update app.membership_product_versions
-        set status = 'retired', retired_at = statement_timestamp()
-        where id = '61000000-0000-4000-8000-000000000001'
-      `);
-      await transaction.unsafe(`
-        delete from app.membership_product_versions
-        where id = '61000000-0000-4000-8000-000000000001'
+        insert into app.membership_product_versions (
+          id, run_id, product_id, version_number, plan_code, name,
+          description, currency_code, price_base_units, period_policy,
+          duration_seconds, access_model, included_checkins,
+          max_included_checkins_per_day, required_core_gym_count,
+          non_core_visit_price_base_units, transferable,
+          transfer_fee_base_units, minimum_hold_seconds,
+          minimum_remaining_transfer_seconds, status
+        ) values (
+          '62000000-0000-4000-8000-000000000004',
+          '20000000-0000-4000-8000-000000000001',
+          '60000000-0000-4000-8000-000000000101',
+          2, 'basic', 'Bad limits', 'Must fail', 'EURC', 80000000,
+          'calendar_month', null, 'limited', 10, 2, 3, 15000000,
+          false, 0, 0, 0, 'draft'
+        )
       `);
     }),
     hasDatabaseCode("23514"),
   );
 });
 
-test("same-dataset references and default-deny runtime access hold", async () => {
+test("published terms, dataset boundaries and default-deny access hold", async () => {
   await assert.rejects(
     queryClient.begin(async (transaction) => {
       await transaction.unsafe(`
-        insert into app.membership_product_versions (
-          id, run_id, product_id, version_number, name, description,
-          currency_code, price_base_units, duration_seconds, access_model,
-          initial_entry_allowance, transferable, transfer_fee_base_units,
-          minimum_hold_seconds, minimum_remaining_transfer_seconds, status
+        update app.membership_product_versions
+        set name = 'Changed after publication'
+        where id = '61000000-0000-4000-8000-000000000101'
+      `);
+    }),
+    hasDatabaseCode("23514"),
+  );
+
+  await assert.rejects(
+    queryClient.begin(async (transaction) => {
+      await transaction.unsafe(`
+        insert into app.membership_product_gym_eligibility (
+          run_id, product_id, product_scope, venue_id, status
         ) values (
-          '62000000-0000-4000-8000-000000000004',
           '90000000-0000-4000-8000-000000000001',
-          '60000000-0000-4000-8000-000000000001',
-          2, 'Cross-run version', 'Must fail', 'EURC', null, 31536000,
-          'unlimited', null, true, 10000000, 2592000, 2592000, 'draft'
+          '60000000-0000-4000-8000-000000000101',
+          'platform',
+          '40000000-0000-4000-8000-000000000001',
+          'active'
         )
       `);
     }),
     hasDatabaseCode("23503"),
   );
 
+  await assert.rejects(
+    queryClient.begin(async (transaction) => {
+      await transaction.unsafe(`
+        insert into app.membership_product_gym_eligibility (
+          run_id, product_id, product_scope, venue_id, status
+        ) values (
+          '20000000-0000-4000-8000-000000000001',
+          '60000000-0000-4000-8000-000000000101',
+          'organization',
+          '40000000-0000-4000-8000-000000000007',
+          'active'
+        )
+      `);
+    }),
+    hasDatabaseCode("23514"),
+  );
+
+  await assert.rejects(
+    queryClient.begin(async (transaction) => {
+      await transaction.unsafe(`
+        insert into app.membership_product_gym_eligibility (
+          run_id, product_id, product_scope, venue_id, status
+        ) values (
+          '20000000-0000-4000-8000-000000000001',
+          '60000000-0000-4000-8000-000000000101',
+          'platform',
+          '40000000-0000-4000-8000-000000000001',
+          'active'
+        )
+      `);
+    }),
+    hasDatabaseCode("23505"),
+  );
+
   await queryClient.begin(async (transaction) => {
     await transaction.unsafe("set local role app_runtime");
-    const rows = await transaction<{ count: string }[]>`
-      select count(*)::text as count
-      from app.membership_product_versions
+    const rows = await transaction<{ count: number }[]>`
+      select (
+        (select count(*) from app.membership_products)
+        + (select count(*) from app.membership_product_versions)
+        + (select count(*) from app.participating_gyms)
+        + (select count(*) from app.membership_product_gym_eligibility)
+      )::integer as count
     `;
-    assert.equal(rows[0]?.count, "0");
+    assert.equal(rows[0]?.count, 0);
   });
 
   await assert.rejects(
     queryClient.begin(async (transaction) => {
       await transaction.unsafe("set local role app_runtime");
       await transaction.unsafe(`
-          insert into app.membership_products (
-            run_id, organization_id, slug, status, record_source
-          ) values (
-            '20000000-0000-4000-8000-000000000001',
-            '30000000-0000-4000-8000-000000000002',
-            'runtime-must-not-insert', 'active', 'fixture'
-          )
-        `);
+        insert into app.participating_gyms (
+          run_id, venue_id, artwork_key, coach_names, map_label, map_address,
+          map_latitude, map_longitude, supports_non_core_visit, status
+        ) values (
+          '20000000-0000-4000-8000-000000000001',
+          '40000000-0000-4000-8000-000000000004',
+          'recovery', array['Nobody'], 'Hidden', 'Nowhere in Berlin',
+          52.5, 13.4, false, 'active'
+        )
+      `);
     }),
     hasDatabaseCode("42501"),
   );
 
-  const unchanged = await db
-    .select({ status: membershipProductVersions.status })
-    .from(membershipProductVersions)
-    .where(
-      eq(membershipProductVersions.id, "61000000-0000-4000-8000-000000000001"),
-    );
-  assert.deepEqual(unchanged, [{ status: "draft" }]);
+  const obsolete = await queryClient<{ count: number }[]>`
+    select count(*)::integer as count
+    from app.membership_products
+    where slug in ('annual-unlimited', 'six-month-flex-12')
+  `;
+  assert.equal(obsolete[0]?.count, 0);
 });

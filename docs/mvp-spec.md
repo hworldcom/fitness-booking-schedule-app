@@ -10,7 +10,7 @@ The MVP no longer includes membership transfers, standalone class passes or pass
 
 This specification defines the target behavior. It does not claim that the target has already been implemented.
 
-Home and How it works now present the focused four-gym membership concept, while Explore still uses a small temporary fictional gym catalogue and no usable selection or activation exists. The private catalogue migration created by DEV0067 contains earlier `Annual Unlimited` and `Flex 12` drafts. Those records are not the current product contract and must not be published as the new offer. Follow-up development tickets will replace the temporary discovery data and obsolete private drafts through forward-compatible application and database changes.
+Home and How it works present the focused four-gym membership concept. Explore and membership setup use a typed seven-gym preview catalogue and can save a browser-local four-gym draft; neither creates access. The private database catalogue now represents published Basic and Classic terms, the same seven fictional participating gyms and explicit plan eligibility through an additive migration. It remains default-deny until a later service ticket replaces the frontend preview adapter. Membership activation and operational usage do not yet exist.
 
 Completed and cancelled tickets are preserved as historical evidence. They explain previous choices but do not override this document. [The ticket index](../tickets/README.md) records current delivery work.
 
@@ -153,7 +153,7 @@ Authorization comes from server-derived identity and persisted role bindings, ne
 - Seven fictional participating gyms are used in the current frontend preview so a member can compare routines, choose four core gyms and demonstrate one non-core visit. Persistent catalogue rules must support at least five without treating seven as an infrastructure limit.
 - Gym wallets and staff authority must remain distinct from personal wallets and from one another.
 - Fixtures must not use an actual gym's name, logo, address, pricing or partnership claim without permission. Inspiration may be transformed into clearly fictional data.
-- The current seed still contains `Kru Tiger`; a future fixture implementation ticket must replace that legacy real-world name before the multi-gym demo is presented publicly.
+- The deterministic database seed uses the same seven fictional gym identities as the preview and retains no real-gym-inspired name, address, price or partnership claim.
 
 <a id="5-architecture"></a>
 <a id="5-architecture-and-storage"></a>
@@ -168,7 +168,7 @@ The minimum on-chain or transaction-verifiable surface is membership-period acti
 
 The database provider remains Supabase PostgreSQL. The legacy HTML anchors above preserve links from historical tickets; they do not reintroduce superseded product requirements. Inspect the installed Anchor framework, Solana SDK and Next.js versions before integration changes.
 
-DEV0067 is historical evidence for the first private catalogue schema. Replace its obsolete plan drafts with additive forward migrations; do not squash already shared migration history. COR0006 owns participating-gym and membership-plan catalogue work. COR0007 owns the membership lifecycle, usage, financial evidence, gym/member views and minimal social integration.
+DEV0067 is historical evidence for the first private catalogue schema. DEV0078 replaces its obsolete seeded plan drafts through an additive forward migration while preserving shared history. COR0006 owns the remaining published catalogue service and adapter work. COR0007 owns the membership lifecycle, usage, financial evidence, gym/member views and minimal social integration.
 
 Every externally retried activation, payment, check-in and reconciliation operation needs a stable operation identifier. Store pending, submitted, confirmed and failed states where appropriate so a retry cannot silently double-charge or double-count.
 
