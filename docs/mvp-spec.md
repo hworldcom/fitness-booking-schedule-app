@@ -10,7 +10,7 @@ The MVP no longer includes membership transfers, standalone class passes or pass
 
 This specification defines the target behavior. It does not claim that the target has already been implemented.
 
-Home and How it works present the focused four-gym membership concept. Explore and membership setup use a typed seven-gym preview catalogue and can save a browser-local four-gym draft; neither creates access. The private database catalogue now represents published Basic and Classic terms, the same seven fictional participating gyms and explicit plan eligibility through an additive migration. It remains default-deny until a later service ticket replaces the frontend preview adapter. Membership activation and operational usage do not yet exist.
+Home and How it works present the focused four-gym membership concept. Explore, Search, membership setup and My Membership use one read-only server projection of the persistent published Basic/Classic terms, seven fictional participating gyms and explicit plan eligibility. Setup can save a browser-local four-gym draft, but neither the catalogue nor that draft creates access. Database failure, empty publication and inconsistent data are shown honestly without fixture fallback. Membership activation and operational usage do not yet exist.
 
 Completed and cancelled tickets are preserved as historical evidence. They explain previous choices but do not override this document. [The ticket index](../tickets/README.md) records current delivery work.
 
@@ -150,7 +150,7 @@ Authorization comes from server-derived identity and persisted role bindings, ne
 ### Demonstration fixtures
 
 - At least two ordinary member accounts are required to prove private state and social permissions.
-- Seven fictional participating gyms are used in the current frontend preview so a member can compare routines, choose four core gyms and demonstrate one non-core visit. Persistent catalogue rules must support at least five without treating seven as an infrastructure limit.
+- Seven fictional participating gyms are served from the current persistent demonstration catalogue so a member can compare routines, choose four core gyms and demonstrate one non-core visit. Catalogue rules must support at least five without treating seven as an infrastructure limit.
 - Gym wallets and staff authority must remain distinct from personal wallets and from one another.
 - Fixtures must not use an actual gym's name, logo, address, pricing or partnership claim without permission. Inspiration may be transformed into clearly fictional data.
 - The deterministic database seed uses the same seven fictional gym identities as the preview and retains no real-gym-inspired name, address, price or partnership claim.
@@ -168,7 +168,7 @@ The minimum on-chain or transaction-verifiable surface is membership-period acti
 
 The database provider remains Supabase PostgreSQL. The legacy HTML anchors above preserve links from historical tickets; they do not reintroduce superseded product requirements. Inspect the installed Anchor framework, Solana SDK and Next.js versions before integration changes.
 
-DEV0067 is historical evidence for the first private catalogue schema. DEV0078 replaces its obsolete seeded plan drafts through an additive forward migration while preserving shared history. COR0006 owns the remaining published catalogue service and adapter work. COR0007 owns the membership lifecycle, usage, financial evidence, gym/member views and minimal social integration.
+DEV0067 is historical evidence for the first private catalogue schema. DEV0078 replaces its obsolete seeded plan drafts through an additive forward migration while preserving shared history. DEV0079 supplies the restricted read-only public projection and replaces plan/gym fixture adapters. COR0007 owns the membership lifecycle, usage, financial evidence, gym/member views and minimal social integration.
 
 Every externally retried activation, payment, check-in and reconciliation operation needs a stable operation identifier. Store pending, submitted, confirmed and failed states where appropriate so a retry cannot silently double-charge or double-count.
 
@@ -192,6 +192,8 @@ effective_from / effective_to
 Basic has `access_model = limited`, `included_checkins = 10` and `max_included_checkins_per_day = 1`. Classic has `access_model = daily_uncapped`, no numerical monthly allowance, and `max_included_checkins_per_day = 1`. Classic must not be represented by a fabricated large allowance.
 
 Past purchases retain the plan terms accepted at activation even if later catalogue versions change.
+
+For the hackathon, the catalogue is read-only at runtime. Reviewed migrations and deterministic seed data define participating gyms, plan versions and eligibility. Operator editing, catalogue write APIs and administration screens are deferred until platform-versus-gym management authority is designed.
 
 ### 7.2 Membership-period contract
 

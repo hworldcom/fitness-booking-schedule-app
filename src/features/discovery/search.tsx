@@ -1,10 +1,22 @@
 import Link from "next/link";
 import { ArrowUpRight, Search } from "lucide-react";
+import { Empty } from "@/components/ui";
+import type { PublicCatalogueResult } from "@/domain/catalogue";
+import { discoveryCatalogue } from "@/features/discovery/catalogue";
 import { searchCatalogue } from "@/features/discovery/queries";
-import { previewDiscoveryCatalogue } from "@/features/preview/discovery";
 
-export function SearchScreen({ query }: { query: string }) {
-  const results = searchCatalogue(previewDiscoveryCatalogue, query);
+export function SearchScreen({
+  query,
+  catalogueResult,
+}: {
+  query: string;
+  catalogueResult: PublicCatalogueResult;
+}) {
+  const catalogue =
+    catalogueResult.status === "ready"
+      ? discoveryCatalogue(catalogueResult.catalogue.gyms)
+      : [];
+  const results = searchCatalogue(catalogue, query);
   return (
     <>
       <div className="page-heading">
@@ -38,7 +50,34 @@ export function SearchScreen({ query }: { query: string }) {
       <p className="small-copy">
         Public demonstration catalogue · No account or wallet needed to browse.
       </p>
-      {query ? (
+      {catalogueResult.status === "error" ? (
+        <div className="catalogue-state" role="status">
+          <Empty
+            title="The gym catalogue is unavailable."
+            description={catalogueResult.message}
+          />
+          <Link href="/coming-soon" className="button secondary">
+            Join the waitlist
+          </Link>
+        </div>
+      ) : catalogueResult.status === "empty" ? (
+        <div className="catalogue-state" role="status">
+          <Empty
+            title="No participating gyms are available yet."
+            description="Join the waitlist while the fictional catalogue is prepared."
+          />
+          <Link href="/coming-soon" className="button secondary">
+            Join the waitlist
+          </Link>
+        </div>
+      ) : catalogueResult.status === "loading" ? (
+        <div className="catalogue-state" role="status">
+          <Empty
+            title="Loading the gym catalogue…"
+            description="The fictional catalogue is being prepared."
+          />
+        </div>
+      ) : query ? (
         <>
           <div className="results-label">
             <strong>

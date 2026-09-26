@@ -2,15 +2,18 @@ export const membershipPlanIds = ["basic", "classic"] as const;
 
 export type MembershipPlanId = (typeof membershipPlanIds)[number];
 
-export type Discipline =
-  | "Grappling"
-  | "Kickboxing"
-  | "Massage"
-  | "MMA"
-  | "Muay Thai"
-  | "Strength"
-  | "Wellness"
-  | "Yoga";
+export const disciplines = [
+  "Grappling",
+  "Kickboxing",
+  "Massage",
+  "MMA",
+  "Muay Thai",
+  "Strength",
+  "Wellness",
+  "Yoga",
+] as const;
+
+export type Discipline = (typeof disciplines)[number];
 
 export type Money = {
   amount: number;
@@ -58,7 +61,7 @@ export type GymSummary = {
 export type ClubStudio = GymSummary;
 
 export type PublicCatalogue = {
-  source: "preview-fixtures";
+  source: "preview-fixtures" | "persistent-catalogue";
   version: string;
   plans: MembershipPlanSummary[];
   gyms: GymSummary[];

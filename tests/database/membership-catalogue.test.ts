@@ -9,6 +9,12 @@ import {
   membershipProductVersions,
   participatingGyms,
 } from "@/server/db/schema";
+import {
+  catalogueResultFromRows,
+  currentPublicCatalogue,
+} from "@/server/catalogue/service";
+import { readPublishedCatalogueRows } from "@/server/db/catalogue/repository";
+import { closeDatabaseConnection } from "@/server/db/client";
 
 const connectionString = process.env.DATABASE_TEST_URL;
 if (!connectionString) {
@@ -16,6 +22,10 @@ if (!connectionString) {
     "DATABASE_TEST_URL is required for database integration tests.",
   );
 }
+
+const runtimeConnectionString =
+  "postgresql://repx_runtime_login:postgres@127.0.0.1:55322/postgres";
+process.env.DATABASE_URL = runtimeConnectionString;
 
 const queryClient = postgres(connectionString, {
   max: 1,
@@ -25,6 +35,7 @@ const queryClient = postgres(connectionString, {
 const db = drizzle(queryClient);
 
 after(async () => {
+  await closeDatabaseConnection();
   await queryClient.end();
 });
 
@@ -269,7 +280,7 @@ test("current plan constraints reject prices and allowances outside the contract
   );
 });
 
-test("published terms, dataset boundaries and default-deny access hold", async () => {
+test("published terms, dataset boundaries and read-only runtime access hold", async () => {
   await assert.rejects(
     queryClient.begin(async (transaction) => {
       await transaction.unsafe(`
@@ -342,7 +353,7 @@ test("published terms, dataset boundaries and default-deny access hold", async (
         + (select count(*) from app.membership_product_gym_eligibility)
       )::integer as count
     `;
-    assert.equal(rows[0]?.count, 0);
+    assert.equal(rows[0]?.count, 23);
   });
 
   await assert.rejects(
@@ -369,4 +380,77 @@ test("published terms, dataset boundaries and default-deny access hold", async (
     where slug in ('annual-unlimited', 'six-month-flex-12')
   `;
   assert.equal(obsolete[0]?.count, 0);
+});
+
+test("the server catalogue projection exposes only stable public fields", async () => {
+  const result = await currentPublicCatalogue();
+  assert.equal(result.status, "ready");
+  if (result.status !== "ready") return;
+
+  assert.equal(result.catalogue.source, "persistent-catalogue");
+  assert.deepEqual(
+    result.catalogue.plans.map((plan) => ({
+      id: plan.id,
+      price: plan.price.amount,
+      access: plan.access,
+      nonCorePrice: plan.nonCoreVisitPrice.amount,
+    })),
+    [
+      {
+        id: "basic",
+        price: 80,
+        access: { model: "limited", includedCheckins: 10 },
+        nonCorePrice: 15,
+      },
+      {
+        id: "classic",
+        price: 150,
+        access: { model: "daily-uncapped" },
+        nonCorePrice: 15,
+      },
+    ],
+  );
+  assert.equal(result.catalogue.gyms.length, 7);
+  assert.equal(
+    result.catalogue.gyms.filter((gym) => gym.eligiblePlans.includes("basic"))
+      .length,
+    5,
+  );
+  assert.equal(
+    result.catalogue.gyms.filter((gym) => gym.eligiblePlans.includes("classic"))
+      .length,
+    7,
+  );
+
+  const publicPayload = JSON.stringify(result.catalogue);
+  assert.doesNotMatch(
+    publicPayload,
+    /[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i,
+  );
+  assert.doesNotMatch(
+    publicPayload,
+    /organization|created_at|updated_at|product_id|venue_id/i,
+  );
+});
+
+test("empty, inconsistent and unavailable catalogues never use fixture fallback", async () => {
+  assert.deepEqual(catalogueResultFromRows([]), { status: "empty" });
+
+  const rows = await readPublishedCatalogueRows();
+  assert.ok(rows.length > 0);
+  const inconsistent = rows.map((row, index) =>
+    index === 0 ? { ...row, price_base_units: "81000000" } : row,
+  );
+  assert.deepEqual(catalogueResultFromRows(inconsistent), {
+    status: "error",
+    message: "The gym catalogue is inconsistent.",
+  });
+
+  await closeDatabaseConnection();
+  delete process.env.DATABASE_URL;
+  assert.deepEqual(await currentPublicCatalogue(), {
+    status: "error",
+    message: "The gym catalogue is temporarily unavailable. Please try again.",
+  });
+  process.env.DATABASE_URL = runtimeConnectionString;
 });

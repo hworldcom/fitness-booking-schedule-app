@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = extensions, public, pg_catalog;
 
-select plan(27);
+select plan(30);
 
 select has_table('app', 'membership_products', 'product identities exist');
 select has_table('app', 'membership_product_versions', 'versioned plan terms exist');
@@ -95,8 +95,23 @@ select is(
         'membership_product_gym_eligibility'
       )
   ),
-  0,
-  'no runtime catalogue policy is opened by this schema ticket'
+  4,
+  'each catalogue table has one narrow runtime read policy'
+);
+
+select ok(
+  not exists (
+    select 1
+    from unnest(array[
+      'app.membership_products',
+      'app.membership_product_versions',
+      'app.participating_gyms',
+      'app.membership_product_gym_eligibility'
+    ]) table_name
+    cross join unnest(array['insert', 'update', 'delete']) privilege_name
+    where has_table_privilege('app_runtime', table_name, privilege_name)
+  ),
+  'app_runtime has no catalogue write privilege'
 );
 
 select has_function(
@@ -330,12 +345,34 @@ select set_config(
   )::text,
   true
 );
+select set_config(
+  'app.test_runtime_public_run_count',
+  (select count(*) from app.demo_runs)::text,
+  true
+);
+select set_config(
+  'app.test_runtime_catalogue_venue_count',
+  (select count(*) from app.venues)::text,
+  true
+);
 reset role;
 
 select is(
   current_setting('app.test_runtime_membership_catalogue_count')::integer,
-  0,
-  'default-deny RLS hides all catalogue rows from app_runtime'
+  23,
+  'app_runtime sees only the seeded public product, version, gym and eligibility rows'
+);
+
+select is(
+  current_setting('app.test_runtime_public_run_count')::integer,
+  1,
+  'app_runtime sees the active public catalogue run'
+);
+
+select is(
+  current_setting('app.test_runtime_catalogue_venue_count')::integer,
+  7,
+  'app_runtime sees only active participating-gym venues'
 );
 
 select ok(

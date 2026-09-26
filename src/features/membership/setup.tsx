@@ -9,7 +9,13 @@ import {
   CircleAlert,
   RotateCcw,
 } from "lucide-react";
-import type { MembershipPlanId } from "@/domain/catalogue";
+import { Empty } from "@/components/ui";
+import type {
+  MembershipPlanId,
+  MembershipPlanSummary,
+  PublicCatalogue,
+  PublicCatalogueResult,
+} from "@/domain/catalogue";
 import {
   isMembershipDraftReviewable,
   membershipDraftGyms,
@@ -18,13 +24,8 @@ import {
   type MembershipDraftIssue,
 } from "@/domain/membership-draft";
 import { useMembershipDraft } from "@/features/membership/draft-store";
-import { plans, studios } from "@/features/preview/catalogue";
 
-const catalogue = { plans, gyms: studios };
-
-function accessLabel(planId: MembershipPlanId) {
-  const plan = plans.find((candidate) => candidate.id === planId);
-  if (!plan) return "";
+function accessLabel(plan: MembershipPlanSummary) {
   return plan.access.model === "limited"
     ? `${plan.access.includedCheckins} included check-ins`
     : "Unlimited included check-ins";
@@ -46,13 +47,16 @@ function issueMessage(issue: MembershipDraftIssue | null) {
   }
 }
 
-export function MembershipSetup({
+function ReadyMembershipSetup({
   initialPlan,
+  catalogue,
 }: {
   initialPlan: MembershipPlanId | null;
+  catalogue: PublicCatalogue;
 }) {
+  const { plans, gyms } = catalogue;
   const { draft, recovery, storageUnavailable, dispatch } =
-    useMembershipDraft();
+    useMembershipDraft(catalogue);
   const [notice, setNotice] = useState<string | null>(null);
   const [reviewMode, setReviewMode] = useState(false);
   const initializedFromQuery = useRef(false);
@@ -72,9 +76,7 @@ export function MembershipSetup({
     setReviewMode(false);
     if (outcome.removedGymIds.length) {
       const removedNames = outcome.removedGymIds
-        .map(
-          (gymId) => studios.find((candidate) => candidate.id === gymId)?.name,
-        )
+        .map((gymId) => gyms.find((candidate) => candidate.id === gymId)?.name)
         .filter(Boolean)
         .join(", ");
       setNotice(
@@ -168,7 +170,7 @@ export function MembershipSetup({
                         <small> / month</small>
                       </b>
                     </span>
-                    <span>{accessLabel(plan.id)}</span>
+                    <span>{accessLabel(plan)}</span>
                     <small>
                       Four core gyms · one included check-in per venue-local day
                     </small>
@@ -204,7 +206,7 @@ export function MembershipSetup({
               </p>
             )}
             <div className="membership-gym-choices">
-              {studios.map((gym) => {
+              {gyms.map((gym) => {
                 const selected = draft.gymIds.includes(gym.id);
                 const eligible = draft.planId
                   ? gym.eligiblePlans.includes(draft.planId)
@@ -286,7 +288,7 @@ export function MembershipSetup({
             <div className="membership-review-plan">
               <div>
                 <span>{selectedPlan.name}</span>
-                <strong>{accessLabel(selectedPlan.id)}</strong>
+                <strong>{accessLabel(selectedPlan)}</strong>
               </div>
               <b>
                 €{selectedPlan.price.amount}
@@ -353,6 +355,63 @@ export function MembershipSetup({
           <RotateCcw size={14} aria-hidden="true" /> Reset draft
         </button>
       )}
+    </section>
+  );
+}
+
+export function MembershipSetup({
+  initialPlan,
+  catalogueResult,
+}: {
+  initialPlan: MembershipPlanId | null;
+  catalogueResult: PublicCatalogueResult;
+}) {
+  if (catalogueResult.status === "ready") {
+    return (
+      <ReadyMembershipSetup
+        initialPlan={initialPlan}
+        catalogue={catalogueResult.catalogue}
+      />
+    );
+  }
+
+  const state =
+    catalogueResult.status === "error"
+      ? {
+          title: "Membership setup is temporarily unavailable.",
+          description: catalogueResult.message,
+        }
+      : catalogueResult.status === "empty"
+        ? {
+            title: "No membership plans are available yet.",
+            description:
+              "Join the waitlist while the fictional membership catalogue is prepared.",
+          }
+        : {
+            title: "Loading membership plans…",
+            description:
+              "The fictional membership catalogue is being prepared.",
+          };
+
+  return (
+    <section className="membership-setup" aria-labelledby="membership-title">
+      <div className="membership-setup-heading">
+        <Link href="/explore" className="back-link">
+          <ArrowLeft size={14} aria-hidden="true" /> Back to Explore
+        </Link>
+        <span className="eyebrow">MEMBERSHIP SETUP · PREVIEW ONLY</span>
+        <h1 id="membership-title">
+          Build your membership draft<span className="lime-text">.</span>
+        </h1>
+      </div>
+      <div className="catalogue-state" role="status">
+        <Empty title={state.title} description={state.description} />
+        {catalogueResult.status !== "loading" && (
+          <Link href="/coming-soon" className="button secondary">
+            Join the waitlist <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+        )}
+      </div>
     </section>
   );
 }

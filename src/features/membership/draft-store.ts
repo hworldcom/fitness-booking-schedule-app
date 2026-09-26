@@ -9,11 +9,9 @@ import {
   type MembershipDraftOutcome,
   type MembershipDraftRecovery,
 } from "@/domain/membership-draft";
-import { plans, studios } from "@/features/preview/catalogue";
+import type { PublicCatalogue } from "@/domain/catalogue";
 
 export const MEMBERSHIP_DRAFT_STORAGE_KEY = "movx-club:membership-draft:v1";
-
-const catalogue = { plans, gyms: studios };
 
 type MembershipDraftSnapshot = {
   draft: typeof EMPTY_MEMBERSHIP_DRAFT;
@@ -28,6 +26,7 @@ const SERVER_SNAPSHOT: MembershipDraftSnapshot = {
 };
 
 let snapshot: MembershipDraftSnapshot | undefined;
+let snapshotCatalogueVersion: string | undefined;
 const listeners = new Set<() => void>();
 
 function persistDraft(draft: typeof EMPTY_MEMBERSHIP_DRAFT) {
@@ -41,7 +40,7 @@ function persistDraft(draft: typeof EMPTY_MEMBERSHIP_DRAFT) {
   );
 }
 
-function readSnapshot(): MembershipDraftSnapshot {
+function readSnapshot(catalogue: PublicCatalogue): MembershipDraftSnapshot {
   try {
     const parsed = parseMembershipDraft(
       window.localStorage.getItem(MEMBERSHIP_DRAFT_STORAGE_KEY),
@@ -62,8 +61,11 @@ function readSnapshot(): MembershipDraftSnapshot {
   }
 }
 
-function getSnapshot() {
-  if (!snapshot) snapshot = readSnapshot();
+function getSnapshot(catalogue: PublicCatalogue) {
+  if (!snapshot || snapshotCatalogueVersion !== catalogue.version) {
+    snapshot = readSnapshot(catalogue);
+    snapshotCatalogueVersion = catalogue.version;
+  }
   return snapshot;
 }
 
@@ -76,6 +78,7 @@ function subscribe(listener: () => void) {
   const onStorage = (event: StorageEvent) => {
     if (event.key === MEMBERSHIP_DRAFT_STORAGE_KEY || event.key === null) {
       snapshot = undefined;
+      snapshotCatalogueVersion = undefined;
       listener();
     }
   };
@@ -88,9 +91,10 @@ function subscribe(listener: () => void) {
 
 function dispatchMembershipDraft(
   action: MembershipDraftAction,
+  catalogue: PublicCatalogue,
 ): MembershipDraftOutcome {
   const outcome = applyMembershipDraftAction(
-    getSnapshot().draft,
+    getSnapshot(catalogue).draft,
     action,
     catalogue,
   );
@@ -105,19 +109,25 @@ function dispatchMembershipDraft(
     recovery: "none",
     storageUnavailable,
   };
+  snapshotCatalogueVersion = catalogue.version;
   listeners.forEach((listener) => listener());
   return outcome;
 }
 
-export function useMembershipDraft() {
+export function useMembershipDraft(catalogue: PublicCatalogue) {
+  const currentSnapshot = useCallback(
+    () => getSnapshot(catalogue),
+    [catalogue],
+  );
   const current = useSyncExternalStore(
     subscribe,
-    getSnapshot,
+    currentSnapshot,
     getServerSnapshot,
   );
   const dispatch = useCallback(
-    (action: MembershipDraftAction) => dispatchMembershipDraft(action),
-    [],
+    (action: MembershipDraftAction) =>
+      dispatchMembershipDraft(action, catalogue),
+    [catalogue],
   );
   return { ...current, dispatch };
 }

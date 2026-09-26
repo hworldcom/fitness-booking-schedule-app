@@ -8,7 +8,7 @@ The current MVP deliberately focuses on that membership alone. Membership transf
 
 Solana provides the membership-state and test-payment layer for the hackathon demo. People create application accounts with email and later link a Phantom wallet for wallet-backed actions; financially active gyms use distinct club wallets operated by individually signed-in administrators. Devnet transactions use test EURC for membership activation and eligible visits to participating gyms outside a member's selected four; test SOL is used only for network/account costs. Product discovery, application identity, permissions and social data stay in the backend.
 
-**Current status:** the responsive Next.js frontend preview, local Supabase foundation, server-only Drizzle boundary and verified protected-actor context are implemented. Email-code accounts exist, optional personal-wallet linking is in progress and prepared gym-wallet authority awaits its real-Phantom completion rehearsal. Home and How it works explain the focused four-gym Basic/Classic concept with illustrative €80, €150 and €15 demo pricing; Explore and membership setup use seven typed fictional preview gyms and can save a browser-local four-gym draft. The database now represents the same two published plans, seven participating gyms and explicit eligibility, but the frontend does not read that private catalogue yet. No activation, real EURC payment, check-in allocation or member-priced non-core visit exists. Follow-up tickets under COR0006 and COR0007 will add the safe catalogue service and membership lifecycle.
+**Current status:** the responsive Next.js frontend preview, local Supabase foundation, server-only Drizzle boundary and verified protected-actor context are implemented. Email-code accounts exist, optional personal-wallet linking is in progress and prepared gym-wallet authority awaits its real-Phantom completion rehearsal. Home and How it works explain the focused four-gym Basic/Classic concept with illustrative €80, €150 and €15 demo pricing. Explore, Search, membership setup and My Membership now read the same published Basic/Classic terms, seven fictional participating gyms and eligibility through a read-only server catalogue; setup can save only a browser-local four-gym draft. No activation, real EURC payment, check-in allocation or member-priced non-core visit exists. COR0007 owns the remaining membership lifecycle.
 
 **Start with the [MVP specification](docs/mvp-spec.md).** It is the single current product document, including project status, scope, architecture, milestones, acceptance checks, and the demo script.
 
@@ -25,19 +25,29 @@ Solana provides the membership-state and test-payment layer for the hackathon de
 
 ## Backend and wallet work
 
-The [architecture and delivery boundary](docs/mvp-spec.md#6-architecture-and-delivery-boundaries) uses Supabase PostgreSQL and a bounded Anchor program. Completed [DEV0015](tickets/archive/backend/DEV0015-supabase-database-foundation.md) contains the local configuration, migrations, deterministic seed, database tests and server Drizzle mappings; completed [DEV0025](tickets/archive/backend/DEV0025-nextjs-backend-boundary.md) owns their server-only/import enforcement. Completed DEV0027 and DEV0038–DEV0040 preserve the prepared wallet/auth/protected-context foundation; completed DEV0046 owns open email-code accounts and minimal application profiles; in-progress [DEV0047](tickets/current/backend/DEV0047-personal-wallet-linking-and-replacement.md) adds optional personal-wallet linking. [DEV0041](tickets/current/backend/DEV0041-club-wallet-authorization.md) owns separate gym-wallet authority. [COR0006](tickets/current/organisatory/COR0006-persistent-access-catalogue.md) coordinates participating-gym and plan catalogue work; its current schema represents Basic, Classic and the seven fictional gyms while retaining default-deny access until a service peer is delivered. [COR0007](tickets/current/organisatory/COR0007-core-multigym-membership-mvp.md) coordinates membership activation, check-ins, provisional allocation, gym/member views and the minimal social loop.
+The [architecture and delivery boundary](docs/mvp-spec.md#6-architecture-and-delivery-boundaries) uses Supabase PostgreSQL and a bounded Anchor program. Completed [DEV0015](tickets/archive/backend/DEV0015-supabase-database-foundation.md) contains the local configuration, migrations, deterministic seed, database tests and server Drizzle mappings; completed [DEV0025](tickets/archive/backend/DEV0025-nextjs-backend-boundary.md) owns their server-only/import enforcement. Completed DEV0027 and DEV0038–DEV0040 preserve the prepared wallet/auth/protected-context foundation; completed DEV0046 owns open email-code accounts and minimal application profiles; in-progress [DEV0047](tickets/current/backend/DEV0047-personal-wallet-linking-and-replacement.md) adds optional personal-wallet linking. [DEV0041](tickets/current/backend/DEV0041-club-wallet-authorization.md) owns separate gym-wallet authority. [COR0006](tickets/current/organisatory/COR0006-persistent-access-catalogue.md) coordinates the read-only participating-gym and plan catalogue. [COR0007](tickets/current/organisatory/COR0007-core-multigym-membership-mvp.md) coordinates membership activation, check-ins, provisional allocation, gym/member views and the minimal social loop.
 
 ## Run locally
 
-Use Node.js 24.21.0 LTS and npm 11. The Node version is pinned in `.nvmrc`, the supported major range is enforced by `package.json`, and dependency versions are pinned in `package-lock.json`. After opening a new terminal, verify `node --version` reports `v24.21.0` before installing dependencies. For browsing, reviewing or demonstrating the app, use the optimized preview:
+Use Node.js 24.21.0 LTS and npm 11. The Node version is pinned in `.nvmrc`, the supported major range is enforced by `package.json`, and dependency versions are pinned in `package-lock.json`. After opening a new terminal, verify `node --version` reports `v24.21.0` before installing dependencies.
+
+The catalogue-backed Explore, Search and membership routes require the local database and restricted server login. Start Docker Desktop, install dependencies, then prepare the database:
 
 ```sh
 npm ci
+npm run db:start
+npm run db:reset
+npm run db:runtime
+```
+
+Put `DATABASE_URL=postgresql://repx_runtime_login:postgres@127.0.0.1:55322/postgres` in ignored `.env.local`, then use the optimized preview for browsing, review or demonstration:
+
+```sh
 npm run build
 npm run start
 ```
 
-Open [localhost:3100](http://localhost:3100). No environment variables, account, wallet, database or external service are required for public preview browsing. Email sign-in uses the optional local Auth setup below.
+Home, How it works and Coming soon remain usable without an account or wallet. Email sign-in uses the optional local Auth setup below.
 
 The preview serves already-built pages, avoiding route compilation while you navigate. After changing application code, stop the preview, run `npm run build` again and restart `npm run start` to see the changes.
 
@@ -79,7 +89,7 @@ The first real release targets only the generated `workers.dev` hostname. Do not
 
 ## Local database foundation
 
-Database work is optional for the current frontend preview. To validate the in-progress foundation, start Docker Desktop and run:
+The local database is required for catalogue-backed preview routes. Start Docker Desktop and run:
 
 ```sh
 npm run db:start
@@ -113,7 +123,7 @@ Recovery uses another code sent to the same verified email. Sign out in the appl
 
 ## What you can try
 
-The [frontend foundation ticket](tickets/archive/frontend/DEV0008-repx-club-frontend.md) records the original slice. You can currently explore Home, the focused How it works guide, the seven-gym preview catalogue, My Membership and Profile, and follow demonstration people in preview mode. The displayed plans and pricing explain the target concept; the membership setup saves only a versioned browser-local draft and does not create payment, membership, reservation or attendance evidence. Membership choices can be cleared from **My Membership → Reset draft**; older social-preview choices can be cleared with **Profile → Reset preview**.
+The [frontend foundation ticket](tickets/archive/frontend/DEV0008-repx-club-frontend.md) records the original slice. You can currently explore Home, the focused How it works guide, the persistent fictional gym catalogue, My Membership and Profile, and follow demonstration people in preview mode. The database-backed plans and pricing explain the target concept; the membership setup saves only a versioned browser-local draft and does not create payment, membership, reservation or attendance evidence. Membership choices can be cleared from **My Membership → Reset draft**; older social-preview choices can be cleared with **Profile → Reset preview**.
 
 The header wallet control discovers Phantom through Wallet Standard on Solana Devnet. It can connect, show the public address and disconnect without authenticating or linking the wallet. The separate `/sign-in` page uses email OTP for the application account. In-progress DEV0047 adds an explicit message-only proof for optional wallet linking; connection alone still grants no identity, role, payment evidence or automatic account merge.
 
@@ -132,7 +142,7 @@ npm run build
 npm run test:e2e
 ```
 
-Domain tests cover validation, local state transitions, sharing privacy and storage recovery. `test:auth` requires the Auth-enabled local stack, Mailpit and an already-running configured app on port 3100; it creates disposable email accounts and proves new/returning login, invalid-code recovery, profile isolation and sign-out. `test:wallet-auth` requires that same app to use the local public Supabase values rather than hosted credentials; it creates two disposable accounts and generated test-only Solana keys to exercise the same-origin challenge/proof/link/replace/collision/unlink HTTP path. It never constructs a transaction and does not replace the required real Phantom interface rehearsal. Browser tests exercise desktop and mobile layouts and keyboard flows using **installed Google Chrome**. Build first; Playwright starts a separate production server on port 3101 and refuses to reuse an existing server, so another local project cannot be mistaken for MovX Club. Browser evidence and failure traces go to ignored `test-results/`. In restricted agent environments, the test runner, build worker and browser/server may require permission to use local IPC/ports.
+Domain tests cover validation, local state transitions, sharing privacy and storage recovery. `test:auth` requires the Auth-enabled local stack, Mailpit and an already-running configured app on port 3100; it creates disposable email accounts and proves new/returning login, invalid-code recovery, profile isolation and sign-out. `test:wallet-auth` requires that same app to use the local public Supabase values rather than hosted credentials; it creates two disposable accounts and generated test-only Solana keys to exercise the same-origin challenge/proof/link/replace/collision/unlink HTTP path. It never constructs a transaction and does not replace the required real Phantom interface rehearsal. Browser tests exercise desktop and mobile layouts and keyboard flows using **installed Google Chrome**. Reset and prepare the local database, export the restricted `DATABASE_URL`, then build; Playwright starts a separate production server on port 3101 and refuses to reuse an existing server, so another local project cannot be mistaken for MovX Club. Browser evidence and failure traces go to ignored `test-results/`. In restricted agent environments, the test runner, build worker and browser/server may require permission to use local IPC/ports.
 
 The database commands above add SQL catalogue/constraint/RLS checks and Drizzle integration coverage. They require the isolated local stack and are intentionally separate from the configuration-free `npm test` preview suite.
 
@@ -141,12 +151,13 @@ The database commands above add SQL catalogue/constraint/RLS checks and Drizzle 
 - `src/app/`: thin Next.js App Router adapters, shared layout and visual styles.
 - `src/features/`: capability-owned Home/feed, Explore/discovery, membership setup/My Membership and profile screens; no standalone event/class product modules remain.
 - `src/domain/`: framework-independent gym catalogue and discovery rules; no browser, network or persistence authority.
-- `src/features/preview/`: typed demonstration catalogue, derived discovery data, validated local state transitions and browser persistence under the legacy compatibility key `repx-club-preview-v1`; never live inventory, authorization, payment proof or a financial ledger. DEV0049 retains that opaque key so the MovX Club rename does not discard existing browser choices.
+- `src/features/preview/`: demonstration people and social browser persistence under the legacy compatibility key `repx-club-preview-v1`; never live inventory, authorization, payment proof or a financial ledger. DEV0049 retains that opaque key so the MovX Club rename does not discard existing browser choices.
 - `src/solana/client/`: browser-safe, Devnet-only Phantom discovery/connection state and accessible wallet presentation; no RPC, authentication, balance or transaction authority.
 - `src/auth/`: public Auth/identity response contracts, bounded email/code rules and the browser-side Supabase session/identity clients.
 - `src/server/auth/`: server-only Supabase client and verified session boundary; `src/proxy.ts` refreshes session cookies without protecting public routes.
 - `src/server/identity/`: server-only application-profile enrollment and lookup service.
-- `src/server/db/`: server-only environment parsing, bounded Postgres.js connection, Drizzle mappings and narrow identity/authorization repositories. Other feature repositories arrive in their owning later tickets.
+- `src/server/catalogue/` and `src/server/db/catalogue/`: strict public catalogue mapping and the narrow read-only database projection.
+- `src/server/db/`: server-only environment parsing, bounded Postgres.js connection, Drizzle mappings and narrow feature repositories.
 - `src/components/`: application shell, presentation formatting and reusable accessible interface/discovery controls.
 - `supabase/`: local configuration, the sole SQL migration history, deterministic seeds and database tests.
 - `tests/`: domain checks and Playwright browser flows.

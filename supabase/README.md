@@ -18,7 +18,7 @@ npm run db:lint
 
 `db:reset` is destructive only to this repository's disposable local database: it recreates the database from `migrations/` and then runs `seed.sql`. Run `npm run db:seed` again against the same local database to verify that fixture inserts remain idempotent. That script uses Postgres.js and a fixed loopback-only development URL because Supabase CLI 2.117.0 no longer applies general SQL through `supabase seed --local`; it cannot target a hosted database. Stop this repository's stack with `npm run db:stop`.
 
-The local integration test uses Supabase's disposable `postgres` credential on `127.0.0.1:55322`; it is not an application credential. The frontend preview does not read `DATABASE_URL`, initialize a database client or require this stack.
+The local integration test uses Supabase's disposable `postgres` credential on `127.0.0.1:55322`; it is not an application credential. The catalogue-backed application routes use the separate restricted `DATABASE_URL` described below; browser code never receives that value or initializes a database client.
 
 `npm run db:runtime` idempotently provisions the loopback-only `repx_runtime_login` used by the Next.js application and grants it only the non-bypass `app_runtime` group role. DEV0049 preserves this legacy infrastructure identifier so existing local credentials keep working after the MovX Club brand rename. Its fixed `postgres` password is acceptable only for this disposable database bound to the local Supabase port; hosted environments must use a generated secret and the environment-specific login described below. For local application enrollment, set `DATABASE_URL=postgresql://repx_runtime_login:postgres@127.0.0.1:55322/postgres`. Open email registration no longer uses a prepared-person or wallet roster.
 
@@ -48,13 +48,13 @@ With the Auth stack, runtime role and configured production app already running 
 - `app_runtime` is `NOLOGIN`, cannot bypass row-level security (RLS), and has only the data privileges that forced RLS permits.
 - `anon`, `authenticated` and `service_role` have no `app` schema usage. The `app` schema is absent from the local Data API schema list.
 
-## Private membership catalogue foundation
+## Read-only membership catalogue
 
 DEV0067 created the initial `app.membership_products` identities and immutable `app.membership_product_versions`. DEV0078 preserves that migration history and adds the current platform-scoped monthly contract: published Basic at 80 EURC with ten included check-ins, published Classic at 150 EURC with daily-uncapped included access, four required core gyms, one included check-in per venue-local day and the 15-EURC eligible non-core visit amount. The obsolete single-gym fixture drafts are not part of the revised seed.
 
 `app.participating_gyms` adds catalogue metadata over canonical venue identities; `app.membership_product_gym_eligibility` maps stable plan products to those venues. The deterministic seed contains seven fictional Berlin gyms, five Basic eligibility rows and seven Classic rows. These tables describe catalogue configuration only: they do not create a partnership claim, member selection, purchased entitlement, payment, reservation or check-in.
 
-All four catalogue tables are owned by `app_owner`, force row-level security and deliberately have no feature policy, so `app_runtime` sees no rows. A later COR0006 service ticket must expose narrow published projections and authorized mutations; browser roles must never receive direct table access. Shared migration history is not squashed.
+All four catalogue tables are owned by `app_owner` and force row-level security. DEV0079 gives only `app_runtime` narrow read policies over the active public demo run, active platform products, published plan versions, active participating gyms and active eligibility. The server joins those records to active participating venues and maps them into a public shape without internal UUIDs or lifecycle fields. `anon`, `authenticated` and `service_role` retain no direct `app` schema access, and `app_runtime` has no insert, update or delete privilege on catalogue tables. For the hackathon, catalogue changes remain migration/seed managed; operator mutation APIs and administration screens are deferred. Shared migration history is not squashed.
 
 For local development, `npm run db:runtime` provisions the legacy `repx_runtime_login` described above. Hosted environments use a distinct login outside migrations so a password rotation never rewrites schema history.
 

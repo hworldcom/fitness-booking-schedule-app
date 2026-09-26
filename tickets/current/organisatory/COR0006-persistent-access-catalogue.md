@@ -5,12 +5,12 @@
 - Last updated: 2026-09-26
 - Milestone: M1 participating gym and membership-plan catalogue
 - Converted from: Retired `DEV0017`
-- Tracked development tickets: completed [DEV0067 — Add membership catalogue schema](../../archive/backend/DEV0067-membership-catalogue-schema.md) and [DEV0078 — Revise the multi-gym catalogue schema](../../archive/backend/DEV0078-revise-multigym-catalogue-schema.md); one required direct peer ticket identified below has not yet been created
+- Tracked development tickets: completed [DEV0067 — Add membership catalogue schema](../../archive/backend/DEV0067-membership-catalogue-schema.md), completed [DEV0078 — Revise the multi-gym catalogue schema](../../archive/backend/DEV0078-revise-multigym-catalogue-schema.md), and completed [DEV0079 — Serve the persistent public catalogue](../../archive/backend/DEV0079-serve-persistent-public-catalogue.md)
 - Related records: planned by [DEV0014](../../archive/backend/DEV0014-database-and-backend-plan.md); depends on completed database, identity and protected-context work; current contract adopted by [DEV0069](../../archive/organisatory/DEV0069-adopt-core-multigym-membership-mvp.md) and amended by [DEV0070](../../archive/organisatory/DEV0070-revise-multigym-plan-pricing.md); downstream membership delivery [COR0007](COR0007-core-multigym-membership-mvp.md); historical contracts [DEV0058](../../archive/organisatory/DEV0058-fitness-access-mvp-contract.md), [DEV0066](../../archive/organisatory/DEV0066-freeze-membership-product-rules.md) and [DEV0068](../../archive/organisatory/DEV0068-revise-subscription-and-pass-resale-contract.md)
 
 ## Objective and boundaries
 
-Coordinate the shared persistent catalogue for the focused multi-gym membership MVP. Guests and signed-in users can discover fictional participating gyms and compare accurate versioned Basic/Classic plan terms. Authorized operators can manage private catalogue state without exposing drafts or deriving authority from client-supplied actor, dataset, gym or wallet identifiers.
+Coordinate the shared persistent catalogue for the focused multi-gym membership MVP. Guests and signed-in users can discover fictional participating gyms and compare accurate versioned Basic/Classic plan terms. For the hackathon, catalogue changes are delivered only through reviewed migrations and deterministic seed data; operator editing and write APIs are deferred.
 
 The original DEV0017 draft combined schema, repositories, public browsing, editors, follows and bookmarks. Pre-implementation review split that work into focused tickets. The new product pivot narrows this coordination record further: it owns participating-gym and membership-plan catalogue data only. Membership activation, ownership, check-ins, payments, provisional allocation and social behavior belong to COR0007. Passes, resale and ordinary/sponsored events have left the MVP and require no catalogue ticket.
 
@@ -18,11 +18,11 @@ Catalogue publication never implies payment, membership ownership, reservation, 
 
 ## Direct development work
 
-| Implementation part                                           | Development ticket                                                                                                  | Owned deliverable                                                                                                                                                               | Start condition or dependency                                          |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Initial membership product storage                            | Completed [DEV0067 — Add membership catalogue schema](../../archive/backend/DEV0067-membership-catalogue-schema.md) | Historical product/version foundation, two obsolete private drafts, Drizzle mappings and database tests; no entitlement or UI                                                   | Delivered under the superseded DEV0066 contract                        |
-| Multi-gym plan and gym-eligibility schema revision            | Completed [DEV0078 — Revise the multi-gym catalogue schema](../../archive/backend/DEV0078-revise-multigym-catalogue-schema.md) | Additive Basic/Classic version fields, participating-gym eligibility, fictional fixtures and retirement of obsolete draft publication paths without rewriting migration history | Delivered after DEV0069 and completed DEV0074/DEV0075 contracts        |
-| Persistent catalogue services and preview-adapter replacement | Required backend-primary peer ticket not yet created                                                                | Safe public gym/plan projections, authorized catalogue mutations and replacement of DEV0074's preview adapter without redesigning its Explore/detail presentation               | After the schema revision and reviewed DEV0074 frontend read contracts |
+| Implementation part                                          | Development ticket                                                                                                              | Owned deliverable                                                                                                                                                               | Start condition or dependency                                     |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Initial membership product storage                           | Completed [DEV0067 — Add membership catalogue schema](../../archive/backend/DEV0067-membership-catalogue-schema.md)             | Historical product/version foundation, two obsolete private drafts, Drizzle mappings and database tests; no entitlement or UI                                                   | Delivered under the superseded DEV0066 contract                   |
+| Multi-gym plan and gym-eligibility schema revision           | Completed [DEV0078 — Revise the multi-gym catalogue schema](../../archive/backend/DEV0078-revise-multigym-catalogue-schema.md)  | Additive Basic/Classic version fields, participating-gym eligibility, fictional fixtures and retirement of obsolete draft publication paths without rewriting migration history | Delivered after DEV0069 and completed DEV0074/DEV0075 contracts   |
+| Persistent catalogue service and preview-adapter replacement | Completed [DEV0079 — Serve the persistent public catalogue](../../archive/backend/DEV0079-serve-persistent-public-catalogue.md) | Safe read-only public gym/plan projections and replacement of DEV0074/DEV0075 runtime fixture adapters without redesigning their presentation                                   | Delivered after completed DEV0078 and reviewed frontend contracts |
 
 Every direct ticket must link back to COR0006. No pass/event or social schema may be added under this record.
 
@@ -40,9 +40,9 @@ Every direct ticket must link back to COR0006. No pass/event or social schema ma
 
 DEV0067 established the first product/version foundation. DEV0074 established the reviewed frontend read contract and clearly labelled preview adapter; the additive schema peer must now model Basic/Classic and gym eligibility with forward migration history. The public service peer follows that schema and replaces the preview adapter without duplicating or redesigning the frontend. COR0007 may build membership lifecycle contracts in parallel but cannot activate an offer that is draft, inactive or ineligible.
 
-Complete COR0006 only after every mapped row has a direct DEV ticket that is Completed or explicitly Cancelled/replaced, guests and authenticated users receive the same safe published catalogue, obsolete drafts remain private/retired, authorized mutations are isolated and durable, and no catalogue row fabricates access or financial state.
+Complete COR0006 only after every mapped row has a direct DEV ticket that is Completed or explicitly Cancelled/replaced, guests and authenticated users receive the same safe published catalogue, obsolete drafts remain private/retired, runtime catalogue access remains read-only, and no catalogue row fabricates access or financial state.
 
-Final integration must include anonymous/private-ID probes, two independent authenticated accounts, cross-dataset denial, role derivation, restart durability, conflict/retry behavior, backend failure, public filters/details, sign-out/cache isolation and mobile/desktop keyboard/error-state coverage. Direct DEV tickets own their exact commands and evidence.
+Final integration must include anonymous/private-ID probes, authenticated/public equivalence, cross-dataset denial, restart durability, backend failure, public filters/details, sign-out/cache isolation and mobile/desktop keyboard/error-state coverage. Direct DEV tickets own their exact commands and evidence. Operator edit conflicts and retries are deferred with catalogue management.
 
 ## Progress and integration record
 
@@ -53,19 +53,21 @@ Final integration must include anonymous/private-ID probes, two independent auth
 - 2026-09-25: DEV0074 was created under COR0007 to own preview discovery and stable frontend read contracts. COR0006 now limits its uncreated service peer to persistence, authority and adapter integration rather than duplicating the screen.
 - 2026-09-26: DEV0078 began the forward Basic/Classic plan revision and seven-fictional-gym database representation after the user approved the seed scope. Public services and frontend adapter replacement remain a separate peer.
 - 2026-09-26: DEV0078 completed the additive revision with published Basic/Classic terms, seven canonical fictional gym fixtures, explicit 5/7 eligibility, default-deny security and clean-replay/idempotency evidence. COR0006 remains open for the uncreated public service and preview-adapter peer.
+- 2026-09-26: The user deferred operator catalogue editing beyond the hackathon. DEV0079 started as the final read-only COR0006 slice: narrow public projections plus replacement of runtime plan/gym fixture adapters.
+- 2026-09-26: DEV0079 completed the restricted public service and all four runtime adapter replacements. Clean replay, 119 pgTAP assertions, 19 database integration tests, 55 fast tests, a successful production build and 28 focused desktop/mobile browser scenarios passed. COR0006 remains open only for its configured signed-in/public equivalence integration evidence alongside the hosted Auth/runtime work; no catalogue mutation implementation is pending.
 
 ## Validation results
 
-DEV0069 checks the revised work map and links. Direct implementation validation belongs to the corresponding DEV records.
+DEV0069 checks the revised work map and links. DEV0067/DEV0078 contain schema history; DEV0079 records the clean replay, privilege/projection probes, failure-state coverage and frontend integration evidence. The same actor-independent service supplies every public request and authorized My Membership after its existing gate. A configured signed-in hosted rehearsal remains before coordination completion.
 
 ## Risks, limitations, and follow-ups
 
-The private catalogue now represents €80 Basic, €150 Classic, €15 non-core access and four core gyms as configurable demo hypotheses, not production commitments. DEV0074's adapter must stay visibly preview-only until the service peer replaces it. Later services must not expose retired legacy rows or silently fall back to frontend fixtures during backend failure.
+The catalogue represents €80 Basic, €150 Classic, €15 non-core access and four core gyms as configurable demo hypotheses, not production commitments. Runtime editing is intentionally deferred. Hosted catalogue availability and the final signed-in/public equivalence rehearsal depend on DEV0055/DEV0056; membership activation remains under COR0007.
 
 ## Completion and review references
 
 - Completed: Not completed.
-- Direct development tickets: DEV0067 and DEV0078 Completed; one required service peer not yet created.
+- Direct development tickets: DEV0067, DEV0078 and DEV0079 Completed.
 - Commit: Not applicable — coordination-record IDs are not used in commit subjects.
 - Review: Work-map revision reviewed under DEV0069; no independent implementation review.
 - Deployment or release: None.

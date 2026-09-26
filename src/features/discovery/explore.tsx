@@ -30,7 +30,6 @@ import {
 } from "@/components/discovery-filters";
 import { Artwork, Empty, Modal, Pill } from "@/components/ui";
 import { filterStudios } from "@/features/discovery/filters";
-import { previewCatalogue } from "@/features/preview/catalogue";
 
 function PlanCard({ plan }: { plan: MembershipPlanSummary }) {
   const limited = plan.access.model === "limited";
@@ -259,8 +258,8 @@ function ReadyExplore({
             Explore participating gyms<span className="lime-text">.</span>
           </h1>
           <p>
-            Compare the two demo plans, then explore seven fictional Berlin gyms
-            built around different routines.
+            Compare the two demo plans, then explore fictional Berlin gyms built
+            around different routines.
           </p>
         </div>
         <Pill>
@@ -363,8 +362,8 @@ function ReadyExplore({
       )}
 
       <p className="catalogue-note">
-        Preview fixtures only. Public map anchors are not gym addresses and no
-        venue partnership is claimed.
+        Fictional demonstration catalogue. Public map anchors are not gym
+        addresses and no venue partnership is claimed.
       </p>
 
       {studio && (
@@ -376,15 +375,15 @@ function ReadyExplore({
 
 export function Explore({
   initialQuery = "",
-  catalogueResult = previewCatalogue,
+  catalogueResult,
 }: {
   initialQuery?: string;
-  catalogueResult?: PublicCatalogueResult;
+  catalogueResult: PublicCatalogueResult;
 }) {
   if (catalogueResult.status === "loading") {
     return (
       <CatalogueState
-        title="Loading the gym preview…"
+        title="Loading the gym catalogue…"
         description="The fictional catalogue is being prepared."
       />
     );
@@ -392,7 +391,7 @@ export function Explore({
   if (catalogueResult.status === "error") {
     return (
       <CatalogueState
-        title="The gym preview is unavailable."
+        title="The gym catalogue is unavailable."
         description={catalogueResult.message}
       />
     );
@@ -400,7 +399,7 @@ export function Explore({
   if (catalogueResult.status === "empty") {
     return (
       <CatalogueState
-        title="No preview gyms are available yet."
+        title="No participating gyms are available yet."
         description="Join the waitlist while the fictional catalogue is prepared."
       />
     );

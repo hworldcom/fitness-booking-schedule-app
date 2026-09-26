@@ -1,5 +1,6 @@
 import type { MembershipPlanId } from "@/domain/catalogue";
 import { MembershipSetup } from "@/features/membership/setup";
+import { currentPublicCatalogue } from "@/server/catalogue/service";
 
 export const metadata = {
   title: "Membership setup preview",
@@ -16,6 +17,14 @@ export default async function Page({
 }: {
   searchParams: Promise<{ plan?: string }>;
 }) {
-  const { plan } = await searchParams;
-  return <MembershipSetup initialPlan={planFromQuery(plan)} />;
+  const [{ plan }, catalogueResult] = await Promise.all([
+    searchParams,
+    currentPublicCatalogue(),
+  ]);
+  return (
+    <MembershipSetup
+      initialPlan={planFromQuery(plan)}
+      catalogueResult={catalogueResult}
+    />
+  );
 }

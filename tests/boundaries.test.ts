@@ -135,6 +135,7 @@ test("privileged database entry points carry the Next.js server-only marker", ()
   for (const relative of [
     "src/server/db/client.ts",
     "src/server/db/env.ts",
+    "src/server/db/catalogue/repository.ts",
     "src/server/db/schema/index.ts",
     "src/server/db/identity/repository.ts",
     "src/server/db/wallet/club-repository.ts",
@@ -147,6 +148,7 @@ test("privileged database entry points carry the Next.js server-only marker", ()
     "src/server/authorization/page-access.ts",
     "src/server/authorization/service.ts",
     "src/server/identity/service.ts",
+    "src/server/catalogue/service.ts",
     "src/server/wallet/signature.ts",
     "src/server/wallet/club-service.ts",
     "src/server/wallet/service.ts",

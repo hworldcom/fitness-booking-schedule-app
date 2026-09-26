@@ -8,6 +8,11 @@ import {
   Pencil,
   RotateCcw,
 } from "lucide-react";
+import { Empty } from "@/components/ui";
+import type {
+  PublicCatalogue,
+  PublicCatalogueResult,
+} from "@/domain/catalogue";
 import {
   isMembershipDraftReviewable,
   membershipDraftGyms,
@@ -15,13 +20,16 @@ import {
   REQUIRED_CORE_GYMS,
 } from "@/domain/membership-draft";
 import { useMembershipDraft } from "@/features/membership/draft-store";
-import { plans, studios } from "@/features/preview/catalogue";
 
-const catalogue = { plans, gyms: studios };
-
-export function MyAccess({ preview }: { preview: boolean }) {
+function ReadyMyAccess({
+  preview,
+  catalogue,
+}: {
+  preview: boolean;
+  catalogue: PublicCatalogue;
+}) {
   const { draft, recovery, storageUnavailable, dispatch } =
-    useMembershipDraft();
+    useMembershipDraft(catalogue);
   const plan = membershipDraftPlan(draft, catalogue);
   const gyms = membershipDraftGyms(draft, catalogue);
   const complete = isMembershipDraftReviewable(draft, catalogue);
@@ -159,6 +167,59 @@ export function MyAccess({ preview }: { preview: boolean }) {
           </div>
         </div>
       )}
+    </section>
+  );
+}
+
+export function MyAccess({
+  preview,
+  catalogueResult,
+}: {
+  preview: boolean;
+  catalogueResult: PublicCatalogueResult;
+}) {
+  if (catalogueResult.status === "ready") {
+    return (
+      <ReadyMyAccess preview={preview} catalogue={catalogueResult.catalogue} />
+    );
+  }
+
+  const state =
+    catalogueResult.status === "error"
+      ? {
+          title: "Your membership draft is temporarily unavailable.",
+          description: catalogueResult.message,
+        }
+      : catalogueResult.status === "empty"
+        ? {
+            title: "No membership plans are available yet.",
+            description:
+              "Your saved draft is unchanged. Join the waitlist while the fictional catalogue is prepared.",
+          }
+        : {
+            title: "Loading your membership draft…",
+            description:
+              "The fictional membership catalogue is being prepared.",
+          };
+
+  return (
+    <section className="my-access" aria-labelledby="my-access-title">
+      <div className="page-heading">
+        <div>
+          <span className="eyebrow">MY MEMBERSHIP · PREVIEW</span>
+          <h1 id="my-access-title">
+            Your membership draft<span className="lime-text">.</span>
+          </h1>
+        </div>
+      </div>
+      <div className="catalogue-state" role="status">
+        <Empty title={state.title} description={state.description} />
+        {catalogueResult.status !== "loading" && (
+          <Link href="/coming-soon" className="button secondary">
+            Join the waitlist <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+        )}
+      </div>
     </section>
   );
 }
