@@ -94,6 +94,7 @@ select is(
         'participating_gyms',
         'membership_product_gym_eligibility'
       )
+      and 'app_runtime' = any(roles)
   ),
   4,
   'each catalogue table has one narrow runtime read policy'

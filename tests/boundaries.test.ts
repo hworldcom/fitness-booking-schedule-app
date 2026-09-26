@@ -136,6 +136,7 @@ test("privileged database entry points carry the Next.js server-only marker", ()
     "src/server/db/client.ts",
     "src/server/db/env.ts",
     "src/server/db/catalogue/repository.ts",
+    "src/server/db/membership/repository.ts",
     "src/server/db/schema/index.ts",
     "src/server/db/identity/repository.ts",
     "src/server/db/wallet/club-repository.ts",
@@ -149,6 +150,7 @@ test("privileged database entry points carry the Next.js server-only marker", ()
     "src/server/authorization/service.ts",
     "src/server/identity/service.ts",
     "src/server/catalogue/service.ts",
+    "src/server/membership/service.ts",
     "src/server/wallet/signature.ts",
     "src/server/wallet/club-service.ts",
     "src/server/wallet/service.ts",
@@ -156,4 +158,13 @@ test("privileged database entry points carry the Next.js server-only marker", ()
     const contents = readFileSync(path.join(root, relative), "utf8");
     assert.match(contents, /^import ["']server-only["'];/);
   }
+});
+
+test("verified membership completion is not exposed through an application route", () => {
+  const app = path.join(src, "app");
+  const violations = sourceFiles(app).filter((file) =>
+    readFileSync(file, "utf8").includes("completeVerifiedMembershipActivation"),
+  );
+
+  assert.deepEqual(violations, []);
 });

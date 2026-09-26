@@ -56,6 +56,14 @@ DEV0067 created the initial `app.membership_products` identities and immutable `
 
 All four catalogue tables are owned by `app_owner` and force row-level security. DEV0079 gives only `app_runtime` narrow read policies over the active public demo run, active platform products, published plan versions, active participating gyms and active eligibility. The server joins those records to active participating venues and maps them into a public shape without internal UUIDs or lifecycle fields. `anon`, `authenticated` and `service_role` retain no direct `app` schema access, and `app_runtime` has no insert, update or delete privilege on catalogue tables. For the hackathon, catalogue changes remain migration/seed managed; operator mutation APIs and administration screens are deferred. Shared migration history is not squashed.
 
+## Membership activation persistence
+
+DEV0080 adds private `membership_activation_operations`, immutable operation-gym snapshots, `membership_periods` and immutable period-core-gym snapshots. Preparation resolves the verified member from the transaction-local actor context, accepts exactly four distinct active plan-eligible gyms and freezes the current published plan terms. Stable operation identifiers make exact retries idempotent; conflicting reuse, an existing submitted operation and an unexpired period fail closed.
+
+Submission records only bounded evidence for the member's actively linked Devnet personal wallet. A separate internal completion function can create one non-renewing period only after a future caller has independently verified the Devnet EURC transaction; there is no public route or browser database grant for that completion path. The period begins at verified completion and ends one calendar month later, inherits exactly four frozen core gyms and cannot overlap another period for the same member. Failed or wallet-cancelled operations create no access. The current frontend still stops before payment and activation.
+
+The four tables force RLS and expose no direct `app_runtime`, `anon`, `authenticated` or `service_role` table access. The restricted runtime can use only actor-checked security-definer functions for preparation, submission, failure, verified completion and a ten-operation member history/current-state projection. Catalogue seed data creates no activation, payment evidence or membership owner.
+
 For local development, `npm run db:runtime` provisions the legacy `repx_runtime_login` described above. Hosted environments use a distinct login outside migrations so a password rotation never rewrites schema history.
 
 ## Hosted staging runtime login
