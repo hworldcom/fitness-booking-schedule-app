@@ -43,9 +43,14 @@ export type MembershipStateRecord = Readonly<{
   paymentCluster: "solana:devnet";
   paymentWalletAddress: string | null;
   paymentDestinationAddress: string | null;
+  paymentMintAddress: string | null;
+  paymentTokenProgramAddress: string | null;
+  paymentTokenDecimals: number | null;
+  paymentReferenceAddress: string | null;
   transactionSignature: string | null;
   submittedAt: string | Date | null;
   confirmedAt: string | Date | null;
+  confirmedSlot: string | null;
   failedAt: string | Date | null;
   operationCreatedAt: string | Date;
   membershipPeriodId: string | null;
@@ -75,9 +80,14 @@ type MembershipStateRow = Readonly<{
   payment_cluster: string;
   payment_wallet_address: string | null;
   payment_destination_address: string | null;
+  payment_mint_address: string | null;
+  payment_token_program_address: string | null;
+  payment_token_decimals: number | null;
+  payment_reference_address: string | null;
   transaction_signature: string | null;
   submitted_at: string | Date | null;
   confirmed_at: string | Date | null;
+  confirmed_slot: string | null;
   failed_at: string | Date | null;
   operation_created_at: string | Date;
   membership_period_id: string | null;
@@ -144,6 +154,20 @@ function mapMembershipStateRow(row: MembershipStateRow): MembershipStateRecord {
     (row.access_model !== "limited" && row.access_model !== "daily_uncapped") ||
     row.payment_cluster !== "solana:devnet" ||
     !(
+      (row.payment_wallet_address === null &&
+        row.payment_destination_address === null &&
+        row.payment_mint_address === null &&
+        row.payment_token_program_address === null &&
+        row.payment_token_decimals === null &&
+        row.payment_reference_address === null) ||
+      (row.payment_wallet_address !== null &&
+        row.payment_destination_address !== null &&
+        row.payment_mint_address !== null &&
+        row.payment_token_program_address !== null &&
+        row.payment_token_decimals === 6 &&
+        row.payment_reference_address !== null)
+    ) ||
+    !(
       row.period_status === null ||
       row.period_status === "active" ||
       row.period_status === "expired"
@@ -172,9 +196,14 @@ function mapMembershipStateRow(row: MembershipStateRow): MembershipStateRecord {
     paymentCluster: row.payment_cluster,
     paymentWalletAddress: row.payment_wallet_address,
     paymentDestinationAddress: row.payment_destination_address,
+    paymentMintAddress: row.payment_mint_address,
+    paymentTokenProgramAddress: row.payment_token_program_address,
+    paymentTokenDecimals: row.payment_token_decimals,
+    paymentReferenceAddress: row.payment_reference_address,
     transactionSignature: row.transaction_signature,
     submittedAt: row.submitted_at,
     confirmedAt: row.confirmed_at,
+    confirmedSlot: row.confirmed_slot,
     failedAt: row.failed_at,
     operationCreatedAt: row.operation_created_at,
     membershipPeriodId: row.membership_period_id,
@@ -195,6 +224,11 @@ export async function prepareMembershipActivationRecord(
     operationId: string;
     planId: MembershipPlanId;
     gymIds: readonly string[];
+    referenceAddress: string;
+    destinationAddress: string;
+    mintAddress: string;
+    tokenProgramAddress: string;
+    tokenDecimals: number;
   },
 ) {
   const gymIds = sql.join(
@@ -202,10 +236,15 @@ export async function prepareMembershipActivationRecord(
     sql`, `,
   );
   const rows = await transaction.execute<{ result: string }>(sql`
-    select app.prepare_membership_activation(
+    select app.prepare_membership_payment_activation(
       ${input.operationId}::uuid,
       ${input.planId}::text,
-      array[${gymIds}]::text[]
+      array[${gymIds}]::text[],
+      ${input.referenceAddress}::text,
+      ${input.destinationAddress}::text,
+      ${input.mintAddress}::text,
+      ${input.tokenProgramAddress}::text,
+      ${input.tokenDecimals}::integer
     ) as result
   `);
   return commandResult(rows[0]?.result);
@@ -215,16 +254,12 @@ export async function recordMembershipActivationSubmission(
   transaction: ActorDatabaseTransaction,
   input: {
     operationId: string;
-    walletAddress: string;
-    destinationAddress: string;
     transactionSignature: string;
   },
 ) {
   const rows = await transaction.execute<{ result: string }>(sql`
-    select app.record_membership_activation_submission(
+    select app.record_membership_payment_submission(
       ${input.operationId}::uuid,
-      ${input.walletAddress}::text,
-      ${input.destinationAddress}::text,
       ${input.transactionSignature}::text
     ) as result
   `);
@@ -253,7 +288,12 @@ export async function completeVerifiedMembershipActivationRecord(
     operationId: string;
     walletAddress: string;
     destinationAddress: string;
+    mintAddress: string;
+    tokenProgramAddress: string;
+    tokenDecimals: number;
+    referenceAddress: string;
     transactionSignature: string;
+    confirmedSlot: string;
     amountBaseUnits: string;
   },
 ): Promise<MembershipActivationCompletionResult> {
@@ -262,11 +302,16 @@ export async function completeVerifiedMembershipActivationRecord(
     membership_period_id: string | null;
   }>(sql`
     select *
-    from app.complete_verified_membership_activation(
+    from app.complete_verified_membership_payment(
       ${input.operationId}::uuid,
       ${input.walletAddress}::text,
       ${input.destinationAddress}::text,
+      ${input.mintAddress}::text,
+      ${input.tokenProgramAddress}::text,
+      ${input.referenceAddress}::text,
+      ${input.tokenDecimals}::integer,
       ${input.transactionSignature}::text,
+      ${input.confirmedSlot}::bigint,
       ${input.amountBaseUnits}::numeric
     )
   `);
@@ -298,7 +343,7 @@ export async function currentMembershipStateRecords(
   transaction: ActorDatabaseTransaction,
 ) {
   const rows = await transaction.execute<MembershipStateRow>(sql`
-    select * from app.current_membership_state()
+    select * from app.current_membership_payment_state()
   `);
   return Object.freeze(rows.map(mapMembershipStateRow));
 }

@@ -1,7 +1,20 @@
 import { membershipPlanIds, type MembershipPlanId } from "./catalogue";
 import { REQUIRED_CORE_GYMS } from "./membership-draft";
-
 export const MEMBERSHIP_PAYMENT_CLUSTER = "solana:devnet" as const;
+
+export type MembershipPaymentQuote = Readonly<{
+  cluster: typeof MEMBERSHIP_PAYMENT_CLUSTER;
+  currency: "EURC";
+  amountBaseUnits: string;
+  walletAddress: string;
+  destinationOwnerAddress: string;
+  destinationTokenAddress: string;
+  mintAddress: string;
+  tokenProgramAddress: string;
+  tokenDecimals: number;
+  referenceAddress: string;
+  memo: string;
+}>;
 
 export type MembershipActivationOperationStatus =
   "pending" | "submitted" | "confirmed" | "failed";
@@ -35,17 +48,28 @@ export type MembershipActivationSnapshot = Readonly<{
     nonCoreVisitPriceBaseUnits: string;
   }>;
   gyms: readonly MembershipGymSnapshot[];
-  payment: Readonly<{
-    cluster: typeof MEMBERSHIP_PAYMENT_CLUSTER;
-    walletAddress: string;
-    destinationAddress: string;
-    transactionSignature: string;
-    submittedAt: string;
-    confirmedAt: string | null;
-  }> | null;
+  payment:
+    | (MembershipPaymentQuote &
+        Readonly<{
+          transactionSignature: string | null;
+          submittedAt: string | null;
+          confirmedAt: string | null;
+          confirmedSlot: string | null;
+        }>)
+    | null;
   failedAt: string | null;
   createdAt: string;
 }>;
+
+export type ConfirmedMembershipPayment = NonNullable<
+  MembershipActivationSnapshot["payment"]
+> &
+  Readonly<{
+    transactionSignature: string;
+    submittedAt: string;
+    confirmedAt: string;
+    confirmedSlot: string;
+  }>;
 
 export type MembershipPeriodSnapshot = Readonly<{
   id: string;
@@ -58,7 +82,7 @@ export type MembershipPeriodSnapshot = Readonly<{
   endsAt: string;
   includedCheckinsUsed: number;
   lastIncludedServiceDate: string | null;
-  payment: NonNullable<MembershipActivationSnapshot["payment"]>;
+  payment: ConfirmedMembershipPayment;
 }>;
 
 export type MemberMembershipState = Readonly<{
@@ -132,6 +156,16 @@ export function normalizeMembershipPaymentBaseUnits(value: unknown) {
   try {
     const amount = BigInt(value);
     return amount <= maximumU64 ? amount.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+export function normalizeMembershipPaymentSlot(value: unknown) {
+  if (typeof value !== "string" || !/^[1-9][0-9]*$/.test(value)) return null;
+  try {
+    const slot = BigInt(value);
+    return slot <= maximumU64 ? slot.toString() : null;
   } catch {
     return null;
   }

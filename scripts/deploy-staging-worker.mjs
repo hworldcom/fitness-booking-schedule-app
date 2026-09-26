@@ -20,6 +20,9 @@ const approvedBindings = [
   "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
   "NEXT_PUBLIC_SITE_URL",
   "DATABASE_URL",
+  "SOLANA_CLUSTER",
+  "NEXT_PUBLIC_SOLANA_RPC_URL",
+  "SOLANA_RPC_URL",
 ];
 
 function fail(message) {
@@ -39,6 +42,21 @@ function validatedEnvironment() {
 
   if (values.NEXT_PUBLIC_SITE_URL !== expectedSiteUrl) {
     fail(`NEXT_PUBLIC_SITE_URL must be ${expectedSiteUrl}.`);
+  }
+
+  if (values.SOLANA_CLUSTER !== "devnet") {
+    fail("SOLANA_CLUSTER must be devnet for the hackathon activation flow.");
+  }
+  for (const name of ["NEXT_PUBLIC_SOLANA_RPC_URL", "SOLANA_RPC_URL"]) {
+    let rpcUrl;
+    try {
+      rpcUrl = new URL(values[name]);
+    } catch {
+      fail(`${name} is not a valid URL.`);
+    }
+    if (rpcUrl.protocol !== "https:") {
+      fail(`${name} must use HTTPS in staging.`);
+    }
   }
 
   let supabaseUrl;

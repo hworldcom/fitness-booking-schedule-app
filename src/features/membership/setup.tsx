@@ -1,14 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
   Check,
   CircleAlert,
+  ExternalLink,
   RotateCcw,
+  ShieldCheck,
 } from "lucide-react";
+import { useConnectedWallet } from "@solana/kit-plugin-wallet/react";
+import { useAuthSession } from "@/auth/client/session-provider";
 import { Empty } from "@/components/ui";
 import type {
   MembershipPlanId,
@@ -23,7 +28,34 @@ import {
   REQUIRED_CORE_GYMS,
   type MembershipDraftIssue,
 } from "@/domain/membership-draft";
+import type { MemberMembershipState } from "@/domain/membership-activation";
 import { useMembershipDraft } from "@/features/membership/draft-store";
+import {
+  readMembershipPaymentRecovery,
+  writeMembershipPaymentRecovery,
+  type MembershipPaymentRecovery,
+} from "@/features/membership/payment-recovery";
+import type { PersonalWalletSnapshot } from "@/solana/personal-wallet";
+import {
+  membershipPaymentAmountLabel,
+  membershipPaymentExplorerUrl,
+} from "@/solana/membership-payment";
+import {
+  approveAndBroadcastMembershipPayment,
+  MembershipPaymentClientError,
+  prepareMembershipPaymentTransaction,
+  type PreparedMembershipPaymentTransaction,
+} from "@/solana/client/membership-payment-client";
+import { fetchPersonalWallet } from "@/solana/client/personal-wallet-client";
+import { walletClient } from "@/solana/client/wallet-client";
+import { shortenWalletAddress } from "@/solana/client/wallet-presentation";
+import {
+  cancelMembershipActivationRequest,
+  fetchMembershipState,
+  prepareMembershipActivationRequest,
+  reconcileMembershipActivationRequest,
+  submitMembershipActivationRequest,
+} from "./activation-client";
 
 function accessLabel(plan: MembershipPlanSummary) {
   return plan.access.model === "limited"
@@ -47,6 +79,41 @@ function issueMessage(issue: MembershipDraftIssue | null) {
   }
 }
 
+function paymentErrorMessage(error: unknown) {
+  if (!(error instanceof MembershipPaymentClientError)) {
+    return "The Devnet payment check could not be completed. No membership was activated.";
+  }
+  switch (error.code) {
+    case "configuration-unavailable":
+      return "Devnet payment configuration is unavailable. Try again after the environment is configured.";
+    case "wallet-mismatch":
+      return "The connected Phantom account does not match your linked personal wallet.";
+    case "unsupported-wallet":
+      return "This Phantom connection cannot sign the required legacy transaction. Reconnect Phantom and try again.";
+    case "source-account-unavailable":
+      return "The linked wallet has no usable Devnet EURC token account.";
+    case "insufficient-eurc":
+      return "The linked wallet does not have enough test EURC for this membership.";
+    case "destination-mismatch":
+      return "The configured membership-pool token account did not pass validation.";
+    case "simulation-failed":
+      return "The exact Devnet transaction did not pass simulation, so Phantom was not opened.";
+    case "wallet-cancelled":
+      return "You cancelled the Phantom approval. No membership was activated.";
+    default:
+      return "The signed transaction could not be broadcast reliably. Its reference can still be checked without sending another payment.";
+  }
+}
+
+function membershipPaymentStorage() {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
 function ReadyMembershipSetup({
   initialPlan,
   catalogue,
@@ -55,15 +122,155 @@ function ReadyMembershipSetup({
   catalogue: PublicCatalogue;
 }) {
   const { plans, gyms } = catalogue;
+  const router = useRouter();
   const { draft, recovery, storageUnavailable, dispatch } =
     useMembershipDraft(catalogue);
   const [notice, setNotice] = useState<string | null>(null);
+  const { session } = useAuthSession();
+  const connected = useConnectedWallet(walletClient);
+  const [personalWallet, setPersonalWallet] =
+    useState<PersonalWalletSnapshot | null>(null);
+  const [membershipState, setMembershipState] =
+    useState<MemberMembershipState | null>(null);
+  const [paymentAction, setPaymentAction] = useState<
+    "preparing" | "simulating" | "approving" | "reconciling" | null
+  >(null);
+  const [preparedPayment, setPreparedPayment] =
+    useState<PreparedMembershipPaymentTransaction | null>(null);
+  const [signedRecovery, setSignedRecovery] =
+    useState<MembershipPaymentRecovery | null>(() => {
+      const storage = membershipPaymentStorage();
+      return storage ? readMembershipPaymentRecovery(storage) : null;
+    });
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const reconciliationLock = useRef(false);
+  const recoveryLock = useRef(false);
   const [reviewMode, setReviewMode] = useState(false);
   const initializedFromQuery = useRef(false);
   const reviewable = isMembershipDraftReviewable(draft, catalogue);
   const selectedPlan = membershipDraftPlan(draft, catalogue);
   const selectedGyms = membershipDraftGyms(draft, catalogue);
   const showReview = reviewMode && reviewable;
+  const visibleMembershipState =
+    session.status === "signed-in" ? membershipState : null;
+  const visiblePersonalWallet =
+    session.status === "signed-in" ? personalWallet : null;
+  const pendingOperation = visibleMembershipState?.pending ?? null;
+  const activePeriod = visibleMembershipState?.activePeriod ?? null;
+  const signedRecoveryOperation = signedRecovery
+    ? visibleMembershipState?.history.find(
+        (operation) => operation.id === signedRecovery.operationId,
+      )
+    : null;
+  const signedRecoverySettled = Boolean(
+    signedRecovery &&
+    (activePeriod?.activationOperationId === signedRecovery.operationId ||
+      signedRecoveryOperation?.status === "confirmed" ||
+      signedRecoveryOperation?.status === "failed" ||
+      (pendingOperation?.id === signedRecovery.operationId &&
+        pendingOperation.status === "submitted" &&
+        pendingOperation.payment?.transactionSignature)),
+  );
+  const recoverableSignedPayment = signedRecoverySettled
+    ? null
+    : signedRecovery;
+  const linkedWallet =
+    visiblePersonalWallet?.status === "linked"
+      ? visiblePersonalWallet.wallet.address
+      : null;
+  const connectedWallet = connected?.account.address ?? null;
+  const walletMatches = Boolean(
+    linkedWallet && connectedWallet && linkedWallet === connectedWallet,
+  );
+
+  function rememberSignedPayment(recovery: MembershipPaymentRecovery) {
+    setSignedRecovery(recovery);
+    const storage = membershipPaymentStorage();
+    if (storage) writeMembershipPaymentRecovery(storage, recovery);
+  }
+
+  function forgetSignedPayment() {
+    setSignedRecovery(null);
+    const storage = membershipPaymentStorage();
+    if (storage) writeMembershipPaymentRecovery(storage, null);
+  }
+
+  async function refreshActivationState() {
+    const result = await fetchMembershipState();
+    if (result.status === "ready") {
+      setMembershipState(result.membership);
+      return result.membership;
+    }
+    return null;
+  }
+
+  async function reconcile(operationId: string) {
+    if (reconciliationLock.current) return;
+    reconciliationLock.current = true;
+    setPaymentAction("reconciling");
+    try {
+      const result = await reconcileMembershipActivationRequest(operationId);
+      const nextState = await refreshActivationState();
+      if (result.status === "confirmed" || result.status === "existing") {
+        dispatch({ type: "reset" });
+        router.push("/my-access");
+        router.refresh();
+        return;
+      }
+      if (result.status === "failed") {
+        setPaymentError(
+          "The submitted transaction did not match the authoritative payment quote. No membership was created.",
+        );
+      } else if (result.status === "pending") {
+        setNotice(
+          "Payment is still pending final Devnet verification. Do not send another transaction.",
+        );
+      } else if (!nextState) {
+        setPaymentError("Membership status is temporarily unavailable.");
+      }
+    } finally {
+      reconciliationLock.current = false;
+      setPaymentAction(null);
+    }
+  }
+
+  async function resumeSignedPayment(recovery: MembershipPaymentRecovery) {
+    if (recoveryLock.current) return;
+    recoveryLock.current = true;
+    setPaymentAction("reconciling");
+    setPaymentError(null);
+    try {
+      const submission = await submitMembershipActivationRequest(recovery);
+      if (
+        submission.status !== "submitted" &&
+        submission.status !== "existing"
+      ) {
+        const nextState = await refreshActivationState();
+        if (
+          nextState?.activePeriod?.activationOperationId ===
+          recovery.operationId
+        ) {
+          forgetSignedPayment();
+          router.push("/my-access");
+          router.refresh();
+          return;
+        }
+        setPaymentError(
+          "The signed transaction is saved in this browser, but the server could not record it yet. Resume this same transaction later; do not approve another payment.",
+        );
+        return;
+      }
+      forgetSignedPayment();
+      setNotice(
+        "Signed transaction recorded. Waiting for finalized server verification.",
+      );
+      await refreshActivationState();
+      await reconcile(recovery.operationId);
+    } finally {
+      recoveryLock.current = false;
+      setPaymentAction(null);
+    }
+  }
 
   useEffect(() => {
     if (!initialPlan || initializedFromQuery.current) return;
@@ -71,9 +278,174 @@ function ReadyMembershipSetup({
     dispatch({ type: "select-plan", planId: initialPlan });
   }, [dispatch, initialPlan]);
 
+  useEffect(() => {
+    if (session.status !== "signed-in") return;
+    let active = true;
+    void Promise.all([fetchPersonalWallet(), fetchMembershipState()]).then(
+      ([wallet, membership]) => {
+        if (!active) return;
+        setPersonalWallet(wallet);
+        if (membership.status === "ready") {
+          setMembershipState(membership.membership);
+        }
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [session.status]);
+
+  useEffect(() => {
+    if (
+      !pendingOperation ||
+      (pendingOperation.status !== "pending" &&
+        pendingOperation.status !== "submitted") ||
+      recoverableSignedPayment?.operationId === pendingOperation.id
+    ) {
+      return;
+    }
+    if (pendingOperation.status === "pending") {
+      void reconcile(pendingOperation.id);
+      return;
+    }
+    let checks = 0;
+    const timer = window.setInterval(() => {
+      checks += 1;
+      void reconcile(pendingOperation.id);
+      if (checks >= 8) window.clearInterval(timer);
+    }, 2_500);
+    void reconcile(pendingOperation.id);
+    return () => window.clearInterval(timer);
+    // Reconciliation intentionally keys only on the durable operation identity/status.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    pendingOperation?.id,
+    pendingOperation?.status,
+    recoverableSignedPayment?.operationId,
+  ]);
+
+  useEffect(() => {
+    if (signedRecoverySettled) {
+      const storage = membershipPaymentStorage();
+      if (storage) writeMembershipPaymentRecovery(storage, null);
+    }
+  }, [signedRecoverySettled]);
+
+  useEffect(() => {
+    if (!recoverableSignedPayment) return;
+    if (
+      pendingOperation?.id === recoverableSignedPayment.operationId &&
+      pendingOperation.status === "pending"
+    ) {
+      void resumeSignedPayment(recoverableSignedPayment);
+    }
+    // Recovery intentionally keys only on durable public operation/signature evidence.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    pendingOperation?.id,
+    pendingOperation?.status,
+    recoverableSignedPayment?.operationId,
+    recoverableSignedPayment?.transactionSignature,
+  ]);
+
+  async function preparePaymentDetails() {
+    if (
+      !selectedPlan ||
+      !reviewable ||
+      session.status !== "signed-in" ||
+      !walletMatches
+    ) {
+      return;
+    }
+    setPaymentAction("preparing");
+    setPaymentError(null);
+    setNotice(null);
+    try {
+      const result = await prepareMembershipActivationRequest({
+        operationId: crypto.randomUUID(),
+        planId: selectedPlan.id,
+        gymIds: selectedGyms.map((gym) => gym.id),
+      });
+      if (result.status !== "prepared" && result.status !== "existing") {
+        setPaymentError(
+          result.status === "wallet-conflict"
+            ? "Link the connected Phantom account as your personal wallet before preparing payment."
+            : result.status === "state-conflict"
+              ? "An active or submitted membership already exists. Open My Membership to continue."
+              : "The server could not prepare an authoritative payment quote.",
+        );
+        return;
+      }
+      const nextState = await refreshActivationState();
+      if (!nextState?.pending?.payment) {
+        setPaymentError("The prepared payment quote could not be loaded.");
+      }
+    } finally {
+      setPaymentAction(null);
+    }
+  }
+
+  async function simulatePayment() {
+    const payment = pendingOperation?.payment;
+    if (!payment || !connected?.signer || !walletMatches) return;
+    setPaymentAction("simulating");
+    setPaymentError(null);
+    setNotice(null);
+    try {
+      const prepared = await prepareMembershipPaymentTransaction({
+        quote: payment,
+        signer: connected.signer,
+      });
+      setPreparedPayment(prepared);
+      setNotice(
+        `Payment check passed${prepared.unitsConsumed ? ` (${prepared.unitsConsumed} compute units)` : ""}. Phantom has not been opened yet.`,
+      );
+    } catch (error) {
+      setPreparedPayment(null);
+      setPaymentError(paymentErrorMessage(error));
+    } finally {
+      setPaymentAction(null);
+    }
+  }
+
+  async function approvePayment() {
+    if (!preparedPayment || !pendingOperation?.payment) return;
+    setPaymentAction("approving");
+    setPaymentError(null);
+    try {
+      const broadcast = await approveAndBroadcastMembershipPayment({
+        prepared: preparedPayment,
+      });
+      const recovery = Object.freeze({
+        operationId: pendingOperation.id,
+        transactionSignature: broadcast.signature,
+      });
+      rememberSignedPayment(recovery);
+      setPreparedPayment(null);
+      setNotice(
+        broadcast.broadcastAcknowledged
+          ? "Transaction submitted. Waiting for finalized server verification."
+          : "The RPC response was lost after signing. The transaction signature was preserved for safe recovery; do not pay again.",
+      );
+      await resumeSignedPayment(recovery);
+    } catch (error) {
+      if (
+        error instanceof MembershipPaymentClientError &&
+        error.code === "wallet-cancelled"
+      ) {
+        await cancelMembershipActivationRequest(pendingOperation.id);
+        await refreshActivationState();
+      }
+      setPaymentError(paymentErrorMessage(error));
+    } finally {
+      setPaymentAction(null);
+    }
+  }
+
   function selectPlan(planId: MembershipPlanId) {
     const outcome = dispatch({ type: "select-plan", planId });
     setReviewMode(false);
+    setPreparedPayment(null);
     if (outcome.removedGymIds.length) {
       const removedNames = outcome.removedGymIds
         .map((gymId) => gyms.find((candidate) => candidate.id === gymId)?.name)
@@ -90,6 +462,7 @@ function ReadyMembershipSetup({
   function toggleGym(gymId: string) {
     const outcome = dispatch({ type: "toggle-gym", gymId });
     setReviewMode(false);
+    setPreparedPayment(null);
     setNotice(issueMessage(outcome.issue));
   }
 
@@ -105,13 +478,14 @@ function ReadyMembershipSetup({
         <Link href="/explore" className="back-link">
           <ArrowLeft size={14} aria-hidden="true" /> Back to Explore
         </Link>
-        <span className="eyebrow">MEMBERSHIP SETUP · PREVIEW ONLY</span>
+        <span className="eyebrow">MEMBERSHIP SETUP · DEVNET DEMO</span>
         <h1 id="membership-title">
           Build your membership draft<span className="lime-text">.</span>
         </h1>
         <p>
-          Choose a plan and exactly four eligible core gyms. This browser-local
-          draft does not activate access or request payment.
+          Choose a plan and exactly four eligible core gyms. You will review an
+          exact server quote before Phantom opens, and access starts only after
+          finalized test-EURC verification.
         </p>
       </div>
 
@@ -257,7 +631,9 @@ function ReadyMembershipSetup({
                   ? "Your draft is ready to review."
                   : `${REQUIRED_CORE_GYMS - draft.gymIds.length} gym${REQUIRED_CORE_GYMS - draft.gymIds.length === 1 ? "" : "s"} still needed.`}
               </strong>
-              <small>No membership or payment is created.</small>
+              <small>
+                No membership or payment is created during selection.
+              </small>
             </div>
             <button
               type="button"
@@ -274,7 +650,7 @@ function ReadyMembershipSetup({
           <div className="membership-review-heading">
             <div>
               <span className="eyebrow">DRAFT SELECTION · NOT ACTIVE</span>
-              <h2 id="review-title">Review your membership preview.</h2>
+              <h2 id="review-title">Review your membership.</h2>
             </div>
             <button
               type="button"
@@ -322,11 +698,105 @@ function ReadyMembershipSetup({
           <div className="membership-review-notice">
             <CircleAlert size={18} aria-hidden="true" />
             <p>
-              <strong>This remains a browser-local draft.</strong>
-              Continuing will not activate access, request a wallet transaction
-              or create a paid membership.
+              <strong>Devnet demo payment only.</strong>
+              Activation uses test EURC on Solana Devnet. It never charges real
+              euros, but your wallet needs test EURC and a small amount of test
+              SOL for the network fee.
             </p>
           </div>
+          {paymentError && (
+            <div className="membership-message warning" role="alert">
+              <CircleAlert size={17} aria-hidden="true" /> {paymentError}
+            </div>
+          )}
+          {activePeriod && (
+            <div className="membership-payment-panel">
+              <strong>You already have an active membership.</strong>
+              <p>Open My Membership to review the frozen plan and gym set.</p>
+              <Link href="/my-access" className="text-link">
+                View My Membership <ArrowRight size={14} aria-hidden="true" />
+              </Link>
+            </div>
+          )}
+          {!activePeriod && pendingOperation?.payment && (
+            <div className="membership-payment-panel">
+              <span className="eyebrow">AUTHORITATIVE PAYMENT SUMMARY</span>
+              <h3>
+                {membershipPaymentAmountLabel(
+                  pendingOperation.payment.amountBaseUnits,
+                  pendingOperation.payment.tokenDecimals,
+                )}{" "}
+                test EURC
+              </h3>
+              <dl>
+                <div>
+                  <dt>Network</dt>
+                  <dd>Solana Devnet</dd>
+                </div>
+                <div>
+                  <dt>Linked source wallet</dt>
+                  <dd title={pendingOperation.payment.walletAddress}>
+                    {shortenWalletAddress(
+                      pendingOperation.payment.walletAddress,
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Membership pool</dt>
+                  <dd title={pendingOperation.payment.destinationTokenAddress}>
+                    {shortenWalletAddress(
+                      pendingOperation.payment.destinationTokenAddress,
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Period</dt>
+                  <dd>One calendar month · no automatic renewal</dd>
+                </div>
+              </dl>
+              <p>
+                The membership becomes active only after MovX independently
+                verifies final settlement. Test SOL pays the network fee.
+              </p>
+              {pendingOperation.payment.transactionSignature && (
+                <a
+                  className="text-link"
+                  href={membershipPaymentExplorerUrl(
+                    pendingOperation.payment.transactionSignature,
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View Devnet transaction
+                  <ExternalLink size={13} aria-hidden="true" />
+                </a>
+              )}
+            </div>
+          )}
+          {!activePeriod && !pendingOperation && (
+            <div className="membership-payment-readiness">
+              {session.status !== "signed-in" ? (
+                <p>Sign in before preparing a Devnet payment.</p>
+              ) : visiblePersonalWallet?.status !== "linked" ? (
+                <p>
+                  Connect Phantom from the header and link it as your personal
+                  wallet before continuing.
+                </p>
+              ) : !connectedWallet ? (
+                <p>Reconnect your linked Phantom wallet before continuing.</p>
+              ) : !walletMatches ? (
+                <p>
+                  Connected wallet {shortenWalletAddress(connectedWallet)} does
+                  not match linked wallet {shortenWalletAddress(linkedWallet!)}.
+                </p>
+              ) : (
+                <p>
+                  <ShieldCheck size={16} aria-hidden="true" /> Linked and
+                  connected wallet match. Prepare the exact server quote next.
+                </p>
+              )}
+            </div>
+          )}
           <div className="membership-review-actions">
             <button
               type="button"
@@ -335,13 +805,74 @@ function ReadyMembershipSetup({
             >
               <ArrowLeft size={16} aria-hidden="true" /> Edit draft
             </button>
-            <Link
-              href="/coming-soon?source=membership-draft"
-              className="button lime"
-            >
-              Continue to Coming Soon
-              <ArrowRight size={17} aria-hidden="true" />
-            </Link>
+            {session.status !== "signed-in" ? (
+              <Link
+                href="/sign-in?returnTo=%2Fmembership%2Fsetup"
+                className="button lime"
+              >
+                Sign in to activate <ArrowRight size={17} aria-hidden="true" />
+              </Link>
+            ) : recoverableSignedPayment?.operationId ===
+              pendingOperation?.id ? (
+              <button
+                type="button"
+                className="button lime"
+                disabled={paymentAction !== null}
+                onClick={() => {
+                  if (recoverableSignedPayment) {
+                    void resumeSignedPayment(recoverableSignedPayment);
+                  }
+                }}
+              >
+                {paymentAction === "reconciling"
+                  ? "Recovering signed transaction…"
+                  : "Resume signed transaction"}
+              </button>
+            ) : pendingOperation?.status === "submitted" ? (
+              <button
+                type="button"
+                className="button lime"
+                disabled={paymentAction !== null}
+                onClick={() => void reconcile(pendingOperation.id)}
+              >
+                {paymentAction === "reconciling"
+                  ? "Checking finality…"
+                  : "Check payment status"}
+              </button>
+            ) : preparedPayment ? (
+              <button
+                type="button"
+                className="button lime"
+                disabled={paymentAction !== null}
+                onClick={() => void approvePayment()}
+              >
+                {paymentAction === "approving"
+                  ? "Waiting for Phantom…"
+                  : `Approve ${pendingOperation?.payment ? membershipPaymentAmountLabel(pendingOperation.payment.amountBaseUnits) : ""} test EURC`}
+              </button>
+            ) : pendingOperation?.payment ? (
+              <button
+                type="button"
+                className="button lime"
+                disabled={!walletMatches || paymentAction !== null}
+                onClick={() => void simulatePayment()}
+              >
+                {paymentAction === "simulating"
+                  ? "Running payment check…"
+                  : "Run payment check"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="button lime"
+                disabled={!walletMatches || paymentAction !== null}
+                onClick={() => void preparePaymentDetails()}
+              >
+                {paymentAction === "preparing"
+                  ? "Preparing details…"
+                  : "Prepare Devnet payment"}
+              </button>
+            )}
           </div>
         </section>
       )}
@@ -399,7 +930,7 @@ export function MembershipSetup({
         <Link href="/explore" className="back-link">
           <ArrowLeft size={14} aria-hidden="true" /> Back to Explore
         </Link>
-        <span className="eyebrow">MEMBERSHIP SETUP · PREVIEW ONLY</span>
+        <span className="eyebrow">MEMBERSHIP SETUP · DEVNET DEMO</span>
         <h1 id="membership-title">
           Build your membership draft<span className="lime-text">.</span>
         </h1>

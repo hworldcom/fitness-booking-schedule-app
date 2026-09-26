@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import {
   ArrowRight,
   CircleAlert,
   Dumbbell,
+  ExternalLink,
   Pencil,
   RotateCcw,
 } from "lucide-react";
@@ -19,14 +21,21 @@ import {
   membershipDraftPlan,
   REQUIRED_CORE_GYMS,
 } from "@/domain/membership-draft";
+import type { MemberMembershipState } from "@/domain/membership-activation";
 import { useMembershipDraft } from "@/features/membership/draft-store";
+import {
+  membershipPaymentAmountLabel,
+  membershipPaymentExplorerUrl,
+} from "@/solana/membership-payment";
 
 function ReadyMyAccess({
   preview,
   catalogue,
+  membershipState,
 }: {
   preview: boolean;
   catalogue: PublicCatalogue;
+  membershipState: MemberMembershipState | null;
 }) {
   const { draft, recovery, storageUnavailable, dispatch } =
     useMembershipDraft(catalogue);
@@ -34,19 +43,51 @@ function ReadyMyAccess({
   const gyms = membershipDraftGyms(draft, catalogue);
   const complete = isMembershipDraftReviewable(draft, catalogue);
   const hasDraft = Boolean(plan || gyms.length);
+  const clearedConfirmedDraft = useRef(false);
+  const activePeriod = membershipState?.activePeriod ?? null;
+  const pendingOperation = membershipState?.pending ?? null;
+  const heading = activePeriod
+    ? {
+        eyebrow: "MY MEMBERSHIP · DEVNET DEMO",
+        title: "Your active membership",
+        description:
+          "Review the frozen plan, core gyms and finalized Devnet payment evidence for this period.",
+      }
+    : pendingOperation
+      ? {
+          eyebrow: "MY MEMBERSHIP · ACTIVATION",
+          title: "Your activation is pending",
+          description:
+            "Resume the same prepared payment or finalized verification without sending a second transaction.",
+        }
+      : {
+          eyebrow: "MY MEMBERSHIP · DRAFT",
+          title: "Your membership draft",
+          description:
+            "Review or continue the choices saved in this browser. A draft does not provide gym access.",
+        };
+
+  useEffect(() => {
+    if (!activePeriod || clearedConfirmedDraft.current) return;
+    const activeGymIds = new Set(activePeriod.gyms.map((gym) => gym.id));
+    const matches =
+      draft.planId === activePeriod.plan.id &&
+      draft.gymIds.length === activePeriod.gyms.length &&
+      draft.gymIds.every((gymId) => activeGymIds.has(gymId));
+    if (matches) dispatch({ type: "reset" });
+    clearedConfirmedDraft.current = true;
+  }, [activePeriod, dispatch, draft.gymIds, draft.planId]);
 
   return (
     <section className="my-access" aria-labelledby="my-access-title">
       <div className="page-heading">
         <div>
-          <span className="eyebrow">MY MEMBERSHIP · PREVIEW</span>
+          <span className="eyebrow">{heading.eyebrow}</span>
           <h1 id="my-access-title">
-            Your membership draft<span className="lime-text">.</span>
+            {heading.title}
+            <span className="lime-text">.</span>
           </h1>
-          <p>
-            Review or continue the choices saved in this browser. Drafts are not
-            active memberships and do not provide gym access.
-          </p>
+          <p>{heading.description}</p>
         </div>
       </div>
 
@@ -65,7 +106,122 @@ function ReadyMyAccess({
         </div>
       )}
 
-      {hasDraft ? (
+      {activePeriod ? (
+        <article className="membership-draft-card">
+          <div className="membership-draft-status">
+            <span className="eyebrow">ACTIVE MEMBERSHIP</span>
+            <strong>Payment confirmed</strong>
+          </div>
+          <div className="membership-draft-plan">
+            <div>
+              <span>Current plan</span>
+              <h2>{activePeriod.plan.name}</h2>
+              <p>
+                {activePeriod.plan.access.model === "limited"
+                  ? `${activePeriod.plan.access.includedCheckins - activePeriod.includedCheckinsUsed} of ${activePeriod.plan.access.includedCheckins} included check-ins remaining`
+                  : "Daily access without a numerical period allowance"}
+              </p>
+            </div>
+            <span className="draft-completeness complete">Active</span>
+          </div>
+          <div className="membership-draft-gyms">
+            {activePeriod.gyms.map((gym, index) => (
+              <div key={gym.id}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <p>
+                  <strong>{gym.name}</strong>
+                  <small>Frozen core-gym selection</small>
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="membership-draft-disclaimer">
+            <p>
+              <strong>
+                {new Date(activePeriod.startsAt).toLocaleDateString()} –{" "}
+                {new Date(activePeriod.endsAt).toLocaleDateString()}
+              </strong>
+              {membershipPaymentAmountLabel(
+                activePeriod.payment.amountBaseUnits,
+                activePeriod.payment.tokenDecimals,
+              )}{" "}
+              test EURC confirmed on Solana Devnet at slot{" "}
+              {activePeriod.payment.confirmedSlot}. This is hackathon test
+              infrastructure, not a real-money gym payout.
+            </p>
+          </div>
+          <div className="access-actions">
+            <a
+              href={membershipPaymentExplorerUrl(
+                activePeriod.payment.transactionSignature,
+              )}
+              target="_blank"
+              rel="noreferrer"
+              className="button dark"
+            >
+              View Devnet evidence <ExternalLink size={15} aria-hidden="true" />
+            </a>
+            <Link href="/explore" className="button secondary">
+              Explore gyms
+            </Link>
+          </div>
+        </article>
+      ) : pendingOperation ? (
+        <article className="membership-draft-card">
+          <div className="membership-draft-status">
+            <span className="eyebrow">ACTIVATION PENDING</span>
+            <strong>{pendingOperation.status}</strong>
+          </div>
+          <div className="membership-draft-plan">
+            <div>
+              <span>Prepared plan</span>
+              <h2>{pendingOperation.plan.name}</h2>
+              <p>
+                {pendingOperation.payment
+                  ? `${membershipPaymentAmountLabel(pendingOperation.payment.amountBaseUnits)} test EURC · Solana Devnet`
+                  : "Payment details are being prepared."}
+              </p>
+            </div>
+            <span className="draft-completeness">Not active</span>
+          </div>
+          <div className="membership-draft-gyms">
+            {pendingOperation.gyms.map((gym, index) => (
+              <div key={gym.id}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <p>
+                  <strong>{gym.name}</strong>
+                  <small>Pending frozen selection</small>
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="membership-draft-disclaimer">
+            <CircleAlert size={18} aria-hidden="true" />
+            <p>
+              <strong>Do not send a second payment.</strong>
+              Continue setup to simulate/approve a prepared payment or resume
+              finalized server verification.
+            </p>
+          </div>
+          <div className="access-actions">
+            <Link href="/membership/setup" className="button dark">
+              Continue activation <ArrowRight size={17} aria-hidden="true" />
+            </Link>
+            {pendingOperation.payment?.transactionSignature && (
+              <a
+                href={membershipPaymentExplorerUrl(
+                  pendingOperation.payment.transactionSignature,
+                )}
+                target="_blank"
+                rel="noreferrer"
+                className="button secondary"
+              >
+                Devnet transaction <ExternalLink size={14} aria-hidden="true" />
+              </a>
+            )}
+          </div>
+        </article>
+      ) : hasDraft ? (
         <article className="membership-draft-card">
           <div className="membership-draft-status">
             <span className="eyebrow">DRAFT SELECTION</span>
@@ -153,7 +309,7 @@ function ReadyMyAccess({
           <div className="access-kind-grid">
             <div className="access-kind">
               <Dumbbell size={22} strokeWidth={1.5} aria-hidden="true" />
-              <h3>Multi-gym membership preview</h3>
+              <h3>Multi-gym membership</h3>
               <p>Choose Basic or Classic and exactly four core gyms.</p>
             </div>
           </div>
@@ -174,13 +330,19 @@ function ReadyMyAccess({
 export function MyAccess({
   preview,
   catalogueResult,
+  membershipState,
 }: {
   preview: boolean;
   catalogueResult: PublicCatalogueResult;
+  membershipState: MemberMembershipState | null;
 }) {
   if (catalogueResult.status === "ready") {
     return (
-      <ReadyMyAccess preview={preview} catalogue={catalogueResult.catalogue} />
+      <ReadyMyAccess
+        preview={preview}
+        catalogue={catalogueResult.catalogue}
+        membershipState={membershipState}
+      />
     );
   }
 

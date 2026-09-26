@@ -8,11 +8,20 @@ import {
   normalizeMembershipActivationSelection,
   normalizeMembershipPaymentAddress,
   normalizeMembershipPaymentBaseUnits,
+  normalizeMembershipPaymentSlot,
   normalizeMembershipTransactionSignature,
   type MemberMembershipState,
   type MembershipActivationSnapshot,
   type MembershipPeriodSnapshot,
 } from "@/domain/membership-activation";
+import { generateKeyPairSigner } from "@solana/kit";
+import {
+  MEMBERSHIP_PAYMENT_CURRENCY,
+  MEMBERSHIP_PAYMENT_POOL_OWNER_ADDRESS,
+  membershipPaymentMemo,
+} from "@/solana/membership-payment";
+import { membershipPaymentConfig } from "@/server/solana/membership-payment-config";
+import { reconcileMembershipPayment } from "@/server/solana/membership-payment-reconciliation";
 import { verifiedAuthSession } from "@/server/auth/session";
 import {
   withAuthorizedActor,
@@ -47,8 +56,29 @@ export type MembershipActivationMutationResult = Readonly<{
     | "state-conflict"
     | "wallet-conflict"
     | "payment-conflict"
+    | "configuration-unavailable"
     | MembershipAccessStatus;
   membershipPeriodId?: string;
+}>;
+
+export type MembershipActivationReconciliationResult = Readonly<{
+  status:
+    | "confirmed"
+    | "existing"
+    | "pending"
+    | "failed"
+    | "invalid-request"
+    | "operation-conflict"
+    | "state-conflict"
+    | "configuration-unavailable"
+    | "prepared"
+    | "submitted"
+    | "invalid-selection"
+    | "wallet-conflict"
+    | "payment-conflict"
+    | MembershipAccessStatus;
+  membershipPeriodId?: string;
+  reason?: string;
 }>;
 
 export type VerifiedMembershipPayment = Readonly<{
@@ -58,6 +88,11 @@ export type VerifiedMembershipPayment = Readonly<{
   destinationAddress: unknown;
   transactionSignature: unknown;
   amountBaseUnits: unknown;
+  mintAddress: unknown;
+  tokenProgramAddress: unknown;
+  tokenDecimals: unknown;
+  referenceAddress: unknown;
+  confirmedSlot: unknown;
 }>;
 
 function isoTimestamp(value: string | Date) {
@@ -107,18 +142,29 @@ function paymentSnapshot(
   if (
     !record.paymentWalletAddress ||
     !record.paymentDestinationAddress ||
-    !record.transactionSignature ||
-    !record.submittedAt
+    !record.paymentMintAddress ||
+    !record.paymentTokenProgramAddress ||
+    record.paymentTokenDecimals === null ||
+    !record.paymentReferenceAddress
   ) {
     return null;
   }
   return Object.freeze({
     cluster: MEMBERSHIP_PAYMENT_CLUSTER,
+    currency: MEMBERSHIP_PAYMENT_CURRENCY,
+    amountBaseUnits: record.priceBaseUnits,
     walletAddress: record.paymentWalletAddress,
-    destinationAddress: record.paymentDestinationAddress,
+    destinationOwnerAddress: MEMBERSHIP_PAYMENT_POOL_OWNER_ADDRESS,
+    destinationTokenAddress: record.paymentDestinationAddress,
+    mintAddress: record.paymentMintAddress,
+    tokenProgramAddress: record.paymentTokenProgramAddress,
+    tokenDecimals: record.paymentTokenDecimals,
+    referenceAddress: record.paymentReferenceAddress,
+    memo: membershipPaymentMemo(record.activationOperationId),
     transactionSignature: record.transactionSignature,
-    submittedAt: isoTimestamp(record.submittedAt),
+    submittedAt: record.submittedAt ? isoTimestamp(record.submittedAt) : null,
     confirmedAt: record.confirmedAt ? isoTimestamp(record.confirmedAt) : null,
+    confirmedSlot: record.confirmedSlot,
   });
 }
 
@@ -147,10 +193,20 @@ function periodSnapshot(record: MembershipStateRecord) {
     !record.endsAt ||
     record.includedCheckinsUsed === null ||
     !payment ||
-    !payment.confirmedAt
+    !payment.confirmedAt ||
+    !payment.confirmedSlot ||
+    !payment.transactionSignature ||
+    !payment.submittedAt
   ) {
     return null;
   }
+  const confirmedPayment = Object.freeze({
+    ...payment,
+    confirmedAt: payment.confirmedAt,
+    confirmedSlot: payment.confirmedSlot,
+    transactionSignature: payment.transactionSignature,
+    submittedAt: payment.submittedAt,
+  });
   return Object.freeze({
     id: record.membershipPeriodId,
     activationOperationId: record.activationOperationId,
@@ -162,7 +218,7 @@ function periodSnapshot(record: MembershipStateRecord) {
     endsAt: isoTimestamp(record.endsAt),
     includedCheckinsUsed: record.includedCheckinsUsed,
     lastIncludedServiceDate: record.lastIncludedServiceDate,
-    payment,
+    payment: confirmedPayment,
   }) satisfies MembershipPeriodSnapshot;
 }
 
@@ -225,11 +281,21 @@ export async function prepareMembershipActivation(input: {
   if (!operationId || !selection) {
     return Object.freeze({ status: "invalid-request" });
   }
+  const config = membershipPaymentConfig();
+  if (!config) {
+    return Object.freeze({ status: "configuration-unavailable" });
+  }
+  const referenceAddress = (await generateKeyPairSigner()).address;
   const result = await withAuthorizedActor((transaction) =>
     prepareMembershipActivationRecord(transaction, {
       operationId,
       planId: selection.planId,
       gymIds: selection.gymIds,
+      referenceAddress,
+      destinationAddress: config.poolTokenAddress,
+      mintAddress: config.mintAddress,
+      tokenProgramAddress: config.tokenProgramAddress,
+      tokenDecimals: config.tokenDecimals,
     }),
   );
   return result.status === "authorized"
@@ -239,31 +305,18 @@ export async function prepareMembershipActivation(input: {
 
 export async function submitMembershipActivation(input: {
   operationId: unknown;
-  walletAddress: unknown;
-  destinationAddress: unknown;
   transactionSignature: unknown;
 }): Promise<MembershipActivationMutationResult> {
   const operationId = normalizeMembershipActivationId(input.operationId);
-  const walletAddress = normalizeMembershipPaymentAddress(input.walletAddress);
-  const destinationAddress = normalizeMembershipPaymentAddress(
-    input.destinationAddress,
-  );
   const transactionSignature = normalizeMembershipTransactionSignature(
     input.transactionSignature,
   );
-  if (
-    !operationId ||
-    !walletAddress ||
-    !destinationAddress ||
-    !transactionSignature
-  ) {
+  if (!operationId || !transactionSignature) {
     return Object.freeze({ status: "invalid-request" });
   }
   const result = await withAuthorizedActor((transaction) =>
     recordMembershipActivationSubmission(transaction, {
       operationId,
-      walletAddress,
-      destinationAddress,
       transactionSignature,
     }),
   );
@@ -308,13 +361,27 @@ export async function completeVerifiedMembershipActivation(
   const amountBaseUnits = normalizeMembershipPaymentBaseUnits(
     payment.amountBaseUnits,
   );
+  const mintAddress = normalizeMembershipPaymentAddress(payment.mintAddress);
+  const tokenProgramAddress = normalizeMembershipPaymentAddress(
+    payment.tokenProgramAddress,
+  );
+  const referenceAddress = normalizeMembershipPaymentAddress(
+    payment.referenceAddress,
+  );
+  const confirmedSlot = normalizeMembershipPaymentSlot(payment.confirmedSlot);
+  const tokenDecimals = payment.tokenDecimals;
   if (
     payment.verification !== "verified-devnet-eurc-payment" ||
     !operationId ||
     !walletAddress ||
     !destinationAddress ||
     !transactionSignature ||
-    !amountBaseUnits
+    !amountBaseUnits ||
+    !mintAddress ||
+    !tokenProgramAddress ||
+    tokenDecimals !== 6 ||
+    !referenceAddress ||
+    !confirmedSlot
   ) {
     return Object.freeze({ status: "invalid-request" });
   }
@@ -325,6 +392,11 @@ export async function completeVerifiedMembershipActivation(
       destinationAddress,
       transactionSignature,
       amountBaseUnits,
+      mintAddress,
+      tokenProgramAddress,
+      tokenDecimals,
+      referenceAddress,
+      confirmedSlot,
     }),
   );
   if (result.status !== "authorized") return accessStatus(result.status);
@@ -338,4 +410,87 @@ export async function completeVerifiedMembershipActivation(
 
 export async function membershipStateForCurrentSession() {
   return memberMembershipStateForSession(await verifiedAuthSession());
+}
+
+export async function reconcileMembershipActivation(input: {
+  operationId: unknown;
+}): Promise<MembershipActivationReconciliationResult> {
+  const operationId = normalizeMembershipActivationId(input.operationId);
+  if (!operationId) return Object.freeze({ status: "invalid-request" });
+
+  const state = await memberMembershipState();
+  if (state.status !== "ready") return accessStatus(state.status);
+  const operation = state.membership.history.find(
+    (candidate) => candidate.id === operationId,
+  );
+  if (!operation) return Object.freeze({ status: "operation-conflict" });
+  if (
+    operation.status === "confirmed" &&
+    state.membership.activePeriod?.activationOperationId === operationId
+  ) {
+    return Object.freeze({
+      status: "existing",
+      membershipPeriodId: state.membership.activePeriod.id,
+    });
+  }
+  if (operation.status === "failed") {
+    return Object.freeze({
+      status: "failed",
+      reason: operation.failureReason ?? "verification-failed",
+    });
+  }
+  if (!operation.payment) {
+    return Object.freeze({ status: "state-conflict" });
+  }
+
+  const reconciliation = await reconcileMembershipPayment({
+    quote: operation.payment,
+    transactionSignature: operation.payment.transactionSignature,
+  });
+  if (reconciliation.status === "configuration-unavailable") {
+    return Object.freeze({ status: "configuration-unavailable" });
+  }
+  if (reconciliation.status === "pending") {
+    return Object.freeze({
+      status: "pending",
+      reason: reconciliation.reason,
+    });
+  }
+  if (reconciliation.status === "rejected") {
+    const failed = await failMembershipActivation({
+      operationId,
+      reason:
+        reconciliation.reason === "execution-failed"
+          ? "transaction-rejected"
+          : "verification-failed",
+    });
+    return Object.freeze({
+      status: failed.status === "failed" ? "failed" : failed.status,
+      reason: reconciliation.reason,
+    });
+  }
+
+  if (!operation.payment.transactionSignature) {
+    const submission = await submitMembershipActivation({
+      operationId,
+      transactionSignature: reconciliation.evidence.signature,
+    });
+    if (submission.status !== "submitted" && submission.status !== "existing") {
+      return Object.freeze({ status: submission.status });
+    }
+  }
+  const completed = await completeVerifiedMembershipActivation({
+    verification: "verified-devnet-eurc-payment",
+    operationId,
+    walletAddress: operation.payment.walletAddress,
+    destinationAddress: operation.payment.destinationTokenAddress,
+    mintAddress: operation.payment.mintAddress,
+    tokenProgramAddress: operation.payment.tokenProgramAddress,
+    tokenDecimals: operation.payment.tokenDecimals,
+    referenceAddress: operation.payment.referenceAddress,
+    transactionSignature: reconciliation.evidence.signature,
+    confirmedSlot: reconciliation.evidence.slot,
+    amountBaseUnits: operation.payment.amountBaseUnits,
+  });
+  return Object.freeze(completed);
 }

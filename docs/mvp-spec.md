@@ -1,6 +1,6 @@
 # MovX Club — Hackathon MVP specification
 
-Last updated: 26 September 2026.
+Last updated: 27 September 2026.
 
 This is the single current product contract for the MovX Club hackathon MVP. MovX Club is testing one focused product: a membership that gives a member included access to four selected participating gyms, with visible usage accounting for the member and the gyms. A small social layer lets people follow one another and explicitly share verified participation.
 
@@ -10,7 +10,7 @@ The MVP no longer includes membership transfers, standalone class passes or pass
 
 This specification defines the target behavior. It does not claim that the target has already been implemented.
 
-Home and How it works present the focused four-gym membership concept. Explore, Search, membership setup and My Membership use one read-only server projection of the persistent published Basic/Classic terms, seven fictional participating gyms and explicit plan eligibility. Setup can save a browser-local four-gym draft, but neither the catalogue nor that draft creates access. Database failure, empty publication and inconsistent data are shown honestly without fixture fallback. The backend now has private, actor-scoped activation-operation and fixed-period persistence for a later verified-payment adapter, but no user-facing activation, Devnet-EURC transaction verification, check-in or allocation flow exists yet.
+Home and How it works present the focused four-gym membership concept. Explore, Search, membership setup and My Membership use one read-only server projection of the persistent published Basic/Classic terms, seven fictional participating gyms and explicit plan eligibility. Setup saves a browser-local four-gym draft before any payment. The current DEV0081 implementation can turn that draft into one active fixed period through an authoritative operation, exact simulated-before-signing official test-EURC transfer, finalized server verification and recoverable reference; its required real funded-Phantom rehearsal is still outstanding. Database failure, empty publication and inconsistent data are shown honestly without fixture fallback. Included check-ins, allocation and non-core visit payment are not implemented yet.
 
 Completed and cancelled tickets are preserved as historical evidence. They explain previous choices but do not override this document. [The ticket index](../tickets/README.md) records current delivery work.
 

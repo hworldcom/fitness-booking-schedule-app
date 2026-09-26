@@ -57,7 +57,7 @@ test("builds and reviews an exactly-four-gym membership draft", async ({
   await page.keyboard.press("Enter");
   const summary = page.locator(".membership-review");
   await expect(
-    page.getByRole("heading", { name: "Review your membership preview." }),
+    page.getByRole("heading", { name: "Review your membership." }),
   ).toBeVisible();
   await expect(summary).toContainText("Basic");
   await expect(summary).toContainText("€80");
@@ -70,11 +70,10 @@ test("builds and reviews an exactly-four-gym membership draft", async ({
   );
   await expect(summary).toContainText("€15");
   for (const name of selectedGyms) await expect(summary).toContainText(name);
-  await expect(summary).toContainText("browser-local draft");
-  await expect(summary).toContainText("will not activate access");
+  await expect(summary).toContainText("Devnet demo payment only");
   await expect(
-    page.getByRole("link", { name: "Continue to Coming Soon" }),
-  ).toHaveAttribute("href", "/coming-soon?source=membership-draft");
+    page.getByRole("link", { name: "Sign in to activate" }),
+  ).toHaveAttribute("href", "/sign-in?returnTo=%2Fmembership%2Fsetup");
 
   await page.reload();
   await expect(basic).toBeChecked();
@@ -96,12 +95,10 @@ test("builds and reviews an exactly-four-gym membership draft", async ({
   });
 
   await page.getByRole("button", { name: "Review draft" }).click();
-  await page.getByRole("link", { name: "Continue to Coming Soon" }).click();
-  await expect(page).toHaveURL(/\/coming-soon\?source=membership-draft$/);
+  await page.getByRole("link", { name: "Sign in to activate" }).click();
+  await expect(page).toHaveURL(/\/sign-in\?returnTo=%2Fmembership%2Fsetup$/);
   await expect(
-    page.getByRole("heading", {
-      name: "Flexible fitness access is getting ready to move.",
-    }),
+    page.getByRole("heading", { name: "Sign in with your email." }),
   ).toBeVisible();
   await expect(page.getByLabel("Email address")).toBeVisible();
 });

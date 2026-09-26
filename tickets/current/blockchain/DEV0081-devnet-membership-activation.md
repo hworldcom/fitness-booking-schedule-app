@@ -1,8 +1,8 @@
 # Ticket DEV0081: Activate memberships with Devnet EURC
 
-- Status: Ready
+- Status: In progress
 - Created: 2026-09-26
-- Last updated: 2026-09-26
+- Last updated: 2026-09-27
 - Milestone: M2 membership period and activation
 - Coordination: [COR0007 — Core multi-gym membership MVP](../organisatory/COR0007-core-multigym-membership-mvp.md)
 - Related records: completes the user-visible payment half of [DEV0080 — Persist membership activation foundation](../../archive/backend/DEV0080-membership-activation-foundation.md), replaces the Coming Soon handoff delivered by [DEV0075 — Preview membership selection](../../archive/frontend/DEV0075-preview-membership-selection.md), depends on the personal-wallet authority and pending real-Phantom evidence in [DEV0047 — Personal wallet linking and replacement](../backend/DEV0047-personal-wallet-linking-and-replacement.md), and reuses the Wallet Standard connection from [DEV0027 — Phantom wallet connection foundation](../../archive/blockchain/DEV0027-phantom-wallet-connection-foundation.md)
@@ -46,7 +46,7 @@ Malformed RPC data, an unsupported transaction version, wrong mint/program/decim
 ## Assumptions, decisions, and dependencies
 
 - Confirmed product rules remain unchanged: Basic is 80 EURC with ten included check-ins, Classic is 150 EURC without a numerical period allowance, both use four core gyms, and a confirmed period lasts one calendar month without automatic renewal.
-- The repository already pins `@solana/kit` 8.3.0, `@solana/kit-plugin-wallet` 0.20.0 and `@solana/react` 8.3.0. Implementation must inspect those installed APIs before changing the client. The repository does not currently install the token or memo instruction packages and has no RPC/payment environment contract.
+- The repository already pinned `@solana/kit` 8.3.0, `@solana/kit-plugin-wallet` 0.20.0 and `@solana/react` 8.3.0. Implementation inspected those installed APIs before changing the client, then pinned the compatible token and memo instruction packages and added an explicit RPC/payment environment contract.
 - Confirmed Devnet payment configuration: [Circle's official EURC address register](https://developers.circle.com/stablecoins/eurc-contract-addresses) identifies `HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr` for Solana Devnet; it is an initialized classic SPL Token mint owned by `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA` with six decimals. Circle documents its [faucet](https://faucet.circle.com/) as the source of testnet EURC. Pin these values through reviewed configuration and never accept a mint, token program or decimals from browser input. If official test EURC becomes unavailable, block the rehearsal rather than relabeling another token as EURC.
 - The user designated `3AX3T287yKvEahS9dThua27dSmby8UV7DdVWtK8BgwDL` as the fixed Devnet membership-pool owner. `@solana/kit` accepted it as a valid address and Devnet `getAccountInfo` at slot `504526985` returned a non-executable, zero-data account owned by the System Program. Its canonical EURC associated token account is `BQjoA2qcxpBF6sNCLvz8XwyiEaUnAW3osnyF76BBDtJ8`; Kit derivation and Devnet RPC at slot `504528271` confirmed that this initialized classic SPL Token account has the configured pool owner and EURC mint. The application sends only to this configured token account and verifies it again during payment reconciliation.
 - The pool wallet is a recipient, not an application actor. It never connects to MovX, authenticates, signs the member's activation or exposes signing authority to the application. The MVP therefore requires no cryptographic pool-control proof or pool admin interface. Custody proof, withdrawals, refunds and production treasury operations require a separate future ticket before they enter product scope. No seed phrase, private key or keypair file enters the application or repository.
@@ -102,17 +102,30 @@ For the final manual rehearsal, show the transaction summary and require explici
 
 ## Implementation record
 
-Pending implementation. The ticket was created after the user confirmed that the current membership review still redirects to Coming Soon and asked to begin the user-visible activation ticket. The official mint, fixed pool token-account destination, browser/server RPC boundary and operation-reference recovery design are now recorded. The ticket is Ready; implementation has not started.
+Implementation started after the user approved and committed the reviewed ticket. The official mint, fixed pool token-account destination, browser/server RPC boundary and operation-reference recovery design were recorded before runtime edits began. The code now implements the complete local vertical slice; this ticket remains In progress only because responsive authenticated browser evidence and the required real funded-Phantom approval/rejection rehearsal are not complete.
 
 ### Changes and rationale
 
-Not implemented. The planned change is one coherent vertical slice from reviewed plan/four-gym draft through a real verified Devnet test-EURC transfer to the existing persistent active-period read model.
+The membership review no longer ends at Coming Soon. For an authenticated member, the server derives the plan/version, four gym snapshots, linked source wallet, exact Basic/Classic amount, fixed official Devnet EURC asset, canonical pool token account and a fresh public reference. The browser validates both token accounts, builds one legacy `TransferChecked` transaction with the reference and memo, simulates the exact unsigned message, and opens Phantom only after the member approves the displayed summary.
+
+Submission records only the signature against the existing operation. The server independently checks Devnet genesis, finalized status, signer/source ownership, mint/program/decimals, destination, exact source debit/destination credit and the read-only reference before completing the trusted DEV0080 boundary. If the browser response is lost, bounded lookup by the unique reference runs the same verifier. Unknown RPC outcomes stay pending and never initiate another payment. My Membership now renders durable pending or active state and Devnet evidence; it clears the matching local draft only after confirmation.
+
+The implementation deliberately uses a direct checked SPL Token transfer rather than adding an Anchor custody program. This is enough to prove test payment and deterministic membership activation without inventing pool administration, withdrawals, refunds or production custody. The membership pool remains a configured recipient and never signs into MovX.
 
 ### Affected files
 
 | File or component | Change and purpose |
 | ----------------- | ------------------ |
-| Pending | Exact configuration, migrations, Solana adapters, API routes, UI and tests will be recorded during implementation. |
+| [`package.json`](../../../package.json), [`.env.example`](../../../.env.example), [`wrangler.jsonc`](../../../wrangler.jsonc), [`scripts/deploy-staging-worker.mjs`](../../../scripts/deploy-staging-worker.mjs) | Pin compatible SPL Token/memo builders and define/validate the split public-browser and server-only Devnet RPC contract for local and staging builds. |
+| [`src/solana/membership-payment.ts`](../../../src/solana/membership-payment.ts), [`src/domain/membership-activation.ts`](../../../src/domain/membership-activation.ts) | Fix the official test-EURC/pool constants and expose bounded quote, reference, slot and confirmed-payment shapes shared by the client and member read model. |
+| [`src/solana/client/membership-payment-client.ts`](../../../src/solana/client/membership-payment-client.ts) | Derive and validate associated token accounts, construct the checked legacy transfer/reference/memo transaction, simulate before approval and preserve the signature when a broadcast response is ambiguous. |
+| [`src/server/solana/membership-payment-config.ts`](../../../src/server/solana/membership-payment-config.ts), [`src/server/solana/membership-payment-reconciliation.ts`](../../../src/server/solana/membership-payment-reconciliation.ts), [`src/solana/membership-payment-verification.ts`](../../../src/solana/membership-payment-verification.ts) | Fail closed on cluster/RPC configuration, verify finalized parsed transaction and balance evidence, and recover at most eight reference candidates through the same pure verifier. |
+| [`supabase/migrations/20260926000400_add_membership_payment_evidence.sql`](../../../supabase/migrations/20260926000400_add_membership_payment_evidence.sql) | Add immutable quote/reference/finality evidence, actor-safe preparation/submission/read wrappers and the restricted trusted-completion wrapper while revoking runtime access to the older low-level mutation functions. |
+| [`src/server/db/membership/repository.ts`](../../../src/server/db/membership/repository.ts), [`src/server/membership/service.ts`](../../../src/server/membership/service.ts) | Map the extended state, prepare server-owned payment expectations, record bounded submissions and orchestrate idempotent signature/reference reconciliation. |
+| [`src/app/api/membership/`](../../../src/app/api/membership/), [`src/features/membership/activation-client.ts`](../../../src/features/membership/activation-client.ts) | Add same-origin, actor-scoped, no-store prepare/submission/failure/reconcile/current-state contracts with bounded request and response shapes. |
+| [`src/features/membership/setup.tsx`](../../../src/features/membership/setup.tsx), [`src/features/membership/my-membership.tsx`](../../../src/features/membership/my-membership.tsx), [`src/app/membership.css`](../../../src/app/membership.css) | Replace the membership Coming Soon handoff with explicit identity/wallet gates, authoritative payment summary, simulation/approval/recovery states and truthful pending/active member views. |
+| [`src/features/membership/payment-recovery.ts`](../../../src/features/membership/payment-recovery.ts) | Retain only the public operation ID and signed transaction signature after Phantom returns, so an interrupted submission resumes the same evidence after reload instead of exposing another approval path. |
+| [`tests/membership-payment-verification.test.ts`](../../../tests/membership-payment-verification.test.ts), [`tests/membership-payment-recovery.test.ts`](../../../tests/membership-payment-recovery.test.ts), [`tests/database/membership-activation.test.ts`](../../../tests/database/membership-activation.test.ts), [`tests/boundaries.test.ts`](../../../tests/boundaries.test.ts), [`tests/browser/membership.spec.ts`](../../../tests/browser/membership.spec.ts) | Cover the exact transfer verifier, bounded reload recovery, immutable database evidence/idempotency, trusted boundary imports and the responsive signed-out review gate. |
 
 ### Decisions and deviations
 
@@ -124,32 +137,43 @@ Not implemented. The planned change is one coherent vertical slice from reviewed
 - 2026-09-26: Confirmed that browser means MovX frontend code on the member's device, server means MovX backend route/service code, and RPC means an external Solana node API either side may call. The browser owns simulation, Phantom approval and broadcast; the server owns authoritative payment expectations, recovery and finalized verification.
 - 2026-09-26: Adopted separate public-browser and server-only Devnet RPC settings even though both initially use Solana's public Devnet endpoint. This keeps credentials and verification authority out of the browser and allows the server endpoint to move to a private provider without changing the frontend contract.
 - 2026-09-26: Adopted one unique Solana Pay-style public reference address per activation operation, with signature callback as the normal path and server lookup by reference as disconnect recovery. The optional versioned memo is diagnostic only. A legacy `TransferChecked` transaction and bounded HTTP polling are sufficient for the hackathon slice.
+- 2026-09-27: Final review found that a successful wallet signature followed by a failed submission API call could otherwise expose the approval action again. Added a versioned browser recovery record containing only the operation ID and public signature, automatic idempotent resubmission/reconciliation after reload, and a dedicated “Resume signed transaction” state. This record is recovery evidence, not payment authority, and is cleared when the server records or confirms the same transaction.
 
 ### Contracts, configuration, and operations
 
-Planned additions include `SOLANA_CLUSTER=devnet`, deliberately public `NEXT_PUBLIC_SOLANA_RPC_URL`, server-only `SOLANA_RPC_URL`, and the confirmed EURC mint, token program, decimals, pool owner and pool token-account configuration. The two RPC URLs initially use `https://api.devnet.solana.com`; only the server setting may later contain a private provider credential. The ticket is expected to add pinned token/memo instruction dependencies and may add forward-only public-reference/finality/reconciliation columns to DEV0080's schema. It does not create, store or use pool-wallet private keys or persistent reference signing keys.
+The implementation adds `SOLANA_CLUSTER=devnet`, deliberately public `NEXT_PUBLIC_SOLANA_RPC_URL` and server-only `SOLANA_RPC_URL`. The two RPC URLs initially use `https://api.devnet.solana.com`; only the server setting may later contain a private provider credential. Staging validation now requires all three values and rejects a non-Devnet cluster or non-HTTPS hosted RPC.
+
+`@solana-program/token@0.17.0` and `@solana-program/memo@0.15.0` are pinned. The forward-only migration adds `payment_mint_address`, `payment_token_program_address`, `payment_token_decimals`, `payment_reference_address` and `payment_confirmed_slot` evidence to activation operations and membership periods, plus one unique reference per quoted operation. Existing pre-DEV0081 rows remain readable with nullable evidence; new wrapper functions enforce the complete quote before submission/completion. No application response contains the server RPC URL, and no pool/reference private key exists or is stored.
+
+After Phantom returns a signed transaction, the browser may store `movx-club:membership-payment-recovery:v1` with exactly the operation UUID and public transaction signature. It contains no wallet key, quote override or trusted result. Malformed/expanded values are rejected; unavailable browser storage is tolerated. Server state and finalized RPC evidence remain authoritative.
 
 ## Validation results
 
-Pending implementation validation; no DEV0081 payment transaction has been performed. Planning validation has confirmed the official Devnet EURC and fixed pool destination as described below.
+No DEV0081 payment transaction has been performed yet. Deterministic and local database validation proves the implementation boundaries below, but it does not substitute for AC10's real Phantom/test-EURC rehearsal.
 
 | Criterion | Evidence | Result |
 | --------- | -------- | ------ |
-| Pool-owner readiness | `@solana/kit` `address(...)`; Devnet `getAccountInfo` at slot `504526985` | Public-key parsing passed and RPC returned a System Program-owned, non-executable, zero-data account suitable as the fixed ATA owner. Application-level control proof is not required because the pool never signs or authenticates. |
-| EURC mint readiness | Circle's official EURC address documentation; finalized Devnet `getAccountInfo` at slot `504528159` | `HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr` was confirmed as an initialized six-decimal mint owned by the classic SPL Token Program. |
-| Pool destination readiness | Kit canonical ATA derivation; finalized Devnet `getTokenAccountsByOwner` at slot `504528271` | `BQjoA2qcxpBF6sNCLvz8XwyiEaUnAW3osnyF76BBDtJ8` was confirmed as the initialized canonical token account for the configured pool owner and EURC mint. |
-| RPC/reference readiness | User-reviewed frontend/backend boundary and Solana Pay-style reference recovery design | Separate public-browser/server-only RPC responsibilities, legacy transaction shape, pre-approval simulation, finalized verification and lookup-by-reference recovery were accepted; ticket moved to Ready. |
-| AC1–AC10 | Not run | Not run |
+| Pool-owner readiness | `@solana/kit` `address(...)`; Devnet `getAccountInfo` at slot `504526985` | Passed: public-key parsing and RPC confirmed the fixed owner account; no application-level control proof is required because it never signs or authenticates. |
+| EURC mint and destination readiness | Circle address register; finalized Devnet mint/token-account reads at slots `504528159` and `504528271`; local Kit ATA derivation | Passed: official six-decimal classic SPL EURC mint and canonical pool token account matched the pinned configuration. |
+| Clean schema replay | `npm run db:reset`; migration ledger inspection; `npm run db:runtime` | Passed locally: every migration including `20260926000400_add_membership_payment_evidence.sql` replayed and the restricted runtime login was recreated. |
+| Database schema security | `npm run db:test`; `npm run db:lint` | Passed: all 141 pgTAP assertions and schema lint. The restricted runtime role can execute only the payment-aware wrapper API and cannot call DEV0080's superseded lower-level prepare/submit/complete mutations. |
+| Database activation behavior | Focused `tests/database/membership-activation.test.ts`; full `npm run test:db` | Passed: 5 focused activation cases and all 24 database integration tests, including actor isolation, idempotent preparation/submission/completion and immutable payment evidence. |
+| Pure verifier, reload recovery and boundaries | `npm test` | Passed: 64/64, including exact positive transfer/balance evidence, mutable reference/wrong owner/wrong amount/execution-failure rejection, bounded public-signature recovery, server-only imports and no public trusted-completion route. |
+| Static analysis | `npm run typecheck`; `npm run lint` | Passed with no errors. |
+| Production compilation | `SOLANA_CLUSTER=devnet NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com SOLANA_RPC_URL=https://api.devnet.solana.com npm run build -- --webpack` | Passed: all pages and five membership API routes compiled, typed and generated. The default Turbopack build was stopped after stalling without an error or further output; Webpack is the documented production-builder fallback. |
+| Formatting and patch integrity | `npm run format:check`; `git diff --check` | Passed after targeted formatting of the new files. |
+| Responsive browser behavior | `npm run test:e2e -- tests/browser/membership.spec.ts` | Passed 8 desktop/mobile checks covering keyboard selection, exact-four review, reload persistence, blocked/corrupt storage, no horizontal overflow and signed-out activation gating. Two preview-only My Membership cases were skipped because this environment has Auth configured. Authenticated Phantom states remain part of the manual rehearsal. |
+| Real Phantom Devnet activation | Required manual approval/rejection rehearsal | Not run: a member wallet funded with official Devnet test EURC and test SOL is still required. AC10 remains unmet and the ticket stays In progress. |
 
 ## Risks, limitations, and follow-ups
 
-The highest risks are paying an incorrectly configured destination, trusting a client callback, activating on the wrong token, losing reconciliation after a response timeout, or treating a public RPC as authoritative without validation. Fail closed on configuration and mismatched evidence, but preserve ambiguous submitted transactions for retry so safety does not become double payment.
+The implementation fails closed on configuration and mismatched evidence, and preserves ambiguous submitted transactions for retry so safety does not become double payment. Remaining risk is concentrated in real provider/wallet behavior that deterministic fixtures cannot prove: Phantom legacy-transaction support, public-RPC rate limits, finality delays, Circle faucet availability and the actual funded source token account.
 
 The membership pool is test infrastructure, not gym revenue or a production custody design. Refunds, pool withdrawal authority, final allocation/payout, accounting, taxes, disputes and production key management remain unresolved and must not be implied by the activation UI. Included check-ins/allocation and non-core direct payments require separate COR0007 peer tickets.
 
 ## Completion and review references
 
-- Completed: Not completed.
-- Commit: Not created.
-- Review: Initial scope, mint/pool readiness and RPC/reference design review complete; implementation review remains.
+- Completed: Not completed — responsive browser validation and AC10's real Phantom approval/rejection rehearsal remain.
+- Commit: Planning committed as `a06c9ab`; implementation recorded by `[DEV0081] Implement Devnet membership activation` in repository history.
+- Review: Initial scope, mint/pool readiness and RPC/reference design review complete; local implementation self-review complete, real-wallet review remains.
 - Deployment or release: None.

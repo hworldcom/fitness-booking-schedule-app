@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = extensions, public, pg_catalog;
 
-select plan(21);
+select plan(22);
 
 select has_table(
   'app',
@@ -113,15 +113,15 @@ select ok(
 
 select has_function(
   'app',
-  'prepare_membership_activation',
-  array['uuid', 'text', 'text[]'],
-  'prepare activation function exists'
+  'prepare_membership_payment_activation',
+  array['uuid', 'text', 'text[]', 'text', 'text', 'text', 'text', 'integer'],
+  'payment-aware prepare activation function exists'
 );
 select has_function(
   'app',
-  'record_membership_activation_submission',
-  array['uuid', 'text', 'text', 'text'],
-  'submission recording function exists'
+  'record_membership_payment_submission',
+  array['uuid', 'text'],
+  'payment-aware submission recording function exists'
 );
 select has_function(
   'app',
@@ -131,15 +131,15 @@ select has_function(
 );
 select has_function(
   'app',
-  'complete_verified_membership_activation',
-  array['uuid', 'text', 'text', 'text', 'numeric'],
-  'verified completion function exists'
+  'complete_verified_membership_payment',
+  array['uuid', 'text', 'text', 'text', 'text', 'text', 'integer', 'text', 'bigint', 'numeric'],
+  'payment-aware verified completion function exists'
 );
 select has_function(
   'app',
-  'current_membership_state',
+  'current_membership_payment_state',
   array[]::text[],
-  'bounded member read function exists'
+  'bounded payment-aware member read function exists'
 );
 
 select ok(
@@ -148,11 +148,11 @@ select ok(
       has_function_privilege('app_runtime', function_signature, 'execute')
     )
     from unnest(array[
-      'app.prepare_membership_activation(uuid,text,text[])',
-      'app.record_membership_activation_submission(uuid,text,text,text)',
+      'app.prepare_membership_payment_activation(uuid,text,text[],text,text,text,text,integer)',
+      'app.record_membership_payment_submission(uuid,text)',
       'app.fail_membership_activation(uuid,text)',
-      'app.complete_verified_membership_activation(uuid,text,text,text,numeric)',
-      'app.current_membership_state()'
+      'app.complete_verified_membership_payment(uuid,text,text,text,text,text,integer,text,bigint,numeric)',
+      'app.current_membership_payment_state()'
     ]) function_signature
   ),
   'app_runtime can execute only the bounded activation API'
@@ -161,13 +161,26 @@ select ok(
 select ok(
   not exists (
     select 1
-    from unnest(array['anon', 'authenticated', 'service_role']) role_name
-    cross join unnest(array[
+    from unnest(array[
       'app.prepare_membership_activation(uuid,text,text[])',
       'app.record_membership_activation_submission(uuid,text,text,text)',
+      'app.complete_verified_membership_activation(uuid,text,text,text,numeric)'
+    ]) function_signature
+    where has_function_privilege('app_runtime', function_signature, 'execute')
+  ),
+  'app_runtime cannot bypass payment-aware wrappers with legacy mutations'
+);
+
+select ok(
+  not exists (
+    select 1
+    from unnest(array['anon', 'authenticated', 'service_role']) role_name
+    cross join unnest(array[
+      'app.prepare_membership_payment_activation(uuid,text,text[],text,text,text,text,integer)',
+      'app.record_membership_payment_submission(uuid,text)',
       'app.fail_membership_activation(uuid,text)',
-      'app.complete_verified_membership_activation(uuid,text,text,text,numeric)',
-      'app.current_membership_state()'
+      'app.complete_verified_membership_payment(uuid,text,text,text,text,text,integer,text,bigint,numeric)',
+      'app.current_membership_payment_state()'
     ]) function_signature
     where has_function_privilege(role_name, function_signature, 'execute')
   ),

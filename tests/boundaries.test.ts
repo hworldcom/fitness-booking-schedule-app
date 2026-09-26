@@ -151,6 +151,8 @@ test("privileged database entry points carry the Next.js server-only marker", ()
     "src/server/identity/service.ts",
     "src/server/catalogue/service.ts",
     "src/server/membership/service.ts",
+    "src/server/solana/membership-payment-config.ts",
+    "src/server/solana/membership-payment-reconciliation.ts",
     "src/server/wallet/signature.ts",
     "src/server/wallet/club-service.ts",
     "src/server/wallet/service.ts",

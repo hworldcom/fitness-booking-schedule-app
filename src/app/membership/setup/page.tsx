@@ -3,9 +3,9 @@ import { MembershipSetup } from "@/features/membership/setup";
 import { currentPublicCatalogue } from "@/server/catalogue/service";
 
 export const metadata = {
-  title: "Membership setup preview",
+  title: "Membership setup",
   description:
-    "Build a browser-local MovX Club membership draft by choosing a plan and four fictional participating gyms.",
+    "Choose a MovX Club plan and four gyms, then activate it with test EURC on Solana Devnet.",
 };
 
 function planFromQuery(value: string | undefined): MembershipPlanId | null {

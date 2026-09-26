@@ -45,12 +45,37 @@ const secondWallet = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 const destinationWallet = "ComputeBudget111111111111111111111111111111";
 const firstSignature = "2".repeat(88);
 const secondSignature = "3".repeat(88);
+const mintAddress = "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr";
+const tokenProgramAddress = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 const basicGyms = [
   "northside-combat",
   "fabrik",
   "vela",
   "groundline-mma",
 ] as const;
+
+function paymentPreparation(referenceMarker: string) {
+  return {
+    referenceAddress: referenceMarker.repeat(44),
+    destinationAddress: destinationWallet,
+    mintAddress,
+    tokenProgramAddress,
+    tokenDecimals: 6,
+  } as const;
+}
+
+function verifiedEvidence(
+  referenceMarker: string,
+  confirmedSlot = "500000001",
+) {
+  return {
+    mintAddress,
+    tokenProgramAddress,
+    tokenDecimals: 6,
+    referenceAddress: referenceMarker.repeat(44),
+    confirmedSlot,
+  } as const;
+}
 
 const admin = postgres(adminConnectionString, {
   max: 1,
@@ -226,11 +251,16 @@ async function directCompletion(
       }>
     >`
       select *
-      from app.complete_verified_membership_activation(
+      from app.complete_verified_membership_payment(
         ${secondOperationId}::uuid,
         ${firstWallet},
         ${destinationWallet},
+        ${mintAddress},
+        ${tokenProgramAddress},
+        ${"5".repeat(44)},
+        6::integer,
         ${firstSignature},
+        500000001::bigint,
         80000000::numeric
       )
     `;
@@ -286,10 +316,15 @@ test("activation tables are private and actor preparation validates the catalogu
   const threeGyms = await withActorDatabaseContext(firstActor, (transaction) =>
     transaction.execute<{ result: string }>(
       sql`
-          select app.prepare_membership_activation(
+          select app.prepare_membership_payment_activation(
             ${invalidOperationId}::uuid,
             'basic'::text,
-            array['northside-combat', 'fabrik', 'vela']::text[]
+            array['northside-combat', 'fabrik', 'vela']::text[],
+            ${"8".repeat(44)}::text,
+            ${destinationWallet}::text,
+            ${mintAddress}::text,
+            ${tokenProgramAddress}::text,
+            6::integer
           ) as result
         `,
     ),
@@ -303,6 +338,7 @@ test("activation tables are private and actor preparation validates the catalogu
         operationId: invalidOperationId,
         planId: "basic",
         gymIds: ["northside-combat", "fabrik", "vela", "quiet-current"],
+        ...paymentPreparation("8"),
       }),
   );
   assert.equal(invalidSelection, "invalid-selection");
@@ -322,6 +358,7 @@ test("stable preparation retries preserve snapshots and supersede only pending i
         operationId: firstOperationId,
         planId: "basic",
         gymIds: basicGyms,
+        ...paymentPreparation("4"),
       }),
     ),
     "prepared",
@@ -333,6 +370,7 @@ test("stable preparation retries preserve snapshots and supersede only pending i
         operationId: firstOperationId,
         planId: "basic",
         gymIds: [...basicGyms].reverse(),
+        ...paymentPreparation("4"),
       }),
     ),
     "existing",
@@ -343,6 +381,7 @@ test("stable preparation retries preserve snapshots and supersede only pending i
         operationId: firstOperationId,
         planId: "classic",
         gymIds: basicGyms,
+        ...paymentPreparation("4"),
       }),
     ),
     "operation-conflict",
@@ -376,6 +415,7 @@ test("stable preparation retries preserve snapshots and supersede only pending i
         operationId: secondOperationId,
         planId: "basic",
         gymIds: basicGyms,
+        ...paymentPreparation("5"),
       }),
     ),
     "prepared",
@@ -393,25 +433,11 @@ test("stable preparation retries preserve snapshots and supersede only pending i
   assert.deepEqual(states[0]?.selectedGymSlugs, basicGyms);
 });
 
-test("submission binds the linked wallet and concurrent confirmation creates one period", async () => {
-  const wrongWallet = await withActorDatabaseContext(
-    firstActor,
-    (transaction) =>
-      recordMembershipActivationSubmission(transaction, {
-        operationId: secondOperationId,
-        walletAddress: secondWallet,
-        destinationAddress: destinationWallet,
-        transactionSignature: firstSignature,
-      }),
-  );
-  assert.equal(wrongWallet, "wallet-conflict");
-
+test("submission uses the prepared linked wallet and concurrent confirmation creates one period", async () => {
   assert.equal(
     await withActorDatabaseContext(firstActor, (transaction) =>
       recordMembershipActivationSubmission(transaction, {
         operationId: secondOperationId,
-        walletAddress: firstWallet,
-        destinationAddress: destinationWallet,
         transactionSignature: firstSignature,
       }),
     ),
@@ -421,8 +447,6 @@ test("submission binds the linked wallet and concurrent confirmation creates one
     await withActorDatabaseContext(firstActor, (transaction) =>
       recordMembershipActivationSubmission(transaction, {
         operationId: secondOperationId,
-        walletAddress: firstWallet,
-        destinationAddress: destinationWallet,
         transactionSignature: firstSignature,
       }),
     ),
@@ -438,6 +462,7 @@ test("submission binds the linked wallet and concurrent confirmation creates one
         destinationAddress: destinationWallet,
         transactionSignature: firstSignature,
         amountBaseUnits: "79999999",
+        ...verifiedEvidence("5"),
       }),
   );
   assert.deepEqual(wrongAmount, {
@@ -501,6 +526,7 @@ test("submission binds the linked wallet and concurrent confirmation creates one
         operationId: overlappingOperationId,
         planId: "classic",
         gymIds: basicGyms,
+        ...paymentPreparation("7"),
       }),
     ),
     "state-conflict",
@@ -535,6 +561,7 @@ test("another member sees no private state and failed activation creates no peri
         operationId: secondActorOperationId,
         planId: "classic",
         gymIds: basicGyms,
+        ...paymentPreparation("6"),
       }),
     ),
     "prepared",
@@ -591,6 +618,7 @@ test("one chain transaction cannot be reused by another activation", async () =>
         operationId: reuseOperationId,
         planId: "classic",
         gymIds: basicGyms,
+        ...paymentPreparation("9"),
       }),
     ),
     "prepared",
@@ -599,8 +627,6 @@ test("one chain transaction cannot be reused by another activation", async () =>
     await withActorDatabaseContext(secondActor, (transaction) =>
       recordMembershipActivationSubmission(transaction, {
         operationId: reuseOperationId,
-        walletAddress: secondWallet,
-        destinationAddress: destinationWallet,
         transactionSignature: firstSignature,
       }),
     ),
@@ -610,8 +636,6 @@ test("one chain transaction cannot be reused by another activation", async () =>
     await withActorDatabaseContext(secondActor, (transaction) =>
       recordMembershipActivationSubmission(transaction, {
         operationId: reuseOperationId,
-        walletAddress: secondWallet,
-        destinationAddress: destinationWallet,
         transactionSignature: secondSignature,
       }),
     ),

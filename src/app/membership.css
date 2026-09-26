@@ -454,6 +454,71 @@
   font-size: 10px;
 }
 
+.membership-review > .membership-message {
+  margin: 0 30px 18px;
+}
+
+.membership-payment-panel,
+.membership-payment-readiness {
+  margin: 0 30px 22px;
+  padding: 18px;
+  border: 1px solid #d9e4d1;
+  border-radius: 14px;
+  background: #f7faf3;
+}
+
+.membership-payment-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.membership-payment-panel h3 {
+  font-size: 22px;
+  letter-spacing: -0.5px;
+}
+
+.membership-payment-panel dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.membership-payment-panel dl > div {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: white;
+}
+
+.membership-payment-panel dt {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.membership-payment-panel dd,
+.membership-payment-panel p,
+.membership-payment-readiness p {
+  color: #52604e;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.membership-payment-panel dd {
+  overflow-wrap: anywhere;
+  font-weight: 700;
+}
+
+.membership-payment-panel .text-link,
+.membership-payment-readiness p {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .membership-review-actions {
   padding: 20px 30px;
   border-top: 1px solid var(--line);
@@ -605,9 +670,16 @@
   .membership-review-plan,
   .membership-review-gyms,
   .membership-review-rules,
-  .membership-review-notice {
+  .membership-review-notice,
+  .membership-payment-panel,
+  .membership-payment-readiness,
+  .membership-review > .membership-message {
     margin-right: 22px;
     margin-left: 22px;
+  }
+
+  .membership-payment-panel dl {
+    grid-template-columns: 1fr;
   }
 
   .membership-draft-plan {

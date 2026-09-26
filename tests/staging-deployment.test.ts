@@ -13,6 +13,9 @@ const validEnvironment = {
   NEXT_PUBLIC_SITE_URL: "https://staging.movx.club",
   DATABASE_URL:
     "postgresql://movx_staging_runtime_login.project:test-only@aws-0-eu-central-1.pooler.supabase.com:6543/postgres",
+  SOLANA_CLUSTER: "devnet",
+  NEXT_PUBLIC_SOLANA_RPC_URL: "https://api.devnet.solana.com",
+  SOLANA_RPC_URL: "https://api.devnet.solana.com",
 };
 
 test("staging deployment validation accepts only the staging contract", () => {
@@ -47,6 +50,9 @@ test("Wrangler declares exactly the approved staging binding names", () => {
     "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
     "NEXT_PUBLIC_SITE_URL",
     "DATABASE_URL",
+    "SOLANA_CLUSTER",
+    "NEXT_PUBLIC_SOLANA_RPC_URL",
+    "SOLANA_RPC_URL",
   ];
   for (const name of names) assert.match(wrangler, new RegExp(`"${name}"`));
   assert.doesNotMatch(wrangler, /STAGING_AUTH_TEST|EXPECTED_DATABASE_USER/);
