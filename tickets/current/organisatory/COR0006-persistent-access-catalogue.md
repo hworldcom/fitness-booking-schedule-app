@@ -31,7 +31,7 @@ Every direct ticket must link back to COR0006. No pass/event or social schema ma
 - [DEV0069](../../archive/organisatory/DEV0069-adopt-core-multigym-membership-mvp.md) supplies the focused product contract and [DEV0070](../../archive/organisatory/DEV0070-revise-multigym-plan-pricing.md) supplies the latest price/allowance amendment; neither implements the catalogue.
 - [COR0007](COR0007-core-multigym-membership-mvp.md) consumes published plan and gym eligibility. It owns selection, activation, check-ins, payments, allocation, gym/member operational views and social integration.
 - Completed [DEV0074](../../archive/frontend/DEV0074-preview-multigym-discovery.md) owns the frontend plan/gym read contracts and preview discovery presentation under COR0007. It is a downstream consumer, not a direct COR0006 member; the catalogue service ticket replaces its fixture adapter without taking over its screen design.
-- [DEV0075](../frontend/DEV0075-preview-membership-selection.md) consumes those frontend contracts for a local draft selection. It does not create catalogue or membership state.
+- Completed [DEV0075](../../archive/frontend/DEV0075-preview-membership-selection.md) consumes those frontend contracts for a local draft selection. It does not create catalogue or membership state.
 - DEV0067 remains valid historical implementation evidence. Its `Annual Unlimited` and `Flex 12` private drafts are obsolete and must not be published as Basic/Classic.
 - Follows and explicitly shared check-ins belong to DEV0023 under COR0007, not to the catalogue.
 - Archived DEV0066/DEV0068 preserve prior single-gym transfer and pass-resale decisions but do not define current persistence work.

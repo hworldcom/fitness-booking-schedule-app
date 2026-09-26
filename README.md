@@ -113,11 +113,11 @@ Recovery uses another code sent to the same verified email. Sign out in the appl
 
 ## What you can try
 
-The [frontend foundation ticket](tickets/archive/frontend/DEV0008-repx-club-frontend.md) records the original slice. You can currently explore Home, the focused How it works guide, the temporary fictional gym catalogue, My Access and Profile, and follow demonstration people in preview mode. The displayed plans and pricing explain the target concept; they do not create payment, membership, reservation or attendance evidence. Browser-local preview choices can be cleared with **Profile → Reset preview**.
+The [frontend foundation ticket](tickets/archive/frontend/DEV0008-repx-club-frontend.md) records the original slice. You can currently explore Home, the focused How it works guide, the temporary fictional gym catalogue, My Membership and Profile, and follow demonstration people in preview mode. The displayed plans and pricing explain the target concept; the membership setup saves only a versioned browser-local draft and does not create payment, membership, reservation or attendance evidence. Membership choices can be cleared from **My Membership → Reset draft**; older social-preview choices can be cleared with **Profile → Reset preview**.
 
 The header wallet control discovers Phantom through Wallet Standard on Solana Devnet. It can connect, show the public address and disconnect without authenticating or linking the wallet. The separate `/sign-in` page uses email OTP for the application account. In-progress DEV0047 adds an explicit message-only proof for optional wallet linking; connection alone still grants no identity, role, payment evidence or automatic account merge.
 
-This is a frontend preview. People, venues, schedules and activity are examples. No current click creates a usable multi-gym membership, reservation, payment, check-in or allocation. The four-gym selection, membership pool, non-core member price and Phantom/Devnet transaction flows remain outstanding; see the [current implementation status](docs/mvp-spec.md) and its acceptance criteria.
+This is a frontend preview. People, venues, schedules and activity are examples. No current click creates a usable multi-gym membership, reservation, payment, check-in or allocation. Visitors can draft a plan and four-gym selection locally; membership activation, the membership pool, non-core purchase and Phantom/Devnet transaction flows remain outstanding. See the [current implementation status](docs/mvp-spec.md) and its acceptance criteria.
 
 ## Checks
 
@@ -139,7 +139,7 @@ The database commands above add SQL catalogue/constraint/RLS checks and Drizzle 
 ## Application structure
 
 - `src/app/`: thin Next.js App Router adapters, shared layout and visual styles.
-- `src/features/`: capability-owned Home/feed, Explore/discovery, How it works, My Access and profile screens; no standalone event/class product modules remain.
+- `src/features/`: capability-owned Home/feed, Explore/discovery, membership setup/My Membership and profile screens; no standalone event/class product modules remain.
 - `src/domain/`: framework-independent gym catalogue and discovery rules; no browser, network or persistence authority.
 - `src/features/preview/`: typed demonstration catalogue, derived discovery data, validated local state transitions and browser persistence under the legacy compatibility key `repx-club-preview-v1`; never live inventory, authorization, payment proof or a financial ledger. DEV0049 retains that opaque key so the MovX Club rename does not discard existing browser choices.
 - `src/solana/client/`: browser-safe, Devnet-only Phantom discovery/connection state and accessible wallet presentation; no RPC, authentication, balance or transaction authority.

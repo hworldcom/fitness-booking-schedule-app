@@ -146,7 +146,7 @@ test("simplified navigation keeps destinations and nested selection without head
   ).toHaveCount(0);
   for (const [label, route] of [
     ["Explore", "/explore"],
-    ["My Access", "/my-access"],
+    ["My Membership", "/my-access"],
     ["Profile", "/profile"],
     ["Home", "/"],
   ]) {
@@ -154,7 +154,7 @@ test("simplified navigation keeps destinations and nested selection without head
     await link.focus();
     await page.keyboard.press("Enter");
     const privateGuestRoute =
-      configuredGuest && ["My Access", "Profile"].includes(label);
+      configuredGuest && ["My Membership", "Profile"].includes(label);
     await expect(page).toHaveURL((url) =>
       privateGuestRoute
         ? url.pathname === "/sign-in" &&

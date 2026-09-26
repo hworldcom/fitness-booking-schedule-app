@@ -5,6 +5,7 @@ import "./globals.css";
 import "./club-theme.css";
 import "./how-it-works.css";
 import "./coming-soon.css";
+import "./membership.css";
 import { ActorProvider } from "@/auth/client/actor-provider";
 import { AuthSessionProvider } from "@/auth/client/session-provider";
 import { PreviewShell } from "@/features/preview/preview-shell";

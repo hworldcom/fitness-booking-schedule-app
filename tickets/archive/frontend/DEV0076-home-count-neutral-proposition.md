@@ -5,7 +5,7 @@
 - Last updated: 2026-09-26
 - Milestone: M0 truthful positioning refinement
 - Coordination: [COR0007 — Core multi-gym membership MVP](../../current/organisatory/COR0007-core-multigym-membership-mvp.md)
-- Related records: follows completed public story [DEV0073](DEV0073-rewrite-multigym-public-story.md); preserves the exact-four selection contract planned by [DEV0075](../../current/frontend/DEV0075-preview-membership-selection.md)
+- Related records: follows completed public story [DEV0073](DEV0073-rewrite-multigym-public-story.md); preserves the exact-four selection contract delivered by [DEV0075](DEV0075-preview-membership-selection.md)
 
 ## Objective and context
 

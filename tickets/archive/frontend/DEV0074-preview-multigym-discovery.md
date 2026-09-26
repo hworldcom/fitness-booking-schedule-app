@@ -5,7 +5,7 @@
 - Last updated: 2026-09-26
 - Milestone: M1 frontend membership discovery preview
 - Coordination: [COR0007 — Core multi-gym membership MVP](../../current/organisatory/COR0007-core-multigym-membership-mvp.md)
-- Related records: depends on completed [DEV0072](DEV0072-remove-legacy-product-ui.md); complements completed public story [DEV0073](DEV0073-rewrite-multigym-public-story.md); supplies discovery contracts to [DEV0075](../../current/frontend/DEV0075-preview-membership-selection.md); future persistence is coordinated by [COR0006](../../current/organisatory/COR0006-persistent-access-catalogue.md)
+- Related records: depends on completed [DEV0072](DEV0072-remove-legacy-product-ui.md); complements completed public story [DEV0073](DEV0073-rewrite-multigym-public-story.md); supplies discovery contracts to completed [DEV0075](DEV0075-preview-membership-selection.md); future persistence is coordinated by [COR0006](../../current/organisatory/COR0006-persistent-access-catalogue.md)
 
 ## Objective and context
 

@@ -63,6 +63,12 @@ function PlanCard({ plan }: { plan: MembershipPlanSummary }) {
         <li>One included check-in per venue-local day</li>
         <li>Eligible non-core visits: €{plan.nonCoreVisitPrice.amount}</li>
       </ul>
+      <Link
+        href={`/membership/setup?plan=${plan.id}`}
+        className="explore-plan-select text-link"
+      >
+        Preview {plan.name} <ArrowRight size={15} aria-hidden="true" />
+      </Link>
     </article>
   );
 }

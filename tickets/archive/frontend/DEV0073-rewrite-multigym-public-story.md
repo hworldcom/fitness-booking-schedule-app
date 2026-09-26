@@ -69,7 +69,7 @@ The non-core demo price changed from €8 to €15 before implementation. The cu
 - `src/features/discovery/how-it-works.tsx` and `src/app/how-it-works.css`: rebuilt the guide around plan choice, the six-step member journey, direct-to-gym non-core payment, member/gym benefits, provisional allocation and supporting Devnet rails.
 - `src/app/page.tsx`, `src/app/layout.tsx`, `src/app/how-it-works/page.tsx`, `src/components/shell.tsx` and `src/app/globals.css`: aligned metadata and shared framing, and added the missing cream/forest theme tokens found during visual review.
 - `tests/browser/redesign.spec.ts` and `tests/browser/discovery.spec.ts`: assert plan/pricing/daily-rule content, information order, removed-product absence, truthful destinations, keyboard behavior and responsive layouts.
-- `docs/mvp-spec.md`, `README.md`, `tickets/current/frontend/DEV0075-preview-membership-selection.md`, `tickets/current/organisatory/COR0006-persistent-access-catalogue.md` and `tickets/current/organisatory/COR0007-core-multigym-membership-mvp.md`: adopted €15 as the current illustrative non-core value and updated current status/downstream assumptions.
+- `docs/mvp-spec.md`, `README.md`, `tickets/archive/frontend/DEV0075-preview-membership-selection.md`, `tickets/current/organisatory/COR0006-persistent-access-catalogue.md` and `tickets/current/organisatory/COR0007-core-multigym-membership-mvp.md`: adopted €15 as the current illustrative non-core value and updated current status/downstream assumptions.
 
 ### Decisions and deviations
 

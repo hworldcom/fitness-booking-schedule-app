@@ -33,13 +33,13 @@ test("retained navigation surfaces render without overflow or removed products",
 
   for (const [label, route] of [
     ["Explore", "/explore"],
-    ["My Access", "/my-access"],
+    ["My Membership", "/my-access"],
     ["Profile", "/profile"],
     ["Home", "/"],
   ]) {
     await nav.getByRole("link", { name: label, exact: true }).click();
     const privateGuestRoute =
-      configuredGuest && ["My Access", "Profile"].includes(label);
+      configuredGuest && ["My Membership", "Profile"].includes(label);
     await expect(page).toHaveURL((url) =>
       privateGuestRoute
         ? url.pathname === "/sign-in" &&
@@ -57,7 +57,7 @@ test("retained navigation surfaces render without overflow or removed products",
     await page.goto("/my-access");
     await expect(
       page.getByRole("heading", {
-        name: /Your MovX membership will live here/,
+        name: /Your membership draft/,
       }),
     ).toBeVisible();
     await expect(page.locator(".my-access")).not.toContainText(
@@ -82,6 +82,12 @@ test("Explore filters gyms and keeps the details dialog keyboard accessible", as
   await expect(plans).toContainText("€150");
   await expect(plans).toContainText("Unlimited included check-ins");
   await expect(plans).toContainText("€15");
+  await expect(
+    plans.getByRole("link", { name: "Preview Basic" }),
+  ).toHaveAttribute("href", "/membership/setup?plan=basic");
+  await expect(
+    plans.getByRole("link", { name: "Preview Classic" }),
+  ).toHaveAttribute("href", "/membership/setup?plan=classic");
 
   const activity = page.getByRole("combobox", {
     name: "Activities",

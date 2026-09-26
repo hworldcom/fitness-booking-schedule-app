@@ -141,7 +141,7 @@ Authorization comes from server-derived identity and persisted role bindings, ne
 - **Home:** concise current proposition and route to discovery.
 - **Explore:** participating gyms and the two membership variants.
 - **Membership setup:** compare plans, choose exactly four eligible gyms, review terms and activate.
-- **My Access:** period, selected gyms, remaining Basic allowance or Classic policy, daily availability, payment state and check-in history.
+- **My Membership:** draft selection in the frontend preview, then verified period, selected gyms, remaining Basic allowance or Classic policy, daily availability, payment state and check-in history after activation exists. The compatibility route remains `/my-access` until a separately reviewed route migration.
 - **Profile / Feed:** follows and explicitly shared verified participation.
 - **How it works:** member and gym explanations plus honest Devnet status.
 - **Gym workspace:** staff confirmation, gym-scoped attendance and provisional allocation.

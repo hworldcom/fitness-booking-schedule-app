@@ -26,7 +26,7 @@ import { ClubWalletAuthorityGuard } from "@/solana/client/club-wallet-authority"
 const navigation = [
   { label: "Home", href: "/", Icon: House },
   { label: "Explore", href: "/explore", Icon: Dumbbell },
-  { label: "My Access", href: "/my-access", Icon: WalletCards },
+  { label: "My Membership", href: "/my-access", Icon: WalletCards },
   { label: "Profile", href: "/profile", Icon: UserRound },
 ];
 export function Shell({
