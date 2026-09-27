@@ -31,6 +31,7 @@ import {
 import type { MemberMembershipState } from "@/domain/membership-activation";
 import { useMembershipDraft } from "@/features/membership/draft-store";
 import {
+  membershipPaymentRecoveryMatchesOperation,
   readMembershipPaymentRecovery,
   writeMembershipPaymentRecovery,
   type MembershipPaymentRecovery,
@@ -89,7 +90,7 @@ function paymentErrorMessage(error: unknown) {
     case "wallet-mismatch":
       return "The connected Phantom account does not match your linked personal wallet.";
     case "unsupported-wallet":
-      return "This Phantom connection cannot sign the required legacy transaction. Reconnect Phantom and try again.";
+      return "This Phantom connection does not support the required Devnet sign-and-send method. Update or reconnect Phantom and try again.";
     case "source-account-unavailable":
       return "The linked wallet has no usable Devnet EURC token account.";
     case "insufficient-eurc":
@@ -100,8 +101,10 @@ function paymentErrorMessage(error: unknown) {
       return "The exact Devnet transaction did not pass simulation, so Phantom was not opened.";
     case "wallet-cancelled":
       return "You cancelled the Phantom approval. No membership was activated.";
+    case "broadcast-failed":
+      return "Phantom did not return a transaction signature. The pending payment will be checked by its unique reference; do not approve another payment yet.";
     default:
-      return "The signed transaction could not be broadcast reliably. Its reference can still be checked without sending another payment.";
+      return "The Devnet payment could not be completed. No membership was activated.";
   }
 }
 
@@ -164,7 +167,8 @@ function ReadyMembershipSetup({
     : null;
   const signedRecoverySettled = Boolean(
     signedRecovery &&
-    (activePeriod?.activationOperationId === signedRecovery.operationId ||
+    ((visibleMembershipState && !signedRecoveryOperation) ||
+      activePeriod?.activationOperationId === signedRecovery.operationId ||
       signedRecoveryOperation?.status === "confirmed" ||
       signedRecoveryOperation?.status === "failed" ||
       (pendingOperation?.id === signedRecovery.operationId &&
@@ -174,6 +178,10 @@ function ReadyMembershipSetup({
   const recoverableSignedPayment = signedRecoverySettled
     ? null
     : signedRecovery;
+  const canResumeSignedPayment = membershipPaymentRecoveryMatchesOperation(
+    recoverableSignedPayment,
+    pendingOperation?.id,
+  );
   const linkedWallet =
     visiblePersonalWallet?.status === "linked"
       ? visiblePersonalWallet.wallet.address
@@ -423,9 +431,7 @@ function ReadyMembershipSetup({
       rememberSignedPayment(recovery);
       setPreparedPayment(null);
       setNotice(
-        broadcast.broadcastAcknowledged
-          ? "Transaction submitted. Waiting for finalized server verification."
-          : "The RPC response was lost after signing. The transaction signature was preserved for safe recovery; do not pay again.",
+        "Transaction submitted. Waiting for finalized server verification.",
       );
       await resumeSignedPayment(recovery);
     } catch (error) {
@@ -435,6 +441,14 @@ function ReadyMembershipSetup({
       ) {
         await cancelMembershipActivationRequest(pendingOperation.id);
         await refreshActivationState();
+      } else if (
+        error instanceof MembershipPaymentClientError &&
+        error.code === "broadcast-failed"
+      ) {
+        setPreparedPayment(null);
+        setPaymentError(paymentErrorMessage(error));
+        await reconcile(pendingOperation.id);
+        return;
       }
       setPaymentError(paymentErrorMessage(error));
     } finally {
@@ -812,8 +826,7 @@ function ReadyMembershipSetup({
               >
                 Sign in to activate <ArrowRight size={17} aria-hidden="true" />
               </Link>
-            ) : recoverableSignedPayment?.operationId ===
-              pendingOperation?.id ? (
+            ) : canResumeSignedPayment ? (
               <button
                 type="button"
                 className="button lime"
@@ -848,7 +861,7 @@ function ReadyMembershipSetup({
               >
                 {paymentAction === "approving"
                   ? "Waiting for Phantom…"
-                  : `Approve ${pendingOperation?.payment ? membershipPaymentAmountLabel(pendingOperation.payment.amountBaseUnits) : ""} test EURC`}
+                  : `Approve ${membershipPaymentAmountLabel(preparedPayment.amountBaseUnits)} test EURC`}
               </button>
             ) : pendingOperation?.payment ? (
               <button

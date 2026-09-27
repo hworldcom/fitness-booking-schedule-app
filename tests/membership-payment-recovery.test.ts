@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  membershipPaymentRecoveryMatchesOperation,
   membershipPaymentRecoveryKey,
   parseMembershipPaymentRecovery,
   readMembershipPaymentRecovery,
@@ -43,6 +44,29 @@ test("signed membership payment recovery keeps only bounded public evidence", ()
       JSON.stringify({ ...recovery, transactionSignature: "not-base58" }),
     ),
     null,
+  );
+});
+
+test("recovery is resumable only when both records identify the same operation", () => {
+  assert.equal(membershipPaymentRecoveryMatchesOperation(null, null), false);
+  assert.equal(
+    membershipPaymentRecoveryMatchesOperation(null, undefined),
+    false,
+  );
+  assert.equal(
+    membershipPaymentRecoveryMatchesOperation(recovery, undefined),
+    false,
+  );
+  assert.equal(
+    membershipPaymentRecoveryMatchesOperation(
+      recovery,
+      "98000000-0000-4000-8000-000000000102",
+    ),
+    false,
+  );
+  assert.equal(
+    membershipPaymentRecoveryMatchesOperation(recovery, recovery.operationId),
+    true,
   );
 });
 

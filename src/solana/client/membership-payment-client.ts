@@ -14,11 +14,12 @@ import {
   createSolanaRpc,
   createTransactionMessage,
   devnet,
+  getBase58Decoder,
   getBase64EncodedWireTransaction,
-  getSignatureFromTransaction,
+  isTransactionSendingSigner,
   setTransactionMessageFeePayerSigner,
   setTransactionMessageLifetimeUsingBlockhash,
-  signTransactionMessageWithSigners,
+  signAndSendTransactionMessageWithSigners,
   type Instruction,
   type AccountMeta,
   type TransactionSigner,
@@ -97,6 +98,9 @@ export async function prepareMembershipPaymentTransaction(input: {
   if (input.signer.address !== input.quote.walletAddress) {
     throw new MembershipPaymentClientError("wallet-mismatch");
   }
+  if (!isTransactionSendingSigner(input.signer)) {
+    throw new MembershipPaymentClientError("unsupported-wallet");
+  }
   const rpc = createSolanaRpc(devnet(rpcUrl));
   const mintAddress = address(input.quote.mintAddress);
   const tokenProgramAddress = address(input.quote.tokenProgramAddress);
@@ -132,7 +136,8 @@ export async function prepareMembershipPaymentTransaction(input: {
   ) {
     throw new MembershipPaymentClientError("destination-mismatch");
   }
-  if (sourceAccount.data.amount < BigInt(input.quote.amountBaseUnits)) {
+  const amountBaseUnits = input.quote.amountBaseUnits;
+  if (sourceAccount.data.amount < BigInt(amountBaseUnits)) {
     throw new MembershipPaymentClientError("insufficient-eurc");
   }
 
@@ -143,7 +148,7 @@ export async function prepareMembershipPaymentTransaction(input: {
         mint: mintAddress,
         destination: destinationTokenAddress,
         authority: input.signer,
-        amount: BigInt(input.quote.amountBaseUnits),
+        amount: BigInt(amountBaseUnits),
         decimals: input.quote.tokenDecimals,
       },
       { programAddress: tokenProgramAddress },
@@ -183,6 +188,7 @@ export async function prepareMembershipPaymentTransaction(input: {
       transactionMessage,
       sourceTokenAddress,
       unitsConsumed: simulation.value.unitsConsumed?.toString() ?? null,
+      amountBaseUnits,
     });
   } catch (error) {
     if (error instanceof MembershipPaymentClientError) throw error;
@@ -197,43 +203,18 @@ export type PreparedMembershipPaymentTransaction = Awaited<
 export async function approveAndBroadcastMembershipPayment(input: {
   prepared: PreparedMembershipPaymentTransaction;
 }) {
-  const rpcUrl = browserRpcUrl();
-  if (!rpcUrl) {
-    throw new MembershipPaymentClientError("configuration-unavailable");
-  }
-  let signedTransaction;
+  let transactionSignatureBytes;
   try {
-    signedTransaction = await signTransactionMessageWithSigners(
+    transactionSignatureBytes = await signAndSendTransactionMessageWithSigners(
       input.prepared.transactionMessage,
     );
   } catch (error) {
     if (walletCancelled(error)) {
       throw new MembershipPaymentClientError("wallet-cancelled");
     }
-    throw new MembershipPaymentClientError("unsupported-wallet");
+    throw new MembershipPaymentClientError("broadcast-failed");
   }
-  const transactionSignature = getSignatureFromTransaction(signedTransaction);
-  const rpc = createSolanaRpc(devnet(rpcUrl));
-  try {
-    const acknowledgedSignature = await rpc
-      .sendTransaction(getBase64EncodedWireTransaction(signedTransaction), {
-        encoding: "base64",
-        maxRetries: BigInt(3),
-        preflightCommitment: "confirmed",
-        skipPreflight: false,
-      })
-      .send({ abortSignal: AbortSignal.timeout(20_000) });
-    if (acknowledgedSignature !== transactionSignature) {
-      throw new MembershipPaymentClientError("broadcast-failed");
-    }
-    return Object.freeze({
-      signature: transactionSignature,
-      broadcastAcknowledged: true,
-    });
-  } catch {
-    return Object.freeze({
-      signature: transactionSignature,
-      broadcastAcknowledged: false,
-    });
-  }
+  return Object.freeze({
+    signature: getBase58Decoder().decode(transactionSignatureBytes),
+  });
 }

@@ -11,6 +11,15 @@ export type MembershipPaymentRecovery = Readonly<{
   transactionSignature: string;
 }>;
 
+export function membershipPaymentRecoveryMatchesOperation(
+  recovery: MembershipPaymentRecovery | null,
+  operationId: string | null | undefined,
+) {
+  return Boolean(
+    recovery && operationId && recovery.operationId === operationId,
+  );
+}
+
 export function parseMembershipPaymentRecovery(
   value: string | null,
 ): MembershipPaymentRecovery | null {
