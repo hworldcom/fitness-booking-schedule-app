@@ -112,6 +112,17 @@ export function prepareMembershipActivationRequest(input: {
   return mutation("/api/membership/activation/prepare", input);
 }
 
+export async function sponsorMembershipActivationRequest(operationId: string) {
+  try {
+    return await jsonRequest("/api/membership/activation/sponsor", {
+      method: "POST",
+      body: JSON.stringify({ operationId }),
+    });
+  } catch {
+    return { status: "unavailable" } as const;
+  }
+}
+
 export function submitMembershipActivationRequest(input: {
   operationId: string;
   transactionSignature: string;

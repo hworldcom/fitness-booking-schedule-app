@@ -91,6 +91,22 @@ export type MemberMembershipState = Readonly<{
   history: readonly MembershipActivationSnapshot[];
 }>;
 
+export function isRecoverableMembershipVerificationFailure(operation: {
+  status: MembershipActivationOperationStatus;
+  failureReason: MembershipActivationFailureReason | null;
+  payment: Readonly<{
+    transactionSignature: string | null;
+    submittedAt: string | null;
+  }> | null;
+}) {
+  return (
+    operation.status === "failed" &&
+    operation.failureReason === "verification-failed" &&
+    typeof operation.payment?.transactionSignature === "string" &&
+    typeof operation.payment.submittedAt === "string"
+  );
+}
+
 const uuidV4Pattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;

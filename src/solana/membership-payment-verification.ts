@@ -53,6 +53,41 @@ function unsignedIntegerString(value: unknown) {
   return typeof value === "string" && /^[0-9]+$/.test(value) ? value : null;
 }
 
+function exactTextArray(value: unknown): readonly string[] | null {
+  if (!Array.isArray(value) || value.length > 64) return null;
+  const values: string[] = [];
+  for (const candidate of value) {
+    const parsed = text(candidate);
+    if (!parsed) return null;
+    values.push(parsed);
+  }
+  return values;
+}
+
+function transferAuthorityMatches(
+  info: Record<string, unknown>,
+  walletAddress: string,
+  referenceAddress: string,
+) {
+  if ("authority" in info) {
+    return (
+      text(info.authority) === walletAddress &&
+      !("multisigAuthority" in info) &&
+      !("signers" in info)
+    );
+  }
+
+  // jsonParsed assigns trailing transferChecked accounts to its multisig
+  // fields even when our appended reference is read-only and did not sign.
+  // The transaction account metadata is checked independently below.
+  const parsedSigners = exactTextArray(info.signers);
+  return (
+    text(info.multisigAuthority) === walletAddress &&
+    parsedSigners?.length === 1 &&
+    parsedSigners[0] === referenceAddress
+  );
+}
+
 type ParsedAccount = Readonly<{
   pubkey: string;
   signer: boolean;
@@ -194,7 +229,11 @@ export function validateMembershipPaymentTransaction(
     text(info?.source) !== input.expectedSourceTokenAddress ||
     text(info?.mint) !== input.quote.mintAddress ||
     text(info?.destination) !== input.quote.destinationTokenAddress ||
-    text(info?.authority) !== input.quote.walletAddress ||
+    !transferAuthorityMatches(
+      info ?? {},
+      input.quote.walletAddress,
+      input.quote.referenceAddress,
+    ) ||
     unsignedIntegerString(tokenAmount?.amount) !==
       input.quote.amountBaseUnits ||
     integer(tokenAmount?.decimals) !== input.quote.tokenDecimals

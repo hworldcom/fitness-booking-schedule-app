@@ -1,29 +1,17 @@
 "use client";
 
-import { getAddMemoInstruction } from "@solana-program/memo";
 import {
-  fetchToken,
-  findAssociatedTokenPda,
-  getTransferCheckedInstruction,
-} from "@solana-program/token";
-import {
-  AccountRole,
   address,
-  appendTransactionMessageInstructions,
-  compileTransaction,
-  createSolanaRpc,
-  createTransactionMessage,
-  devnet,
   getBase58Decoder,
-  getBase64EncodedWireTransaction,
+  getBase64Encoder,
+  getTransactionDecoder,
   isTransactionSendingSigner,
-  setTransactionMessageFeePayerSigner,
-  setTransactionMessageLifetimeUsingBlockhash,
-  signAndSendTransactionMessageWithSigners,
-  type Instruction,
-  type AccountMeta,
+  signAndSendTransactionWithSigners,
+  type Address,
+  type Transaction,
   type TransactionSigner,
 } from "@solana/kit";
+import { sponsorMembershipActivationRequest } from "@/features/membership/activation-client";
 import type { MembershipPaymentQuote } from "@/solana/membership-payment";
 
 export type MembershipPaymentClientErrorCode =
@@ -34,6 +22,7 @@ export type MembershipPaymentClientErrorCode =
   | "insufficient-eurc"
   | "destination-mismatch"
   | "simulation-failed"
+  | "sponsor-unavailable"
   | "wallet-cancelled"
   | "broadcast-failed";
 
@@ -44,156 +33,117 @@ export class MembershipPaymentClientError extends Error {
   }
 }
 
-function browserRpcUrl() {
-  const value = process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
-  if (!value) return null;
-  try {
-    const parsed = new URL(value);
-    if (
-      parsed.protocol !== "https:" &&
-      !(
-        parsed.protocol === "http:" &&
-        (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1")
-      )
-    ) {
-      return null;
-    }
-    return parsed.toString();
-  } catch {
-    return null;
-  }
-}
-
-function withReferenceAccount<
-  TInstruction extends Instruction & {
-    readonly accounts: readonly AccountMeta[];
-  },
->(instruction: TInstruction, referenceAddress: string): Instruction {
-  return Object.freeze({
-    ...instruction,
-    accounts: Object.freeze([
-      ...instruction.accounts,
-      Object.freeze({
-        address: address(referenceAddress),
-        role: AccountRole.READONLY,
-      }),
-    ]),
-  });
-}
-
 function walletCancelled(error: unknown) {
   if (!error || typeof error !== "object") return false;
   const code = (error as { code?: unknown }).code;
   return code === 4001 || code === "4001";
 }
 
+function object(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function sponsorshipError(status: unknown) {
+  switch (status) {
+    case "configuration-unavailable":
+      return new MembershipPaymentClientError("configuration-unavailable");
+    case "account-unavailable":
+      return new MembershipPaymentClientError("source-account-unavailable");
+    case "insufficient-eurc":
+      return new MembershipPaymentClientError("insufficient-eurc");
+    case "destination-mismatch":
+      return new MembershipPaymentClientError("destination-mismatch");
+    case "simulation-failed":
+      return new MembershipPaymentClientError("simulation-failed");
+    default:
+      return new MembershipPaymentClientError("sponsor-unavailable");
+  }
+}
+
+function decodeSponsoredTransaction(input: {
+  wireTransaction: string;
+  sponsorAddress: Address;
+  walletAddress: Address;
+}): Transaction {
+  if (
+    input.wireTransaction.length === 0 ||
+    input.wireTransaction.length > 2_048
+  ) {
+    throw new MembershipPaymentClientError("sponsor-unavailable");
+  }
+  try {
+    const transaction = getTransactionDecoder().decode(
+      getBase64Encoder().encode(input.wireTransaction) as Uint8Array,
+    );
+    const signatures = transaction.signatures;
+    const signerAddresses = Object.keys(signatures);
+    if (
+      signerAddresses.length !== 2 ||
+      signerAddresses[0] !== input.sponsorAddress ||
+      signerAddresses[1] !== input.walletAddress ||
+      !signatures[input.sponsorAddress] ||
+      signatures[input.walletAddress] !== null
+    ) {
+      throw new Error("Unexpected sponsored transaction signers.");
+    }
+    return transaction;
+  } catch (error) {
+    if (error instanceof MembershipPaymentClientError) throw error;
+    throw new MembershipPaymentClientError("sponsor-unavailable");
+  }
+}
+
 export async function prepareMembershipPaymentTransaction(input: {
+  operationId: string;
   quote: MembershipPaymentQuote;
   signer: TransactionSigner;
 }) {
-  const rpcUrl = browserRpcUrl();
-  if (!rpcUrl) {
-    throw new MembershipPaymentClientError("configuration-unavailable");
-  }
   if (input.signer.address !== input.quote.walletAddress) {
     throw new MembershipPaymentClientError("wallet-mismatch");
   }
   if (!isTransactionSendingSigner(input.signer)) {
     throw new MembershipPaymentClientError("unsupported-wallet");
   }
-  const rpc = createSolanaRpc(devnet(rpcUrl));
-  const mintAddress = address(input.quote.mintAddress);
-  const tokenProgramAddress = address(input.quote.tokenProgramAddress);
-  const [sourceTokenAddress] = await findAssociatedTokenPda({
-    owner: input.signer.address,
-    mint: mintAddress,
-    tokenProgram: tokenProgramAddress,
-  });
-  const [destinationTokenAddress] = await findAssociatedTokenPda({
-    owner: address(input.quote.destinationOwnerAddress),
-    mint: mintAddress,
-    tokenProgram: tokenProgramAddress,
-  });
-  if (destinationTokenAddress !== input.quote.destinationTokenAddress) {
-    throw new MembershipPaymentClientError("destination-mismatch");
-  }
-
-  let sourceAccount;
-  let destinationAccount;
-  try {
-    [sourceAccount, destinationAccount] = await Promise.all([
-      fetchToken(rpc, sourceTokenAddress, { commitment: "confirmed" }),
-      fetchToken(rpc, destinationTokenAddress, { commitment: "confirmed" }),
-    ]);
-  } catch {
-    throw new MembershipPaymentClientError("source-account-unavailable");
+  const result = object(
+    await sponsorMembershipActivationRequest(input.operationId),
+  );
+  if (result?.status !== "ready") {
+    throw sponsorshipError(result?.status);
   }
   if (
-    sourceAccount.data.owner !== input.signer.address ||
-    sourceAccount.data.mint !== mintAddress ||
-    destinationAccount.data.owner !== input.quote.destinationOwnerAddress ||
-    destinationAccount.data.mint !== mintAddress
+    typeof result.wireTransaction !== "string" ||
+    typeof result.sponsorAddress !== "string" ||
+    typeof result.sourceTokenAddress !== "string" ||
+    result.amountBaseUnits !== input.quote.amountBaseUnits ||
+    (result.unitsConsumed !== null && typeof result.unitsConsumed !== "string")
   ) {
-    throw new MembershipPaymentClientError("destination-mismatch");
+    throw new MembershipPaymentClientError("sponsor-unavailable");
   }
-  const amountBaseUnits = input.quote.amountBaseUnits;
-  if (sourceAccount.data.amount < BigInt(amountBaseUnits)) {
-    throw new MembershipPaymentClientError("insufficient-eurc");
-  }
-
-  const transferInstruction = withReferenceAccount(
-    getTransferCheckedInstruction(
-      {
-        source: sourceTokenAddress,
-        mint: mintAddress,
-        destination: destinationTokenAddress,
-        authority: input.signer,
-        amount: BigInt(amountBaseUnits),
-        decimals: input.quote.tokenDecimals,
-      },
-      { programAddress: tokenProgramAddress },
-    ),
-    input.quote.referenceAddress,
-  );
-  const memoInstruction = getAddMemoInstruction({ memo: input.quote.memo });
-  const { value: latestBlockhash } = await rpc
-    .getLatestBlockhash({ commitment: "confirmed" })
-    .send({ abortSignal: AbortSignal.timeout(12_000) });
-  const transactionMessage = appendTransactionMessageInstructions(
-    [transferInstruction, memoInstruction],
-    setTransactionMessageLifetimeUsingBlockhash(
-      latestBlockhash,
-      setTransactionMessageFeePayerSigner(
-        input.signer,
-        createTransactionMessage({ version: "legacy" }),
-      ),
-    ),
-  );
-  const compiledTransaction = compileTransaction(transactionMessage);
+  let sponsorAddress: Address;
+  let sourceTokenAddress: Address;
   try {
-    const simulation = await rpc
-      .simulateTransaction(
-        getBase64EncodedWireTransaction(compiledTransaction),
-        {
-          commitment: "confirmed",
-          encoding: "base64",
-          sigVerify: false,
-        },
-      )
-      .send({ abortSignal: AbortSignal.timeout(12_000) });
-    if (simulation.value.err !== null) {
-      throw new MembershipPaymentClientError("simulation-failed");
-    }
-    return Object.freeze({
-      transactionMessage,
-      sourceTokenAddress,
-      unitsConsumed: simulation.value.unitsConsumed?.toString() ?? null,
-      amountBaseUnits,
-    });
-  } catch (error) {
-    if (error instanceof MembershipPaymentClientError) throw error;
-    throw new MembershipPaymentClientError("simulation-failed");
+    sponsorAddress = address(result.sponsorAddress);
+    sourceTokenAddress = address(result.sourceTokenAddress);
+  } catch {
+    throw new MembershipPaymentClientError("sponsor-unavailable");
   }
+  if (sponsorAddress === input.signer.address) {
+    throw new MembershipPaymentClientError("sponsor-unavailable");
+  }
+  return Object.freeze({
+    transaction: decodeSponsoredTransaction({
+      wireTransaction: result.wireTransaction,
+      sponsorAddress,
+      walletAddress: input.signer.address,
+    }),
+    signer: input.signer,
+    sponsorAddress,
+    sourceTokenAddress,
+    unitsConsumed: result.unitsConsumed,
+    amountBaseUnits: input.quote.amountBaseUnits,
+  });
 }
 
 export type PreparedMembershipPaymentTransaction = Awaited<
@@ -205,8 +155,9 @@ export async function approveAndBroadcastMembershipPayment(input: {
 }) {
   let transactionSignatureBytes;
   try {
-    transactionSignatureBytes = await signAndSendTransactionMessageWithSigners(
-      input.prepared.transactionMessage,
+    transactionSignatureBytes = await signAndSendTransactionWithSigners(
+      [input.prepared.signer],
+      input.prepared.transaction,
     );
   } catch (error) {
     if (walletCancelled(error)) {

@@ -3,6 +3,7 @@ import "server-only";
 import { findAssociatedTokenPda } from "@solana-program/token";
 import { address, createSolanaRpc, devnet, signature } from "@solana/kit";
 import type { MembershipPaymentQuote } from "@/solana/membership-payment";
+import { isMembershipPaymentDevnetGenesisHash } from "@/solana/membership-payment";
 import {
   validateMembershipPaymentTransaction,
   type VerifiedMembershipPaymentEvidence,
@@ -12,7 +13,6 @@ import {
   type MembershipPaymentConfig,
 } from "./membership-payment-config";
 
-const SOLANA_DEVNET_GENESIS_HASH = "EtWTRABZaYq6iMfeYKouRu166VU2xqa1";
 const MAX_REFERENCE_CANDIDATES = 8;
 
 export type MembershipPaymentReconciliation =
@@ -53,7 +53,7 @@ async function verifySignature(
   const abortSignal = AbortSignal.timeout(12_000);
   try {
     const genesisHash = await rpc.getGenesisHash().send({ abortSignal });
-    if (genesisHash !== SOLANA_DEVNET_GENESIS_HASH) {
+    if (!isMembershipPaymentDevnetGenesisHash(genesisHash)) {
       return { status: "rejected", reason: "wrong-cluster" };
     }
     const typedSignature = signature(transactionSignature);

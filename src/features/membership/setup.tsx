@@ -99,6 +99,8 @@ function paymentErrorMessage(error: unknown) {
       return "The configured membership-pool token account did not pass validation.";
     case "simulation-failed":
       return "The exact Devnet transaction did not pass simulation, so Phantom was not opened.";
+    case "sponsor-unavailable":
+      return "MovX could not prepare the Devnet network fee. No wallet approval was requested.";
     case "wallet-cancelled":
       return "You cancelled the Phantom approval. No membership was activated.";
     case "broadcast-failed":
@@ -401,6 +403,7 @@ function ReadyMembershipSetup({
     setNotice(null);
     try {
       const prepared = await prepareMembershipPaymentTransaction({
+        operationId: pendingOperation.id,
         quote: payment,
         signer: connected.signer,
       });
@@ -714,8 +717,8 @@ function ReadyMembershipSetup({
             <p>
               <strong>Devnet demo payment only.</strong>
               Activation uses test EURC on Solana Devnet. It never charges real
-              euros, but your wallet needs test EURC and a small amount of test
-              SOL for the network fee.
+              euros. Your wallet needs test EURC; MovX pays the test SOL network
+              fee.
             </p>
           </div>
           {paymentError && (
@@ -770,7 +773,8 @@ function ReadyMembershipSetup({
               </dl>
               <p>
                 The membership becomes active only after MovX independently
-                verifies final settlement. Test SOL pays the network fee.
+                verifies final settlement. MovX pays the Devnet SOL network fee;
+                your linked wallet authorizes only the EURC transfer.
               </p>
               {pendingOperation.payment.transactionSignature && (
                 <a

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   isMembershipActivationFailureReason,
+  isRecoverableMembershipVerificationFailure,
   normalizeMembershipActivationId,
   normalizeMembershipActivationSelection,
   normalizeMembershipPaymentAddress,
@@ -76,4 +77,54 @@ test("only bounded activation failure reasons are accepted", () => {
     assert.equal(isMembershipActivationFailureReason(reason), true);
   }
   assert.equal(isMembershipActivationFailureReason("payment-refunded"), false);
+});
+
+test("only submitted verification failures are reconciliation-recoverable", () => {
+  const submittedPayment = {
+    transactionSignature,
+    submittedAt: "2026-09-27T12:00:00.000Z",
+  };
+  assert.equal(
+    isRecoverableMembershipVerificationFailure({
+      status: "failed",
+      failureReason: "verification-failed",
+      payment: submittedPayment,
+    }),
+    true,
+  );
+
+  for (const candidate of [
+    {
+      status: "failed" as const,
+      failureReason: "wallet-cancelled" as const,
+      payment: submittedPayment,
+    },
+    {
+      status: "failed" as const,
+      failureReason: "transaction-rejected" as const,
+      payment: submittedPayment,
+    },
+    {
+      status: "failed" as const,
+      failureReason: "superseded" as const,
+      payment: submittedPayment,
+    },
+    {
+      status: "failed" as const,
+      failureReason: "verification-failed" as const,
+      payment: null,
+    },
+    {
+      status: "failed" as const,
+      failureReason: "verification-failed" as const,
+      payment: { transactionSignature, submittedAt: null },
+    },
+    {
+      status: "submitted" as const,
+      failureReason: null,
+      payment: submittedPayment,
+    },
+  ]) {
+    assert.equal(isRecoverableMembershipVerificationFailure(candidate), false);
+  }
 });

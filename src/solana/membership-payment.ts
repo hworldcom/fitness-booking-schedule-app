@@ -3,6 +3,8 @@ import { address, type Address } from "@solana/kit";
 export { MEMBERSHIP_PAYMENT_CLUSTER } from "@/domain/membership-activation";
 export type { MembershipPaymentQuote } from "@/domain/membership-activation";
 export const MEMBERSHIP_PAYMENT_CLUSTER_LABEL = "Solana Devnet";
+export const MEMBERSHIP_PAYMENT_DEVNET_GENESIS_HASH =
+  "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG";
 export const MEMBERSHIP_PAYMENT_CURRENCY = "EURC" as const;
 export const MEMBERSHIP_PAYMENT_MINT_ADDRESS = address(
   "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr",
@@ -23,6 +25,10 @@ export const MEMBERSHIP_PAYMENT_EXPLORER_BASE_URL =
 
 export function membershipPaymentMemo(operationId: string) {
   return `${MEMBERSHIP_PAYMENT_MEMO_PREFIX}${operationId}`;
+}
+
+export function isMembershipPaymentDevnetGenesisHash(value: unknown) {
+  return value === MEMBERSHIP_PAYMENT_DEVNET_GENESIS_HASH;
 }
 
 export function membershipPaymentExplorerUrl(signature: string) {

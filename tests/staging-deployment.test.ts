@@ -16,6 +16,8 @@ const validEnvironment = {
   SOLANA_CLUSTER: "devnet",
   NEXT_PUBLIC_SOLANA_RPC_URL: "https://api.devnet.solana.com",
   SOLANA_RPC_URL: "https://api.devnet.solana.com",
+  SOLANA_FEE_SPONSOR_ADDRESS: "11111111111111111111111111111111",
+  SOLANA_FEE_SPONSOR_KEYPAIR_BASE64: Buffer.alloc(64).toString("base64"),
 };
 
 test("staging deployment validation accepts only the staging contract", () => {
@@ -53,6 +55,8 @@ test("Wrangler declares exactly the approved staging binding names", () => {
     "SOLANA_CLUSTER",
     "NEXT_PUBLIC_SOLANA_RPC_URL",
     "SOLANA_RPC_URL",
+    "SOLANA_FEE_SPONSOR_ADDRESS",
+    "SOLANA_FEE_SPONSOR_KEYPAIR_BASE64",
   ];
   for (const name of names) assert.match(wrangler, new RegExp(`"${name}"`));
   assert.doesNotMatch(wrangler, /STAGING_AUTH_TEST|EXPECTED_DATABASE_USER/);

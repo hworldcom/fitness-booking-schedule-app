@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { MembershipPaymentQuote } from "@/domain/membership-activation";
+import {
+  isMembershipPaymentDevnetGenesisHash,
+  MEMBERSHIP_PAYMENT_DEVNET_GENESIS_HASH,
+} from "@/solana/membership-payment";
 import { validateMembershipPaymentTransaction } from "@/solana/membership-payment-verification";
 
 const wallet = "So11111111111111111111111111111111111111112";
@@ -28,9 +32,11 @@ const quote: MembershipPaymentQuote = Object.freeze({
 
 function fixture(input?: {
   referenceWritable?: boolean;
+  referenceSigner?: boolean;
   destinationOwner?: string;
   transferredAmount?: string;
   executionError?: unknown;
+  authorityInfo?: Readonly<Record<string, unknown>>;
 }) {
   const transferredAmount = input?.transferredAmount ?? "80000000";
   return {
@@ -46,7 +52,7 @@ function fixture(input?: {
           { pubkey: destination, signer: false, writable: true },
           {
             pubkey: reference,
-            signer: false,
+            signer: input?.referenceSigner ?? false,
             writable: input?.referenceWritable ?? false,
           },
         ],
@@ -60,7 +66,7 @@ function fixture(input?: {
                 source,
                 mint,
                 destination,
-                authority: wallet,
+                ...(input?.authorityInfo ?? { authority: wallet }),
                 tokenAmount: { amount: transferredAmount, decimals: 6 },
               },
             },
@@ -115,6 +121,29 @@ function validate(transaction: unknown) {
   });
 }
 
+test("Devnet cluster verification requires the complete genesis hash", () => {
+  assert.equal(
+    MEMBERSHIP_PAYMENT_DEVNET_GENESIS_HASH,
+    "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
+  );
+  assert.equal(
+    isMembershipPaymentDevnetGenesisHash(
+      "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
+    ),
+    true,
+  );
+  assert.equal(
+    isMembershipPaymentDevnetGenesisHash("EtWTRABZaYq6iMfeYKouRu166VU2xqa1"),
+    false,
+  );
+  assert.equal(
+    isMembershipPaymentDevnetGenesisHash(
+      "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY",
+    ),
+    false,
+  );
+});
+
 test("finalized EURC evidence accepts only the exact quote and balance movement", () => {
   assert.deepEqual(validate(fixture()), {
     status: "verified",
@@ -124,6 +153,81 @@ test("finalized EURC evidence accepts only the exact quote and balance movement"
       sourceTokenAddress: source,
     },
   });
+});
+
+test("payment verification accepts the exact reference-bearing RPC authority shape", () => {
+  assert.deepEqual(
+    validate(
+      fixture({
+        authorityInfo: {
+          multisigAuthority: wallet,
+          signers: [reference],
+        },
+      }),
+    ),
+    {
+      status: "verified",
+      evidence: {
+        signature: transactionSignature,
+        slot: "500000001",
+        sourceTokenAddress: source,
+      },
+    },
+  );
+});
+
+test("payment verification rejects ambiguous or genuine multisig evidence", () => {
+  const rejected = {
+    status: "rejected",
+    reason: "transfer-shape-mismatch",
+  } as const;
+
+  assert.deepEqual(
+    validate(
+      fixture({
+        authorityInfo: {
+          multisigAuthority: poolOwner,
+          signers: [reference],
+        },
+      }),
+    ),
+    rejected,
+  );
+  assert.deepEqual(
+    validate(
+      fixture({
+        authorityInfo: {
+          multisigAuthority: wallet,
+          signers: [reference, poolOwner],
+        },
+      }),
+    ),
+    rejected,
+  );
+  assert.deepEqual(
+    validate(
+      fixture({
+        authorityInfo: {
+          authority: wallet,
+          multisigAuthority: wallet,
+          signers: [reference],
+        },
+      }),
+    ),
+    rejected,
+  );
+  assert.deepEqual(
+    validate(
+      fixture({
+        referenceSigner: true,
+        authorityInfo: {
+          multisigAuthority: wallet,
+          signers: [reference],
+        },
+      }),
+    ),
+    { status: "rejected", reason: "reference-mismatch" },
+  );
 });
 
 test("payment verification rejects mutable references and the wrong pool owner", () => {

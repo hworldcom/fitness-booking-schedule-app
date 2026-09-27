@@ -38,6 +38,8 @@ const secondAuthUserId = "98000000-0000-4000-8000-000000000002";
 const firstOperationId = "98000000-0000-4000-8000-000000000101";
 const secondOperationId = "98000000-0000-4000-8000-000000000102";
 const secondActorOperationId = "98000000-0000-4000-8000-000000000201";
+const recoveryOperationId = "98000000-0000-4000-8000-000000000202";
+const rejectedOperationId = "98000000-0000-4000-8000-000000000203";
 const overlappingOperationId = "98000000-0000-4000-8000-000000000301";
 const invalidOperationId = "98000000-0000-4000-8000-000000000901";
 const firstWallet = "So11111111111111111111111111111111111111112";
@@ -45,6 +47,7 @@ const secondWallet = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 const destinationWallet = "ComputeBudget111111111111111111111111111111";
 const firstSignature = "2".repeat(88);
 const secondSignature = "3".repeat(88);
+const thirdSignature = "4".repeat(88);
 const mintAddress = "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr";
 const tokenProgramAddress = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 const basicGyms = [
@@ -235,6 +238,13 @@ async function linkWallet(
 async function directCompletion(
   connection: typeof runtimeA,
   actor: AuthorizedActor,
+  input: {
+    operationId: string;
+    walletAddress: string;
+    referenceMarker: string;
+    transactionSignature: string;
+    amountBaseUnits: string;
+  },
 ) {
   return connection.begin(async (transaction) => {
     await transaction`
@@ -252,16 +262,16 @@ async function directCompletion(
     >`
       select *
       from app.complete_verified_membership_payment(
-        ${secondOperationId}::uuid,
-        ${firstWallet},
+        ${input.operationId}::uuid,
+        ${input.walletAddress},
         ${destinationWallet},
         ${mintAddress},
         ${tokenProgramAddress},
-        ${"5".repeat(44)},
+        ${input.referenceMarker.repeat(44)},
         6::integer,
-        ${firstSignature},
+        ${input.transactionSignature},
         500000001::bigint,
-        80000000::numeric
+        ${input.amountBaseUnits}::numeric
       )
     `;
     return rows[0]!;
@@ -471,8 +481,20 @@ test("submission uses the prepared linked wallet and concurrent confirmation cre
   });
 
   const [firstCompletion, secondCompletion] = await Promise.all([
-    directCompletion(runtimeA, firstActor),
-    directCompletion(runtimeB, firstActor),
+    directCompletion(runtimeA, firstActor, {
+      operationId: secondOperationId,
+      walletAddress: firstWallet,
+      referenceMarker: "5",
+      transactionSignature: firstSignature,
+      amountBaseUnits: "80000000",
+    }),
+    directCompletion(runtimeB, firstActor, {
+      operationId: secondOperationId,
+      walletAddress: firstWallet,
+      referenceMarker: "5",
+      transactionSignature: firstSignature,
+      amountBaseUnits: "80000000",
+    }),
   ]);
   assert.deepEqual(
     new Set([
@@ -592,6 +614,17 @@ test("another member sees no private state and failed activation creates no peri
   `;
   assert.equal(periodCount[0]?.count, 0);
 
+  assert.deepEqual(
+    await directCompletion(runtimeA, secondActor, {
+      operationId: secondActorOperationId,
+      walletAddress: secondWallet,
+      referenceMarker: "6",
+      transactionSignature: secondSignature,
+      amountBaseUnits: "150000000",
+    }),
+    { completion_result: "state-conflict", membership_period_id: null },
+  );
+
   const secondState = membershipStateFromRecords(
     await withActorDatabaseContext(secondActor, currentMembershipStateRecords),
   );
@@ -610,12 +643,53 @@ test("another member sees no private state and failed activation creates no peri
   );
 });
 
-test("one chain transaction cannot be reused by another activation", async () => {
-  const reuseOperationId = "98000000-0000-4000-8000-000000000202";
+test("transaction rejection remains terminal to verified completion", async () => {
   assert.equal(
     await withActorDatabaseContext(secondActor, (transaction) =>
       prepareMembershipActivationRecord(transaction, {
-        operationId: reuseOperationId,
+        operationId: rejectedOperationId,
+        planId: "classic",
+        gymIds: basicGyms,
+        ...paymentPreparation("7"),
+      }),
+    ),
+    "prepared",
+  );
+  assert.equal(
+    await withActorDatabaseContext(secondActor, (transaction) =>
+      recordMembershipActivationSubmission(transaction, {
+        operationId: rejectedOperationId,
+        transactionSignature: thirdSignature,
+      }),
+    ),
+    "submitted",
+  );
+  assert.equal(
+    await withActorDatabaseContext(secondActor, (transaction) =>
+      failMembershipActivationRecord(transaction, {
+        operationId: rejectedOperationId,
+        reason: "transaction-rejected",
+      }),
+    ),
+    "failed",
+  );
+  assert.deepEqual(
+    await directCompletion(runtimeA, secondActor, {
+      operationId: rejectedOperationId,
+      walletAddress: secondWallet,
+      referenceMarker: "7",
+      transactionSignature: thirdSignature,
+      amountBaseUnits: "150000000",
+    }),
+    { completion_result: "state-conflict", membership_period_id: null },
+  );
+});
+
+test("one chain transaction cannot be reused and a verification failure recovers once", async () => {
+  assert.equal(
+    await withActorDatabaseContext(secondActor, (transaction) =>
+      prepareMembershipActivationRecord(transaction, {
+        operationId: recoveryOperationId,
         planId: "classic",
         gymIds: basicGyms,
         ...paymentPreparation("9"),
@@ -626,7 +700,7 @@ test("one chain transaction cannot be reused by another activation", async () =>
   assert.equal(
     await withActorDatabaseContext(secondActor, (transaction) =>
       recordMembershipActivationSubmission(transaction, {
-        operationId: reuseOperationId,
+        operationId: recoveryOperationId,
         transactionSignature: firstSignature,
       }),
     ),
@@ -635,10 +709,93 @@ test("one chain transaction cannot be reused by another activation", async () =>
   assert.equal(
     await withActorDatabaseContext(secondActor, (transaction) =>
       recordMembershipActivationSubmission(transaction, {
-        operationId: reuseOperationId,
+        operationId: recoveryOperationId,
         transactionSignature: secondSignature,
       }),
     ),
     "submitted",
+  );
+
+  assert.equal(
+    await withActorDatabaseContext(secondActor, (transaction) =>
+      failMembershipActivationRecord(transaction, {
+        operationId: recoveryOperationId,
+        reason: "verification-failed",
+      }),
+    ),
+    "failed",
+  );
+  assert.deepEqual(
+    await directCompletion(runtimeA, secondActor, {
+      operationId: recoveryOperationId,
+      walletAddress: secondWallet,
+      referenceMarker: "9",
+      transactionSignature: secondSignature,
+      amountBaseUnits: "149999999",
+    }),
+    { completion_result: "state-conflict", membership_period_id: null },
+  );
+
+  const [firstRecovery, secondRecovery] = await Promise.all([
+    directCompletion(runtimeA, secondActor, {
+      operationId: recoveryOperationId,
+      walletAddress: secondWallet,
+      referenceMarker: "9",
+      transactionSignature: secondSignature,
+      amountBaseUnits: "150000000",
+    }),
+    directCompletion(runtimeB, secondActor, {
+      operationId: recoveryOperationId,
+      walletAddress: secondWallet,
+      referenceMarker: "9",
+      transactionSignature: secondSignature,
+      amountBaseUnits: "150000000",
+    }),
+  ]);
+  assert.deepEqual(
+    new Set([
+      firstRecovery.completion_result,
+      secondRecovery.completion_result,
+    ]),
+    new Set(["confirmed", "existing"]),
+  );
+  assert.ok(firstRecovery.membership_period_id);
+  assert.equal(
+    firstRecovery.membership_period_id,
+    secondRecovery.membership_period_id,
+  );
+
+  const recovered = await admin<
+    Array<{
+      operation_status: string;
+      failure_reason: string | null;
+      failed_at: Date | null;
+      period_count: number;
+    }>
+  >`
+    select
+      operation.operation_status,
+      operation.failure_reason,
+      operation.failed_at,
+      count(period.id)::integer as period_count
+    from app.membership_activation_operations operation
+    left join app.membership_periods period
+      on period.activation_operation_id = operation.id
+    where operation.id = ${recoveryOperationId}::uuid
+    group by operation.id
+  `;
+  assert.deepEqual(
+    {
+      operationStatus: recovered[0]?.operation_status,
+      failureReason: recovered[0]?.failure_reason,
+      failedAt: recovered[0]?.failed_at,
+      periodCount: recovered[0]?.period_count,
+    },
+    {
+      operationStatus: "confirmed",
+      failureReason: null,
+      failedAt: null,
+      periodCount: 1,
+    },
   );
 });

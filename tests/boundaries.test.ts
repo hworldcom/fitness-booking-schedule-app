@@ -152,6 +152,8 @@ test("privileged database entry points carry the Next.js server-only marker", ()
     "src/server/catalogue/service.ts",
     "src/server/membership/service.ts",
     "src/server/solana/membership-payment-config.ts",
+    "src/server/solana/membership-fee-sponsor-config.ts",
+    "src/server/solana/membership-payment-sponsorship.ts",
     "src/server/solana/membership-payment-reconciliation.ts",
     "src/server/wallet/signature.ts",
     "src/server/wallet/club-service.ts",
@@ -169,4 +171,30 @@ test("verified membership completion is not exposed through an application route
   );
 
   assert.deepEqual(violations, []);
+});
+
+test("membership fee-sponsor secret has one server-only source consumer", () => {
+  const consumers = sourceFiles(src)
+    .filter((file) =>
+      readFileSync(file, "utf8").includes("SOLANA_FEE_SPONSOR_KEYPAIR_BASE64"),
+    )
+    .map((file) => path.relative(root, file));
+
+  assert.deepEqual(consumers, [
+    "src/server/solana/membership-fee-sponsor-config.ts",
+  ]);
+});
+
+test("membership sponsorship route accepts only an operation identifier", () => {
+  const route = readFileSync(
+    path.join(root, "src/app/api/membership/activation/sponsor/route.ts"),
+    "utf8",
+  );
+
+  assert.match(route, /Object\.keys\(record\)\.length !== 1/);
+  assert.match(route, /"operationId" in record/);
+  assert.doesNotMatch(
+    route,
+    /record\.(?:wireTransaction|transaction|amount|mint|destination|wallet|blockhash)/,
+  );
 });

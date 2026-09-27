@@ -23,6 +23,8 @@ const approvedBindings = [
   "SOLANA_CLUSTER",
   "NEXT_PUBLIC_SOLANA_RPC_URL",
   "SOLANA_RPC_URL",
+  "SOLANA_FEE_SPONSOR_ADDRESS",
+  "SOLANA_FEE_SPONSOR_KEYPAIR_BASE64",
 ];
 
 function fail(message) {
@@ -58,6 +60,25 @@ function validatedEnvironment() {
       fail(`${name} must use HTTPS in staging.`);
     }
   }
+  if (
+    !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(values.SOLANA_FEE_SPONSOR_ADDRESS)
+  ) {
+    fail("SOLANA_FEE_SPONSOR_ADDRESS must be a base58 Solana address.");
+  }
+  let sponsorKeypair;
+  try {
+    sponsorKeypair = Buffer.from(
+      values.SOLANA_FEE_SPONSOR_KEYPAIR_BASE64,
+      "base64",
+    );
+  } catch {
+    fail("SOLANA_FEE_SPONSOR_KEYPAIR_BASE64 must be valid base64.");
+  }
+  if (sponsorKeypair.length !== 64) {
+    sponsorKeypair.fill(0);
+    fail("SOLANA_FEE_SPONSOR_KEYPAIR_BASE64 must decode to 64 bytes.");
+  }
+  sponsorKeypair.fill(0);
 
   let supabaseUrl;
   try {

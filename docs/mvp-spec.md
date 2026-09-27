@@ -41,6 +41,7 @@ The identifiers below remain stable so tickets can cite product decisions precis
 | C25 | Member and gym interfaces must show predictable amounts and states without hidden platform surcharges or invented payout claims.                                                                                                                                                     |
 | C26 | There is no membership transfer, transfer fee, recipient flow, resale listing or transferred entitlement in the current MVP.                                                                                                                                                         |
 | C27 | Included check-ins produce a transparent provisional usage allocation for gyms. The MVP must not make a final payout claim until unused value, refunds, reserves, taxes, aggregation and settlement timing are decided.                                                              |
+| C28 | MovX pays the Solana network fee for the Devnet membership-activation demonstration. The member still explicitly authorizes the exact EURC transfer; the sponsor key remains server-only and may sign only a server-constructed actor-owned activation transaction.                  |
 
 ### Superseded decisions retained as history
 
@@ -52,15 +53,15 @@ Previous versions used C07/C08 for class-pass purchase and refunds, C16 for even
 
 These are working defaults, not confirmed production policy.
 
-| ID  | Proposed default                                                                                                                                                                                                       |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P07 | Count at most one included check-in for a membership on a venue-local calendar date. A separately paid non-core visit is a different transaction and attendance record.                                                |
-| P13 | Platform pricing, the party responsible for network fees and the platform's long-term revenue model remain unresolved.                                                                                                 |
+| ID  | Proposed default                                                                                                                                                                                                                                                        |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P07 | Count at most one included check-in for a membership on a venue-local calendar date. A separately paid non-core visit is a different transaction and attendance record.                                                                                                 |
+| P13 | Production network-fee policy, platform pricing and the platform's long-term revenue model remain unresolved; C28 applies only to the bounded Devnet membership-activation demonstration.                                                                               |
 | P15 | The demo creates one fixed monthly membership period beginning at verified activation and ending at the same instant one calendar month later, with no automatic renewal or overlapping period. Production billing term, renewal and cancellation behavior remain open. |
-| P16 | Calculate a provisional pro-rata allocation for the demonstrated period. Keep zero-use and partially used value in the test pool and display it as unresolved rather than treating it as MovX revenue or a gym payout. |
-| P17 | The four core gyms are frozen after period activation. The member may choose a different eligible set for a later period.                                                                                              |
-| P18 | €80 Basic, €150 Classic and €15 non-core access are illustrative demo values stored as configuration or versioned plan data.                                                                                           |
-| P19 | Production cancellations, cooling-off rights, refunds, chargebacks and gym closure handling are unresolved. Paid but undelivered access must be treated as an obligation, never as automatic platform revenue.         |
+| P16 | Calculate a provisional pro-rata allocation for the demonstrated period. Keep zero-use and partially used value in the test pool and display it as unresolved rather than treating it as MovX revenue or a gym payout.                                                  |
+| P17 | The four core gyms are frozen after period activation. The member may choose a different eligible set for a later period.                                                                                                                                               |
+| P18 | €80 Basic, €150 Classic and €15 non-core access are illustrative demo values stored as configuration or versioned plan data.                                                                                                                                            |
+| P19 | Production cancellations, cooling-off rights, refunds, chargebacks and gym closure handling are unresolved. Paid but undelivered access must be treated as an obligation, never as automatic platform revenue.                                                          |
 
 Earlier P01 and P09–P12/P14 described removed challenges, passes, events or transfers and are retired from the current contract.
 
@@ -216,7 +217,7 @@ The four gym identifiers must be distinct, active and eligible for the selected 
 
 ### 7.3 Activation
 
-The member reviews the exact plan version, selected gyms, price, period and wallet before approving a Devnet-EURC transaction. The application records an intent before submission, verifies the confirmed transaction against the expected mint, amount, source, destination and operation, and then activates exactly one period. Cancellation or failure leaves no active membership. A retry reuses or safely reconciles the same operation rather than creating a second membership or payment.
+The member reviews the exact plan version, selected gyms, price, period and wallet before approving a Devnet-EURC transaction. The application records an intent before submission, verifies the confirmed transaction against the expected mint, amount, source, destination and operation, and then activates exactly one period. Cancellation or failure leaves no active membership. A retry reuses or safely reconciles the same operation rather than creating a second membership or payment. If a submitted payment was classified as `verification-failed`, reconciliation may recover it only after rerunning the complete finalized-chain verification against the same immutable quote and transaction signature; wallet cancellation, on-chain rejection and superseded operations remain terminal.
 
 ### 7.4 Included check-ins
 

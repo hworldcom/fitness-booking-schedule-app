@@ -3,6 +3,7 @@ import "server-only";
 import type { AuthSessionSnapshot } from "@/auth/contracts";
 import {
   isMembershipActivationFailureReason,
+  isRecoverableMembershipVerificationFailure,
   MEMBERSHIP_PAYMENT_CLUSTER,
   normalizeMembershipActivationId,
   normalizeMembershipActivationSelection,
@@ -22,6 +23,10 @@ import {
 } from "@/solana/membership-payment";
 import { membershipPaymentConfig } from "@/server/solana/membership-payment-config";
 import { reconcileMembershipPayment } from "@/server/solana/membership-payment-reconciliation";
+import {
+  sponsorMembershipPayment,
+  type MembershipPaymentSponsorshipResult,
+} from "@/server/solana/membership-payment-sponsorship";
 import { verifiedAuthSession } from "@/server/auth/session";
 import {
   withAuthorizedActor,
@@ -80,6 +85,16 @@ export type MembershipActivationReconciliationResult = Readonly<{
   membershipPeriodId?: string;
   reason?: string;
 }>;
+
+export type MembershipActivationSponsorshipResult =
+  | MembershipPaymentSponsorshipResult
+  | Readonly<{
+      status:
+        | "invalid-request"
+        | "operation-conflict"
+        | "state-conflict"
+        | MembershipAccessStatus;
+    }>;
 
 export type VerifiedMembershipPayment = Readonly<{
   verification: "verified-devnet-eurc-payment";
@@ -325,6 +340,24 @@ export async function submitMembershipActivation(input: {
     : accessStatus(result.status);
 }
 
+export async function sponsorMembershipActivation(input: {
+  operationId: unknown;
+}): Promise<MembershipActivationSponsorshipResult> {
+  const operationId = normalizeMembershipActivationId(input.operationId);
+  if (!operationId) return Object.freeze({ status: "invalid-request" });
+
+  const state = await memberMembershipState();
+  if (state.status !== "ready") return accessStatus(state.status);
+  const operation = state.membership.history.find(
+    (candidate) => candidate.id === operationId,
+  );
+  if (!operation) return Object.freeze({ status: "operation-conflict" });
+  if (operation.status !== "pending" || !operation.payment) {
+    return Object.freeze({ status: "state-conflict" });
+  }
+  return sponsorMembershipPayment(operation.payment);
+}
+
 export async function failMembershipActivation(input: {
   operationId: unknown;
   reason: unknown;
@@ -433,7 +466,9 @@ export async function reconcileMembershipActivation(input: {
       membershipPeriodId: state.membership.activePeriod.id,
     });
   }
-  if (operation.status === "failed") {
+  const recoverableVerificationFailure =
+    isRecoverableMembershipVerificationFailure(operation);
+  if (operation.status === "failed" && !recoverableVerificationFailure) {
     return Object.freeze({
       status: "failed",
       reason: operation.failureReason ?? "verification-failed",
