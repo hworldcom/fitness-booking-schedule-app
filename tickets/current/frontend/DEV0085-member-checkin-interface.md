@@ -1,11 +1,11 @@
 # Ticket DEV0085: Add the member check-in interface
 
-- Status: Draft
+- Status: Ready
 - Created: 2026-09-27
 - Last updated: 2026-09-28
 - Milestone: M3 check-ins, member-price access and allocation
 - Coordination: [COR0008 — Membership reservations and check-ins](../organisatory/COR0008-membership-reservations-and-checkins.md)
-- Related records: consumes arrival/attendance from [DEV0084 — Persist included membership check-ins](../backend/DEV0084-persist-included-membership-checkins.md), consumes upcoming reservations from completed [DEV0087 — Add the member class reservation interface](../../archive/frontend/DEV0087-member-class-reservation-interface.md), depends transitively on completed [DEV0086 — Persist included class reservations](../../archive/backend/DEV0086-persist-included-class-reservations.md), and extends the active membership view delivered through [DEV0081](../blockchain/DEV0081-devnet-membership-activation.md); the original broad DEV0085 plan is preserved in commit `f6bde9f`
+- Related records: consumes arrival/attendance from completed [DEV0084 — Persist included membership check-ins](../../archive/backend/DEV0084-persist-included-membership-checkins.md), consumes upcoming reservations from completed [DEV0087 — Add the member class reservation interface](../../archive/frontend/DEV0087-member-class-reservation-interface.md), depends transitively on completed [DEV0086 — Persist included class reservations](../../archive/backend/DEV0086-persist-included-class-reservations.md), and extends the active membership view delivered through [DEV0081](../blockchain/DEV0081-devnet-membership-activation.md); the original broad DEV0085 plan is preserved in commit `f6bde9f`
 
 ## Objective and context
 
@@ -28,7 +28,7 @@ Upcoming reservation state comes from DEV0087/DEV0086. Non-core gyms do not expo
 
 ## Assumptions, decisions, and dependencies
 
-- DEV0084 must stabilize its request/read contract before this ticket moves to Ready; completed DEV0087 supplies the upcoming reservation presentation this screen extends.
+- Completed DEV0084 supplies the stable private request/read contract and completed DEV0087 supplies the upcoming reservation presentation this screen extends.
 - `/my-access` remains the compatibility route.
 - A visual QR may use an existing dependency-free browser representation or a reviewed small dependency; any dependency addition must be recorded before implementation.
 - Expiry and eligibility use server timestamps. A client countdown is explanatory and cannot extend the request.
@@ -80,6 +80,7 @@ No implementation changes yet.
 - 2026-09-27: Preserve DEV0085 because its planning record was already committed; narrow it to arrival code, pending confirmation, allowance and history under COR0008.
 - 2026-09-28: Show DEV0086's shared daily-access claim as held for a reservation or pending open-gym arrival; only staff confirmation turns it into confirmed usage.
 - 2026-09-28: DEV0087 completed the upcoming selected-gym schedule and persistent reservation controls. DEV0085 remains Draft only on DEV0084's arrival/attendance contract and will extend the delivered My Membership component boundary.
+- 2026-09-28: DEV0084 completed the server-generated presentation-code, member snapshot/create/cancel and same-venue staff-confirmation contract. DEV0085 is now Ready; its browser must retain `presentationCode` only from the first `created` response and use `sessionStorage` for same-tab recovery.
 
 ### Contracts, configuration, and operations
 
@@ -89,9 +90,9 @@ No migration or secret is planned. The browser consumes DEV0084's private member
 
 Pending validation.
 
-| Criterion | Evidence                                    | Result  |
-| --------- | ------------------------------------------- | ------- |
-| AC1–AC9   | Blocked on DEV0084; DEV0087 integration dependency is delivered | Not run |
+| Criterion | Evidence                                                                       | Result  |
+| --------- | ------------------------------------------------------------------------------ | ------- |
+| AC1–AC9   | Implementation has not started; DEV0084 and DEV0087 dependencies are delivered | Not run |
 
 ## Risks, limitations, and follow-ups
 

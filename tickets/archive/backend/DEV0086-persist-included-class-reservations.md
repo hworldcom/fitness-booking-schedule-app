@@ -5,7 +5,7 @@
 - Last updated: 2026-09-28
 - Milestone: M3 check-ins, member-price access and allocation
 - Coordination: [COR0008 — Membership reservations and check-ins](../../current/organisatory/COR0008-membership-reservations-and-checkins.md)
-- Related records: builds on active periods from [DEV0080 — Persist membership activation foundation](DEV0080-membership-activation-foundation.md) and the fictional schedule delivered by completed [DEV0088 — Seed fictional demo class schedules](DEV0088-seed-fictional-demo-class-schedules.md), supplies upcoming reservations to [DEV0087 — Add the member class reservation interface](../frontend/DEV0087-member-class-reservation-interface.md), and defines the shared daily-access claim consumed by [DEV0084 — Persist included membership check-ins](../../current/backend/DEV0084-persist-included-membership-checkins.md); cancelled [DEV0018](DEV0018-class-pass-reservations-and-confirmed-visits.md) is historical class-pass context only
+- Related records: builds on active periods from [DEV0080 — Persist membership activation foundation](DEV0080-membership-activation-foundation.md) and the fictional schedule delivered by completed [DEV0088 — Seed fictional demo class schedules](DEV0088-seed-fictional-demo-class-schedules.md), supplies upcoming reservations to [DEV0087 — Add the member class reservation interface](../frontend/DEV0087-member-class-reservation-interface.md), and defines the shared daily-access claim consumed by completed [DEV0084 — Persist included membership check-ins](DEV0084-persist-included-membership-checkins.md); cancelled [DEV0018](DEV0018-class-pass-reservations-and-confirmed-visits.md) is historical class-pass context only
 
 ## Objective and context
 
@@ -76,13 +76,13 @@ Basic reservations count held claims together with confirmed usage; Classic uses
 
 ### Affected files
 
-| File or component | Change and purpose |
-| --- | --- |
-| `supabase/migrations/20260928000200_create_class_reservations.sql` | Adds the private claim/reservation schema, invariants, row locks, reconciliation and actor-scoped reserve/cancel/read functions. |
-| `src/server/db/schema/membership.ts` | Maps the additive relations and membership-period ownership key for typed server access. |
-| `src/domain/class-reservations.ts` | Defines the bounded schedule, reservation and booking-status contract shared with the member UI. |
-| `src/server/db/reservations/repository.ts` and `src/server/reservations/service.ts` | Validate database output, derive member state and expose actor-scoped operations without client authority over membership terms. |
-| `src/app/api/membership/classes/route.ts` and `src/app/api/membership/reservations/**` | Provide private same-origin JSON reads and bounded reserve/cancel mutations. |
+| File or component                                                                                     | Change and purpose                                                                                                                |
+| ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `supabase/migrations/20260928000200_create_class_reservations.sql`                                    | Adds the private claim/reservation schema, invariants, row locks, reconciliation and actor-scoped reserve/cancel/read functions.  |
+| `src/server/db/schema/membership.ts`                                                                  | Maps the additive relations and membership-period ownership key for typed server access.                                          |
+| `src/domain/class-reservations.ts`                                                                    | Defines the bounded schedule, reservation and booking-status contract shared with the member UI.                                  |
+| `src/server/db/reservations/repository.ts` and `src/server/reservations/service.ts`                   | Validate database output, derive member state and expose actor-scoped operations without client authority over membership terms.  |
+| `src/app/api/membership/classes/route.ts` and `src/app/api/membership/reservations/**`                | Provide private same-origin JSON reads and bounded reserve/cancel mutations.                                                      |
 | `supabase/tests/database/class-reservations.test.sql` and `tests/database/class-reservations.test.ts` | Prove privacy, constraints, idempotency, daily/allowance/capacity concurrency, cancellation, no-show and terminal-state behavior. |
 
 ### Decisions and deviations
@@ -106,13 +106,13 @@ The browser/server JSON contract adds a member schedule containing plan usage, h
 
 ## Validation results
 
-| Criterion | Evidence | Result |
-| --- | --- | --- |
-| AC1, AC4, AC8 | `tests/database/class-reservations.test.ts`: private tables, four frozen gyms, non-core rejection, daily conflict, foreign cancellation privacy and replacement after release | Passed |
-| AC2, AC5 | Focused integration proves exact retry recovery and concurrent final-seat attempts yield one `reserved` plus one `full`, with one persisted reservation/claim | Passed |
-| AC3 | Concurrent different-day final-Basic-use attempts with nine confirmed uses yield one `reserved` plus one `allowance-exhausted` | Passed |
-| AC6, AC7 | Session cancellation and forced post-end reconciliation yield released claims and terminal `cancelled`/`no_show`; revival attempts fail and no runtime check-in function exists | Passed |
-| AC9 | `npm run db:reset`; `npm run db:runtime`; focused reservation integration (5/5); `npm run test:db` (30/30); `npm run db:test` (156 assertions); `npm test` (82/82); lint, typecheck, format check, database lint, production build and `git diff --check` | Passed |
+| Criterion     | Evidence                                                                                                                                                                                                                                                  | Result |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| AC1, AC4, AC8 | `tests/database/class-reservations.test.ts`: private tables, four frozen gyms, non-core rejection, daily conflict, foreign cancellation privacy and replacement after release                                                                             | Passed |
+| AC2, AC5      | Focused integration proves exact retry recovery and concurrent final-seat attempts yield one `reserved` plus one `full`, with one persisted reservation/claim                                                                                             | Passed |
+| AC3           | Concurrent different-day final-Basic-use attempts with nine confirmed uses yield one `reserved` plus one `allowance-exhausted`                                                                                                                            | Passed |
+| AC6, AC7      | Session cancellation and forced post-end reconciliation yield released claims and terminal `cancelled`/`no_show`; revival attempts fail and no runtime check-in function exists                                                                           | Passed |
+| AC9           | `npm run db:reset`; `npm run db:runtime`; focused reservation integration (5/5); `npm run test:db` (30/30); `npm run db:test` (156 assertions); `npm test` (82/82); lint, typecheck, format check, database lint, production build and `git diff --check` | Passed |
 
 ## Risks, limitations, and follow-ups
 

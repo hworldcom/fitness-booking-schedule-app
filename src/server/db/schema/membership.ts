@@ -19,6 +19,7 @@ import {
   classSessions,
   demoRunParticipants,
   organizations,
+  profiles,
   venues,
 } from "./foundation";
 
@@ -900,6 +901,248 @@ export const classReservations = app.table(
   ],
 );
 
+export const membershipArrivalRequests = app.table(
+  "membership_arrival_requests",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    operationId: uuid("operation_id").notNull(),
+    runId: uuid("run_id").notNull(),
+    membershipPeriodId: uuid("membership_period_id").notNull(),
+    profileId: uuid("profile_id").notNull(),
+    venueId: uuid("venue_id").notNull(),
+    reservationId: uuid("reservation_id"),
+    accessClaimId: uuid("access_claim_id").notNull(),
+    serviceDate: date("service_date", { mode: "string" }).notNull(),
+    codeHash: text("code_hash").notNull(),
+    requestStatus: text("request_status").notNull(),
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+      mode: "string",
+    })
+      .defaultNow()
+      .notNull(),
+    expiresAt: timestamp("expires_at", {
+      withTimezone: true,
+      mode: "string",
+    }).notNull(),
+    confirmedAt: timestamp("confirmed_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    confirmedByProfileId: uuid("confirmed_by_profile_id"),
+    expiredAt: timestamp("expired_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    cancelledAt: timestamp("cancelled_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+      mode: "string",
+    })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    foreignKey({
+      name: "membership_arrival_requests_period_fkey",
+      columns: [table.runId, table.membershipPeriodId, table.profileId],
+      foreignColumns: [
+        membershipPeriods.runId,
+        membershipPeriods.id,
+        membershipPeriods.profileId,
+      ],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "membership_arrival_requests_venue_fkey",
+      columns: [table.runId, table.venueId],
+      foreignColumns: [venues.runId, venues.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "membership_arrival_requests_reservation_fkey",
+      columns: [table.runId, table.reservationId],
+      foreignColumns: [classReservations.runId, classReservations.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "membership_arrival_requests_claim_fkey",
+      columns: [
+        table.runId,
+        table.accessClaimId,
+        table.membershipPeriodId,
+        table.profileId,
+        table.serviceDate,
+      ],
+      foreignColumns: [
+        membershipDailyAccessClaims.runId,
+        membershipDailyAccessClaims.id,
+        membershipDailyAccessClaims.membershipPeriodId,
+        membershipDailyAccessClaims.profileId,
+        membershipDailyAccessClaims.serviceDate,
+      ],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "membership_arrival_requests_confirmer_fkey",
+      columns: [table.confirmedByProfileId],
+      foreignColumns: [profiles.id],
+    }).onDelete("restrict"),
+    unique("membership_arrival_requests_run_id_id_key").on(
+      table.runId,
+      table.id,
+    ),
+    unique("membership_arrival_requests_operation_key").on(
+      table.runId,
+      table.profileId,
+      table.operationId,
+    ),
+    unique("membership_arrival_requests_code_hash_key").on(
+      table.runId,
+      table.codeHash,
+    ),
+    check(
+      "membership_arrival_requests_status_check",
+      sql`${table.requestStatus} in ('pending', 'confirmed', 'expired', 'cancelled')`,
+    ),
+    check(
+      "membership_arrival_requests_code_hash_check",
+      sql`${table.codeHash} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check(
+      "membership_arrival_requests_expiry_check",
+      sql`${table.expiresAt} > ${table.createdAt}`,
+    ),
+    check(
+      "membership_arrival_requests_state_check",
+      sql`(${table.requestStatus} = 'pending' and ${table.confirmedAt} is null and ${table.confirmedByProfileId} is null and ${table.expiredAt} is null and ${table.cancelledAt} is null) or (${table.requestStatus} = 'confirmed' and ${table.confirmedAt} is not null and ${table.confirmedAt} >= ${table.createdAt} and ${table.confirmedByProfileId} is not null and ${table.expiredAt} is null and ${table.cancelledAt} is null) or (${table.requestStatus} = 'expired' and ${table.confirmedAt} is null and ${table.confirmedByProfileId} is null and ${table.expiredAt} is not null and ${table.expiredAt} >= ${table.createdAt} and ${table.cancelledAt} is null) or (${table.requestStatus} = 'cancelled' and ${table.confirmedAt} is null and ${table.confirmedByProfileId} is null and ${table.expiredAt} is null and ${table.cancelledAt} is not null and ${table.cancelledAt} >= ${table.createdAt})`,
+    ),
+    uniqueIndex("membership_arrival_requests_one_pending_member_idx")
+      .on(table.runId, table.membershipPeriodId, table.profileId)
+      .where(sql`${table.requestStatus} = 'pending'`),
+    uniqueIndex("membership_arrival_requests_one_active_claim_idx")
+      .on(table.runId, table.accessClaimId)
+      .where(sql`${table.requestStatus} in ('pending', 'confirmed')`),
+    index("membership_arrival_requests_member_history_idx").on(
+      table.runId,
+      table.profileId,
+      table.createdAt,
+    ),
+  ],
+);
+
+export const membershipCheckins = app.table(
+  "membership_checkins",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    runId: uuid("run_id").notNull(),
+    membershipPeriodId: uuid("membership_period_id").notNull(),
+    profileId: uuid("profile_id").notNull(),
+    venueId: uuid("venue_id").notNull(),
+    reservationId: uuid("reservation_id"),
+    classSessionId: uuid("class_session_id"),
+    accessClaimId: uuid("access_claim_id").notNull(),
+    arrivalRequestId: uuid("arrival_request_id").notNull(),
+    confirmedByProfileId: uuid("confirmed_by_profile_id").notNull(),
+    serviceDate: date("service_date", { mode: "string" }).notNull(),
+    attendanceKind: text("attendance_kind").notNull(),
+    confirmedAt: timestamp("confirmed_at", {
+      withTimezone: true,
+      mode: "string",
+    })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+      mode: "string",
+    })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    foreignKey({
+      name: "membership_checkins_period_fkey",
+      columns: [table.runId, table.membershipPeriodId, table.profileId],
+      foreignColumns: [
+        membershipPeriods.runId,
+        membershipPeriods.id,
+        membershipPeriods.profileId,
+      ],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "membership_checkins_venue_fkey",
+      columns: [table.runId, table.venueId],
+      foreignColumns: [venues.runId, venues.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "membership_checkins_reservation_fkey",
+      columns: [table.runId, table.reservationId],
+      foreignColumns: [classReservations.runId, classReservations.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "membership_checkins_session_fkey",
+      columns: [table.runId, table.classSessionId],
+      foreignColumns: [classSessions.runId, classSessions.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "membership_checkins_claim_fkey",
+      columns: [
+        table.runId,
+        table.accessClaimId,
+        table.membershipPeriodId,
+        table.profileId,
+        table.serviceDate,
+      ],
+      foreignColumns: [
+        membershipDailyAccessClaims.runId,
+        membershipDailyAccessClaims.id,
+        membershipDailyAccessClaims.membershipPeriodId,
+        membershipDailyAccessClaims.profileId,
+        membershipDailyAccessClaims.serviceDate,
+      ],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "membership_checkins_arrival_fkey",
+      columns: [table.runId, table.arrivalRequestId],
+      foreignColumns: [
+        membershipArrivalRequests.runId,
+        membershipArrivalRequests.id,
+      ],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "membership_checkins_confirmer_fkey",
+      columns: [table.confirmedByProfileId],
+      foreignColumns: [profiles.id],
+    }).onDelete("restrict"),
+    unique("membership_checkins_run_id_id_key").on(table.runId, table.id),
+    unique("membership_checkins_claim_key").on(table.accessClaimId),
+    unique("membership_checkins_arrival_key").on(table.arrivalRequestId),
+    unique("membership_checkins_reservation_key").on(table.reservationId),
+    check(
+      "membership_checkins_kind_check",
+      sql`${table.attendanceKind} in ('class', 'open_gym')`,
+    ),
+    check(
+      "membership_checkins_kind_reference_check",
+      sql`(${table.attendanceKind} = 'class' and ${table.reservationId} is not null and ${table.classSessionId} is not null) or (${table.attendanceKind} = 'open_gym' and ${table.reservationId} is null and ${table.classSessionId} is null)`,
+    ),
+    check(
+      "membership_checkins_timestamp_check",
+      sql`${table.confirmedAt} >= ${table.createdAt}`,
+    ),
+    index("membership_checkins_member_history_idx").on(
+      table.runId,
+      table.profileId,
+      table.confirmedAt,
+    ),
+    index("membership_checkins_venue_history_idx").on(
+      table.runId,
+      table.venueId,
+      table.serviceDate,
+      table.confirmedAt,
+    ),
+  ],
+);
+
 export type MembershipProductRow = typeof membershipProducts.$inferSelect;
 export type MembershipProductVersionRow =
   typeof membershipProductVersions.$inferSelect;
@@ -916,3 +1159,6 @@ export type MembershipPeriodCoreGymRow =
 export type MembershipDailyAccessClaimRow =
   typeof membershipDailyAccessClaims.$inferSelect;
 export type ClassReservationRow = typeof classReservations.$inferSelect;
+export type MembershipArrivalRequestRow =
+  typeof membershipArrivalRequests.$inferSelect;
+export type MembershipCheckinRow = typeof membershipCheckins.$inferSelect;
