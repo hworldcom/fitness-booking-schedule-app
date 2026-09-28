@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   CircleAlert,
@@ -23,8 +23,10 @@ import {
   REQUIRED_CORE_GYMS,
 } from "@/domain/membership-draft";
 import type { MemberMembershipState } from "@/domain/membership-activation";
+import type { MembershipCheckinSnapshot } from "@/domain/membership-checkins";
 import { useMembershipDraft } from "@/features/membership/draft-store";
 import { MemberClassSchedulePanel } from "@/features/membership/class-schedule";
+import { MemberCheckinPanel } from "@/features/membership/member-checkin";
 import {
   membershipPaymentAmountLabel,
   membershipPaymentExplorerUrl,
@@ -35,11 +37,13 @@ function ReadyMyAccess({
   catalogue,
   membershipState,
   classSchedule,
+  checkinSnapshot,
 }: {
   preview: boolean;
   catalogue: PublicCatalogue;
   membershipState: MemberMembershipState | null;
   classSchedule: MemberClassSchedule | null;
+  checkinSnapshot: MembershipCheckinSnapshot | null;
 }) {
   const { draft, recovery, storageUnavailable, dispatch } =
     useMembershipDraft(catalogue);
@@ -50,6 +54,8 @@ function ReadyMyAccess({
   const clearedConfirmedDraft = useRef(false);
   const activePeriod = membershipState?.activePeriod ?? null;
   const pendingOperation = membershipState?.pending ?? null;
+  const [currentClassSchedule, setCurrentClassSchedule] =
+    useState(classSchedule);
   const heading = activePeriod
     ? {
         eyebrow: "MY MEMBERSHIP · DEVNET DEMO",
@@ -177,7 +183,15 @@ function ReadyMyAccess({
               </Link>
             </div>
           </article>
-          <MemberClassSchedulePanel initialSchedule={classSchedule} />
+          <MemberCheckinPanel
+            initialSnapshot={checkinSnapshot}
+            schedule={currentClassSchedule}
+            coreGyms={activePeriod.gyms}
+          />
+          <MemberClassSchedulePanel
+            initialSchedule={classSchedule}
+            onScheduleChange={setCurrentClassSchedule}
+          />
         </>
       ) : pendingOperation ? (
         <article className="membership-draft-card">
@@ -345,11 +359,13 @@ export function MyAccess({
   catalogueResult,
   membershipState,
   classSchedule,
+  checkinSnapshot,
 }: {
   preview: boolean;
   catalogueResult: PublicCatalogueResult;
   membershipState: MemberMembershipState | null;
   classSchedule: MemberClassSchedule | null;
+  checkinSnapshot: MembershipCheckinSnapshot | null;
 }) {
   if (catalogueResult.status === "ready") {
     return (
@@ -358,6 +374,7 @@ export function MyAccess({
         catalogue={catalogueResult.catalogue}
         membershipState={membershipState}
         classSchedule={classSchedule}
+        checkinSnapshot={checkinSnapshot}
       />
     );
   }

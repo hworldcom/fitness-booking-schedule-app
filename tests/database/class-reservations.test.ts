@@ -46,6 +46,7 @@ const firstAllowanceReserveId = "99000000-0000-4000-8000-000000000205";
 const secondAllowanceReserveId = "99000000-0000-4000-8000-000000000206";
 const sessionCancelledReserveId = "99000000-0000-4000-8000-000000000207";
 const noShowReserveId = "99000000-0000-4000-8000-000000000208";
+const concurrentReplacementReserveId = "99000000-0000-4000-8000-000000000209";
 const firstCapacityReserveId = "99000000-0000-4000-8000-000000000301";
 const secondCapacityReserveId = "99000000-0000-4000-8000-000000000302";
 const firstWallet = (await generateKeyPairSigner()).address;
@@ -376,7 +377,7 @@ test("reservation tables are private and schedules expose only frozen core gyms"
   assert.ok(schedule.every((session) => session.bookingStatus === "available"));
 });
 
-test("reservation retries, daily conflicts and cancellation preserve one held use", async () => {
+test("reservation retries, cancellation and same-class rebooking preserve one active hold", async () => {
   const initial = await withActorDatabaseContext(
     firstActor,
     currentMemberClassScheduleRecords,
@@ -431,16 +432,99 @@ test("reservation retries, daily conflicts and cancellation preserve one held us
     ),
     "cancelled",
   );
-  assert.equal(
-    (
-      await withActorDatabaseContext(firstActor, (transaction) =>
-        reserveMemberClassRecord(transaction, {
-          operationId: replacementReserveId,
-          classSessionId: secondSession.classSessionId,
-        }),
-      )
-    ).result,
-    "reserved",
+  assert.deepEqual(
+    await withActorDatabaseContext(firstActor, (transaction) =>
+      reserveMemberClassRecord(transaction, {
+        operationId: firstReserveId,
+        classSessionId: firstSession.classSessionId,
+      }),
+    ),
+    { result: "existing", reservationId: reserved.reservationId },
+  );
+
+  const afterCancellation = await withActorDatabaseContext(
+    firstActor,
+    currentMemberClassScheduleRecords,
+  );
+  const cancelledClass = afterCancellation.find(
+    (session) => session.classSessionId === firstSession.classSessionId,
+  );
+  assert.equal(cancelledClass?.bookingStatus, "available");
+  assert.equal(cancelledClass?.reservationId, null);
+
+  const rebookAttempts = await Promise.all(
+    [replacementReserveId, concurrentReplacementReserveId].map(
+      async (operationId, index) => ({
+        operationId,
+        result: await directReserve(
+          index === 0 ? runtimeA : runtimeB,
+          firstActor,
+          operationId,
+          firstSession.classSessionId,
+        ),
+      }),
+    ),
+  );
+  assert.deepEqual(
+    new Set(rebookAttempts.map((attempt) => attempt.result.reservation_result)),
+    new Set(["reserved", "existing"]),
+  );
+  const successfulRebook = rebookAttempts.find(
+    (attempt) => attempt.result.reservation_result === "reserved",
+  );
+  assert.ok(successfulRebook?.result.reservation_id);
+  const rebooked = {
+    result: "reserved" as const,
+    reservationId: successfulRebook.result.reservation_id,
+  };
+  assert.deepEqual(
+    new Set(rebookAttempts.map((attempt) => attempt.result.reservation_id)),
+    new Set([rebooked.reservationId]),
+  );
+  assert.notEqual(rebooked.reservationId, reserved.reservationId);
+  assert.deepEqual(
+    await withActorDatabaseContext(firstActor, (transaction) =>
+      reserveMemberClassRecord(transaction, {
+        operationId: successfulRebook.operationId,
+        classSessionId: firstSession.classSessionId,
+      }),
+    ),
+    { result: "existing", reservationId: rebooked.reservationId },
+  );
+
+  const reservationHistory = await admin<
+    Array<{
+      reservation_id: string;
+      reservation_status: string;
+      claim_status: string;
+    }>
+  >`
+    select
+      reservation.id::text as reservation_id,
+      reservation.reservation_status,
+      claim.claim_status
+    from app.class_reservations as reservation
+    join app.membership_daily_access_claims as claim
+      on claim.id = reservation.access_claim_id
+    where reservation.run_id = ${firstActor.runId}::uuid
+      and reservation.profile_id = ${firstActor.profileId}::uuid
+      and reservation.class_session_id = ${firstSession.classSessionId}::uuid
+    order by reservation.created_at, reservation.id
+  `;
+  assert.deepEqual(
+    reservationHistory.map((record) => ({ ...record })),
+    [
+      {
+        reservation_id: reserved.reservationId,
+        reservation_status: "cancelled",
+        claim_status: "released",
+      },
+      {
+        reservation_id: rebooked.reservationId,
+        reservation_status: "reserved",
+        claim_status: "held",
+      },
+    ],
   );
 
   const claims = await admin<Array<{ claim_status: string; count: number }>>`

@@ -4,8 +4,8 @@
 - Created: 2026-09-27
 - Last updated: 2026-09-28
 - Milestone: M3 check-ins, member-price access and allocation
-- Coordination: [COR0008 — Membership reservations and check-ins](../../current/organisatory/COR0008-membership-reservations-and-checkins.md)
-- Related records: consumes [DEV0086 — Persist included class reservations](../backend/DEV0086-persist-included-class-reservations.md), supplies upcoming reservation context to [DEV0085 — Add the member check-in interface](../../current/frontend/DEV0085-member-checkin-interface.md), and extends the active membership view delivered through [DEV0081 — Activate memberships with Devnet EURC](../../current/blockchain/DEV0081-devnet-membership-activation.md)
+- Coordination: [COR0008 — Membership reservations and check-ins](../organisatory/COR0008-membership-reservations-and-checkins.md)
+- Related records: consumes [DEV0086 — Persist included class reservations](../backend/DEV0086-persist-included-class-reservations.md), supplies upcoming reservation context to [DEV0085 — Add the member check-in interface](DEV0085-member-checkin-interface.md), and extends the active membership view delivered through [DEV0081 — Activate memberships with Devnet EURC](../../current/blockchain/DEV0081-devnet-membership-activation.md)
 
 ## Objective and context
 
@@ -68,14 +68,14 @@ The plan summary separates Basic available, held and confirmed counts. Classic e
 
 ### Affected files
 
-| File or component | Change and purpose |
-| --- | --- |
+| File or component                                                            | Change and purpose                                                                                                                                   |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/app/my-access/page.tsx` and `src/features/membership/my-membership.tsx` | Load the private schedule with membership state and mount it only for an active period; use deterministic membership dates to avoid hydration drift. |
-| `src/features/membership/class-schedule.tsx` | Adds date groups, class cards, capacity/status presentation, accessible reserve/cancel/refresh actions and held-versus-attended copy. |
-| `src/features/membership/reservation-client.ts` | Strictly parses schedule responses and provides same-origin reserve/cancel clients with bounded unavailable fallbacks. |
-| `src/app/membership.css` | Adds responsive two-column desktop and single-column mobile schedule layouts plus visible status/feedback treatment. |
-| `tests/class-reservations.test.ts` | Covers the response parser, bounded lifecycle and server-rendered held-access presentation. |
-| `scripts/rehearse-local-class-reservations.mjs` and `package.json` | Add a disposable real Auth/database/Chrome rehearsal for reserve, reload, cancel, keyboard use and mobile/desktop rendering. |
+| `src/features/membership/class-schedule.tsx`                                 | Adds date groups, class cards, capacity/status presentation, accessible reserve/cancel/refresh actions and held-versus-attended copy.                |
+| `src/features/membership/reservation-client.ts`                              | Strictly parses schedule responses and provides same-origin reserve/cancel clients with bounded unavailable fallbacks.                               |
+| `src/app/membership.css`                                                     | Adds responsive two-column desktop and single-column mobile schedule layouts plus visible status/feedback treatment.                                 |
+| `tests/class-reservations.test.ts`                                           | Covers the response parser, bounded lifecycle and server-rendered held-access presentation.                                                          |
+| `scripts/rehearse-local-class-reservations.mjs` and `package.json`           | Add a disposable real Auth/database/Chrome rehearsal for reserve, reload, cancel, keyboard use and mobile/desktop rendering.                         |
 
 ### Decisions and deviations
 
@@ -91,11 +91,11 @@ The browser consumes DEV0086's private schedule/reservation contract. It sends o
 
 ## Validation results
 
-| Criterion | Evidence | Result |
-| --- | --- | --- |
-| AC1–AC6 | Component/domain tests plus the real actor-scoped browser flow show selected-gym classes, persistent reserve/reload/cancel state, honest held-use accounting and no attendance claim | Passed |
-| AC7 | `npm run test:reservations` passed at 1440×1040 and 393×852, including Enter-key reservation, no horizontal overflow, live feedback and reviewed screenshots in ignored `test-results/` | Passed |
-| AC8 | `npm test` (82/82), `npm run lint`, `npm run typecheck`, `npm run format:check`, `npm run build`, `npm run test:reservations` and `git diff --check` | Passed |
+| Criterion | Evidence                                                                                                                                                                                | Result |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| AC1–AC6   | Component/domain tests plus the real actor-scoped browser flow show selected-gym classes, persistent reserve/reload/cancel state, honest held-use accounting and no attendance claim    | Passed |
+| AC7       | `npm run test:reservations` passed at 1440×1040 and 393×852, including Enter-key reservation, no horizontal overflow, live feedback and reviewed screenshots in ignored `test-results/` | Passed |
+| AC8       | `npm test` (82/82), `npm run lint`, `npm run typecheck`, `npm run format:check`, `npm run build`, `npm run test:reservations` and `git diff --check`                                    | Passed |
 
 ## Risks, limitations, and follow-ups
 

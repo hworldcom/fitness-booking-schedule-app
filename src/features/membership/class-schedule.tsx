@@ -89,8 +89,10 @@ function mutationMessage(status: string) {
 
 export function MemberClassSchedulePanel({
   initialSchedule,
+  onScheduleChange,
 }: {
   initialSchedule: MemberClassSchedule | null;
+  onScheduleChange?: (schedule: MemberClassSchedule) => void;
 }) {
   const [schedule, setSchedule] = useState(initialSchedule);
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -101,6 +103,7 @@ export function MemberClassSchedulePanel({
     const result = await fetchMemberClassSchedule();
     if (result.status === "ready") {
       setSchedule(result.schedule);
+      onScheduleChange?.(result.schedule);
       return true;
     }
     setNotice(
@@ -140,9 +143,10 @@ export function MemberClassSchedulePanel({
     );
     const refreshed = await refresh();
     if (result.status === "cancelled" || result.status === "existing") {
+      operationIds.current.delete(session.id);
       setNotice(
         refreshed
-          ? "Reservation cancelled. The seat and any held Basic use were released."
+          ? "Reservation cancelled. The seat and any held Basic use were released. You can reserve this class again while it remains available."
           : "The cancellation was accepted. Refresh again to load its latest state.",
       );
     } else {
@@ -252,6 +256,7 @@ export function MemberClassSchedulePanel({
                   return (
                     <article
                       className={`class-session-card status-${session.bookingStatus}`}
+                      data-session-id={session.id}
                       key={session.id}
                     >
                       <div className="class-session-topline">

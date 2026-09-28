@@ -4,7 +4,7 @@
 - Created: 2026-09-28
 - Last updated: 2026-09-28
 - Milestone: M3 reservations and check-ins
-- Coordination: [COR0008 — Membership reservations and check-ins](../../current/organisatory/COR0008-membership-reservations-and-checkins.md)
+- Coordination: [COR0008 — Membership reservations and check-ins](../organisatory/COR0008-membership-reservations-and-checkins.md)
 - Related records: supplies schedule and trainer fixtures to completed [DEV0086 — Persist included class reservations](DEV0086-persist-included-class-reservations.md); builds on the seven fictional participating gyms delivered by completed [DEV0078](DEV0078-revise-multigym-catalogue-schema.md)
 
 ## Objective and context

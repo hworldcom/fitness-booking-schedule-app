@@ -4,7 +4,7 @@
 - Created: 2026-09-27
 - Last updated: 2026-09-28
 - Milestone: M3 check-ins, member-price access and allocation
-- Coordination: [COR0008 — Membership reservations and check-ins](../../current/organisatory/COR0008-membership-reservations-and-checkins.md)
+- Coordination: [COR0008 — Membership reservations and check-ins](../organisatory/COR0008-membership-reservations-and-checkins.md)
 - Related records: builds on active periods from [DEV0080 — Persist membership activation foundation](DEV0080-membership-activation-foundation.md) and the fictional schedule delivered by completed [DEV0088 — Seed fictional demo class schedules](DEV0088-seed-fictional-demo-class-schedules.md), supplies upcoming reservations to [DEV0087 — Add the member class reservation interface](../frontend/DEV0087-member-class-reservation-interface.md), and defines the shared daily-access claim consumed by completed [DEV0084 — Persist included membership check-ins](DEV0084-persist-included-membership-checkins.md); cancelled [DEV0018](DEV0018-class-pass-reservations-and-confirmed-visits.md) is historical class-pass context only
 
 ## Objective and context
