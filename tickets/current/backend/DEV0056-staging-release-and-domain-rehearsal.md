@@ -42,7 +42,7 @@ This is the integration/release peer under [COR0004](../organisatory/COR0004-hos
 - Current Phantom extension connect/account-change/disconnect behavior works on the HTTPS custom domain without requesting a transaction signature. Optional message-signature linking is rehearsed only if DEV0047 is completed and included in the deployed commit.
 - Existing `hello@movx.club` inbound and outbound mail continues to work after nameserver delegation. Missing MX/SPF/DKIM/DMARC records block cutover.
 - A failed Worker release can roll back to the previous version without altering the staging database; DNS rollback and credential rotation are documented separately.
-- Repeated and concurrent database-backed requests create and close request-scoped connections. Cloudflare must not report cross-request promise resolution or cancel Explore as a hung request.
+- Repeated and concurrent database-backed requests create and close request-scoped connections. Cloudflare must not report cross-request promise resolution or cancel Explore as a hung request. A caught catalogue database failure keeps the public recovery state but emits a bounded server-only diagnostic so staging failures can be distinguished without exposing credentials.
 
 ## Assumptions, decisions, and dependencies
 
@@ -65,7 +65,7 @@ This is the integration/release peer under [COR0004](../organisatory/COR0004-hos
 8. Run the hosted smoke matrix at mobile and desktop widths, including two-account Auth/profile isolation and current Phantom states; record the corresponding DEV0055 evidence there as well.
 9. Exercise rollback of the Worker version or document a safe dry run if rollback would disrupt the active rehearsal; record database independence and secret-rotation steps.
 10. Update deployment/setup documentation and the ticket with redacted evidence. Do not mark Completed while any acceptance flow remains untested.
-11. Correct the 2026-09-28 hosted regression by replacing the module-global PostgreSQL client in application repositories with a bounded request-scoped helper, then verify repeated live Explore requests and Worker logs after deployment.
+11. Correct the 2026-09-28 hosted regression by replacing the module-global PostgreSQL client in application repositories with a bounded request-scoped helper. If the recoverable catalogue state remains, add a credential-safe server diagnostic, reproduce it in Cloudflare, correct the Worker-specific failure and then verify repeated live Explore requests and Worker logs after deployment.
 
 ## Acceptance criteria
 
@@ -102,22 +102,25 @@ The Worker is deployed at its temporary `workers.dev` hostname and at the Cloudf
 
 The 2026-09-28 catalogue regression replaces the module-global PostgreSQL client with `withDatabaseConnection`, which creates one client for a repository operation and awaits bounded cleanup in `finally`. Public catalogue reads and application-identity operations use the helper directly; actor-scoped membership, reservation and wallet operations own one client around their database transaction. The lower-level factory remains available for explicit test and operational connections, but application repositories cannot retain a client or promise across Worker requests.
 
+The first corrected release removed the cross-request warning and hung-request cancellation, but live Explore still reached its recoverable error state. The same runtime-role join returned 12 rows and the exact catalogue service produced two plans and seven gyms outside Cloudflare, isolating the remaining fault to the Worker execution path. The catalogue service now records only the caught error name, optional code and a length-bounded message with PostgreSQL URLs redacted; the browser continues to receive the existing generic recovery copy.
+
 ### Affected files
 
-| File or component                      | Change and purpose                                                                                                                                                                  |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `scripts/deploy-staging-worker.mjs`    | Validates the exact staging origin, Supabase project, publishable-key shape, transaction-pooler login and Worker name; builds and supplies only allowlisted bindings to Wrangler.   |
-| `tests/staging-deployment.test.ts`     | Exercises accepted and rejected staging configuration without connecting to Cloudflare or printing values.                                                                          |
-| `package.json`                         | Adds explicit validation, dry-run and clean-commit deployment commands for staging.                                                                                                 |
-| `wrangler.jsonc`                       | Declares the four required binding names without values while retaining the route-free staging-only target.                                                                         |
-| `README.md`                            | Documents the secret-safe commands and the `workers.dev`-before-DNS boundary.                                                                                                       |
-| Cloudflare staging Worker and secrets  | Latest release deploys commit `b2ff5b7` as Worker version `5469b9a0-0123-4929-94bd-d948ed14ca16`; all four approved binding values remained hidden.                                 |
-| Cloudflare DNS / `staging.movx.club`   | Cloudflare is authoritative and the public Worker Custom Domain resolves through Cloudflare with a valid certificate and direct `200` application response.                         |
-| Porkbun nameserver and email DNS state | Nameserver delegation was submitted after the imported website and mail records were compared; the Cloudflare authorities preserve the expected mail records.                       |
-| `src/server/db/client.ts`               | Replaces the warm-instance singleton with an owned connection helper that closes after success or failure in the same request context.                                                |
-| Catalogue, identity and actor repositories | Route public, identity and actor-scoped operations through request-owned connections so Cloudflare never resumes PostgreSQL promises from an earlier request.                         |
-| Database and boundary tests             | Prove cleanup on success/failure and reject a return to module-global application repository connections.                                                                             |
-| `supabase/README.md`                     | Corrects the hosted runtime runbook from warm-instance pooling to request-scoped connection ownership.                                                                                |
+| File or component                          | Change and purpose                                                                                                                                                                |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scripts/deploy-staging-worker.mjs`        | Validates the exact staging origin, Supabase project, publishable-key shape, transaction-pooler login and Worker name; builds and supplies only allowlisted bindings to Wrangler. |
+| `tests/staging-deployment.test.ts`         | Exercises accepted and rejected staging configuration without connecting to Cloudflare or printing values.                                                                        |
+| `package.json`                             | Adds explicit validation, dry-run and clean-commit deployment commands for staging.                                                                                               |
+| `wrangler.jsonc`                           | Declares the four required binding names without values while retaining the route-free staging-only target.                                                                       |
+| `README.md`                                | Documents the secret-safe commands and the `workers.dev`-before-DNS boundary.                                                                                                     |
+| Cloudflare staging Worker and secrets      | Latest release deploys commit `b2ff5b7` as Worker version `5469b9a0-0123-4929-94bd-d948ed14ca16`; all four approved binding values remained hidden.                               |
+| Cloudflare DNS / `staging.movx.club`       | Cloudflare is authoritative and the public Worker Custom Domain resolves through Cloudflare with a valid certificate and direct `200` application response.                       |
+| Porkbun nameserver and email DNS state     | Nameserver delegation was submitted after the imported website and mail records were compared; the Cloudflare authorities preserve the expected mail records.                     |
+| `src/server/db/client.ts`                  | Replaces the warm-instance singleton with an owned connection helper that closes after success or failure in the same request context.                                            |
+| `src/server/catalogue/service.ts`          | Preserves the bounded public recovery state while emitting a credential-safe server diagnostic for a caught catalogue database failure.                                           |
+| Catalogue, identity and actor repositories | Route public, identity and actor-scoped operations through request-owned connections so Cloudflare never resumes PostgreSQL promises from an earlier request.                     |
+| Database and boundary tests                | Prove cleanup on success/failure and reject a return to module-global application repository connections.                                                                         |
+| `supabase/README.md`                       | Corrects the hosted runtime runbook from warm-instance pooling to request-scoped connection ownership.                                                                            |
 
 ### Decisions and deviations
 
@@ -142,6 +145,7 @@ The local release guard, application checks and Cloudflare upload dry run pass. 
 
 - 2026-09-28 regression reproduction — repeated deployed Explore React Server Component requests were cancelled as hung; Worker logs reported promises resolving from a different request context and pointed to the cached `postgres` client. A runtime-role database query itself succeeded, isolating the failure to Worker connection lifetime rather than credentials or grants.
 - 2026-09-28 local correction — `npm test` passed 83 tests, including the new repository-boundary check; `npm run test:db` passed 31 integration tests, including request-owned cleanup after success and failure; `npm run db:test` passed all 156 pgTAP assertions from a reset deterministic local database. `npm run lint`, `npm run typecheck`, `npm run format:check`, `npm run build` and `git diff --check` passed. One earlier pgTAP run encountered pre-existing disposable local membership/reservation rows; the documented local-only reset and runtime-role recreation restored the deterministic baseline before the clean passing rerun.
+- 2026-09-28 first corrected staging release — eight concurrent Explore requests returned HTTP `200` without cross-request promise warnings or hung-request cancellations, but their application payloads still reported the recoverable catalogue error. A read-only invocation of the exact hosted join returned 12 rows, and the exact service returned `ready` with two plans and seven gyms from the same environment. The credential-safe caught-error diagnostic was added for the next Worker reproduction; `npm test` passed 83 tests, `npm run lint` and `npm run typecheck` passed, and focused formatting passed after applying Prettier to this record.
 
 - `npx --no-install wrangler whoami` — passed; confirmed the intended authenticated Cloudflare session.
 - `npx --no-install wrangler deployments list --name movx-club-staging --json` — passed; confirmed no existing deployment would be overwritten.

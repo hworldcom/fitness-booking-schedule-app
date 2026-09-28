@@ -144,6 +144,21 @@ function sameValue(left: unknown, right: unknown) {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
+function safeErrorDiagnostic(error: unknown) {
+  if (!(error instanceof Error)) {
+    return { name: "UnknownError" };
+  }
+
+  const codedError = error as Error & { code?: unknown };
+  return {
+    name: error.name,
+    code: typeof codedError.code === "string" ? codedError.code : undefined,
+    message: error.message
+      .replace(/postgres(?:ql)?:\/\/[^\s]+/gi, "[redacted database URL]")
+      .slice(0, 500),
+  };
+}
+
 export function catalogueResultFromRows(
   rows: readonly PublicCatalogueProjectionRow[],
 ): PublicCatalogueResult {
@@ -222,7 +237,11 @@ export function catalogueResultFromRows(
 export async function currentPublicCatalogue(): Promise<PublicCatalogueResult> {
   try {
     return catalogueResultFromRows(await readPublishedCatalogueRows());
-  } catch {
+  } catch (error) {
+    console.error(
+      "The public catalogue database read failed.",
+      safeErrorDiagnostic(error),
+    );
     return {
       status: "error",
       message:
