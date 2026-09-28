@@ -1,6 +1,6 @@
 export type DatabaseRuntimeConfig = Readonly<{
   connectionString: string;
-  ssl: false | "require";
+  ssl: false | "require" | undefined;
 }>;
 
 export class DatabaseConfigurationError extends Error {
@@ -8,6 +8,14 @@ export class DatabaseConfigurationError extends Error {
     super(message);
     this.name = "DatabaseConfigurationError";
   }
+}
+
+export function isCloudflareWorkerRuntime(
+  userAgent = typeof navigator === "undefined"
+    ? undefined
+    : navigator.userAgent,
+) {
+  return userAgent === "Cloudflare-Workers";
 }
 
 function isLocalHostname(hostname: string) {
@@ -52,5 +60,16 @@ export function parseDatabaseUrl(
   return Object.freeze({
     connectionString: url.toString(),
     ssl: isLocalHostname(url.hostname) ? false : "require",
+  });
+}
+
+export function parseHyperdriveDatabaseUrl(
+  value: string | undefined,
+): DatabaseRuntimeConfig {
+  const config = parseDatabaseUrl(value);
+  return Object.freeze({
+    connectionString: config.connectionString,
+    // Hyperdrive's generated connection string owns its transport settings.
+    ssl: undefined,
   });
 }

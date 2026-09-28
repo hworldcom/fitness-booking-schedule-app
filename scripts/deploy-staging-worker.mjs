@@ -15,17 +15,19 @@ const expectedSiteUrl = "https://staging.movx.club";
 const expectedSupabaseHost = "qaluvzwudsqrchdwxcsb.supabase.co";
 const expectedDatabaseUser = "movx_staging_runtime_login";
 const expectedWorkerName = "movx-club-staging";
-const approvedBindings = [
+const expectedHyperdriveBinding = "MOVX_DATABASE";
+const expectedHyperdriveId = "390007706c314f3f808535332a802f7d";
+const uploadedBindings = [
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
   "NEXT_PUBLIC_SITE_URL",
-  "DATABASE_URL",
   "SOLANA_CLUSTER",
   "NEXT_PUBLIC_SOLANA_RPC_URL",
   "SOLANA_RPC_URL",
   "SOLANA_FEE_SPONSOR_ADDRESS",
   "SOLANA_FEE_SPONSOR_KEYPAIR_BASE64",
 ];
+const requiredInputs = [...uploadedBindings, "DATABASE_URL"];
 
 function fail(message) {
   throw new Error(`Staging deployment validation failed: ${message}`);
@@ -39,7 +41,7 @@ function requiredValue(name) {
 
 function validatedEnvironment() {
   const values = Object.fromEntries(
-    approvedBindings.map((name) => [name, requiredValue(name)]),
+    requiredInputs.map((name) => [name, requiredValue(name)]),
   );
 
   if (values.NEXT_PUBLIC_SITE_URL !== expectedSiteUrl) {
@@ -132,13 +134,23 @@ function validatedEnvironment() {
   if (!wranglerSource.includes(`"name": "${expectedWorkerName}"`)) {
     fail(`wrangler.jsonc must target only ${expectedWorkerName}.`);
   }
+  if (
+    !wranglerSource.includes(`"binding": "${expectedHyperdriveBinding}"`) ||
+    !wranglerSource.includes(`"id": "${expectedHyperdriveId}"`)
+  ) {
+    fail(
+      `wrangler.jsonc must bind ${expectedHyperdriveBinding} to the reviewed staging Hyperdrive configuration.`,
+    );
+  }
   if (/"routes?"\s*:|"custom_domains?"\s*:/.test(wranglerSource)) {
     fail(
       "wrangler.jsonc must not bind a route or custom domain before rehearsal.",
     );
   }
 
-  return values;
+  return Object.fromEntries(
+    uploadedBindings.map((name) => [name, values[name]]),
+  );
 }
 
 function binary(name) {
@@ -181,7 +193,7 @@ let temporaryDirectory;
 try {
   const values = validatedEnvironment();
   console.log(
-    `Validated ${expectedWorkerName} configuration and ${approvedBindings.length} approved bindings without printing values.`,
+    `Validated ${expectedWorkerName} configuration, ${uploadedBindings.length} secret bindings and one Hyperdrive binding without printing values.`,
   );
 
   if (mode === "--validate-only") process.exit(0);

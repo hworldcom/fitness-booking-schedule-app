@@ -12,12 +12,17 @@
   "images": {
     "binding": "IMAGES",
   },
+  "hyperdrive": [
+    {
+      "binding": "MOVX_DATABASE",
+      "id": "390007706c314f3f808535332a802f7d",
+    },
+  ],
   "secrets": {
     "required": [
       "NEXT_PUBLIC_SUPABASE_URL",
       "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
       "NEXT_PUBLIC_SITE_URL",
-      "DATABASE_URL",
       "SOLANA_CLUSTER",
       "NEXT_PUBLIC_SOLANA_RPC_URL",
       "SOLANA_RPC_URL",

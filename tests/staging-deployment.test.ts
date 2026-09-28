@@ -45,13 +45,12 @@ test("staging deployment validation rejects a non-staging origin", () => {
   assert.doesNotMatch(result.stderr, /sb_publishable_test-only|test-only@/);
 });
 
-test("Wrangler declares exactly the approved staging binding names", () => {
+test("Wrangler declares exactly the approved staging runtime bindings", () => {
   const wrangler = readFileSync(path.join(root, "wrangler.jsonc"), "utf8");
   const names = [
     "NEXT_PUBLIC_SUPABASE_URL",
     "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
     "NEXT_PUBLIC_SITE_URL",
-    "DATABASE_URL",
     "SOLANA_CLUSTER",
     "NEXT_PUBLIC_SOLANA_RPC_URL",
     "SOLANA_RPC_URL",
@@ -59,6 +58,9 @@ test("Wrangler declares exactly the approved staging binding names", () => {
     "SOLANA_FEE_SPONSOR_KEYPAIR_BASE64",
   ];
   for (const name of names) assert.match(wrangler, new RegExp(`"${name}"`));
+  assert.match(wrangler, /"binding":\s*"MOVX_DATABASE"/);
+  assert.match(wrangler, /"id":\s*"390007706c314f3f808535332a802f7d"/);
+  assert.doesNotMatch(wrangler, /"DATABASE_URL"/);
   assert.doesNotMatch(wrangler, /STAGING_AUTH_TEST|EXPECTED_DATABASE_USER/);
   assert.doesNotMatch(wrangler, /"routes?"\s*:|"custom_domains?"\s*:/);
 });

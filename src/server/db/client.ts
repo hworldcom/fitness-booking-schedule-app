@@ -2,14 +2,13 @@ import "server-only";
 
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { databaseRuntimeConfig } from "./env";
+import { databaseRuntimeConfig, requestDatabaseRuntimeConfig } from "./env";
 import * as schema from "./schema";
 
 export function createDatabaseConnection(config = databaseRuntimeConfig()) {
   const queryClient = postgres(config.connectionString, {
     max: 1,
     prepare: false,
-    fetch_types: false,
     ssl: config.ssl,
   });
 
@@ -23,11 +22,14 @@ export type DatabaseConnection = ReturnType<typeof createDatabaseConnection>;
 
 export async function withDatabaseConnection<T>(
   work: (connection: DatabaseConnection) => Promise<T>,
-  connection = createDatabaseConnection(),
+  connection?: DatabaseConnection,
 ) {
+  const ownedConnection =
+    connection ??
+    createDatabaseConnection(await requestDatabaseRuntimeConfig());
   try {
-    return await work(connection);
+    return await work(ownedConnection);
   } finally {
-    await connection.queryClient.end({ timeout: 1 });
+    await ownedConnection.queryClient.end({ timeout: 1 });
   }
 }

@@ -2,7 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   DatabaseConfigurationError,
+  isCloudflareWorkerRuntime,
   parseDatabaseUrl,
+  parseHyperdriveDatabaseUrl,
 } from "@/server/db/config";
 
 test("database configuration is lazy, explicit and redacts invalid values", () => {
@@ -40,4 +42,18 @@ test("Docker-local Supabase hostnames do not require TLS", () => {
     "postgresql://postgres:postgres@supabase_db_project:5432/postgres",
   );
   assert.equal(config.ssl, false);
+});
+
+test("Hyperdrive retains its generated transport configuration", () => {
+  const config = parseHyperdriveDatabaseUrl(
+    "postgresql://runtime:generated@hyperdrive.local:5432/postgres?sslmode=disable",
+  );
+  assert.equal(config.ssl, undefined);
+  assert.match(config.connectionString, /sslmode=disable/);
+});
+
+test("Cloudflare runtime detection is explicit", () => {
+  assert.equal(isCloudflareWorkerRuntime("Cloudflare-Workers"), true);
+  assert.equal(isCloudflareWorkerRuntime("Node.js/24"), false);
+  assert.equal(isCloudflareWorkerRuntime(undefined), false);
 });
