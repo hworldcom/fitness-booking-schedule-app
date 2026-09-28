@@ -2,7 +2,7 @@
 
 - Status: Draft
 - Created: 2026-09-27
-- Last updated: 2026-09-27
+- Last updated: 2026-09-28
 - Milestone: M3 check-ins, member-price access and allocation
 - Coordination: [COR0008 — Membership reservations and check-ins](../organisatory/COR0008-membership-reservations-and-checkins.md)
 - Related records: consumes [DEV0086 — Persist included class reservations](../backend/DEV0086-persist-included-class-reservations.md), supplies upcoming reservation context to [DEV0085 — Add the member check-in interface](DEV0085-member-checkin-interface.md), and extends the active membership view delivered through [DEV0081 — Activate memberships with Devnet EURC](../blockchain/DEV0081-devnet-membership-activation.md)
@@ -22,7 +22,7 @@ This ticket owns the member presentation for [reservations](../../../docs/mvp-sp
 
 An active member sees only eligible scheduled classes at the four selected gyms. Reserving shows a durable `Reserved` state and explains that a seat—and for Basic one included use—is held but not yet consumed. Classic shows no numerical balance. A repeated click or page reload recovers the same reservation.
 
-The member may cancel before the class begins, releasing the hold. Full, cancelled, same-day-conflicting, out-of-period or service-unavailable classes cannot appear reserved. No-show and expired results are shown honestly after server reconciliation and never appear as attendance. DEV0085 later exposes the short-lived arrival action for an eligible upcoming reservation.
+The member may cancel before the class begins, releasing the hold. A class cancelled by its venue also releases the hold and is distinguished from a member cancellation. Full, cancelled, same-day-conflicting, past, out-of-period or service-unavailable classes cannot appear reserved. A post-class `no_show` result is shown honestly after server reconciliation and never appears as attendance. `Expired` belongs to the short-lived DEV0085 arrival code, not a class reservation.
 
 ## Assumptions, decisions, and dependencies
 
@@ -44,7 +44,7 @@ The member may cancel before the class begins, releasing the hold. Full, cancell
 - [ ] AC1: An active member sees only eligible scheduled classes from the four frozen core gyms with authoritative local time and capacity state.
 - [ ] AC2: Reserve/resume creates one durable visible reservation and clearly labels its seat and Basic allowance as held, not consumed.
 - [ ] AC3: Classic shows the daily conflict policy without a numerical monthly allowance.
-- [ ] AC4: Cancellation before start releases the visible hold; full, cancelled, conflicting, expired and unavailable outcomes remain honest and cannot look reserved.
+- [ ] AC4: Member/session cancellation before start releases the visible hold and shows the correct reason; full, cancelled, conflicting, past, no-show and unavailable outcomes remain honest and cannot look reserved.
 - [ ] AC5: Reload/retry recovers one reservation without duplicate cards, capacity claims or automatic replacement submission.
 - [ ] AC6: Reservation UI never claims physical attendance, allocation, payment or staff confirmation.
 - [ ] AC7: Schedule, reserve and cancel flows are usable by keyboard and at representative mobile/desktop widths with accessible status announcements.
@@ -52,7 +52,7 @@ The member may cancel before the class begins, releasing the hold. Full, cancell
 
 ## Validation plan
 
-Use DEV0086 fixtures for available/full/cancelled/out-of-period sessions, Basic available/final/exhausted holds, Classic same-day conflicts, reserved/cancelled/no-show/expired states and service failure. Exercise repeated actions, reloads, keyboard use and mobile/desktop layouts. Confirm signed-out and inactive-member states retain the existing access boundary.
+Use DEV0086 fixtures for available/full/cancelled/past/out-of-period sessions, Basic available/final/exhausted holds, Classic same-day conflicts, reserved/member-cancelled/session-cancelled/no-show states and service failure. Exercise repeated actions, reloads, keyboard use and mobile/desktop layouts. Confirm signed-out and inactive-member states retain the existing access boundary.
 
 Run focused unit/component tests, `npm test`, lint, typecheck, formatting, the documented Webpack build, `git diff --check` and focused browser tests. Mock-only behavior cannot complete the ticket without DEV0086's persistent contract.
 
@@ -73,6 +73,7 @@ No implementation changes yet.
 ### Decisions and deviations
 
 - 2026-09-27: Created as the frontend reservation peer after splitting advance booking from arrival check-in.
+- 2026-09-28: Align the interface with DEV0086's four reservation states; only arrival requests expire, and reservation cancellation identifies member versus session cancellation.
 
 ### Contracts, configuration, and operations
 
@@ -93,6 +94,6 @@ Capacity displayed in the browser is advisory until the atomic reserve response 
 ## Completion and review references
 
 - Completed: Not completed.
-- Commit: Not created.
+- Commit: Initial split planning record created in `25d4842`; the lifecycle clarification is not yet committed.
 - Review: Planning self-review completed; no independent review.
 - Deployment or release: None.

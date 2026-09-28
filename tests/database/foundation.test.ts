@@ -1,6 +1,6 @@
 import test, { after } from "node:test";
 import assert from "node:assert/strict";
-import { asc, eq } from "drizzle-orm";
+import { asc, countDistinct, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { classSessions, profiles } from "@/server/db/schema";
@@ -30,22 +30,26 @@ test("Drizzle mappings read the deterministic foundation fixtures", async () => 
     .from(profiles)
     .where(eq(profiles.recordSource, "fixture"))
     .orderBy(asc(profiles.slug));
-  assert.equal(seededProfiles.length, 5);
+  assert.equal(seededProfiles.length, 11);
   assert.ok(seededProfiles.every((profile) => profile.authUserId === null));
 
   const seededClasses = await db
     .select({
       slug: classSessions.slug,
+      venueId: classSessions.venueId,
       priceBaseUnits: classSessions.priceBaseUnits,
       currencyCode: classSessions.currencyCode,
     })
     .from(classSessions)
     .orderBy(asc(classSessions.slug));
-  assert.deepEqual(
-    seededClasses.map((session) => session.priceBaseUnits),
-    ["12000000", "18000000", "15000000"],
-  );
+  assert.equal(seededClasses.length, 42);
+  assert.ok(seededClasses.every((session) => session.priceBaseUnits === "0"));
   assert.ok(seededClasses.every((session) => session.currencyCode === "EURC"));
+
+  const [venueCount] = await db
+    .select({ count: countDistinct(classSessions.venueId) })
+    .from(classSessions);
+  assert.equal(venueCount?.count, 7);
 });
 
 test("forced RLS hides private rows from the runtime role", async () => {

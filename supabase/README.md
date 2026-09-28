@@ -66,6 +66,12 @@ The four tables force RLS and expose no direct `app_runtime`, `anon`, `authentic
 
 For local development, `npm run db:runtime` provisions the legacy `repx_runtime_login` described above. Hosted environments use a distinct login outside migrations so a password rotation never rewrites schema history.
 
+## Fictional demo class schedule
+
+DEV0088 extends the seven-gym catalogue with nine fictional trainer affiliations and 42 scheduled sessions: six sessions per participating gym across two weeks. The fixed `2026-09-28` demo anchor produces Berlin-local morning, lunch, evening and weekend times inside the current hackathon run window. MMA, grappling, kickboxing, massage and wellness use the same reviewed activity taxonomy as participating venues. Capacity-one sports massage and group recovery fixtures exercise both appointment and class-style capacity boundaries.
+
+The schedule transforms only general cadence and duration patterns from public research; tracked fixtures contain original fictional identities, titles, descriptions, times and capacities. They are not live availability or partnership claims. `price_base_units = 0` records that the current product has no standalone class sale, not a retail-price promise. The fixed anchor is intentionally deterministic and time-bounded: a later demonstration period must create a newly anchored dataset rather than shifting sessions that may already have reservation history.
+
 ## Hosted staging runtime login
 
 The hosted staging project is `movx-club-staging` (`qaluvzwudsqrchdwxcsb`) in `eu-central-1`. Store its runtime password in macOS Keychain so local verification does not require a duplicate plaintext environment file.

@@ -2,7 +2,7 @@
 
 - Status: Draft
 - Created: 2026-09-27
-- Last updated: 2026-09-27
+- Last updated: 2026-09-28
 - Milestone: M3 check-ins, member-price access and allocation
 - Coordination: [COR0008 — Membership reservations and check-ins](../organisatory/COR0008-membership-reservations-and-checkins.md)
 - Related records: consumes arrival/attendance from [DEV0084 — Persist included membership check-ins](../backend/DEV0084-persist-included-membership-checkins.md), consumes upcoming reservations from [DEV0087 — Add the member class reservation interface](DEV0087-member-class-reservation-interface.md), depends transitively on [DEV0086 — Persist included class reservations](../backend/DEV0086-persist-included-class-reservations.md), and extends the active membership view delivered through [DEV0081](../blockchain/DEV0081-devnet-membership-activation.md); the original broad DEV0085 plan is preserved in commit `f6bde9f`
@@ -22,7 +22,7 @@ This ticket owns the member-facing portion of [included check-ins](../../../docs
 
 An active member opens an upcoming reservation and requests its arrival code during the allowed window, or starts a venue-only open-gym arrival at a selected gym. The UI displays a QR and fallback code with an explicit expiration countdown and “Waiting for gym confirmation.” It identifies the gym and class when applicable but embeds no personal or financial text in the QR payload.
 
-The browser keeps the server-bound opaque value only in bounded session state. Reloading in the same browser resumes the same unexpired request rather than generating multiple codes. If that local value is lost, the interface explains that the existing request must be cancelled or allowed to expire before a replacement can be created. Only a server-confirmed result moves into history or changes Basic's confirmed remaining allowance. An expired, cancelled, wrong-window, terminal-reservation or unavailable result explains what happened without claiming attendance. Classic shows uncapped period access plus the one-per-local-day rule and never a made-up balance.
+The browser keeps the server-bound opaque value only in bounded session state. Reloading in the same browser resumes the same unexpired request rather than generating multiple codes. If that local value is lost, the interface explains that the existing request must be cancelled or allowed to expire before a replacement can be created. A reservation-backed arrival shows its existing held daily access; an open-gym arrival creates a temporary held claim that disappears if the request is cancelled or expires. Only a server-confirmed result moves into history or changes Basic's confirmed remaining allowance. An expired, cancelled, wrong-window, terminal-reservation or unavailable result explains what happened without claiming attendance. Classic shows uncapped period access plus the one-per-local-day rule and never a made-up balance.
 
 Upcoming reservation state comes from DEV0087/DEV0086. Non-core gyms do not expose included arrival actions. The interface shows no staff-private data, wallet/payment details or provisional allocation.
 
@@ -48,8 +48,8 @@ Upcoming reservation state comes from DEV0087/DEV0086. Non-core gyms do not expo
 - [ ] AC1: An active member can request arrival only for an eligible upcoming reservation or selected-core-gym open access; non-core/inactive/terminal cases expose no valid code.
 - [ ] AC2: The interface displays one server-issued QR/fallback code, exact gym/class context and 15-minute expiry without embedding personal or financial data.
 - [ ] AC3: Starting or repeating an action resumes one request and explicitly says gym confirmation is required.
-- [ ] AC4: Allowance and history change only after confirmed attendance; expiry, cancellation, conflict and service failure never appear completed.
-- [ ] AC5: Basic distinguishes held reservations from confirmed remaining uses; Classic shows no numerical allowance and does show the daily rule.
+- [ ] AC4: Confirmed allowance and history change only after attendance; an open-gym request visibly holds daily access until confirmation, cancellation or expiry, and failure never appears completed.
+- [ ] AC5: Basic distinguishes held reservation/open-gym claims from confirmed usage; Classic shows no numerical allowance and does show the daily rule.
 - [ ] AC6: Same-browser reload/retry recovers the same pending/confirmed request without duplicate codes, history or automatic replacement submission; a lost raw value has an explicit cancel/expiry recovery path.
 - [ ] AC7: Member-safe history exposes no payment, wallet, staff-private or monetary-allocation data.
 - [ ] AC8: The full request/pending/confirmed/expired/error flow is keyboard usable and responsive at representative mobile/desktop widths with accessible status announcements.
@@ -57,7 +57,7 @@ Upcoming reservation state comes from DEV0087/DEV0086. Non-core gyms do not expo
 
 ## Validation plan
 
-Use delivered fixtures for reservation-backed and open-gym arrival, too-early/valid/expired windows, Basic held/final/exhausted states, Classic available/same-day-used state, confirmed history and service failure. Verify repeated clicks/reloads preserve one operation and only confirmation changes usage. Exercise QR fallback, countdown/status announcements and controls by keyboard at mobile and desktop widths.
+Use delivered fixtures for reservation-backed and open-gym arrival, too-early/valid/expired windows, Basic held/final/exhausted states, Classic available/same-day-used state, confirmed history and service failure. Verify repeated clicks/reloads preserve one operation, open-gym arrival holds and releases daily access correctly, and only confirmation changes confirmed usage. Exercise QR fallback, countdown/status announcements and controls by keyboard at mobile and desktop widths.
 
 Run focused unit/component tests, `npm test`, lint, typecheck, formatting, the documented Webpack build, `git diff --check` and focused browser tests. Mock-only behavior cannot complete the ticket without DEV0084's persistent contract.
 
@@ -78,6 +78,7 @@ No implementation changes yet.
 ### Decisions and deviations
 
 - 2026-09-27: Preserve DEV0085 because its planning record was already committed; narrow it to arrival code, pending confirmation, allowance and history under COR0008.
+- 2026-09-28: Show DEV0086's shared daily-access claim as held for a reservation or pending open-gym arrival; only staff confirmation turns it into confirmed usage.
 
 ### Contracts, configuration, and operations
 
@@ -98,6 +99,6 @@ The code helps staff find the correct request but does not prove presence by its
 ## Completion and review references
 
 - Completed: Not completed.
-- Commit: Initial broad planning record committed in `f6bde9f`; split revision not yet committed.
+- Commit: Initial broad planning record committed in `f6bde9f`; split revision committed in `25d4842`; the daily-claim clarification is not yet committed.
 - Review: Planning self-review completed; no independent review.
 - Deployment or release: None.

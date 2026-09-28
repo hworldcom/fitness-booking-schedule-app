@@ -423,7 +423,7 @@ export const trainerAffiliations = app.table(
     }).onDelete("restrict"),
     check(
       "trainer_affiliations_activity_tags_check",
-      sql`cardinality(${table.activityTags}) > 0 and ${table.activityTags} <@ array['Running', 'Strength', 'Muay Thai', 'Yoga']::text[]`,
+      sql`cardinality(${table.activityTags}) > 0 and ${table.activityTags} <@ array['Grappling', 'Kickboxing', 'Massage', 'MMA', 'Muay Thai', 'Running', 'Strength', 'Wellness', 'Yoga']::text[]`,
     ),
     check(
       "trainer_affiliations_status_check",
@@ -495,7 +495,7 @@ export const classSessions = app.table(
     ),
     check(
       "class_sessions_discipline_check",
-      sql`${table.discipline} in ('Running', 'Strength', 'Muay Thai', 'Yoga')`,
+      sql`${table.discipline} in ('Grappling', 'Kickboxing', 'Massage', 'MMA', 'Muay Thai', 'Running', 'Strength', 'Wellness', 'Yoga')`,
     ),
     check(
       "class_sessions_time_order_check",

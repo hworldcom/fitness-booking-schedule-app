@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = extensions, public, pg_catalog;
 
-select plan(26);
+select plan(31);
 
 select has_schema('app', 'app schema exists');
 
@@ -135,10 +135,89 @@ select is(
     from app.profiles
     where record_source = 'fixture'
   ),
-  5,
-  'five public fixture profiles are seeded without a prepared current user'
+  11,
+  'eleven public fixture profiles are seeded without a prepared current user'
 );
-select is((select count(*)::integer from app.class_sessions), 3, 'three classes are seeded');
+select is((select count(*)::integer from app.class_sessions), 42, 'forty-two classes are seeded');
+
+select is(
+  (select count(*)::integer from app.trainer_affiliations),
+  9,
+  'nine fictional trainer affiliations are seeded'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from (
+      select gym.venue_id
+      from app.participating_gyms as gym
+      left join app.class_sessions as session
+        on session.run_id = gym.run_id
+        and session.venue_id = gym.venue_id
+      group by gym.venue_id
+      having count(session.id) <> 6
+    ) as incorrect_venue
+  ),
+  0,
+  'each participating gym has six seeded sessions'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from app.class_sessions as session
+    join app.demo_runs as run on run.id = session.run_id
+    left join app.trainer_affiliations as affiliation
+      on affiliation.run_id = session.run_id
+      and affiliation.venue_id = session.venue_id
+      and affiliation.profile_id = session.trainer_profile_id
+      and affiliation.status = 'active'
+    where affiliation.profile_id is null
+      or session.starts_at < run.starts_at
+      or session.ends_at > run.ends_at
+  ),
+  0,
+  'every session has an active same-venue trainer and stays inside the run window'
+);
+
+select ok(
+  exists (
+    select 1
+    from app.class_sessions
+    where (starts_at at time zone timezone)::time < time '09:00'
+  )
+    and exists (
+      select 1
+      from app.class_sessions
+      where (starts_at at time zone timezone)::time between time '12:00' and time '13:59'
+    )
+    and exists (
+      select 1
+      from app.class_sessions
+      where (starts_at at time zone timezone)::time >= time '18:00'
+    )
+    and exists (
+      select 1
+      from app.class_sessions
+      where extract(isodow from starts_at at time zone timezone) in (6, 7)
+    ),
+  'the schedule covers morning, lunch, evening and weekend sessions'
+);
+
+select ok(
+  (
+    select count(*) = 2 and min(capacity) = 1 and max(capacity) = 1
+    from app.class_sessions
+    where discipline = 'Massage'
+  )
+    and (
+      select count(*) = 4 and min(capacity) > 1
+      from app.class_sessions
+      where discipline = 'Wellness'
+    ),
+  'massage is capacity one while group recovery retains group capacity'
+);
 select ok(
   to_regclass('app.membership_entitlements') is null
     and not exists (
@@ -370,6 +449,28 @@ begin
   end;
 end
 $time_constraint_test$;
+
+do $activity_constraint_test$
+begin
+  begin
+    insert into app.class_sessions (
+      id, run_id, venue_id, trainer_profile_id, slug, title, description,
+      discipline, timezone, currency_code, starts_at, ends_at, capacity,
+      price_base_units, status, record_source
+    )
+    select
+      gen_random_uuid(), run_id, venue_id, trainer_profile_id,
+      'invalid-sql-test-activity', title, description, 'Parkour', timezone,
+      currency_code, starts_at, ends_at, capacity, price_base_units,
+      status, record_source
+    from app.class_sessions
+    limit 1;
+    raise exception 'invalid class activity was accepted';
+  exception when check_violation then
+    null;
+  end;
+end
+$activity_constraint_test$;
 
 do $duplicate_constraint_test$
 declare
