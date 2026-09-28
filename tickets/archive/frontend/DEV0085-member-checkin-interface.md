@@ -122,6 +122,6 @@ The code helps staff find the correct request but does not prove presence by its
 ## Completion and review references
 
 - Completed: 2026-09-28.
-- Commit: Initial broad planning record committed in `f6bde9f`; split revision committed in `25d4842`; implementation is ready for a DEV0085 commit.
+- Commit: Initial broad planning record committed in `f6bde9f`; split revision committed in `25d4842`; implementation committed in `b65ae5a` together with the overlapping DEV0090 follow-up.
 - Review: Implementation self-review and responsive visual review completed; no independent review.
 - Deployment or release: None.

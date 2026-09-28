@@ -106,6 +106,6 @@ Repeated member cancellations remain free for the hackathon; production cancella
 ## Completion and review references
 
 - Completed: 2026-09-28.
-- Commit: Not created.
+- Commit: Implemented in `b65ae5a` together with the overlapping DEV0085 member check-in interface.
 - Review: Scope and changed-file self-review completed; no independent review.
 - Deployment or release: Local migration and rehearsal only; no staging or production release.
