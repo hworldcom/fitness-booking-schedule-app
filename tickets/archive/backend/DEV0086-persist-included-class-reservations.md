@@ -1,11 +1,11 @@
 # Ticket DEV0086: Persist included class reservations
 
-- Status: Ready
+- Status: Completed
 - Created: 2026-09-27
 - Last updated: 2026-09-28
 - Milestone: M3 check-ins, member-price access and allocation
-- Coordination: [COR0008 — Membership reservations and check-ins](../organisatory/COR0008-membership-reservations-and-checkins.md)
-- Related records: builds on active periods from [DEV0080 — Persist membership activation foundation](../../archive/backend/DEV0080-membership-activation-foundation.md) and the fictional schedule delivered by completed [DEV0088 — Seed fictional demo class schedules](../../archive/backend/DEV0088-seed-fictional-demo-class-schedules.md), supplies upcoming reservations to [DEV0087 — Add the member class reservation interface](../frontend/DEV0087-member-class-reservation-interface.md), and defines the shared daily-access claim consumed by [DEV0084 — Persist included membership check-ins](DEV0084-persist-included-membership-checkins.md); cancelled [DEV0018](../../archive/backend/DEV0018-class-pass-reservations-and-confirmed-visits.md) is historical class-pass context only
+- Coordination: [COR0008 — Membership reservations and check-ins](../../current/organisatory/COR0008-membership-reservations-and-checkins.md)
+- Related records: builds on active periods from [DEV0080 — Persist membership activation foundation](DEV0080-membership-activation-foundation.md) and the fictional schedule delivered by completed [DEV0088 — Seed fictional demo class schedules](DEV0088-seed-fictional-demo-class-schedules.md), supplies upcoming reservations to [DEV0087 — Add the member class reservation interface](../frontend/DEV0087-member-class-reservation-interface.md), and defines the shared daily-access claim consumed by [DEV0084 — Persist included membership check-ins](../../current/backend/DEV0084-persist-included-membership-checkins.md); cancelled [DEV0018](DEV0018-class-pass-reservations-and-confirmed-visits.md) is historical class-pass context only
 
 ## Objective and context
 
@@ -48,15 +48,15 @@ A member may cancel before the class starts. Cancellation sets the reservation t
 
 ## Acceptance criteria
 
-- [ ] AC1: An active member can reserve only a future scheduled class at a gym frozen into that membership period and only when the full session lies within the period.
-- [ ] AC2: Reservation holds one seat atomically; duplicate/member-session and concurrent final-seat attempts cannot overbook.
-- [ ] AC3: Basic confirmed usage plus `held` daily-access claims never exceeds ten; concurrent final-use reservations produce at most one success.
-- [ ] AC4: A partial uniqueness constraint permits at most one `held` or `consumed` daily-access claim across the membership on one immutable venue-local service date; a `released` claim permits another same-day attempt and Classic has no fabricated monthly allowance.
-- [ ] AC5: Retrying one operation returns the same reservation without an additional seat or daily-access claim.
-- [ ] AC6: Member or session cancellation before start records the correct reason, while an unconfirmed reservation becomes `no_show` after class end; each releases the seat/claim and creates no attendance, fee, allocation input or allowance loss.
-- [ ] AC7: Only DEV0084's authorized boundary can atomically transition the reservation `reserved -> checked_in` and its claim `held -> consumed`; terminal reservations and released claims cannot be revived or reassigned.
-- [ ] AC8: Member reads expose only the actor's eligible classes/reservations and no other member's private state.
-- [ ] AC9: Forward/clean migration replay, authorization/concurrency/database tests, unit tests, lint, typecheck, formatting, database lint and production build pass.
+- [x] AC1: An active member can reserve only a future scheduled class at a gym frozen into that membership period and only when the full session lies within the period.
+- [x] AC2: Reservation holds one seat atomically; duplicate/member-session and concurrent final-seat attempts cannot overbook.
+- [x] AC3: Basic confirmed usage plus `held` daily-access claims never exceeds ten; concurrent final-use reservations produce at most one success.
+- [x] AC4: A partial uniqueness constraint permits at most one `held` or `consumed` daily-access claim across the membership on one immutable venue-local service date; a `released` claim permits another same-day attempt and Classic has no fabricated monthly allowance.
+- [x] AC5: Retrying one operation returns the same reservation without an additional seat or daily-access claim.
+- [x] AC6: Member or session cancellation before start records the correct reason, while an unconfirmed reservation becomes `no_show` after class end; each releases the seat/claim and creates no attendance, fee, allocation input or allowance loss.
+- [x] AC7: Only DEV0084's authorized boundary can atomically transition the reservation `reserved -> checked_in` and its claim `held -> consumed`; terminal reservations and released claims cannot be revived or reassigned.
+- [x] AC8: Member reads expose only the actor's eligible classes/reservations and no other member's private state.
+- [x] AC9: Forward/clean migration replay, authorization/concurrency/database tests, unit tests, lint, typecheck, formatting, database lint and production build pass.
 
 ## Validation plan
 
@@ -66,17 +66,24 @@ Run forward migration, clean migration/seed replay, pgTAP or equivalent constrai
 
 ## Implementation record
 
-Pending implementation.
+Completed the private persistent reservation boundary consumed by DEV0087 and reserved the attendance transition for DEV0084.
 
 ### Changes and rationale
 
-No implementation changes yet.
+Added two private, forced-row-level-security relations: `membership_daily_access_claims` serializes one included visit per membership/service date, while `class_reservations` records one immutable operation, class and claim relationship. Security-definer functions derive the actor and active period, reconcile cancelled/ended sessions, expose only selected-gym schedules and perform idempotent reserve/cancel mutations under member and class-session locks.
+
+Basic reservations count held claims together with confirmed usage; Classic uses the daily claim without a numerical monthly balance. Capacity, selected-gym eligibility, the period window and venue-local service date are all decided by the database. Cancellation and no-show release claims without changing confirmed usage. Runtime callers receive bounded results and have no direct table or internal reconciliation access.
 
 ### Affected files
 
-| File or component                                 | Change and purpose                                                         |
-| ------------------------------------------------- | -------------------------------------------------------------------------- |
-| Pending reservation migration/domain/server files | Add the reviewed class reservation and shared daily-access-claim boundary. |
+| File or component | Change and purpose |
+| --- | --- |
+| `supabase/migrations/20260928000200_create_class_reservations.sql` | Adds the private claim/reservation schema, invariants, row locks, reconciliation and actor-scoped reserve/cancel/read functions. |
+| `src/server/db/schema/membership.ts` | Maps the additive relations and membership-period ownership key for typed server access. |
+| `src/domain/class-reservations.ts` | Defines the bounded schedule, reservation and booking-status contract shared with the member UI. |
+| `src/server/db/reservations/repository.ts` and `src/server/reservations/service.ts` | Validate database output, derive member state and expose actor-scoped operations without client authority over membership terms. |
+| `src/app/api/membership/classes/route.ts` and `src/app/api/membership/reservations/**` | Provide private same-origin JSON reads and bounded reserve/cancel mutations. |
+| `supabase/tests/database/class-reservations.test.sql` and `tests/database/class-reservations.test.ts` | Prove privacy, constraints, idempotency, daily/allowance/capacity concurrency, cancellation, no-show and terminal-state behavior. |
 
 ### Decisions and deviations
 
@@ -87,26 +94,33 @@ No implementation changes yet.
 - 2026-09-28: Move the ticket back to Draft until the user supplies the intended class/trainer fixture data and its reservable date strategy is recorded.
 - 2026-09-28: The user supplied public schedule references; DEV0088 now owns transforming them into original fixtures with a fixed current anchor. DEV0086 remains Draft until that prerequisite completes.
 - 2026-09-28: DEV0088 completed 42 original fictional sessions across all seven gyms and validated the fixed schedule window. DEV0086 is now Ready.
+- 2026-09-28: Implementation started after the user asked to add the seeded classes to the UI. DEV0086 will first deliver the persistent member schedule and reserve/cancel contract consumed by DEV0087; no browser-only schedule or mock reservation state will be introduced.
+- 2026-09-28: Kept `checked_in` as a reserved terminal schema state for DEV0084 but exposed no current check-in mutation. Runtime users cannot write the tables or invoke reconciliation directly, and terminal reservations/claims cannot be revived.
+- 2026-09-28: Isolated generated wallet identities and payment references in the reservation integration fixture after the full parallel test suite correctly exposed collisions with DEV0080's activation tests.
 
 ### Contracts, configuration, and operations
 
-An additive reservation relation, `membership_daily_access_claims` relation and private HTTP contract are planned. The claim's active-state partial uniqueness is shared with DEV0084. No new secret, wallet key, payment or public catalogue mutation is required. Exact migration and rollback details will be recorded during implementation.
+The migration adds `app.membership_daily_access_claims`, `app.class_reservations`, one membership-period ownership key, supporting indexes, row-level-security policies and four server functions. Deployments must apply this migration before serving the three new reservation routes. Rollback is destructive to reservation history and therefore requires an explicit data-retention decision; no automatic down migration is supplied.
+
+The browser/server JSON contract adds a member schedule containing plan usage, held Basic uses, selected-gym class metadata, remaining capacity, bounded booking status and the actor's reservation when present. Reserve accepts only one version-4 operation UUID plus a class-session UUID; cancel accepts only the actor's reservation UUID. No dependency, secret, wallet-key or public-catalogue mutation was added.
 
 ## Validation results
 
-Pending validation.
-
-| Criterion | Evidence            | Result  |
-| --------- | ------------------- | ------- |
-| AC1–AC9   | Not yet implemented | Not run |
+| Criterion | Evidence | Result |
+| --- | --- | --- |
+| AC1, AC4, AC8 | `tests/database/class-reservations.test.ts`: private tables, four frozen gyms, non-core rejection, daily conflict, foreign cancellation privacy and replacement after release | Passed |
+| AC2, AC5 | Focused integration proves exact retry recovery and concurrent final-seat attempts yield one `reserved` plus one `full`, with one persisted reservation/claim | Passed |
+| AC3 | Concurrent different-day final-Basic-use attempts with nine confirmed uses yield one `reserved` plus one `allowance-exhausted` | Passed |
+| AC6, AC7 | Session cancellation and forced post-end reconciliation yield released claims and terminal `cancelled`/`no_show`; revival attempts fail and no runtime check-in function exists | Passed |
+| AC9 | `npm run db:reset`; `npm run db:runtime`; focused reservation integration (5/5); `npm run test:db` (30/30); `npm run db:test` (156 assertions); `npm test` (82/82); lint, typecheck, format check, database lint, production build and `git diff --check` | Passed |
 
 ## Risks, limitations, and follow-ups
 
-The no-penalty cancellation/no-show policy is intentionally simplified. It can encourage unused reservations and must be revisited before production. DEV0084 must consume or release the shared claim through the delivered atomic transition rather than duplicating daily or allowance logic. DEV0088's fixed hackathon schedule is a prerequisite, not a recurring production schedule.
+The no-penalty cancellation/no-show policy is intentionally simplified. It can encourage unused reservations and must be revisited before production. DEV0084 must add the sole authorized atomic `held -> consumed` plus `reserved -> checked_in` operation rather than duplicating daily or allowance logic. DEV0088's fixed hackathon schedule is demonstration data, not a recurring production schedule. No hosted migration or deployment was performed.
 
 ## Completion and review references
 
-- Completed: Not completed.
-- Commit: Initial split planning record created in `25d4842`; the lifecycle/daily-claim revision is not yet committed.
-- Review: Planning self-review completed; no independent review.
+- Completed: 2026-09-28.
+- Commit: Implementation commit pending; initial split planning record is `25d4842`.
+- Review: Implementation self-review against AC1–AC9 completed; no independent review.
 - Deployment or release: None.

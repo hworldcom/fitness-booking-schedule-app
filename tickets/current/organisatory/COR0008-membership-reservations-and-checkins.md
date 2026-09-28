@@ -5,7 +5,7 @@
 - Last updated: 2026-09-28
 - Milestone: M3 check-ins, member-price access and allocation
 - Converted from: Not applicable — created after the committed DEV0084 planning record required multiple implementation boundaries
-- Tracked development tickets: draft [DEV0084 — Persist included membership check-ins](../backend/DEV0084-persist-included-membership-checkins.md), draft [DEV0085 — Add the member check-in interface](../frontend/DEV0085-member-checkin-interface.md), ready [DEV0086 — Persist included class reservations](../backend/DEV0086-persist-included-class-reservations.md), draft [DEV0087 — Add the member class reservation interface](../frontend/DEV0087-member-class-reservation-interface.md), and completed [DEV0088 — Seed fictional demo class schedules](../../archive/backend/DEV0088-seed-fictional-demo-class-schedules.md)
+- Tracked development tickets: draft [DEV0084 — Persist included membership check-ins](../backend/DEV0084-persist-included-membership-checkins.md), draft [DEV0085 — Add the member check-in interface](../frontend/DEV0085-member-checkin-interface.md), completed [DEV0086 — Persist included class reservations](../../archive/backend/DEV0086-persist-included-class-reservations.md), completed [DEV0087 — Add the member class reservation interface](../../archive/frontend/DEV0087-member-class-reservation-interface.md), and completed [DEV0088 — Seed fictional demo class schedules](../../archive/backend/DEV0088-seed-fictional-demo-class-schedules.md)
 - Related records: delivers the reservation/member-attendance slice required by [COR0007 — Core multi-gym membership MVP](COR0007-core-multigym-membership-mvp.md); follows the active membership foundation in completed [DEV0080](../../archive/backend/DEV0080-membership-activation-foundation.md) and current [DEV0081](../blockchain/DEV0081-devnet-membership-activation.md); later gym operations, provisional monetary allocation, non-core visits and social publication remain outside this coordination record
 
 ## Objective and boundaries
@@ -23,8 +23,8 @@ COR0007 already coordinates the full multi-gym MVP. DEV0084 and DEV0085 were com
 | Implementation part                | Development ticket                                                                                                              | Owned deliverable                                                                                                                                 | Start condition or dependency                                                                                 |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | Demo schedule fixtures             | Completed [DEV0088 — Seed fictional demo class schedules](../../archive/backend/DEV0088-seed-fictional-demo-class-schedules.md) | Original two-week class/session fixtures and fictional trainer affiliations across all seven participating gyms                                   | Delivered; validated fixture identities, activity taxonomy and current fixed schedule dates                   |
-| Reservation persistence and rules  | Ready [DEV0086 — Persist included class reservations](../backend/DEV0086-persist-included-class-reservations.md)                | Member-scoped scheduled-class reservation, atomic capacity, shared daily claims, cancellation/no-show and retry behavior                          | DEV0088 prerequisite completed; ready to start                                                                |
-| Member reservation interface       | Draft [DEV0087 — Add the member class reservation interface](../frontend/DEV0087-member-class-reservation-interface.md)         | Eligible selected-gym class discovery, reserve/cancel actions and upcoming reservation state                                                      | Starts after DEV0086 stabilizes its member contract                                                           |
+| Reservation persistence and rules  | Completed [DEV0086 — Persist included class reservations](../../archive/backend/DEV0086-persist-included-class-reservations.md) | Member-scoped scheduled-class reservation, atomic capacity, shared daily claims, cancellation/no-show and retry behavior                          | Delivered and validated against DEV0088's schedule                                                           |
+| Member reservation interface       | Completed [DEV0087 — Add the member class reservation interface](../../archive/frontend/DEV0087-member-class-reservation-interface.md) | Eligible selected-gym class discovery, reserve/cancel actions and upcoming reservation state                                               | Delivered against DEV0086 with desktop/mobile Auth/database rehearsal                                        |
 | Arrival and attendance persistence | Draft [DEV0084 — Persist included membership check-ins](../backend/DEV0084-persist-included-membership-checkins.md)             | Short-lived venue/reservation-bound arrival requests, same-venue staff confirmation, daily/allowance consumption and immutable private attendance | Starts after DEV0086 defines reservation/daily-claim transitions; venue-only design may proceed independently |
 | Member arrival interface           | Draft [DEV0085 — Add the member check-in interface](../frontend/DEV0085-member-checkin-interface.md)                            | QR/code presentation, pending confirmation, confirmed history and accurate remaining allowance                                                    | Starts after DEV0084 stabilizes its member request/read contract; consumes DEV0087 upcoming reservations      |
 
@@ -58,12 +58,13 @@ Complete COR0008 only when all five direct tickets are Completed or explicitly C
 - 2026-09-28: A shared `held`/`consumed`/`released` daily-access claim serializes class reservations and open-gym attendance. DEV0086 remains Draft pending user-supplied demo class/trainer data.
 - 2026-09-28: The user supplied public schedule research. DEV0088 owns transforming its general cadence into original fictional fixtures; no real business identity or copied catalogue content enters tracked data.
 - 2026-09-28: DEV0088 completed and validated 42 sessions, six per participating gym, with nine fictional trainer affiliations and no tracked source identities. DEV0086 is unblocked and Ready.
+- 2026-09-28: DEV0086 completed the private capacity-safe reservation and shared daily-claim contract. DEV0087 completed the My Membership schedule with persistent reserve/reload/cancel behavior, honest Basic holds and responsive keyboard validation. Attendance remains deliberately unimplemented until DEV0084/DEV0085.
 
 ## Validation and integration evidence
 
 Planning consistency checks must confirm reciprocal COR/DEV links, unique record IDs, explicit dependencies and no duplicated ownership in COR0007. Each DEV ticket owns its detailed implementation evidence. Final integration must cover reservation, cancellation, no-show, arrival-code expiry, wrong-venue staff, repeated confirmation, Basic final-use concurrency, Classic daily enforcement and reload/retry behavior.
 
-No application validation has run for this coordination-only revision. Markdown formatting and repository link/whitespace checks are required before committing the planning update.
+DEV0086 records clean migration, 156 pgTAP assertions, 30 database integration checks, concurrency/terminal-state evidence and static/build validation. DEV0087 records 82 unit checks plus a disposable desktop/mobile Chrome rehearsal against real local Auth and persistence. Final integration still requires DEV0084/DEV0085's arrival and staff-confirmed attendance path.
 
 ## Risks, limitations, and follow-ups
 
@@ -72,7 +73,7 @@ The 15-minute arrival lifetime and no-penalty cancellation/no-show policy are bo
 ## Completion and review references
 
 - Completed: Not completed.
-- Direct development tickets: DEV0084, DEV0085 and DEV0087 Draft; DEV0086 Ready; DEV0088 Completed.
+- Direct development tickets: DEV0084 and DEV0085 Draft; DEV0086, DEV0087 and DEV0088 Completed.
 - Commit: The initial split was recorded in development-ticket commit `25d4842`; coordination-record IDs are not used in commit subjects. The lifecycle/daily-claim revision is not yet committed.
 - Review: Planning self-review completed; no independent review.
 - Deployment or release: None.

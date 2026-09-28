@@ -11,6 +11,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { Empty } from "@/components/ui";
+import type { MemberClassSchedule } from "@/domain/class-reservations";
 import type {
   PublicCatalogue,
   PublicCatalogueResult,
@@ -23,6 +24,7 @@ import {
 } from "@/domain/membership-draft";
 import type { MemberMembershipState } from "@/domain/membership-activation";
 import { useMembershipDraft } from "@/features/membership/draft-store";
+import { MemberClassSchedulePanel } from "@/features/membership/class-schedule";
 import {
   membershipPaymentAmountLabel,
   membershipPaymentExplorerUrl,
@@ -32,10 +34,12 @@ function ReadyMyAccess({
   preview,
   catalogue,
   membershipState,
+  classSchedule,
 }: {
   preview: boolean;
   catalogue: PublicCatalogue;
   membershipState: MemberMembershipState | null;
+  classSchedule: MemberClassSchedule | null;
 }) {
   const { draft, recovery, storageUnavailable, dispatch } =
     useMembershipDraft(catalogue);
@@ -107,65 +111,74 @@ function ReadyMyAccess({
       )}
 
       {activePeriod ? (
-        <article className="membership-draft-card">
-          <div className="membership-draft-status">
-            <span className="eyebrow">ACTIVE MEMBERSHIP</span>
-            <strong>Payment confirmed</strong>
-          </div>
-          <div className="membership-draft-plan">
-            <div>
-              <span>Current plan</span>
-              <h2>{activePeriod.plan.name}</h2>
-              <p>
-                {activePeriod.plan.access.model === "limited"
-                  ? `${activePeriod.plan.access.includedCheckins - activePeriod.includedCheckinsUsed} of ${activePeriod.plan.access.includedCheckins} included check-ins remaining`
-                  : "Daily access without a numerical period allowance"}
-              </p>
+        <>
+          <article className="membership-draft-card">
+            <div className="membership-draft-status">
+              <span className="eyebrow">ACTIVE MEMBERSHIP</span>
+              <strong>Payment confirmed</strong>
             </div>
-            <span className="draft-completeness complete">Active</span>
-          </div>
-          <div className="membership-draft-gyms">
-            {activePeriod.gyms.map((gym, index) => (
-              <div key={gym.id}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
+            <div className="membership-draft-plan">
+              <div>
+                <span>Current plan</span>
+                <h2>{activePeriod.plan.name}</h2>
                 <p>
-                  <strong>{gym.name}</strong>
-                  <small>Frozen core-gym selection</small>
+                  {activePeriod.plan.access.model === "limited"
+                    ? `${activePeriod.includedCheckinsUsed} of ${activePeriod.plan.access.includedCheckins} confirmed check-ins used; reservation holds are shown below`
+                    : "Daily access without a numerical period allowance"}
                 </p>
               </div>
-            ))}
-          </div>
-          <div className="membership-draft-disclaimer">
-            <p>
-              <strong>
-                {new Date(activePeriod.startsAt).toLocaleDateString()} –{" "}
-                {new Date(activePeriod.endsAt).toLocaleDateString()}
-              </strong>
-              {membershipPaymentAmountLabel(
-                activePeriod.payment.amountBaseUnits,
-                activePeriod.payment.tokenDecimals,
-              )}{" "}
-              test EURC confirmed on Solana Devnet at slot{" "}
-              {activePeriod.payment.confirmedSlot}. This is hackathon test
-              infrastructure, not a real-money gym payout.
-            </p>
-          </div>
-          <div className="access-actions">
-            <a
-              href={membershipPaymentExplorerUrl(
-                activePeriod.payment.transactionSignature,
-              )}
-              target="_blank"
-              rel="noreferrer"
-              className="button dark"
-            >
-              View Devnet evidence <ExternalLink size={15} aria-hidden="true" />
-            </a>
-            <Link href="/explore" className="button secondary">
-              Explore gyms
-            </Link>
-          </div>
-        </article>
+              <span className="draft-completeness complete">Active</span>
+            </div>
+            <div className="membership-draft-gyms">
+              {activePeriod.gyms.map((gym, index) => (
+                <div key={gym.id}>
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <p>
+                    <strong>{gym.name}</strong>
+                    <small>Frozen core-gym selection</small>
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="membership-draft-disclaimer">
+              <p>
+                <strong>
+                  {new Date(activePeriod.startsAt).toLocaleDateString("en-GB", {
+                    timeZone: "UTC",
+                  })}{" "}
+                  –{" "}
+                  {new Date(activePeriod.endsAt).toLocaleDateString("en-GB", {
+                    timeZone: "UTC",
+                  })}
+                </strong>
+                {membershipPaymentAmountLabel(
+                  activePeriod.payment.amountBaseUnits,
+                  activePeriod.payment.tokenDecimals,
+                )}{" "}
+                test EURC confirmed on Solana Devnet at slot{" "}
+                {activePeriod.payment.confirmedSlot}. This is hackathon test
+                infrastructure, not a real-money gym payout.
+              </p>
+            </div>
+            <div className="access-actions">
+              <a
+                href={membershipPaymentExplorerUrl(
+                  activePeriod.payment.transactionSignature,
+                )}
+                target="_blank"
+                rel="noreferrer"
+                className="button dark"
+              >
+                View Devnet evidence{" "}
+                <ExternalLink size={15} aria-hidden="true" />
+              </a>
+              <Link href="/explore" className="button secondary">
+                Explore gyms
+              </Link>
+            </div>
+          </article>
+          <MemberClassSchedulePanel initialSchedule={classSchedule} />
+        </>
       ) : pendingOperation ? (
         <article className="membership-draft-card">
           <div className="membership-draft-status">
@@ -331,10 +344,12 @@ export function MyAccess({
   preview,
   catalogueResult,
   membershipState,
+  classSchedule,
 }: {
   preview: boolean;
   catalogueResult: PublicCatalogueResult;
   membershipState: MemberMembershipState | null;
+  classSchedule: MemberClassSchedule | null;
 }) {
   if (catalogueResult.status === "ready") {
     return (
@@ -342,6 +357,7 @@ export function MyAccess({
         preview={preview}
         catalogue={catalogueResult.catalogue}
         membershipState={membershipState}
+        classSchedule={classSchedule}
       />
     );
   }

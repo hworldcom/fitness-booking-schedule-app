@@ -5,7 +5,7 @@
 - Last updated: 2026-09-28
 - Milestone: M3 check-ins, member-price access and allocation
 - Coordination: [COR0008 — Membership reservations and check-ins](../organisatory/COR0008-membership-reservations-and-checkins.md)
-- Related records: builds on active periods from [DEV0080 — Persist membership activation foundation](../../archive/backend/DEV0080-membership-activation-foundation.md), consumes the shared daily-access claim from [DEV0086 — Persist included class reservations](DEV0086-persist-included-class-reservations.md), supplies [DEV0085 — Add the member check-in interface](../frontend/DEV0085-member-checkin-interface.md), and is deliberately distinct from the financial club-wallet authority in [DEV0041](DEV0041-club-wallet-authorization.md); the original broad DEV0084 plan is preserved in commit `f6bde9f`
+- Related records: builds on active periods from [DEV0080 — Persist membership activation foundation](../../archive/backend/DEV0080-membership-activation-foundation.md), consumes the shared daily-access claim from completed [DEV0086 — Persist included class reservations](../../archive/backend/DEV0086-persist-included-class-reservations.md), supplies [DEV0085 — Add the member check-in interface](../frontend/DEV0085-member-checkin-interface.md), and is deliberately distinct from the financial club-wallet authority in [DEV0041](DEV0041-club-wallet-authorization.md); the original broad DEV0084 plan is preserved in commit `f6bde9f`
 
 ## Objective and context
 
@@ -32,7 +32,7 @@ The attendance record is an auditable future allocation input, but DEV0084 calcu
 
 ## Assumptions, decisions, and dependencies
 
-- DEV0086 must deliver the shared daily-access claim and reservation transition before this ticket moves to Ready; venue-only arrival design may proceed independently.
+- Completed DEV0086 supplies the shared daily-access claim and reserved terminal transition. This ticket must use that contract rather than introduce a parallel daily-use model.
 - Fifteen minutes applies to the arrival code, not the advance reservation. A different configurable window requires a recorded product change.
 - The one-per-day rule is per membership/service date across all four gyms. The target venue's IANA timezone derives that date.
 - PostgreSQL is the hackathon attendance authority. Activation and direct payments retain separate Solana verification boundaries.
@@ -67,7 +67,7 @@ Run forward migration, clean migration/seed replay, pgTAP or equivalent constrai
 
 ## Implementation record
 
-Pending implementation. The original committed plan combined reservation, attendance and monetary allocation. Review split advance reservation into DEV0086/DEV0087, retained attendance under DEV0084/DEV0085 and deferred allocation economics. DEV0084 is Draft until DEV0086 delivers the reservation/daily-claim transition.
+Pending implementation. The original committed plan combined reservation, attendance and monetary allocation. Review split advance reservation into completed DEV0086/DEV0087, retained attendance under DEV0084/DEV0085 and deferred allocation economics. DEV0084 remains Draft pending its final readiness review; its reservation/daily-claim dependency is delivered.
 
 ### Changes and rationale
 
@@ -85,6 +85,7 @@ No implementation changes yet.
 - 2026-09-27: Remove reservation/capacity and monetary allocation calculation. DEV0086 owns reservation; confirmed attendance merely supplies a future allocation input.
 - 2026-09-27: Use email-authenticated `venue_staff` authority rather than the unrelated club-wallet proof.
 - 2026-09-28: Consume DEV0086's shared daily-access claim for reservation-backed attendance. Venue-only arrival uses the same claim contract so reservation and open-gym flows cannot both use one membership day.
+- 2026-09-28: DEV0086 completed the private `held`/`consumed`/`released` claim and four-state reservation schema. DEV0084 is now technically unblocked but remains Draft until its arrival-window and staff-confirmation implementation review is completed.
 
 ### Contracts, configuration, and operations
 
@@ -96,7 +97,7 @@ Pending validation.
 
 | Criterion | Evidence                                              | Result  |
 | --------- | ----------------------------------------------------- | ------- |
-| AC1–AC9   | Blocked on DEV0086's reservation/daily-claim contract | Not run |
+| AC1–AC9   | Implementation has not started; DEV0086 dependency is delivered | Not run |
 
 ## Risks, limitations, and follow-ups
 

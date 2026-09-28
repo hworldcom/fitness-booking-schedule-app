@@ -72,6 +72,12 @@ DEV0088 extends the seven-gym catalogue with nine fictional trainer affiliations
 
 The schedule transforms only general cadence and duration patterns from public research; tracked fixtures contain original fictional identities, titles, descriptions, times and capacities. They are not live availability or partnership claims. `price_base_units = 0` records that the current product has no standalone class sale, not a retail-price promise. The fixed anchor is intentionally deterministic and time-bounded: a later demonstration period must create a newly anchored dataset rather than shifting sessions that may already have reservation history.
 
+## Included class reservations
+
+DEV0086 adds private `membership_daily_access_claims` and `class_reservations` relations. A reservation at one of the active period's four frozen gyms atomically holds one class seat and one venue-local service date. Basic also checks confirmed usage plus all held claims against its ten-use allowance; Classic has no fabricated monthly counter but uses the same one-included-visit-per-day claim. A stable client operation identifier makes exact reserve retries idempotent, while session row locking prevents concurrent final-seat overbooking.
+
+Member cancellation before class start and venue cancellation both move the reservation to a terminal state and release its claim. An unconfirmed reservation reconciles to `no_show` after the class ends and also releases the claim without attendance, allowance consumption, allocation input or fee. `checked_in` and `consumed` are defined states but can be reached only by the separately owned DEV0084 attendance boundary. The restricted runtime has no direct table access and calls only actor-checked schedule, reserve and cancel functions; the browser never supplies a membership period, profile, capacity or allowance value.
+
 ## Hosted staging runtime login
 
 The hosted staging project is `movx-club-staging` (`qaluvzwudsqrchdwxcsb`) in `eu-central-1`. Store its runtime password in macOS Keychain so local verification does not require a duplicate plaintext environment file.

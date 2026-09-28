@@ -626,6 +626,222 @@
   border-top: 1px solid var(--line);
 }
 
+.member-class-schedule {
+  margin-top: 32px;
+}
+
+.class-schedule-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.class-schedule-heading h2 {
+  margin: 6px 0 8px;
+  font-size: clamp(25px, 3.4vw, 38px);
+  letter-spacing: -1.4px;
+}
+
+.class-schedule-heading p {
+  max-width: 650px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.schedule-refresh {
+  flex: 0 0 auto;
+}
+
+.class-schedule-policy {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid #cfe1b5;
+  border-radius: 12px;
+  background: #f1f8e7;
+  color: #45563a;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.class-schedule-policy svg {
+  margin-top: 1px;
+  color: #58772b;
+}
+
+.class-schedule-notice {
+  margin-bottom: 16px;
+}
+
+.class-schedule-empty {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding: 28px;
+  border: 1px dashed #cdd4c7;
+  border-radius: 16px;
+  background: #fbfcf8;
+}
+
+.class-schedule-empty h3 {
+  font-size: 18px;
+}
+
+.class-schedule-empty p {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.class-schedule-empty .button {
+  margin-top: 8px;
+}
+
+.class-schedule-days {
+  display: grid;
+  gap: 22px;
+}
+
+.class-schedule-day {
+  display: grid;
+  gap: 11px;
+}
+
+.class-schedule-day > h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #41503d;
+  font-size: 13px;
+  letter-spacing: -0.15px;
+}
+
+.class-session-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.class-session-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 20px;
+  border: 1px solid #dce2d7;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 10px 28px rgb(42 58 42 / 4%);
+}
+
+.class-session-card.status-reserved {
+  border-color: #9dbf65;
+  background: #f7fceb;
+  box-shadow: inset 0 0 0 1px #d5edac;
+}
+
+.class-session-card.status-member-cancelled,
+.class-session-card.status-session-cancelled,
+.class-session-card.status-past,
+.class-session-card.status-no-show {
+  background: #f6f6f2;
+  color: #5e675b;
+}
+
+.class-session-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #65715f;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.class-session-status {
+  max-width: 62%;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #edf0e9;
+  color: #56634f;
+  text-align: right;
+  line-height: 1.3;
+}
+
+.status-reserved .class-session-status {
+  background: #d9f4a8;
+  color: #3f5d1d;
+}
+
+.class-session-card h4 {
+  margin: 10px 0 13px;
+  font-size: 20px;
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+}
+
+.class-session-meta {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.class-session-meta span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.class-session-details {
+  margin: 15px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid #e6e9e2;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.class-session-details summary {
+  width: fit-content;
+  color: #465644;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.class-session-details p {
+  margin-top: 8px;
+  line-height: 1.6;
+}
+
+.class-session-details small {
+  display: block;
+  margin-top: 5px;
+  color: #778173;
+}
+
+.class-session-held-copy {
+  margin-top: 12px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: #eaf6d7;
+  color: #4e642e;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.class-session-action {
+  width: 100%;
+  margin-top: 16px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
 @media (max-width: 760px) {
   .membership-setup-heading h1 {
     font-size: 36px;
@@ -696,6 +912,19 @@
 
   .membership-draft-card .access-actions {
     padding: 18px 22px;
+  }
+
+  .class-schedule-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .schedule-refresh {
+    width: 100%;
+  }
+
+  .class-session-grid {
+    grid-template-columns: 1fr;
   }
 }
 

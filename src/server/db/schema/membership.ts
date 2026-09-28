@@ -14,7 +14,13 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import { app, demoRunParticipants, organizations, venues } from "./foundation";
+import {
+  app,
+  classSessions,
+  demoRunParticipants,
+  organizations,
+  venues,
+} from "./foundation";
 
 const auditColumns = {
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
@@ -633,6 +639,11 @@ export const membershipPeriods = app.table(
       ],
     }).onDelete("restrict"),
     unique("membership_periods_run_id_id_key").on(table.runId, table.id),
+    unique("membership_periods_run_id_id_profile_key").on(
+      table.runId,
+      table.id,
+      table.profileId,
+    ),
     unique("membership_periods_activation_operation_key").on(
       table.activationOperationId,
     ),
@@ -716,6 +727,179 @@ export const membershipPeriodCoreGyms = app.table(
   ],
 );
 
+export const membershipDailyAccessClaims = app.table(
+  "membership_daily_access_claims",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    runId: uuid("run_id").notNull(),
+    membershipPeriodId: uuid("membership_period_id").notNull(),
+    profileId: uuid("profile_id").notNull(),
+    serviceDate: date("service_date", { mode: "string" }).notNull(),
+    claimKind: text("claim_kind").notNull(),
+    claimStatus: text("claim_status").notNull(),
+    heldAt: timestamp("held_at", { withTimezone: true, mode: "string" })
+      .defaultNow()
+      .notNull(),
+    consumedAt: timestamp("consumed_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    releasedAt: timestamp("released_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    ...auditColumns,
+  },
+  (table) => [
+    foreignKey({
+      name: "membership_daily_access_claims_period_fkey",
+      columns: [table.runId, table.membershipPeriodId, table.profileId],
+      foreignColumns: [
+        membershipPeriods.runId,
+        membershipPeriods.id,
+        membershipPeriods.profileId,
+      ],
+    }).onDelete("restrict"),
+    unique("membership_daily_access_claims_run_id_id_key").on(
+      table.runId,
+      table.id,
+    ),
+    unique("membership_daily_access_claims_reference_key").on(
+      table.runId,
+      table.id,
+      table.membershipPeriodId,
+      table.profileId,
+      table.serviceDate,
+    ),
+    check(
+      "membership_daily_access_claims_kind_check",
+      sql`${table.claimKind} in ('class_reservation', 'open_gym')`,
+    ),
+    check(
+      "membership_daily_access_claims_status_check",
+      sql`${table.claimStatus} in ('held', 'consumed', 'released')`,
+    ),
+    check(
+      "membership_daily_access_claims_state_check",
+      sql`(${table.claimStatus} = 'held' and ${table.consumedAt} is null and ${table.releasedAt} is null) or (${table.claimStatus} = 'consumed' and ${table.consumedAt} is not null and ${table.consumedAt} >= ${table.heldAt} and ${table.releasedAt} is null) or (${table.claimStatus} = 'released' and ${table.consumedAt} is null and ${table.releasedAt} is not null and ${table.releasedAt} >= ${table.heldAt})`,
+    ),
+    uniqueIndex("membership_daily_access_claims_active_date_idx")
+      .on(table.runId, table.membershipPeriodId, table.serviceDate)
+      .where(sql`${table.claimStatus} in ('held', 'consumed')`),
+    index("membership_daily_access_claims_member_history_idx").on(
+      table.runId,
+      table.profileId,
+      table.serviceDate,
+    ),
+  ],
+);
+
+export const classReservations = app.table(
+  "class_reservations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    operationId: uuid("operation_id").notNull(),
+    runId: uuid("run_id").notNull(),
+    membershipPeriodId: uuid("membership_period_id").notNull(),
+    profileId: uuid("profile_id").notNull(),
+    classSessionId: uuid("class_session_id").notNull(),
+    accessClaimId: uuid("access_claim_id").notNull(),
+    serviceDate: date("service_date", { mode: "string" }).notNull(),
+    reservationStatus: text("reservation_status").notNull(),
+    cancellationReason: text("cancellation_reason"),
+    reservedAt: timestamp("reserved_at", {
+      withTimezone: true,
+      mode: "string",
+    })
+      .defaultNow()
+      .notNull(),
+    cancelledAt: timestamp("cancelled_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    checkedInAt: timestamp("checked_in_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    noShowAt: timestamp("no_show_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    ...auditColumns,
+  },
+  (table) => [
+    foreignKey({
+      name: "class_reservations_period_fkey",
+      columns: [table.runId, table.membershipPeriodId, table.profileId],
+      foreignColumns: [
+        membershipPeriods.runId,
+        membershipPeriods.id,
+        membershipPeriods.profileId,
+      ],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "class_reservations_session_fkey",
+      columns: [table.runId, table.classSessionId],
+      foreignColumns: [classSessions.runId, classSessions.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "class_reservations_claim_fkey",
+      columns: [
+        table.runId,
+        table.accessClaimId,
+        table.membershipPeriodId,
+        table.profileId,
+        table.serviceDate,
+      ],
+      foreignColumns: [
+        membershipDailyAccessClaims.runId,
+        membershipDailyAccessClaims.id,
+        membershipDailyAccessClaims.membershipPeriodId,
+        membershipDailyAccessClaims.profileId,
+        membershipDailyAccessClaims.serviceDate,
+      ],
+    }).onDelete("restrict"),
+    unique("class_reservations_run_id_id_key").on(table.runId, table.id),
+    unique("class_reservations_operation_key").on(
+      table.runId,
+      table.profileId,
+      table.operationId,
+    ),
+    unique("class_reservations_claim_key").on(table.accessClaimId),
+    check(
+      "class_reservations_status_check",
+      sql`${table.reservationStatus} in ('reserved', 'cancelled', 'checked_in', 'no_show')`,
+    ),
+    check(
+      "class_reservations_cancellation_reason_check",
+      sql`${table.cancellationReason} is null or ${table.cancellationReason} in ('member', 'session')`,
+    ),
+    check(
+      "class_reservations_state_check",
+      sql`(${table.reservationStatus} = 'reserved' and ${table.cancellationReason} is null and ${table.cancelledAt} is null and ${table.checkedInAt} is null and ${table.noShowAt} is null) or (${table.reservationStatus} = 'cancelled' and ${table.cancellationReason} is not null and ${table.cancelledAt} is not null and ${table.cancelledAt} >= ${table.reservedAt} and ${table.checkedInAt} is null and ${table.noShowAt} is null) or (${table.reservationStatus} = 'checked_in' and ${table.cancellationReason} is null and ${table.cancelledAt} is null and ${table.checkedInAt} is not null and ${table.checkedInAt} >= ${table.reservedAt} and ${table.noShowAt} is null) or (${table.reservationStatus} = 'no_show' and ${table.cancellationReason} is null and ${table.cancelledAt} is null and ${table.checkedInAt} is null and ${table.noShowAt} is not null and ${table.noShowAt} >= ${table.reservedAt})`,
+    ),
+    uniqueIndex("class_reservations_one_active_member_session_idx")
+      .on(
+        table.runId,
+        table.membershipPeriodId,
+        table.profileId,
+        table.classSessionId,
+      )
+      .where(sql`${table.reservationStatus} in ('reserved', 'checked_in')`),
+    index("class_reservations_session_capacity_idx").on(
+      table.runId,
+      table.classSessionId,
+      table.reservationStatus,
+    ),
+    index("class_reservations_member_history_idx").on(
+      table.runId,
+      table.profileId,
+      table.serviceDate,
+      table.createdAt,
+    ),
+  ],
+);
+
 export type MembershipProductRow = typeof membershipProducts.$inferSelect;
 export type MembershipProductVersionRow =
   typeof membershipProductVersions.$inferSelect;
@@ -729,3 +913,6 @@ export type MembershipActivationOperationGymRow =
 export type MembershipPeriodRow = typeof membershipPeriods.$inferSelect;
 export type MembershipPeriodCoreGymRow =
   typeof membershipPeriodCoreGyms.$inferSelect;
+export type MembershipDailyAccessClaimRow =
+  typeof membershipDailyAccessClaims.$inferSelect;
+export type ClassReservationRow = typeof classReservations.$inferSelect;
