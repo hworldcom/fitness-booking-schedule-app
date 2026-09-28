@@ -172,6 +172,7 @@ test("application repositories own database connections per request", () => {
     "utf8",
   );
   assert.doesNotMatch(client, /let connection\s*:/);
+  assert.match(client, /fetch_types:\s*false/);
   assert.match(
     client,
     /finally\s*{[\s\S]*queryClient\.end\(\{ timeout: 1 \}\)/,

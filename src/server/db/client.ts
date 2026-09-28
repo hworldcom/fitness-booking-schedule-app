@@ -9,6 +9,7 @@ export function createDatabaseConnection(config = databaseRuntimeConfig()) {
   const queryClient = postgres(config.connectionString, {
     max: 1,
     prepare: false,
+    fetch_types: false,
     ssl: config.ssl,
   });
 
