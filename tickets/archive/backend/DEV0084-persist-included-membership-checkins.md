@@ -134,6 +134,6 @@ A displayed arrival code can be shared during its short lifetime; same-venue sta
 ## Completion and review references
 
 - Completed: 2026-09-28.
-- Commit: This change — `[DEV0084][DEV0089] Persist check-ins and plan wallet card`; initial broad planning is `f6bde9f` and split revision is `25d4842`.
+- Commit: Implementation and DEV0089 planning committed in `867bc76` — `[DEV0084][DEV0089] Persist check-ins and plan wallet card`; initial broad planning is `f6bde9f` and split revision is `25d4842`.
 - Review: Implementation self-review against AC1–AC9 completed; no independent review.
 - Deployment or release: None. The migration and routes are validated locally but have not been applied or deployed to staging.

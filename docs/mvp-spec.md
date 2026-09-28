@@ -44,7 +44,7 @@ The identifiers below remain stable so tickets can cite product decisions precis
 | C28 | MovX pays the Solana network fee for the Devnet membership-activation demonstration. The member still explicitly authorizes the exact EURC transfer; the sponsor key remains server-only and may sign only a server-constructed actor-owned activation transaction.                                                                                                                                      |
 | C29 | A member may reserve an eligible scheduled class at one of the four selected gyms before arrival. Reservation atomically holds a seat and an exclusive daily-access claim; for Basic, that claim also holds one available included use. It does not prove attendance or change allocation. Cancellation before start and a reconciled no-show release the holds without an MVP fee or allowance penalty. |
 | C30 | Arrival is separate from reservation. A member presents a short-lived 15-minute opaque code bound to the selected venue and optional reservation; only an email-authenticated actor with active same-venue staff authority may confirm presence. Open-gym arrival may omit a class reservation.                                                                                                          |
-| C31 | Each verified Devnet membership period should be visible in the member's linked wallet as one non-transferable membership card. It shows plan, validity and the applicable allowance/remaining value; Classic must retain its one-per-day rule alongside `Unlimited`. It contains no identity, selected-gym or attendance detail and remains a public projection rather than access authority.           |
+| C31 | Each verified Devnet membership period has exactly one current non-transferable wallet card. A reviewed wallet replacement may retain the old card as inactive and issue one new PDA-tracked current card. It shows plan, validity and Basic remaining or Classic `Unlimited · one per day`; it exposes no identity, gym or attendance detail and never grants access.                                   |
 
 ### Superseded decisions retained as history
 
@@ -114,7 +114,7 @@ Public users can browse gym and plan information. Selecting gyms, activating a m
 - Member and gym views of the states each actor is allowed to see.
 - One-way follows and explicitly shared verified check-ins.
 - Persistent demonstration evidence and recovery from interrupted operations.
-- One non-transferable wallet-visible projection of each verified Devnet membership period, including Basic allowance/remaining visits or truthful Classic unlimited status.
+- One current non-transferable wallet-visible projection of each verified Devnet membership period, including Basic allowance/remaining visits or truthful Classic unlimited status; a reviewed wallet replacement may retain inactive historical cards.
 
 ### Out of scope
 
@@ -224,7 +224,7 @@ The four gym identifiers must be distinct, active and eligible for the selected 
 
 The member reviews the exact plan version, selected gyms, price, period and wallet before approving a Devnet-EURC transaction. The application records an intent before submission, verifies the confirmed transaction against the expected mint, amount, source, destination and operation, and then activates exactly one period. Cancellation or failure leaves no active membership. A retry reuses or safely reconciles the same operation rather than creating a second membership or payment. If a submitted payment was classified as `verification-failed`, reconciliation may recover it only after rerunning the complete finalized-chain verification against the same immutable quote and transaction signature; wallet cancellation, on-chain rejection and superseded operations remain terminal.
 
-After verified activation, the application should create or reconcile one non-transferable wallet-visible card for that membership period. The card publicly projects only plan, validity, status and Basic total/used/remaining values or Classic `Unlimited · one included visit per day`; it excludes identity, selected gyms, reservations and attendance details. PostgreSQL remains authoritative for access and check-ins. Mint/update failure must not invalidate a membership or attendance record, and retries must converge on the same card and projection version. The exact Token-2022 or Metaplex standard, authority custody, wallet replacement and cache/expiry synchronization require DEV0089 readiness review and Devnet wallet evidence.
+After verified activation, the application should create or reconcile exactly one current non-transferable wallet-visible card for that membership period. The card publicly projects only plan, validity, status and Basic total/used/remaining values or Classic `Unlimited · one included visit per day`; it excludes identity, selected gyms, reservations and attendance details. PostgreSQL remains authoritative for access and check-ins. A reviewed wallet replacement retains the old card as inactive rather than requiring a burn, creates one new current card and advances a public PDA's current-asset address and generation. Standard wallets do not evaluate that PDA automatically, so MovX must also update metadata recognized by the selected asset standard; a stale wallet label never makes an old card current. Mint/update failure must not invalidate a membership or attendance record, and retries must converge without two accepted current cards. DEV0092 must validate the exact Token-2022 or Metaplex standard, PDA/authority contract, replacement transition and wallet-cache behavior before DEV0089 becomes Ready.
 
 ### 7.4 Included check-ins
 
@@ -316,7 +316,7 @@ The pivot is delivered only when all of the following are true:
 10. Transfer, pass, resale, event, sponsorship, challenge and reaction controls are absent from the current product experience.
 11. Automated checks cover authorization, state transitions, uniqueness/concurrency and reconciliation; responsive and keyboard flows are rehearsed.
 12. The staged demo preserves durable evidence across reloads and uses fictional partners plus clearly labeled Devnet values.
-13. One verified period produces one non-transferable wallet-visible membership card whose public Basic/Classic usage presentation reconciles without becoming access authority or leaking private membership details.
+13. One verified period has exactly one current non-transferable wallet-visible membership card whose public Basic/Classic usage presentation reconciles without becoming access authority or leaking private membership details; a reviewed wallet replacement may retain explicitly inactive predecessors.
 
 <a id="11-delivery-milestones"></a>
 
@@ -389,7 +389,7 @@ The pivot is delivered only when all of the following are true:
 | A23 | Every payment uses the configured Devnet EURC mint and verifies expected source, destination, amount and confirmed outcome.                                                                                                                                    |
 | A24 | Reloading or retrying a submitted activation, reservation, direct payment or check-in reconciles the same operation without double effects.                                                                                                                    |
 | A25 | Member/session cancellation before class start or reconciling a no-show releases the reserved seat and daily-access claim without attendance, allocation input, fee or allowance loss.                                                                         |
-| A26 | One verified membership period produces one non-transferable wallet-visible card; Basic remaining visits or Classic `Unlimited · one per day` status reconcile after usage without granting access, duplicating assets or exposing private membership details. |
+| A26 | One verified period has one PDA-matched current non-transferable wallet-visible card; Basic remaining or Classic `Unlimited · one per day` reconciles without granting access or exposing private data; wallet replacement retains only inactive predecessors. |
 
 ## 14. Demonstration path
 
