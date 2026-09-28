@@ -1,6 +1,6 @@
 import "server-only";
 
-import { databaseConnection } from "../client";
+import { withDatabaseConnection } from "../client";
 
 type ApplicationIdentityRow = Readonly<{
   identity_profile_id: string;
@@ -69,24 +69,26 @@ export function enrollApplicationProfile(
   authUserId: string,
   displayName: string,
 ) {
-  const { queryClient } = databaseConnection();
-  return oneIdentity(
-    () => queryClient<ApplicationIdentityRow[]>`
-    select *
-    from app.enroll_application_identity(
-      ${authUserId}::uuid,
-      ${displayName}::text
-    )
-  `,
+  return withDatabaseConnection(({ queryClient }) =>
+    oneIdentity(
+      () => queryClient<ApplicationIdentityRow[]>`
+        select *
+        from app.enroll_application_identity(
+          ${authUserId}::uuid,
+          ${displayName}::text
+        )
+      `,
+    ),
   );
 }
 
 export function currentApplicationProfile(authUserId: string) {
-  const { queryClient } = databaseConnection();
-  return oneIdentity(
-    () => queryClient<ApplicationIdentityRow[]>`
-    select *
-    from app.current_application_identity(${authUserId}::uuid)
-  `,
+  return withDatabaseConnection(({ queryClient }) =>
+    oneIdentity(
+      () => queryClient<ApplicationIdentityRow[]>`
+        select *
+        from app.current_application_identity(${authUserId}::uuid)
+      `,
+    ),
   );
 }

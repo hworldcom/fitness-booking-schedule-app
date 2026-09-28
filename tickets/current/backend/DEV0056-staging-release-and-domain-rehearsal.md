@@ -2,7 +2,7 @@
 
 - Status: In progress
 - Created: 2026-09-23
-- Last updated: 2026-09-24
+- Last updated: 2026-09-28
 - Milestone: M0 hosted integration environment
 - Coordination: [COR0004 — Hosted staging deployment](../organisatory/COR0004-hosted-staging-deployment.md)
 - Related records: [DEV0054 — Cloudflare Workers runtime foundation](../../archive/backend/DEV0054-cloudflare-workers-runtime-foundation.md), [DEV0055 — Hosted Supabase staging environment](DEV0055-hosted-supabase-staging-environment.md), [DEV0046 — Email OTP registration and application profiles](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md), [DEV0027 — Phantom wallet connection foundation](../../archive/blockchain/DEV0027-phantom-wallet-connection-foundation.md), and [DEV0047 — Personal wallet linking and replacement](DEV0047-personal-wallet-linking-and-replacement.md)
@@ -22,6 +22,7 @@ This is the integration/release peer under [COR0004](../organisatory/COR0004-hos
   - Bind `staging.movx.club` as a Worker Custom Domain and verify Cloudflare-created Domain Name System (DNS) and Transport Layer Security (TLS) state.
   - Apply the staging access/abuse boundary adopted in DEV0055.
   - Run hosted public, responsive, Auth, protected-profile, account-isolation, error/recovery and current Phantom connection smoke tests.
+  - Keep database clients and their network promises within one Cloudflare request context; no cached PostgreSQL connection may leak across Worker requests.
   - Record the deployed commit, redacted provider configuration, validation outcomes, rollback and secret-rotation steps.
 - Out of scope:
   - Production hostname or production Supabase deployment.
@@ -41,6 +42,7 @@ This is the integration/release peer under [COR0004](../organisatory/COR0004-hos
 - Current Phantom extension connect/account-change/disconnect behavior works on the HTTPS custom domain without requesting a transaction signature. Optional message-signature linking is rehearsed only if DEV0047 is completed and included in the deployed commit.
 - Existing `hello@movx.club` inbound and outbound mail continues to work after nameserver delegation. Missing MX/SPF/DKIM/DMARC records block cutover.
 - A failed Worker release can roll back to the previous version without altering the staging database; DNS rollback and credential rotation are documented separately.
+- Repeated and concurrent database-backed requests create and close request-scoped connections. Cloudflare must not report cross-request promise resolution or cancel Explore as a hung request.
 
 ## Assumptions, decisions, and dependencies
 
@@ -63,6 +65,7 @@ This is the integration/release peer under [COR0004](../organisatory/COR0004-hos
 8. Run the hosted smoke matrix at mobile and desktop widths, including two-account Auth/profile isolation and current Phantom states; record the corresponding DEV0055 evidence there as well.
 9. Exercise rollback of the Worker version or document a safe dry run if rollback would disrupt the active rehearsal; record database independence and secret-rotation steps.
 10. Update deployment/setup documentation and the ticket with redacted evidence. Do not mark Completed while any acceptance flow remains untested.
+11. Correct the 2026-09-28 hosted regression by replacing the module-global PostgreSQL client in application repositories with a bounded request-scoped helper, then verify repeated live Explore requests and Worker logs after deployment.
 
 ## Acceptance criteria
 
@@ -74,6 +77,7 @@ This is the integration/release peer under [COR0004](../organisatory/COR0004-hos
 - [ ] AC6: Current Phantom HTTPS connect, account-change and disconnect behavior passes without an unintended transaction signature; optional wallet-link proof is tested only when its owning ticket is complete.
 - [ ] AC7: Unauthorized origins/access and missing or invalid session states fail closed without making public discovery unavailable.
 - [ ] AC8: The deployed commit, provider boundaries, rollback, DNS recovery and secret-rotation procedure are documented with redacted evidence.
+- [ ] AC9: Repeated public catalogue and protected database requests complete without a module-global connection, a Cloudflare cross-request promise warning or a hung-request cancellation.
 
 ## Validation plan
 
@@ -92,15 +96,17 @@ Implementation began after DEV0054 completed its supported-host Worker validatio
 
 ### Changes and rationale
 
-Added a guarded staging-release command that validates the expected Worker name, exact staging origin, hosted Supabase project, publishable-key form and restricted transaction-pooler connection before building. It passes only the four approved environment values to Wrangler through a temporary owner-only secrets file, deletes that file even on failure and requires a clean committed worktree for a real deployment. The validation-only and dry-run paths do not create or update a Worker.
+Added a guarded staging-release command that validates the expected Worker name, exact staging origin, hosted Supabase project, publishable-key form and restricted transaction-pooler connection before building. It passes only allowlisted environment values to Wrangler through a temporary owner-only secrets file, deletes that file even on failure and requires a clean committed worktree for a real deployment. The validation-only and dry-run paths do not create or update a Worker.
 
 The Worker is deployed at its temporary `workers.dev` hostname and at the Cloudflare-managed `https://staging.movx.club` Custom Domain. Worker-level Cloudflare Access protects temporary preview deployments only; the stable Custom Domain is public and the application still enforces its own Supabase sign-in and protected server boundaries. The dependency order permits this integration deployment to supply DEV0055's remaining exact-origin, browser-secret and two-account evidence.
+
+The 2026-09-28 catalogue regression replaces the module-global PostgreSQL client with `withDatabaseConnection`, which creates one client for a repository operation and awaits bounded cleanup in `finally`. Public catalogue reads and application-identity operations use the helper directly; actor-scoped membership, reservation and wallet operations own one client around their database transaction. The lower-level factory remains available for explicit test and operational connections, but application repositories cannot retain a client or promise across Worker requests.
 
 ### Affected files
 
 | File or component                      | Change and purpose                                                                                                                                                                  |
 | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `scripts/deploy-staging-worker.mjs`    | Validates the exact staging origin, Supabase project, publishable-key shape, transaction-pooler login and Worker name; builds and supplies only four approved bindings to Wrangler. |
+| `scripts/deploy-staging-worker.mjs`    | Validates the exact staging origin, Supabase project, publishable-key shape, transaction-pooler login and Worker name; builds and supplies only allowlisted bindings to Wrangler.   |
 | `tests/staging-deployment.test.ts`     | Exercises accepted and rejected staging configuration without connecting to Cloudflare or printing values.                                                                          |
 | `package.json`                         | Adds explicit validation, dry-run and clean-commit deployment commands for staging.                                                                                                 |
 | `wrangler.jsonc`                       | Declares the four required binding names without values while retaining the route-free staging-only target.                                                                         |
@@ -108,6 +114,10 @@ The Worker is deployed at its temporary `workers.dev` hostname and at the Cloudf
 | Cloudflare staging Worker and secrets  | Latest release deploys commit `b2ff5b7` as Worker version `5469b9a0-0123-4929-94bd-d948ed14ca16`; all four approved binding values remained hidden.                                 |
 | Cloudflare DNS / `staging.movx.club`   | Cloudflare is authoritative and the public Worker Custom Domain resolves through Cloudflare with a valid certificate and direct `200` application response.                         |
 | Porkbun nameserver and email DNS state | Nameserver delegation was submitted after the imported website and mail records were compared; the Cloudflare authorities preserve the expected mail records.                       |
+| `src/server/db/client.ts`               | Replaces the warm-instance singleton with an owned connection helper that closes after success or failure in the same request context.                                                |
+| Catalogue, identity and actor repositories | Route public, identity and actor-scoped operations through request-owned connections so Cloudflare never resumes PostgreSQL promises from an earlier request.                         |
+| Database and boundary tests             | Prove cleanup on success/failure and reject a return to module-global application repository connections.                                                                             |
+| `supabase/README.md`                     | Corrects the hosted runtime runbook from warm-instance pooling to request-scoped connection ownership.                                                                                |
 
 ### Decisions and deviations
 
@@ -120,14 +130,18 @@ The Worker is deployed at its temporary `workers.dev` hostname and at the Cloudf
 - 2026-09-23: Added `staging.movx.club` through the Worker's Custom Domain interface with Production and Preview enabled. Cloudflare created the specific hostname record and certificate; no competing manual record was created. The specific Worker hostname takes precedence over the retained Porkbun wildcard record.
 - 2026-09-24: At the user's request, narrowed Worker-level Cloudflare Access from All traffic to Previews only. The stable `staging.movx.club` deployment is public without an extra Cloudflare login; temporary preview deployments retain the configured authentication policies. DEV0055's bounded Supabase Auth email and request limits remain the staging abuse boundary.
 - 2026-09-24: At the user's request, released the completed DEV0063/DEV0064 product-guide and waitlist revision from clean commit `b2ff5b7`. The guarded deployment retained the existing Worker/custom-domain configuration and uploaded only changed assets plus the new `/coming-soon` application route.
+- 2026-09-28: Live Worker diagnostics after deploying the persistent catalogue captured Cloudflare's cross-request promise warning and hung-request cancellation. The cause is the module-global `postgres`/Drizzle connection cached by `src/server/db/client.ts`; the catch in the catalogue service converted the exception into a generic unavailable state. The adopted correction is explicit request-scoped connection ownership with awaited cleanup. The compatibility flag suggested by the runtime warning is not used to conceal unsafe connection reuse.
 
 ### Contracts, configuration, and operations
 
-The release will use `https://staging.movx.club`, the existing four-variable application environment contract, Cloudflare-managed TLS and a staging-only Worker. `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `NEXT_PUBLIC_SITE_URL` are present before the build so vinext can inline the explicitly public values; all four names, including server-only `DATABASE_URL`, are uploaded to the Worker through a temporary filtered secrets file. Actual values are never recorded here.
+The release uses `https://staging.movx.club`, the current nine-binding application environment contract, Cloudflare-managed TLS and a staging-only Worker. Public Supabase/site and browser Devnet RPC values are present before the build so vinext can inline only explicitly public configuration; server-only database, RPC and fee-sponsor values remain runtime bindings. All names are uploaded through a temporary filtered secrets file, and actual values are never recorded here.
 
 ## Validation results
 
 The local release guard, application checks and Cloudflare upload dry run pass. Commands and output below omit all values, account identifiers and provider credentials.
+
+- 2026-09-28 regression reproduction — repeated deployed Explore React Server Component requests were cancelled as hung; Worker logs reported promises resolving from a different request context and pointed to the cached `postgres` client. A runtime-role database query itself succeeded, isolating the failure to Worker connection lifetime rather than credentials or grants.
+- 2026-09-28 local correction — `npm test` passed 83 tests, including the new repository-boundary check; `npm run test:db` passed 31 integration tests, including request-owned cleanup after success and failure; `npm run db:test` passed all 156 pgTAP assertions from a reset deterministic local database. `npm run lint`, `npm run typecheck`, `npm run format:check`, `npm run build` and `git diff --check` passed. One earlier pgTAP run encountered pre-existing disposable local membership/reservation rows; the documented local-only reset and runtime-role recreation restored the deterministic baseline before the clean passing rerun.
 
 - `npx --no-install wrangler whoami` — passed; confirmed the intended authenticated Cloudflare session.
 - `npx --no-install wrangler deployments list --name movx-club-staging --json` — passed; confirmed no existing deployment would be overwritten.

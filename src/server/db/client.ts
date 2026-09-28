@@ -20,15 +20,13 @@ export function createDatabaseConnection(config = databaseRuntimeConfig()) {
 
 export type DatabaseConnection = ReturnType<typeof createDatabaseConnection>;
 
-let connection: DatabaseConnection | undefined;
-
-export function databaseConnection() {
-  connection ??= createDatabaseConnection();
-  return connection;
-}
-
-export async function closeDatabaseConnection() {
-  if (!connection) return;
-  await connection.queryClient.end();
-  connection = undefined;
+export async function withDatabaseConnection<T>(
+  work: (connection: DatabaseConnection) => Promise<T>,
+  connection = createDatabaseConnection(),
+) {
+  try {
+    return await work(connection);
+  } finally {
+    await connection.queryClient.end({ timeout: 1 });
+  }
 }

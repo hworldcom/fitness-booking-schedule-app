@@ -5,7 +5,6 @@ import { sql } from "drizzle-orm";
 import postgres from "postgres";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
 import { withActorDatabaseContext } from "@/server/db/authorization/repository";
-import { closeDatabaseConnection } from "@/server/db/client";
 import { enrollApplicationProfile } from "@/server/db/identity/repository";
 import {
   completeVerifiedMembershipActivationRecord,
@@ -303,7 +302,6 @@ before(async () => {
 });
 
 after(async () => {
-  await closeDatabaseConnection();
   await runtimeA.end();
   await runtimeB.end();
   await removeFixtures();

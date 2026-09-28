@@ -14,7 +14,6 @@ import {
   currentPublicCatalogue,
 } from "@/server/catalogue/service";
 import { readPublishedCatalogueRows } from "@/server/db/catalogue/repository";
-import { closeDatabaseConnection } from "@/server/db/client";
 
 const connectionString = process.env.DATABASE_TEST_URL;
 if (!connectionString) {
@@ -35,7 +34,6 @@ const queryClient = postgres(connectionString, {
 const db = drizzle(queryClient);
 
 after(async () => {
-  await closeDatabaseConnection();
   await queryClient.end();
 });
 
@@ -446,7 +444,6 @@ test("empty, inconsistent and unavailable catalogues never use fixture fallback"
     message: "The gym catalogue is inconsistent.",
   });
 
-  await closeDatabaseConnection();
   delete process.env.DATABASE_URL;
   assert.deepEqual(await currentPublicCatalogue(), {
     status: "error",

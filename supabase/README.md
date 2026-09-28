@@ -123,7 +123,7 @@ EXPECTED_DATABASE_USER=movx_staging_runtime_login
 
 Run `chmod 600 .env.staging.local` before verification. Never pass the populated URL directly in shell history.
 
-After validation, put the assembled `DATABASE_URL` in the Cloudflare staging secret store during DEV0056; never prefix it with `NEXT_PUBLIC_` or commit the populated value. The application connection in `src/server/db/client.ts` already enforces one client connection per warm instance, TLS for non-local hosts and disabled prepared statements.
+After validation, put the assembled `DATABASE_URL` in the Cloudflare staging secret store during DEV0056; never prefix it with `NEXT_PUBLIC_` or commit the populated value. The application connection in `src/server/db/client.ts` opens at most one client for each repository operation, closes it before the Cloudflare request completes, requires TLS for non-local hosts and disables prepared statements. Do not cache PostgreSQL clients or their promises across Worker requests.
 
 Rotate the login without changing its grants by running `alter role movx_staging_runtime_login password '<new-generated-secret>';`, updating the deployment secret, redeploying, and rerunning the verifier. Supavisor may cache the previous password briefly, so retry with a bounded delay before treating an immediate authentication failure as persistent. To retire this login, remove it from every deployment first, then run `revoke app_runtime from movx_staging_runtime_login;` and `drop role movx_staging_runtime_login;`.
 

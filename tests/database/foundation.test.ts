@@ -4,7 +4,11 @@ import { asc, countDistinct, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { classSessions, profiles } from "@/server/db/schema";
-import { createDatabaseConnection } from "@/server/db/client";
+import {
+  createDatabaseConnection,
+  withDatabaseConnection,
+  type DatabaseConnection,
+} from "@/server/db/client";
 
 const connectionString = process.env.DATABASE_TEST_URL;
 if (!connectionString) {
@@ -116,4 +120,30 @@ test("database outages reject instead of returning fabricated state", async () =
   } finally {
     await unavailableClient.end({ timeout: 1 });
   }
+});
+
+test("request-owned database connections close after success and failure", async () => {
+  const closeTimeouts: number[] = [];
+  const connection = {
+    queryClient: {
+      end: async ({ timeout }: { timeout?: number } = {}) => {
+        closeTimeouts.push(timeout ?? -1);
+      },
+    },
+  } as unknown as DatabaseConnection;
+
+  const result = await withDatabaseConnection(async (ownedConnection) => {
+    assert.equal(ownedConnection, connection);
+    return "completed";
+  }, connection);
+  assert.equal(result, "completed");
+  assert.deepEqual(closeTimeouts, [1]);
+
+  await assert.rejects(
+    withDatabaseConnection(async () => {
+      throw new Error("request failed");
+    }, connection),
+    /request failed/,
+  );
+  assert.deepEqual(closeTimeouts, [1, 1]);
 });

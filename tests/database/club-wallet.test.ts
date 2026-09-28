@@ -7,7 +7,6 @@ import {
   withActorDatabaseContext,
   type ActorDatabaseTransaction,
 } from "@/server/db/authorization/repository";
-import { closeDatabaseConnection } from "@/server/db/client";
 import { enrollApplicationProfile } from "@/server/db/identity/repository";
 import {
   ClubWalletStateConflictError,
@@ -248,7 +247,6 @@ before(async () => {
 });
 
 after(async () => {
-  await closeDatabaseConnection();
   await runtimeA.end();
   await runtimeB.end();
   await removeFixtures();

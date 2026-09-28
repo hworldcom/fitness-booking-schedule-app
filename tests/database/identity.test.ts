@@ -13,10 +13,7 @@ import {
   currentApplicationProfile,
   enrollApplicationProfile,
 } from "@/server/db/identity/repository";
-import {
-  closeDatabaseConnection,
-  databaseConnection,
-} from "@/server/db/client";
+import { createDatabaseConnection } from "@/server/db/client";
 import { profiles } from "@/server/db/schema";
 
 const adminConnectionString = process.env.DATABASE_TEST_URL;
@@ -125,7 +122,6 @@ before(async () => {
 });
 
 after(async () => {
-  await closeDatabaseConnection();
   await runtimeA.end();
   await runtimeB.end();
   await removeFixture();
@@ -241,29 +237,34 @@ function authorizedActor(
 }
 
 async function assertPooledContextCleared() {
-  const rows = await databaseConnection().queryClient<
-    Array<{
-      auth_user_id: string | null;
-      profile_id: string | null;
-      run_id: string | null;
-      run_role: string | null;
-    }>
-  >`
-    select
-      nullif(current_setting('app.current_auth_user_id', true), '') as auth_user_id,
-      nullif(current_setting('app.current_profile_id', true), '') as profile_id,
-      nullif(current_setting('app.current_run_id', true), '') as run_id,
-      nullif(current_setting('app.current_run_role', true), '') as run_role
-  `;
-  assert.deepEqual(
-    { ...rows[0] },
-    {
-      auth_user_id: null,
-      profile_id: null,
-      run_id: null,
-      run_role: null,
-    },
-  );
+  const { queryClient } = createDatabaseConnection();
+  try {
+    const rows = await queryClient<
+      Array<{
+        auth_user_id: string | null;
+        profile_id: string | null;
+        run_id: string | null;
+        run_role: string | null;
+      }>
+    >`
+      select
+        nullif(current_setting('app.current_auth_user_id', true), '') as auth_user_id,
+        nullif(current_setting('app.current_profile_id', true), '') as profile_id,
+        nullif(current_setting('app.current_run_id', true), '') as run_id,
+        nullif(current_setting('app.current_run_role', true), '') as run_role
+    `;
+    assert.deepEqual(
+      { ...rows[0] },
+      {
+        auth_user_id: null,
+        profile_id: null,
+        run_id: null,
+        run_role: null,
+      },
+    );
+  } finally {
+    await queryClient.end({ timeout: 1 });
+  }
 }
 
 test("wallet-independent actor context isolates alternating accounts", async () => {

@@ -166,6 +166,28 @@ test("privileged database entry points carry the Next.js server-only marker", ()
   }
 });
 
+test("application repositories own database connections per request", () => {
+  const client = readFileSync(
+    path.join(root, "src/server/db/client.ts"),
+    "utf8",
+  );
+  assert.doesNotMatch(client, /let connection\s*:/);
+  assert.match(
+    client,
+    /finally\s*{[\s\S]*queryClient\.end\(\{ timeout: 1 \}\)/,
+  );
+
+  for (const relative of [
+    "src/server/db/catalogue/repository.ts",
+    "src/server/db/identity/repository.ts",
+    "src/server/db/authorization/repository.ts",
+  ]) {
+    const contents = readFileSync(path.join(root, relative), "utf8");
+    assert.match(contents, /withDatabaseConnection/);
+    assert.doesNotMatch(contents, /\bdatabaseConnection\s*\(/);
+  }
+});
+
 test("verified membership completion is not exposed through an application route", () => {
   const app = path.join(src, "app");
   const violations = sourceFiles(app).filter((file) =>

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { databaseConnection } from "@/server/db/client";
+import { withDatabaseConnection } from "@/server/db/client";
 
 export type PublicCatalogueProjectionRow = Readonly<{
   run_slug: string;
@@ -32,8 +32,8 @@ export type PublicCatalogueProjectionRow = Readonly<{
 }>;
 
 export function readPublishedCatalogueRows() {
-  const { queryClient } = databaseConnection();
-  return queryClient<PublicCatalogueProjectionRow[]>`
+  return withDatabaseConnection(
+    ({ queryClient }) => queryClient<PublicCatalogueProjectionRow[]>`
     select
       run.slug as run_slug,
       product.slug as product_slug,
@@ -86,5 +86,6 @@ export function readPublishedCatalogueRows() {
       and participating_gym.status = 'active'
       and venue.status = 'active'
     order by version.plan_code, venue.slug
-  `;
+  `,
+  );
 }
