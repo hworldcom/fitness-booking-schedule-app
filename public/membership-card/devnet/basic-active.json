@@ -1,0 +1,26 @@
+{
+  "name": "MovX Basic Membership",
+  "description": "A non-transferable MovX Club membership-card demonstration on Solana Devnet. Access remains governed by MovX membership records, not by possession of this asset.",
+  "image": "https://staging.movx.club/membership-card/devnet/basic-active.png",
+  "external_url": "https://staging.movx.club/my-access",
+  "category": "image",
+  "attributes": [
+    { "trait_type": "Network", "value": "Solana Devnet" },
+    { "trait_type": "Status", "value": "Active" },
+    { "trait_type": "Plan", "value": "Basic" },
+    { "trait_type": "Included visits", "value": 10 },
+    { "trait_type": "Visits used", "value": 0 },
+    { "trait_type": "Visits remaining", "value": 10 },
+    { "trait_type": "Valid from", "value": "2026-09-29" },
+    { "trait_type": "Valid until", "value": "2026-10-29" }
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "https://staging.movx.club/membership-card/devnet/basic-active.png",
+        "type": "image/png"
+      }
+    ],
+    "category": "image"
+  }
+}

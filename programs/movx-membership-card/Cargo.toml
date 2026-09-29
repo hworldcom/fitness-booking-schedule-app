@@ -1,0 +1,31 @@
+[package]
+name = "movx-membership-card"
+version = "0.1.0"
+description = "Local prototype for the MovX PDA-backed membership card lifecycle"
+edition = "2021"
+publish = false
+rust-version = "1.89"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }
+
+[lib]
+crate-type = ["cdylib"]
+name = "movx_membership_card"
+
+[features]
+default = []
+anchor-debug = []
+cpi = ["no-entrypoint"]
+custom-heap = []
+custom-panic = []
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build"]
+
+[dependencies]
+anchor-lang = "=1.1.2"
+
+[dev-dependencies]
+mpl-core = { version = "=0.12.1", default-features = false, features = ["borsh-v1"] }
