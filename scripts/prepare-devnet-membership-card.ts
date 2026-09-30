@@ -40,7 +40,7 @@ const MPL_CORE_ADDRESS = address(
 );
 const SYSTEM_PROGRAM_ADDRESS = address("11111111111111111111111111111111");
 const METADATA_URI =
-  "https://staging.movx.club/membership-card/devnet/basic-active.json";
+  "https://staging.movx.club/membership-card/devnet/basic-active/v1/metadata.json";
 const LINEAGE_ACCOUNT_DATA_LENGTH = 238;
 const RPC_TIMEOUT_MS = 20_000;
 

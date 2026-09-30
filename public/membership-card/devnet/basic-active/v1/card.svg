@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200" role="img" aria-labelledby="title description">
   <title id="title">MovX Basic Membership</title>
-  <desc id="description">Active non-transferable MovX Club Devnet membership card</desc>
+  <desc id="description">Version 1 active non-transferable MovX Club Devnet membership card</desc>
   <rect width="1200" height="1200" rx="92" fill="#f5f1e7"/>
   <circle cx="1035" cy="185" r="240" fill="#294f3d" opacity="0.62"/>
   <rect x="72" y="72" width="1056" height="1056" rx="72" fill="#173528"/>
