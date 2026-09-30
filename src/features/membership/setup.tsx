@@ -91,8 +91,14 @@ function paymentErrorMessage(error: unknown) {
       return "The connected Phantom account does not match your linked personal wallet.";
     case "unsupported-wallet":
       return "This Phantom connection does not support the required Devnet sign-and-send method. Update or reconnect Phantom and try again.";
+    case "rpc-unavailable":
+      return "Solana Devnet did not return the payment accounts. Try the payment check again.";
     case "source-account-unavailable":
       return "The linked wallet has no usable Devnet EURC token account.";
+    case "source-account-mismatch":
+      return "The linked wallet's Devnet EURC token account did not pass validation.";
+    case "destination-account-unavailable":
+      return "The configured membership-pool EURC token account is unavailable.";
     case "insufficient-eurc":
       return "The linked wallet does not have enough test EURC for this membership.";
     case "destination-mismatch":

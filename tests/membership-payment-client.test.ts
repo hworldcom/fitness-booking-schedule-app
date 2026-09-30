@@ -139,6 +139,40 @@ test("membership preparation requests only operation-bound server sponsorship", 
   }
 });
 
+test("membership preparation preserves precise payment-preflight errors", async () => {
+  const signer = {
+    address: walletAddress,
+    async signAndSendTransactions() {
+      return [signatureBytes];
+    },
+  } as TransactionSigner;
+  const originalFetch = globalThis.fetch;
+
+  try {
+    for (const code of [
+      "rpc-unavailable",
+      "source-account-unavailable",
+      "source-account-mismatch",
+      "destination-account-unavailable",
+      "destination-mismatch",
+    ] as const) {
+      globalThis.fetch = (async () =>
+        new Response(JSON.stringify({ status: code }), {
+          status: code === "rpc-unavailable" ? 503 : 409,
+          headers: { "content-type": "application/json" },
+        })) as typeof fetch;
+
+      await assert.rejects(
+        prepareMembershipPaymentTransaction({ operationId, quote, signer }),
+        (error) =>
+          error instanceof MembershipPaymentClientError && error.code === code,
+      );
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("membership approval uses the wallet sign-and-send capability", async () => {
   let signOnlyCalls = 0;
   let signAndSendCalls = 0;

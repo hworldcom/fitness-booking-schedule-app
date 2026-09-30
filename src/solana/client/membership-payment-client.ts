@@ -18,7 +18,10 @@ export type MembershipPaymentClientErrorCode =
   | "configuration-unavailable"
   | "wallet-mismatch"
   | "unsupported-wallet"
+  | "rpc-unavailable"
   | "source-account-unavailable"
+  | "source-account-mismatch"
+  | "destination-account-unavailable"
   | "insufficient-eurc"
   | "destination-mismatch"
   | "simulation-failed"
@@ -49,8 +52,16 @@ function sponsorshipError(status: unknown) {
   switch (status) {
     case "configuration-unavailable":
       return new MembershipPaymentClientError("configuration-unavailable");
-    case "account-unavailable":
+    case "rpc-unavailable":
+      return new MembershipPaymentClientError("rpc-unavailable");
+    case "source-account-unavailable":
       return new MembershipPaymentClientError("source-account-unavailable");
+    case "source-account-mismatch":
+      return new MembershipPaymentClientError("source-account-mismatch");
+    case "destination-account-unavailable":
+      return new MembershipPaymentClientError(
+        "destination-account-unavailable",
+      );
     case "insufficient-eurc":
       return new MembershipPaymentClientError("insufficient-eurc");
     case "destination-mismatch":

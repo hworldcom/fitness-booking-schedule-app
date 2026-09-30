@@ -2,7 +2,7 @@ import "server-only";
 
 import { getAddMemoInstruction } from "@solana-program/memo";
 import {
-  fetchToken,
+  fetchAllMaybeToken,
   findAssociatedTokenPda,
   getTransferCheckedInstruction,
 } from "@solana-program/token";
@@ -21,6 +21,7 @@ import {
   type AccountMeta,
   type Instruction,
 } from "@solana/kit";
+import { checkMembershipPaymentTokenAccounts } from "@/solana/membership-payment-accounts";
 import type { MembershipPaymentQuote } from "@/solana/membership-payment";
 import { membershipFeeSponsorConfig } from "./membership-fee-sponsor-config";
 import {
@@ -40,7 +41,10 @@ export type MembershipPaymentSponsorshipResult =
   | Readonly<{
       status:
         | "configuration-unavailable"
-        | "account-unavailable"
+        | "rpc-unavailable"
+        | "source-account-unavailable"
+        | "source-account-mismatch"
+        | "destination-account-unavailable"
         | "insufficient-eurc"
         | "destination-mismatch"
         | "simulation-failed";
@@ -106,26 +110,22 @@ export async function sponsorMembershipPayment(
     return Object.freeze({ status: "destination-mismatch" });
   }
 
-  let sourceAccount;
-  let destinationAccount;
-  try {
-    [sourceAccount, destinationAccount] = await Promise.all([
-      fetchToken(rpc, sourceTokenAddress, { commitment: "confirmed" }),
-      fetchToken(rpc, destinationTokenAddress, { commitment: "confirmed" }),
-    ]);
-  } catch {
-    return Object.freeze({ status: "account-unavailable" });
-  }
-  if (
-    sourceAccount.data.owner !== memberAuthority.address ||
-    sourceAccount.data.mint !== mintAddress ||
-    destinationAccount.data.owner !== quote.destinationOwnerAddress ||
-    destinationAccount.data.mint !== mintAddress
-  ) {
-    return Object.freeze({ status: "destination-mismatch" });
-  }
-  if (sourceAccount.data.amount < BigInt(quote.amountBaseUnits)) {
-    return Object.freeze({ status: "insufficient-eurc" });
+  const accountCheck = await checkMembershipPaymentTokenAccounts({
+    sourceAddress: sourceTokenAddress,
+    sourceOwnerAddress: memberAuthority.address,
+    destinationAddress: destinationTokenAddress,
+    destinationOwnerAddress: address(quote.destinationOwnerAddress),
+    mintAddress,
+    tokenProgramAddress,
+    requiredAmount: BigInt(quote.amountBaseUnits),
+    fetchAccounts: (addresses) =>
+      fetchAllMaybeToken(rpc, [...addresses], {
+        abortSignal: AbortSignal.timeout(12_000),
+        commitment: "confirmed",
+      }),
+  });
+  if (accountCheck.status !== "ready") {
+    return accountCheck;
   }
 
   try {

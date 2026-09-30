@@ -224,3 +224,13 @@ test("membership sponsorship route accepts only an operation identifier", () => 
     /record\.(?:wireTransaction|transaction|amount|mint|destination|wallet|blockhash)/,
   );
 });
+
+test("membership sponsorship batches token-account readiness into one RPC request", () => {
+  const sponsorship = readFileSync(
+    path.join(root, "src/server/solana/membership-payment-sponsorship.ts"),
+    "utf8",
+  );
+
+  assert.match(sponsorship, /fetchAllMaybeToken\(/);
+  assert.doesNotMatch(sponsorship, /\bfetchToken\(/);
+});
