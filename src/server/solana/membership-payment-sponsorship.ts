@@ -23,6 +23,7 @@ import {
 } from "@solana/kit";
 import { checkMembershipPaymentTokenAccounts } from "@/solana/membership-payment-accounts";
 import type { MembershipPaymentQuote } from "@/solana/membership-payment";
+import { rpcFailureDiagnostic } from "@/solana/rpc-failure-diagnostic";
 import { membershipFeeSponsorConfig } from "./membership-fee-sponsor-config";
 import {
   membershipPaymentConfig,
@@ -118,11 +119,20 @@ export async function sponsorMembershipPayment(
     mintAddress,
     tokenProgramAddress,
     requiredAmount: BigInt(quote.amountBaseUnits),
-    fetchAccounts: (addresses) =>
-      fetchAllMaybeToken(rpc, [...addresses], {
-        abortSignal: AbortSignal.timeout(12_000),
-        commitment: "confirmed",
-      }),
+    fetchAccounts: async (addresses) => {
+      try {
+        return await fetchAllMaybeToken(rpc, [...addresses], {
+          abortSignal: AbortSignal.timeout(12_000),
+          commitment: "confirmed",
+        });
+      } catch (error) {
+        console.warn(
+          "membership-payment-account-rpc-failure",
+          rpcFailureDiagnostic(error),
+        );
+        throw error;
+      }
+    },
   });
   if (accountCheck.status !== "ready") {
     return accountCheck;
