@@ -1,6 +1,6 @@
 # MovX Club — Coach-first private-class MVP specification
 
-Last updated: 3 October 2026.
+Last updated: 4 October 2026.
 
 This is the single current product contract for the MovX Club hackathon MVP. MovX connects clients with martial-arts coaches through discoverable profiles, optional fictional gym associations or independent public training locations, capacity-one availability for the coming week, private-class booking, one-session or ten-session passes purchased with test USDC on Solana Devnet, verifiable remaining-session balances and a lightweight coach-led social feed.
 
@@ -10,7 +10,7 @@ The former multi-gym membership, group-class reservation, gym check-in, membersh
 
 This specification defines the target behavior. It does not claim that the complete target is implemented.
 
-The repository already contains reusable Next.js, Supabase/PostgreSQL, email identity, personal-wallet linking, Wallet Standard and Cloudflare staging foundations. DEV0101 removed the legacy multi-gym mutation runtime while preserving additive migrations and historical evidence. DEV0109 completed a forward cleanup of its dormant membership/class/check-in schema while preserving simple fictional gym locations. DEV0096 adds persistent self-declared coach profiles, optional fictional-gym affiliations or independent public locations, and list-based public discovery. Weekly availability, Mapbox discovery, on-chain offers, test-USDC pass purchase, private-class booking, completed-session redemption and coach posts remain planned work under COR0009 until their owning tickets record implementation and validation evidence.
+The repository already contains reusable Next.js, Supabase/PostgreSQL, email identity, Wallet Standard and Cloudflare staging foundations. Personal-wallet linking is implemented locally under DEV0047, but its required real-Phantom and signed-in responsive-keyboard completion evidence remains pending. DEV0101 removed the legacy multi-gym mutation runtime while preserving additive migrations and historical evidence. DEV0109 completed a forward cleanup of its dormant membership/class/check-in schema while preserving simple fictional gym locations. DEV0096 adds persistent self-declared coach profiles, optional fictional-gym affiliations or independent public locations, and list-based public discovery. DEV0104 completes explicit weekly availability and the protected coach workspace, while DEV0100 completes coach follows, public recent posts and the chronological Following feed. Mapbox discovery, on-chain offers, test-USDC pass purchase, private-class booking and completed-session redemption remain unfinished under COR0009 until their owning tickets record implementation and validation evidence.
 
 Retained completed/cancelled records and the compact pruned-identifier register in [the ticket index](../tickets/README.md) identify current work and recoverable history; no ticket or blueprint overrides this specification.
 
