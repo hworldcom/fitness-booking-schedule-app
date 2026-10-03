@@ -83,7 +83,7 @@ This ticket cannot invent source truth. It stays Draft until the COR0007 members
 
 ## Completion and review references
 
-- Completed: Cancelled on 2026-10-03. The coach-first contract does not publish gym-check-in activity; [DEV0100](../../current/backend/DEV0100-coach-follows-and-chronological-posts.md) replaces this unimplemented plan with coach follows and coach-authored posts.
+- Completed: Cancelled on 2026-10-03. The coach-first contract does not publish gym-check-in activity; [DEV0100](DEV0100-coach-follows-and-chronological-posts.md) replaces this unimplemented plan with coach follows and coach-authored posts.
 - Commit: Not created.
 - Review: Planning self-review only; no independent review.
 - Deployment or release: None.

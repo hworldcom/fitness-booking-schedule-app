@@ -364,3 +364,67 @@ values
 on conflict (run_id, profile_id, discipline) do update
 set sort_order = excluded.sort_order
 where coach_profile_disciplines.sort_order is distinct from excluded.sort_order;
+
+insert into app.coach_posts (
+  run_id,
+  id,
+  coach_profile_id,
+  body,
+  visibility,
+  published_at,
+  record_source,
+  created_at,
+  updated_at
+)
+values
+  (
+    '20000000-0000-4000-8000-000000000001',
+    '81000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000005',
+    'A useful pad round starts with balance: return to stance before adding speed.',
+    'visible',
+    '2026-10-03T09:30:00Z',
+    'fixture',
+    '2026-10-03T09:30:00Z',
+    '2026-10-03T09:30:00Z'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000001',
+    '81000000-0000-4000-8000-000000000002',
+    '10000000-0000-4000-8000-000000000007',
+    'When striking meets wrestling, posture is the bridge. Practise the transition slowly before adding resistance.',
+    'visible',
+    '2026-10-03T08:15:00Z',
+    'fixture',
+    '2026-10-03T08:15:00Z',
+    '2026-10-03T08:15:00Z'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000001',
+    '81000000-0000-4000-8000-000000000003',
+    '10000000-0000-4000-8000-000000000002',
+    'Footwork practice is most useful when every step leaves you balanced enough to defend or move again.',
+    'visible',
+    '2026-10-02T17:00:00Z',
+    'fixture',
+    '2026-10-02T17:00:00Z',
+    '2026-10-02T17:00:00Z'
+  )
+on conflict (run_id, id) do update
+set coach_profile_id = excluded.coach_profile_id,
+    body = excluded.body,
+    visibility = excluded.visibility,
+    published_at = excluded.published_at,
+    updated_at = excluded.updated_at
+where coach_posts.record_source = 'fixture'
+  and (
+    coach_posts.coach_profile_id,
+    coach_posts.body,
+    coach_posts.visibility,
+    coach_posts.published_at
+  ) is distinct from (
+    excluded.coach_profile_id,
+    excluded.body,
+    excluded.visibility,
+    excluded.published_at
+  );

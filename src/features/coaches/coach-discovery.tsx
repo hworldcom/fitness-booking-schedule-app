@@ -16,7 +16,12 @@ import {
   type CoachDirectoryFilters,
   type PublicCoachProfileState,
 } from "@/domain/coaches";
+import type {
+  CoachFollowState,
+  PublicCoachPostsState,
+} from "@/domain/coach-social";
 import { Avatar, Pill } from "@/components/ui";
+import { CoachFollowControl, CoachRecentPosts } from "./coach-social";
 
 export function CoachDirectory({ state }: { state: CoachDirectoryState }) {
   const filters = state.filters;
@@ -164,8 +169,12 @@ function CoachFilters({ filters }: { filters: CoachDirectoryFilters }) {
 
 export function CoachProfileView({
   state,
+  postsState,
+  followState,
 }: {
   state: Extract<PublicCoachProfileState, { status: "ready" }>;
+  postsState: PublicCoachPostsState;
+  followState: CoachFollowState;
 }) {
   const { coach, slots } = state;
   return (
@@ -184,6 +193,12 @@ export function CoachProfileView({
                 <span key={discipline}>{discipline}</span>
               ))}
             </div>
+            <CoachFollowControl
+              coachProfileId={coach.profileId}
+              coachSlug={coach.slug}
+              coachDisplayName={coach.displayName}
+              state={followState}
+            />
           </div>
         </div>
         <div className="public-coach-place">
@@ -269,10 +284,7 @@ export function CoachProfileView({
         </aside>
       </div>
 
-      <section
-        className="coach-future-sections"
-        aria-label="Planned coach data"
-      >
+      <section className="coach-future-sections" aria-label="Coach offers">
         <article>
           <span>TrainingPass offers</span>
           <strong>No active indexed offer yet</strong>
@@ -281,12 +293,16 @@ export function CoachProfileView({
             Devnet offer has been indexed.
           </p>
         </article>
-        <article>
-          <span>Recent posts</span>
-          <strong>No coach posts yet</strong>
-          <p>Coach-led social updates arrive in a later delivery ticket.</p>
-        </article>
       </section>
+      {postsState.status === "ready" ? (
+        <CoachRecentPosts posts={postsState.posts} />
+      ) : (
+        <section className="coach-recent-posts" role="alert">
+          <span className="eyebrow">COACH NOTES</span>
+          <h2>Recent posts are temporarily unavailable.</h2>
+          <p>No fabricated post fallback was shown.</p>
+        </section>
+      )}
     </article>
   );
 }

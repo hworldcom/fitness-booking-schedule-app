@@ -5,6 +5,10 @@ import {
   CoachProfileView,
 } from "@/features/coaches/coach-discovery";
 import { publicCoachProfile } from "@/server/coaches/service";
+import {
+  currentCoachFollowState,
+  publicCoachPosts,
+} from "@/server/coaches/social-service";
 
 export const metadata: Metadata = {
   title: "Coach profile",
@@ -23,5 +27,15 @@ export default async function Page({
     if (state.status === "not-found") notFound();
     return <CoachProfileUnavailable />;
   }
-  return <CoachProfileView state={state} />;
+  const [postsState, followState] = await Promise.all([
+    publicCoachPosts(state.coach.profileId),
+    currentCoachFollowState(state.coach.profileId),
+  ]);
+  return (
+    <CoachProfileView
+      state={state}
+      postsState={postsState}
+      followState={followState}
+    />
+  );
 }

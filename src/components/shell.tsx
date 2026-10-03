@@ -11,6 +11,7 @@ import {
   ArrowRight,
   CircleHelp,
   ListChecks,
+  Rss,
 } from "lucide-react";
 import { Avatar, Brand, Modal, Pill } from "./ui";
 import { AuthStatusLink } from "@/auth/client/auth-status-link";
@@ -24,6 +25,7 @@ import {
 const navigation = [
   { label: "Home", href: "/", Icon: House },
   { label: "Explore", href: "/explore", Icon: MapPin },
+  { label: "Following", href: "/following", Icon: Rss },
   { label: "How it works", href: "/how-it-works", Icon: ListChecks },
   { label: "Profile", href: "/profile", Icon: UserRound },
 ];

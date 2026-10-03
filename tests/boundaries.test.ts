@@ -141,6 +141,7 @@ test("privileged database entry points carry the Next.js server-only marker", ()
     "src/server/db/authorization/repository.ts",
     "src/server/db/coaches/repository.ts",
     "src/server/db/coaches/availability-repository.ts",
+    "src/server/db/coaches/social-repository.ts",
     "src/server/auth/client.ts",
     "src/server/auth/session.ts",
     "src/server/authorization/contracts.ts",
@@ -149,6 +150,7 @@ test("privileged database entry points carry the Next.js server-only marker", ()
     "src/server/authorization/service.ts",
     "src/server/identity/service.ts",
     "src/server/coaches/service.ts",
+    "src/server/coaches/social-service.ts",
     "src/server/solana/fee-sponsor-config.ts",
     "src/server/wallet/signature.ts",
     "src/server/wallet/service.ts",
@@ -156,6 +158,15 @@ test("privileged database entry points carry the Next.js server-only marker", ()
     const contents = readFileSync(path.join(root, relative), "utf8");
     assert.match(contents, /^import ["']server-only["'];/);
   }
+});
+
+test("the protected coach-post workspace always waits for a request", () => {
+  const page = readFileSync(
+    path.join(root, "src/app/coach/posts/page.tsx"),
+    "utf8",
+  );
+  assert.match(page, /import \{ connection \} from ["']next\/server["']/);
+  assert.match(page, /await connection\(\)/);
 });
 
 test("application repositories own database connections per request", () => {
@@ -176,6 +187,7 @@ test("application repositories own database connections per request", () => {
     "src/server/db/authorization/repository.ts",
     "src/server/db/coaches/repository.ts",
     "src/server/db/coaches/availability-repository.ts",
+    "src/server/db/coaches/social-repository.ts",
   ]) {
     const contents = readFileSync(path.join(root, relative), "utf8");
     assert.match(contents, /withDatabaseConnection/);

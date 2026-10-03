@@ -63,6 +63,15 @@ test("guest opens a coach profile without fabricated offers or availability", as
     }),
   ).toBeVisible();
   await expect(page.getByText("No active indexed offer yet")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Recent posts" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/A useful pad round starts with balance/),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Sign in to follow" }),
+  ).toHaveAttribute("href", /\/sign-in\?returnTo=/);
   await expect(page.getByText(/not live tracking/)).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Back to coaches" }),
@@ -102,6 +111,30 @@ test("coach workspace stays protected and exposes no placeholder controls", asyn
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
+});
+
+test("following and coach-post workspaces stay behind application identity", async ({
+  page,
+}) => {
+  await page.goto("/following");
+  if (new URL(page.url()).pathname === "/sign-in") {
+    expect(new URL(page.url()).searchParams.get("returnTo")).toBe("/following");
+  } else {
+    await expect(
+      page.getByRole("heading", { name: "Sign in to build your coach feed." }),
+    ).toBeVisible();
+  }
+
+  await page.goto("/coach/posts");
+  if (new URL(page.url()).pathname === "/sign-in") {
+    expect(new URL(page.url()).searchParams.get("returnTo")).toBe(
+      "/coach/posts",
+    );
+  } else {
+    await expect(
+      page.getByRole("heading", { name: "Sign in to publish coach notes." }),
+    ).toBeVisible();
+  }
 });
 
 test("coach profile setup stays behind application identity", async ({

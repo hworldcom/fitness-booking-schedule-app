@@ -14,8 +14,8 @@ select is(
     where table_schema = 'app'
       and table_type = 'BASE TABLE'
   ),
-  9,
-  'app contains identity, wallet, gym, coach-discovery and availability tables'
+  11,
+  'app contains identity, wallet, gym, coach-discovery, availability and social tables'
 );
 
 select ok(
@@ -112,7 +112,7 @@ select is(
       and c.relkind = 'r'
       and r.rolname = 'app_owner'
   ),
-  9,
+  11,
   'app_owner owns every app table'
 );
 

@@ -15,6 +15,7 @@
     "test:db": "DATABASE_TEST_URL=postgresql://postgres:postgres@127.0.0.1:55322/postgres tsx --conditions=react-server --test --test-concurrency=1 tests/database/*.test.ts",
     "test:auth": "node scripts/rehearse-local-email-auth.mjs",
     "test:coach-availability": "node scripts/rehearse-local-coach-availability.mjs",
+    "test:coach-social": "node scripts/rehearse-local-coach-social.mjs",
     "test:wallet-auth": "node scripts/rehearse-local-personal-wallet.mjs",
     "test:e2e": "playwright test",
     "db:start": "supabase start --exclude gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
