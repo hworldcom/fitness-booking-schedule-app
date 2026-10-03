@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Coach-first M0 database cleanup
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../../current/organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: follows completed runtime retirement in [DEV0101 — Retire the multi-gym membership runtime](DEV0101-retire-multigym-membership-runtime.md); provides the simplified gym boundary consumed by [DEV0096 — Persist coach profiles and discovery](../../current/backend/DEV0096-persist-coach-profiles-and-discovery.md), [DEV0104 — Publish weekly coach availability](DEV0104-publish-weekly-coach-availability.md) and [DEV0108 — Add the Mapbox coach Explore map](../../current/frontend/DEV0108-add-mapbox-coach-explore-map.md); hosted application depends on [DEV0055 — Hosted Supabase staging environment](../../current/backend/DEV0055-hosted-supabase-staging-environment.md)
+- Related records: follows completed runtime retirement in [DEV0101 — Retire the multi-gym membership runtime](DEV0101-retire-multigym-membership-runtime.md); provides the simplified gym boundary consumed by [DEV0096 — Persist coach profiles and discovery](DEV0096-persist-coach-profiles-and-discovery.md), [DEV0104 — Publish weekly coach availability](DEV0104-publish-weekly-coach-availability.md) and [DEV0108 — Add the Mapbox coach Explore map](../../current/frontend/DEV0108-add-mapbox-coach-explore-map.md); hosted application depends on [DEV0055 — Hosted Supabase staging environment](../../current/backend/DEV0055-hosted-supabase-staging-environment.md)
 
 ## Objective and context
 

@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Coach-first M2 one-session/ten-session offers
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on [DEV0094](../../archive/organisatory/DEV0094-adopt-coach-first-training-package-mvp.md), applicable coach identity from [DEV0096](../backend/DEV0096-persist-coach-profiles-and-discovery.md) and linked-wallet authority from [DEV0047](../backend/DEV0047-personal-wallet-linking-and-replacement.md); supplies authoritative one-session/ten-session terms to DEV0098 and booking eligibility to DEV0105
+- Related records: depends on [DEV0094](../../archive/organisatory/DEV0094-adopt-coach-first-training-package-mvp.md), applicable coach identity from [DEV0096](../../archive/backend/DEV0096-persist-coach-profiles-and-discovery.md) and linked-wallet authority from [DEV0047](../backend/DEV0047-personal-wallet-linking-and-replacement.md); supplies authoritative one-session/ten-session terms to DEV0098 and booking eligibility to DEV0105
 
 ## Objective and context
 

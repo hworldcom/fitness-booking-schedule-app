@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Coach-first location-discovery correction
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../../current/organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: refines coach discovery in [DEV0096](../../current/backend/DEV0096-persist-coach-profiles-and-discovery.md), weekly slot location in [DEV0104](../backend/DEV0104-publish-weekly-coach-availability.md), booking presentation in [DEV0105](../../current/backend/DEV0105-book-private-classes-with-pass-credits.md), and creates [DEV0108 — Add the Mapbox coach Explore map](../../current/frontend/DEV0108-add-mapbox-coach-explore-map.md)
+- Related records: refines coach discovery in [DEV0096](../backend/DEV0096-persist-coach-profiles-and-discovery.md), weekly slot location in [DEV0104](../backend/DEV0104-publish-weekly-coach-availability.md), booking presentation in [DEV0105](../../current/backend/DEV0105-book-private-classes-with-pass-credits.md), and creates [DEV0108 — Add the Mapbox coach Explore map](../../current/frontend/DEV0108-add-mapbox-coach-explore-map.md)
 
 ## Objective and context
 

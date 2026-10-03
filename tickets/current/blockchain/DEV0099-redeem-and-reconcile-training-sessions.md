@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Coach-first M5 completed-class consumption
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on purchased passes from [DEV0098](DEV0098-purchase-training-packages-with-devnet-usdc.md), confirmed bookings from [DEV0105 — Book private classes with pass credits](../backend/DEV0105-book-private-classes-with-pass-credits.md) and coach identity from [DEV0096](../backend/DEV0096-persist-coach-profiles-and-discovery.md)
+- Related records: depends on purchased passes from [DEV0098](DEV0098-purchase-training-packages-with-devnet-usdc.md), confirmed bookings from [DEV0105 — Book private classes with pass credits](../backend/DEV0105-book-private-classes-with-pass-credits.md) and coach identity from [DEV0096](../../archive/backend/DEV0096-persist-coach-profiles-and-discovery.md)
 
 ## Objective and context
 

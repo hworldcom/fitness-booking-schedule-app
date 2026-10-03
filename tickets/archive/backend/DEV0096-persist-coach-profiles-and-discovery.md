@@ -1,11 +1,11 @@
 # Ticket DEV0096: Persist coach profiles and discovery
 
-- Status: In progress
+- Status: Completed
 - Created: 2026-10-02
 - Last updated: 2026-10-03
 - Milestone: Coach-first M1 identity and discovery
-- Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on the simplified gym/location boundary from [DEV0109 — Retire membership schema and preserve gyms](../../archive/backend/DEV0109-retire-membership-schema-and-preserve-gyms.md), follows [DEV0094](../../archive/organisatory/DEV0094-adopt-coach-first-training-package-mvp.md) and reuses completed email identity plus in-progress [DEV0047 — Personal wallet linking](DEV0047-personal-wallet-linking-and-replacement.md); supplies coach identity/location to DEV0097, DEV0100, [DEV0104 — Publish weekly coach availability](../../archive/backend/DEV0104-publish-weekly-coach-availability.md) and [DEV0108 — Add the Mapbox coach Explore map](../frontend/DEV0108-add-mapbox-coach-explore-map.md); [DEV0110 — Activate coaching during account onboarding](../../archive/backend/DEV0110-activate-coaching-during-account-onboarding.md) later separates self-service activation from public-profile existence
+- Coordination: [COR0009 — Coach-first private-class booking MVP](../../current/organisatory/COR0009-coach-first-training-package-mvp.md)
+- Related records: depends on the simplified gym/location boundary from [DEV0109 — Retire membership schema and preserve gyms](DEV0109-retire-membership-schema-and-preserve-gyms.md), follows [DEV0094](../organisatory/DEV0094-adopt-coach-first-training-package-mvp.md) and reuses completed email identity plus in-progress [DEV0047 — Personal wallet linking](../../current/backend/DEV0047-personal-wallet-linking-and-replacement.md); supplies coach identity/location to DEV0097, DEV0100, [DEV0104 — Publish weekly coach availability](DEV0104-publish-weekly-coach-availability.md) and [DEV0108 — Add the Mapbox coach Explore map](../../current/frontend/DEV0108-add-mapbox-coach-explore-map.md); [DEV0110 — Activate coaching during account onboarding](DEV0110-activate-coaching-during-account-onboarding.md) later separates self-service activation from public-profile existence
 
 ## Objective and context
 
@@ -43,7 +43,7 @@ This ticket originally treated coach-profile existence as the hackathon's explic
 - [x] AC2: An authenticated user can create/update only their own coach profile and optional gym selection; anonymous, cross-user, inactive-gym and cross-dataset mutations fail closed.
 - [x] AC3: Public-location fields are bounded, coordinate-valid, provider-neutral and owner-confirmed; a gym-derived location references one eligible fictional gym without granting gym authority; filters are deterministic and empty/database-error states do not fall back to fixtures or provider results.
 - [x] AC4: Offer metadata cannot override authoritative onchain commercial terms or surface a deactivated/unindexed offer.
-- [ ] AC5: Migration, seed, authorization, service, browser, static and build checks pass.
+- [x] AC5: Migration, seed, authorization, service, browser, static and build checks pass.
 
 ## Validation plan
 
@@ -51,7 +51,7 @@ Run clean/repeat migration and seed checks, database constraint/RLS tests, serve
 
 ## Implementation record
 
-Implementation started after DEV0109 completed the simplified gym boundary. Route, authority and role semantics were reviewed before the first runtime edit. The feature implementation and its focused validation are complete; final repository-wide static validation is pending correction of unrelated concurrent DEV0097 files described below.
+Implementation started after DEV0109 completed the simplified gym boundary. Route, authority and role semantics were reviewed before the first runtime edit. The feature implementation and focused validation completed first; final repository-wide static validation was rerun successfully on 2026-10-03 after the concurrent DEV0097 issues were resolved.
 
 ### Changes and rationale
 
@@ -89,8 +89,7 @@ The additive database contract permits zero or one selected fictional gym affili
 - Passed: `npm test` — 47 unit/boundary tests in the isolated DEV0096 state; a later shared-tree run also passed 51 tests after concurrent DEV0097 tests appeared. Focused coach validation and server-only boundary checks passed in both runs.
 - Passed: `npm run test:e2e` — 24 desktop/mobile scenarios. The coach directory, discipline filtering, profile detail, truthful empty downstream sections and protected editor boundary passed without horizontal overflow. Captured desktop/mobile directory and profile screenshots were visually reviewed.
 - Passed: `npm run db:lint` — no schema errors. `npm run format:check`, focused ESLint for every DEV0096 TypeScript/TSX file and `git diff --check` also passed.
-- Passed before concurrent DEV0097 files appeared: `npm run typecheck`, full `npm run lint -- --quiet` and `npm run build`; the build included dynamic `/explore`, `/coaches/[slug]` and `/profile/coach` routes.
-- Pending final repository-wide rerun: later uncommitted DEV0097 files currently fail TypeScript on BigInt literals below the configured target and full ESLint on two generated empty-object types. These files are outside DEV0096 and were not modified here. DEV0096 therefore remains in progress with AC5 unchecked until that parallel ticket restores the shared static checks.
+- Passed on the final shared tree on 2026-10-03: `npm run lint`, `npm run typecheck` and `npm run build`. Next.js 16.3.5 generated route types, completed TypeScript, compiled the production application and included dynamic `/explore`, `/coaches/[slug]` and `/profile/coach` routes. This clears the temporary concurrent DEV0097 blocker and completes AC5.
 
 ## Risks, limitations, and follow-ups
 
@@ -98,7 +97,7 @@ Self-declared coach profiles prove neither credentials nor quality. Verification
 
 ## Completion and review references
 
-- Completed: Not completed — focused implementation and validation pass; final shared-tree typecheck/lint/build rerun is waiting on the concurrent DEV0097 worktree changes.
-- Commit: Not created.
-- Review: Implementation self-review completed against AC1–AC4; AC5 remains open for the final shared-tree static rerun.
+- Completed: 2026-10-03 — persistent coach profiles, provider-neutral locations, fictional discovery data and public/owner interfaces passed AC1–AC5.
+- Commit: `aadff87` — `[DEV0096] Add persistent coach discovery`; completion-record update is included in this change.
+- Review: Implementation self-review completed against AC1–AC5; no independent review.
 - Deployment or release: None.

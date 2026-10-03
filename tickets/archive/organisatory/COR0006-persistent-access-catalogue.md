@@ -66,7 +66,7 @@ The catalogue represents €80 Basic, €150 Classic, €15 non-core access and 
 
 ## Completion and review references
 
-- Completed: Cancelled on 2026-10-03. DEV0067, DEV0078 and DEV0079 remain completed historical delivery, but their Basic/Classic gym catalogue is superseded by the coach-first profile/package contract. [DEV0101](../backend/DEV0101-retire-multigym-membership-runtime.md) removes the live catalogue adapter; [DEV0096](../../current/backend/DEV0096-persist-coach-profiles-and-discovery.md) owns its replacement.
+- Completed: Cancelled on 2026-10-03. DEV0067, DEV0078 and DEV0079 remain completed historical delivery, but their Basic/Classic gym catalogue is superseded by the coach-first profile/package contract. [DEV0101](../backend/DEV0101-retire-multigym-membership-runtime.md) removes the live catalogue adapter; [DEV0096](../backend/DEV0096-persist-coach-profiles-and-discovery.md) owns its replacement.
 - Direct development tickets: DEV0067, DEV0078 and DEV0079 Completed.
 - Commit: Not applicable — coordination-record IDs are not used in commit subjects.
 - Review: Work-map revision reviewed under DEV0069; no independent implementation review.
