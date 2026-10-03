@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Coach-first M1 identity and discovery
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on the simplified gym/location boundary from [DEV0109 — Retire membership schema and preserve gyms](DEV0109-retire-membership-schema-and-preserve-gyms.md), follows [DEV0094](../../archive/organisatory/DEV0094-adopt-coach-first-training-package-mvp.md) and reuses completed email identity plus in-progress [DEV0047 — Personal wallet linking](DEV0047-personal-wallet-linking-and-replacement.md); supplies coach identity/location to DEV0097, DEV0100, [DEV0104 — Publish weekly coach availability](DEV0104-publish-weekly-coach-availability.md) and [DEV0108 — Add the Mapbox coach Explore map](../frontend/DEV0108-add-mapbox-coach-explore-map.md)
+- Related records: depends on the simplified gym/location boundary from [DEV0109 — Retire membership schema and preserve gyms](../../archive/backend/DEV0109-retire-membership-schema-and-preserve-gyms.md), follows [DEV0094](../../archive/organisatory/DEV0094-adopt-coach-first-training-package-mvp.md) and reuses completed email identity plus in-progress [DEV0047 — Personal wallet linking](DEV0047-personal-wallet-linking-and-replacement.md); supplies coach identity/location to DEV0097, DEV0100, [DEV0104 — Publish weekly coach availability](DEV0104-publish-weekly-coach-availability.md) and [DEV0108 — Add the Mapbox coach Explore map](../frontend/DEV0108-add-mapbox-coach-explore-map.md)
 
 ## Objective and context
 

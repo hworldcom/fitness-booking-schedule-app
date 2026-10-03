@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Coach-first M2 private availability
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on persistent coach identity, optional gym affiliation and confirmed public location from [DEV0096 — Persist coach profiles and discovery](DEV0096-persist-coach-profiles-and-discovery.md), which consumes the simplified gyms from [DEV0109 — Retire membership schema and preserve gyms](DEV0109-retire-membership-schema-and-preserve-gyms.md); supplies capacity-one slots/location snapshots to [DEV0105 — Book private classes with pass credits](DEV0105-book-private-classes-with-pass-credits.md) and public projections to [DEV0108 — Add the Mapbox coach Explore map](../frontend/DEV0108-add-mapbox-coach-explore-map.md)
+- Related records: depends on persistent coach identity, optional gym affiliation and confirmed public location from [DEV0096 — Persist coach profiles and discovery](DEV0096-persist-coach-profiles-and-discovery.md), which consumes the simplified gyms from [DEV0109 — Retire membership schema and preserve gyms](../../archive/backend/DEV0109-retire-membership-schema-and-preserve-gyms.md); supplies capacity-one slots/location snapshots to [DEV0105 — Book private classes with pass credits](DEV0105-book-private-classes-with-pass-credits.md) and public projections to [DEV0108 — Add the Mapbox coach Explore map](../frontend/DEV0108-add-mapbox-coach-explore-map.md)
 
 ## Objective and context
 

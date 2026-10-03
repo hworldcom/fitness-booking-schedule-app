@@ -2,9 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   check,
   date,
-  foreignKey,
   index,
-  integer,
   numeric,
   pgSchema,
   primaryKey,
@@ -181,8 +179,8 @@ export const demoRunParticipants = app.table(
   ],
 );
 
-export const organizations = app.table(
-  "organizations",
+export const gyms = app.table(
+  "gyms",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     runId: uuid("run_id")
@@ -191,281 +189,25 @@ export const organizations = app.table(
     slug: text("slug").notNull(),
     name: text("name").notNull(),
     description: text("description").notNull(),
-    kind: text("kind").notNull(),
-    status: text("status").notNull(),
-    recordSource: text("record_source").notNull(),
-    ...auditColumns,
-  },
-  (table) => [
-    unique("organizations_run_id_id_key").on(table.runId, table.id),
-    unique("organizations_run_id_slug_key").on(table.runId, table.slug),
-    check(
-      "organizations_slug_format_check",
-      sql`${table.slug} ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'`,
-    ),
-    check(
-      "organizations_kind_check",
-      sql`${table.kind} in ('gym', 'cafe', 'studio', 'community', 'sponsor')`,
-    ),
-    check(
-      "organizations_status_check",
-      sql`${table.status} in ('active', 'inactive')`,
-    ),
-    check(
-      "organizations_record_source_check",
-      sql`${table.recordSource} in ('fixture', 'user')`,
-    ),
-    index("organizations_run_kind_status_idx").on(
-      table.runId,
-      table.kind,
-      table.status,
-    ),
-  ],
-);
-
-export const organizationMemberships = app.table(
-  "organization_memberships",
-  {
-    runId: uuid("run_id").notNull(),
-    organizationId: uuid("organization_id").notNull(),
-    profileId: uuid("profile_id").notNull(),
-    role: text("role").notNull(),
-    status: text("status").notNull(),
-    ...auditColumns,
-    revokedAt: timestamp("revoked_at", {
-      withTimezone: true,
-      mode: "string",
-    }),
-  },
-  (table) => [
-    primaryKey({
-      name: "organization_memberships_pkey",
-      columns: [table.runId, table.organizationId, table.profileId],
-    }),
-    foreignKey({
-      name: "organization_memberships_organization_fkey",
-      columns: [table.runId, table.organizationId],
-      foreignColumns: [organizations.runId, organizations.id],
-    }).onDelete("restrict"),
-    foreignKey({
-      name: "organization_memberships_run_profile_fkey",
-      columns: [table.runId, table.profileId],
-      foreignColumns: [
-        demoRunParticipants.runId,
-        demoRunParticipants.profileId,
-      ],
-    }).onDelete("restrict"),
-    check(
-      "organization_memberships_role_check",
-      sql`${table.role} in ('primary_admin', 'admin', 'member')`,
-    ),
-    check(
-      "organization_memberships_status_check",
-      sql`${table.status} in ('active', 'revoked')`,
-    ),
-    check(
-      "organization_memberships_revoked_state_check",
-      sql`(${table.status} = 'revoked') = (${table.revokedAt} is not null)`,
-    ),
-    index("organization_memberships_run_profile_status_idx").on(
-      table.runId,
-      table.profileId,
-      table.status,
-    ),
-    uniqueIndex("organization_memberships_one_active_primary_admin_idx")
-      .on(table.runId, table.organizationId)
-      .where(
-        sql`${table.status} = 'active' and ${table.role} = 'primary_admin'`,
-      ),
-  ],
-);
-
-export const venues = app.table(
-  "venues",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    runId: uuid("run_id").notNull(),
-    organizationId: uuid("organization_id").notNull(),
-    slug: text("slug").notNull(),
-    name: text("name").notNull(),
+    publicLocationLabel: text("public_location_label").notNull(),
     area: text("area").notNull(),
     city: text("city").notNull(),
     countryCode: text("country_code").notNull(),
     timezone: text("timezone").notNull(),
-    description: text("description").notNull(),
-    kind: text("kind").notNull(),
-    status: text("status").notNull(),
-    recordSource: text("record_source").notNull(),
-    activityTags: text("activity_tags").array().notNull(),
-    ...auditColumns,
-  },
-  (table) => [
-    foreignKey({
-      name: "venues_run_organization_fkey",
-      columns: [table.runId, table.organizationId],
-      foreignColumns: [organizations.runId, organizations.id],
-    }).onDelete("restrict"),
-    unique("venues_run_id_id_key").on(table.runId, table.id),
-    unique("venues_run_id_slug_key").on(table.runId, table.slug),
-    check(
-      "venues_slug_format_check",
-      sql`${table.slug} ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'`,
-    ),
-    check(
-      "venues_country_code_check",
-      sql`${table.countryCode} ~ '^[A-Z]{2}$'`,
-    ),
-    check(
-      "venues_kind_check",
-      sql`${table.kind} in ('gym', 'studio', 'cafe', 'outdoor', 'other')`,
-    ),
-    check(
-      "venues_status_check",
-      sql`${table.status} in ('active', 'inactive')`,
-    ),
-    check(
-      "venues_record_source_check",
-      sql`${table.recordSource} in ('fixture', 'user')`,
-    ),
-    check(
-      "venues_activity_tags_check",
-      sql`cardinality(${table.activityTags}) > 0 and ${table.activityTags} <@ array['Grappling', 'Kickboxing', 'Massage', 'MMA', 'Muay Thai', 'Running', 'Strength', 'Wellness', 'Yoga']::text[]`,
-    ),
-    index("venues_run_kind_status_idx").on(
-      table.runId,
-      table.kind,
-      table.status,
-    ),
-    index("venues_activity_tags_idx").using("gin", table.activityTags),
-  ],
-);
-
-export const venueStaff = app.table(
-  "venue_staff",
-  {
-    runId: uuid("run_id").notNull(),
-    venueId: uuid("venue_id").notNull(),
-    profileId: uuid("profile_id").notNull(),
-    role: text("role").notNull(),
-    status: text("status").notNull(),
-    ...auditColumns,
-    revokedAt: timestamp("revoked_at", {
-      withTimezone: true,
-      mode: "string",
-    }),
-  },
-  (table) => [
-    primaryKey({
-      name: "venue_staff_pkey",
-      columns: [table.runId, table.venueId, table.profileId],
-    }),
-    foreignKey({
-      name: "venue_staff_run_venue_fkey",
-      columns: [table.runId, table.venueId],
-      foreignColumns: [venues.runId, venues.id],
-    }).onDelete("restrict"),
-    foreignKey({
-      name: "venue_staff_run_profile_fkey",
-      columns: [table.runId, table.profileId],
-      foreignColumns: [
-        demoRunParticipants.runId,
-        demoRunParticipants.profileId,
-      ],
-    }).onDelete("restrict"),
-    check(
-      "venue_staff_role_check",
-      sql`${table.role} in ('manager', 'check_in_staff')`,
-    ),
-    check(
-      "venue_staff_status_check",
-      sql`${table.status} in ('active', 'revoked')`,
-    ),
-    check(
-      "venue_staff_revoked_state_check",
-      sql`(${table.status} = 'revoked') = (${table.revokedAt} is not null)`,
-    ),
-    index("venue_staff_run_profile_status_idx").on(
-      table.runId,
-      table.profileId,
-      table.status,
-    ),
-  ],
-);
-
-export const trainerAffiliations = app.table(
-  "trainer_affiliations",
-  {
-    runId: uuid("run_id").notNull(),
-    venueId: uuid("venue_id").notNull(),
-    profileId: uuid("profile_id").notNull(),
-    title: text("title").notNull(),
-    activityTags: text("activity_tags").array().notNull(),
-    status: text("status").notNull(),
-    ...auditColumns,
-  },
-  (table) => [
-    primaryKey({
-      name: "trainer_affiliations_pkey",
-      columns: [table.runId, table.venueId, table.profileId],
-    }),
-    foreignKey({
-      name: "trainer_affiliations_run_venue_fkey",
-      columns: [table.runId, table.venueId],
-      foreignColumns: [venues.runId, venues.id],
-    }).onDelete("restrict"),
-    foreignKey({
-      name: "trainer_affiliations_run_profile_fkey",
-      columns: [table.runId, table.profileId],
-      foreignColumns: [
-        demoRunParticipants.runId,
-        demoRunParticipants.profileId,
-      ],
-    }).onDelete("restrict"),
-    check(
-      "trainer_affiliations_activity_tags_check",
-      sql`cardinality(${table.activityTags}) > 0 and ${table.activityTags} <@ array['Grappling', 'Kickboxing', 'Massage', 'MMA', 'Muay Thai', 'Running', 'Strength', 'Wellness', 'Yoga']::text[]`,
-    ),
-    check(
-      "trainer_affiliations_status_check",
-      sql`${table.status} in ('active', 'inactive')`,
-    ),
-    index("trainer_affiliations_run_profile_status_idx").on(
-      table.runId,
-      table.profileId,
-      table.status,
-    ),
-    index("trainer_affiliations_activity_tags_idx").using(
-      "gin",
-      table.activityTags,
-    ),
-  ],
-);
-
-export const classSessions = app.table(
-  "class_sessions",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    runId: uuid("run_id").notNull(),
-    venueId: uuid("venue_id").notNull(),
-    trainerProfileId: uuid("trainer_profile_id").notNull(),
-    slug: text("slug").notNull(),
-    title: text("title").notNull(),
-    description: text("description").notNull(),
-    discipline: text("discipline").notNull(),
-    timezone: text("timezone").notNull(),
-    currencyCode: text("currency_code").notNull(),
-    startsAt: timestamp("starts_at", {
-      withTimezone: true,
+    latitude: numeric("latitude", {
+      precision: 9,
+      scale: 6,
       mode: "string",
     }).notNull(),
-    endsAt: timestamp("ends_at", {
-      withTimezone: true,
+    longitude: numeric("longitude", {
+      precision: 9,
+      scale: 6,
       mode: "string",
     }).notNull(),
-    capacity: integer("capacity").notNull(),
-    priceBaseUnits: numeric("price_base_units", {
-      precision: 20,
-      scale: 0,
+    locationSource: text("location_source").notNull(),
+    locationProvider: text("location_provider"),
+    locationConfirmedAt: timestamp("location_confirmed_at", {
+      withTimezone: true,
       mode: "string",
     }).notNull(),
     status: text("status").notNull(),
@@ -473,64 +215,60 @@ export const classSessions = app.table(
     ...auditColumns,
   },
   (table) => [
-    foreignKey({
-      name: "class_sessions_run_venue_fkey",
-      columns: [table.runId, table.venueId],
-      foreignColumns: [venues.runId, venues.id],
-    }).onDelete("restrict"),
-    foreignKey({
-      name: "class_sessions_trainer_affiliation_fkey",
-      columns: [table.runId, table.venueId, table.trainerProfileId],
-      foreignColumns: [
-        trainerAffiliations.runId,
-        trainerAffiliations.venueId,
-        trainerAffiliations.profileId,
-      ],
-    }).onDelete("restrict"),
-    unique("class_sessions_run_id_id_key").on(table.runId, table.id),
-    unique("class_sessions_run_id_slug_key").on(table.runId, table.slug),
+    unique("gyms_run_id_id_key").on(table.runId, table.id),
+    unique("gyms_run_id_slug_key").on(table.runId, table.slug),
     check(
-      "class_sessions_slug_format_check",
+      "gyms_slug_format_check",
       sql`${table.slug} ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'`,
     ),
     check(
-      "class_sessions_discipline_check",
-      sql`${table.discipline} in ('Grappling', 'Kickboxing', 'Massage', 'MMA', 'Muay Thai', 'Running', 'Strength', 'Wellness', 'Yoga')`,
+      "gyms_name_length_check",
+      sql`char_length(${table.name}) between 2 and 160`,
     ),
     check(
-      "class_sessions_time_order_check",
-      sql`${table.endsAt} > ${table.startsAt}`,
-    ),
-    check("class_sessions_capacity_check", sql`${table.capacity} > 0`),
-    check(
-      "class_sessions_price_check",
-      sql`${table.priceBaseUnits} >= 0 and ${table.priceBaseUnits} <= 18446744073709551615`,
+      "gyms_description_length_check",
+      sql`char_length(${table.description}) between 1 and 2000`,
     ),
     check(
-      "class_sessions_currency_code_check",
-      sql`${table.currencyCode} = 'EURC'`,
+      "gyms_public_location_label_length_check",
+      sql`char_length(${table.publicLocationLabel}) between 2 and 240`,
     ),
     check(
-      "class_sessions_status_check",
-      sql`${table.status} in ('scheduled', 'cancelled')`,
+      "gyms_area_length_check",
+      sql`char_length(${table.area}) between 1 and 120`,
     ),
     check(
-      "class_sessions_record_source_check",
+      "gyms_city_length_check",
+      sql`char_length(${table.city}) between 1 and 120`,
+    ),
+    check("gyms_country_code_check", sql`${table.countryCode} ~ '^[A-Z]{2}$'`),
+    check(
+      "gyms_timezone_format_check",
+      sql`${table.timezone} = 'UTC' or ${table.timezone} ~ '^[A-Za-z_]+(?:/[A-Za-z0-9_+.-]+)+$'`,
+    ),
+    check("gyms_latitude_check", sql`${table.latitude} between -90 and 90`),
+    check("gyms_longitude_check", sql`${table.longitude} between -180 and 180`),
+    check(
+      "gyms_location_source_check",
+      sql`${table.locationSource} in ('fixture', 'manual', 'permanent-geocoding')`,
+    ),
+    check(
+      "gyms_location_provider_check",
+      sql`${table.locationProvider} is null or (char_length(${table.locationProvider}) between 2 and 40 and ${table.locationProvider} ~ '^[a-z0-9-]+$')`,
+    ),
+    check(
+      "gyms_location_provenance_check",
+      sql`(${table.locationSource} in ('fixture', 'manual') and ${table.locationProvider} is null) or (${table.locationSource} = 'permanent-geocoding' and ${table.locationProvider} is not null)`,
+    ),
+    check("gyms_status_check", sql`${table.status} in ('active', 'inactive')`),
+    check(
+      "gyms_record_source_check",
       sql`${table.recordSource} in ('fixture', 'user')`,
     ),
-    index("class_sessions_run_starts_at_idx").on(table.runId, table.startsAt),
-    index("class_sessions_run_venue_starts_at_idx").on(
-      table.runId,
-      table.venueId,
-      table.startsAt,
-    ),
-    index("class_sessions_run_discipline_starts_at_idx").on(
-      table.runId,
-      table.discipline,
-      table.startsAt,
-    ),
+    index("gyms_run_status_name_idx").on(table.runId, table.status, table.name),
+    index("gyms_run_city_area_idx").on(table.runId, table.city, table.area),
   ],
 );
 
 export type ProfileRow = typeof profiles.$inferSelect;
-export type ClassSessionRow = typeof classSessions.$inferSelect;
+export type GymRow = typeof gyms.$inferSelect;

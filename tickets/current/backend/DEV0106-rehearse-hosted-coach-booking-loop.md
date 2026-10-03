@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Coach-first M7 hosted rehearsal
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: integrates DEV0095–DEV0100, DEV0104–DEV0105, [DEV0108 — Add the Mapbox coach Explore map](../frontend/DEV0108-add-mapbox-coach-explore-map.md) and the reviewed migration outcome of [DEV0109 — Retire membership schema and preserve gyms](DEV0109-retire-membership-schema-and-preserve-gyms.md) after their completion; depends on the staging foundation coordinated by [COR0004 — Hosted staging deployment](../organisatory/COR0004-hosted-staging-deployment.md), including DEV0055/DEV0056; does not replace their infrastructure ownership
+- Related records: integrates DEV0095–DEV0100, DEV0104–DEV0105, [DEV0108 — Add the Mapbox coach Explore map](../frontend/DEV0108-add-mapbox-coach-explore-map.md) and the reviewed migration outcome of [DEV0109 — Retire membership schema and preserve gyms](../../archive/backend/DEV0109-retire-membership-schema-and-preserve-gyms.md) after their completion; depends on the staging foundation coordinated by [COR0004 — Hosted staging deployment](../organisatory/COR0004-hosted-staging-deployment.md), including DEV0055/DEV0056; does not replace their infrastructure ownership
 
 ## Objective and context
 

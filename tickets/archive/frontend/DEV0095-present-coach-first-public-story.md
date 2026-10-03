@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Coach-first M0 truthful positioning
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../../current/organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on [DEV0094](../organisatory/DEV0094-adopt-coach-first-training-package-mvp.md); replaces the current public multi-gym story delivered by archived DEV0073/DEV0076 without rewriting their history; navigation hands public discovery to [DEV0108 — Add the Mapbox coach Explore map](../../current/frontend/DEV0108-add-mapbox-coach-explore-map.md); [DEV0109 — Retire membership schema and preserve gyms](../../current/backend/DEV0109-retire-membership-schema-and-preserve-gyms.md) preserves gyms only as optional coach locations
+- Related records: depends on [DEV0094](../organisatory/DEV0094-adopt-coach-first-training-package-mvp.md); replaces the current public multi-gym story delivered by archived DEV0073/DEV0076 without rewriting their history; navigation hands public discovery to [DEV0108 — Add the Mapbox coach Explore map](../../current/frontend/DEV0108-add-mapbox-coach-explore-map.md); [DEV0109 — Retire membership schema and preserve gyms](../backend/DEV0109-retire-membership-schema-and-preserve-gyms.md) preserves gyms only as optional coach locations
 
 ## Objective and context
 

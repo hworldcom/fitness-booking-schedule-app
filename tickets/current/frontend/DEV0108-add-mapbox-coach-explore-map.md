@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Coach-first M1 location discovery
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on provider-neutral coach-location persistence and optional gym affiliation from [DEV0096 — Persist coach profiles and discovery](../backend/DEV0096-persist-coach-profiles-and-discovery.md), backed by the simplified fictional gyms from [DEV0109 — Retire membership schema and preserve gyms](../backend/DEV0109-retire-membership-schema-and-preserve-gyms.md); consumes stable slot-location projections from [DEV0104 — Publish weekly coach availability](../backend/DEV0104-publish-weekly-coach-availability.md); contract adopted by [DEV0107 — Adopt the Mapbox coach-discovery contract](../../archive/organisatory/DEV0107-adopt-mapbox-coach-discovery-contract.md)
+- Related records: depends on provider-neutral coach-location persistence and optional gym affiliation from [DEV0096 — Persist coach profiles and discovery](../backend/DEV0096-persist-coach-profiles-and-discovery.md), backed by the simplified fictional gyms from [DEV0109 — Retire membership schema and preserve gyms](../../archive/backend/DEV0109-retire-membership-schema-and-preserve-gyms.md); consumes stable slot-location projections from [DEV0104 — Publish weekly coach availability](../backend/DEV0104-publish-weekly-coach-availability.md); contract adopted by [DEV0107 — Adopt the Mapbox coach-discovery contract](../../archive/organisatory/DEV0107-adopt-mapbox-coach-discovery-contract.md)
 
 ## Objective and context
 

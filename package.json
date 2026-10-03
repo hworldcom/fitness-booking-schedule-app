@@ -22,6 +22,8 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset --local",
     "db:runtime": "node scripts/prepare-local-runtime-database.mjs",
+    "db:preflight:coach-cleanup:local": "node scripts/preflight-coach-schema-cleanup.mjs --local",
+    "db:preflight:coach-cleanup:hosted": "node scripts/preflight-coach-schema-cleanup.mjs --linked",
     "db:verify:hosted-runtime": "node --env-file-if-exists=.env.staging.local scripts/verify-hosted-runtime-database.mjs",
     "db:seed": "node scripts/seed-local-database.mjs",
     "db:test": "supabase test db --local",
