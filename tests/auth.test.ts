@@ -6,6 +6,12 @@ import {
 } from "../src/auth/config";
 import { isAuthSessionSnapshot } from "../src/auth/contracts";
 import {
+  authServiceTransportErrorMessage,
+  authServiceUnavailableCopy,
+  createAuthServiceFetch,
+  isLocalAuthServiceUrl,
+} from "../src/auth/service-availability";
+import {
   emailOtpErrorMessage,
   normalizeEmail,
   normalizeEmailOtp,
@@ -81,6 +87,17 @@ test("verified session responses require a bounded email identity", () => {
 
 test("OTP failures use bounded copy without echoing provider details", () => {
   assert.match(
+    emailOtpErrorMessage(
+      {
+        status: 0,
+        message:
+          'Local Supabase Auth could not be reached. Run "npm run auth:start", then retry.',
+      },
+      "request",
+    ),
+    /local supabase auth is unreachable.*npm run auth:start/i,
+  );
+  assert.match(
     emailOtpErrorMessage({ status: 429, message: "raw body" }, "request"),
     /too many/i,
   );
@@ -104,6 +121,78 @@ test("OTP failures use bounded copy without echoing provider details", () => {
       "request",
     ).includes("does not exist"),
     false,
+  );
+});
+
+test("Auth service diagnostics distinguish local and hosted endpoints", () => {
+  assert.equal(isLocalAuthServiceUrl("http://localhost:55321"), true);
+  assert.equal(isLocalAuthServiceUrl("http://127.0.0.1:55321"), true);
+  assert.equal(isLocalAuthServiceUrl("http://127.42.0.8:55321"), true);
+  assert.equal(isLocalAuthServiceUrl("http://[::1]:55321"), true);
+  assert.equal(isLocalAuthServiceUrl("https://project.supabase.co"), false);
+
+  const localCopy = authServiceUnavailableCopy("http://127.0.0.1:55321");
+  assert.match(localCopy.title, /local supabase auth is unreachable/i);
+  assert.equal(localCopy.recoveryCommand, "npm run auth:start");
+  assert.match(localCopy.detail, /127\.0\.0\.1:55321/);
+
+  const hostedUrl = "https://private-project.supabase.co";
+  const hostedCopy = authServiceUnavailableCopy(hostedUrl);
+  assert.equal(hostedCopy.recoveryCommand, null);
+  assert.doesNotMatch(hostedCopy.detail, /private-project|supabase\.co/i);
+  assert.doesNotMatch(
+    authServiceTransportErrorMessage(hostedUrl),
+    /private-project|supabase\.co/i,
+  );
+});
+
+test("Auth fetch wraps transport failures with actionable bounded context", async () => {
+  const successfulResponse = new Response(null, { status: 204 });
+  const successfulFetch = createAuthServiceFetch(
+    "http://127.0.0.1:55321",
+    (() => Promise.resolve(successfulResponse)) as typeof fetch,
+  );
+  assert.equal(
+    await successfulFetch("http://127.0.0.1:55321/auth/v1/health"),
+    successfulResponse,
+  );
+
+  const failingFetch = (() =>
+    Promise.reject(
+      new TypeError("secret low-level network detail"),
+    )) as typeof fetch;
+  const localFetch = createAuthServiceFetch(
+    "http://127.0.0.1:55321",
+    failingFetch,
+  );
+  const hostedFetch = createAuthServiceFetch(
+    "https://private-project.supabase.co",
+    failingFetch,
+  );
+
+  await assert.rejects(
+    localFetch("http://127.0.0.1:55321/auth/v1/user"),
+    (error: Error) => {
+      assert.match(error.message, /npm run auth:start/);
+      assert.doesNotMatch(error.message, /secret low-level/);
+      return true;
+    },
+  );
+  await assert.rejects(
+    hostedFetch("https://private-project.supabase.co/auth/v1/user"),
+    (error: Error) => {
+      assert.match(error.message, /configured supabase auth service/i);
+      assert.doesNotMatch(error.message, /private-project|secret low-level/i);
+      return true;
+    },
+  );
+
+  const aborted = new DOMException("The operation was aborted", "AbortError");
+  const abortedFetch = createAuthServiceFetch("http://127.0.0.1:55321", (() =>
+    Promise.reject(aborted)) as typeof fetch);
+  await assert.rejects(
+    abortedFetch("http://127.0.0.1:55321/auth/v1/user"),
+    (error) => error === aborted,
   );
 });
 

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Pill } from "@/components/ui";
 import { isCanonicalSignInLocation, supabasePublicConfig } from "@/auth/config";
+import { authServiceUnavailableCopy } from "@/auth/service-availability";
 import {
   emailOtpErrorMessage,
   normalizeEmail,
@@ -58,6 +59,9 @@ export function SignInScreen({
     () => false,
   );
   const config = supabasePublicConfig();
+  const unavailableCopy = config
+    ? authServiceUnavailableCopy(config.url)
+    : null;
   const canonicalLocation =
     mounted && config
       ? isCanonicalSignInLocation(config, window.location)
@@ -321,11 +325,20 @@ export function SignInScreen({
 
           {session.status === "unavailable" && (
             <div className="auth-notice warning" role="alert">
-              <strong>Sign-in status could not be verified.</strong>
+              <strong>
+                {unavailableCopy?.title ??
+                  "Sign-in status could not be verified."}
+              </strong>
               <p>
-                The Auth service may be offline or the session may be invalid.
-                No authenticated state is being assumed.
+                {unavailableCopy?.detail ??
+                  "The Auth service is unavailable. No signed-in state is being assumed."}
               </p>
+              {unavailableCopy?.recoveryCommand && (
+                <p>
+                  Run <code>{unavailableCopy.recoveryCommand}</code> from the
+                  project directory.
+                </p>
+              )}
               <button
                 type="button"
                 className="text-button"

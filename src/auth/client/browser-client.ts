@@ -2,6 +2,7 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 import { supabasePublicConfig } from "../config";
+import { createAuthServiceFetch } from "../service-availability";
 
 type BrowserAuthClient = ReturnType<typeof createBrowserClient>;
 
@@ -12,7 +13,10 @@ export function browserAuthClient(): BrowserAuthClient | null {
 
   const config = supabasePublicConfig();
   browserClient = config
-    ? createBrowserClient(config.url, config.publishableKey)
+    ? createBrowserClient(config.url, config.publishableKey, {
+        global: { fetch: createAuthServiceFetch(config.url) },
+        isSingleton: false,
+      })
     : null;
 
   return browserClient;

@@ -37,12 +37,16 @@ export function emailOtpErrorMessage(
   action: "request" | "verify",
 ) {
   const { message, status } = authErrorDetails(error);
+  if (message.includes("npm run auth:start")) {
+    return "Local Supabase Auth is unreachable. Run npm run auth:start from the project directory, wait for it to report ready, then try again.";
+  }
   if (status === 429 || message.includes("rate limit")) {
     return "Too many code attempts were made. Wait a few minutes before trying again.";
   }
   if (
     message.includes("fetch") ||
     message.includes("network") ||
+    message.includes("could not be reached") ||
     status === 500 ||
     status === 502 ||
     status === 503 ||

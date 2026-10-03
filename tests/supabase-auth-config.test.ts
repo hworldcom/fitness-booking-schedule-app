@@ -72,6 +72,7 @@ test("profile enrollment accepts only a bounded display name", () => {
 
 test("server Auth verifies claims and never promotes editable metadata", () => {
   const session = read("src/server/auth/session.ts");
+  const sessionRoute = read("src/app/api/auth/session/route.ts");
   const proxy = read("src/server/auth/proxy.ts");
 
   assert.match(session, /auth\.getClaims\(\)/);
@@ -82,4 +83,5 @@ test("server Auth verifies claims and never promotes editable metadata", () => {
   assert.doesNotMatch(session, /user_metadata|app_metadata/);
   assert.match(session, /email_confirmed_at/);
   assert.match(session, /identity\.provider === "email"/);
+  assert.match(sessionRoute, /session\.status === "unavailable" \? 503 : 200/);
 });

@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { supabasePublicConfig } from "@/auth/config";
+import { createAuthServiceFetch } from "@/auth/service-availability";
 
 export async function refreshAuthSession(request: NextRequest) {
   const config = supabasePublicConfig();
@@ -9,6 +10,7 @@ export async function refreshAuthSession(request: NextRequest) {
   try {
     let response = NextResponse.next({ request });
     const client = createServerClient(config.url, config.publishableKey, {
+      global: { fetch: createAuthServiceFetch(config.url) },
       cookies: {
         getAll() {
           return request.cookies.getAll();
