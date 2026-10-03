@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Coach-first M7 hosted rehearsal
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: integrates DEV0095–DEV0100, DEV0104–DEV0105 and [DEV0108 — Add the Mapbox coach Explore map](../frontend/DEV0108-add-mapbox-coach-explore-map.md) after their completion; depends on the staging foundation coordinated by [COR0004 — Hosted staging deployment](../organisatory/COR0004-hosted-staging-deployment.md), including DEV0055/DEV0056; does not replace their infrastructure ownership
+- Related records: integrates DEV0095–DEV0100, DEV0104–DEV0105, [DEV0108 — Add the Mapbox coach Explore map](../frontend/DEV0108-add-mapbox-coach-explore-map.md) and the reviewed migration outcome of [DEV0109 — Retire membership schema and preserve gyms](DEV0109-retire-membership-schema-and-preserve-gyms.md) after their completion; depends on the staging foundation coordinated by [COR0004 — Hosted staging deployment](../organisatory/COR0004-hosted-staging-deployment.md), including DEV0055/DEV0056; does not replace their infrastructure ownership
 
 ## Objective and context
 
@@ -13,8 +13,8 @@ Deploy and rehearse the complete coach-first private-class loop on the existing 
 
 ## Scope and non-goals
 
-- In scope: integrate completed peer migrations/configuration/program addresses and URL-restricted Mapbox public-token setup into staging; guarded Worker deployment; deterministic fictional coach/location/offer/availability setup; funded Devnet coach/client/sponsor prerequisites; one 2–3 minute primary judge path plus focused map-fallback and cancellation/recovery evidence; chain/database/view consistency checks; secret-safe logs; mobile/desktop smoke checks; rollback/reseed instructions; public transaction/account references and ticket evidence.
-- Out of scope: production release, mainnet assets, production availability guarantees, real coach onboarding, destructive hosted legacy-data cleanup, CI/CD, refunds, disputes, no-show policy, group bookings or expanding unfinished peer scope during rehearsal.
+- In scope: integrate completed peer migrations/configuration/program addresses and URL-restricted Mapbox public-token setup into staging; verify DEV0109's reviewed schema cleanup and fictional gym preservation; guarded Worker deployment; deterministic fictional coach/gym-or-independent-location/offer/availability setup; funded Devnet coach/client/sponsor prerequisites; one 2–3 minute primary judge path plus focused map-fallback and cancellation/recovery evidence; chain/database/view consistency checks; secret-safe logs; mobile/desktop smoke checks; rollback/reseed instructions; public transaction/account references and ticket evidence.
+- Out of scope: production release, mainnet assets, production availability guarantees, real coach/gym onboarding, performing or repairing DEV0109's destructive cleanup inside the rehearsal ticket, CI/CD, refunds, disputes, no-show policy, group bookings or expanding unfinished peer scope during rehearsal.
 
 ## Expected behavior and edge cases
 
@@ -24,7 +24,7 @@ No manual database repair, ad hoc chain account edit or second charge may be nee
 
 ## Assumptions, decisions, and dependencies
 
-Every owning implementation ticket must be Completed before this rehearsal starts; this ticket integrates rather than silently finishing peer acceptance criteria. DEV0055/DEV0056 provide the Supabase/Cloudflare/Auth/domain foundation but their historical multi-gym observations do not prove the coach booking loop. Exact official Devnet test-USDC mint/program/decimals, funding source, sponsor policy, program ID and upgrade authority must already be documented by DEV0097/DEV0098.
+Every owning implementation ticket must be Completed before this rehearsal starts; this ticket integrates rather than silently finishing peer acceptance criteria. DEV0109 must already have recorded the reviewed hosted migration state; this ticket verifies it but does not own destructive repair. DEV0055/DEV0056 provide the Supabase/Cloudflare/Auth/domain foundation but their historical multi-gym observations do not prove the coach booking loop. Exact official Devnet test-USDC mint/program/decimals, funding source, sponsor policy, program ID and upgrade authority must already be documented by DEV0097/DEV0098.
 
 The judge price must fit the repeatable test-USDC funding procedure. Prepared test wallets are acceptable if their provenance and reset steps are documented without storing secrets.
 
@@ -43,7 +43,7 @@ The judge price must fit the repeatable test-USDC funding procedure. Prepared te
 - [ ] AC2: The hosted primary path completes list/map discovery, stable-location slot selection, one exact test-USDC purchase, one TrainingPass, one confirmed booking and one completed-class redemption from `N` to `N - 1` without manual repair.
 - [ ] AC3: Hosted client cancellation releases the reservation, reopens the still-valid slot, preserves the full pass credit and permits rebooking without another payment; hosted coach cancellation withdraws the slot while preserving that credit for another eligible slot.
 - [ ] AC4: Coach/client views reload to the same finalized pass balance and booking history; retry/reconciliation cannot duplicate payment, booking or redemption.
-- [ ] AC5: Follow/post behavior, mobile/desktop access, Mapbox failure with working list fallback, authorization failures, other unavailable states and retired membership routes remain correct.
+- [ ] AC5: Follow/post behavior, mobile/desktop access, Mapbox failure with working list fallback, authorization failures and other unavailable states remain correct; retired membership/class/check-in routes and database mutation objects remain unavailable while fictional gym locations still resolve.
 - [ ] AC6: Redacted evidence includes exact commands/results, public chain references, deployment revision, prerequisites, reset/rollback procedure and all remaining limitations.
 
 ## Validation plan

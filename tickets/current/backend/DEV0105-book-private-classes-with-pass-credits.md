@@ -13,12 +13,12 @@ Let a client book one open private-class slot with an eligible coach-specific Tr
 
 ## Scope and non-goals
 
-- In scope: bounded purchase-time slot holds; hold expiry; pass-backed confirmed bookings; coach/client/pass/slot eligibility; off-chain reservation of future session credits; atomic capacity and credit checks; client and coach booking views showing the stable slot-location label; future-booking cancellation by either party with credit retained; payment/booking recovery; booking states needed for later completion/redemption; idempotent operations; responsive accessible UI and authorization/concurrency tests.
-- Out of scope: recurring calendars, group capacity, waitlists, automatic USDC refunds, pass transfer, booking fees, late-cancellation/no-show charges, disputes, reminders, external calendars, direct messaging or on-chain calendar accounts.
+- In scope: bounded purchase-time slot holds; hold expiry; pass-backed confirmed bookings; coach/client/pass/slot eligibility; off-chain reservation of future session credits; atomic capacity and credit checks; client and coach booking views showing the stable slot-location label and optional fictional gym name; future-booking cancellation by either party with credit retained; payment/booking recovery; booking states needed for later completion/redemption; idempotent operations; responsive accessible UI and authorization/concurrency tests.
+- Out of scope: gym-managed classes, memberships, access claims or check-ins, recurring calendars, group capacity, waitlists, automatic USDC refunds, pass transfer, booking fees, late-cancellation/no-show charges, disputes, reminders, external calendars, direct messaging or on-chain calendar accounts.
 
 ## Expected behavior and edge cases
 
-A signed-in client selects an open slot after seeing its scheduled time and stable public-location label. If the client has an eligible active pass that remains valid through the scheduled slot and has an unreserved session, one database transaction confirms the booking, closes the slot and reserves one future credit. Bookable credit equals the latest verified finalized on-chain remaining balance minus active confirmed or completion-pending bookings that have not yet produced a matching redemption. Booking views read the slot snapshot rather than the coach's mutable current profile location.
+A signed-in client selects an open slot after seeing its scheduled time and stable public-location label, including the fictional gym name when the coach selected one. If the client has an eligible active pass that remains valid through the scheduled slot and has an unreserved session, one database transaction confirms the booking, closes the slot and reserves one future credit. Bookable credit equals the latest verified finalized on-chain remaining balance minus active confirmed or completion-pending bookings that have not yet produced a matching redemption. Booking views read the slot snapshot rather than mutable coach or gym records.
 
 If the client must purchase, MovX creates one short-lived capacity hold before wallet approval. Successful finalized purchase creates a one-session or ten-session pass through DEV0098, after which the same operation confirms the held slot. Wallet rejection or failed payment releases or expires the hold. If payment succeeds but the response or booking confirmation is interrupted, reconciliation never charges again: it confirms the still-valid hold when possible or leaves the full purchased pass available to book another eligible slot.
 
@@ -40,7 +40,7 @@ PostgreSQL owns slot, hold, booking and future-credit reservation state. Solana 
 
 ## Acceptance criteria
 
-- [ ] AC1: A client with one eligible unreserved session can confirm exactly one open capacity-one slot, and coach/client views show the same booking time and stable location label.
+- [ ] AC1: A client with one eligible unreserved session can confirm exactly one open capacity-one slot, and coach/client views show the same booking time, stable location label and optional fictional gym name.
 - [ ] AC2: A client without a pass can hold a slot, buy a one-session or ten-session pass and converge on one confirmed booking without double payment or double booking.
 - [ ] AC3: Client or coach cancellation before start releases the reservation while the authoritative pass balance remains unchanged and reusable; a client-cancelled, still-valid slot reopens, while a coach-cancelled slot is withdrawn.
 - [ ] AC4: Concurrent slot claims, concurrent last-credit claims, expired holds, ineligible coach/pass, a pass expiring before the slot, and replayed operations fail or recover without fabricated capacity or entitlement.

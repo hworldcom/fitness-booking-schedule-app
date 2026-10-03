@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { ComingSoonScreen } from "@/features/waitlist/coming-soon";
+import { CoachStoryHome } from "@/features/public/coach-story";
 
 export const metadata: Metadata = {
-  title: "MovX Club — Find your coach.",
+  title: "Find your martial-arts coach",
   description:
-    "Join the early-access list for MovX Club's coach-first training-package demo.",
+    "Discover martial-arts coaches, choose a private weekly slot and use a clear one-session or ten-session TrainingPass.",
 };
 
 export default function Page() {
-  return <ComingSoonScreen />;
+  return <CoachStoryHome />;
 }

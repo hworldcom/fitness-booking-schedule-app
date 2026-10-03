@@ -3,10 +3,10 @@ import { ArrowLeft, ArrowRight, Check, Dumbbell, Sparkles } from "lucide-react";
 import { WaitlistRequest } from "./waitlist-request";
 
 const previewSteps = [
-  "Discover independent martial-arts coaches",
-  "Review customizable prepaid packages",
-  "Purchase with test USDC on Solana Devnet",
-  "Track the remaining sessions together",
+  "Discover coaches and public training locations",
+  "Choose a capacity-one private weekly slot",
+  "Use or buy a one-session or ten-session pass",
+  "Deduct a session only after completed training",
 ];
 
 export function ComingSoonScreen() {
@@ -19,9 +19,10 @@ export function ComingSoonScreen() {
             Find the right martial arts coach for you.
           </h1>
           <p>
-            Discover independent coaches, explore their disciplines and
-            availability, and book private training that fits your goals and
-            schedule.
+            Discover independent or fictional-gym-associated coaches, explore
+            their disciplines and availability, and book private training that
+            fits your goals and schedule. Cancel before it starts and your
+            unused credit remains.
           </p>
           <ul>
             {previewSteps.map((step) => (

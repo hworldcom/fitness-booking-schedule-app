@@ -37,15 +37,17 @@ test("sign-in explains the email/account boundary without blocking public browsi
   await page
     .getByRole("link", { name: "Continue browsing without signing in" })
     .click();
-  await expect(page).toHaveURL(/\/explore$/);
+  await expect(page).toHaveURL(/\/$/);
   await expect(
-    page.getByRole("heading", { name: "Find your next move." }),
+    page.getByRole("heading", {
+      name: "Private training built around the way you want to move.",
+    }),
   ).toBeVisible();
   expect(identityRequests).toBe(0);
 });
 
 test("the global sign-in control is keyboard reachable", async ({ page }) => {
-  await page.goto("/explore");
+  await page.goto("/");
   const signIn = page.getByRole("link", { name: "Sign in", exact: true });
   await expect(signIn).toBeVisible();
   await signIn.focus();

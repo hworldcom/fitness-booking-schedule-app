@@ -596,7 +596,7 @@ export function SignInScreen({
               connected wallet never signs you into this account automatically.
             </p>
           </div>
-          <Link href="/explore" className="text-link">
+          <Link href="/" className="text-link">
             Continue browsing without signing in
           </Link>
           <p className="auth-wallet-note">

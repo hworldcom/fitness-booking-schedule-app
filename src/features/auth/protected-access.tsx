@@ -13,7 +13,7 @@ export function ProtectedAccessUnavailable() {
         <Link href="/sign-in" className="button dark">
           Check sign-in
         </Link>
-        <Link href="/explore" className="button secondary">
+        <Link href="/" className="button secondary">
           Continue public browsing
         </Link>
       </div>

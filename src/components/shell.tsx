@@ -10,6 +10,7 @@ import {
   Info,
   ArrowRight,
   CircleHelp,
+  ListChecks,
 } from "lucide-react";
 import { Avatar, Brand, Modal, Pill } from "./ui";
 import { AuthStatusLink } from "@/auth/client/auth-status-link";
@@ -22,6 +23,7 @@ import {
 
 const navigation = [
   { label: "Home", href: "/", Icon: House },
+  { label: "How it works", href: "/how-it-works", Icon: ListChecks },
   { label: "Profile", href: "/profile", Icon: UserRound },
 ];
 export function Shell({ children }: { children: ReactNode }) {
@@ -103,9 +105,9 @@ export function Shell({ children }: { children: ReactNode }) {
             <span>Berlin, Germany</span>
           </span>
           <div className="header-right">
-            <Link href="/coming-soon" className="how-it-works-link">
+            <Link href="/how-it-works" className="how-it-works-link">
               <CircleHelp size={17} aria-hidden="true" />
-              <span>Early access</span>
+              <span>How it works</span>
             </Link>
             <AuthStatusLink />
             <WalletStatusButton onOpen={() => setModal("wallet")} />

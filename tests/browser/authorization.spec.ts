@@ -20,7 +20,7 @@ test("configured guests keep public routes and are redirected from private pages
 }) => {
   await requireConfiguredGuest(page);
 
-  for (const path of ["/", "/coming-soon", "/sign-in"]) {
+  for (const path of ["/", "/how-it-works", "/coming-soon", "/sign-in"]) {
     const response = await page.goto(path);
     expect(response?.status()).toBeLessThan(400);
     expect(new URL(page.url()).pathname).toBe(path);
@@ -43,7 +43,6 @@ test("legacy membership and gym-wallet routes are unavailable", async ({
     "/membership-card/devnet/rehearsal",
     "/clubs/sign-in",
     "/explore",
-    "/how-it-works",
     "/search",
     "/users/max",
   ]) {

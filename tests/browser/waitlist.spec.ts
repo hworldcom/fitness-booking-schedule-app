@@ -13,7 +13,7 @@ test("coming soon page prepares a truthful waitlist email request", async ({
   await expect(
     page.locator(".coming-soon-copy").getByRole("paragraph"),
   ).toHaveText(
-    "Discover independent coaches, explore their disciplines and availability, and book private training that fits your goals and schedule.",
+    "Discover independent or fictional-gym-associated coaches, explore their disciplines and availability, and book private training that fits your goals and schedule. Cancel before it starts and your unused credit remains.",
   );
   await expect(page.locator(".coming-soon-status")).toContainText(
     "Solana Devnet · Test USDC · No real funds",
