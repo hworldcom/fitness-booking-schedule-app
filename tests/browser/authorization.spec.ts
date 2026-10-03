@@ -42,7 +42,6 @@ test("legacy membership and gym-wallet routes are unavailable", async ({
     "/my-access",
     "/membership-card/devnet/rehearsal",
     "/clubs/sign-in",
-    "/explore",
     "/search",
     "/users/max",
   ]) {

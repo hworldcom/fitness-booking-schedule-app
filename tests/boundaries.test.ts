@@ -139,6 +139,7 @@ test("privileged database entry points carry the Next.js server-only marker", ()
     "src/server/db/identity/repository.ts",
     "src/server/db/wallet/repository.ts",
     "src/server/db/authorization/repository.ts",
+    "src/server/db/coaches/repository.ts",
     "src/server/auth/client.ts",
     "src/server/auth/session.ts",
     "src/server/authorization/contracts.ts",
@@ -146,6 +147,7 @@ test("privileged database entry points carry the Next.js server-only marker", ()
     "src/server/authorization/page-access.ts",
     "src/server/authorization/service.ts",
     "src/server/identity/service.ts",
+    "src/server/coaches/service.ts",
     "src/server/solana/fee-sponsor-config.ts",
     "src/server/wallet/signature.ts",
     "src/server/wallet/service.ts",
@@ -171,6 +173,7 @@ test("application repositories own database connections per request", () => {
   for (const relative of [
     "src/server/db/identity/repository.ts",
     "src/server/db/authorization/repository.ts",
+    "src/server/db/coaches/repository.ts",
   ]) {
     const contents = readFileSync(path.join(root, relative), "utf8");
     assert.match(contents, /withDatabaseConnection/);

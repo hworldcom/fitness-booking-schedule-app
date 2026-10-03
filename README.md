@@ -22,7 +22,7 @@ Start with the [MVP specification](docs/mvp-spec.md). It is the single current p
 
 Delivered reusable foundations include the responsive Next.js application shell, local Supabase/PostgreSQL workflow, server-only database boundary, email-code accounts, protected application profiles, optional personal-wallet proof flow, Phantom discovery through Wallet Standard and Cloudflare staging tooling.
 
-Coach discovery, coach-selected public locations, the Mapbox Explore view, weekly availability, one-session/ten-session Offer accounts, test-USDC purchase, TrainingPass state, private booking, completed-session redemption and coach posts are not complete until their COR0009 development tickets record implementation and validation. The public home currently presents a truthful coach-first early-access state while those routes are built. Retired gym and membership routes return not found rather than exposing a second product.
+Persistent self-declared coach profiles, coach-selected public locations and list-based coach discovery are implemented under DEV0096. The Mapbox Explore view, weekly availability, one-session/ten-session Offer accounts, test-USDC purchase, TrainingPass state, private booking, completed-session redemption and coach posts are not complete until their COR0009 development tickets record implementation and validation. The public home and coach directory present a truthful coach-first early-access state while those later capabilities are built. Retired gym and membership routes return not found rather than exposing a second product.
 
 ## Run locally
 

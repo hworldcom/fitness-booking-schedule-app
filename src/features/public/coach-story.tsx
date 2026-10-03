@@ -68,8 +68,8 @@ export function CoachStoryHome() {
             week—all with one clear TrainingPass balance.
           </p>
           <div className="coach-story-actions">
-            <Link className="button lime" href="/coming-soon">
-              Join early access <ArrowRight size={17} aria-hidden="true" />
+            <Link className="button lime" href="/explore">
+              Explore coaches <ArrowRight size={17} aria-hidden="true" />
             </Link>
             <Link className="button coach-button-ghost" href="/how-it-works">
               See how it works
@@ -266,8 +266,8 @@ export function HowItWorksStory() {
             sessions connected.
           </p>
           <div className="coach-story-actions">
-            <Link className="button lime" href="/coming-soon">
-              Join early access <ArrowRight size={17} aria-hidden="true" />
+            <Link className="button lime" href="/explore">
+              Explore coaches <ArrowRight size={17} aria-hidden="true" />
             </Link>
             <Link className="button coach-button-ghost" href="/">
               Back to overview

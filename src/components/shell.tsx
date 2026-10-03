@@ -23,6 +23,7 @@ import {
 
 const navigation = [
   { label: "Home", href: "/", Icon: House },
+  { label: "Explore", href: "/explore", Icon: MapPin },
   { label: "How it works", href: "/how-it-works", Icon: ListChecks },
   { label: "Profile", href: "/profile", Icon: UserRound },
 ];
@@ -68,10 +69,10 @@ export function Shell({ children }: { children: ReactNode }) {
         <div className="sidebar-bottom">
           <div className="club-note">
             <span className="little-spark">✳</span>
-            <strong>Coach-first MovX is coming.</strong>
-            <p>Join the early-access list while we rebuild the experience.</p>
-            <Link href="/coming-soon">
-              Join the waitlist <ArrowUpRight size={16} />
+            <strong>Meet the demo coaches.</strong>
+            <p>Browse disciplines and coach-confirmed training places.</p>
+            <Link href="/explore">
+              Explore coaches <ArrowUpRight size={16} />
             </Link>
           </div>
           <button className="preview-link" onClick={() => setModal("about")}>
@@ -129,7 +130,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <span>
             <i /> DEMO WORLD
           </span>
-          <p>Coach-first rebuild in progress.</p>
+          <p>Coach discovery live · booking still in progress.</p>
           <button onClick={() => setModal("about")}>
             Fixtures · No real funds <Info size={13} />
           </button>

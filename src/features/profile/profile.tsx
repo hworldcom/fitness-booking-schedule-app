@@ -84,16 +84,17 @@ export function Profile() {
         <BadgeCheck size={24} />
         <h2>Your profile is connected to this account.</h2>
         <p>
-          Coach roles, followed coaches and purchased packages will appear only
-          after their owning coach-first features store verified data.
+          Your self-declared coach profile can now be created separately.
+          Passes, bookings, followed coaches and posts appear only after their
+          owning features store authoritative data.
         </p>
       </section>
       <div className="account-profile-empty">
         <Empty
-          title="Your account starts with a clean slate."
-          description="No coach role, package, session balance, follow or post is being claimed yet."
-          href="/coming-soon"
-          action="View early access"
+          title="Want clients to discover your coaching?"
+          description="Create a self-declared coach profile, choose disciplines and confirm one public training place."
+          href="/profile/coach"
+          action="Set up coach profile"
         />
       </div>
     </>
