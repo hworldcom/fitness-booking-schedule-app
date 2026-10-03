@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Coach-first M0 truthful positioning
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on [DEV0094](../../archive/organisatory/DEV0094-adopt-coach-first-training-package-mvp.md); replaces the current public multi-gym story delivered by archived DEV0073/DEV0076 without rewriting their history
+- Related records: depends on [DEV0094](../../archive/organisatory/DEV0094-adopt-coach-first-training-package-mvp.md); replaces the current public multi-gym story delivered by archived DEV0073/DEV0076 without rewriting their history; navigation hands public discovery to [DEV0108 — Add the Mapbox coach Explore map](DEV0108-add-mapbox-coach-explore-map.md)
 
 ## Objective and context
 
@@ -13,12 +13,12 @@ Make the public application explain one current product: discover independent ma
 
 ## Scope and non-goals
 
-- In scope: build Home and How it works from the coach-first early-access baseline; update navigation/route names and metadata; introduce coach, private-class, slot and pass terminology; show the complete choose-slot, use-or-buy-pass, cancel-with-credit-retained and completed-session loop with honest Devnet/test-money labels; preserve accessible responsive design and intentional not-found behavior for retired routes.
+- In scope: build Home and How it works from the coach-first early-access baseline; update navigation/route names and metadata, including the `/explore` entry owned by DEV0108; introduce coach, private-class, slot and pass terminology; show the complete choose-slot, use-or-buy-pass, cancel-with-credit-retained and completed-session loop with honest Devnet/test-money labels; preserve accessible responsive design and intentional not-found behavior for retired routes.
 - Out of scope: persistent coach/availability/booking data, working offer creation/purchase/redemption, social persistence, destructive database cleanup, new branding, production payment claims or implementing the coach discovery and booking capabilities owned by backend/blockchain peers.
 
 ## Expected behavior and edge cases
 
-A guest understands the coach-first product without seeing contradictory claims about four gyms, Basic/Classic, included gym check-ins, membership pools, gym allocation or wallet membership cards. The story makes clear that a client chooses a coach's open private slot, uses or purchases a one-session/ten-session pass, keeps an unused credit after cancellation and consumes one session only after a completed class. Calls to action lead only to delivered coach discovery/booking routes or clearly labelled preview states. Pages must not imply that a real coach partnership, live availability, real USDC payment or production entitlement exists.
+A guest understands the coach-first product without seeing contradictory claims about four gyms, Basic/Classic, included gym check-ins, membership pools, gym allocation or wallet membership cards. The story makes clear that a client explores coach-selected public locations, chooses an open private slot, uses or purchases a one-session/ten-session pass, keeps an unused credit after cancellation and consumes one session only after a completed class. Calls to action lead only to delivered coach discovery/booking routes or clearly labelled preview states. Pages must not imply that a public Mapbox pin is live tracking, current presence or availability, or that a real coach partnership, live slot, real USDC payment or production entitlement exists.
 
 Legacy links should fail safely or redirect to an appropriate coach-first route; they must not expose a half-functional multi-gym purchase flow. Existing signed-in identity and wallet controls remain intact.
 
@@ -31,12 +31,12 @@ DEV0094 must first make the coach-first specification authoritative. Use **coach
 1. Inventory the transitional early-access home, navigation, metadata and shared styles left by DEV0101.
 2. Start with a focused hero-copy slice that states the martial-arts coach marketplace value directly while the page remains explicitly labelled as coming soon.
 3. Implement the remaining coach-first private-class booking loop, cancellation/credit explanation, client/coach benefits and Devnet explanation.
-4. Connect only delivered coach discovery/availability/booking or clearly labelled preview/coming-soon calls to action while preserving auth/profile behavior.
+4. Connect only delivered coach discovery/availability/booking or clearly labelled preview/coming-soon calls to action while preserving auth/profile behavior; DEV0108 owns `/explore` list/map implementation.
 5. Update focused unit/browser coverage for desktop, mobile, keyboard and truthful unavailable states.
 
 ## Acceptance criteria
 
-- [ ] AC1: Home and How it works describe only the coach discovery/weekly-slot/one-session-or-ten-session-pass/booking/completed-session/social loop and clearly label Devnet test USDC.
+- [ ] AC1: Home and How it works describe only the list/map coach discovery/weekly-slot/one-session-or-ten-session-pass/booking/completed-session/social loop, distinguish a chosen public pin from live location/availability and clearly label Devnet test USDC.
 - [ ] AC2: Current navigation and calls to action contain no active four-gym, Basic/Classic, pool-allocation, non-core-visit or wallet-membership-card product path.
 - [ ] AC3: Legacy links resolve safely, and authenticated account/wallet controls remain usable.
 - [ ] AC4: Representative mobile/desktop and keyboard checks pass with no fabricated availability or misleading partnership/production-payment claim.

@@ -37,6 +37,8 @@ Completed and cancelled tickets are preserved as historical records. [The ticket
 | C15 | Coach profiles, availability, bookings, media, follows and posts are authoritative off-chain. The feed contains coach posts only, ordered newest first, with required text and an optional image.                                                                                                                                    |
 | C16 | Recurring calendars, group capacity, waitlists, external calendar sync, transfers, resale, subscriptions, automatic refunds, no-show charges, disputes, client posts, reactions, comments, direct messages, reviews and recommendation ranking are deferred.                                                                         |
 | C17 | A coach/gym payment split is a stretch goal only after the complete single-recipient flow is stable. The current MVP must not require a venue or gym account.                                                                                                                                                                        |
+| C18 | Mapbox is the P0 map provider because implementation speed is the current priority. Each coach explicitly chooses the public discovery location; MovX does not collect live/device location.                                                                                                                                         |
+| C19 | The accessible coach list remains primary and usable without Mapbox. P0 stores one provider-neutral confirmed coach location, new slots snapshot it so profile edits cannot move existing classes, and persisted Mapbox-derived results use a storage-permitted permanent-geocoding flow.                                            |
 
 ### Proposed defaults that are not yet confirmed implementation contracts
 
@@ -61,7 +63,7 @@ A client has an email-backed MovX account and may link one personal wallet throu
 
 ### Coach
 
-A coach is an application profile with an adopted coach role and a linked personal wallet. The profile owner publishes open capacity-one slots. The linked wallet is the authority for creating/deactivating offers and redeeming completed bookings. The offer's payment recipient is fixed when the offer is created.
+A coach is an application profile with an adopted coach role and a linked personal wallet. The profile owner chooses one public location at which to appear in discovery and publishes open capacity-one slots that snapshot that location. The linked wallet is the authority for creating/deactivating offers and redeeming completed bookings. The offer's payment recipient is fixed when the offer is created.
 
 ### MovX service
 
@@ -71,19 +73,20 @@ The service stores profiles, availability, holds, bookings, offer display metada
 
 ### 4.1 Discover a coach and an open class
 
-1. A guest opens Discover and sees seeded fictional coach profiles rather than an empty followed feed.
-2. Search/filtering may narrow by discipline and Berlin area.
-3. A coach profile shows display name, disciplines, short biography, location text, public one-session/ten-session offers, open private slots for the coming seven days and recent posts.
-4. Client-specific offers and private booking state are visible only to the intended signed-in client.
-5. A database failure shows availability as unavailable; fixture slots never masquerade as live inventory.
+1. A guest opens Explore and sees an accessible list of seeded fictional coach profiles rather than an empty followed feed.
+2. Search/filtering may narrow by discipline, coach-selected Berlin location and authoritative open availability.
+3. When Mapbox is configured and available, one lazy-loaded map shows the same filtered coaches as pins synchronized with the list. A pin is a coach-chosen public training location, not live tracking, current presence or proof of availability.
+4. A coach profile shows display name, disciplines, short biography, public location label, public one-session/ten-session offers, open private slots for the coming seven days and recent posts.
+5. Client-specific offers and private booking state are visible only to the intended signed-in client.
+6. Database failure shows discovery/availability as unavailable; Mapbox failure preserves list discovery; fixture coaches or slots never masquerade as live inventory.
 
 ### 4.2 Coach publishes weekly availability
 
 1. The coach signs in and opens the Coach Dashboard.
-2. The coach creates explicit future start/end intervals in the profile's reviewed timezone.
+2. The coach creates explicit future start/end intervals in the profile's reviewed timezone. Each slot snapshots the coach's confirmed public location.
 3. The service rejects malformed, overlapping, past or out-of-horizon intervals atomically.
 4. Open slots appear on the public profile with capacity one.
-5. The coach may edit or withdraw an open slot but cannot silently move or delete a held or confirmed slot.
+5. The coach may edit or withdraw an open slot but cannot silently move, relocate or delete a held or confirmed slot. Changing the profile location does not rewrite existing slots.
 
 ### 4.3 Coach creates pass offers
 
@@ -99,13 +102,13 @@ The service stores profiles, availability, holds, bookings, offer display metada
 2. MovX reads the latest finalized eligible TrainingPass balance and its active booking reservations; the pass must remain valid through the selected slot.
 3. One database transaction verifies the slot is still open, verifies one unreserved session and creates one confirmed booking.
 4. The slot closes to other clients and the booking reserves one future session without decrementing the on-chain pass.
-5. Reload shows the same confirmed booking to client and coach.
+5. Reload shows the same confirmed booking time and location to client and coach.
 
 ### 4.5 Client purchases a pass and books
 
 1. A client without an eligible pass selects an open slot and chooses the coach's one-session or ten-session offer.
 2. MovX places one bounded temporary hold on that capacity-one slot before wallet approval.
-3. The client sees coach, selected time, sessions, validity, recipient, exact test-USDC amount and network.
+3. The client sees coach, selected time and stable location label, sessions, validity, recipient, exact test-USDC amount and network.
 4. The server/client read authoritative terms from the Offer account and validate the configured Devnet mint; browser-supplied price or recipient is never trusted.
 5. Readiness checks identify the client test-USDC token account and explain insufficient funds before an avoidable signature request.
 6. The complete transaction is simulated and summarized with cluster, token amount, recipient, fee payer and accounts to be created.
@@ -165,9 +168,9 @@ Illustrative seeds: `['pass', offer_pubkey, client_pubkey, purchase_nonce]`. The
 ### 5.2 Off-chain records
 
 - user/application profiles and coach roles;
-- coach profile, disciplines, biography, location and visibility;
+- coach profile, disciplines, biography, visibility and one explicitly confirmed provider-neutral public location snapshot with bounded label, longitude, latitude, source and confirmation time;
 - Offer display metadata keyed by Offer address;
-- explicit timezone-aware capacity-one availability slots;
+- explicit timezone-aware capacity-one availability slots with stable provider-neutral public-location snapshots;
 - bounded temporary slot holds with expiry and idempotent operation identity;
 - confirmed/cancelled/completion-pending/completed bookings linked to coach, client, slot and TrainingPass;
 - active future-session reservations derived from bookings;
@@ -191,6 +194,8 @@ Large descriptions, bios and media do not belong in Solana accounts. Off-chain c
 
 The application uses `@solana/kit`, Wallet Standard and Phantom on Solana Devnet. Server reads validate expected program/token account owners, account lengths/discriminators, configured mint and transaction version. Transactions are simulated before wallet approval. Mainnet and production custody are outside scope.
 
+The Explore map uses Mapbox GL JS through a client-only lazy boundary and a dedicated least-scope public token restricted to approved origins. Public Mapbox tokens are intentionally browser-visible; secret-scope tokens are prohibited from client bundles and committed configuration. The accessible server-rendered coach list does not require Mapbox. Temporary Search Box results remain ephemeral. Any Mapbox-derived label/coordinate persisted in PostgreSQL must be produced by a contemporaneously storage-permitted permanent Geocoding API flow, currently `permanent=true` with eligible billing, and Mapbox attribution remains visible.
+
 Availability/booking database transactions prevent ordinary double booking and pass over-reservation, while idempotent operation records bridge the non-atomic boundary between finalized chain purchase/redemption and PostgreSQL confirmation. A successful payment is never discarded because a slot hold expires: the resulting pass remains valid and reusable with that coach.
 
 <a id="core-coach-packages"></a>
@@ -201,7 +206,7 @@ An offer is a coach-specific one-session or ten-session product. Its price must 
 
 A TrainingPass is non-transferable and client-associated. It can be active or exhausted and optionally expires. The client and coach see the same on-chain totals. Possession of an unrelated token, database row, screenshot, booking or indexed cache does not grant sessions.
 
-An availability slot is capacity-one private-class inventory. A confirmed booking reserves but does not consume one pass session. The same pass can support no more active future reservations than its latest finalized remaining balance. Cancellation before start releases the reservation and preserves the pass credit. A client-cancelled, still-valid slot becomes bookable again; a coach-cancelled slot is withdrawn. Only completed-class redemption consumes the pass.
+An availability slot is capacity-one private-class inventory with a snapshot of the coach's selected public location. A confirmed booking reserves but does not consume one pass session. The same pass can support no more active future reservations than its latest finalized remaining balance. Cancellation before start releases the reservation and preserves the pass credit. A client-cancelled, still-valid slot becomes bookable again; a coach-cancelled slot is withdrawn. Only completed-class redemption consumes the pass. A later coach-profile location change cannot silently relocate an existing slot or booking.
 
 The coach-first MVP does not model selected gyms, group-class capacity, recurring calendar rules, waitlists, external calendar sync, included visits, venue check-ins, membership periods or pool allocation.
 
@@ -243,7 +248,10 @@ Posts require bounded text and may reference one safely validated image. Reactio
 The MVP is done only when:
 
 - a guest can discover a fictional coach, inspect one-session/ten-session offers and see open private slots for the coming seven days;
+- a guest can use the same filtered coach results through an accessible list and Mapbox pins, while provider/configuration failure leaves the list usable and makes no live-location claim;
+- a coach can explicitly confirm one public discovery location without device geolocation, and persisted Mapbox-derived results use an approved permanent-storage flow;
 - an authorized coach can publish non-overlapping capacity-one availability and create/deactivate an Offer without database edits;
+- each slot/booking preserves its public-location snapshot when the coach later changes the profile location;
 - a linked client wallet can purchase the exact Offer with official Devnet test USDC and receive one TrainingPass atomically;
 - a client with an eligible unreserved session can book exactly one open slot and coach/client views reload the same booking;
 - a purchase-time hold converges on one booking or leaves the purchased pass reusable without a second charge;
@@ -260,7 +268,7 @@ The MVP is done only when:
 ## 12. Delivery milestones
 
 1. **M0 — Contract and cleanup:** adopt this specification, retire the multi-gym mutation runtime and present a truthful coach-first public story.
-2. **M1 — Coach identity and discovery:** persist coach profiles, seed fictional coaches and provide guest discovery/profile views.
+2. **M1 — Coach identity and discovery:** persist coach profiles and one coach-selected public location, seed fictional coaches, and provide accessible list/Mapbox discovery plus profile views.
 3. **M2 — Availability and offers:** publish capacity-one slots for the coming seven days and implement coach-authorized one-session/ten-session Offer accounts plus display metadata.
 4. **M3 — Pass purchase:** atomically transfer test USDC and create/recover/index TrainingPass accounts.
 5. **M4 — Private booking:** hold and confirm one slot against an eligible unreserved pass session; cancellation preserves the credit.
@@ -272,37 +280,40 @@ The coach/gym split, recurring calendars and group classes begin only as separat
 
 ## 13. Acceptance matrix
 
-| Scenario                                       | Expected result                                                                                                                         |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Guest opens Discover                           | Fictional coach cards load without sign-in; no legacy gym-membership mutation is offered.                                               |
-| Guest opens coach profile                      | Public biography, disciplines, public offers, open weekly slots and posts are readable; restricted offers/private bookings stay hidden. |
-| Coach publishes valid availability             | Non-overlapping capacity-one slots appear for the coming seven days in the reviewed timezone.                                           |
-| Coach overlaps or edits a booked slot          | Mutation fails without duplicating capacity or silently changing the client's booking.                                                  |
-| Unauthorized profile/offer/slot mutation       | Request fails without changing application or chain state.                                                                              |
-| Coach creates valid 1x/10x offer               | Expected Offer PDA contains immutable terms and recipient; display metadata references its address.                                     |
-| Coach changes price                            | Existing offer cannot be edited; coach deactivates it and creates a new offer.                                                          |
-| Client books with existing pass                | One open slot becomes one confirmed booking and one future credit reservation; chain balance is unchanged.                              |
-| Two clients claim the same slot                | Exactly one booking succeeds; the other receives an honest unavailable result.                                                          |
-| Client overbooks last pass credit              | Additional booking fails while all finalized remaining sessions are already reserved.                                                   |
-| Client buys public offer for selected slot     | Exact test USDC reaches the immutable recipient, one TrainingPass is created and the held slot becomes one booking.                     |
-| Wrong client buys restricted offer             | Program rejects the purchase and transfers no tokens.                                                                                   |
-| Wrong mint/amount/recipient                    | Program rejects the purchase and creates no pass.                                                                                       |
-| Purchase succeeds but booking response is lost | Retry reconciles the existing pass/booking or leaves the pass reusable; it creates no second payment, pass or booking.                  |
-| Client cancels before start                    | Booking/reservation release, the still-valid slot reopens and the full pass balance remains available.                                  |
-| Coach cancels before start                     | Booking/reservation release, the slot is withdrawn and the full pass balance remains available for another eligible slot.               |
-| Same client books another slot after cancel    | The preserved one-session or ten-session credit confirms one new eligible booking without another purchase.                             |
-| Same client buys again                         | A new nonce creates a distinct pass, unless an explicit adopted UI rule prevents the attempt before signing.                            |
-| Coach redeems completed booking                | Remaining sessions decrement once and booking/history reconcile to the indexed event.                                                   |
-| Client or unrelated coach redeems              | Program rejects the instruction.                                                                                                        |
-| Exhausted or expired pass redeems              | Program rejects without underflow or balance change.                                                                                    |
-| Client follows coach                           | Relationship survives reload and the coach's posts appear newest first.                                                                 |
-| Wallet merely connects                         | No account, coach role, pass, booking or payment authority is inferred.                                                                 |
-| Legacy membership URL/API is requested         | It is unavailable/not found and cannot mutate stored membership state.                                                                  |
+| Scenario                                       | Expected result                                                                                                                                                |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Guest opens Explore                            | Fictional coach cards load without sign-in; configured Mapbox pins represent the same filtered coaches and no legacy gym-membership mutation is offered.       |
+| Mapbox is unavailable                          | Coach list, filters and profile navigation remain usable; a bounded map-unavailable state replaces the map without fabricated pins.                            |
+| Coach confirms a public location               | One bounded provider-neutral label/coordinate snapshot is stored through an approved permanent-result flow; no device/live location is requested.              |
+| Coach changes the profile location             | Discovery uses the new confirmed point, while existing slot and booking location snapshots remain unchanged.                                                   |
+| Guest opens coach profile                      | Public biography, disciplines, chosen location label, public offers, open weekly slots and posts are readable; restricted offers/private bookings stay hidden. |
+| Coach publishes valid availability             | Non-overlapping capacity-one slots appear for the coming seven days in the reviewed timezone.                                                                  |
+| Coach overlaps or edits a booked slot          | Mutation fails without duplicating capacity or silently changing the client's booking.                                                                         |
+| Unauthorized profile/offer/slot mutation       | Request fails without changing application or chain state.                                                                                                     |
+| Coach creates valid 1x/10x offer               | Expected Offer PDA contains immutable terms and recipient; display metadata references its address.                                                            |
+| Coach changes price                            | Existing offer cannot be edited; coach deactivates it and creates a new offer.                                                                                 |
+| Client books with existing pass                | One open slot becomes one confirmed booking and one future credit reservation; chain balance is unchanged.                                                     |
+| Two clients claim the same slot                | Exactly one booking succeeds; the other receives an honest unavailable result.                                                                                 |
+| Client overbooks last pass credit              | Additional booking fails while all finalized remaining sessions are already reserved.                                                                          |
+| Client buys public offer for selected slot     | Exact test USDC reaches the immutable recipient, one TrainingPass is created and the held slot becomes one booking.                                            |
+| Wrong client buys restricted offer             | Program rejects the purchase and transfers no tokens.                                                                                                          |
+| Wrong mint/amount/recipient                    | Program rejects the purchase and creates no pass.                                                                                                              |
+| Purchase succeeds but booking response is lost | Retry reconciles the existing pass/booking or leaves the pass reusable; it creates no second payment, pass or booking.                                         |
+| Client cancels before start                    | Booking/reservation release, the still-valid slot reopens and the full pass balance remains available.                                                         |
+| Coach cancels before start                     | Booking/reservation release, the slot is withdrawn and the full pass balance remains available for another eligible slot.                                      |
+| Same client books another slot after cancel    | The preserved one-session or ten-session credit confirms one new eligible booking without another purchase.                                                    |
+| Same client buys again                         | A new nonce creates a distinct pass, unless an explicit adopted UI rule prevents the attempt before signing.                                                   |
+| Coach redeems completed booking                | Remaining sessions decrement once and booking/history reconcile to the indexed event.                                                                          |
+| Client or unrelated coach redeems              | Program rejects the instruction.                                                                                                                               |
+| Exhausted or expired pass redeems              | Program rejects without underflow or balance change.                                                                                                           |
+| Client follows coach                           | Relationship survives reload and the coach's posts appear newest first.                                                                                        |
+| Wallet merely connects                         | No account, coach role, pass, booking or payment authority is inferred.                                                                                        |
+| Legacy membership URL/API is requested         | It is unavailable/not found and cannot mutate stored membership state.                                                                                         |
 
 ## 14. Judge demo
 
-1. A coach publishes two capacity-one Boxing slots for the coming week and public offers for **1 Boxing Session** at an illustrative `2` test USDC and **10 Boxing Sessions** at `10` test USDC, valid for 90 days.
-2. A client discovers the coach, selects the first slot, follows the coach and buys the ten-session pass; the finalized purchase confirms one booking while My Pass shows `10 / 10` with one future class reserved.
+1. A coach confirms one fictional Berlin public location, publishes two capacity-one Boxing slots there for the coming week and creates public offers for **1 Boxing Session** at an illustrative `2` test USDC and **10 Boxing Sessions** at `10` test USDC, valid for 90 days.
+2. A client discovers the coach through the synchronized Explore list/Mapbox pin, selects the first slot with the same stable location label, follows the coach and buys the ten-session pass; the finalized purchase confirms one booking while My Pass shows `10 / 10` with one future class reserved.
 3. The client cancels before the start. The slot reopens and My Pass remains `10 / 10`; the same pass then books the second slot without another payment.
 4. After the demonstrated class is completed, the coach redeems it; both views refresh to `9 / 10` and show the matching booking/redemption history.
 5. The coach publishes a short update; the client sees it at the top of the feed.

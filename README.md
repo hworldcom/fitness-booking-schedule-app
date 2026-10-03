@@ -2,7 +2,7 @@
 
 **Find the right coach. Book a private class. Train on your terms.**
 
-MovX Club is a coach-first hackathon product for independent martial-arts coaches and their clients. Coaches publish capacity-one availability for the coming week plus one-session and ten-session passes. Clients choose a private slot, buy or use a pass, and keep the credit when a future booking is cancelled. Pass purchase and completed-session balances use test USDC and a Solana Devnet program; profiles, availability, bookings, follows and a small chronological coach feed live in the application layer.
+MovX Club is a coach-first hackathon product for independent martial-arts coaches and their clients. Coaches choose one public discovery location, publish capacity-one availability for the coming week and offer one-session and ten-session passes. Clients explore coaches through an accessible list and planned Mapbox view, choose a private slot, buy or use a pass, and keep the credit when a future booking is cancelled. Pass purchase and completed-session balances use test USDC and a Solana Devnet program; profiles, locations, availability, bookings, follows and a small chronological coach feed live in the application layer.
 
 The former multi-gym membership product is superseded. Its additive migrations and archived tickets remain historical evidence, but its membership activation, reservation, check-in, gym-wallet and wallet-card runtime was removed under [DEV0101](./tickets/archive/backend/DEV0101-retire-multigym-membership-runtime.md). The coach-first runtime is planned under [COR0009](tickets/current/organisatory/COR0009-coach-first-training-package-mvp.md); do not infer that every target flow is already implemented.
 
@@ -22,7 +22,7 @@ Start with the [MVP specification](docs/mvp-spec.md). It is the single current p
 
 Delivered reusable foundations include the responsive Next.js application shell, local Supabase/PostgreSQL workflow, server-only database boundary, email-code accounts, protected application profiles, optional personal-wallet proof flow, Phantom discovery through Wallet Standard and Cloudflare staging tooling.
 
-Coach discovery, weekly availability, one-session/ten-session Offer accounts, test-USDC purchase, TrainingPass state, private booking, completed-session redemption and coach posts are not complete until their COR0009 development tickets record implementation and validation. The public home currently presents a truthful coach-first early-access state while those routes are built. Retired gym and membership routes return not found rather than exposing a second product.
+Coach discovery, coach-selected public locations, the Mapbox Explore view, weekly availability, one-session/ten-session Offer accounts, test-USDC purchase, TrainingPass state, private booking, completed-session redemption and coach posts are not complete until their COR0009 development tickets record implementation and validation. The public home currently presents a truthful coach-first early-access state while those routes are built. Retired gym and membership routes return not found rather than exposing a second product.
 
 ## Run locally
 
@@ -131,6 +131,7 @@ npm run test:e2e
 - `src/auth/` and `src/server/auth/`: browser/server Supabase identity boundaries.
 - `src/server/identity/` and `src/server/wallet/`: application profile and personal-wallet proof services.
 - `src/server/db/`: server-only PostgreSQL configuration, schema mappings and narrow repositories; availability and booking persistence arrives under DEV0104–DEV0105.
+- Planned Mapbox integration remains a browser-side rendering/selection adapter; provider-neutral coach and slot location snapshots remain in PostgreSQL, and list discovery must work without Mapbox.
 - `src/solana/`: shared chain contracts plus browser-safe Wallet Standard clients; coach-pass modules arrive under DEV0097–DEV0099.
 - `supabase/`: sole additive SQL migration history, deterministic seeds and database tests.
 - `tests/`: unit, integration and browser validation.
