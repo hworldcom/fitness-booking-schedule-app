@@ -5,7 +5,7 @@
 - Last updated: 2026-09-28
 - Milestone: M3 check-ins, member-price access and allocation
 - Coordination: [COR0008 — Membership reservations and check-ins](../organisatory/COR0008-membership-reservations-and-checkins.md)
-- Related records: consumes [DEV0086 — Persist included class reservations](../backend/DEV0086-persist-included-class-reservations.md), supplies upcoming reservation context to [DEV0085 — Add the member check-in interface](DEV0085-member-checkin-interface.md), and extends the active membership view delivered through [DEV0081 — Activate memberships with Devnet EURC](../../current/blockchain/DEV0081-devnet-membership-activation.md)
+- Related records: consumes [DEV0086 — Persist included class reservations](../backend/DEV0086-persist-included-class-reservations.md), supplies upcoming reservation context to [DEV0085 — Add the member check-in interface](DEV0085-member-checkin-interface.md), and extends the active membership view delivered through [DEV0081 — Activate memberships with Devnet EURC](../blockchain/DEV0081-devnet-membership-activation.md)
 
 ## Objective and context
 

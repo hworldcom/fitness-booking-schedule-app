@@ -4,8 +4,8 @@
 - Created: 2026-09-25
 - Last updated: 2026-09-25
 - Milestone: M0 core product contract
-- Coordination: [COR0007 — Core multi-gym membership MVP](../../current/organisatory/COR0007-core-multigym-membership-mvp.md)
-- Related records: amends the contract adopted by completed [DEV0069 — Adopt core multi-gym membership MVP](DEV0069-adopt-core-multigym-membership-mvp.md); affects catalogue coordination [COR0006](../../current/organisatory/COR0006-persistent-access-catalogue.md)
+- Coordination: [COR0007 — Core multi-gym membership MVP](./COR0007-core-multigym-membership-mvp.md)
+- Related records: amends the contract adopted by completed [DEV0069 — Adopt core multi-gym membership MVP](DEV0069-adopt-core-multigym-membership-mvp.md); affects catalogue coordination [COR0006](./COR0006-persistent-access-catalogue.md)
 
 ## Objective and context
 
@@ -60,12 +60,12 @@ Completed the documentation-only plan revision. No application, schema, program 
 
 ### Affected files
 
-| File or component | Change and purpose |
-| --- | --- |
-| `docs/mvp-spec.md` | Sets Basic to €80/ten and Classic to €150/unlimited throughout the normative contract and examples. |
-| `tickets/current/organisatory/COR0006-persistent-access-catalogue.md` | Updates the configurable catalogue hypotheses and links the amendment. |
-| `tickets/current/organisatory/COR0007-core-multigym-membership-mvp.md` | Registers this direct contract amendment and updates the economics risk/progress record. |
-| `tickets/README.md` | Registers and archives DEV0070 and advances the next development identifier. |
+| File or component                                                      | Change and purpose                                                                                  |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `docs/mvp-spec.md`                                                     | Sets Basic to €80/ten and Classic to €150/unlimited throughout the normative contract and examples. |
+| `tickets/current/organisatory/COR0006-persistent-access-catalogue.md`  | Updates the configurable catalogue hypotheses and links the amendment.                              |
+| `tickets/current/organisatory/COR0007-core-multigym-membership-mvp.md` | Registers this direct contract amendment and updates the economics risk/progress record.            |
+| `tickets/README.md`                                                    | Registers and archives DEV0070 and advances the next development identifier.                        |
 
 ### Decisions and deviations
 
@@ -77,15 +77,15 @@ Documentation contract only. No runtime, schema, dependency, configuration, envi
 
 ## Validation results
 
-| Criterion | Evidence | Result |
-| --- | --- | --- |
-| AC1–AC2 | Targeted `rg` audit across the current specification and coordination records; remaining €50/eight references occur only in DEV0070's explicit before-state/history | Passed |
-| AC3 | Manual reciprocal review of DEV0070, COR0006, COR0007 and the ticket index | Passed |
-| AC4 — whitespace | `git diff --check` | Passed with no output |
-| AC4 — repository formatting | `npm run format:check` | Passed; all configured application/source files match Prettier style |
-| AC4 — Markdown paths | Node audit over 92 Markdown files | Passed; all repository-local targets resolve |
-| AC4 — Markdown fragments | Node heading/explicit-anchor audit | Passed; all local fragments resolve |
-| Runtime/database/browser checks | Not run — no executable or database artifact changed | Not applicable |
+| Criterion                       | Evidence                                                                                                                                                            | Result                                                               |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| AC1–AC2                         | Targeted `rg` audit across the current specification and coordination records; remaining €50/eight references occur only in DEV0070's explicit before-state/history | Passed                                                               |
+| AC3                             | Manual reciprocal review of DEV0070, COR0006, COR0007 and the ticket index                                                                                          | Passed                                                               |
+| AC4 — whitespace                | `git diff --check`                                                                                                                                                  | Passed with no output                                                |
+| AC4 — repository formatting     | `npm run format:check`                                                                                                                                              | Passed; all configured application/source files match Prettier style |
+| AC4 — Markdown paths            | Node audit over 92 Markdown files                                                                                                                                   | Passed; all repository-local targets resolve                         |
+| AC4 — Markdown fragments        | Node heading/explicit-anchor audit                                                                                                                                  | Passed; all local fragments resolve                                  |
+| Runtime/database/browser checks | Not run — no executable or database artifact changed                                                                                                                | Not applicable                                                       |
 
 ## Risks, limitations, and follow-ups
 

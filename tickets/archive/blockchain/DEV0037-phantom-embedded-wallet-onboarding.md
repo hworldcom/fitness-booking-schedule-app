@@ -5,7 +5,7 @@
 - Last updated: 2026-09-25
 - Milestone: Deferred post-MVP wallet onboarding history
 - Coordination: None — independent development ticket
-- Related records: follows completed [DEV0027 — Phantom wallet connection foundation](DEV0027-phantom-wallet-connection-foundation.md); may have refined [COR0002 — Phantom authentication and demo access](../../current/organisatory/COR0002-phantom-auth-and-demo-access.md), especially completed [DEV0038 — Phantom Supabase Web3 authentication](../backend/DEV0038-phantom-supabase-web3-authentication.md), after the extension-first authentication slice existed; cancelled by [DEV0071](../organisatory/DEV0071-audit-active-work-after-multigym-pivot.md)
+- Related records: follows completed [DEV0027 — Phantom wallet connection foundation](DEV0027-phantom-wallet-connection-foundation.md); may have refined [COR0002 — Phantom authentication and demo access](../organisatory/COR0002-phantom-auth-and-demo-access.md), especially completed [DEV0038 — Phantom Supabase Web3 authentication](../backend/DEV0038-phantom-supabase-web3-authentication.md), after the extension-first authentication slice existed; cancelled by [DEV0071](../organisatory/DEV0071-audit-active-work-after-multigym-pivot.md)
 
 ## Objective and context
 

@@ -5,7 +5,7 @@
 - Last updated: 2026-09-25
 - Milestone: M0 frozen product contracts
 - Coordination: None — independent development ticket
-- Related records: revises the contract frozen by [DEV0066 — Freeze membership product rules](DEV0066-freeze-membership-product-rules.md); affects completed [DEV0067 — Add membership catalogue schema](../backend/DEV0067-membership-catalogue-schema.md), [COR0006 — Persistent access catalogue](../../current/organisatory/COR0006-persistent-access-catalogue.md), and later-cancelled [DEV0018 — Class-pass reservations and confirmed visits](../backend/DEV0018-class-pass-reservations-and-confirmed-visits.md)
+- Related records: revises the contract frozen by [DEV0066 — Freeze membership product rules](DEV0066-freeze-membership-product-rules.md); affects completed [DEV0067 — Add membership catalogue schema](../backend/DEV0067-membership-catalogue-schema.md), [COR0006 — Persistent access catalogue](./COR0006-persistent-access-catalogue.md), and later-cancelled [DEV0018 — Class-pass reservations and confirmed visits](../backend/DEV0018-class-pass-reservations-and-confirmed-visits.md)
 
 ## Objective and context
 
@@ -71,12 +71,12 @@ MVP scope, fixtures, architecture sequence, definition of done, milestones, acce
 
 ### Affected files
 
-| File or component | Change and purpose |
-| --- | --- |
-| `docs/mvp-spec.md` | Replaces the prepaid-only Annual Unlimited interpretation, defines holder/payer assignment and adds bounded pro-rata pass resale throughout the authoritative contract. |
-| `tickets/README.md` | Registers and completes DEV0068. |
-| `tickets/current/organisatory/COR0006-persistent-access-catalogue.md` | Adds the required additive billing-model schema peer and blocks publication of DEV0067 drafts until it lands. |
-| `tickets/current/backend/DEV0018-class-pass-reservations-and-confirmed-visits.md` | Requires current-holder evidence and resale/redemption serialization while keeping payment/resale settlement separately owned. |
+| File or component                                                                 | Change and purpose                                                                                                                                                      |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/mvp-spec.md`                                                                | Replaces the prepaid-only Annual Unlimited interpretation, defines holder/payer assignment and adds bounded pro-rata pass resale throughout the authoritative contract. |
+| `tickets/README.md`                                                               | Registers and completes DEV0068.                                                                                                                                        |
+| `tickets/current/organisatory/COR0006-persistent-access-catalogue.md`             | Adds the required additive billing-model schema peer and blocks publication of DEV0067 drafts until it lands.                                                           |
+| `tickets/current/backend/DEV0018-class-pass-reservations-and-confirmed-visits.md` | Requires current-holder evidence and resale/redemption serialization while keeping payment/resale settlement separately owned.                                          |
 
 ### Decisions and deviations
 
@@ -100,11 +100,11 @@ Validated on 2026-09-25 as documentation-only work.
 - Reviewed C20–C27, P01/P09–P14, scope, fixtures, architecture, membership/pass contracts, definition of done, milestones, A05–A13/A24–A25 and the demo script as one contract.
 - Application, database, browser and deployment checks were not run because this ticket changes documentation and planning records only.
 
-| Criterion | Evidence | Result |
-| --- | --- | --- |
-| AC1–AC4 | Cross-section contract review plus focused contradiction search | Passed |
-| AC5 | COR0006/DEV0018 relationship and publication-blocker review | Passed |
-| AC6 | Markdown link audit, `git diff --check`, and existing format check | Passed |
+| Criterion | Evidence                                                           | Result |
+| --------- | ------------------------------------------------------------------ | ------ |
+| AC1–AC4   | Cross-section contract review plus focused contradiction search    | Passed |
+| AC5       | COR0006/DEV0018 relationship and publication-blocker review        | Passed |
+| AC6       | Markdown link audit, `git diff --check`, and existing format check | Passed |
 
 ## Risks, limitations, and follow-ups
 

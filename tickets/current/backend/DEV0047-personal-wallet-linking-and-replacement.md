@@ -5,7 +5,7 @@
 - Last updated: 2026-09-25
 - Milestone: Prioritized identity and onboarding
 - Coordination: [COR0003 — Account-first identity and wallet linking](../organisatory/COR0003-account-first-identity-and-wallet-linking.md)
-- Related records: follows completed [DEV0046 — Email OTP registration and application profiles](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md); reuses the wallet connection delivered by [DEV0027](../../archive/blockchain/DEV0027-phantom-wallet-connection-foundation.md), the binding foundation from [DEV0039](../../archive/backend/DEV0039-prepared-identity-and-wallet-bindings.md), and the actor boundary from [DEV0040](../../archive/backend/DEV0040-protected-access-and-database-context.md); supplies the shared challenge foundation later consumed by [DEV0041 — Club wallet authorization](DEV0041-club-wallet-authorization.md)
+- Related records: follows completed [DEV0046 — Email OTP registration and application profiles](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md); reuses the wallet connection delivered by [DEV0027](../../archive/blockchain/DEV0027-phantom-wallet-connection-foundation.md), the binding foundation from [DEV0039](../../archive/backend/DEV0039-prepared-identity-and-wallet-bindings.md), and the actor boundary from [DEV0040](../../archive/backend/DEV0040-protected-access-and-database-context.md); cancelled [DEV0041 — Club wallet authorization](../../archive/backend/DEV0041-club-wallet-authorization.md) remains historical evidence and no longer consumes this challenge boundary
 
 ## Objective and context
 
@@ -28,7 +28,7 @@ Provider disconnect preserves the durable link but disables live wallet-required
 
 The user accepted these defaults on 2026-09-21: wallet linking is optional; exactly one active personal wallet is supported; connection and linking are different states; one message signature proves linking; no transaction is requested; email reauthentication protects unlink/replacement; the new wallet must prove control; automatic merging is forbidden.
 
-Completed DEV0046 delivers wallet-independent email accounts, profiles and protected actors. DEV0047 becomes the owner of the shared one-time `auth_challenges` schema because it now precedes DEV0041; DEV0041 must extend that reviewed purpose/organization-owner contract for club-wallet proof rather than create a competing table.
+Completed DEV0046 delivers wallet-independent email accounts, profiles and protected actors. DEV0047 owns the shared one-time `auth_challenges` schema for personal-wallet proof. The cancelled club-wallet product leaves its historical purpose mapping in additive migration history but creates no current runtime dependency.
 
 Implementation defaults locked on 2026-09-22 after reviewing the installed Supabase Auth 2.116 and Solana Kit 8.3 / wallet-plugin 0.20 contracts:
 

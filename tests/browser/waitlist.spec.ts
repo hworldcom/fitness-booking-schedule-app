@@ -7,11 +7,16 @@ test("coming soon page prepares a truthful waitlist email request", async ({
 
   await expect(
     page.getByRole("heading", {
-      name: "Flexible fitness access is getting ready to move.",
+      name: "Find the right martial arts coach for you.",
     }),
   ).toBeVisible();
+  await expect(
+    page.locator(".coming-soon-copy").getByRole("paragraph"),
+  ).toHaveText(
+    "Discover independent coaches, explore their disciplines and availability, and book private training that fits your goals and schedule.",
+  );
   await expect(page.locator(".coming-soon-status")).toContainText(
-    "Solana Devnet · Test EURC · No real funds",
+    "Solana Devnet · Test USDC · No real funds",
   );
 
   const email = page.getByLabel("Email address", { exact: true });
@@ -55,11 +60,15 @@ test("coming soon page prepares a truthful waitlist email request", async ({
   await page.getByRole("button", { name: "Use another email" }).click();
   await expect(email).toHaveValue("early.member@example.com");
   await expect(
-    page.getByRole("link", { name: "Review how MovX works" }),
-  ).toHaveAttribute("href", "/how-it-works");
+    page
+      .locator(".coming-soon-waitlist-copy")
+      .getByRole("link", { name: "MovX Club home" }),
+  ).toHaveAttribute("href", "/");
   await expect(
-    page.getByRole("link", { name: "Explore MovX", exact: true }),
-  ).toHaveAttribute("href", "/explore");
+    page
+      .locator(".coming-soon-return")
+      .getByRole("link", { name: "Join the waitlist", exact: true }),
+  ).toHaveAttribute("href", "#waitlist-email");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,

@@ -3,21 +3,19 @@ import "@fontsource-variable/manrope";
 import "@fontsource-variable/bricolage-grotesque";
 import "./globals.css";
 import "./club-theme.css";
-import "./how-it-works.css";
 import "./coming-soon.css";
-import "./membership.css";
 import { ActorProvider } from "@/auth/client/actor-provider";
 import { AuthSessionProvider } from "@/auth/client/session-provider";
-import { PreviewShell } from "@/features/preview/preview-shell";
+import { Shell } from "@/components/shell";
 import { initialAuthorizationState } from "@/server/authorization/service";
 
 export const metadata: Metadata = {
   title: {
-    default: "MovX Club — A membership built around your routine.",
+    default: "MovX Club — Find your coach.",
     template: "%s | MovX Club",
   },
   description:
-    "Preview one MovX Club membership across selected gyms, with clear plans and a community built on shared verified participation.",
+    "Discover martial-arts coaches, buy prepaid training packages with test USDC and track every session.",
   robots: { index: false, follow: false },
 };
 export default async function RootLayout({
@@ -33,7 +31,7 @@ export default async function RootLayout({
       <body>
         <AuthSessionProvider initialSession={initialSession}>
           <ActorProvider initialActor={initialActor}>
-            <PreviewShell>{children}</PreviewShell>
+            <Shell>{children}</Shell>
           </ActorProvider>
         </AuthSessionProvider>
       </body>

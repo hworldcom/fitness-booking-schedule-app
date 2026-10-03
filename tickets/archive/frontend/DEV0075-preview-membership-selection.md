@@ -4,7 +4,7 @@
 - Created: 2026-09-25
 - Last updated: 2026-09-26
 - Milestone: M2 frontend membership setup preview
-- Coordination: [COR0007 — Core multi-gym membership MVP](../../current/organisatory/COR0007-core-multigym-membership-mvp.md)
+- Coordination: [COR0007 — Core multi-gym membership MVP](../organisatory/COR0007-core-multigym-membership-mvp.md)
 - Related records: depends on discovery contracts from completed [DEV0074](DEV0074-preview-multigym-discovery.md) and public terminology from completed [DEV0073](DEV0073-rewrite-multigym-public-story.md); future membership activation/payment work is a not-yet-created COR0007 peer
 
 ## Objective and context
@@ -65,10 +65,10 @@ Implementation started with the completed DEV0074 plan/gym contracts as the only
 
 ### Affected files
 
-- [`src/domain/membership-draft.ts`](../../../src/domain/membership-draft.ts) owns the framework-independent draft shape, parser, transition rules and review validation.
-- [`src/features/membership/draft-store.ts`](../../../src/features/membership/draft-store.ts), [`setup.tsx`](../../../src/features/membership/setup.tsx) and [`my-membership.tsx`](../../../src/features/membership/my-membership.tsx) own browser persistence and the setup/My Membership presentation. The former `src/features/access/my-access.tsx` screen was removed after its retained route moved to the membership feature boundary.
-- [`src/app/membership/setup/page.tsx`](../../../src/app/membership/setup/page.tsx), [`src/app/my-access/page.tsx`](../../../src/app/my-access/page.tsx), [`src/components/shell.tsx`](../../../src/components/shell.tsx), [`src/features/discovery/explore.tsx`](../../../src/features/discovery/explore.tsx) and [`src/app/membership.css`](../../../src/app/membership.css) expose and style the flow while retaining `/my-access` compatibility.
-- [`tests/membership-draft.test.ts`](../../../tests/membership-draft.test.ts) and [`tests/browser/membership.spec.ts`](../../../tests/browser/membership.spec.ts) cover the new contract and browser flow; the retained navigation/discovery assertions in [`tests/browser/preview.spec.ts`](../../../tests/browser/preview.spec.ts) and [`tests/browser/redesign.spec.ts`](../../../tests/browser/redesign.spec.ts) now use My Membership.
+- `src/domain/membership-draft.ts` (historical path `src/domain/membership-draft.ts`) owns the framework-independent draft shape, parser, transition rules and review validation.
+- `src/features/membership/draft-store.ts` (historical path `src/features/membership/draft-store.ts`), `setup.tsx` (historical path `src/features/membership/setup.tsx`) and `my-membership.tsx` (historical path `src/features/membership/my-membership.tsx`) own browser persistence and the setup/My Membership presentation. The former `src/features/access/my-access.tsx` screen was removed after its retained route moved to the membership feature boundary.
+- `src/app/membership/setup/page.tsx` (historical path `src/app/membership/setup/page.tsx`), `src/app/my-access/page.tsx` (historical path `src/app/my-access/page.tsx`), [`src/components/shell.tsx`](../../../src/components/shell.tsx), `src/features/discovery/explore.tsx` (historical path `src/features/discovery/explore.tsx`) and `src/app/membership.css` (historical path `src/app/membership.css`) expose and style the flow while retaining `/my-access` compatibility.
+- `tests/membership-draft.test.ts` (historical path `tests/membership-draft.test.ts`) and `tests/browser/membership.spec.ts` (historical path `tests/browser/membership.spec.ts`) cover the new contract and browser flow; the retained navigation/discovery assertions in `tests/browser/preview.spec.ts` (historical path `tests/browser/preview.spec.ts`) and `tests/browser/redesign.spec.ts` (historical path `tests/browser/redesign.spec.ts`) now use My Membership.
 - [`docs/mvp-spec.md`](../../../docs/mvp-spec.md) and [`README.md`](../../../README.md) describe the draft preview and keep future authoritative activation separate.
 
 ### Decisions and deviations

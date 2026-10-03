@@ -49,8 +49,8 @@ The frontend currently uses seeded identities/catalogue and browser-local drafts
 
 - [Specification, section 5](../../../docs/mvp-spec.md#5-architecture-and-storage): added the provider/cost assessment, Auth and server/SQL access boundaries, staged record groups, one SQL migration history, seed/environment rules and implementation order. Existing financial authority and product decisions are preserved; the recommendation is not recorded as a new confirmed user decision.
 - [DEV0015](DEV0015-supabase-database-foundation.md): scoped local database tooling, base schema, restricted roles, migrations and reproducible seeds.
-- [COR0002](../../current/organisatory/COR0002-phantom-auth-and-demo-access.md), converted from retired DEV0016: coordinates fresh tickets for real Phantom login validation, verified profiles/run access, wallet separation and protected queries.
-- [COR0006](../../current/organisatory/COR0006-persistent-access-catalogue.md), converted from retired DEV0017: coordinates the first shared catalogue/private-draft checkpoint, with cross-user denial and honest preview/error states.
+- [COR0002](../organisatory/COR0002-phantom-auth-and-demo-access.md), converted from retired DEV0016: coordinates fresh tickets for real Phantom login validation, verified profiles/run access, wallet separation and protected queries.
+- [COR0006](../organisatory/COR0006-persistent-access-catalogue.md), converted from retired DEV0017: coordinates the first shared catalogue/private-draft checkpoint, with cross-user denial and honest preview/error states.
 - [DEV0018](DEV0018-class-pass-reservations-and-confirmed-visits.md): planned verified class-pass reservations and staff confirmation; it was later cancelled when passes left the MVP.
 - [Ticket index](../../README.md#ticket-index) and [project README](../../../README.md#planned-backend-work): added navigation/status without copying the architecture into a second plan or inventing setup commands.
 

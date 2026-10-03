@@ -48,8 +48,8 @@ Lint, types, formatting, production build; browser navigation/discovery and shar
 - [Shared shell](../../../src/components/shell.tsx): switched navigation to House/Dumbbell/Trophy/UserRound, filled the selected home icon, removed trailing active dots, header search form/mobile shortcut and unused router/form handler. Existing route matching and accessible link names remain intact.
 - [Club theme](../../../src/app/club-theme.css): compact 44px desktop links, charcoal labels and a soft lime selected treatment; mobile uses matching icons and rounded lime selection. Existing keyboard focus rings are retained.
 - [Base styles](../../../src/app/globals.css): removed unused global-search, mobile-search and active-dot selectors. Header right controls continue to align using existing auto margin.
-- [Discovery checks](../../../tests/browser/discovery.spec.ts): exercise retained catalogue search through its direct URL rather than deleted header controls.
-- [Redesign checks](../../../tests/browser/redesign.spec.ts): keyboard navigation through all four destinations, selected nested event route and absence of header search on desktop/mobile.
+- Discovery checks (historical path `tests/browser/discovery.spec.ts`): exercise retained catalogue search through its direct URL rather than deleted header controls.
+- Redesign checks (historical path `tests/browser/redesign.spec.ts`): keyboard navigation through all four destinations, selected nested event route and absence of header search on desktop/mobile.
 - [Specification](../../../docs/mvp-spec.md#visual-design-direction--21-september-2026): records icon/selection direction, removed header search and retained direct search contract; A56 updated consistently.
 
 ### Decisions and deviations
@@ -59,7 +59,6 @@ No scope deviations. Existing catalogue filters and direct search remain functio
 ### Contracts and operations
 
 Presentation and entry-point changes only. No data, API, environment, authentication or payment changes; no migration. Restarted the workspace's production preview after the build. No external deployment.
-
 
 ## Validation results
 
@@ -73,13 +72,12 @@ Presentation and entry-point changes only. No data, API, environment, authentica
 - `git diff --check` and local Markdown link checks — passed.
 - Database and real devnet tests not applicable: no changes to those contracts.
 
-| Criterion | Evidence | Result |
-| --- | --- | --- |
-| AC1 | Navigation keyboard test, desktop/mobile screenshots | Passed |
-| AC2 | Header absence assertions and guide/auth/wallet tests | Passed |
-| AC3 | Responsive, nested route and direct-search checks | Passed |
-| AC4 | Updated specification and record, local link checks | Passed |
-
+| Criterion | Evidence                                              | Result |
+| --------- | ----------------------------------------------------- | ------ |
+| AC1       | Navigation keyboard test, desktop/mobile screenshots  | Passed |
+| AC2       | Header absence assertions and guide/auth/wallet tests | Passed |
+| AC3       | Responsive, nested route and direct-search checks     | Passed |
+| AC4       | Updated specification and record, local link checks   | Passed |
 
 ## Risks, limitations, and follow-ups
 

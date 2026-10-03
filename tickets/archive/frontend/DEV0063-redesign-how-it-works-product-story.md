@@ -56,16 +56,16 @@ The supplied visual references informed hierarchy, palette and responsive behavi
 
 ### Affected files
 
-| File or component                                                                             | Change and purpose                                                                                                                                     |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [`src/features/discovery/how-it-works.tsx`](../../../src/features/discovery/how-it-works.tsx) | Rebuilt the page semantics, product narrative, illustrative membership/transfer content, audience value cards, Solana rails, demo CTA and compact FAQ. |
-| [`src/app/how-it-works.css`](../../../src/app/how-it-works.css)                               | Added the scoped desktop, tablet and mobile visual treatment for the redesigned page.                                                                  |
-| [`src/app/layout.tsx`](../../../src/app/layout.tsx)                                           | Loads the page-specific global stylesheet after the established shared styles.                                                                         |
-| [`src/app/how-it-works/page.tsx`](../../../src/app/how-it-works/page.tsx)                     | Updated the route metadata to describe the new product story.                                                                                          |
-| [`tests/browser/discovery.spec.ts`](../../../tests/browser/discovery.spec.ts)                 | Replaced the old guide assertions with semantic, keyboard, narrative, responsive and CTA coverage for the redesign.                                    |
-| [`tests/browser/clubs.spec.ts`](../../../tests/browser/clubs.spec.ts)                         | Updated the business-value and club-entry checks for the condensed audience card.                                                                      |
-| [`docs/mvp-spec.md`](../../../docs/mvp-spec.md)                                               | Made the redesigned public narrative and its product-concept/Devnet boundary part of the current product contract.                                     |
-| [`tickets/README.md`](../../README.md)                                                        | Tracked DEV0063 through implementation and completion.                                                                                                 |
+| File or component                                                                                     | Change and purpose                                                                                                                                     |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/features/discovery/how-it-works.tsx` (historical path `src/features/discovery/how-it-works.tsx`) | Rebuilt the page semantics, product narrative, illustrative membership/transfer content, audience value cards, Solana rails, demo CTA and compact FAQ. |
+| `src/app/how-it-works.css` (historical path `src/app/how-it-works.css`)                               | Added the scoped desktop, tablet and mobile visual treatment for the redesigned page.                                                                  |
+| [`src/app/layout.tsx`](../../../src/app/layout.tsx)                                                   | Loads the page-specific global stylesheet after the established shared styles.                                                                         |
+| `src/app/how-it-works/page.tsx` (historical path `src/app/how-it-works/page.tsx`)                     | Updated the route metadata to describe the new product story.                                                                                          |
+| `tests/browser/discovery.spec.ts` (historical path `tests/browser/discovery.spec.ts`)                 | Replaced the old guide assertions with semantic, keyboard, narrative, responsive and CTA coverage for the redesign.                                    |
+| `tests/browser/clubs.spec.ts` (historical path `tests/browser/clubs.spec.ts`)                         | Updated the business-value and club-entry checks for the condensed audience card.                                                                      |
+| [`docs/mvp-spec.md`](../../../docs/mvp-spec.md)                                                       | Made the redesigned public narrative and its product-concept/Devnet boundary part of the current product contract.                                     |
+| [`tickets/README.md`](../../README.md)                                                                | Tracked DEV0063 through implementation and completion.                                                                                                 |
 
 ### Decisions and deviations
 

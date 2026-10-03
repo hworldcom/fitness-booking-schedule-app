@@ -71,8 +71,8 @@ test("actor responses accept only the bounded public shape", () => {
 test("return destinations preserve safe internal state and reject redirects", () => {
   const origin = "http://localhost:3100";
   assert.equal(
-    safeReturnTo("/my-access?view=passes#active", origin),
-    "/my-access?view=passes#active",
+    safeReturnTo("/packages?view=active#current", origin),
+    "/packages?view=active#current",
   );
   assert.equal(safeReturnTo("https://example.com/steal", origin), "/");
   assert.equal(safeReturnTo("//example.com/steal", origin), "/");

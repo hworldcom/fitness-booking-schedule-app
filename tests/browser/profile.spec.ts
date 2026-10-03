@@ -22,7 +22,7 @@ test("guests and preview visitors are never assigned a personal identity", async
   }
 
   await expect(page.locator("body")).not.toContainText("Anna Klein");
-  await expect(page.getByText("Available test EURC")).toHaveCount(0);
+  await expect(page.getByText("Available test USDC")).toHaveCount(0);
   await expect(page.getByText("Confirmed visits")).toHaveCount(0);
   expect(
     await page.evaluate(

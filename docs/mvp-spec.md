@@ -1,413 +1,310 @@
-# MovX Club — Hackathon MVP specification
+# MovX Club — Coach-first private-class MVP specification
 
-Last updated: 28 September 2026.
+Last updated: 3 October 2026.
 
-This is the single current product contract for the MovX Club hackathon MVP. MovX Club is testing one focused product: a membership that gives a member included access to four selected participating gyms, with visible usage accounting for the member and the gyms. A small social layer lets people follow one another and explicitly share verified participation.
+This is the single current product contract for the MovX Club hackathon MVP. MovX connects clients with independent martial-arts coaches through discoverable profiles, capacity-one availability for the coming week, private-class booking, one-session or ten-session passes purchased with test USDC on Solana Devnet, verifiable remaining-session balances and a lightweight coach-led social feed.
 
-The MVP no longer includes membership transfers, standalone class passes or pass resale, ordinary or sponsored events, challenges, reactions, comments or messaging. Those ideas remain only in historical records.
+The former multi-gym membership, venue reservation, gym check-in, membership-card collectible and membership-pool payment product is superseded. Its completed tickets and additive database migrations remain historical evidence; they do not define current behavior.
 
 ## 1. Product status and document authority
 
-This specification defines the target behavior. It does not claim that the target has already been implemented.
+This specification defines the target behavior. It does not claim that the complete target is implemented.
 
-Home and How it works present the focused four-gym membership concept. Explore, Search, membership setup and My Membership use one read-only server projection of the persistent published Basic/Classic terms, seven fictional participating gyms and explicit plan eligibility. Setup saves a browser-local four-gym draft before any payment. The current DEV0081 implementation can turn that draft into one active fixed period through an authoritative operation, exact simulated-before-signing official test-EURC transfer, finalized server verification and recoverable reference; its required real funded-Phantom rehearsal is still outstanding. DEV0086 and DEV0087 add the private selected-gym class schedule plus persistent reserve/cancel behavior with atomic capacity and shared daily-access holds. DEV0084 adds the private persistent arrival and same-venue staff-confirmation boundary, including atomic Basic/Classic attendance; DEV0085's member QR/check-in interface is not implemented yet. C31's wallet-visible membership card is planned in Draft DEV0089 and is not implemented. Database failure, empty publication and inconsistent data are shown honestly without fixture fallback. Allocation and non-core visit payment are not implemented yet.
+The repository already contains reusable Next.js, Supabase/PostgreSQL, email identity, personal-wallet linking, Wallet Standard and Cloudflare staging foundations. DEV0101 removed the legacy multi-gym mutation runtime while preserving additive migrations and historical evidence. Coach profiles, weekly availability, on-chain offers, test-USDC pass purchase, private-class booking, completed-session redemption and coach posts remain planned work under COR0009 until their owning tickets record implementation and validation evidence.
 
-Completed and cancelled tickets are preserved as historical evidence. They explain previous choices but do not override this document. [The ticket index](../tickets/README.md) records current delivery work.
+Completed and cancelled tickets are preserved as historical records. [The ticket index](../tickets/README.md) identifies current work; no ticket or blueprint overrides this specification.
 
 <a id="confirmed-target-and-decisions"></a>
 
 ## 2. Confirmed target and decisions
 
-The identifiers below remain stable so tickets can cite product decisions precisely.
+| ID  | Confirmed decision                                                                                                                                                                                                                                                                                                                   |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| C01 | The target is a focused Solana Devnet hackathon demonstration, not a production financial or general-purpose scheduling service.                                                                                                                                                                                                     |
+| C02 | The initial supply side is independent martial-arts coaches offering private training. Public product terminology is **coach**, not trainer, gym or club operator.                                                                                                                                                                   |
+| C03 | A coach publishes explicit capacity-one private-class slots for the coming seven days. PostgreSQL is authoritative for availability, temporary holds and bookings; no live availability is fabricated from fixtures after a database failure.                                                                                        |
+| C04 | A coach can publish a public or client-specific one-session or ten-session pass offer with an immutable test-USDC price, validity policy and payment recipient. To change commercial terms, deactivate the offer and create a new one.                                                                                               |
+| C05 | A guest may discover coaches, profiles, public offers and open slots without signing in. Following and booking require an application account; purchasing also requires the account's linked and connected personal wallet.                                                                                                          |
+| C06 | The configured official Devnet test-USDC mint is the only payment asset in the hackathon flow. Test SOL is used only for transaction fees and account deposits. No production value is accepted.                                                                                                                                     |
+| C07 | Purchase transfers the exact on-chain Offer price to the Offer's immutable coach recipient and creates one non-transferable TrainingPass atomically. A purchase nonce permits intentional repeat purchases of the same offer by one client.                                                                                          |
+| C08 | The TrainingPass program-derived account (PDA) is authoritative for coach, client, offer, amount paid, initial and remaining sessions, purchase time, expiry and lifecycle status. It is not an NFT and does not need to appear as a wallet collectible.                                                                             |
+| C09 | A confirmed future booking reserves one pass session off-chain. Bookable sessions equal the latest verified finalized on-chain remaining balance minus active confirmed or completion-pending bookings that have not produced a matching redemption. PostgreSQL cannot increase entitlement.                                         |
+| C10 | Client or coach cancellation before the scheduled start releases the reservation while preserving the full on-chain pass balance. A client-cancelled, still-valid slot reopens; a coach-cancelled slot is withdrawn. A one-session pass remains reusable with the same coach; cancellation does not create an automatic USDC refund. |
+| C11 | The coach authority alone redeems one completed booked session for the hackathon. Redemption requires the coach signature, an active unexpired pass and a positive balance; it decrements exactly once and emits an indexable event tied to a bounded booking reference.                                                             |
+| C12 | The application indexes purchases and redemptions for fast views and recovery, but PostgreSQL must not override the authoritative on-chain remaining balance. Retries are idempotent and ambiguous RPC results are reconciled from chain state.                                                                                      |
+| C13 | Email-backed application identity and linked-wallet ownership remain separate. Connecting a wallet alone grants no profile, coach role, pass, booking or payment authority.                                                                                                                                                          |
+| C14 | MovX may sponsor bounded Devnet network fees, but sponsorship does not grant coach or client authority. The reviewed transaction must still contain the required user signer and exact on-chain terms.                                                                                                                               |
+| C15 | Coach profiles, availability, bookings, media, follows and posts are authoritative off-chain. The feed contains coach posts only, ordered newest first, with required text and an optional image.                                                                                                                                    |
+| C16 | Recurring calendars, group capacity, waitlists, external calendar sync, transfers, resale, subscriptions, automatic refunds, no-show charges, disputes, client posts, reactions, comments, direct messages, reviews and recommendation ranking are deferred.                                                                         |
+| C17 | A coach/gym payment split is a stretch goal only after the complete single-recipient flow is stable. The current MVP must not require a venue or gym account.                                                                                                                                                                        |
 
-| ID  | Confirmed decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| C01 | The target is a focused hackathon demonstration on Solana Devnet, not a production-ready commercial service.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| C09 | A visit becomes participation only after an authorized venue representative confirms the member's presence. Membership payment, plan selection, reservation, check-in, settlement accounting and social sharing are separate states.                                                                                                                                                                                                                                                                                                                                                      |
-| C10 | The MVP does not issue achievement badges, transferable/speculative collectibles or tokens that grant membership access. C31 defines the only wallet-visible membership projection.                                                                                                                                                                                                                                                                                                                                                                                                       |
-| C11 | A verified check-in is private by default and appears socially only after the member explicitly shares it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| C12 | A person starts with an email-backed account. A personal wallet can be linked later. Each gym uses a distinct authorized business wallet; no shared gym login is permitted.                                                                                                                                                                                                                                                                                                                                                                                                               |
-| C13 | Devnet EURC is the only demonstrated payment asset. It is used for membership activation and member-priced non-core visits.                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| C14 | Personal funds, gym funds and pooled membership funds are distinct. A UI balance must name the holder and source rather than presenting unrelated funds as one total.                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| C15 | Financial states must be honest. Pool balance, provisional usage allocation and finalized or claimable payout are different concepts and must not be labeled interchangeably.                                                                                                                                                                                                                                                                                                                                                                                                             |
-| C17 | Guests may browse participating gyms and the available membership plans without signing in.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| C18 | The public How it works guide must explain the member journey, the gym value proposition, the four-gym selection and the role of Devnet without presenting the concept as already production-ready.                                                                                                                                                                                                                                                                                                                                                                                       |
-| C19 | The social MVP is one-way follows plus a chronological feed of explicitly shared verified check-ins. It has no reactions, comments, direct messages, notifications, rankings or general-purpose posts.                                                                                                                                                                                                                                                                                                                                                                                    |
-| C20 | The demo has two configurable plan variants. Basic includes ten check-ins per membership period for an illustrative €80. Classic has no numerical monthly check-in allowance and costs an illustrative €150. Both permit at most one included check-in across the membership per venue-local service date.                                                                                                                                                                                                                                                                                |
-| C21 | A member selects exactly four distinct, active and plan-eligible core gyms for a membership period. Four is a configurable MVP hypothesis, not a permanent infrastructure limit.                                                                                                                                                                                                                                                                                                                                                                                                          |
-| C22 | Challenges and reactions are outside the MVP.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| C23 | The multi-gym membership is the only paid product family in the current MVP. Membership transfers, standalone passes, pass resale, ordinary events and sponsored events are outside scope.                                                                                                                                                                                                                                                                                                                                                                                                |
-| C24 | An active member may visit an eligible participating gym outside their four core gyms for an illustrative €15 Devnet-EURC member price paid directly to that gym. This visit does not consume a Basic check-in and does not enter the membership pool.                                                                                                                                                                                                                                                                                                                                    |
-| C25 | Member and gym interfaces must show predictable amounts and states without hidden platform surcharges or invented payout claims.                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| C26 | There is no membership transfer, transfer fee, recipient flow, resale listing or transferred entitlement in the current MVP.                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| C27 | Included check-ins produce a transparent provisional usage allocation for gyms. The MVP must not make a final payout claim until unused value, refunds, reserves, taxes, aggregation and settlement timing are decided.                                                                                                                                                                                                                                                                                                                                                                   |
-| C28 | MovX pays the Solana network fee for the Devnet membership-activation demonstration. The member still explicitly authorizes the exact EURC transfer; the sponsor key remains server-only and may sign only a server-constructed actor-owned activation transaction.                                                                                                                                                                                                                                                                                                                       |
-| C29 | A member may reserve an eligible scheduled class at one of the four selected gyms before arrival. Reservation atomically holds a seat and an exclusive daily-access claim; for Basic, that claim also holds one available included use. It does not prove attendance or change allocation. Cancellation before start and a reconciled no-show release the holds without an MVP fee or allowance penalty.                                                                                                                                                                                  |
-| C30 | Arrival is separate from reservation. A member presents a short-lived 15-minute opaque code bound to the selected venue and optional reservation; only an email-authenticated actor with active same-venue staff authority may confirm presence. Open-gym arrival may omit a class reservation.                                                                                                                                                                                                                                                                                           |
-| C31 | A member's continuing Devnet membership has one stable PDA-backed card lineage and exactly one accepted current non-transferable wallet card. A later same-wallet period updates that PDA/card instead of creating another; immutable period history remains in PostgreSQL. A reviewed wallet replacement may retain the old card as inactive and issue one new current generation. The card shows the current or most recent period's plan, validity and Basic remaining or Classic `Unlimited · one per day`; it exposes no identity, gym or attendance detail and never grants access. |
+### Proposed defaults that are not yet confirmed implementation contracts
 
-### Superseded decisions retained as history
+- Offer validity may use `0` for no expiry and otherwise store a positive duration in seconds.
+- A purchase-time slot hold may expire after ten minutes; DEV0105 must adopt or replace the exact duration.
+- Slot-duration bounds and how coaches move from one seven-day window to the next must be adopted by DEV0104 before implementation.
+- MovX may offer an explicit, reversible follow prompt after a successful booking; purchase or booking must not silently follow a coach.
+- Redemption history may be represented by structured program events indexed off-chain rather than one paid account per redeemed session.
+- Images may initially use the existing application media/storage path; permanent or content-addressed media is not required for the hackathon.
 
-Previous versions used C07/C08 for class-pass purchase and refunds, C16 for events, C20/C21 for a single-gym transferable membership, C23 for sponsored events, C24 for a broader access-product family, C26 for a €10 transfer fee and C27 for pass resale. DEV0069 supersedes those behaviors. C31 narrows the earlier blanket no-collectibles wording in C10 only for a non-transferable wallet membership projection; it does not restore tokenized access, badges or speculative assets. Archived specifications and completed tickets remain unchanged as historical context.
+An owning development ticket must adopt or replace a proposed default before implementation.
 
-<a id="proposed-defaults-to-resolve"></a>
+## 3. Actors and authority
 
-### Proposed implementation and business defaults
+### Guest
 
-These are working defaults, not confirmed production policy.
+A guest can browse the coach directory, coach profiles, public pass offers, open private-class slots and public posts. A guest cannot hold or book a slot, follow, purchase, create offers or see client-specific package state.
 
-| ID  | Proposed default                                                                                                                                                                                                                                                                                                                                                                            |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P07 | Count at most one included check-in for a membership on a venue-local calendar date. A separately paid non-core visit is a different transaction and attendance record.                                                                                                                                                                                                                     |
-| P13 | Production network-fee policy, platform pricing and the platform's long-term revenue model remain unresolved; C28 applies only to the bounded Devnet membership-activation demonstration.                                                                                                                                                                                                   |
-| P15 | The demo creates one fixed monthly membership period beginning at verified activation and ending at the same instant one calendar month later, with no automatic renewal or overlapping period. Production billing term, renewal and cancellation behavior remain open.                                                                                                                     |
-| P16 | Calculate a provisional pro-rata allocation for the demonstrated period. Keep zero-use and partially used value in the test pool and display it as unresolved rather than treating it as MovX revenue or a gym payout.                                                                                                                                                                      |
-| P17 | The four core gyms are frozen after period activation. The member may choose a different eligible set for a later period.                                                                                                                                                                                                                                                                   |
-| P18 | €80 Basic, €150 Classic and €15 non-core access are illustrative demo values stored as configuration or versioned plan data.                                                                                                                                                                                                                                                                |
-| P19 | Production cancellations, cooling-off rights, refunds, chargebacks and gym closure handling are unresolved. Paid but undelivered access must be treated as an obligation, never as automatic platform revenue.                                                                                                                                                                              |
-| P20 | For the Devnet wallet-card demonstration, a MovX-controlled sponsor pays network fees and account-creation deposits while a distinct projection authority controls card updates. First initialization creates the stable PDA and card; fixed-size usage/status/later-period updates ordinarily pay only transaction fees; wallet replacement reuses the PDA but funds one new card account. |
+### Client
 
-Earlier P01 and P09–P12/P14 described removed challenges, passes, events or transfers and are retired from the current contract.
+A client has an email-backed MovX account and may link one personal wallet through an explicit signed-message proof. The client signs pass purchases, books an eligible open slot using an unreserved pass session, sees bookings and passes associated with the account's wallet history, and follows or unfollows coaches.
 
-### Business validation required before production
+### Coach
 
-- Confirm that four core gyms is understandable and attractive to members and workable for gyms.
-- Model high-frequency Classic use. Its effective value per check-in may become unsustainably low without a fair-use or allocation rule.
-- Decide whether allocation is calculated per member, per plan cohort or across a wider pool.
-- Decide how unused and partially used membership value is handled.
-- Agree final payout timing, reserves, taxes, refunds, failed venues and dispute handling with participating gyms.
-- Validate prices and the non-core member rate through venue and member interviews; the demo values are not market claims.
+A coach is an application profile with an adopted coach role and a linked personal wallet. The profile owner publishes open capacity-one slots. The linked wallet is the authority for creating/deactivating offers and redeeming completed bookings. The offer's payment recipient is fixed when the offer is created.
 
-<a id="2-screens-and-actions"></a>
-<a id="discovery-and-how-it-works"></a>
-<a id="visual-design-direction--21-september-2026"></a>
+### MovX service
 
-## 3. Public explanation and visual direction
+The service stores profiles, availability, holds, bookings, offer display metadata, follows, posts and indexed chain projections. It atomically prevents double booking and off-chain over-reservation against verified pass state. It may coordinate a bounded Devnet fee sponsor and reconciliation jobs. It cannot create a client purchase or coach redemption without the required wallet authority and cannot manufacture pass sessions in PostgreSQL.
 
-The public page should lead with the product rather than the chain:
+## 4. Primary user flows
 
-1. Discover participating gyms and compare Basic and Classic.
-2. Choose four core gyms.
-3. Activate one membership period.
-4. Check in at a selected gym, subject to capacity and daily/plan limits.
-5. See usage and transparent provisional gym allocation.
-6. Visit another participating gym at the clearly stated member price when eligible.
-7. Optionally share a verified check-in with followers.
+### 4.1 Discover a coach and an open class
 
-The current How it works page communicates an earlier transferable-access concept and therefore requires a separate frontend ticket. Until it is replaced, it must not be treated as evidence that the new product is delivered.
+1. A guest opens Discover and sees seeded fictional coach profiles rather than an empty followed feed.
+2. Search/filtering may narrow by discipline and Berlin area.
+3. A coach profile shows display name, disciplines, short biography, location text, public one-session/ten-session offers, open private slots for the coming seven days and recent posts.
+4. Client-specific offers and private booking state are visible only to the intended signed-in client.
+5. A database failure shows availability as unavailable; fixture slots never masquerade as live inventory.
 
-<a id="public-browsing-and-sign-in-boundaries"></a>
+### 4.2 Coach publishes weekly availability
 
-Public users can browse gym and plan information. Selecting gyms, activating a membership, reserving, checking in, viewing private access or financial state, managing gym operations and sharing socially require an authenticated, authorized actor as appropriate.
+1. The coach signs in and opens the Coach Dashboard.
+2. The coach creates explicit future start/end intervals in the profile's reviewed timezone.
+3. The service rejects malformed, overlapping, past or out-of-horizon intervals atomically.
+4. Open slots appear on the public profile with capacity one.
+5. The coach may edit or withdraw an open slot but cannot silently move or delete a held or confirmed slot.
 
-## 4. MVP scope
+### 4.3 Coach creates pass offers
 
-### In scope
+1. The coach links/connects the authority wallet and opens offer controls.
+2. The coach creates a one-session or ten-session offer with title, service/discipline, test-USDC price, validity and public or client-specific visibility.
+3. The UI shows the fixed recipient and exact commercial terms before wallet approval.
+4. The coach signs `create_offer`; the application stores non-authoritative display metadata keyed by Offer address.
+5. Published commercial terms are immutable. The coach can deactivate future purchases but existing TrainingPasses and bookings remain valid.
 
-- Public discovery of fictional participating gyms and Basic/Classic plan terms.
-- Email-backed member identity, optional personal wallet linking and separate gym-wallet authorization.
-- Selection of exactly four eligible core gyms for one membership period.
-- Basic allowance and Classic daily-limit enforcement.
-- A real Devnet-EURC activation payment into a clearly identified membership pool or program-controlled payment account.
-- Authorized, unique and idempotent included check-ins.
-- Transparent provisional gym allocation derived from valid included check-ins.
-- A real Devnet-EURC member-price payment for an eligible non-core gym visit.
-- Member and gym views of the states each actor is allowed to see.
-- One-way follows and explicitly shared verified check-ins.
-- Persistent demonstration evidence and recovery from interrupted operations.
-- One stable non-transferable wallet-visible membership-card lineage that projects the current or most recent verified Devnet period, including Basic allowance/remaining visits or truthful Classic unlimited status; same-wallet periods reuse the PDA/card and a reviewed wallet replacement may retain inactive historical cards.
+### 4.4 Client books with an existing pass
 
-### Out of scope
+1. The signed-in client selects an open coach slot.
+2. MovX reads the latest finalized eligible TrainingPass balance and its active booking reservations; the pass must remain valid through the selected slot.
+3. One database transaction verifies the slot is still open, verifies one unreserved session and creates one confirmed booking.
+4. The slot closes to other clients and the booking reserves one future session without decrementing the on-chain pass.
+5. Reload shows the same confirmed booking to client and coach.
 
-- Membership transfer, reassignment, transfer fees and secondary-market listing.
-- Standalone class passes, pass bundles and pass resale.
-- Ordinary events, event tickets, sponsored events and sponsorship balances.
-- Challenges, prize pools, reactions, comments, messaging, notifications and rankings.
-- Automatic renewal, production card or fiat payments, production legal terms and production tax handling.
-- Final or claimable gym payout before settlement economics are confirmed.
-- Tokens representing access, transferable/speculative assets and achievement collectibles. The C31 wallet card is a non-authoritative membership projection, not an access token.
+### 4.5 Client purchases a pass and books
 
-<a id="3-demo-fixtures-and-account-model"></a>
+1. A client without an eligible pass selects an open slot and chooses the coach's one-session or ten-session offer.
+2. MovX places one bounded temporary hold on that capacity-one slot before wallet approval.
+3. The client sees coach, selected time, sessions, validity, recipient, exact test-USDC amount and network.
+4. The server/client read authoritative terms from the Offer account and validate the configured Devnet mint; browser-supplied price or recipient is never trusted.
+5. Readiness checks identify the client test-USDC token account and explain insufficient funds before an avoidable signature request.
+6. The complete transaction is simulated and summarized with cluster, token amount, recipient, fee payer and accounts to be created.
+7. The client approves one transaction in which the exact token transfer and TrainingPass creation succeed or fail together.
+8. Finalized chain state is verified and indexed, then the still-valid hold becomes one confirmed booking and reservation.
+9. A rejected/failed purchase releases or expires the hold. If payment succeeds but booking confirmation is interrupted, reconciliation confirms the intended booking when possible or leaves the full pass available for another eligible slot; it never charges again.
 
-## 5. Roles, screens and fixtures
+### 4.6 Client or coach cancels a future booking
 
-<a id="authentication-and-data-access-recommendation"></a>
+1. Either party opens a confirmed booking before its scheduled start and chooses Cancel.
+2. One idempotent database operation marks it cancelled and releases the pass reservation. A still-valid slot reopens after client cancellation; coach cancellation withdraws the slot because the coach is no longer offering that time.
+3. The TrainingPass balance is unchanged. A one-session pass remains `1 / 1`; a ten-session pass loses no session.
+4. Completed, redemption-pending or redeemed bookings cannot be cancelled.
 
-### Roles
+### 4.7 Coach completes and redeems a class
 
-- **Guest:** browses public gym and plan information and reads the guide.
-- **Member:** selects gyms, activates and uses a membership, purchases eligible non-core visits, follows accounts and controls sharing.
-- **Gym staff:** confirms attendance and sees only the gym's operational and provisional allocation data.
-- **Gym administrator:** has staff capabilities plus authorized gym-wallet and configuration responsibilities.
+1. After the booked class, the coach opens the confirmed booking in the Coach Dashboard and attests that it was completed.
+2. The UI identifies client, scheduled slot, offer, authoritative balance and expiry and asks the coach to confirm one redemption.
+3. `redeem_session` verifies coach authority, active status, expiry and remaining balance and records a bounded booking reference in its event.
+4. Finalized state decrements exactly one session and emits a structured event.
+5. The booking reconciles to completed and no longer counts as a future reservation. Coach and client views converge on the same remaining balance and history; retry cannot decrement twice.
 
-Authorization comes from server-derived identity and persisted role bindings, never from a client-supplied account, gym or wallet identifier.
+### 4.8 Follow and feed
 
-### Minimum screens
+1. A signed-in client follows or unfollows a coach from the public profile.
+2. A coach publishes a short text post and may attach one image.
+3. The client's feed contains posts from followed coaches in reverse chronological order.
+4. Discovery and weekly availability remain available independently of following so the product has a cold-start path.
 
-- **Home:** concise current proposition and route to discovery.
-- **Explore:** participating gyms and the two membership variants.
-- **Membership setup:** compare plans, choose exactly four eligible gyms, review terms and activate.
-- **My Membership:** draft selection in the frontend preview, then verified period, selected gyms, eligible selected-gym classes, reservations and held Basic uses, arrival code, remaining Basic allowance or Classic policy, daily availability, payment state and private check-in history after activation exists. The compatibility route remains `/my-access` until a separately reviewed route migration.
-- **Profile / Feed:** follows and explicitly shared verified participation.
-- **How it works:** member and gym explanations plus honest Devnet status.
-- **Gym workspace:** staff confirmation, gym-scoped attendance and provisional allocation.
-- **Coming soon / waitlist:** honest fallback for product actions that have not been implemented; it must not collect an email without a real storage and consent path.
+## 5. Data and state model
 
-### Demonstration fixtures
+### 5.1 On-chain accounts
 
-- At least two ordinary member accounts are required to prove private state and social permissions.
-- Seven fictional participating gyms are served from the current persistent demonstration catalogue so a member can compare routines, choose four core gyms and demonstrate one non-core visit. Catalogue rules must support at least five without treating seven as an infrastructure limit.
-- Gym wallets and staff authority must remain distinct from personal wallets and from one another.
-- Fixtures must not use an actual gym's name, logo, address, pricing or partnership claim without permission. Inspiration may be transformed into clearly fictional data.
-- The deterministic database seed uses the same seven fictional gym identities as the preview and retains no real-gym-inspired name, address, price or partnership claim.
-- Demo class schedules may transform broad cadence and duration patterns from public research, but their trainer identities, titles, descriptions, times and capacities remain original fictional data. They are not live availability or a partnership claim.
+**Offer PDA**
 
-<a id="5-architecture"></a>
-<a id="5-architecture-and-storage"></a>
-<a id="database-provider-recommendation--19-september-2026"></a>
-<a id="migrations-environments-and-seed-boundaries"></a>
+- coach authority and immutable payment recipient;
+- coach-scoped offer identifier;
+- configured test-USDC price in base units;
+- session count of exactly `1` or `10`;
+- validity duration (`0` may represent no expiry if adopted by DEV0097);
+- optional restricted client wallet;
+- active/deactivated flag.
+
+Illustrative seeds: `['offer', coach_pubkey, offer_id]`.
+
+**TrainingPass PDA**
+
+- pass identifier or purchase nonce;
+- Offer address, coach and client;
+- initial and remaining sessions (`1` or `10` initially);
+- paid test-USDC amount;
+- purchase and optional expiry timestamps;
+- `Active` or `Exhausted` status. `Cancelled` is not valid unless a future ticket defines the authority and instruction.
+
+Illustrative seeds: `['pass', offer_pubkey, client_pubkey, purchase_nonce]`. The nonce is required because one client may buy the same offer more than once.
+
+### 5.2 Off-chain records
+
+- user/application profiles and coach roles;
+- coach profile, disciplines, biography, location and visibility;
+- Offer display metadata keyed by Offer address;
+- explicit timezone-aware capacity-one availability slots;
+- bounded temporary slot holds with expiry and idempotent operation identity;
+- confirmed/cancelled/completion-pending/completed bookings linked to coach, client, slot and TrainingPass;
+- active future-session reservations derived from bookings;
+- follow edges;
+- coach text/image posts;
+- indexed TrainingPass snapshots and transaction references;
+- indexed redemption events with booking reference and resulting remaining balance;
+- idempotent purchase, booking, cancellation and reconciliation operations.
+
+Large descriptions, bios and media do not belong in Solana accounts. Off-chain caches must be refreshable from expected program-owned accounts and finalized transactions. A booking or reservation row cannot create, restore or decrement on-chain entitlement.
 
 ## 6. Architecture and delivery boundaries
 
-The web application remains a Next.js application backed by PostgreSQL/Supabase and Drizzle. A bounded Anchor program owns only the Devnet state that materially benefits from shared, verifiable execution. Profiles, content, search, capacity, schedules and social graph remain off-chain.
+- `src/app/` contains thin Next.js App Router pages and route handlers.
+- `src/features/` owns browser interaction and presentation by capability.
+- `src/domain/` owns framework-independent validation and state rules.
+- `src/server/` is the server-only authentication, authorization, PostgreSQL and RPC boundary.
+- `src/solana/` contains shared chain contracts and browser-safe Wallet Standard clients; no private RPC credential or sponsor secret enters client code.
+- `programs/` contains the bounded coach-package Solana program once DEV0097 creates it.
+- Supabase PostgreSQL owns application identity, coach discovery, availability, holds, bookings and social data. Solana owns commercial Offer terms, payment-coupled TrainingPass creation and remaining sessions.
 
-The minimum on-chain or transaction-verifiable surface is membership-period activation, payment identity, the C31 wallet-visible membership projection, included check-in identity where required for allocation integrity, and the direct non-core payment receipt. Exact state placement belongs to implementation tickets and must minimize duplication while preserving reconciliation.
+The application uses `@solana/kit`, Wallet Standard and Phantom on Solana Devnet. Server reads validate expected program/token account owners, account lengths/discriminators, configured mint and transaction version. Transactions are simulated before wallet approval. Mainnet and production custody are outside scope.
 
-The database provider remains Supabase PostgreSQL. The legacy HTML anchors above preserve links from historical tickets; they do not reintroduce superseded product requirements. Inspect the installed Anchor framework, Solana SDK and Next.js versions before integration changes.
+Availability/booking database transactions prevent ordinary double booking and pass over-reservation, while idempotent operation records bridge the non-atomic boundary between finalized chain purchase/redemption and PostgreSQL confirmation. A successful payment is never discarded because a slot hold expires: the resulting pass remains valid and reusable with that coach.
 
-DEV0067 is historical evidence for the first private catalogue schema. DEV0078 replaces its obsolete seeded plan drafts through an additive forward migration while preserving shared history. DEV0079 supplies the restricted read-only public projection and replaces plan/gym fixture adapters. COR0007 owns the membership lifecycle, usage, financial evidence, gym/member views and minimal social integration.
+<a id="core-coach-packages"></a>
 
-Every externally retried activation, payment, check-in and reconciliation operation needs a stable operation identifier. Store pending, submitted, confirmed and failed states where appropriate so a retry cannot silently double-charge or double-count.
+## 7. Core coach passes and private classes
 
-## 7. Core multi-gym membership
+An offer is a coach-specific one-session or ten-session product. Its price must be positive, its recipient belongs to the coach at creation, and an optional client restriction is enforced on chain. Deactivation prevents new purchases without invalidating existing passes or bookings.
 
-### 7.1 Versioned plan contract
+A TrainingPass is non-transferable and client-associated. It can be active or exhausted and optionally expires. The client and coach see the same on-chain totals. Possession of an unrelated token, database row, screenshot, booking or indexed cache does not grant sessions.
 
-A plan version needs at least:
+An availability slot is capacity-one private-class inventory. A confirmed booking reserves but does not consume one pass session. The same pass can support no more active future reservations than its latest finalized remaining balance. Cancellation before start releases the reservation and preserves the pass credit. A client-cancelled, still-valid slot becomes bookable again; a coach-cancelled slot is withdrawn. Only completed-class redemption consumes the pass.
 
-```text
-price_eurc
-period_policy
-access_model
-included_checkins
-max_included_checkins_per_day
-required_core_gym_count
-non_core_member_price_eurc
-effective_from / effective_to
-```
+The coach-first MVP does not model selected gyms, group-class capacity, recurring calendar rules, waitlists, external calendar sync, included visits, venue check-ins, membership periods or pool allocation.
 
-Basic has `access_model = limited`, `included_checkins = 10` and `max_included_checkins_per_day = 1`. Classic has `access_model = daily_uncapped`, no numerical monthly allowance, and `max_included_checkins_per_day = 1`. Classic must not be represented by a fabricated large allowance.
+<a id="purchase-and-redemption"></a>
 
-Past purchases retain the plan terms accepted at activation even if later catalogue versions change.
+## 8. Purchase, booking and redemption
 
-For the hackathon, the catalogue is read-only at runtime. Reviewed migrations and deterministic seed data define participating gyms, plan versions and eligibility. Operator editing, catalogue write APIs and administration screens are deferred until platform-versus-gym management authority is designed.
+The purchase instruction accepts only the configured Devnet test-USDC mint and derives amount, session count, recipient and restriction from the Offer account. Token transfer and pass creation are atomic. Wrong mint, amount, recipient, authority, client restriction, inactive offer or reused pass address fails without creating entitlement.
 
-### 7.2 Membership-period contract
+Purchase operations retain a bounded public reference sufficient to recover after wallet approval or RPC ambiguity. Final verification reads finalized chain state; the browser response is never payment authority. The same submitted signature can be reconciled repeatedly, but one payment cannot create multiple indexed passes or bookings.
 
-A membership period needs at least:
+Booking confirmation atomically checks slot capacity and off-chain unreserved credit against a freshly verified pass projection. A temporary hold is not a booking or entitlement. Hold expiry after a failed purchase releases capacity. If chain purchase succeeds after the intended slot is no longer confirmable, the pass remains fully usable and the interface must explain that another eligible slot can be selected.
 
-```text
-member_account
-member_wallet used for payment
-plan_version
-selected_gym_ids[4]
-starts_at / ends_at
-included_checkins_used
-last_included_service_date
-payment_status
-membership_status
-activation_operation_id
-```
+Only the recorded coach authority may redeem. The application exposes redemption for a confirmed booked class after its scheduled session and binds the operation/event to that booking reference. The on-chain program verifies coach/pass authority, expiry and balance; it does not independently prove that a real-world class occurred. Redemption rejects expired or exhausted passes, never underflows, decrements one session per accepted instruction and exposes a deterministic event for indexing. Database-only decrement is prohibited.
 
-The four gym identifiers must be distinct, active and eligible for the selected plan at activation. Draft selection can change before payment. Under P17, an activated selection cannot change during that period.
-
-### 7.3 Activation
-
-The member reviews the exact plan version, selected gyms, price, period and wallet before approving a Devnet-EURC transaction. The application records an intent before submission, verifies the confirmed transaction against the expected mint, amount, source, destination and operation, and then activates exactly one period. Cancellation or failure leaves no active membership. A retry reuses or safely reconciles the same operation rather than creating a second membership or payment. If a submitted payment was classified as `verification-failed`, reconciliation may recover it only after rerunning the complete finalized-chain verification against the same immutable quote and transaction signature; wallet cancellation, on-chain rejection and superseded operations remain terminal.
-
-After a member's first verified activation, the application should create or reconcile one stable membership-card lineage PDA and exactly one current non-transferable wallet-visible card. A later non-overlapping period in the same reviewed wallet updates that PDA/card instead of creating another; each membership period and its history remains separate and immutable in PostgreSQL. The card publicly projects only the current or most recent period's plan, validity, status and Basic total/used/remaining values or Classic `Unlimited · one included visit per day`; it excludes identity, selected gyms, reservations and attendance details. PostgreSQL remains authoritative for access and check-ins. A reviewed wallet replacement retains the old card as inactive rather than requiring a burn, creates one new current card and advances the same public PDA's current-asset address and generation. Standard wallets do not evaluate that PDA automatically, so MovX must also update metadata recognized by the selected asset standard; a stale wallet label never makes an old card current. Mint/update failure must not invalidate a membership or attendance record, and retries must converge without two accepted current cards or duplicate lineages.
-
-For the Devnet demonstration, a MovX-controlled sponsor pays the projection transaction fees and required rent-exempt account deposits while remaining distinct from the projection authority. First initialization funds the PDA and card accounts. Fixed-size usage, expiry/status and later same-wallet period updates ordinarily require only transaction fees; time passing and reads create no on-chain fee. Wallet replacement reuses the PDA but funds the new card account, and retaining the old card leaves its deposit locked until a future authorized close or burn policy. Exact rent and fees must be estimated from the active cluster and verified through payer balance deltas rather than hard-coded. DEV0092 must validate the exact Token-2022 or Metaplex standard, stable PDA/authority/payer contract, replacement transition, cost shape and wallet-cache behavior before DEV0089 becomes Ready.
-
-### 7.4 Included check-ins
-
-An included check-in is valid only when:
-
-- the membership period is active at the service time;
-- the venue is one of the period's four selected gyms;
-- capacity/reservation requirements are satisfied;
-- authorized staff for that venue confirms the member's presence;
-- the check-in identifier has not already been consumed;
-- the plan's daily rule is satisfied; and
-- Basic still has an included check-in remaining.
-
-The venue's configured timezone determines the service date. The one-per-day rule applies across the membership's four gyms, not once per gym. A valid Basic check-in increments `included_checkins_used`; a valid Classic check-in records usage without decrementing a synthetic allowance. Invalid, duplicate, stale, wrong-venue, exhausted or second-same-day attempts do not change usage or allocation.
-
-For arrival, the member creates or resumes one opaque request bound to the active membership, selected venue and optional reservation. For the hackathon, a reservation-backed arrival opens 30 minutes before class and closes at class end. The server-generated presentation code expires after 15 minutes or at class end, whichever comes first, and contains no personal or financial data; the server stores only its cryptographic hash. Open-gym arrival codes use the same 15-minute lifetime. The code helps authorized same-venue staff retrieve the request; it is not proof of presence by itself. Staff authority comes from the email-authenticated actor's active `manager` or `check_in_staff` venue relation in the same demo dataset, not from a club-wallet signature.
-
-### 7.5 Provisional allocation
-
-For a stated demo period and distributable test pool, show:
-
-```text
-gym provisional share = distributable pool
-                      × valid included check-ins at that gym
-                      ÷ all valid included check-ins in the allocation scope
-```
-
-The UI must identify the period, pool and allocation scope and label the result **provisional**. Zero-check-in and partially used memberships remain visible as unresolved pool value under P16. No gym can claim or withdraw this figure in the MVP unless a later confirmed settlement decision and implementation ticket explicitly adds that capability.
-
-### 7.6 No transfer lifecycle
-
-A membership period belongs to the activating member for its duration. There is no sender, recipient, transfer eligibility, transfer fee, acceptance, resale price, transferred remainder or ownership mutation in the current contract.
-
-## 8. Reservations and member-priced visits
-
-Membership eligibility does not guarantee space in a class. A member may reserve a future scheduled class at one of the four selected gyms when the full session lies inside the active period. A reservation progresses from `reserved` to exactly one terminal state: `cancelled`, `checked_in` or `no_show`. A cancelled reservation records whether the member cancelled it or the underlying class session was cancelled. `expired` is not a reservation state; it applies only to the short-lived arrival request.
-
-Reservation atomically holds one seat and creates a daily-access claim in `held` state for the membership and immutable venue-local service date. Only one `held` or `consumed` claim may exist for that membership/date across all four selected gyms. Basic also treats each held claim as one unavailable included use, so confirmed usage plus active holds cannot exceed ten. Classic has no numerical monthly hold but uses the same daily claim. Reserving does not create attendance or an allocation input.
-
-For the hackathon, a member may cancel before the session begins; cancellation releases the seat and changes the daily-access claim to `released`. The cancelled reservation remains terminal and cannot become attendance, but it does not permanently block that class: while the session is still scheduled and in the future, the member may make a fresh reservation with a new operation, reservation row and held claim under the ordinary capacity, daily and allowance rules. Cancelling the underlying class releases the original reservation with a session-cancellation reason and does not permit a new reservation. A reservation still unconfirmed when the class ends reconciles to `no_show` and releases its claim without reopening the class. These terminal states create no attendance, allocation input, fee or allowance penalty. Production cancellation/no-show economics remain unresolved.
-
-A staff-confirmed reservation check-in atomically changes the existing claim from `held` to `consumed`, changes the reservation to `checked_in` and increments Basic confirmed usage exactly once. A venue-only open-gym arrival obtains the same kind of `held` claim through DEV0084 and either consumes it on confirmation or releases it when the arrival request is cancelled or expires. The shared claim is the serialization boundary between reservation and open-gym attendance; it is not itself proof of attendance.
-
-An active member may purchase a visit at a participating gym that is not one of their four selected gyms when that venue supports the member price and has capacity. The illustrative €15 Devnet-EURC payment goes directly to the destination gym's authorized wallet. The system verifies the payment before confirming paid eligibility, uses an idempotent operation ID, and records the attendance separately from included usage. It does not decrement Basic, affect the daily included-check-in rule or enter the membership allocation pool.
-
-There are no standalone pass, pass-bundle, resale, event or event-ticket objects in this flow.
-
-<a id="8-asset-wallet-and-demo-integrity"></a>
+<a id="asset-wallet-and-demo-integrity"></a>
 
 ## 9. Asset, wallet and demo integrity
 
-- Use the configured Devnet EURC mint; do not treat arbitrary SPL tokens as EURC.
-- Derive expected associated token accounts and verify mint, owner, amount, destination and finalized transaction outcome.
-- Show balances with their owner and purpose: personal spendable balance, membership pool balance, direct gym receipt and provisional gym allocation are different values.
-- A linked wallet proves control only through an explicit message-signing flow. A gym wallet also requires the authenticated user's stored gym role.
-- Client-supplied wallet, actor or gym identifiers never grant authority.
-- Persist transaction signatures, operation identifiers and reconciliation state needed to recover after a timeout or page reload.
-- Treat a wallet-visible membership card as a public, non-transferable projection only. Never derive access from possession, publish identity/gym/attendance details in its metadata or roll back authoritative membership/check-in state because projection synchronization fails.
-- Keep card-lineage, period and wallet identity separate: the stable PDA must not be derived from a replaceable wallet or recreated for every period, while PostgreSQL remains the source of immutable period history.
-- Use fictional gyms and clearly labeled demo values. Do not imply a real partnership, production payment, legal entitlement or finalized payout.
+- Every payment screen names Solana Devnet, test USDC, recipient, amount and fee payer. It never calls test assets real money.
+- Wallet connection, email identity and linked-wallet proof remain distinct states.
+- Sponsor secrets and credentialed RPC endpoints remain server-only. A public browser RPC endpoint may be exposed intentionally.
+- Fee sponsorship pays network/account costs only; it cannot substitute for the client purchase signature or coach authority.
+- A TrainingPass PDA may be displayed inside MovX but is not promised as a Phantom collectible. The superseded membership-card Core asset experiment is historical evidence only.
+- Fictional coach profiles, offers and slots are labeled as demonstration data and must not imply partnerships with real coaches, gyms or venues.
+- Open-slot presentation comes from the authoritative booking database. Database failure cannot fall back to fabricated available times.
+- The demo can be reset/reseeded without hand-editing production, hosted or chain records.
 
-<a id="9-social-behavior-and-permissions"></a>
-<a id="source-evidence-sharing-and-privacy"></a>
+<a id="social-behavior-and-permissions"></a>
 
 ## 10. Social behavior and permissions
 
-The social graph uses one-way follows. Following is idempotent, self-follow is rejected and unfollowing removes only the actor's edge.
+Guests can read public coach profiles and posts. Signed-in clients can follow/unfollow coaches. Only a coach can create or manage that coach's posts. The feed is reverse chronological and includes followed-coach posts only; discovery and weekly availability are separate.
 
-The only feed source in scope is a verified included or member-priced gym check-in that the participating member explicitly shares. A feed entry may identify the member, gym, activity label and verified time. It must not disclose payment details, plan price, remaining allowance, private wallet data or provisional allocation.
-
-The Community feed is chronological shared activity visible under the product's public/profile rules. The Following feed is the chronological subset from accounts the viewer follows. A private or unshared check-in appears in neither feed. Revoking sharing removes it from social queries without deleting the underlying attendance evidence.
-
-There are no reactions, comments, reposts, arbitrary text posts, messages, notifications, rankings, challenges or event activity in the MVP.
-
-<a id="10-definition-of-done"></a>
+Posts require bounded text and may reference one safely validated image. Reactions, comments, direct messages, stories, groups, client posts, ranking, notifications and complex moderation are excluded. Removing or hiding a post is an off-chain application action and never changes bookings or TrainingPass state.
 
 ## 11. Definition of done
 
-The pivot is delivered only when all of the following are true:
+The MVP is done only when:
 
-1. Public positioning and How it works explain the four-gym membership and do not promote removed products.
-2. Guests can browse fictional participating gyms and accurate versioned Basic/Classic terms.
-3. Email identity, optional personal wallet and separate gym-wallet authority preserve existing security boundaries.
-4. A member can select exactly four eligible gyms and activate one period with a verified real Devnet-EURC payment.
-5. Authorized check-ins enforce Basic's ten-use allowance, Classic's uncapped monthly use and the shared one-included-check-in-per-day rule.
-6. Member and gym views show correct private usage state and a clearly provisional allocation.
-7. An eligible non-core member visit produces a verified direct Devnet-EURC gym payment without changing included allowance or pool allocation.
-8. Capacity, duplicate submission, failed transaction, timeout and reload paths preserve recoverable, idempotent state.
-9. Members can follow accounts and explicitly share verified check-ins; hidden/private activity does not leak.
-10. Transfer, pass, resale, event, sponsorship, challenge and reaction controls are absent from the current product experience.
-11. Automated checks cover authorization, state transitions, uniqueness/concurrency and reconciliation; responsive and keyboard flows are rehearsed.
-12. The staged demo preserves durable evidence across reloads and uses fictional partners plus clearly labeled Devnet values.
-13. One stable membership-card lineage has exactly one accepted current non-transferable wallet-visible card, reuses its PDA/card across same-wallet periods and projects no more than one current or most recent period without becoming access authority or leaking private membership details; a reviewed wallet replacement may retain explicitly inactive predecessors.
-
-<a id="11-delivery-milestones"></a>
+- a guest can discover a fictional coach, inspect one-session/ten-session offers and see open private slots for the coming seven days;
+- an authorized coach can publish non-overlapping capacity-one availability and create/deactivate an Offer without database edits;
+- a linked client wallet can purchase the exact Offer with official Devnet test USDC and receive one TrainingPass atomically;
+- a client with an eligible unreserved session can book exactly one open slot and coach/client views reload the same booking;
+- a purchase-time hold converges on one booking or leaves the purchased pass reusable without a second charge;
+- the same client can intentionally repeat a purchase through a distinct nonce or the UI clearly blocks it by an adopted rule;
+- concurrent clients cannot double-book one slot and one pass cannot reserve more future classes than its finalized remaining sessions;
+- client or coach cancellation before start releases the reservation and preserves the full one-session or ten-session pass balance; client cancellation reopens a still-valid slot, while coach cancellation withdraws it;
+- only the coach can redeem a completed booked class, and one redemption changes the balance from `N` to `N - 1` exactly once;
+- wrong mint, amount, recipient, signer, restricted client, ineligible coach/pass, expired/exhausted pass, slot race, last-credit race and replay paths are tested;
+- transaction rejection, RPC failure, ambiguous submission and purchase/booking/redemption reconciliation states are honest and recoverable;
+- follow/unfollow and a chronological coach post survive reload;
+- relevant unit/integration, authorization, concurrency, database, program, static, build and browser checks pass;
+- one hosted 2–3 minute Devnet rehearsal completes without manual database or chain intervention.
 
 ## 12. Delivery milestones
 
-<a id="m0--foundation-and-frozen-product-contracts"></a>
+1. **M0 — Contract and cleanup:** adopt this specification, retire the multi-gym mutation runtime and present a truthful coach-first public story.
+2. **M1 — Coach identity and discovery:** persist coach profiles, seed fictional coaches and provide guest discovery/profile views.
+3. **M2 — Availability and offers:** publish capacity-one slots for the coming seven days and implement coach-authorized one-session/ten-session Offer accounts plus display metadata.
+4. **M3 — Pass purchase:** atomically transfer test USDC and create/recover/index TrainingPass accounts.
+5. **M4 — Private booking:** hold and confirm one slot against an eligible unreserved pass session; cancellation preserves the credit.
+6. **M5 — Completion and redemption:** implement coach-authorized completed-booking redemption, history and consistent booking/pass dashboards.
+7. **M6 — Network loop:** follow/unfollow coaches and publish/read chronological coach posts.
+8. **M7 — Hosted rehearsal:** validate the complete discovery, purchase, booking, cancellation/rebooking and redemption flow on staging with public Devnet evidence.
 
-### M0 — Contract and truthful positioning
-
-- Adopt this specification and flat delivery coordination.
-- Rewrite public positioning around one multi-gym membership.
-- Remove controls and promises for superseded products.
-
-### M1 — Participating gym and plan catalogue
-
-- Add versioned Basic/Classic plan data and plan-eligible fictional gyms.
-- Expose public read models without leaking drafts or protected operations.
-- Replace the legacy real-world fixture and obsolete Annual Unlimited/Flex 12 drafts.
-
-### M2 — Membership period and activation
-
-- Implement four-gym selection and immutable activated-period terms.
-- Implement idempotent Devnet-EURC membership activation and reconciliation.
-- Add the non-transferable wallet-visible membership projection with recoverable activation and usage synchronization.
-- Add the member access view.
-
-### M3 — Check-ins, member-price access and allocation
-
-- Implement capacity-aware reservation and authorized included check-ins.
-- Enforce plan and daily rules under concurrency.
-- Implement direct non-core payment and attendance.
-- Show transparent provisional gym allocation and gym-scoped operations.
-
-<a id="m4--social-loop-and-demo-delivery"></a>
-
-### M4 — Minimal social and integrated demo
-
-- Deliver follows and explicitly shared verified check-ins.
-- Complete recovery, privacy, responsive, keyboard and persistent staging rehearsals.
-- Record end-to-end Devnet evidence without claiming production readiness.
-
-<a id="12-acceptance-matrix"></a>
+The coach/gym split, recurring calendars and group classes begin only as separately reviewed stretch tickets after M0–M7 are stable.
 
 ## 13. Acceptance matrix
 
-| ID  | Scenario and expected result                                                                                                                                                                                                                                                                                                   |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| A01 | A guest sees only published fictional gyms and accurate Basic/Classic terms; drafts and private operations are absent.                                                                                                                                                                                                         |
-| A02 | Selecting fewer or more than four gyms, the same gym twice, an inactive gym or a plan-ineligible gym cannot activate a membership.                                                                                                                                                                                             |
-| A03 | A valid four-gym selection and verified Devnet-EURC payment creates exactly one active period with snapshotted terms.                                                                                                                                                                                                          |
-| A04 | Cancelling or failing the wallet approval creates no active period and a safe retry cannot double-charge or duplicate access.                                                                                                                                                                                                  |
-| A05 | A Basic member completes ten valid included check-ins; an eleventh attempt is rejected without usage or allocation mutation.                                                                                                                                                                                                   |
-| A06 | A Classic member can continue checking in across the period without a monthly numerical allowance.                                                                                                                                                                                                                             |
-| A07 | Basic and Classic both reject a second included check-in on the same venue-local calendar day.                                                                                                                                                                                                                                 |
-| A08 | A check-in at a gym outside the selected four cannot use included membership access.                                                                                                                                                                                                                                           |
-| A09 | Unauthorized staff, wrong-gym staff, stale/terminal reservations, expired arrival codes, duplicate identifiers and expired memberships cannot confirm included usage.                                                                                                                                                          |
-| A10 | Concurrent attempts for the last Basic use, final class seat or same-day reservation/open-gym access produce at most one successful mutation; retries cannot duplicate a seat or daily-access claim.                                                                                                                           |
-| A11 | Every valid included check-in changes the correct usage total and provisional allocation input exactly once.                                                                                                                                                                                                                   |
-| A12 | The displayed provisional shares reconcile to the declared distributable pool and usage scope within explicit rounding rules.                                                                                                                                                                                                  |
-| A13 | A zero-use or partially used membership leaves value labeled unresolved in the test pool and creates no invented MovX revenue or gym payout.                                                                                                                                                                                   |
-| A14 | An active member pays the configured price at an eligible non-core gym; the verified payment reaches that gym and does not alter included usage or the pool.                                                                                                                                                                   |
-| A15 | A non-member, inactive member, selected-core-gym attempt, unsupported venue, full session or failed direct payment cannot produce paid non-core eligibility.                                                                                                                                                                   |
-| A16 | Gym staff see only their gym's attendees and provisional allocation; they cannot view or mutate another gym's private data.                                                                                                                                                                                                    |
-| A17 | Following and unfollowing are idempotent, self-follow is rejected and one member cannot mutate another member's choices.                                                                                                                                                                                                       |
-| A18 | Only an explicitly shared verified check-in appears in Community/Following queries, in chronological order and without private financial data.                                                                                                                                                                                 |
-| A19 | Revoking sharing removes social visibility while preserving attendance and financial evidence.                                                                                                                                                                                                                                 |
-| A20 | Current routes and controls contain no membership transfer, pass/resale, event/sponsorship, challenge or reaction action.                                                                                                                                                                                                      |
-| A21 | Legacy records and migrations remain replayable while forward changes prevent obsolete drafts from becoming the published product.                                                                                                                                                                                             |
-| A22 | Home, Explore, setup, access, guide, social and gym workspace are usable at representative mobile/desktop widths and with keyboard navigation.                                                                                                                                                                                 |
-| A23 | Every payment uses the configured Devnet EURC mint and verifies expected source, destination, amount and confirmed outcome.                                                                                                                                                                                                    |
-| A24 | Reloading or retrying a submitted activation, reservation, direct payment or check-in reconciles the same operation without double effects.                                                                                                                                                                                    |
-| A25 | Member/session cancellation before class start or reconciling a no-show releases the reserved seat and daily-access claim without attendance, allocation input, fee or allowance loss.                                                                                                                                         |
-| A26 | One stable opaque membership-card lineage has one PDA-matched current non-transferable wallet-visible card; a later same-wallet period reuses it, Basic remaining or Classic `Unlimited · one per day` reconciles without granting access or exposing private data, and wallet replacement retains only inactive predecessors. |
+| Scenario                                       | Expected result                                                                                                                         |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Guest opens Discover                           | Fictional coach cards load without sign-in; no legacy gym-membership mutation is offered.                                               |
+| Guest opens coach profile                      | Public biography, disciplines, public offers, open weekly slots and posts are readable; restricted offers/private bookings stay hidden. |
+| Coach publishes valid availability             | Non-overlapping capacity-one slots appear for the coming seven days in the reviewed timezone.                                           |
+| Coach overlaps or edits a booked slot          | Mutation fails without duplicating capacity or silently changing the client's booking.                                                  |
+| Unauthorized profile/offer/slot mutation       | Request fails without changing application or chain state.                                                                              |
+| Coach creates valid 1x/10x offer               | Expected Offer PDA contains immutable terms and recipient; display metadata references its address.                                     |
+| Coach changes price                            | Existing offer cannot be edited; coach deactivates it and creates a new offer.                                                          |
+| Client books with existing pass                | One open slot becomes one confirmed booking and one future credit reservation; chain balance is unchanged.                              |
+| Two clients claim the same slot                | Exactly one booking succeeds; the other receives an honest unavailable result.                                                          |
+| Client overbooks last pass credit              | Additional booking fails while all finalized remaining sessions are already reserved.                                                   |
+| Client buys public offer for selected slot     | Exact test USDC reaches the immutable recipient, one TrainingPass is created and the held slot becomes one booking.                     |
+| Wrong client buys restricted offer             | Program rejects the purchase and transfers no tokens.                                                                                   |
+| Wrong mint/amount/recipient                    | Program rejects the purchase and creates no pass.                                                                                       |
+| Purchase succeeds but booking response is lost | Retry reconciles the existing pass/booking or leaves the pass reusable; it creates no second payment, pass or booking.                  |
+| Client cancels before start                    | Booking/reservation release, the still-valid slot reopens and the full pass balance remains available.                                  |
+| Coach cancels before start                     | Booking/reservation release, the slot is withdrawn and the full pass balance remains available for another eligible slot.               |
+| Same client books another slot after cancel    | The preserved one-session or ten-session credit confirms one new eligible booking without another purchase.                             |
+| Same client buys again                         | A new nonce creates a distinct pass, unless an explicit adopted UI rule prevents the attempt before signing.                            |
+| Coach redeems completed booking                | Remaining sessions decrement once and booking/history reconcile to the indexed event.                                                   |
+| Client or unrelated coach redeems              | Program rejects the instruction.                                                                                                        |
+| Exhausted or expired pass redeems              | Program rejects without underflow or balance change.                                                                                    |
+| Client follows coach                           | Relationship survives reload and the coach's posts appear newest first.                                                                 |
+| Wallet merely connects                         | No account, coach role, pass, booking or payment authority is inferred.                                                                 |
+| Legacy membership URL/API is requested         | It is unavailable/not found and cannot mutate stored membership state.                                                                  |
 
-## 14. Demonstration path
+## 14. Judge demo
 
-1. A guest understands one product: choose four gyms and use one membership.
-2. A member signs in, compares Basic and Classic, and selects four of seven fictional participating gyms.
-3. The member activates Basic with a real Devnet-EURC payment and sees ten included check-ins.
-4. The member reserves an eligible class at a selected gym; one seat and one Basic use are held without claiming attendance.
-5. At arrival, the member presents the short-lived code and authorized same-venue staff confirm presence; the held use becomes confirmed, the member sees nine remaining and one allocation input exists.
-6. A duplicate or second same-day included attempt is rejected without another decrement.
-7. The member visits another participating gym outside the core set, approves the illustrative €15 direct payment and receives separately recorded attendance.
-8. Gym staff see their scoped visits and provisional allocation, not another gym's or member's private financial state.
-9. The member explicitly shares one verified check-in; a follower sees it chronologically and no reaction control appears.
-10. A reload shows the same confirmed membership, payments, usage and sharing state.
+1. A coach publishes two capacity-one Boxing slots for the coming week and public offers for **1 Boxing Session** at an illustrative `2` test USDC and **10 Boxing Sessions** at `10` test USDC, valid for 90 days.
+2. A client discovers the coach, selects the first slot, follows the coach and buys the ten-session pass; the finalized purchase confirms one booking while My Pass shows `10 / 10` with one future class reserved.
+3. The client cancels before the start. The slot reopens and My Pass remains `10 / 10`; the same pass then books the second slot without another payment.
+4. After the demonstrated class is completed, the coach redeems it; both views refresh to `9 / 10` and show the matching booking/redemption history.
+5. The coach publishes a short update; the client sees it at the top of the feed.
 
-## 15. Deferred work
-
-The following require later product validation and new development tickets: production membership renewal and cancellation, refunds and chargebacks, finalized gym settlement or claims, legal and tax treatment, platform pricing, real partner onboarding, transfer or resale, standalone passes, events and sponsorship, richer social features, production wallets/payments and any collectible or tokenized access beyond C31's non-authoritative membership projection.
+The demo tells this one product story. Multi-gym memberships, group classes, recurring schedules, transfer/resale, automatic refunds and wallet collectibles are not part of it.

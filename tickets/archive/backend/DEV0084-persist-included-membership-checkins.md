@@ -5,7 +5,7 @@
 - Last updated: 2026-09-28
 - Milestone: M3 check-ins, member-price access and allocation
 - Coordination: [COR0008 — Membership reservations and check-ins](../organisatory/COR0008-membership-reservations-and-checkins.md)
-- Related records: builds on active periods from [DEV0080 — Persist membership activation foundation](DEV0080-membership-activation-foundation.md), consumes the shared daily-access claim from completed [DEV0086 — Persist included class reservations](DEV0086-persist-included-class-reservations.md), supplies [DEV0085 — Add the member check-in interface](../frontend/DEV0085-member-checkin-interface.md), and is deliberately distinct from the financial club-wallet authority in [DEV0041](../../current/backend/DEV0041-club-wallet-authorization.md); the original broad DEV0084 plan is preserved in commit `f6bde9f`
+- Related records: builds on active periods from [DEV0080 — Persist membership activation foundation](DEV0080-membership-activation-foundation.md), consumes the shared daily-access claim from completed [DEV0086 — Persist included class reservations](DEV0086-persist-included-class-reservations.md), supplies [DEV0085 — Add the member check-in interface](../frontend/DEV0085-member-checkin-interface.md), and is deliberately distinct from the financial club-wallet authority in [DEV0041](./DEV0041-club-wallet-authorization.md); the original broad DEV0084 plan is preserved in commit `f6bde9f`
 
 ## Objective and context
 

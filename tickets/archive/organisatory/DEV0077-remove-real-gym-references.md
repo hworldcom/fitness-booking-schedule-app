@@ -54,7 +54,7 @@ Removed the named research references and replaced the named negative-test black
 ### Affected files
 
 - [`tickets/archive/frontend/DEV0074-preview-multigym-discovery.md`](../frontend/DEV0074-preview-multigym-discovery.md) now describes only the fictional category mix and contains no external fitness-business attribution.
-- [`tests/explore.test.ts`](../../../tests/explore.test.ts) rejects external URLs and provenance/partner fields in gym fixtures without storing real-business identifiers.
+- `tests/explore.test.ts` (historical path `tests/explore.test.ts`) rejects external URLs and provenance/partner fields in gym fixtures without storing real-business identifiers.
 - [`tickets/README.md`](../../README.md) tracks this corrective record and the next available DEV identifier.
 
 ### Decisions and deviations

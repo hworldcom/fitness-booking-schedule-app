@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Feed } from "@/features/feed/feed";
+import { ComingSoonScreen } from "@/features/waitlist/coming-soon";
 
 export const metadata: Metadata = {
-  title: "MovX Club — A membership built around your routine.",
+  title: "MovX Club — Find your coach.",
   description:
-    "Compare MovX Club Basic and Classic: one membership across your selected core gyms, with optional member-priced visits beyond your core set.",
+    "Join the early-access list for MovX Club's coach-first training-package demo.",
 };
 
 export default function Page() {
-  return <Feed />;
+  return <ComingSoonScreen />;
 }

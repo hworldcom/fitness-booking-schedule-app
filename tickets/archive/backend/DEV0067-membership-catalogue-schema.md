@@ -4,7 +4,7 @@
 - Created: 2026-09-24
 - Last updated: 2026-09-24
 - Milestone: M1 persistent access catalogue
-- Coordination: [COR0006 — Persistent access catalogue](../../current/organisatory/COR0006-persistent-access-catalogue.md)
+- Coordination: [COR0006 — Persistent access catalogue](../organisatory/COR0006-persistent-access-catalogue.md)
 - Related records: implements the first database slice after [DEV0066 — Freeze membership product rules](../organisatory/DEV0066-freeze-membership-product-rules.md); uses the completed [DEV0015 database foundation](DEV0015-supabase-database-foundation.md) and [DEV0040 protected context](DEV0040-protected-access-and-database-context.md)
 
 ## Objective and context
@@ -67,15 +67,15 @@ The seed now contains Annual Unlimited and Six-Month Flex 12 for Fabrik Training
 
 ### Affected files
 
-| File or component | Change and purpose |
-| --- | --- |
-| `supabase/migrations/20260924000200_create_membership_catalogue.sql` | Creates the two catalogue tables, frozen-rule/lifecycle constraints, indexes, triggers, ownership and default-deny security. |
-| `supabase/seed.sql` | Adds the two price-pending private draft products idempotently. |
-| `src/server/db/schema/membership.ts`, `schema/index.ts` | Mirrors the SQL contract for typed server-side queries and exports it only through the server schema boundary. |
-| `supabase/tests/database/membership-catalogue.test.sql` | Adds 20 structural, fixture and access-control assertions to the pgTAP suite. |
-| `tests/database/membership-catalogue.test.ts` | Exercises the Drizzle mapping plus constraint/lifecycle/security behavior against PostgreSQL. |
-| `README.md`, `docs/mvp-spec.md`, `supabase/README.md` | Records the delivered private schema while keeping public catalogue, purchase and entitlement claims explicitly outstanding. |
-| `tickets/current/organisatory/COR0006-persistent-access-catalogue.md` and affected work records | Converts retired DEV0017 into a flat coordination map and repairs downstream ownership links. |
+| File or component                                                                               | Change and purpose                                                                                                           |
+| ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `supabase/migrations/20260924000200_create_membership_catalogue.sql`                            | Creates the two catalogue tables, frozen-rule/lifecycle constraints, indexes, triggers, ownership and default-deny security. |
+| `supabase/seed.sql`                                                                             | Adds the two price-pending private draft products idempotently.                                                              |
+| `src/server/db/schema/membership.ts`, `schema/index.ts`                                         | Mirrors the SQL contract for typed server-side queries and exports it only through the server schema boundary.               |
+| `supabase/tests/database/membership-catalogue.test.sql`                                         | Adds 20 structural, fixture and access-control assertions to the pgTAP suite.                                                |
+| `tests/database/membership-catalogue.test.ts`                                                   | Exercises the Drizzle mapping plus constraint/lifecycle/security behavior against PostgreSQL.                                |
+| `README.md`, `docs/mvp-spec.md`, `supabase/README.md`                                           | Records the delivered private schema while keeping public catalogue, purchase and entitlement claims explicitly outstanding. |
+| `tickets/current/organisatory/COR0006-persistent-access-catalogue.md` and affected work records | Converts retired DEV0017 into a flat coordination map and repairs downstream ownership links.                                |
 
 ### Decisions and deviations
 
@@ -103,11 +103,11 @@ Validated on 2026-09-24 against the disposable local Supabase PostgreSQL instanc
 - `npm run build` — attempted twice but the environment denied Turbopack's existing font/PostCSS helper process an internal port (`Operation not permitted`). `./node_modules/.bin/next build --webpack` passed the optimized production build, TypeScript, all 13 static pages and route collection, distinguishing the sandbox/Turbopack limitation from an application regression.
 - Repository-wide local Markdown file links passed for 88 files; `git diff --check` passed.
 
-| Criterion | Evidence | Result |
-| --- | --- | --- |
-| AC1, AC3, AC4 | Two clean resets, 109 pgTAP assertions, 18 integration tests and schema lint | Passed |
-| AC2, AC5 | Seed/mapping assertions for exact durations, allowances, transfer terms, `NULL` prices and draft states | Passed |
-| AC6 | Boundary/unit tests, lint, typecheck, format and successful webpack production build | Passed; standard Turbopack command blocked by environment |
+| Criterion     | Evidence                                                                                                | Result                                                    |
+| ------------- | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| AC1, AC3, AC4 | Two clean resets, 109 pgTAP assertions, 18 integration tests and schema lint                            | Passed                                                    |
+| AC2, AC5      | Seed/mapping assertions for exact durations, allowances, transfer terms, `NULL` prices and draft states | Passed                                                    |
+| AC6           | Boundary/unit tests, lint, typecheck, format and successful webpack production build                    | Passed; standard Turbopack command blocked by environment |
 
 ## Risks, limitations, and follow-ups
 

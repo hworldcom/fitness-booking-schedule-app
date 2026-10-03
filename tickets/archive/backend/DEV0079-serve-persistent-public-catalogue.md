@@ -4,8 +4,8 @@
 - Created: 2026-09-26
 - Last updated: 2026-09-26
 - Milestone: M1 participating gym and membership-plan catalogue
-- Coordination: [COR0006 — Persistent membership catalogue](../../current/organisatory/COR0006-persistent-access-catalogue.md)
-- Related records: consumes completed [DEV0078](DEV0078-revise-multigym-catalogue-schema.md), replaces the runtime fixture adapters delivered by completed [DEV0074](../frontend/DEV0074-preview-multigym-discovery.md) and [DEV0075](../frontend/DEV0075-preview-membership-selection.md), and supplies the catalogue dependency for [COR0007](../../current/organisatory/COR0007-core-multigym-membership-mvp.md)
+- Coordination: [COR0006 — Persistent membership catalogue](../organisatory/COR0006-persistent-access-catalogue.md)
+- Related records: consumes completed [DEV0078](DEV0078-revise-multigym-catalogue-schema.md), replaces the runtime fixture adapters delivered by completed [DEV0074](../frontend/DEV0074-preview-multigym-discovery.md) and [DEV0075](../frontend/DEV0075-preview-membership-selection.md), and supplies the catalogue dependency for [COR0007](../organisatory/COR0007-core-multigym-membership-mvp.md)
 
 ## Objective and context
 

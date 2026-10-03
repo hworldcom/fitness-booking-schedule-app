@@ -5,7 +5,7 @@
 - Last updated: 2026-09-20
 - Milestone: Product specification / M0–M4 planning
 - Coordination: None — independent development ticket
-- Related tickets: [COR0002](../../current/organisatory/COR0002-phantom-auth-and-demo-access.md), converted from retired DEV0016, [COR0006](../../current/organisatory/COR0006-persistent-access-catalogue.md), converted from retired DEV0017, later-cancelled [DEV0018](DEV0018-class-pass-reservations-and-confirmed-visits.md); later revised delivery [DEV0023](../../current/backend/DEV0023-minimal-shared-activity-feed.md), cancelled [DEV0024](../blockchain/DEV0024-verified-challenge-activity.md)
+- Related tickets: [COR0002](../organisatory/COR0002-phantom-auth-and-demo-access.md), converted from retired DEV0016, [COR0006](../organisatory/COR0006-persistent-access-catalogue.md), converted from retired DEV0017, later-cancelled [DEV0018](DEV0018-class-pass-reservations-and-confirmed-visits.md); later revised delivery [DEV0023](./DEV0023-minimal-shared-activity-feed.md), cancelled [DEV0024](../blockchain/DEV0024-verified-challenge-activity.md)
 
 ## Objective and context
 
@@ -51,16 +51,16 @@ Updated existing draft tickets at their current responsibility boundaries: 0016 
 
 ### Affected files
 
-| File                                                                                                    | Role in this change                                                                                                   |
-| ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| [MVP specification](../../../docs/mvp-spec.md)                                                          | Accepted C19, social behavior/data invariants, scope/deferrals, milestones, completion/demo requirements and A58–A62. |
-| [COR0002 identity/access](../../current/organisatory/COR0002-phantom-auth-and-demo-access.md)           | Signed-in same-run social access and clearing personal social state on sign-out; guest catalogue remains public.      |
-| [COR0006 shared-data coordination](../../current/organisatory/COR0006-persistent-access-catalogue.md) | Unique directed/idempotent follows and profile visibility; excludes reaction implementation.                          |
-| [DEV0018 class activity](DEV0018-class-pass-reservations-and-confirmed-visits.md) | Historical stable actor/source/time/visibility plan; later cancelled when standalone passes left the MVP.             |
-| [DEV0023 feed/Cheers](../../current/backend/DEV0023-minimal-shared-activity-feed.md)                    | Historical name; the 24 September pivot retained the feed ticket but removed reactions.                               |
-| [DEV0024 challenge sources](../blockchain/DEV0024-verified-challenge-activity.md)                       | Cancelled on 24 September 2026 when product challenges left the current MVP.                                          |
-| [README](../../../README.md)                                                                            | Navigation to the accepted social plan, explicitly marked unimplemented.                                              |
-| [Ticket index](../../README.md)                                                                         | Accurate planning/delivery statuses and links.                                                                        |
+| File                                                                                       | Role in this change                                                                                                   |
+| ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| [MVP specification](../../../docs/mvp-spec.md)                                             | Accepted C19, social behavior/data invariants, scope/deferrals, milestones, completion/demo requirements and A58–A62. |
+| [COR0002 identity/access](../organisatory/COR0002-phantom-auth-and-demo-access.md)         | Signed-in same-run social access and clearing personal social state on sign-out; guest catalogue remains public.      |
+| [COR0006 shared-data coordination](../organisatory/COR0006-persistent-access-catalogue.md) | Unique directed/idempotent follows and profile visibility; excludes reaction implementation.                          |
+| [DEV0018 class activity](DEV0018-class-pass-reservations-and-confirmed-visits.md)          | Historical stable actor/source/time/visibility plan; later cancelled when standalone passes left the MVP.             |
+| [DEV0023 feed/Cheers](./DEV0023-minimal-shared-activity-feed.md)                           | Historical name; the 24 September pivot retained the feed ticket but removed reactions.                               |
+| [DEV0024 challenge sources](../blockchain/DEV0024-verified-challenge-activity.md)          | Cancelled on 24 September 2026 when product challenges left the current MVP.                                          |
+| [README](../../../README.md)                                                               | Navigation to the accepted social plan, explicitly marked unimplemented.                                              |
+| [Ticket index](../../README.md)                                                            | Accurate planning/delivery statuses and links.                                                                        |
 
 ### Decisions and deviations
 

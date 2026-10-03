@@ -68,7 +68,7 @@ Use the development ticket's implementation record and validation results as the
 
 ## Product requirements
 
-Implement against the specification's [core multi-gym membership](docs/mvp-spec.md#7-core-multi-gym-membership), [reservations and member-priced visits](docs/mvp-spec.md#8-reservations-and-member-priced-visits), [asset, wallet and demo integrity](docs/mvp-spec.md#9-asset-wallet-and-demo-integrity), and [social behavior and permissions](docs/mvp-spec.md#10-social-behavior-and-permissions). Use its [confirmed and proposed decision register](docs/mvp-spec.md#2-confirmed-target-and-decisions), [definition of done](docs/mvp-spec.md#11-definition-of-done) and [acceptance matrix](docs/mvp-spec.md#13-acceptance-matrix) to select checks. Keep the requirements in that document rather than restating them here.
+Implement against the specification's [core coach passes and private classes](docs/mvp-spec.md#7-core-coach-packages), [purchase, booking and redemption](docs/mvp-spec.md#8-purchase-and-redemption), [asset, wallet and demo integrity](docs/mvp-spec.md#9-asset-wallet-and-demo-integrity), and [social behavior and permissions](docs/mvp-spec.md#10-social-behavior-and-permissions). Use its [confirmed decision register](docs/mvp-spec.md#2-confirmed-target-and-decisions), [definition of done](docs/mvp-spec.md#11-definition-of-done) and [acceptance matrix](docs/mvp-spec.md#13-acceptance-matrix) to select checks. Keep the requirements in that document rather than restating them here.
 
 ## Validation and definition of done
 

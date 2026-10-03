@@ -4,8 +4,8 @@
 - Created: 2026-09-25
 - Last updated: 2026-09-25
 - Milestone: M0 core product contract
-- Coordination: [COR0007 — Core multi-gym membership MVP](../../current/organisatory/COR0007-core-multigym-membership-mvp.md)
-- Related records: supersedes the current behavior defined by completed [DEV0058](DEV0058-fitness-access-mvp-contract.md), [DEV0066](DEV0066-freeze-membership-product-rules.md), and [DEV0068](DEV0068-revise-subscription-and-pass-resale-contract.md); affects [COR0006](../../current/organisatory/COR0006-persistent-access-catalogue.md), cancelled [DEV0018](../backend/DEV0018-class-pass-reservations-and-confirmed-visits.md), and [DEV0023](../../current/backend/DEV0023-minimal-shared-activity-feed.md)
+- Coordination: [COR0007 — Core multi-gym membership MVP](./COR0007-core-multigym-membership-mvp.md)
+- Related records: supersedes the current behavior defined by completed [DEV0058](DEV0058-fitness-access-mvp-contract.md), [DEV0066](DEV0066-freeze-membership-product-rules.md), and [DEV0068](DEV0068-revise-subscription-and-pass-resale-contract.md); affects [COR0006](./COR0006-persistent-access-catalogue.md), cancelled [DEV0018](../backend/DEV0018-class-pass-reservations-and-confirmed-visits.md), and [DEV0023](../backend/DEV0023-minimal-shared-activity-feed.md)
 
 ## Objective and context
 
@@ -72,18 +72,18 @@ Completed the documentation and planning pivot. No runtime application, database
 
 ### Affected files
 
-| File or component | Change and purpose |
-| --- | --- |
-| `docs/mvp-spec.md` | Authoritative Basic/Classic four-gym membership contract, honest implementation status, provisional economics, delivery plan and compatibility anchors for historical ticket links. |
-| `README.md`, `AGENTS.md` | Current product/status/navigation language and corrected specification links; contributor workflow rules remain unchanged. |
-| `tickets/README.md` | Registers DEV0069/COR0007, narrows COR0006, moves DEV0018 to Cancelled history and advances the next COR identifier. |
-| `tickets/current/organisatory/COR0007-core-multigym-membership-mvp.md` | Flat work map for public positioning, member setup, activation, check-ins, direct non-core visits, gym views and minimal social. |
-| `tickets/current/organisatory/COR0006-persistent-access-catalogue.md` | Narrows catalogue ownership to participating gyms and versioned Basic/Classic plan data/services/screens. |
-| `tickets/archive/backend/DEV0018-class-pass-reservations-and-confirmed-visits.md` | Cancelled/archive the unimplemented standalone-pass plan and point replacement membership check-ins to COR0007. |
-| `tickets/current/backend/DEV0023-minimal-shared-activity-feed.md` | Direct COR0007 member using only explicitly shared verified included/member-priced check-ins. |
-| `tickets/current/organisatory/COR0001-project-structure.md`, `COR0002-phantom-auth-and-demo-access.md` | Updates downstream ownership and current identity/specification references. |
-| `tickets/current/backend/DEV0041-club-wallet-authorization.md`, `DEV0055-hosted-supabase-staging-environment.md` | Corrects links to current identity, wallet-integrity and architecture sections without changing their implementation scope. |
-| Affected archived ticket links | Retargets references to DEV0018 after its required archive move; historical outcomes remain intact. |
+| File or component                                                                                                | Change and purpose                                                                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/mvp-spec.md`                                                                                               | Authoritative Basic/Classic four-gym membership contract, honest implementation status, provisional economics, delivery plan and compatibility anchors for historical ticket links. |
+| `README.md`, `AGENTS.md`                                                                                         | Current product/status/navigation language and corrected specification links; contributor workflow rules remain unchanged.                                                          |
+| `tickets/README.md`                                                                                              | Registers DEV0069/COR0007, narrows COR0006, moves DEV0018 to Cancelled history and advances the next COR identifier.                                                                |
+| `tickets/current/organisatory/COR0007-core-multigym-membership-mvp.md`                                           | Flat work map for public positioning, member setup, activation, check-ins, direct non-core visits, gym views and minimal social.                                                    |
+| `tickets/current/organisatory/COR0006-persistent-access-catalogue.md`                                            | Narrows catalogue ownership to participating gyms and versioned Basic/Classic plan data/services/screens.                                                                           |
+| `tickets/archive/backend/DEV0018-class-pass-reservations-and-confirmed-visits.md`                                | Cancelled/archive the unimplemented standalone-pass plan and point replacement membership check-ins to COR0007.                                                                     |
+| `tickets/current/backend/DEV0023-minimal-shared-activity-feed.md`                                                | Direct COR0007 member using only explicitly shared verified included/member-priced check-ins.                                                                                       |
+| `tickets/current/organisatory/COR0001-project-structure.md`, `COR0002-phantom-auth-and-demo-access.md`           | Updates downstream ownership and current identity/specification references.                                                                                                         |
+| `tickets/current/backend/DEV0041-club-wallet-authorization.md`, `DEV0055-hosted-supabase-staging-environment.md` | Corrects links to current identity, wallet-integrity and architecture sections without changing their implementation scope.                                                         |
+| Affected archived ticket links                                                                                   | Retargets references to DEV0018 after its required archive move; historical outcomes remain intact.                                                                                 |
 
 ### Decisions and deviations
 
@@ -97,16 +97,16 @@ The documented target contract changed materially, but no runtime interface, sch
 
 ## Validation results
 
-| Criterion | Evidence | Result |
-| --- | --- | --- |
-| AC1–AC3 | Manual review of the confirmed/proposed register, scope, membership/check-in/payment/allocation contracts, definition of done, milestones, acceptance matrix and demo | Passed |
-| AC4 | Manual reciprocal work-map review of COR0006, COR0007, DEV0023 and cancelled DEV0018 | Passed |
-| AC5 | Manual comparison of README/specification status against the unchanged application/schema state | Passed |
-| AC6 — whitespace | `git diff --check` | Passed with no output |
-| AC6 — repository formatting | `npm run format:check` | Passed; all configured application/source files match Prettier style |
-| AC6 — local Markdown paths | Node audit over 91 Markdown files | Passed; every repository-local Markdown target exists |
-| AC6 — Markdown fragments | Node heading/explicit-anchor audit across repository Markdown | Passed; all local fragments resolve |
-| Runtime/database/browser checks | Not run — this ticket changes product/documentation/work records only and makes no executable or database change | Not applicable |
+| Criterion                       | Evidence                                                                                                                                                              | Result                                                               |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| AC1–AC3                         | Manual review of the confirmed/proposed register, scope, membership/check-in/payment/allocation contracts, definition of done, milestones, acceptance matrix and demo | Passed                                                               |
+| AC4                             | Manual reciprocal work-map review of COR0006, COR0007, DEV0023 and cancelled DEV0018                                                                                  | Passed                                                               |
+| AC5                             | Manual comparison of README/specification status against the unchanged application/schema state                                                                       | Passed                                                               |
+| AC6 — whitespace                | `git diff --check`                                                                                                                                                    | Passed with no output                                                |
+| AC6 — repository formatting     | `npm run format:check`                                                                                                                                                | Passed; all configured application/source files match Prettier style |
+| AC6 — local Markdown paths      | Node audit over 91 Markdown files                                                                                                                                     | Passed; every repository-local Markdown target exists                |
+| AC6 — Markdown fragments        | Node heading/explicit-anchor audit across repository Markdown                                                                                                         | Passed; all local fragments resolve                                  |
+| Runtime/database/browser checks | Not run — this ticket changes product/documentation/work records only and makes no executable or database change                                                      | Not applicable                                                       |
 
 ## Risks, limitations, and follow-ups
 

@@ -2,11 +2,11 @@
 
 - Status: In progress
 - Created: 2026-09-20
-- Last updated: 2026-09-25
+- Last updated: 2026-10-03
 - Milestone: Cross-cutting application foundation
 - Converted from: Not applicable — created as a coordination record
 - Tracked development tickets: completed [DEV0030 — Frontend screen module boundaries](../../archive/frontend/DEV0030-frontend-screen-module-boundaries.md), completed [DEV0031 — Preview data and domain boundaries](../../archive/frontend/DEV0031-preview-data-and-domain-boundaries.md), completed [DEV0015 — Database foundation](../../archive/backend/DEV0015-supabase-database-foundation.md), completed [DEV0025 — Next.js backend boundary](../../archive/backend/DEV0025-nextjs-backend-boundary.md), and completed [DEV0027 — Phantom wallet connection foundation](../../archive/blockchain/DEV0027-phantom-wallet-connection-foundation.md); dedicated server-Solana verification and Anchor/program-client foundation tickets are still required
-- Related records: [DEV0008 — Frontend foundation](../../archive/frontend/DEV0008-repx-club-frontend.md) is the delivered baseline; [COR0002 — Phantom authentication and demo access](COR0002-phantom-auth-and-demo-access.md) coordinates downstream DEV0038–DEV0041; [COR0006](COR0006-persistent-access-catalogue.md), [COR0007](COR0007-core-multigym-membership-mvp.md), DEV0023 and DEV0051 are additional downstream records as mapped below; DEV0018/DEV0024 are cancelled history
+- Related records: [DEV0008 — Frontend foundation](../../archive/frontend/DEV0008-repx-club-frontend.md) is the delivered baseline; COR0002, COR0006 and COR0007 plus DEV0023/DEV0041/DEV0051 are superseded historical downstream records; current coach-first delivery is coordinated by [COR0009](COR0009-coach-first-training-package-mvp.md)
 
 ## Objective and context
 
@@ -111,18 +111,19 @@ The records below are flat peers. Each structural deliverable has one owner even
 
 The following records are downstream consumers. They implement product behavior inside established boundaries and are not direct owners of COR0001's structural foundation:
 
-| Downstream ticket                                                                                                                | Relationship to the structure                                                                                                                        |
-| -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [DEV0038 — Phantom Supabase Web3 authentication](../../archive/backend/DEV0038-phantom-supabase-web3-authentication.md)          | Uses DEV0027's browser wallet plus the server boundary to establish and verify the Supabase Auth session.                                            |
-| [DEV0039 — Prepared identity and wallet bindings](../../archive/backend/DEV0039-prepared-identity-and-wallet-bindings.md)        | Adds prepared identity and wallet-binding mappings and repositories over DEV0015's database boundary.                                                |
-| [DEV0040 — Protected access and database context](../../archive/backend/DEV0040-protected-access-and-database-context.md)        | Added the verified transaction-local database context and guarded server/frontend adapters.                                                          |
-| [DEV0041 — Club wallet authorization](../backend/DEV0041-club-wallet-authorization.md)                                           | Combines an individually authenticated club administrator with a separately proved club wallet without shared credentials or financial transactions. |
-| [DEV0051 — Club value proposition and sign-in entry](../../archive/frontend/DEV0051-club-value-proposition-and-sign-in-entry.md) | Reuses the delivered How-it-works and email-Auth boundaries for public club guidance and a thin club-facing sign-in route over DEV0041 authority.    |
-| [COR0006 — Persistent membership catalogue](COR0006-persistent-access-catalogue.md)                                               | Coordinates participating-gym and Basic/Classic plan catalogue schema/services/UI without owning access or payment state.                            |
-| [COR0007 — Core multi-gym membership MVP](COR0007-core-multigym-membership-mvp.md)                                                 | Coordinates membership activation, check-ins, payment evidence, provisional allocation, gym/member views and minimal social inside these boundaries. |
-| [DEV0018 — Class-pass reservations and confirmed visits](../../archive/backend/DEV0018-class-pass-reservations-and-confirmed-visits.md) | Cancelled historical pass reservation plan; a fresh COR0007 peer will own membership-based reservation/check-in behavior.                            |
-| [DEV0023 — Minimal shared activity feed](../backend/DEV0023-minimal-shared-activity-feed.md)                                     | Owns reaction-free feed/profile projections and UI consumption after identity, catalogue and verified access/attendance sources exist.               |
-| [DEV0024 — Verified challenge activity](../../archive/blockchain/DEV0024-verified-challenge-activity.md)                         | Cancelled historical challenge-source plan; no implementation exists and the access pivot removes it from current delivery.                          |
+| Downstream ticket                                                                                                                       | Relationship to the structure                                                                                               |
+| --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| [DEV0038 — Phantom Supabase Web3 authentication](../../archive/backend/DEV0038-phantom-supabase-web3-authentication.md)                 | Uses DEV0027's browser wallet plus the server boundary to establish and verify the Supabase Auth session.                   |
+| [DEV0039 — Prepared identity and wallet bindings](../../archive/backend/DEV0039-prepared-identity-and-wallet-bindings.md)               | Adds prepared identity and wallet-binding mappings and repositories over DEV0015's database boundary.                       |
+| [DEV0040 — Protected access and database context](../../archive/backend/DEV0040-protected-access-and-database-context.md)               | Added the verified transaction-local database context and guarded server/frontend adapters.                                 |
+| [DEV0041 — Club wallet authorization](../../archive/backend/DEV0041-club-wallet-authorization.md)                                       | Cancelled historical club-wallet consumer; DEV0101 removed its runtime.                                                     |
+| [DEV0051 — Club value proposition and sign-in entry](../../archive/frontend/DEV0051-club-value-proposition-and-sign-in-entry.md)        | Completed historical club-entry presentation; DEV0101 removed its runtime.                                                  |
+| [COR0006 — Persistent membership catalogue](../../archive/organisatory/COR0006-persistent-access-catalogue.md)                          | Cancelled historical catalogue coordination; additive database history remains.                                             |
+| [COR0007 — Core multi-gym membership MVP](../../archive/organisatory/COR0007-core-multigym-membership-mvp.md)                           | Cancelled historical product coordination, replaced by COR0009.                                                             |
+| [COR0009 — Coach-first private-class booking MVP](COR0009-coach-first-training-package-mvp.md)                                          | Current downstream product coordination using the retained frontend/server/database/wallet boundaries.                      |
+| [DEV0018 — Class-pass reservations and confirmed visits](../../archive/backend/DEV0018-class-pass-reservations-and-confirmed-visits.md) | Cancelled historical pass reservation plan; a fresh COR0007 peer will own membership-based reservation/check-in behavior.   |
+| [DEV0023 — Minimal shared activity feed](../../archive/backend/DEV0023-minimal-shared-activity-feed.md)                                 | Cancelled historical gym-check-in feed plan, replaced by COR0009's coach-led social ticket.                                 |
+| [DEV0024 — Verified challenge activity](../../archive/blockchain/DEV0024-verified-challenge-activity.md)                                | Cancelled historical challenge-source plan; no implementation exists and the access pivot removes it from current delivery. |
 
 Recommended sequence:
 
@@ -130,9 +131,9 @@ Recommended sequence:
 2. Preserve completed DEV0031 as the domain/discovery/preview baseline before persistence work replaces preview adapters.
 3. Preserve completed DEV0027 as the browser wallet/Solana client baseline.
 4. Preserve completed DEV0015 and DEV0025 with separate file ownership and evidence: DEV0015 created the real database artifacts/access modules; DEV0025 supplied and validated the server boundary rules around them.
-5. DEV0038 → DEV0039 → DEV0040 completed under COR0002 after DEV0015 and DEV0027. DEV0046 then completed account-first email Auth under COR0003 on 2026-09-21; DEV0047 is in progress and must complete its real Phantom evidence before DEV0041 club-wallet authority begins.
-6. Deliver DEV0041 before DEV0051 connects its public club entry to real server-derived club authority; neither ticket creates a second authentication system.
-7. Create the server-Solana verification and Anchor/program-client tickets before adding `src/server/solana`, `programs` or generated program bindings; COR0007's transaction peers consume those boundaries.
+5. DEV0038 → DEV0039 → DEV0040 completed under historical COR0002 after DEV0015 and DEV0027. DEV0046 then completed account-first email Auth under COR0003; DEV0047 remains the current personal-wallet owner.
+6. Preserve cancelled club/membership records as history; do not restore their removed runtime under this coordination record.
+7. COR0009's DEV0097–DEV0099 own any new server-Solana verification, program and generated-client boundaries required by coach packages.
 8. Complete COR0001 only after every direct structural ticket is completed or explicitly replaced/cancelled and the final tree, import, client-bundle and integration review passes.
 
 Generated Playwright output under `test-results/` is reproducible validation output rather than source or durable review evidence. The root [`.gitignore`](../../../.gitignore) ignores it, and owning tickets retain the observations needed for review.

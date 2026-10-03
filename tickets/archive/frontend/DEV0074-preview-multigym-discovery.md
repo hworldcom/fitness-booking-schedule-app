@@ -4,8 +4,8 @@
 - Created: 2026-09-25
 - Last updated: 2026-09-26
 - Milestone: M1 frontend membership discovery preview
-- Coordination: [COR0007 — Core multi-gym membership MVP](../../current/organisatory/COR0007-core-multigym-membership-mvp.md)
-- Related records: depends on completed [DEV0072](DEV0072-remove-legacy-product-ui.md); complements completed public story [DEV0073](DEV0073-rewrite-multigym-public-story.md); supplies discovery contracts to completed [DEV0075](DEV0075-preview-membership-selection.md); future persistence is coordinated by [COR0006](../../current/organisatory/COR0006-persistent-access-catalogue.md)
+- Coordination: [COR0007 — Core multi-gym membership MVP](../organisatory/COR0007-core-multigym-membership-mvp.md)
+- Related records: depends on completed [DEV0072](DEV0072-remove-legacy-product-ui.md); complements completed public story [DEV0073](DEV0073-rewrite-multigym-public-story.md); supplies discovery contracts to completed [DEV0075](DEV0075-preview-membership-selection.md); future persistence is coordinated by [COR0006](../organisatory/COR0006-persistent-access-catalogue.md)
 
 ## Objective and context
 
@@ -70,12 +70,12 @@ Completed a frontend-only plan and gym discovery preview over versioned, validat
 
 ### Affected files
 
-- [`src/domain/catalogue.ts`](../../../src/domain/catalogue.ts) defines storage-independent plan, money, access, gym, map-anchor and catalogue-result read contracts.
-- [`src/features/preview/catalogue.ts`](../../../src/features/preview/catalogue.ts) contains the two versioned plan summaries, seven fictional gym fixtures and the validating preview adapter.
-- [`src/domain/discovery.ts`](../../../src/domain/discovery.ts), [`src/features/discovery/filters.ts`](../../../src/features/discovery/filters.ts) and [`src/components/discovery-filters.tsx`](../../../src/components/discovery-filters.tsx) define and apply activity, area and plan filters.
-- [`src/features/discovery/explore.tsx`](../../../src/features/discovery/explore.tsx) renders plan comparison, gym cards/details, safe map-anchor links, state fallbacks and waitlist navigation. [`src/app/explore/page.tsx`](../../../src/app/explore/page.tsx) supplies accurate page metadata.
+- `src/domain/catalogue.ts` (historical path `src/domain/catalogue.ts`) defines storage-independent plan, money, access, gym, map-anchor and catalogue-result read contracts.
+- `src/features/preview/catalogue.ts` (historical path `src/features/preview/catalogue.ts`) contains the two versioned plan summaries, seven fictional gym fixtures and the validating preview adapter.
+- `src/domain/discovery.ts` (historical path `src/domain/discovery.ts`), `src/features/discovery/filters.ts` (historical path `src/features/discovery/filters.ts`) and `src/components/discovery-filters.tsx` (historical path `src/components/discovery-filters.tsx`) define and apply activity, area and plan filters.
+- `src/features/discovery/explore.tsx` (historical path `src/features/discovery/explore.tsx`) renders plan comparison, gym cards/details, safe map-anchor links, state fallbacks and waitlist navigation. `src/app/explore/page.tsx` (historical path `src/app/explore/page.tsx`) supplies accurate page metadata.
 - [`src/components/ui.tsx`](../../../src/components/ui.tsx) and [`src/app/globals.css`](../../../src/app/globals.css) provide the new artwork variants and responsive presentation.
-- [`tests/explore.test.ts`](../../../tests/explore.test.ts), [`tests/discovery.test.ts`](../../../tests/discovery.test.ts) and [`tests/browser/preview.spec.ts`](../../../tests/browser/preview.spec.ts) verify contracts, fixtures, distance, search, filters, dialogs, maps and desktop/mobile behavior.
+- `tests/explore.test.ts` (historical path `tests/explore.test.ts`), `tests/discovery.test.ts` (historical path `tests/discovery.test.ts`) and `tests/browser/preview.spec.ts` (historical path `tests/browser/preview.spec.ts`) verify contracts, fixtures, distance, search, filters, dialogs, maps and desktop/mobile behavior.
 - [`docs/mvp-spec.md`](../../../docs/mvp-spec.md) now records seven current preview gyms without making seven an infrastructure limit.
 
 ### Decisions and deviations

@@ -1,0 +1,73 @@
+# Coordination COR0009: Coach-first private-class booking MVP
+
+- Status: In progress
+- Created: 2026-10-02
+- Last updated: 2026-10-03
+- Milestone: Coach-first private-class hackathon MVP
+- Converted from: Not applicable — created as a coordination record
+- Tracked development tickets: DEV0094–DEV0101 and DEV0103–DEV0106; DEV0102 is unrelated local-auth reliability work
+- Related records: replaces the product direction coordinated by [COR0007 — Core multi-gym membership MVP](../../archive/organisatory/COR0007-core-multigym-membership-mvp.md); reuses applicable identity/wallet work from [COR0003](COR0003-account-first-identity-and-wallet-linking.md) and hosted delivery from [COR0004](COR0004-hosted-staging-deployment.md)
+
+## Objective and boundaries
+
+Coordinate the pivot from a users-to-gyms multi-gym membership into one users-to-coaches private-class product for independent martial-arts coaches. The integrated outcome lets a guest discover a coach and open capacity-one slot for the coming week; an authenticated client buy or use a coach-specific one-session/ten-session pass; both parties see one confirmed booking; cancellation preserve the full credit; the coach redeem one completed class; and the client follow the coach's chronological posts.
+
+This record owns sequencing, shared boundaries and integrated evidence only. It does not implement runtime behavior and its COR number must not appear in commit subjects. Production money, recurring calendars, group capacity, waitlists, external calendar sync, messaging, ratings, subscriptions, automatic refunds, no-show charges, disputes, transfer/resale and coach/gym revenue splitting remain outside this coordination.
+
+## Direct development work
+
+| Implementation part                 | Development ticket                                                                                                                             | Owned deliverable                                                                                                                                                                | Start condition or dependency                                                            |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Initial coach-first adoption        | Completed [DEV0094 — Adopt the coach-first training-package MVP](../../archive/organisatory/DEV0094-adopt-coach-first-training-package-mvp.md) | Replace the multi-gym contract and establish the initial coach/pass direction                                                                                                    | Delivered 2026-10-03; corrected by DEV0103                                               |
+| Private-class contract correction   | Completed [DEV0103 — Adopt the private-class booking contract](../../archive/organisatory/DEV0103-adopt-private-class-booking-contract.md)     | Make weekly capacity-one availability, one-session/ten-session passes, booking, cancellation-with-credit-retained and hosted integration explicit                                | Delivered 2026-10-03; precedes affected runtime implementation                           |
+| Public story and navigation         | [DEV0095 — Present the coach-first public story](../frontend/DEV0095-present-coach-first-public-story.md)                                      | Coach-first Home/How it works/navigation for discovery, weekly slots, pass purchase, booking, cancellation and completed-session redemption                                      | DEV0103 complete                                                                         |
+| Coach identity and discovery        | [DEV0096 — Persist coach profiles and discovery](../backend/DEV0096-persist-coach-profiles-and-discovery.md)                                   | Coach role/profile onboarding, timezone, fictional coach seed, public search/projection and coach profile screens                                                                | DEV0103 complete; can run in parallel with offer/availability foundations                |
+| Weekly private availability         | [DEV0104 — Publish weekly coach availability](../backend/DEV0104-publish-weekly-coach-availability.md)                                         | Explicit timezone-aware capacity-one slots for the coming seven days, coach controls and authoritative public projections                                                        | After DEV0096 provides coach identity and ownership                                      |
+| One-session/ten-session offers      | [DEV0097 — Create coach package offers on Devnet](../blockchain/DEV0097-create-coach-package-offers.md)                                        | Offer program state, immutable 1x/10x commercial terms, create/deactivate transactions, metadata binding and coach offer controls                                                | DEV0103 complete; depends on coach identity and applicable wallet authority from DEV0047 |
+| Pass purchase                       | [DEV0098 — Purchase training packages with Devnet USDC](../blockchain/DEV0098-purchase-training-packages-with-devnet-usdc.md)                  | Atomic test-USDC payment and one-session/ten-session TrainingPass creation with sponsorship, repeat-purchase identity, recovery and client pass UI                               | After DEV0097 and configured coach payment recipient                                     |
+| Pass-backed private booking         | [DEV0105 — Book private classes with pass credits](../backend/DEV0105-book-private-classes-with-pass-credits.md)                               | Purchase-time holds, capacity-one confirmation, future-credit reservation, cancellation with credit retained and cross-system recovery                                           | After DEV0104 supplies slots and DEV0098 supplies eligible passes/purchase completion    |
+| Completed-class redemption          | [DEV0099 — Redeem and reconcile training sessions](../blockchain/DEV0099-redeem-and-reconcile-training-sessions.md)                            | Coach-authorized completed-booking decrement, booking-bound structured history, reconciliation and coach/client booking/pass views                                               | After DEV0105 creates durable confirmed bookings                                         |
+| Coach-led social loop               | [DEV0100 — Add coach follows and chronological posts](../backend/DEV0100-coach-follows-and-chronological-posts.md)                             | One-way coach follows, coach-only text posts and chronological Following feed integrated with discovery profiles                                                                 | After DEV0096; may run in parallel with availability/blockchain peers                    |
+| Legacy multi-gym runtime retirement | Completed [DEV0101 — Retire the multi-gym membership runtime](../../archive/backend/DEV0101-retire-multigym-membership-runtime.md)             | Remove superseded membership/reservation/check-in/card routes, APIs and unused code while preserving migrations, evidence and generic wallet/payment primitives                  | Delivered 2026-10-03; DEV0098 reviews the retained generic sponsor boundary              |
+| Hosted integrated rehearsal         | [DEV0106 — Rehearse the hosted coach booking loop](../backend/DEV0106-rehearse-hosted-coach-booking-loop.md)                                   | Deploy and prove discovery, weekly slots, 1x/10x purchase, booking, cancellation/rebooking, completed redemption and coach social behavior with redacted staging/Devnet evidence | After every runtime peer completes; depends on the COR0004 staging foundation            |
+
+Every listed DEV ticket links directly back to COR0009. No ticket belongs to another coordination record for this work. Dependencies on identity, wallet and staging records do not make those records direct COR0009 members. DEV0102 is an independent authentication reliability ticket and is not included merely because its number falls between direct members.
+
+## Other relationships
+
+- [COR0003](COR0003-account-first-identity-and-wallet-linking.md) provides email-first accounts and optional personal-wallet control. COR0009 consumes that authority but does not redefine it. Coach/client wallet replacement must not strand active on-chain authority; the applicable owning ticket must resolve that boundary before offer layout is frozen.
+- [COR0004](COR0004-hosted-staging-deployment.md) provides the hosted Worker/Supabase/Auth/domain environment. DEV0106 consumes it and owns coach-booking-specific release and integrated evidence.
+- COR0006/COR0007 and their completed peers are historical implementation baselines. DEV0094 decided the disposition of unfinished records; COR0009 does not silently reopen or rewrite their completed evidence.
+- Cancelled DEV0092 preserves the experimental membership-card evidence. Its program/runtime was removed by DEV0101 and is not the TrainingPass authority; DEV0097 owns a new explicitly reviewed Offer/TrainingPass program boundary.
+
+## Delivery sequence and completion conditions
+
+DEV0094 and DEV0101 are complete: the initial coach-first contract is authoritative, obsolete runtime is unavailable and the public home is a truthful early-access state. DEV0103 completed the package-only contract correction before affected runtime work proceeds.
+
+After DEV0103, DEV0095 may build the truthful public story. DEV0096 and the program foundation in DEV0097 can proceed in parallel once their role/wallet dependencies are ready. DEV0104 follows coach identity and may run alongside DEV0097. DEV0098 follows authoritative 1x/10x offer terms and may reuse only generic sponsor/wallet boundaries explicitly preserved by DEV0101. DEV0105 integrates durable slots with eligible purchased passes and owns all hold/booking/cancellation behavior. DEV0099 follows durable confirmed bookings and consumes only completed classes. DEV0100 may proceed after persistent coach profiles. DEV0106 starts only after all runtime peers are complete and a clean integrated revision is ready for staging.
+
+Complete COR0009 only when every direct DEV ticket is Completed or explicitly Cancelled/replaced, the current specification's coach-first acceptance matrix passes, and DEV0106 records one hosted Devnet rehearsal demonstrating: guest coach/slot discovery; coach 1x/10x offer creation; exact test-USDC client purchase; one recoverable TrainingPass; one confirmed capacity-one booking; cancellation with unchanged balance and successful rebooking; coach redemption from full balance to one less; reload-consistent coach/client booking/pass views; coach follow; and a chronological coach post. No legacy four-gym, Basic/Classic, pool-allocation or wallet-membership-card surface or mutation API may remain current product behavior.
+
+## Progress and integration record
+
+- 2026-10-02: The user approved coach-first ticket planning after review identified cold-start discovery, coach onboarding, immutable payment recipients, purchase recovery and a defined coach redemption boundary.
+- 2026-10-02: DEV0094–DEV0100 were drafted as flat peers. DEV0101 was added when review showed no ticket owned removal of membership APIs, private flows and obsolete runtime code.
+- 2026-10-03: DEV0094 completed the initial coach-first specification/backlog adoption and archived superseded unfinished work as Cancelled history. DEV0101 then removed the reachable gym/membership runtime, preserved additive migrations and generic wallet/sponsor boundaries, and passed unit, static, production-build and desktop/mobile negative-route checks.
+- 2026-10-03: Review identified that the adopted contract treated private sessions as arrangements outside MovX. The user confirmed that weekly coach availability, customer booking, one-session/ten-session test-USDC passes and cancellation with the credit retained are core behavior. DEV0103 completed the contract/work-map correction; DEV0104–DEV0106 supply previously missing availability, booking and hosted-integration ownership.
+- 2026-10-03: DEV0095 moved to In progress with a first public-positioning slice: the early-access hero now states the martial-arts coach marketplace outcome directly, while its coming-soon and Devnet/test-money disclosures remain intact. The full Home, How it works and navigation deliverable remains open.
+
+## Validation results
+
+The initial package-only work-map validation remains historical evidence in DEV0094. DEV0103 records passing consistency validation for the corrected private-class contract and direct work map. DEV0101 records the runtime validation for the completed cleanup slice. Full coach-first private-class integration remains pending the current runtime peers and DEV0106.
+
+## Risks, limitations, and follow-ups
+
+The largest delivery risks are cross-system purchase/booking recovery, concurrent slot and last-credit claims, custom-program scope, test-USDC availability, fee sponsorship, coach/client wallet replacement and reliable chain-to-database indexing. Database booking references improve traceability but do not prove a real-world class occurred; unilateral coach completion needs later dispute/no-show policy before production. The pivot intentionally leaves additive multi-gym migration/data history; destructive cleanup requires a separate retention review.
+
+## Completion and review references
+
+- Completed: Not completed.
+- Direct development tickets: DEV0094, DEV0101 and DEV0103 Completed; DEV0095 In progress; DEV0096–DEV0100 and DEV0104–DEV0106 Draft.
+- Commit: Not applicable — coordination-record IDs are not used in commit subjects.
+- Review: Planning self-review only; no independent review.
+- Deployment or release: None.

@@ -5,7 +5,7 @@
 - Last updated: 2026-09-20
 - Milestone: M0 backend foundation
 - Coordination: [COR0001 — Project structure](../../current/organisatory/COR0001-project-structure.md)
-- Related tickets: [DEV0014 — Database and backend plan](DEV0014-database-and-backend-plan.md); implemented with [DEV0015 — Supabase database foundation](DEV0015-supabase-database-foundation.md); establishes the boundary used by [COR0002](../../current/organisatory/COR0002-phantom-auth-and-demo-access.md), converted from retired DEV0016, [COR0006](../../current/organisatory/COR0006-persistent-access-catalogue.md), converted from retired DEV0017, later-cancelled [DEV0018](DEV0018-class-pass-reservations-and-confirmed-visits.md), [DEV0023](../../current/backend/DEV0023-minimal-shared-activity-feed.md), and later Solana integration tickets
+- Related tickets: [DEV0014 — Database and backend plan](DEV0014-database-and-backend-plan.md); implemented with [DEV0015 — Supabase database foundation](DEV0015-supabase-database-foundation.md); establishes the boundary used by [COR0002](../organisatory/COR0002-phantom-auth-and-demo-access.md), converted from retired DEV0016, [COR0006](../organisatory/COR0006-persistent-access-catalogue.md), converted from retired DEV0017, later-cancelled [DEV0018](DEV0018-class-pass-reservations-and-confirmed-visits.md), [DEV0023](./DEV0023-minimal-shared-activity-feed.md), and later Solana integration tickets
 
 ## Objective and context
 

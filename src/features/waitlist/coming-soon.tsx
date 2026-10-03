@@ -3,10 +3,10 @@ import { ArrowLeft, ArrowRight, Check, Dumbbell, Sparkles } from "lucide-react";
 import { WaitlistRequest } from "./waitlist-request";
 
 const previewSteps = [
-  "Discover participating gyms",
-  "Compare Basic and Classic membership",
-  "Choose four core gyms",
-  "Share verified participation when you choose",
+  "Discover independent martial-arts coaches",
+  "Review customizable prepaid packages",
+  "Purchase with test USDC on Solana Devnet",
+  "Track the remaining sessions together",
 ];
 
 export function ComingSoonScreen() {
@@ -16,12 +16,12 @@ export function ComingSoonScreen() {
         <div className="coming-soon-copy">
           <span className="eyebrow">MOVX CLUB · COMING SOON</span>
           <h1 id="coming-soon-title">
-            Flexible fitness access is getting ready to move.
+            Find the right martial arts coach for you.
           </h1>
           <p>
-            We&apos;re building one membership for flexible access across four
-            selected participating gyms, with a small community layer around
-            showing up.
+            Discover independent coaches, explore their disciplines and
+            availability, and book private training that fits your goals and
+            schedule.
           </p>
           <ul>
             {previewSteps.map((step) => (
@@ -34,7 +34,7 @@ export function ComingSoonScreen() {
           <div className="coming-soon-status">
             <Sparkles size={17} aria-hidden="true" />
             <span>
-              Product preview · Solana Devnet · Test EURC · No real funds
+              Product preview · Solana Devnet · Test USDC · No real funds
             </span>
           </div>
         </div>
@@ -44,7 +44,7 @@ export function ComingSoonScreen() {
           <span className="coming-soon-orbit-center">
             <Dumbbell size={35} />
           </span>
-          <strong>FOUR GYMS · ONE MEMBERSHIP</strong>
+          <strong>ONE COACH · ONE CLEAR PACKAGE</strong>
         </div>
       </section>
 
@@ -54,10 +54,10 @@ export function ComingSoonScreen() {
           <h2>Get an invitation when the complete demo is ready.</h2>
           <p>
             Join the early-access list for product updates, demo availability
-            and the first complete multi-gym membership walkthrough.
+            and the first complete coach-package walkthrough.
           </p>
-          <Link href="/how-it-works" className="coming-soon-text-link">
-            <ArrowLeft size={15} aria-hidden="true" /> Review how MovX works
+          <Link href="/" className="coming-soon-text-link">
+            <ArrowLeft size={15} aria-hidden="true" /> MovX Club home
           </Link>
         </div>
         <WaitlistRequest />
@@ -65,12 +65,12 @@ export function ComingSoonScreen() {
 
       <section className="coming-soon-return">
         <div>
-          <span className="eyebrow">EXPLORE THE CURRENT PREVIEW</span>
-          <h2>The interim gym preview is already open.</h2>
+          <span className="eyebrow">FOLLOW THE REBUILD</span>
+          <h2>The coach-first experience is coming next.</h2>
         </div>
-        <Link className="button dark" href="/explore">
-          Explore MovX <ArrowRight size={17} aria-hidden="true" />
-        </Link>
+        <a className="button dark" href="#waitlist-email">
+          Join the waitlist <ArrowRight size={17} aria-hidden="true" />
+        </a>
       </section>
     </div>
   );

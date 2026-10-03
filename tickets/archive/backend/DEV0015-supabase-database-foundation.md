@@ -5,7 +5,7 @@
 - Last updated: 2026-09-20
 - Milestone: M0 database foundation
 - Coordination: [COR0001 — Project structure](../../current/organisatory/COR0001-project-structure.md)
-- Related tickets: [DEV0014 — Planning record](DEV0014-database-and-backend-plan.md), [DEV0008 — Frontend](../frontend/DEV0008-repx-club-frontend.md); implemented the server boundary with [DEV0025](DEV0025-nextjs-backend-boundary.md); next [COR0002](../../current/organisatory/COR0002-phantom-auth-and-demo-access.md), converted from retired DEV0016
+- Related tickets: [DEV0014 — Planning record](DEV0014-database-and-backend-plan.md), [DEV0008 — Frontend](../frontend/DEV0008-repx-club-frontend.md); implemented the server boundary with [DEV0025](DEV0025-nextjs-backend-boundary.md); next [COR0002](../organisatory/COR0002-phantom-auth-and-demo-access.md), converted from retired DEV0016
 
 ## Objective and context
 

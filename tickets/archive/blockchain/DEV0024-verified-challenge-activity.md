@@ -5,7 +5,7 @@
 - Last updated: 2026-09-24
 - Milestone: Superseded M4 challenge social sources
 - Coordination: None — independent development ticket
-- Related tickets: Planning [DEV0022](../backend/DEV0022-social-contract-and-delivery-plan.md); superseded by [DEV0058 — Adopt the fitness-access MVP contract](../organisatory/DEV0058-fitness-access-mvp-contract.md); the shared-data plan formerly tracked as DEV0017 is now [COR0006](../../current/organisatory/COR0006-persistent-access-catalogue.md), while cancelled [DEV0018](../backend/DEV0018-class-pass-reservations-and-confirmed-visits.md) and minimal feed [DEV0023](../../current/backend/DEV0023-minimal-shared-activity-feed.md) retain their records
+- Related tickets: Planning [DEV0022](../backend/DEV0022-social-contract-and-delivery-plan.md); superseded by [DEV0058 — Adopt the fitness-access MVP contract](../organisatory/DEV0058-fitness-access-mvp-contract.md); the shared-data plan formerly tracked as DEV0017 is now [COR0006](../organisatory/COR0006-persistent-access-catalogue.md), while cancelled [DEV0018](../backend/DEV0018-class-pass-reservations-and-confirmed-visits.md) and minimal feed [DEV0023](../backend/DEV0023-minimal-shared-activity-feed.md) retain their records
 
 ## Objective and context
 

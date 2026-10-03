@@ -52,11 +52,11 @@ The existing footer layout was extended with a small wrapping contact group rath
 
 ### Affected files
 
-| File or component | Change and purpose |
-| ----------------- | ------------------ |
-| [`src/components/shell.tsx`](../../../src/components/shell.tsx) | Adds the visible shared-footer email address and exact `mailto:` target. |
-| [`src/app/globals.css`](../../../src/app/globals.css) | Keeps the copyright/contact group wrapping, readable and visually consistent with existing footer styling. |
-| [`tests/browser/redesign.spec.ts`](../../../tests/browser/redesign.spec.ts) | Verifies link text and target, keyboard focus, viewport visibility and absence of horizontal overflow at four widths in both browser projects. |
+| File or component                                                                   | Change and purpose                                                                                                                             |
+| ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`src/components/shell.tsx`](../../../src/components/shell.tsx)                     | Adds the visible shared-footer email address and exact `mailto:` target.                                                                       |
+| [`src/app/globals.css`](../../../src/app/globals.css)                               | Keeps the copyright/contact group wrapping, readable and visually consistent with existing footer styling.                                     |
+| `tests/browser/redesign.spec.ts` (historical path `tests/browser/redesign.spec.ts`) | Verifies link text and target, keyboard focus, viewport visibility and absence of horizontal overflow at four widths in both browser projects. |
 
 ### Decisions and deviations
 
@@ -72,12 +72,12 @@ Validation ran on 2026-09-22 against the configured local production build.
 
 The first sandboxed `npm test` attempt could not create the `tsx` IPC socket and stopped with `listen EPERM`; the same unchanged command was rerun with permission to create the local socket and all 38 tests passed. This was an execution-environment restriction rather than a test failure.
 
-| Criterion | Evidence | Result |
-| --------- | -------- | ------ |
-| AC1–AC2 | `npm run test:e2e -- --grep "club layout remains usable"` passed 2 desktop/mobile browser-project checks. Each project verified the exact link and `href`, keyboard focus, viewport presence and no horizontal overflow at 320, 600, 820 and 1100 pixels. | Passed |
-| AC1–AC2 | `npm run test:e2e -- --grep "home discovery links preserve"` passed 2 desktop/mobile browser-project checks. Full-page screenshots were inspected at 1440×1040 and 393×852; the footer address remained readable and balanced with the tagline and Devnet badge. | Passed |
-| AC3 | `npm run format:check`, `npm run lint` and `npm run typecheck` passed. `npm test` passed all 38 tests after the sandbox-only IPC retry. | Passed |
-| AC3 | `npx next build --webpack` completed successfully with all 12 static pages generated and dynamic routes compiled. Webpack was used because it is the established build validation in this restricted environment. | Passed |
+| Criterion | Evidence                                                                                                                                                                                                                                                         | Result |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| AC1–AC2   | `npm run test:e2e -- --grep "club layout remains usable"` passed 2 desktop/mobile browser-project checks. Each project verified the exact link and `href`, keyboard focus, viewport presence and no horizontal overflow at 320, 600, 820 and 1100 pixels.        | Passed |
+| AC1–AC2   | `npm run test:e2e -- --grep "home discovery links preserve"` passed 2 desktop/mobile browser-project checks. Full-page screenshots were inspected at 1440×1040 and 393×852; the footer address remained readable and balanced with the tagline and Devnet badge. | Passed |
+| AC3       | `npm run format:check`, `npm run lint` and `npm run typecheck` passed. `npm test` passed all 38 tests after the sandbox-only IPC retry.                                                                                                                          | Passed |
+| AC3       | `npx next build --webpack` completed successfully with all 12 static pages generated and dynamic routes compiled. Webpack was used because it is the established build validation in this restricted environment.                                                | Passed |
 
 ## Risks, limitations, and follow-ups
 

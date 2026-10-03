@@ -4,8 +4,6 @@ import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import {
   House,
-  Dumbbell,
-  WalletCards,
   UserRound,
   MapPin,
   ArrowUpRight,
@@ -21,21 +19,12 @@ import {
   WalletConnectionPanel,
   WalletStatusButton,
 } from "@/solana/client/wallet-connection";
-import { ClubWalletAuthorityGuard } from "@/solana/client/club-wallet-authority";
 
 const navigation = [
   { label: "Home", href: "/", Icon: House },
-  { label: "Explore", href: "/explore", Icon: Dumbbell },
-  { label: "My Membership", href: "/my-access", Icon: WalletCards },
   { label: "Profile", href: "/profile", Icon: UserRound },
 ];
-export function Shell({
-  children,
-  storageUnavailable,
-}: {
-  children: ReactNode;
-  storageUnavailable: boolean;
-}) {
+export function Shell({ children }: { children: ReactNode }) {
   const path = usePathname();
   const { actor } = useActor();
   const [modal, setModal] = useState<"wallet" | "about" | null>(null);
@@ -44,7 +33,6 @@ export function Shell({
     href === "/" ? path === "/" : path.startsWith(href);
   return (
     <>
-      <ClubWalletAuthorityGuard />
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
@@ -53,9 +41,9 @@ export function Shell({
           <Brand />
         </Link>
         <div className="sidebar-caption">
-          YOUR GYMS.
+          FIND YOUR COACH.
           <br />
-          MOVE TOGETHER.
+          TRAIN TOGETHER.
         </div>
         <nav aria-label="Main navigation">
           {navigation.map(({ label, href, Icon }) => (
@@ -78,17 +66,10 @@ export function Shell({
         <div className="sidebar-bottom">
           <div className="club-note">
             <span className="little-spark">✳</span>
-            <strong>
-              Your gyms.
-              <br />
-              One membership.
-            </strong>
-            <p>
-              Compare the demo plans and
-              <br /> participating gyms.
-            </p>
-            <Link href="/explore">
-              Explore gyms <ArrowUpRight size={16} />
+            <strong>Coach-first MovX is coming.</strong>
+            <p>Join the early-access list while we rebuild the experience.</p>
+            <Link href="/coming-soon">
+              Join the waitlist <ArrowUpRight size={16} />
             </Link>
           </div>
           <button className="preview-link" onClick={() => setModal("about")}>
@@ -106,9 +87,9 @@ export function Shell({
             </Link>
           )}
           <span className="sidebar-tagline">
-            Flexible fitness,
+            Coaches. Packages.
             <br />
-            <span>built around people.</span>
+            <span>Sessions that stay clear.</span>
           </span>
         </div>
       </aside>
@@ -122,9 +103,9 @@ export function Shell({
             <span>Berlin, Germany</span>
           </span>
           <div className="header-right">
-            <Link href="/how-it-works" className="how-it-works-link">
+            <Link href="/coming-soon" className="how-it-works-link">
               <CircleHelp size={17} aria-hidden="true" />
-              <span>How it works</span>
+              <span>Early access</span>
             </Link>
             <AuthStatusLink />
             <WalletStatusButton onOpen={() => setModal("wallet")} />
@@ -146,17 +127,11 @@ export function Shell({
           <span>
             <i /> DEMO WORLD
           </span>
-          <p>Meet your club. Explore the experience.</p>
+          <p>Coach-first rebuild in progress.</p>
           <button onClick={() => setModal("about")}>
             Fixtures · No real funds <Info size={13} />
           </button>
         </div>
-        {storageUnavailable && (
-          <div className="storage-warning" role="status">
-            Browser storage is unavailable. Your changes will last only until
-            this page closes.
-          </div>
-        )}
         <main id="main-content" className="page-content" tabIndex={-1}>
           {children}
         </main>
@@ -168,9 +143,9 @@ export function Shell({
             </a>
           </span>
           <span className="footer-tagline">
-            Flexible fitness, built around people.
+            Find a coach. Train with clarity.
           </span>
-          <Pill>Solana Devnet target · Test EURC</Pill>
+          <Pill>Solana Devnet target · Test USDC</Pill>
         </footer>
       </div>
       <nav className="mobile-nav" aria-label="Mobile navigation">
@@ -205,20 +180,19 @@ export function Shell({
           ) : (
             <>
               <p className="dialog-copy">
-                MovX Club is focusing on one multi-gym membership with a small
-                community layer around verified participation.
+                MovX Club is becoming a coach-first marketplace for prepaid
+                training packages and verifiable session balances.
               </p>
               <div className="notice">
                 <strong>Everything here is demonstration data.</strong>
                 <p>
-                  Browse illustrative gyms and preview the current concept. Your
-                  follows stay in this browser. Venues, visits and people are
-                  fixtures, not live partnerships or financial records.
+                  The current public preview is transitional. Coaches, offers,
+                  packages and posts shown during the rebuild are fixtures, not
+                  live partnerships or financial records.
                 </p>
               </div>
               <p className="small-copy">
-                Membership activation, payment and check-ins are not live in
-                this preview.
+                Coach-package purchase and redemption are not live yet.
               </p>
               <button
                 className="button lime full"

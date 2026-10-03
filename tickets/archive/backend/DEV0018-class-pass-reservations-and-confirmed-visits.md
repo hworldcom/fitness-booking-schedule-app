@@ -5,7 +5,7 @@
 - Last updated: 2026-09-25
 - Milestone: Superseded class-pass access plan
 - Coordination: None — independent development ticket
-- Related records: planned by [DEV0014](DEV0014-database-and-backend-plan.md); revised by [DEV0048](DEV0048-remove-gym-membership-access.md), [DEV0058](../organisatory/DEV0058-fitness-access-mvp-contract.md), [DEV0066](../organisatory/DEV0066-freeze-membership-product-rules.md) and [DEV0068](../organisatory/DEV0068-revise-subscription-and-pass-resale-contract.md); cancelled by completed [DEV0069](../organisatory/DEV0069-adopt-core-multigym-membership-mvp.md); replacement membership check-in work is mapped by [COR0007](../../current/organisatory/COR0007-core-multigym-membership-mvp.md)
+- Related records: planned by [DEV0014](DEV0014-database-and-backend-plan.md); revised by [DEV0048](DEV0048-remove-gym-membership-access.md), [DEV0058](../organisatory/DEV0058-fitness-access-mvp-contract.md), [DEV0066](../organisatory/DEV0066-freeze-membership-product-rules.md) and [DEV0068](../organisatory/DEV0068-revise-subscription-and-pass-resale-contract.md); cancelled by completed [DEV0069](../organisatory/DEV0069-adopt-core-multigym-membership-mvp.md); replacement membership check-in work is mapped by [COR0007](../organisatory/COR0007-core-multigym-membership-mvp.md)
 
 ## Cancellation outcome
 

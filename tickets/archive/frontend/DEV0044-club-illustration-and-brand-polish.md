@@ -51,11 +51,11 @@ Replaced the hero's hard-edged running photograph with an illustrative group of 
 
 ### Affected files
 
-- [Feed](../../../src/features/feed/feed.tsx): consumes the new photo and decorative marks; existing destinations and feed behavior remain intact.
+- Feed (historical path `src/features/feed/feed.tsx`): consumes the new photo and decorative marks; existing destinations and feed behavior remain intact.
 - [Decorative SVG components](../../../src/components/club-doodles.tsx): small reusable shoe/star marks.
 - [Shared UI](../../../src/components/ui.tsx) and [shell](../../../src/components/shell.tsx): accessible wordmark and brand signature.
 - [Club theme](../../../src/app/club-theme.css): responsive image blend, decoration placement, logo/signature typography.
-- [Browser checks](../../../tests/browser/redesign.spec.ts): confirms the footer signature and home link remain visible across narrow/intermediate widths.
+- Browser checks (historical path `tests/browser/redesign.spec.ts`): confirms the footer signature and home link remain visible across narrow/intermediate widths.
 - [Asset provenance](../../../docs/design/DEV0044-assets.md) and [specification](../../../docs/mvp-spec.md#visual-design-direction--21-september-2026): durable image prompt and accepted design contract.
 
 ### Decisions and deviations
@@ -65,7 +65,6 @@ Kept the existing locally served display font for italic signatures rather than 
 ### Contracts, configuration, and operations
 
 No data, API, environment, authentication or payment contract changes. No new dependency or migration. Hero WebP is approximately 97 KB. Existing image assets remain available; rollback consists of reverting this ticket's component/style/asset changes.
-
 
 ## Validation results
 
@@ -80,13 +79,12 @@ No data, API, environment, authentication or payment contract changes. No new de
 - Restarted this workspace's production server; `curl --fail --silent http://localhost:3100/ -o /private/tmp/repx-DEV0044-served.html` — successful response; verified new hero path and wordmark markers.
 - No database tests or devnet transaction rehearsal: no changes to those contracts. No new live authentication rehearsal; existing browser guidance and keyboard checks cover the shared header change.
 
-| Criterion | Evidence | Result |
-| --- | --- | --- |
-| AC1 | [Desktop screenshot](../../../docs/design/DEV0044-desktop.png), image/decorative component review | Passed |
-| AC2 | [Mobile screenshot](../../../docs/design/DEV0044-mobile.png), final footer/home-link assertions | Passed |
-| AC3 | 14 broad checks plus 4 final responsive/navigation checks | Passed |
-| AC4 | Specification and provenance links checked | Passed |
-
+| Criterion | Evidence                                                                                          | Result |
+| --------- | ------------------------------------------------------------------------------------------------- | ------ |
+| AC1       | [Desktop screenshot](../../../docs/design/DEV0044-desktop.png), image/decorative component review | Passed |
+| AC2       | [Mobile screenshot](../../../docs/design/DEV0044-mobile.png), final footer/home-link assertions   | Passed |
+| AC3       | 14 broad checks plus 4 final responsive/navigation checks                                         | Passed |
+| AC4       | Specification and provenance links checked                                                        | Passed |
 
 ## Risks, limitations, and follow-ups
 

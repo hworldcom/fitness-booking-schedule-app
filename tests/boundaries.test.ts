@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -135,12 +135,8 @@ test("privileged database entry points carry the Next.js server-only marker", ()
   for (const relative of [
     "src/server/db/client.ts",
     "src/server/db/env.ts",
-    "src/server/db/catalogue/repository.ts",
-    "src/server/db/membership/repository.ts",
-    "src/server/db/reservations/repository.ts",
     "src/server/db/schema/index.ts",
     "src/server/db/identity/repository.ts",
-    "src/server/db/wallet/club-repository.ts",
     "src/server/db/wallet/repository.ts",
     "src/server/db/authorization/repository.ts",
     "src/server/auth/client.ts",
@@ -150,15 +146,8 @@ test("privileged database entry points carry the Next.js server-only marker", ()
     "src/server/authorization/page-access.ts",
     "src/server/authorization/service.ts",
     "src/server/identity/service.ts",
-    "src/server/catalogue/service.ts",
-    "src/server/membership/service.ts",
-    "src/server/reservations/service.ts",
-    "src/server/solana/membership-payment-config.ts",
-    "src/server/solana/membership-fee-sponsor-config.ts",
-    "src/server/solana/membership-payment-sponsorship.ts",
-    "src/server/solana/membership-payment-reconciliation.ts",
+    "src/server/solana/fee-sponsor-config.ts",
     "src/server/wallet/signature.ts",
-    "src/server/wallet/club-service.ts",
     "src/server/wallet/service.ts",
   ]) {
     const contents = readFileSync(path.join(root, relative), "utf8");
@@ -180,7 +169,6 @@ test("application repositories own database connections per request", () => {
   );
 
   for (const relative of [
-    "src/server/db/catalogue/repository.ts",
     "src/server/db/identity/repository.ts",
     "src/server/db/authorization/repository.ts",
   ]) {
@@ -190,47 +178,33 @@ test("application repositories own database connections per request", () => {
   }
 });
 
-test("verified membership completion is not exposed through an application route", () => {
-  const app = path.join(src, "app");
-  const violations = sourceFiles(app).filter((file) =>
-    readFileSync(file, "utf8").includes("completeVerifiedMembershipActivation"),
-  );
-
-  assert.deepEqual(violations, []);
+test("legacy membership and gym-wallet mutation entry points remain absent", () => {
+  for (const relative of [
+    "src/app/api/membership/route.ts",
+    "src/app/api/membership/activation/prepare/route.ts",
+    "src/app/api/membership-card/devnet/prepare/route.ts",
+    "src/app/api/staff/check-ins/confirm/route.ts",
+    "src/app/api/wallet/club/route.ts",
+    "src/app/membership/setup/page.tsx",
+    "src/app/membership-card/devnet/rehearsal/page.tsx",
+    "src/app/my-access/page.tsx",
+    "src/app/clubs/sign-in/page.tsx",
+    "src/server/membership/service.ts",
+    "src/server/reservations/service.ts",
+    "src/server/checkins/service.ts",
+    "src/features/membership/setup.tsx",
+    "src/features/membership-card/devnet-rehearsal.tsx",
+  ]) {
+    assert.equal(existsSync(path.join(root, relative)), false, relative);
+  }
 });
 
-test("membership fee-sponsor secret has one server-only source consumer", () => {
+test("fee-sponsor secret has one generic server-only source consumer", () => {
   const consumers = sourceFiles(src)
     .filter((file) =>
       readFileSync(file, "utf8").includes("SOLANA_FEE_SPONSOR_KEYPAIR_BASE64"),
     )
     .map((file) => path.relative(root, file));
 
-  assert.deepEqual(consumers, [
-    "src/server/solana/membership-fee-sponsor-config.ts",
-  ]);
-});
-
-test("membership sponsorship route accepts only an operation identifier", () => {
-  const route = readFileSync(
-    path.join(root, "src/app/api/membership/activation/sponsor/route.ts"),
-    "utf8",
-  );
-
-  assert.match(route, /Object\.keys\(record\)\.length !== 1/);
-  assert.match(route, /"operationId" in record/);
-  assert.doesNotMatch(
-    route,
-    /record\.(?:wireTransaction|transaction|amount|mint|destination|wallet|blockhash)/,
-  );
-});
-
-test("membership sponsorship batches token-account readiness into one RPC request", () => {
-  const sponsorship = readFileSync(
-    path.join(root, "src/server/solana/membership-payment-sponsorship.ts"),
-    "utf8",
-  );
-
-  assert.match(sponsorship, /fetchAllMaybeToken\(/);
-  assert.doesNotMatch(sponsorship, /\bfetchToken\(/);
+  assert.deepEqual(consumers, ["src/server/solana/fee-sponsor-config.ts"]);
 });

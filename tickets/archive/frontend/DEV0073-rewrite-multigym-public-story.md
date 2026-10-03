@@ -4,7 +4,7 @@
 - Created: 2026-09-25
 - Last updated: 2026-09-26
 - Milestone: M0 truthful positioning and guide
-- Coordination: [COR0007 — Core multi-gym membership MVP](../../current/organisatory/COR0007-core-multigym-membership-mvp.md)
+- Coordination: [COR0007 — Core multi-gym membership MVP](../organisatory/COR0007-core-multigym-membership-mvp.md)
 - Related records: depends on completed [DEV0072](DEV0072-remove-legacy-product-ui.md); uses the contract adopted by [DEV0069](../organisatory/DEV0069-adopt-core-multigym-membership-mvp.md) and amended by [DEV0070](../organisatory/DEV0070-revise-multigym-plan-pricing.md); discovery followed in completed [DEV0074](DEV0074-preview-multigym-discovery.md)
 
 ## Objective and context

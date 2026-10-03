@@ -4,8 +4,8 @@
 - Created: 2026-09-27
 - Last updated: 2026-09-27
 - Milestone: M2 membership period and activation
-- Coordination: [COR0007 — Core multi-gym membership MVP](../../current/organisatory/COR0007-core-multigym-membership-mvp.md)
-- Related records: follows the finalized verifier in [DEV0081 — Activate memberships with Devnet EURC](../../current/blockchain/DEV0081-devnet-membership-activation.md), the sponsored rehearsal and parser correction in [DEV0082 — Sponsor membership network fees](../../current/blockchain/DEV0082-sponsor-membership-network-fees.md), and the archived persistence foundation in [DEV0080 — Persist membership activation foundation](DEV0080-membership-activation-foundation.md)
+- Coordination: [COR0007 — Core multi-gym membership MVP](../organisatory/COR0007-core-multigym-membership-mvp.md)
+- Related records: follows the finalized verifier in [DEV0081 — Activate memberships with Devnet EURC](../blockchain/DEV0081-devnet-membership-activation.md), the sponsored rehearsal and parser correction in [DEV0082 — Sponsor membership network fees](../blockchain/DEV0082-sponsor-membership-network-fees.md), and the archived persistence foundation in [DEV0080 — Persist membership activation foundation](DEV0080-membership-activation-foundation.md)
 
 ## Objective and context
 
@@ -68,13 +68,13 @@ The paid operation was re-verified at finalized slot `504802995`, completed once
 
 ### Affected files
 
-| File or component | Change and purpose |
-| --- | --- |
-| [`supabase/migrations/20260927000100_recover_verified_membership_activation.sql`](../../../supabase/migrations/20260927000100_recover_verified_membership_activation.sql) | Adds the narrow recoverable lifecycle transition and exact verified-completion rules without resetting existing activation evidence. |
-| [`src/domain/membership-activation.ts`](../../../src/domain/membership-activation.ts), [`src/server/membership/service.ts`](../../../src/server/membership/service.ts) | Classifies only submitted `verification-failed` operations as recoverable and routes them through finalized reconciliation before internal completion. |
-| [`src/solana/membership-payment.ts`](../../../src/solana/membership-payment.ts), [`src/server/solana/membership-payment-reconciliation.ts`](../../../src/server/solana/membership-payment-reconciliation.ts) | Defines and checks the full Solana Devnet genesis hash so a valid configured endpoint is not rejected as the wrong cluster. |
-| [`tests/database/membership-activation.test.ts`](../../../tests/database/membership-activation.test.ts), [`tests/membership-activation.test.ts`](../../../tests/membership-activation.test.ts), [`tests/membership-payment-verification.test.ts`](../../../tests/membership-payment-verification.test.ts) | Covers exact recovery, concurrent idempotence, terminal neighboring failures, recovery classification and full/truncated/wrong genesis hashes. |
-| [`docs/mvp-spec.md`](../../../docs/mvp-spec.md) | Records the confirmed rule that a stored `verification-failed` payment may recover only after full finalized-chain re-verification of the immutable quote and signature. |
+| File or component                                                                                                                                                                                                                                                                                                                 | Change and purpose                                                                                                                                                       |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`supabase/migrations/20260927000100_recover_verified_membership_activation.sql`](../../../supabase/migrations/20260927000100_recover_verified_membership_activation.sql)                                                                                                                                                         | Adds the narrow recoverable lifecycle transition and exact verified-completion rules without resetting existing activation evidence.                                     |
+| `src/domain/membership-activation.ts` (historical path `src/domain/membership-activation.ts`), `src/server/membership/service.ts` (historical path `src/server/membership/service.ts`)                                                                                                                                            | Classifies only submitted `verification-failed` operations as recoverable and routes them through finalized reconciliation before internal completion.                   |
+| `src/solana/membership-payment.ts` (historical path `src/solana/membership-payment.ts`), `src/server/solana/membership-payment-reconciliation.ts` (historical path `src/server/solana/membership-payment-reconciliation.ts`)                                                                                                      | Defines and checks the full Solana Devnet genesis hash so a valid configured endpoint is not rejected as the wrong cluster.                                              |
+| `tests/database/membership-activation.test.ts` (historical path `tests/database/membership-activation.test.ts`), `tests/membership-activation.test.ts` (historical path `tests/membership-activation.test.ts`), `tests/membership-payment-verification.test.ts` (historical path `tests/membership-payment-verification.test.ts`) | Covers exact recovery, concurrent idempotence, terminal neighboring failures, recovery classification and full/truncated/wrong genesis hashes.                           |
+| [`docs/mvp-spec.md`](../../../docs/mvp-spec.md)                                                                                                                                                                                                                                                                                   | Records the confirmed rule that a stored `verification-failed` payment may recover only after full finalized-chain re-verification of the immutable quote and signature. |
 
 ### Decisions and deviations
 
@@ -99,13 +99,13 @@ A forward PostgreSQL migration refines the activation lifecycle. Existing deploy
 - Recovery state: operation `bfaa7024-ca8c-45c0-b69e-07d79b47c1e6` is `confirmed`, has no failure reason or `failed_at`, records slot `504802995`, and owns exactly one active period.
 - Native Chrome verification: `/my-access` displays “Your active membership,” Basic, 10 of 10 included check-ins, the four frozen gyms, 80 test EURC and slot `504802995`.
 
-| Criterion | Evidence | Result |
-| --- | --- | --- |
-| AC1 | Service recovery guard plus live finalized Devnet replay before completion | Passed |
-| AC2–AC3 | Migration trigger/function checks and negative database integration cases | Passed |
-| AC4 | Concurrent completion test and exact one-period local state | Passed |
-| AC5 | Original public signature recovered to one active membership; no new signature or send | Passed |
-| AC6 | Clean isolated 141-assertion replay, 25 integration tests, 78 unit tests, static checks and build | Passed |
+| Criterion | Evidence                                                                                          | Result |
+| --------- | ------------------------------------------------------------------------------------------------- | ------ |
+| AC1       | Service recovery guard plus live finalized Devnet replay before completion                        | Passed |
+| AC2–AC3   | Migration trigger/function checks and negative database integration cases                         | Passed |
+| AC4       | Concurrent completion test and exact one-period local state                                       | Passed |
+| AC5       | Original public signature recovered to one active membership; no new signature or send            | Passed |
+| AC6       | Clean isolated 141-assertion replay, 25 integration tests, 78 unit tests, static checks and build | Passed |
 
 ## Risks, limitations, and follow-ups
 

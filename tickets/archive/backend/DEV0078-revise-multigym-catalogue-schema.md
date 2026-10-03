@@ -4,7 +4,7 @@
 - Created: 2026-09-26
 - Last updated: 2026-09-26
 - Milestone: M1 participating gym and membership-plan catalogue
-- Coordination: [COR0006 — Persistent membership catalogue](../../current/organisatory/COR0006-persistent-access-catalogue.md)
+- Coordination: [COR0006 — Persistent membership catalogue](../organisatory/COR0006-persistent-access-catalogue.md)
 - Related records: follows the historical schema foundation in completed [DEV0067](DEV0067-membership-catalogue-schema.md), implements the current product contract from completed [DEV0069](../organisatory/DEV0069-adopt-core-multigym-membership-mvp.md) and [DEV0070](../organisatory/DEV0070-revise-multigym-plan-pricing.md), and supplies the persistent contract later consumed by completed preview tickets [DEV0074](../frontend/DEV0074-preview-multigym-discovery.md) and [DEV0075](../frontend/DEV0075-preview-membership-selection.md)
 
 ## Objective and context

@@ -3,7 +3,6 @@
 import { Wallet } from "lucide-react";
 import Link from "next/link";
 import {
-  useCallback,
   useEffect,
   useRef,
   useState,
@@ -28,15 +27,12 @@ import {
   normalizeEmailOtp,
 } from "@/auth/email-otp";
 import { Pill } from "@/components/ui";
-import type { ClubWalletSnapshot } from "../club-wallet";
 import {
   walletSignatureToBase64,
   type PersonalWalletMutationResult,
   type PersonalWalletPurpose,
   type PersonalWalletSnapshot,
 } from "../personal-wallet";
-import { fetchClubWallet, revokeClubWallet } from "./club-wallet-client";
-import { ClubWalletAuthorityPanel } from "./club-wallet-authority";
 import {
   fetchPersonalWallet,
   requestPersonalWalletChallenge,
@@ -97,86 +93,7 @@ export function WalletStatusButton({ onOpen }: { onOpen: () => void }) {
 }
 
 export function WalletConnectionPanel({ onSignIn }: { onSignIn?: () => void }) {
-  const { session } = useAuthSession();
-  const sessionKey = session.status === "signed-in" ? session.subject : null;
-  const [mode, setMode] = useState<"personal" | "club">("personal");
-  const [clubResult, setClubResult] = useState<{
-    key: string;
-    snapshot: ClubWalletSnapshot;
-  } | null>(null);
-  const clubSnapshot =
-    sessionKey && clubResult?.key === sessionKey ? clubResult.snapshot : null;
-  const hasClubContext =
-    clubSnapshot?.status === "eligible" ||
-    clubSnapshot?.status === "authorized";
-  const activeMode = hasClubContext ? mode : "personal";
-
-  useEffect(() => {
-    if (!sessionKey) return;
-    let active = true;
-    void fetchClubWallet().then((snapshot) => {
-      if (active) setClubResult({ key: sessionKey, snapshot });
-    });
-    return () => {
-      active = false;
-    };
-  }, [sessionKey]);
-
-  const handleClubSnapshot = useCallback(
-    (snapshot: ClubWalletSnapshot) => {
-      if (sessionKey) setClubResult({ key: sessionKey, snapshot });
-    },
-    [sessionKey],
-  );
-
-  async function selectMode(nextMode: "personal" | "club") {
-    if (nextMode === "personal" && clubSnapshot?.status === "authorized") {
-      const result = await revokeClubWallet();
-      if (result.status === "revoked" || result.status === "no-authority") {
-        handleClubSnapshot({ status: "eligible", club: clubSnapshot.club });
-      }
-    }
-    setMode(nextMode);
-  }
-
-  return (
-    <>
-      {hasClubContext && (
-        <div
-          className="chips wallet-mode-tabs"
-          role="tablist"
-          aria-label="Wallet context"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeMode === "personal"}
-            className={`chip ${activeMode === "personal" ? "active" : ""}`}
-            onClick={() => void selectMode("personal")}
-          >
-            Personal wallet
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeMode === "club"}
-            className={`chip ${activeMode === "club" ? "active" : ""}`}
-            onClick={() => void selectMode("club")}
-          >
-            {clubSnapshot.club.name} club wallet
-          </button>
-        </div>
-      )}
-      {activeMode === "club" && hasClubContext ? (
-        <ClubWalletAuthorityPanel
-          snapshot={clubSnapshot}
-          onSnapshot={handleClubSnapshot}
-        />
-      ) : (
-        <PersonalWalletConnectionPanel onSignIn={onSignIn} />
-      )}
-    </>
-  );
+  return <PersonalWalletConnectionPanel onSignIn={onSignIn} />;
 }
 
 function PersonalWalletConnectionPanel({

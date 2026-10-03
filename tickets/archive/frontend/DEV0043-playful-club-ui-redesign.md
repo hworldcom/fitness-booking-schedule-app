@@ -5,7 +5,7 @@
 - Last updated: 2026-09-21
 - Milestone: M0 frontend visual refinement
 - Coordination: None — independent development ticket
-- Related records: Historical baseline [DEV0008](../../archive/frontend/DEV0008-repx-club-frontend.md); downstream social behavior [DEV0023](../../current/backend/DEV0023-minimal-shared-activity-feed.md)
+- Related records: Historical baseline [DEV0008](../../archive/frontend/DEV0008-repx-club-frontend.md); downstream social behavior [DEV0023](../backend/DEV0023-minimal-shared-activity-feed.md)
 
 ## Objective and context
 
@@ -53,13 +53,13 @@ Implemented the first restrained concept as a shared visual system and a rebuilt
 
 | File                                                                                                                                          | Responsibility                                                                                                   |
 | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| [Feed](../../../src/features/feed/feed.tsx)                                                                                                   | Hero, working discovery links, catalogue-derived studio cards and existing feed/follow controls.                 |
+| Feed (historical path `src/features/feed/feed.tsx`)                                                                                           | Hero, working discovery links, catalogue-derived studio cards and existing feed/follow controls.                 |
 | [Club theme](../../../src/app/club-theme.css)                                                                                                 | Shared typography/surfaces, hero/rail composition, phone/tablet layouts and reduced-motion treatment.            |
 | [Global styles](../../../src/app/globals.css)                                                                                                 | Colour/radius tokens; remove obsolete dark-hero rules.                                                           |
 | [Layout](../../../src/app/layout.tsx)                                                                                                         | Load the local display font and theme after existing styles, preserving Auth/preview providers.                  |
 | [Package manifest](../../../package.json) and [lockfile](../../../package-lock.json)                                                          | Pin Bricolage Grotesque 5.3.0; no unrelated dependency upgrades.                                                 |
 | [Asset record](../../../docs/design/DEV0043-assets.md)                                                                                        | Image provenance, final built-in generation prompts, reference and local WebP paths.                             |
-| [Redesign checks](../../../tests/browser/redesign.spec.ts) and [preview checks](../../../tests/browser/preview.spec.ts)                       | Hero/rail destinations, keyboard use, responsive text clipping/image checks and updated home heading assertions. |
+| Redesign checks (historical path `tests/browser/redesign.spec.ts`) and preview checks (historical path `tests/browser/preview.spec.ts`)       | Hero/rail destinations, keyboard use, responsive text clipping/image checks and updated home heading assertions. |
 | [Specification](../../../docs/mvp-spec.md#visual-design-direction--21-september-2026), [README](../../../README.md), [index](../../README.md) | Accepted visual direction, setup/asset navigation and actual delivery status.                                    |
 
 ### Decisions and deviations

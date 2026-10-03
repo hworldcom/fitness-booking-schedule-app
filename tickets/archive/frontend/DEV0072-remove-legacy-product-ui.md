@@ -4,8 +4,8 @@
 - Created: 2026-09-25
 - Last updated: 2026-09-25
 - Milestone: M0 truthful frontend baseline
-- Coordination: [COR0007 — Core multi-gym membership MVP](../../current/organisatory/COR0007-core-multigym-membership-mvp.md)
-- Related records: follows completed product audit [DEV0071](../organisatory/DEV0071-audit-active-work-after-multigym-pivot.md); precedes completed [DEV0073](DEV0073-rewrite-multigym-public-story.md), completed [DEV0074](DEV0074-preview-multigym-discovery.md) and completed [DEV0075](DEV0075-preview-membership-selection.md); persistent catalogue work remains under [COR0006](../../current/organisatory/COR0006-persistent-access-catalogue.md)
+- Coordination: [COR0007 — Core multi-gym membership MVP](../organisatory/COR0007-core-multigym-membership-mvp.md)
+- Related records: follows completed product audit [DEV0071](../organisatory/DEV0071-audit-active-work-after-multigym-pivot.md); precedes completed [DEV0073](DEV0073-rewrite-multigym-public-story.md), completed [DEV0074](DEV0074-preview-multigym-discovery.md) and completed [DEV0075](DEV0075-preview-membership-selection.md); persistent catalogue work remains under [COR0006](../organisatory/COR0006-persistent-access-catalogue.md)
 
 ## Objective and context
 

@@ -5,7 +5,7 @@
 - Last updated: 2026-09-19
 - Milestone: Product contract / M0 authentication and catalogue planning
 - Coordination: None — independent development ticket
-- Related tickets: [COR0002 — Authentication and access](../../current/organisatory/COR0002-phantom-auth-and-demo-access.md), converted from retired DEV0016; [COR0006 — Persistent catalogue](../../current/organisatory/COR0006-persistent-access-catalogue.md), converted from retired DEV0017; [DEV0015 — Database foundation](../backend/DEV0015-supabase-database-foundation.md)
+- Related tickets: [COR0002 — Authentication and access](../organisatory/COR0002-phantom-auth-and-demo-access.md), converted from retired DEV0016; [COR0006 — Persistent catalogue](../organisatory/COR0006-persistent-access-catalogue.md), converted from retired DEV0017; [DEV0015 — Database foundation](../backend/DEV0015-supabase-database-foundation.md)
 
 ## Objective and context
 
@@ -48,8 +48,8 @@ The existing frontend routes already render without authentication. The gap was 
 
 - [Specification](../../../docs/mvp-spec.md#public-browsing-and-sign-in-boundaries): added C17, public listing/detail scope, sign-in boundaries and return behavior; aligned server/SQL access, demo-run checks and social privacy. Added definition-of-done item 15 and A54–A55 for guests and private-data protection. Public catalogue visibility does not grant challenge entry or reveal restricted content.
 - [DEV0015](../backend/DEV0015-supabase-database-foundation.md): linked the future restricted guest read path while retaining private default-deny access.
-- [COR0002](../../current/organisatory/COR0002-phantom-auth-and-demo-access.md), converted from retired DEV0016: preserves route/action-scoped login, safe internal return destinations, no automatic booking/payment after login, and anonymous/expired-session tests across its direct tickets.
-- [COR0006](../../current/organisatory/COR0006-persistent-access-catalogue.md), converted from retired DEV0017: coordinates public safe projections, separate private overlays, scoped read-only SQL access and anonymous browser/database/cache checks.
+- [COR0002](../organisatory/COR0002-phantom-auth-and-demo-access.md), converted from retired DEV0016: preserves route/action-scoped login, safe internal return destinations, no automatic booking/payment after login, and anonymous/expired-session tests across its direct tickets.
+- [COR0006](../organisatory/COR0006-persistent-access-catalogue.md), converted from retired DEV0017: coordinates public safe projections, separate private overlays, scoped read-only SQL access and anonymous browser/database/cache checks.
 - [Ticket index](../../README.md#ticket-index): records this completed contract update. Future implementation tickets remain Draft; completed historical records were preserved.
 
 Decision: public detail links must work without login so browsing remains useful. Private drafts, My Challenges and personal/financial actions remain protected. No scope deviation. This changes the planned access contract only; no runtime interfaces, dependencies, environment variables, migrations, cloud setup or deployment changed, and no application rollback is needed.

@@ -6,7 +6,7 @@
 - Milestone: M3 check-ins, member-price access and allocation
 - Converted from: Not applicable — created after the committed DEV0084 planning record required multiple implementation boundaries
 - Tracked development tickets: completed [DEV0084 — Persist included membership check-ins](../backend/DEV0084-persist-included-membership-checkins.md), completed [DEV0085 — Add the member check-in interface](../frontend/DEV0085-member-checkin-interface.md), completed [DEV0086 — Persist included class reservations](../backend/DEV0086-persist-included-class-reservations.md), completed [DEV0087 — Add the member class reservation interface](../frontend/DEV0087-member-class-reservation-interface.md), and completed [DEV0088 — Seed fictional demo class schedules](../backend/DEV0088-seed-fictional-demo-class-schedules.md)
-- Related records: delivers the reservation/member-attendance slice required by [COR0007 — Core multi-gym membership MVP](../../current/organisatory/COR0007-core-multigym-membership-mvp.md); follows the active membership foundation in completed [DEV0080](../backend/DEV0080-membership-activation-foundation.md) and current [DEV0081](../../current/blockchain/DEV0081-devnet-membership-activation.md); later gym operations, provisional monetary allocation, non-core visits and social publication remain outside this coordination record
+- Related records: delivers the reservation/member-attendance slice required by [COR0007 — Core multi-gym membership MVP](./COR0007-core-multigym-membership-mvp.md); follows the active membership foundation in completed [DEV0080](../backend/DEV0080-membership-activation-foundation.md) and current [DEV0081](../blockchain/DEV0081-devnet-membership-activation.md); later gym operations, provisional monetary allocation, non-core visits and social publication remain outside this coordination record
 
 ## Objective and boundaries
 
@@ -32,8 +32,8 @@ Each implementation boundary belongs to exactly one peer. DEV0086 owns reservati
 
 ## Other relationships
 
-- [COR0007](../../current/organisatory/COR0007-core-multigym-membership-mvp.md) consumes this coordinated outcome as one M3 delivery dependency but does not directly own DEV0084–DEV0087.
-- Completed [DEV0080](../backend/DEV0080-membership-activation-foundation.md) and current [DEV0081](../../current/blockchain/DEV0081-devnet-membership-activation.md) supply the active membership period required before reservation or arrival.
+- [COR0007](./COR0007-core-multigym-membership-mvp.md) consumes this coordinated outcome as one M3 delivery dependency but does not directly own DEV0084–DEV0087.
+- Completed [DEV0080](../backend/DEV0080-membership-activation-foundation.md) and current [DEV0081](../blockchain/DEV0081-devnet-membership-activation.md) supply the active membership period required before reservation or arrival.
 - A later gym-operations ticket will present DEV0084's staff confirmation action; it will not redefine staff authority or attendance transitions.
 - Provisional monetary allocation, direct non-core visits and optional social publication consume confirmed attendance later and remain outside this record.
 

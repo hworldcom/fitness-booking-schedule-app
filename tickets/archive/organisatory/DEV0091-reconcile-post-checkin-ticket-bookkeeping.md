@@ -5,7 +5,7 @@
 - Last updated: 2026-09-28
 - Milestone: Project maintenance after M3 reservations and check-ins
 - Coordination: None — independent development ticket
-- Related records: corrects the current summary in [COR0007 — Core multi-gym membership MVP](../../current/organisatory/COR0007-core-multigym-membership-mvp.md), reflects completed [COR0008 — Membership reservations and check-ins](COR0008-membership-reservations-and-checkins.md) and its completed [DEV0085 member interface](../frontend/DEV0085-member-checkin-interface.md), and records the existing planning commit for [DEV0089 — Add a wallet-visible membership card](../../current/blockchain/DEV0089-wallet-visible-membership-card.md)
+- Related records: corrects the current summary in [COR0007 — Core multi-gym membership MVP](./COR0007-core-multigym-membership-mvp.md), reflects completed [COR0008 — Membership reservations and check-ins](COR0008-membership-reservations-and-checkins.md) and its completed [DEV0085 member interface](../frontend/DEV0085-member-checkin-interface.md), and records the existing planning commit for [DEV0089 — Add a wallet-visible membership card](../blockchain/DEV0089-wallet-visible-membership-card.md)
 
 ## Objective and context
 
@@ -55,12 +55,12 @@ Implementation completed after the stale current summaries and available histori
 
 ### Affected files
 
-| File or component                                                                                                 | Change and purpose                                                                  |
-| ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| [`COR0007-core-multigym-membership-mvp.md`](../../current/organisatory/COR0007-core-multigym-membership-mvp.md)   | Reconciles current M3 completion and deferred DEV0081/DEV0082 evidence.             |
-| [`DEV0084-persist-included-membership-checkins.md`](../backend/DEV0084-persist-included-membership-checkins.md)   | Records the exact implementation/planning commit hash.                              |
-| [`DEV0089-wallet-visible-membership-card.md`](../../current/blockchain/DEV0089-wallet-visible-membership-card.md) | Records the exact planning commit and distinguishes it from runtime implementation. |
-| [`tickets/README.md`](../../README.md)                                                                            | Updates the record lifecycle and next available DEV ID.                             |
+| File or component                                                                                               | Change and purpose                                                                  |
+| --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| [`COR0007-core-multigym-membership-mvp.md`](./COR0007-core-multigym-membership-mvp.md)                          | Reconciles current M3 completion and deferred DEV0081/DEV0082 evidence.             |
+| [`DEV0084-persist-included-membership-checkins.md`](../backend/DEV0084-persist-included-membership-checkins.md) | Records the exact implementation/planning commit hash.                              |
+| [`DEV0089-wallet-visible-membership-card.md`](../blockchain/DEV0089-wallet-visible-membership-card.md)          | Records the exact planning commit and distinguishes it from runtime implementation. |
+| [`tickets/README.md`](../../README.md)                                                                          | Updates the record lifecycle and next available DEV ID.                             |
 
 ### Decisions and deviations
 

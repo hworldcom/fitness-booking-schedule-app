@@ -5,7 +5,7 @@
 - Last updated: 2026-09-25
 - Milestone: M0 work-record and project-state reconciliation
 - Coordination: None — independent development ticket
-- Related records: current product contract [DEV0069](DEV0069-adopt-core-multigym-membership-mvp.md) amended by [DEV0070](DEV0070-revise-multigym-plan-pricing.md); delivery coordination [COR0006](../../current/organisatory/COR0006-persistent-access-catalogue.md) and [COR0007](../../current/organisatory/COR0007-core-multigym-membership-mvp.md)
+- Related records: current product contract [DEV0069](DEV0069-adopt-core-multigym-membership-mvp.md) amended by [DEV0070](DEV0070-revise-multigym-plan-pricing.md); delivery coordination [COR0006](./COR0006-persistent-access-catalogue.md) and [COR0007](./COR0007-core-multigym-membership-mvp.md)
 
 ## Objective and context
 
@@ -59,19 +59,19 @@ Completed the active-work and repository-state audit. One irrelevant open ticket
 
 ### Active record classification
 
-| Current record | Why it remains active |
-| --- | --- |
-| `DEV0023` | Implements the explicitly retained minimal social feed from verified membership check-ins. |
-| `DEV0041` | Supplies distinct gym-wallet authority required by direct gym payments and future financial operations. |
-| `DEV0047` | Supplies optional member-wallet ownership needed before member-approved Devnet payments. |
-| `DEV0055` | Completes hosted database/Auth isolation evidence for persistent staging. |
-| `DEV0056` | Completes the public staging integration and hosted Auth/wallet rehearsal. |
-| `COR0001` | Still coordinates the missing trusted server-Solana and Anchor/program-client structural boundaries. |
-| `COR0002` | Remains open for DEV0041 gym-wallet authority. |
-| `COR0003` | Remains open for DEV0047's real-wallet completion evidence. |
-| `COR0004` | Remains open for DEV0055/DEV0056 staging acceptance. |
-| `COR0006` | Owns the required Basic/Classic plan and participating-gym catalogue replacement. |
-| `COR0007` | Owns the focused membership implementation and DEV0023 social integration. |
+| Current record | Why it remains active                                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------------------- |
+| `DEV0023`      | Implements the explicitly retained minimal social feed from verified membership check-ins.              |
+| `DEV0041`      | Supplies distinct gym-wallet authority required by direct gym payments and future financial operations. |
+| `DEV0047`      | Supplies optional member-wallet ownership needed before member-approved Devnet payments.                |
+| `DEV0055`      | Completes hosted database/Auth isolation evidence for persistent staging.                               |
+| `DEV0056`      | Completes the public staging integration and hosted Auth/wallet rehearsal.                              |
+| `COR0001`      | Still coordinates the missing trusted server-Solana and Anchor/program-client structural boundaries.    |
+| `COR0002`      | Remains open for DEV0041 gym-wallet authority.                                                          |
+| `COR0003`      | Remains open for DEV0047's real-wallet completion evidence.                                             |
+| `COR0004`      | Remains open for DEV0055/DEV0056 staging acceptance.                                                    |
+| `COR0006`      | Owns the required Basic/Classic plan and participating-gym catalogue replacement.                       |
+| `COR0007`      | Owns the focused membership implementation and DEV0023 social integration.                              |
 
 DEV0037 was the only unrelated open record. It proposed optional embedded Phantom onboarding after the hackathon, had no implementation, depended on unavailable Portal access and was unnecessary for the selected email-plus-external-wallet flow.
 
@@ -93,14 +93,14 @@ DEV0037 was the only unrelated open record. It proposed optional embedded Phanto
 
 ### Affected files
 
-| File or component | Change and purpose |
-| --- | --- |
-| `tickets/archive/blockchain/DEV0037-phantom-embedded-wallet-onboarding.md` | Cancels and archives optional post-MVP work with no implementation or commit. |
-| `tickets/current/organisatory/COR0001-project-structure.md`, `COR0002-phantom-auth-and-demo-access.md`, `COR0003-account-first-identity-and-wallet-linking.md` | Removes DEV0037 from active dependencies/follow-ups while preserving the extension-first history. |
-| `tickets/current/backend/DEV0047-personal-wallet-linking-and-replacement.md` | Clarifies that embedded wallet creation is cancelled historical scope, not another active owner. |
-| `tickets/archive/blockchain/DEV0027-phantom-wallet-connection-foundation.md`, `tickets/archive/backend/DEV0038-phantom-supabase-web3-authentication.md` | Retargets moved DEV0037 links and labels its eventual cancellation without rewriting delivered behavior. |
-| `tickets/README.md` | Moves DEV0037 from current Blocked work to Cancelled history and registers this audit. |
-| `supabase/README.md` | Labels DEV0067's transfer schema/private drafts as legacy and requires an additive Basic/Classic multi-gym replacement before publication. |
+| File or component                                                                                                                                              | Change and purpose                                                                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `tickets/archive/blockchain/DEV0037-phantom-embedded-wallet-onboarding.md`                                                                                     | Cancels and archives optional post-MVP work with no implementation or commit.                                                              |
+| `tickets/current/organisatory/COR0001-project-structure.md`, `COR0002-phantom-auth-and-demo-access.md`, `COR0003-account-first-identity-and-wallet-linking.md` | Removes DEV0037 from active dependencies/follow-ups while preserving the extension-first history.                                          |
+| `tickets/current/backend/DEV0047-personal-wallet-linking-and-replacement.md`                                                                                   | Clarifies that embedded wallet creation is cancelled historical scope, not another active owner.                                           |
+| `tickets/archive/blockchain/DEV0027-phantom-wallet-connection-foundation.md`, `tickets/archive/backend/DEV0038-phantom-supabase-web3-authentication.md`        | Retargets moved DEV0037 links and labels its eventual cancellation without rewriting delivered behavior.                                   |
+| `tickets/README.md`                                                                                                                                            | Moves DEV0037 from current Blocked work to Cancelled history and registers this audit.                                                     |
+| `supabase/README.md`                                                                                                                                           | Labels DEV0067's transfer schema/private drafts as legacy and requires an additive Basic/Classic multi-gym replacement before publication. |
 
 ### Decisions and deviations
 
@@ -112,16 +112,16 @@ No runtime interface, schema, dependency, environment variable, migration or dep
 
 ## Validation results
 
-| Criterion | Evidence | Result |
-| --- | --- | --- |
-| AC1 | Inventory of every current DEV/COR record with the classification table above; no remaining current ticket is post-MVP-only or tied solely to a removed product | Passed |
-| AC2 | `find tickets/current` plus repository-wide DEV0037 reference search; DEV0037 is absent from current, present once in archive and all Markdown links target its archived record | Passed |
-| AC3–AC4 | Targeted `rg` scan of `src`, `tests`, `supabase`, current tickets, README and the specification; legacy and missing surfaces recorded above and in `supabase/README.md` | Passed |
-| AC5 — whitespace | `git diff --check` | Passed with no output |
-| AC5 — repository formatting | `npm run format:check` | Passed; all configured application/source files match Prettier style |
-| AC5 — Markdown paths | Node audit over 93 Markdown files | Passed; every repository-local target resolves |
-| AC5 — Markdown fragments | Node heading/explicit-anchor audit | Passed; all local fragments resolve |
-| Runtime/database/browser checks | Not run — no executable, schema or migration artifact changed | Not applicable |
+| Criterion                       | Evidence                                                                                                                                                                        | Result                                                               |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| AC1                             | Inventory of every current DEV/COR record with the classification table above; no remaining current ticket is post-MVP-only or tied solely to a removed product                 | Passed                                                               |
+| AC2                             | `find tickets/current` plus repository-wide DEV0037 reference search; DEV0037 is absent from current, present once in archive and all Markdown links target its archived record | Passed                                                               |
+| AC3–AC4                         | Targeted `rg` scan of `src`, `tests`, `supabase`, current tickets, README and the specification; legacy and missing surfaces recorded above and in `supabase/README.md`         | Passed                                                               |
+| AC5 — whitespace                | `git diff --check`                                                                                                                                                              | Passed with no output                                                |
+| AC5 — repository formatting     | `npm run format:check`                                                                                                                                                          | Passed; all configured application/source files match Prettier style |
+| AC5 — Markdown paths            | Node audit over 93 Markdown files                                                                                                                                               | Passed; every repository-local target resolves                       |
+| AC5 — Markdown fragments        | Node heading/explicit-anchor audit                                                                                                                                              | Passed; all local fragments resolve                                  |
+| Runtime/database/browser checks | Not run — no executable, schema or migration artifact changed                                                                                                                   | Not applicable                                                       |
 
 ## Risks, limitations, and follow-ups
 
