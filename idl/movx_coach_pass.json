@@ -1,0 +1,713 @@
+{
+  "address": "DfpqcSwSer4MrPehwFk2Jota3yJVhqobWWD2Aq1crARB",
+  "metadata": {
+    "name": "movx_coach_pass",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Coach authority and immutable private-training offers for MovX Club"
+  },
+  "instructions": [
+    {
+      "name": "create_offer",
+      "discriminator": [237, 233, 192, 168, 248, 7, 249, 241],
+      "accounts": [
+        {
+          "name": "coach_wallet",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "coach_authority",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99, 111, 97, 99, 104, 45, 97, 117, 116, 104, 111, 114, 105,
+                  116, 121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.run_id",
+                "account": "CoachAuthority"
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.profile_id",
+                "account": "CoachAuthority"
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.original_wallet",
+                "account": "CoachAuthority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "offer",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [111, 102, 102, 101, 114]
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority"
+              },
+              {
+                "kind": "arg",
+                "path": "args.nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": {
+              "name": "CreateOfferArgs"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "deactivate_offer",
+      "discriminator": [233, 95, 11, 47, 132, 49, 106, 67],
+      "accounts": [
+        {
+          "name": "coach_wallet",
+          "signer": true
+        },
+        {
+          "name": "coach_authority",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99, 111, 97, 99, 104, 45, 97, 117, 116, 104, 111, 114, 105,
+                  116, 121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.run_id",
+                "account": "CoachAuthority"
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.profile_id",
+                "account": "CoachAuthority"
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.original_wallet",
+                "account": "CoachAuthority"
+              }
+            ]
+          },
+          "relations": ["offer"]
+        },
+        {
+          "name": "offer",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [111, 102, 102, 101, 114]
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority"
+              },
+              {
+                "kind": "account",
+                "path": "offer.nonce",
+                "account": "Offer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_coach_authority",
+      "discriminator": [11, 99, 154, 170, 51, 131, 29, 40],
+      "accounts": [
+        {
+          "name": "coach_wallet",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "recovery_authority",
+          "signer": true
+        },
+        {
+          "name": "coach_authority",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99, 111, 97, 99, 104, 45, 97, 117, 116, 104, 111, 114, 105,
+                  116, 121
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "run_id"
+              },
+              {
+                "kind": "arg",
+                "path": "profile_id"
+              },
+              {
+                "kind": "account",
+                "path": "coach_wallet"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": [
+        {
+          "name": "run_id",
+          "type": {
+            "array": ["u8", 16]
+          }
+        },
+        {
+          "name": "profile_id",
+          "type": {
+            "array": ["u8", 16]
+          }
+        }
+      ]
+    },
+    {
+      "name": "rotate_coach_authority",
+      "discriminator": [218, 117, 187, 15, 9, 198, 160, 199],
+      "accounts": [
+        {
+          "name": "coach_authority",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99, 111, 97, 99, 104, 45, 97, 117, 116, 104, 111, 114, 105,
+                  116, 121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.run_id",
+                "account": "CoachAuthority"
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.profile_id",
+                "account": "CoachAuthority"
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.original_wallet",
+                "account": "CoachAuthority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "recovery_authority",
+          "signer": true,
+          "relations": ["coach_authority"]
+        },
+        {
+          "name": "replacement_wallet",
+          "signer": true
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "CoachAuthority",
+      "discriminator": [234, 105, 89, 74, 60, 124, 14, 171]
+    },
+    {
+      "name": "Offer",
+      "discriminator": [215, 88, 60, 71, 170, 162, 73, 229]
+    }
+  ],
+  "events": [
+    {
+      "name": "CoachAuthorityInitialized",
+      "discriminator": [109, 252, 123, 131, 28, 184, 100, 47]
+    },
+    {
+      "name": "CoachAuthorityRotated",
+      "discriminator": [77, 83, 131, 165, 180, 148, 152, 169]
+    },
+    {
+      "name": "OfferCreated",
+      "discriminator": [31, 236, 215, 144, 75, 45, 157, 87]
+    },
+    {
+      "name": "OfferDeactivated",
+      "discriminator": [53, 194, 130, 24, 152, 207, 82, 31]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "NilRunId",
+      "msg": "The application dataset identifier cannot be nil"
+    },
+    {
+      "code": 6001,
+      "name": "NilProfileId",
+      "msg": "The coach profile identifier cannot be nil"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidCoachWallet",
+      "msg": "The coach wallet address is invalid"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidRecoveryAuthority",
+      "msg": "The recovery authority address is invalid"
+    },
+    {
+      "code": 6004,
+      "name": "RecoveryAuthorityMatchesCoach",
+      "msg": "The recovery authority must be different from the coach wallet"
+    },
+    {
+      "code": 6005,
+      "name": "UnauthorizedCoach",
+      "msg": "Only the current coach wallet can perform this action"
+    },
+    {
+      "code": 6006,
+      "name": "UnauthorizedRecoveryAuthority",
+      "msg": "Only the configured recovery authority can rotate the coach wallet"
+    },
+    {
+      "code": 6007,
+      "name": "InvalidReplacementWallet",
+      "msg": "The replacement wallet address is invalid"
+    },
+    {
+      "code": 6008,
+      "name": "ReplacementWalletUnchanged",
+      "msg": "The replacement wallet is already the current coach wallet"
+    },
+    {
+      "code": 6009,
+      "name": "AuthorityEpochOverflow",
+      "msg": "The authority epoch cannot advance further"
+    },
+    {
+      "code": 6010,
+      "name": "EventSequenceOverflow",
+      "msg": "The event sequence cannot advance further"
+    },
+    {
+      "code": 6011,
+      "name": "UnsupportedSessionCount",
+      "msg": "An offer must contain exactly one or ten sessions"
+    },
+    {
+      "code": 6012,
+      "name": "InvalidPrice",
+      "msg": "The test-USDC price must be positive"
+    },
+    {
+      "code": 6013,
+      "name": "InvalidValidity",
+      "msg": "Validity must be no-expiry or between one and 365 days"
+    },
+    {
+      "code": 6014,
+      "name": "InvalidRestrictedClient",
+      "msg": "The restricted client wallet address is invalid"
+    },
+    {
+      "code": 6015,
+      "name": "OfferAlreadyDeactivated",
+      "msg": "The offer is already deactivated"
+    }
+  ],
+  "types": [
+    {
+      "name": "CoachAuthority",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "run_id",
+            "type": {
+              "array": ["u8", 16]
+            }
+          },
+          {
+            "name": "profile_id",
+            "type": {
+              "array": ["u8", 16]
+            }
+          },
+          {
+            "name": "original_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "current_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "recovery_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority_epoch",
+            "type": "u64"
+          },
+          {
+            "name": "event_sequence",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "reserved",
+            "type": {
+              "array": ["u8", 47]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "CoachAuthorityInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "coach_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "run_id",
+            "type": {
+              "array": ["u8", 16]
+            }
+          },
+          {
+            "name": "profile_id",
+            "type": {
+              "array": ["u8", 16]
+            }
+          },
+          {
+            "name": "original_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "recovery_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority_epoch",
+            "type": "u64"
+          },
+          {
+            "name": "event_sequence",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CoachAuthorityRotated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "coach_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "previous_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "replacement_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority_epoch",
+            "type": "u64"
+          },
+          {
+            "name": "event_sequence",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CreateOfferArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "price_usdc_base_units",
+            "type": "u64"
+          },
+          {
+            "name": "session_count",
+            "type": "u8"
+          },
+          {
+            "name": "validity_seconds",
+            "type": "u32"
+          },
+          {
+            "name": "restricted_client",
+            "type": {
+              "option": "pubkey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Offer",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "coach_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "payment_recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "payment_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "price_usdc_base_units",
+            "type": "u64"
+          },
+          {
+            "name": "authority_epoch",
+            "type": "u64"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "validity_seconds",
+            "type": "u32"
+          },
+          {
+            "name": "session_count",
+            "type": "u8"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "OfferStatus"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "reserved",
+            "type": {
+              "array": ["u8", 47]
+            }
+          },
+          {
+            "name": "restricted_client",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "deactivated_at",
+            "type": {
+              "option": "i64"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "OfferCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "offer",
+            "type": "pubkey"
+          },
+          {
+            "name": "coach_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "coach_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "price_usdc_base_units",
+            "type": "u64"
+          },
+          {
+            "name": "session_count",
+            "type": "u8"
+          },
+          {
+            "name": "validity_seconds",
+            "type": "u32"
+          },
+          {
+            "name": "restricted_client",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "payment_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority_epoch",
+            "type": "u64"
+          },
+          {
+            "name": "event_sequence",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OfferDeactivated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "offer",
+            "type": "pubkey"
+          },
+          {
+            "name": "coach_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "coach_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "deactivated_at",
+            "type": "i64"
+          },
+          {
+            "name": "event_sequence",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OfferStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Deactivated"
+          }
+        ]
+      }
+    }
+  ]
+}

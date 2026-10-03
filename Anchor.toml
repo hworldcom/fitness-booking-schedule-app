@@ -7,11 +7,11 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-movx_membership_card = "GEUMk7SoYEsAvTgbFxohHTPbDfdX1citFT6Xxr6E4ULr"
+movx_coach_pass = "DfpqcSwSer4MrPehwFk2Jota3yJVhqobWWD2Aq1crARB"
 
 [provider]
 cluster = "Localnet"
 wallet = ".anchor/local-wallet.json"
 
 [scripts]
-test = "cargo test -p movx-membership-card"
+test = "cargo test -p movx-coach-pass"

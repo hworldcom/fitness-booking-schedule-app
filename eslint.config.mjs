@@ -9,6 +9,7 @@ export default defineConfig([
     ".next/**",
     ".vinext/**",
     ".wrangler/**",
+    "clients/js/src/generated/**",
     "dist/**",
     "out/**",
     "next-env.d.ts",

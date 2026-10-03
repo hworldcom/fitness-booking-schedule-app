@@ -58,6 +58,7 @@ next-env.d.ts
 /.solana/
 /target/
 /test-ledger/
+/clients/.codama/
 *-keypair.json
 *.keypair.json
 

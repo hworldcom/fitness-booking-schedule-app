@@ -1,0 +1,207 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { address, isNone } from "@solana/kit";
+import { getCoachAuthorityEncoder } from "../clients/js/src/generated/accounts/coachAuthority";
+import {
+  getOfferDecoder,
+  getOfferEncoder,
+} from "../clients/js/src/generated/accounts/offer";
+import {
+  CREATE_OFFER_DISCRIMINATOR,
+  getCreateOfferInstructionDataDecoder,
+  getCreateOfferInstructionDataEncoder,
+} from "../clients/js/src/generated/instructions/createOffer";
+import {
+  identifyMovxCoachPassInstruction,
+  MovxCoachPassInstruction,
+} from "../clients/js/src/generated/programs/movxCoachPass";
+import { OfferStatus } from "../clients/js/src/generated/types/offerStatus";
+import {
+  DEVNET_USDC_MINT_ADDRESS,
+  MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+  deriveCoachAuthorityAddress,
+  deriveOfferAddress,
+  isOfferPurchaseEligible,
+  parseCoachOfferMetadata,
+  uuidToSeed,
+} from "../src/solana/coach-pass";
+
+const RUN_ID = "11111111-1111-4111-8111-111111111111";
+const PROFILE_ID = "22222222-2222-4222-8222-222222222222";
+const ORIGINAL_WALLET = address("7EcXv8cRWYEbaYjvcXn37Bq6STqS2QwRkX8EBXjKn5Ge");
+const RECOVERY_AUTHORITY = address(
+  "HULis5PpFFL5ajU9k8WzPjtJ8wZKXg4HHbKVvSEhFCfR",
+);
+
+test("UUID and PDA helpers produce stable coach and offer addresses", async () => {
+  assert.equal(uuidToSeed(RUN_ID).length, 16);
+  assert.throws(() => uuidToSeed("not-a-uuid"), /canonical UUID/u);
+
+  const [coachAuthority, coachBump] = await deriveCoachAuthorityAddress({
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    runId: RUN_ID,
+    profileId: PROFILE_ID,
+    originalWallet: ORIGINAL_WALLET,
+  });
+  const [sameCoachAuthority, sameCoachBump] = await deriveCoachAuthorityAddress(
+    {
+      programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+      runId: RUN_ID,
+      profileId: PROFILE_ID,
+      originalWallet: ORIGINAL_WALLET,
+    },
+  );
+  const [firstOffer] = await deriveOfferAddress({
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    coachAuthority,
+    nonce: BigInt(1),
+  });
+  const [secondOffer] = await deriveOfferAddress({
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    coachAuthority,
+    nonce: BigInt(2),
+  });
+
+  assert.equal(coachAuthority, sameCoachAuthority);
+  assert.equal(coachBump, sameCoachBump);
+  assert.notEqual(firstOffer, secondOffer);
+  await assert.rejects(
+    deriveOfferAddress({
+      programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+      coachAuthority,
+      nonce: BigInt(-1),
+    }),
+    /unsigned 64-bit/u,
+  );
+});
+
+test("generated create-offer codec preserves exact commercial terms", () => {
+  const encoded = getCreateOfferInstructionDataEncoder().encode({
+    args: {
+      nonce: BigInt(9),
+      priceUsdcBaseUnits: BigInt(10_000_000),
+      sessionCount: 10,
+      validitySeconds: 90 * 24 * 60 * 60,
+      restrictedClient: null,
+    },
+  });
+  const decoded = getCreateOfferInstructionDataDecoder().decode(encoded);
+
+  assert.deepEqual(
+    Array.from(encoded.slice(0, 8)),
+    Array.from(CREATE_OFFER_DISCRIMINATOR),
+  );
+  assert.equal(
+    identifyMovxCoachPassInstruction(encoded),
+    MovxCoachPassInstruction.CreateOffer,
+  );
+  assert.equal(decoded.args.nonce, BigInt(9));
+  assert.equal(decoded.args.priceUsdcBaseUnits, BigInt(10_000_000));
+  assert.equal(decoded.args.sessionCount, 10);
+  assert.equal(decoded.args.validitySeconds, 7_776_000);
+  assert.equal(isNone(decoded.args.restrictedClient), true);
+});
+
+test("account codecs and eligibility reject stale wallet epochs", async () => {
+  const [coachAuthorityAddress, bump] = await deriveCoachAuthorityAddress({
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    runId: RUN_ID,
+    profileId: PROFILE_ID,
+    originalWallet: ORIGINAL_WALLET,
+  });
+  const coachAuthorityBytes = getCoachAuthorityEncoder().encode({
+    runId: [...uuidToSeed(RUN_ID)],
+    profileId: [...uuidToSeed(PROFILE_ID)],
+    originalWallet: ORIGINAL_WALLET,
+    currentWallet: ORIGINAL_WALLET,
+    recoveryAuthority: RECOVERY_AUTHORITY,
+    authorityEpoch: BigInt(0),
+    eventSequence: BigInt(1),
+    bump,
+    reserved: Array(47).fill(0),
+  });
+  assert.equal(coachAuthorityBytes.length, 200);
+
+  const offerBytes = getOfferEncoder().encode({
+    coachAuthority: coachAuthorityAddress,
+    paymentRecipient: ORIGINAL_WALLET,
+    paymentMint: DEVNET_USDC_MINT_ADDRESS,
+    nonce: BigInt(1),
+    priceUsdcBaseUnits: BigInt(2_000_000),
+    authorityEpoch: BigInt(0),
+    createdAt: BigInt(1_800_000_000),
+    validitySeconds: 90 * 24 * 60 * 60,
+    sessionCount: 1,
+    status: OfferStatus.Active,
+    bump: 250,
+    reserved: Array(47).fill(0),
+    restrictedClient: null,
+    deactivatedAt: null,
+  });
+  const offer = getOfferDecoder().decode(offerBytes);
+  const authority = {
+    discriminator: coachAuthorityBytes.slice(0, 8),
+    runId: [...uuidToSeed(RUN_ID)],
+    profileId: [...uuidToSeed(PROFILE_ID)],
+    originalWallet: ORIGINAL_WALLET,
+    currentWallet: ORIGINAL_WALLET,
+    recoveryAuthority: RECOVERY_AUTHORITY,
+    authorityEpoch: BigInt(0),
+    eventSequence: BigInt(1),
+    bump,
+    reserved: Array(47).fill(0),
+  };
+
+  assert.equal(
+    isOfferPurchaseEligible({
+      offer,
+      offerCoachAuthorityAddress: coachAuthorityAddress,
+      authority,
+    }),
+    true,
+  );
+  assert.equal(
+    isOfferPurchaseEligible({
+      offer,
+      offerCoachAuthorityAddress: coachAuthorityAddress,
+      authority: {
+        ...authority,
+        currentWallet: RECOVERY_AUTHORITY,
+        authorityEpoch: BigInt(1),
+      },
+    }),
+    false,
+  );
+});
+
+test("offer display metadata remains bounded and non-authoritative", () => {
+  assert.deepEqual(
+    parseCoachOfferMetadata({
+      title: " 10 Boxing Sessions ",
+      service: " Boxing ",
+      description:
+        "Ten private boxing sessions with a fictional MovX demo coach.",
+      imagePath: "/demo/coaches/boxing.webp",
+      priceUsdcBaseUnits: 1,
+    }),
+    {
+      valid: true,
+      value: {
+        title: "10 Boxing Sessions",
+        service: "Boxing",
+        description:
+          "Ten private boxing sessions with a fictional MovX demo coach.",
+        imagePath: "/demo/coaches/boxing.webp",
+      },
+    },
+  );
+  assert.equal(
+    parseCoachOfferMetadata({
+      title: "x",
+      service: "x",
+      description: "short",
+      imagePath: "https://untrusted.example/image.png",
+    }).valid,
+    false,
+  );
+});

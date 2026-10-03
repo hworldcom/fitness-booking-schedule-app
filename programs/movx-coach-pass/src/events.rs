@@ -1,0 +1,46 @@
+use anchor_lang::prelude::*;
+
+#[event]
+pub struct CoachAuthorityInitialized {
+    pub coach_authority: Pubkey,
+    pub run_id: [u8; 16],
+    pub profile_id: [u8; 16],
+    pub original_wallet: Pubkey,
+    pub recovery_authority: Pubkey,
+    pub authority_epoch: u64,
+    pub event_sequence: u64,
+}
+
+#[event]
+pub struct CoachAuthorityRotated {
+    pub coach_authority: Pubkey,
+    pub previous_wallet: Pubkey,
+    pub replacement_wallet: Pubkey,
+    pub authority_epoch: u64,
+    pub event_sequence: u64,
+}
+
+#[event]
+pub struct OfferCreated {
+    pub offer: Pubkey,
+    pub coach_authority: Pubkey,
+    pub coach_wallet: Pubkey,
+    pub nonce: u64,
+    pub price_usdc_base_units: u64,
+    pub session_count: u8,
+    pub validity_seconds: u32,
+    pub restricted_client: Option<Pubkey>,
+    pub payment_mint: Pubkey,
+    pub authority_epoch: u64,
+    pub event_sequence: u64,
+}
+
+#[event]
+pub struct OfferDeactivated {
+    pub offer: Pubkey,
+    pub coach_authority: Pubkey,
+    pub coach_wallet: Pubkey,
+    pub nonce: u64,
+    pub deactivated_at: i64,
+    pub event_sequence: u64,
+}

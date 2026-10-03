@@ -145,7 +145,7 @@ The service stores profiles, simplified fictional gym locations, coach-gym affil
 
 **Offer PDA**
 
-- coach authority and immutable payment recipient;
+- stable CoachAuthority reference, authority epoch and immutable payment recipient;
 - coach-scoped offer identifier;
 - configured test-USDC price in base units;
 - session count of exactly `1` or `10`;
@@ -154,6 +154,13 @@ The service stores profiles, simplified fictional gym locations, coach-gym affil
 - active/deactivated flag.
 
 Illustrative seeds: `['offer', coach_pubkey, offer_id]`.
+
+**CoachAuthority PDA**
+
+- stable application coach identity and originally linked wallet seed;
+- current linked coach wallet, immutable recovery authority and monotonically increasing authority epoch;
+- replacement requires the recovery authority plus the replacement wallet, never the lost old wallet;
+- wallet replacement makes earlier-epoch offers ineligible for new purchases without redirecting their immutable recipient, while existing passes continue to use the stable CoachAuthority reference.
 
 **TrainingPass PDA**
 
@@ -204,7 +211,7 @@ Availability/booking database transactions prevent ordinary double booking and p
 
 ## 7. Core coach passes and private classes
 
-An offer is a coach-specific one-session or ten-session product. Its price must be positive, its recipient belongs to the coach at creation, and an optional client restriction is enforced on chain. Deactivation prevents new purchases without invalidating existing passes or bookings.
+An offer is a coach-specific one-session or ten-session product. Its price must be positive, its recipient is the signing current coach wallet at creation, and an optional client restriction is enforced on chain. Deactivation prevents new purchases without invalidating existing passes or bookings. A wallet replacement advances the stable CoachAuthority epoch: earlier offers remain immutable/readable but cannot be purchased again, and the coach creates replacement offers for the new recipient. Existing passes continue to resolve coach actions through the stable CoachAuthority account.
 
 A TrainingPass is non-transferable and client-associated. It can be active or exhausted and optionally expires. The client and coach see the same on-chain totals. Possession of an unrelated token, database row, screenshot, booking or indexed cache does not grant sessions.
 

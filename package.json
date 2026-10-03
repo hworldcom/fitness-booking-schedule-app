@@ -44,6 +44,7 @@
     "@solana-program/token": "0.17.0",
     "@solana/kit": "8.3.0",
     "@solana/kit-plugin-wallet": "0.20.0",
+    "@solana/program-client-core": "8.3.0",
     "@solana/react": "8.3.0",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.116.0",
@@ -60,6 +61,7 @@
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.57.3",
+    "@codama/renderers-js": "2.5.0",
     "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "24.13.6",
