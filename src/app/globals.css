@@ -1897,6 +1897,33 @@ h1 {
   background: #f4f6ee;
   color: var(--muted);
 }
+.auth-onboarding-choice {
+  display: grid;
+  gap: 14px;
+  margin: 18px 0;
+}
+.auth-onboarding-choice h3 {
+  font-size: 18px;
+  letter-spacing: -0.35px;
+}
+.auth-onboarding-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.auth-onboarding-actions .button {
+  width: 100%;
+}
+.auth-onboarding-note {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+@media (max-width: 520px) {
+  .auth-onboarding-actions {
+    grid-template-columns: 1fr;
+  }
+}
 .auth-explainer {
   background: #f9fbf5;
 }

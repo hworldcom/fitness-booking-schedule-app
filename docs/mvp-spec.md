@@ -41,6 +41,7 @@ Completed and cancelled tickets are preserved as historical records. [The ticket
 | C19 | The accessible coach list remains primary and usable without Mapbox. P0 stores one provider-neutral confirmed coach location, new slots snapshot it so profile edits cannot move existing classes, and persisted Mapbox-derived results use a storage-permitted permanent-geocoding flow.                                            |
 | C20 | Retain gyms only as simple fictional public location records that coaches may optionally select. Gyms have no account, wallet, membership, class schedule, booking, access-claim or check-in authority; independent coaches remain supported.                                                                                        |
 | C21 | P0 availability uses explicit slots rather than recurring rules. Slots start on 15-minute boundaries, last 30–180 minutes in 15-minute increments and must end within the exact rolling seven-day publication horizon; the coach interface defaults new slots to 60 minutes.                                                         |
+| C22 | All users register through one email-code account flow. After creating the ordinary application profile, a user may immediately activate coaching without administrator approval; activation is a persistent owner-scoped capability, remains separate from public profile visibility and does not remove client capabilities.       |
 
 ### Proposed defaults that are not yet confirmed implementation contracts
 
@@ -64,13 +65,20 @@ A client has an email-backed MovX account and may link one personal wallet throu
 
 ### Coach
 
-A coach is an application profile with an adopted coach role and a linked personal wallet. The profile owner chooses one public location at which to appear in discovery, either by selecting one eligible fictional gym association or confirming an independent training location, and publishes open capacity-one slots that snapshot that location. The linked wallet is the authority for creating/deactivating offers and redeeming completed bookings. A selected gym receives no authority. The offer's payment recipient is fixed when the offer is created.
+A coach uses the same email-backed account as a client and explicitly activates coaching through a self-service owner-only action; P0 has no administrator approval. Activation permits coach-profile setup but is not credential verification and does not itself make the profile public. The profile owner chooses one public location at which to appear in discovery, either by selecting one eligible fictional gym association or confirming an independent training location, and publishes open capacity-one slots that snapshot that location. The linked personal wallet—not the activation flag—is the authority for creating/deactivating offers and redeeming completed bookings. A selected gym receives no authority. The offer's payment recipient is fixed when the offer is created.
 
 ### MovX service
 
 The service stores profiles, simplified fictional gym locations, coach-gym affiliations, availability, holds, bookings, offer display metadata, follows, posts and indexed chain projections. It atomically prevents double booking and off-chain over-reservation against verified pass state. It may coordinate a bounded Devnet fee sponsor and reconciliation jobs. It cannot create a client purchase or coach redemption without the required wallet authority and cannot manufacture pass sessions in PostgreSQL.
 
 ## 4. Primary user flows
+
+### 4.0 Register and activate coaching
+
+1. A new user verifies one email code and creates the ordinary MovX application profile used for both client and coach behavior.
+2. The interface asks whether the user wants to find a coach or offer coaching.
+3. Find a coach proceeds to Explore without activating coaching. Offer coaching immediately records owner-scoped activation and proceeds to coach-profile setup; no administrator approval or wallet is required.
+4. An activated account remains able to use client features. Public discovery begins only after the separate coach profile is complete and visible.
 
 ### 4.1 Discover a coach and an open class
 
@@ -175,7 +183,7 @@ Illustrative seeds: `['pass', offer_pubkey, client_pubkey, purchase_nonce]`. The
 
 ### 5.2 Off-chain records
 
-- user/application profiles and coach roles;
+- user/application profiles and explicit self-service coaching activation;
 - simplified fictional gym locations without accounts, classes, memberships, access or check-in authority;
 - coach profile, disciplines, biography, visibility, optional selected gym affiliation and one explicitly confirmed provider-neutral public location snapshot with bounded label, longitude, latitude, source and confirmation time;
 - Offer display metadata keyed by Offer address;
@@ -294,6 +302,7 @@ Gym accounts/administration and coach/gym payment splitting, recurring calendars
 | Scenario                                       | Expected result                                                                                                                                                |
 | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Guest opens Explore                            | Fictional coach cards load without sign-in; configured Mapbox pins represent the same filtered coaches and no legacy gym-membership mutation is offered.       |
+| New user chooses Offer coaching                | The verified owner is immediately and idempotently activated for coach-profile setup without administrator approval; the account retains client capabilities.  |
 | Mapbox is unavailable                          | Coach list, filters and profile navigation remain usable; a bounded map-unavailable state replaces the map without fabricated pins.                            |
 | Coach confirms a public location               | One bounded provider-neutral label/coordinate snapshot is stored through an approved permanent-result flow; no device/live location is requested.              |
 | Coach selects a fictional gym                  | One same-dataset active gym may supply the public label/location; the coach retains offer/slot/booking authority and may instead remain independent.           |

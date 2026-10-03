@@ -12,6 +12,7 @@ export type ActorDatabaseTransaction = Parameters<
 export type ActorProjection = Readonly<{
   profileSlug: string;
   displayName: string;
+  coachingActivated: boolean;
   runSlug: string;
   runName: string;
   role: "member" | "operator";
@@ -66,6 +67,7 @@ export async function currentActorProjection(
     .select({
       profileSlug: profiles.slug,
       displayName: profiles.displayName,
+      coachingActivated: sql<boolean>`${profiles.coachingActivatedAt} is not null`,
       runSlug: demoRuns.slug,
       runName: demoRuns.name,
       role: demoRunParticipants.role,

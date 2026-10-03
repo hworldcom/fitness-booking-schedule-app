@@ -4,6 +4,7 @@ import {
   isApplicationIdentitySnapshot,
   normalizeDisplayName,
 } from "@/auth/identity-contracts";
+import { isCoachingActivationSnapshot } from "@/auth/coaching-activation-contracts";
 
 test("display names are normalized and bounded without assuming ASCII names", () => {
   assert.equal(normalizeDisplayName("  Anna   Klein "), "Anna Klein");
@@ -49,4 +50,17 @@ test("the browser identity contract exposes no wallet or authority metadata", ()
     }),
     false,
   );
+});
+
+test("the coaching activation response exposes only its bounded status", () => {
+  assert.equal(isCoachingActivationSnapshot({ status: "activated" }), true);
+  assert.equal(isCoachingActivationSnapshot({ status: "signed-out" }), true);
+  assert.equal(
+    isCoachingActivationSnapshot({
+      status: "activated",
+      profileId: "browser-supplied",
+    }),
+    false,
+  );
+  assert.equal(isCoachingActivationSnapshot({ status: "pending" }), false);
 });

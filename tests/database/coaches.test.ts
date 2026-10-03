@@ -4,6 +4,7 @@ import postgres from "postgres";
 import type { CoachProfileInput } from "@/domain/coaches";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
 import { withActorDatabaseContext } from "@/server/db/authorization/repository";
+import { activateOwnedCoachingRecord } from "@/server/db/coaches/activation-repository";
 import {
   CoachProfileConflictError,
   currentOwnedCoachProfileRecord,
@@ -120,6 +121,8 @@ before(async () => {
   assert.ok(second);
   firstActor = actorFromRecord(firstAuthUserId, first);
   secondActor = actorFromRecord(secondAuthUserId, second);
+  await withActorDatabaseContext(firstActor, activateOwnedCoachingRecord);
+  await withActorDatabaseContext(secondActor, activateOwnedCoachingRecord);
 });
 
 after(async () => {

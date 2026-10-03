@@ -8,21 +8,22 @@ insert into app.profiles (
   avatar_color,
   record_source,
   claimed_at,
+  coaching_activated_at,
   created_at,
   updated_at
 )
 values
-  ('10000000-0000-4000-8000-000000000002', null, 'daniel-park', 'Daniel Park', 'DP', 'Runs on good coffee', 'peach', 'fixture', null, '2026-09-20T00:00:00Z', '2026-09-20T00:00:00Z'),
-  ('10000000-0000-4000-8000-000000000003', null, 'lea-weber', 'Lea Weber', 'LW', 'Yoga & everyday movement', 'lavender', 'fixture', null, '2026-09-20T00:00:00Z', '2026-09-20T00:00:00Z'),
-  ('10000000-0000-4000-8000-000000000004', null, 'max-mueller', 'Max Müller', 'MM', 'Always up for one more rep', 'blue', 'fixture', null, '2026-09-20T00:00:00Z', '2026-09-20T00:00:00Z'),
-  ('10000000-0000-4000-8000-000000000005', null, 'sam-lee', 'Sam Lee', 'SL', 'Muay Thai coach at Northside Combat', 'orange', 'fixture', null, '2026-09-20T00:00:00Z', '2026-09-20T00:00:00Z'),
-  ('10000000-0000-4000-8000-000000000006', null, 'maya-fischer', 'Maya Fischer', 'MF', 'Strength coach at Fabrik Training', 'blue', 'fixture', null, '2026-09-20T00:00:00Z', '2026-09-20T00:00:00Z'),
-  ('10000000-0000-4000-8000-000000000007', null, 'nora-klein', 'Nora Klein', 'NK', 'MMA fundamentals coach at Groundline MMA', 'green', 'fixture', null, '2026-09-28T00:00:00Z', '2026-09-28T00:00:00Z'),
-  ('10000000-0000-4000-8000-000000000008', null, 'idris-malik', 'Idris Malik', 'IM', 'No-gi grappling coach at Groundline MMA', 'navy', 'fixture', null, '2026-09-28T00:00:00Z', '2026-09-28T00:00:00Z'),
-  ('10000000-0000-4000-8000-000000000009', null, 'elif-demir', 'Elif Demir', 'ED', 'Kickboxing coach at Kiezstrike Club', 'orange', 'fixture', null, '2026-09-28T00:00:00Z', '2026-09-28T00:00:00Z'),
-  ('10000000-0000-4000-8000-000000000010', null, 'anika-roth', 'Anika Roth', 'AR', 'Recovery practitioner at Quiet Current Recovery', 'lavender', 'fixture', null, '2026-09-28T00:00:00Z', '2026-09-28T00:00:00Z'),
-  ('10000000-0000-4000-8000-000000000011', null, 'jules-hartmann', 'Jules Hartmann', 'JH', 'Strength coach at Nightshift Athletic Club', 'blue', 'fixture', null, '2026-09-28T00:00:00Z', '2026-09-28T00:00:00Z'),
-  ('10000000-0000-4000-8000-000000000012', null, 'mina-okafor', 'Mina Okafor', 'MO', 'Yoga teacher at Nightshift Athletic Club', 'peach', 'fixture', null, '2026-09-28T00:00:00Z', '2026-09-28T00:00:00Z')
+  ('10000000-0000-4000-8000-000000000002', null, 'daniel-park', 'Daniel Park', 'DP', 'Runs on good coffee', 'peach', 'fixture', null, '2026-10-03T00:00:00Z', '2026-09-20T00:00:00Z', '2026-09-20T00:00:00Z'),
+  ('10000000-0000-4000-8000-000000000003', null, 'lea-weber', 'Lea Weber', 'LW', 'Yoga & everyday movement', 'lavender', 'fixture', null, null, '2026-09-20T00:00:00Z', '2026-09-20T00:00:00Z'),
+  ('10000000-0000-4000-8000-000000000004', null, 'max-mueller', 'Max Müller', 'MM', 'Always up for one more rep', 'blue', 'fixture', null, null, '2026-09-20T00:00:00Z', '2026-09-20T00:00:00Z'),
+  ('10000000-0000-4000-8000-000000000005', null, 'sam-lee', 'Sam Lee', 'SL', 'Muay Thai coach at Northside Combat', 'orange', 'fixture', null, '2026-10-03T00:00:00Z', '2026-09-20T00:00:00Z', '2026-09-20T00:00:00Z'),
+  ('10000000-0000-4000-8000-000000000006', null, 'maya-fischer', 'Maya Fischer', 'MF', 'Strength coach at Fabrik Training', 'blue', 'fixture', null, null, '2026-09-20T00:00:00Z', '2026-09-20T00:00:00Z'),
+  ('10000000-0000-4000-8000-000000000007', null, 'nora-klein', 'Nora Klein', 'NK', 'MMA fundamentals coach at Groundline MMA', 'green', 'fixture', null, '2026-10-03T00:00:00Z', '2026-09-28T00:00:00Z', '2026-09-28T00:00:00Z'),
+  ('10000000-0000-4000-8000-000000000008', null, 'idris-malik', 'Idris Malik', 'IM', 'No-gi grappling coach at Groundline MMA', 'navy', 'fixture', null, '2026-10-03T00:00:00Z', '2026-09-28T00:00:00Z', '2026-09-28T00:00:00Z'),
+  ('10000000-0000-4000-8000-000000000009', null, 'elif-demir', 'Elif Demir', 'ED', 'Kickboxing coach at Kiezstrike Club', 'orange', 'fixture', null, '2026-10-03T00:00:00Z', '2026-09-28T00:00:00Z', '2026-09-28T00:00:00Z'),
+  ('10000000-0000-4000-8000-000000000010', null, 'anika-roth', 'Anika Roth', 'AR', 'Recovery practitioner at Quiet Current Recovery', 'lavender', 'fixture', null, null, '2026-09-28T00:00:00Z', '2026-09-28T00:00:00Z'),
+  ('10000000-0000-4000-8000-000000000011', null, 'jules-hartmann', 'Jules Hartmann', 'JH', 'Strength coach at Nightshift Athletic Club', 'blue', 'fixture', null, null, '2026-09-28T00:00:00Z', '2026-09-28T00:00:00Z'),
+  ('10000000-0000-4000-8000-000000000012', null, 'mina-okafor', 'Mina Okafor', 'MO', 'Yoga teacher at Nightshift Athletic Club', 'peach', 'fixture', null, null, '2026-09-28T00:00:00Z', '2026-09-28T00:00:00Z')
 on conflict do nothing;
 
 insert into app.demo_runs (

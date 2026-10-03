@@ -59,8 +59,10 @@ async function signInAndEnroll(page) {
   await page.getByLabel("Display name").fill("DEV0104 Coach");
   await submitForm(page);
   await page
-    .getByText("Signed in as DEV0104 Coach.")
+    .getByRole("heading", { name: "How would you like to use MovX?" })
     .waitFor({ timeout: 20_000 });
+  await page.getByRole("button", { name: "Offer coaching" }).click();
+  await page.waitForURL(/\/profile\/coach$/);
 }
 
 async function createCoachProfile(page) {

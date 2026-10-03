@@ -27,6 +27,7 @@ import {
   publicCoachProfileRecord,
   upsertOwnedCoachProfileRecord,
 } from "@/server/db/coaches/repository";
+import { activateOwnedCoachingRecord } from "@/server/db/coaches/activation-repository";
 
 export async function publicCoachDirectory(
   filters: CoachDirectoryFilters,
@@ -61,12 +62,21 @@ export async function publicCoachProfile(
 export async function currentCoachEditor(): Promise<CoachEditorState> {
   const result = await withAuthorizedActor(async (transaction, actor) => {
     const owner = await currentActorProjection(transaction, actor);
+    if (!owner.coachingActivated) {
+      return Object.freeze({
+        coach: null,
+        gyms: Object.freeze([]),
+        ownerDisplayName: owner.displayName,
+        coachingActivated: false,
+      });
+    }
     const coach = await currentOwnedCoachProfileRecord(transaction, actor);
     const gyms = await activeCoachGymOptions(transaction, actor);
     return Object.freeze({
       coach,
       gyms,
       ownerDisplayName: owner.displayName,
+      coachingActivated: true,
     });
   });
   if (result.status !== "authorized") return result;
@@ -74,16 +84,39 @@ export async function currentCoachEditor(): Promise<CoachEditorState> {
 }
 
 export async function saveOwnedCoachProfile(input: CoachProfileInput) {
+  const result = await withAuthorizedActor(async (transaction, actor) => {
+    const owner = await currentActorProjection(transaction, actor);
+    if (!owner.coachingActivated) {
+      return Object.freeze({ outcome: "activation-required" as const });
+    }
+    return Object.freeze({
+      outcome: "saved" as const,
+      slug: await upsertOwnedCoachProfileRecord(transaction, input),
+    });
+  });
+  if (result.status !== "authorized") return result;
+  return Object.freeze({ status: "authorized" as const, ...result.value });
+}
+
+export async function activateCurrentCoaching() {
   const result = await withAuthorizedActor((transaction) =>
-    upsertOwnedCoachProfileRecord(transaction, input),
+    activateOwnedCoachingRecord(transaction),
   );
   if (result.status !== "authorized") return result;
-  return Object.freeze({ status: "authorized" as const, slug: result.value });
+  return Object.freeze({ status: "activated" as const });
 }
 
 export async function currentCoachAvailabilityWorkspace(): Promise<CoachAvailabilityWorkspaceState> {
   const result = await withAuthorizedActor(async (transaction, actor) => {
     const owner = await currentActorProjection(transaction, actor);
+    if (!owner.coachingActivated) {
+      return Object.freeze({
+        coach: null,
+        slots: Object.freeze([]),
+        ownerDisplayName: owner.displayName,
+        coachingActivated: false,
+      });
+    }
     const coach = await currentOwnedCoachProfileRecord(transaction, actor);
     const slots = await currentOwnedCoachAvailabilityRecords(
       transaction,
@@ -93,6 +126,7 @@ export async function currentCoachAvailabilityWorkspace(): Promise<CoachAvailabi
       coach,
       slots,
       ownerDisplayName: owner.displayName,
+      coachingActivated: true,
     });
   });
   if (result.status !== "authorized") return result;

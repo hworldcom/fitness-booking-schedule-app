@@ -49,8 +49,10 @@ async function createAccount(page, email, displayName) {
   await page.getByLabel("Display name").fill(displayName);
   await page.getByRole("button", { name: "Create my profile" }).click();
   await page
-    .getByText(`Signed in as ${displayName}.`)
+    .getByRole("heading", { name: "How would you like to use MovX?" })
     .waitFor({ timeout: 20_000 });
+  await page.getByRole("link", { name: "Find a coach" }).click();
+  await page.waitForURL(/\/explore$/);
 }
 
 async function walletRequest(page, path, options = {}) {

@@ -17,6 +17,7 @@ import {
   withdrawOwnedCoachAvailabilityRecord,
 } from "@/server/db/coaches/availability-repository";
 import { upsertOwnedCoachProfileRecord } from "@/server/db/coaches/repository";
+import { activateOwnedCoachingRecord } from "@/server/db/coaches/activation-repository";
 import { enrollApplicationProfile } from "@/server/db/identity/repository";
 
 const adminConnectionString = process.env.DATABASE_TEST_URL;
@@ -177,6 +178,8 @@ before(async () => {
   assert.ok(second);
   firstActor = actorFromRecord(firstAuthUserId, first);
   secondActor = actorFromRecord(secondAuthUserId, second);
+  await withActorDatabaseContext(firstActor, activateOwnedCoachingRecord);
+  await withActorDatabaseContext(secondActor, activateOwnedCoachingRecord);
 
   await withActorDatabaseContext(firstActor, (transaction) =>
     upsertOwnedCoachProfileRecord(transaction, firstProfile),

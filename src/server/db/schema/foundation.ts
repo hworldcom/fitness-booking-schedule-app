@@ -46,6 +46,10 @@ export const profiles = app.table(
       withTimezone: true,
       mode: "string",
     }),
+    coachingActivatedAt: timestamp("coaching_activated_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
     ...auditColumns,
   },
   (table) => [

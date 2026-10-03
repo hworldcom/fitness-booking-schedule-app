@@ -226,7 +226,7 @@ select is(
   (
     with expected(table_name, column_count) as (
       values
-        ('profiles', 11),
+        ('profiles', 12),
         ('demo_runs', 11),
         ('demo_run_participants', 8),
         ('gyms', 19)

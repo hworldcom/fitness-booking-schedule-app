@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CoachProfileEditor } from "@/features/coaches/coach-profile-editor";
+import { CoachActivationGate } from "@/features/coaches/coach-activation-gate";
 import { signInHref } from "@/auth/return-to";
 import { currentCoachEditor } from "@/server/coaches/service";
 
@@ -50,6 +51,7 @@ export default async function Page() {
       </section>
     );
   }
+  if (!state.coachingActivated) return <CoachActivationGate />;
   return (
     <CoachProfileEditor
       coach={state.coach}

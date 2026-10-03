@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { signInHref } from "@/auth/return-to";
 import { defaultCoachSlotLocalStart } from "@/domain/coaches";
 import { CoachAvailabilityPanel } from "@/features/coaches/coach-availability-panel";
+import { CoachActivationGate } from "@/features/coaches/coach-activation-gate";
 import { currentCoachAvailabilityWorkspace } from "@/server/coaches/service";
 
 export const metadata: Metadata = { title: "Coach workspace" };
@@ -46,6 +47,8 @@ export default async function Page() {
       </section>
     );
   }
+
+  if (!state.coachingActivated) return <CoachActivationGate />;
 
   return (
     <CoachAvailabilityPanel

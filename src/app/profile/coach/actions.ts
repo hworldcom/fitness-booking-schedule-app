@@ -50,6 +50,14 @@ export async function updateCoachProfileAction(
     });
   }
 
+  if (result.outcome === "activation-required") {
+    return Object.freeze({
+      status: "unavailable",
+      message: "Activate coaching before creating a coach profile.",
+      errors: Object.freeze([]),
+    });
+  }
+
   revalidatePath("/explore");
   revalidatePath(`/coaches/${result.slug}`);
   revalidatePath("/profile/coach");

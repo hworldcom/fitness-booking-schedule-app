@@ -9,6 +9,7 @@ import {
   KeyRound,
   LogOut,
   Mail,
+  Search,
   ShieldCheck,
   UserRound,
   Wallet,
@@ -24,6 +25,7 @@ import {
 import { normalizeDisplayName } from "@/auth/identity-contracts";
 import { useActor } from "@/auth/client/actor-provider";
 import { browserAuthClient } from "@/auth/client/browser-client";
+import { activateCoaching } from "@/auth/client/coaching-activation-client";
 import {
   completeApplicationProfile,
   fetchCurrentIdentity,
@@ -41,7 +43,8 @@ type IdentityResult = Readonly<{
   identity: ApplicationIdentitySnapshot;
 }>;
 
-type ActiveAction = "request-code" | "verify-code" | "profile" | "sign-out";
+type ActiveAction =
+  "request-code" | "verify-code" | "profile" | "activate-coaching" | "sign-out";
 
 export function SignInScreen({
   returnTo,
@@ -70,6 +73,7 @@ export function SignInScreen({
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [codeInput, setCodeInput] = useState("");
   const [displayNameInput, setDisplayNameInput] = useState("");
+  const [onboardingChoiceVisible, setOnboardingChoiceVisible] = useState(false);
   const [activeAction, setActiveAction] = useState<ActiveAction | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [identityResult, setIdentityResult] = useState<IdentityResult | null>(
@@ -113,6 +117,7 @@ export function SignInScreen({
   useEffect(() => {
     if (
       !identityKey ||
+      onboardingChoiceVisible ||
       applicationIdentity.status !== "enrolled" ||
       actorRefreshKey.current === identityKey
     ) {
@@ -129,7 +134,14 @@ export function SignInScreen({
     return () => {
       active = false;
     };
-  }, [applicationIdentity.status, identityKey, refreshActor, returnTo, router]);
+  }, [
+    applicationIdentity.status,
+    identityKey,
+    onboardingChoiceVisible,
+    refreshActor,
+    returnTo,
+    router,
+  ]);
 
   async function refreshIdentity() {
     if (!identityKey) return;
@@ -241,11 +253,37 @@ export function SignInScreen({
         return;
       }
       setDisplayNameInput("");
-      actorRefreshKey.current = null;
-      const actor = await refreshActor();
-      if (returnTo && actor.status === "authorized") {
-        router.replace(returnTo);
+      setOnboardingChoiceVisible(true);
+      actorRefreshKey.current = identityKey;
+      await refreshActor();
+      router.refresh();
+    } finally {
+      actionLock.current = false;
+      setActiveAction(null);
+    }
+  }
+
+  async function chooseCoaching() {
+    if (actionLock.current || !identityKey) return;
+    actionLock.current = true;
+    setActiveAction("activate-coaching");
+    setActionError(null);
+    try {
+      const result = await activateCoaching();
+      if (result.status !== "activated") {
+        setActionError(
+          result.status === "signed-out"
+            ? "Your sign-in expired. Sign in again before activating coaching."
+            : result.status === "forbidden"
+              ? "This account cannot activate coaching in the current workspace."
+              : "MovX could not activate coaching right now. Try again shortly.",
+        );
+        return;
       }
+      actorRefreshKey.current = identityKey;
+      await refreshActor();
+      setOnboardingChoiceVisible(false);
+      router.replace("/profile/coach");
       router.refresh();
     } finally {
       actionLock.current = false;
@@ -267,6 +305,7 @@ export function SignInScreen({
       await refreshSession();
       setPendingEmail(null);
       setIdentityResult(null);
+      setOnboardingChoiceVisible(false);
       router.refresh();
     } catch {
       setActionError(
@@ -491,7 +530,46 @@ export function SignInScreen({
             )}
 
           {session.status === "signed-in" &&
-            applicationIdentity.status === "enrolled" && (
+            applicationIdentity.status === "enrolled" &&
+            onboardingChoiceVisible && (
+              <div className="auth-onboarding-choice">
+                <div className="auth-notice success" role="status">
+                  <strong>
+                    Welcome, {applicationIdentity.profile.displayName}.
+                  </strong>
+                  <p>
+                    Your account is ready. Choose a starting path; coaches can
+                    still book as clients.
+                  </p>
+                </div>
+                <h3>How would you like to use MovX?</h3>
+                <div className="auth-onboarding-actions">
+                  <Link className="button secondary" href="/explore">
+                    <Search size={17} aria-hidden="true" /> Find a coach
+                  </Link>
+                  <button
+                    type="button"
+                    className="button dark"
+                    disabled={activeAction !== null}
+                    onClick={() => void chooseCoaching()}
+                  >
+                    <UserRound size={17} aria-hidden="true" />
+                    {activeAction === "activate-coaching"
+                      ? "Activating coaching…"
+                      : "Offer coaching"}
+                  </button>
+                </div>
+                <p className="auth-onboarding-note">
+                  Coaching activates immediately without administrator approval.
+                  Your public profile remains hidden until you finish and
+                  publish it.
+                </p>
+              </div>
+            )}
+
+          {session.status === "signed-in" &&
+            applicationIdentity.status === "enrolled" &&
+            !onboardingChoiceVisible && (
               <div className="auth-notice success" role="status">
                 <strong>
                   Signed in as {applicationIdentity.profile.displayName}.

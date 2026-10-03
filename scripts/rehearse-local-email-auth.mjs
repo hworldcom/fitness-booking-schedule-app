@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
+import { mkdir } from "node:fs/promises";
 import { chromium } from "@playwright/test";
 
 const siteUrl = process.env.AUTH_TEST_SITE_URL ?? "http://localhost:3100";
 const mailboxUrl =
   process.env.AUTH_TEST_MAILPIT_URL ?? "http://127.0.0.1:55324";
 const nonce = Date.now();
+const evidenceDirectory = "test-results/email-auth-rehearsal";
 
 async function emailCodeFor(email) {
   for (let attempt = 0; attempt < 30; attempt += 1) {
@@ -65,7 +67,7 @@ async function completeProfile(page, displayName) {
   await page.getByLabel("Display name").fill(displayName);
   await submitForm(page);
   await page
-    .getByText(`Signed in as ${displayName}.`)
+    .getByRole("heading", { name: "How would you like to use MovX?" })
     .waitFor({ timeout: 20_000 });
   const response = await page.request.get(`${siteUrl}/api/auth/actor`);
   assert.equal(response.status(), 200);
@@ -82,7 +84,7 @@ async function verifyAccountProfile(page, displayName) {
   await page
     .getByRole("heading", { name: displayName, exact: true })
     .waitFor({ timeout: 20_000 });
-  await page.getByText("Email-backed MovX Club profile").waitFor();
+  await page.getByText("Email-backed MovX profile").waitFor();
   assert.equal(await page.getByText("Available test USDC").count(), 0);
   assert.equal(await page.getByText("Confirmed visits").count(), 0);
   assert.equal(await page.getByText("Illustrative history").count(), 0);
@@ -99,6 +101,7 @@ async function signOut(page) {
   assert.deepEqual(await response.json(), { status: "signed-out" });
 }
 
+await mkdir(evidenceDirectory, { recursive: true });
 const browser = await chromium.launch({ channel: "chrome" });
 try {
   const firstContext = await browser.newContext({
@@ -113,6 +116,16 @@ try {
     testInvalidCode: true,
   });
   const firstActor = await completeProfile(firstPage, "Riley Morgan");
+  await firstPage.screenshot({
+    path: `${evidenceDirectory}/account-path-desktop.png`,
+    fullPage: true,
+  });
+  await firstPage.getByRole("link", { name: "Find a coach" }).click();
+  await firstPage.waitForURL(/\/explore$/);
+  await firstPage.goto(`${siteUrl}/coach`, { waitUntil: "domcontentloaded" });
+  await firstPage
+    .getByRole("heading", { name: "Activate coaching when you are ready." })
+    .waitFor();
   await firstPage
     .getByRole("link", { name: "Your profile: Riley Morgan" })
     .waitFor();
@@ -132,6 +145,28 @@ try {
   await requestAndVerify(secondPage, secondEmail);
   const secondActor = await completeProfile(secondPage, "Morgan Lee");
   assert.notEqual(firstActor.profile.slug, secondActor.profile.slug);
+  assert.equal(
+    await secondPage.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+    true,
+  );
+  await secondPage.screenshot({
+    path: `${evidenceDirectory}/account-path-mobile.png`,
+    fullPage: true,
+  });
+  await secondPage.getByRole("button", { name: "Offer coaching" }).focus();
+  assert.equal(
+    await secondPage
+      .getByRole("button", { name: "Offer coaching" })
+      .evaluate((element) => element === document.activeElement),
+    true,
+  );
+  await secondPage.getByRole("button", { name: "Offer coaching" }).click();
+  await secondPage.waitForURL(/\/profile\/coach$/);
+  await secondPage
+    .getByRole("heading", { name: "Become discoverable as a coach." })
+    .waitFor();
   await verifyAccountProfile(secondPage, "Morgan Lee");
   assert.equal(
     await secondPage.evaluate(
@@ -150,7 +185,7 @@ try {
   assert.deepEqual(firstErrors, []);
   assert.deepEqual(secondErrors, []);
   console.log(
-    "Email OTP rehearsal passed for two new account-backed profiles, one returning account, invalid/replayed-code recovery, profile isolation and immediate sign-out cleanup.",
+    "Email OTP rehearsal passed for client and self-service coach onboarding, one returning account, invalid/replayed-code recovery, profile isolation, mobile keyboard/overflow and immediate sign-out cleanup.",
   );
 } finally {
   await browser.close();

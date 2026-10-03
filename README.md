@@ -20,9 +20,9 @@ Start with the [MVP specification](docs/mvp-spec.md). It is the single current p
 
 ## Current foundation
 
-Delivered reusable foundations include the responsive Next.js application shell, local Supabase/PostgreSQL workflow, server-only database boundary, email-code accounts, protected application profiles, optional personal-wallet proof flow, Phantom discovery through Wallet Standard and Cloudflare staging tooling.
+Delivered reusable foundations include the responsive Next.js application shell, local Supabase/PostgreSQL workflow, server-only database boundary, email-code accounts, protected application profiles, self-service coaching activation, optional personal-wallet proof flow, Phantom discovery through Wallet Standard and Cloudflare staging tooling.
 
-Persistent self-declared coach profiles, coach-selected public locations and list-based coach discovery are implemented under DEV0096. The Mapbox Explore view, weekly availability, one-session/ten-session Offer accounts, test-USDC purchase, TrainingPass state, private booking, completed-session redemption and coach posts are not complete until their COR0009 development tickets record implementation and validation. The public home and coach directory present a truthful coach-first early-access state while those later capabilities are built. Retired gym and membership routes return not found rather than exposing a second product.
+Persistent self-declared coach profiles, coach-selected public locations and list-based coach discovery are implemented under DEV0096; explicit seven-day availability and the protected coach workspace are implemented under DEV0104. The Mapbox Explore view, one-session/ten-session Offer accounts, test-USDC purchase, TrainingPass state, private booking, completed-session redemption and coach posts are not complete until their COR0009 development tickets record implementation and validation. The public home and coach directory present a truthful coach-first early-access state while those later capabilities are built. Retired gym and membership routes return not found rather than exposing a second product.
 
 ## Run locally
 
@@ -65,7 +65,7 @@ npm run db:runtime
 
 Copy the printed public `API_URL` and `PUBLISHABLE_KEY` (or legacy `ANON_KEY`) to `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `.env.local`. Keep `NEXT_PUBLIC_SITE_URL=http://localhost:3100`. Never expose the service-role/secret key.
 
-Open `/sign-in`, request a code and read it from local Mailpit at [127.0.0.1:55324](http://127.0.0.1:55324). The first verified login creates an application profile; subsequent codes restore it. Optional personal-wallet linking is a separate signed-message proof and connecting Phantom alone does not authenticate or assign a role.
+Open `/sign-in`, request a code and read it from local Mailpit at [127.0.0.1:55324](http://127.0.0.1:55324). The first verified login creates an application profile, then offers Find a coach or Offer coaching as starting paths. Offer coaching immediately records owner-scoped activation without administrator approval and opens coach-profile setup; it does not publish or verify the coach. Subsequent codes restore the same account. Optional personal-wallet linking is a separate signed-message proof and connecting Phantom alone does not authenticate or activate coaching.
 
 ## Solana configuration
 

@@ -125,6 +125,7 @@ export type CoachEditorState =
       coach: CoachProjection | null;
       gyms: readonly CoachGymOption[];
       ownerDisplayName: string;
+      coachingActivated: boolean;
     }>
   | Readonly<{
       status: "preview" | "signed-out" | "forbidden" | "unavailable";
@@ -136,6 +137,7 @@ export type CoachAvailabilityWorkspaceState =
       coach: CoachProjection | null;
       slots: readonly OwnedCoachAvailabilitySlot[];
       ownerDisplayName: string;
+      coachingActivated: boolean;
     }>
   | Readonly<{
       status: "preview" | "signed-out" | "forbidden" | "unavailable";
