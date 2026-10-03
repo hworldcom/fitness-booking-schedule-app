@@ -27,6 +27,7 @@ export async function updateCoachProfileAction(
     longitude: formData.get("longitude"),
     locationSource: formData.get("locationSource"),
     locationProvider: formData.get("locationProvider"),
+    locationConfirmation: formData.get("locationConfirmation"),
   });
   if (!validation.valid) {
     return Object.freeze({

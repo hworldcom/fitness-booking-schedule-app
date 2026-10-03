@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { CoachProfileEditor } from "@/features/coaches/coach-profile-editor";
 import { CoachActivationGate } from "@/features/coaches/coach-activation-gate";
 import { signInHref } from "@/auth/return-to";
+import { resolveMapboxBrowserConfiguration } from "@/mapbox/provider";
 import { currentCoachEditor } from "@/server/coaches/service";
 
 export const metadata: Metadata = { title: "Your coach profile" };
@@ -57,6 +58,9 @@ export default async function Page() {
       coach={state.coach}
       gyms={state.gyms}
       ownerDisplayName={state.ownerDisplayName}
+      mapboxConfiguration={resolveMapboxBrowserConfiguration(
+        process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
+      )}
     />
   );
 }

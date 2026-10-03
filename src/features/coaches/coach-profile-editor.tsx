@@ -14,10 +14,12 @@ import {
 } from "lucide-react";
 import type { CoachGymOption, CoachProjection } from "@/domain/coaches";
 import { COACH_DISCIPLINES } from "@/domain/coaches";
+import type { MapboxBrowserConfiguration } from "@/mapbox/provider";
 import {
   type CoachProfileActionState,
   updateCoachProfileAction,
 } from "@/app/profile/coach/actions";
+import { CoachLocationPicker } from "./coach-location-picker";
 
 const INITIAL_COACH_PROFILE_ACTION_STATE: CoachProfileActionState =
   Object.freeze({ status: "idle", message: "", errors: Object.freeze([]) });
@@ -26,10 +28,12 @@ export function CoachProfileEditor({
   coach,
   gyms,
   ownerDisplayName,
+  mapboxConfiguration,
 }: {
   coach: CoachProjection | null;
   gyms: readonly CoachGymOption[];
   ownerDisplayName: string;
+  mapboxConfiguration: MapboxBrowserConfiguration;
 }) {
   const [state, formAction, pending] = useActionState(
     updateCoachProfileAction,
@@ -179,57 +183,15 @@ export function CoachProfileEditor({
               </small>
             </label>
           ) : (
-            <div className="coach-independent-fields">
+            <>
               <input type="hidden" name="selectedGymId" value="" />
-              <input type="hidden" name="locationSource" value="manual" />
-              <input type="hidden" name="locationProvider" value="" />
-              <label className="coach-field coach-field-wide">
-                <span>Public location label</span>
-                <input
-                  name="locationLabel"
-                  defaultValue={
-                    coach?.location.kind === "independent"
-                      ? coach.location.label
-                      : ""
-                  }
-                  maxLength={240}
-                  placeholder="For example: Tempelhofer Feld — main entrance"
-                  required
-                />
-              </label>
-              <label className="coach-field">
-                <span>Latitude</span>
-                <input
-                  name="latitude"
-                  type="number"
-                  step="0.000001"
-                  min="-90"
-                  max="90"
-                  defaultValue={
-                    coach?.location.kind === "independent"
-                      ? coach.location.latitude
-                      : ""
-                  }
-                  required
-                />
-              </label>
-              <label className="coach-field">
-                <span>Longitude</span>
-                <input
-                  name="longitude"
-                  type="number"
-                  step="0.000001"
-                  min="-180"
-                  max="180"
-                  defaultValue={
-                    coach?.location.kind === "independent"
-                      ? coach.location.longitude
-                      : ""
-                  }
-                  required
-                />
-              </label>
-            </div>
+              <CoachLocationPicker
+                initialLocation={
+                  coach?.location.kind === "independent" ? coach.location : null
+                }
+                mapboxConfiguration={mapboxConfiguration}
+              />
+            </>
           )}
           {locationMode === "gym" && (
             <>
@@ -238,6 +200,11 @@ export function CoachProfileEditor({
               <input type="hidden" name="longitude" value="" />
               <input type="hidden" name="locationSource" value="manual" />
               <input type="hidden" name="locationProvider" value="" />
+              <input
+                type="hidden"
+                name="locationConfirmation"
+                value="confirmed"
+              />
             </>
           )}
           <label className="coach-field">
@@ -328,8 +295,8 @@ export function CoachProfileEditor({
       <div className="coach-mapbox-followup">
         <MapPin size={19} aria-hidden="true" />
         <p>
-          Map-assisted location search arrives in a separate ticket. This form
-          stores only the provider-neutral location contract needed now.
+          Mapbox assists selection only. MovX stores the provider-neutral
+          location you explicitly confirm, never device or live location.
         </p>
       </div>
     </div>

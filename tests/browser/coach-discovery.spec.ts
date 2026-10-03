@@ -21,6 +21,18 @@ test("guest browses and filters the persistent coach directory", async ({
   await expect(
     page.getByText(/No real coaches, gyms, schedules/),
   ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Map of matching coaches" }),
+  ).toBeVisible();
+  const mapCanvas = page.getByLabel("Matching coach locations");
+  const unavailableState = page.getByText("Map unavailable", { exact: true });
+  await expect(mapCanvas.or(unavailableState)).toBeVisible({ timeout: 30_000 });
+  if (await mapCanvas.isVisible()) {
+    await expect(page.locator("button.coach-map-marker")).toHaveCount(5);
+    await expect(page.locator(".mapboxgl-ctrl-attrib")).toBeVisible();
+  } else {
+    await expect(page.getByText(/Mapbox is not configured yet/)).toBeVisible();
+  }
 
   const discipline = page.getByLabel("Discipline");
   await discipline.focus();

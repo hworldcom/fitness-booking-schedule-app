@@ -142,8 +142,15 @@
 
 .coach-card-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 17px;
+}
+
+.coach-explore-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.16fr) minmax(330px, 0.84fr);
+  align-items: start;
+  gap: 18px;
 }
 
 .coach-card {
@@ -157,6 +164,17 @@
   background: var(--coach-paper);
   padding: 23px;
   box-shadow: 0 14px 38px rgb(25 49 38 / 4%);
+}
+
+.coach-card.selected {
+  border-color: #91ad61;
+  box-shadow:
+    0 0 0 3px rgb(157 188 102 / 18%),
+    0 14px 38px rgb(25 49 38 / 5%);
+}
+
+.coach-card:focus {
+  outline: none;
 }
 
 .coach-card-topline {
@@ -237,9 +255,126 @@
 }
 
 .coach-card-link {
+  flex: 1;
   justify-content: space-between;
+}
+
+.coach-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   border-top: 1px solid #e4e8df;
   padding-top: 15px;
+}
+
+.coach-card-map-button {
+  border-radius: 999px;
+  background: #edf3e5;
+  padding: 7px 10px;
+  color: #4a603b;
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.coach-card-map-button[aria-pressed="true"] {
+  background: var(--coach-forest);
+  color: var(--coach-lime);
+}
+
+.coach-card-map-button:focus-visible {
+  outline: 3px solid rgb(180 214 114 / 35%);
+  outline-offset: 2px;
+}
+
+.coach-map-panel {
+  position: sticky;
+  top: 18px;
+  overflow: hidden;
+  border: 1px solid #dfe5da;
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 14px 38px rgb(25 49 38 / 4%);
+}
+
+.coach-map-heading {
+  display: grid;
+  gap: 10px;
+  padding: 21px 22px 17px;
+}
+
+.coach-map-heading .eyebrow {
+  color: #577143;
+}
+
+.coach-map-heading h2 {
+  margin-top: 5px;
+  font-size: 22px;
+  letter-spacing: -0.7px;
+}
+
+.coach-map-heading p {
+  color: #737d71;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.coach-map-canvas,
+.coach-map-state {
+  min-height: 570px;
+}
+
+.coach-map-canvas {
+  background: #e8eee3;
+}
+
+.coach-map-state {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 9px;
+  background: #eff3eb;
+  padding: 28px;
+  color: #4c603f;
+}
+
+.coach-map-state strong {
+  font-size: 15px;
+}
+
+.coach-map-state span,
+.coach-map-state small {
+  max-width: 320px;
+  color: #6f7a6d;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.coach-map-marker {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: var(--coach-forest);
+  box-shadow: 0 6px 17px rgb(21 43 31 / 28%);
+  color: var(--coach-lime);
+  font-size: 9px;
+  font-weight: 850;
+  transition:
+    scale 160ms ease,
+    background 160ms ease;
+}
+
+.coach-map-marker.selected {
+  background: #789f48;
+  scale: 1.18;
+}
+
+.coach-map-marker:focus-visible {
+  outline: 4px solid rgb(200 239 142 / 80%);
+  outline-offset: 3px;
 }
 
 .coach-directory-state {
@@ -651,6 +786,219 @@
   gap: 20px;
 }
 
+.coach-independent-location {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 15px;
+}
+
+.coach-location-entry-mode {
+  display: flex;
+  gap: 7px;
+  border-radius: 10px;
+  background: #f0f3ec;
+  padding: 5px;
+}
+
+.coach-location-entry-mode button {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 7px;
+  padding: 10px 12px;
+  color: #687366;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.coach-location-entry-mode button.active {
+  background: white;
+  color: #344b2a;
+  box-shadow: 0 2px 8px rgb(35 55 40 / 8%);
+}
+
+.coach-location-entry-mode button:focus-visible,
+.coach-location-candidates button:focus-visible {
+  outline: 3px solid rgb(180 214 114 / 35%);
+  outline-offset: 2px;
+}
+
+.coach-location-provider-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  border-radius: 11px;
+  background: #f0f3ec;
+  padding: 12px 14px;
+  color: #667260;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.coach-location-provider-note svg {
+  flex: 0 0 auto;
+}
+
+.coach-location-search {
+  display: grid;
+  gap: 13px;
+}
+
+.coach-location-search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.coach-location-search-row .button {
+  min-height: 43px;
+}
+
+.coach-location-search-message {
+  border-radius: 10px;
+  background: #f0f3ec;
+  padding: 11px 13px;
+  color: #65705f;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.coach-location-search-message.error {
+  background: #fff0e5;
+  color: #744824;
+}
+
+.coach-location-candidates {
+  display: grid;
+  gap: 7px;
+}
+
+.coach-location-candidates button {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid #dfe5da;
+  border-radius: 11px;
+  background: #fbfcf8;
+  padding: 12px;
+  color: #4d5f42;
+  text-align: left;
+}
+
+.coach-location-candidates button.selected {
+  border-color: #95b363;
+  background: #edf6de;
+}
+
+.coach-location-candidates svg {
+  flex: 0 0 auto;
+}
+
+.coach-location-candidates span,
+.coach-location-candidates strong,
+.coach-location-candidates small {
+  display: block;
+}
+
+.coach-location-candidates strong {
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.coach-location-candidates small {
+  margin-top: 3px;
+  color: #7b8578;
+  font-size: 8px;
+}
+
+.coach-location-confirmation {
+  display: grid;
+  gap: 11px;
+  overflow: hidden;
+  border: 1px solid #dfe5da;
+  border-radius: 14px;
+  background: #fbfcf8;
+  padding: 14px;
+}
+
+.coach-location-confirmation-copy span,
+.coach-location-confirmation-copy strong,
+.coach-location-confirmation-copy small {
+  display: block;
+}
+
+.coach-location-confirmation-copy span {
+  color: #71806a;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.coach-location-confirmation-copy strong {
+  margin-top: 5px;
+  color: #314629;
+  font-size: 11px;
+}
+
+.coach-location-confirmation-copy small,
+.coach-location-confirmation > p {
+  margin-top: 4px;
+  color: #758071;
+  font-size: 8px;
+  line-height: 1.55;
+}
+
+.coach-location-picker-map,
+.coach-location-map-state {
+  min-height: 310px;
+  border-radius: 11px;
+}
+
+.coach-location-picker-map {
+  overflow: hidden;
+  background: #e8eee3;
+}
+
+.coach-location-map-state {
+  display: grid;
+  align-content: center;
+  background: #edf2e8;
+  padding: 22px;
+  color: #687463;
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+.coach-location-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 13px;
+  border-radius: 12px;
+  background: #f2f4ee;
+  padding: 13px;
+}
+
+.coach-location-confirm.confirmed {
+  background: #e8f4d7;
+}
+
+.coach-location-confirm > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #56674c;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.coach-location-confirm.confirmed > div {
+  color: #3f5a2c;
+}
+
 .coach-visibility-options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1002,6 +1350,19 @@
   .coach-filters .button {
     align-self: stretch;
   }
+
+  .coach-explore-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .coach-map-panel {
+    position: static;
+  }
+
+  .coach-map-canvas,
+  .coach-map-state {
+    min-height: 440px;
+  }
 }
 
 @media (max-width: 760px) {
@@ -1070,6 +1431,23 @@
   .coach-editor-submit {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .coach-location-search-row,
+  .coach-location-entry-mode {
+    grid-template-columns: 1fr;
+  }
+
+  .coach-location-entry-mode,
+  .coach-location-confirm,
+  .coach-card-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .coach-location-confirm .button,
+  .coach-card-map-button {
+    width: 100%;
   }
 
   .coach-social-hero {

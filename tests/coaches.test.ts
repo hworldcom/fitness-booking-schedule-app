@@ -65,12 +65,40 @@ test("coach profile validation separates gym and independent locations", () => {
     longitude: "13.403665",
     locationSource: "manual",
     locationProvider: "",
+    locationConfirmation: "confirmed",
   });
   assert.equal(independent.valid, true);
   if (independent.valid) {
     assert.equal(independent.value.independentLocation?.latitude, 52.473086);
     assert.equal(independent.value.visibility, "hidden");
   }
+});
+
+test("permanent coach locations accept only explicitly confirmed Mapbox results", () => {
+  const input = {
+    displayName: "Coach Morgan",
+    bio: "Private wrestling sessions centered on position, balance and repeatable technical progress.",
+    disciplines: ["Wrestling"],
+    timezone: "Europe/Berlin",
+    visibility: "visible",
+    selectedGymId: "",
+    locationLabel: "Tempelhofer Damm 104, 12099 Berlin, Germany",
+    latitude: "52.473086",
+    longitude: "13.403665",
+    locationSource: "permanent-geocoding",
+    locationProvider: "mapbox",
+    locationConfirmation: "confirmed",
+  };
+  assert.equal(validateCoachProfileInput(input).valid, true);
+  assert.equal(
+    validateCoachProfileInput({ ...input, locationProvider: "search-box" })
+      .valid,
+    false,
+  );
+  assert.equal(
+    validateCoachProfileInput({ ...input, locationConfirmation: "" }).valid,
+    false,
+  );
 });
 
 test("coach profile validation rejects fabricated or malformed discovery data", () => {

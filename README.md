@@ -67,6 +67,14 @@ Copy the printed public `API_URL` and `PUBLISHABLE_KEY` (or legacy `ANON_KEY`) t
 
 Open `/sign-in`, request a code and read it from local Mailpit at [127.0.0.1:55324](http://127.0.0.1:55324). The first verified login creates an application profile, then offers Find a coach or Offer coaching as starting paths. Offer coaching immediately records owner-scoped activation without administrator approval and opens coach-profile setup; it does not publish or verify the coach. Subsequent codes restore the same account. Optional personal-wallet linking is a separate signed-message proof and connecting Phantom alone does not authenticate or activate coaching.
 
+## Mapbox configuration
+
+Explore remains a usable server-backed coach list without Mapbox. To enable the synchronized map and coach location picker, set `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` in the ignored environment file before building. Next.js embeds this public value in the browser bundle at build time.
+
+Create separate non-default public (`pk`) tokens for local, staging and production use. Grant only the public scopes required by the configured map style and Geocoding API (`styles:read` and `fonts:read` are required for the map), then restrict each token to its approved browser origin. Include `http://localhost:3100` explicitly for local development; use `https://staging.movx.club` for staging. Never place a secret (`sk`) token in `NEXT_PUBLIC_*`, source files, logs or tickets.
+
+Independent-place search uses an explicit Mapbox Geocoding v6 request with `permanent=true` and `autocomplete=false`; it does not use temporary Search Box results or request device location. Permanent storage requires an eligible Mapbox account with a valid payment method or enterprise agreement. Confirm that eligibility before persisting a searched location. Existing fictional gym coordinates and manual fallback coordinates do not call Mapbox geocoding.
+
 ## Solana configuration
 
 Current and planned chain work is Devnet-only. `.env.example` documents the public browser RPC, private server RPC and bounded fee-sponsor variable names. Credentialed RPC URLs and sponsor keypairs are server-only and must never use a `NEXT_PUBLIC_` prefix or enter committed configuration.
@@ -132,7 +140,7 @@ npm run test:e2e
 - `src/auth/` and `src/server/auth/`: browser/server Supabase identity boundaries.
 - `src/server/identity/` and `src/server/wallet/`: application profile and personal-wallet proof services.
 - `src/server/db/`: server-only PostgreSQL configuration, schema mappings and narrow repositories; availability and booking persistence arrives under DEV0104–DEV0105.
-- Planned Mapbox integration remains a browser-side rendering/selection adapter; provider-neutral coach and slot location snapshots remain in PostgreSQL, and list discovery must work without Mapbox.
+- Mapbox remains a browser-side rendering/selection adapter behind a client-only lazy boundary; provider-neutral coach and slot location snapshots remain in PostgreSQL, and list discovery works without Mapbox.
 - `src/solana/`: shared chain contracts plus browser-safe Wallet Standard clients; coach-pass modules arrive under DEV0097–DEV0099.
 - `supabase/`: sole additive SQL migration history, deterministic seeds and database tests.
 - `tests/`: unit, integration and browser validation.

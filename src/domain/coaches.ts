@@ -233,6 +233,7 @@ export function validateCoachProfileInput(input: {
   longitude?: unknown;
   locationSource?: unknown;
   locationProvider?: unknown;
+  locationConfirmation?: unknown;
 }): CoachProfileInputResult {
   const errors: string[] = [];
   const displayName = normalizeSingleLine(input.displayName);
@@ -299,11 +300,11 @@ export function validateCoachProfileInput(input: {
     if (source === "manual" && provider !== null) {
       errors.push("Manual locations cannot claim a geocoding provider.");
     }
-    if (
-      source === "permanent-geocoding" &&
-      (!provider || !/^[a-z0-9-]{2,40}$/.test(provider))
-    ) {
-      errors.push("Permanent geocoding requires a valid provider label.");
+    if (source === "permanent-geocoding" && provider !== "mapbox") {
+      errors.push("Permanent geocoding requires a confirmed Mapbox result.");
+    }
+    if (input.locationConfirmation !== "confirmed") {
+      errors.push("Confirm the public location before saving the profile.");
     }
     if (
       label.length >= 2 &&

@@ -21,6 +21,7 @@ const uploadedBindings = [
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
   "NEXT_PUBLIC_SITE_URL",
+  "NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN",
   "SOLANA_CLUSTER",
   "NEXT_PUBLIC_SOLANA_RPC_URL",
   "SOLANA_RPC_URL",
@@ -101,6 +102,13 @@ function validatedEnvironment() {
     !values.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.startsWith("sb_publishable_")
   ) {
     fail("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY must be a publishable key.");
+  }
+  if (
+    !/^pk\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(
+      values.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
+    )
+  ) {
+    fail("NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN must be a public Mapbox token.");
   }
 
   let databaseUrl;

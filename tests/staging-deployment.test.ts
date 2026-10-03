@@ -11,6 +11,7 @@ const validEnvironment = {
   NEXT_PUBLIC_SUPABASE_URL: "https://qaluvzwudsqrchdwxcsb.supabase.co",
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test-only",
   NEXT_PUBLIC_SITE_URL: "https://staging.movx.club",
+  NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN: "pk.test-header.test-signature",
   DATABASE_URL:
     "postgresql://movx_staging_runtime_login.project:test-only@aws-0-eu-central-1.pooler.supabase.com:6543/postgres",
   SOLANA_CLUSTER: "devnet",
@@ -27,7 +28,10 @@ test("staging deployment validation accepts only the staging contract", () => {
     encoding: "utf8",
   });
   assert.match(output, /Validated movx-club-staging configuration/);
-  assert.doesNotMatch(output, /sb_publishable_test-only|test-only@/);
+  assert.doesNotMatch(
+    output,
+    /sb_publishable_test-only|test-only@|pk\.test-header/,
+  );
 });
 
 test("staging deployment validation rejects a non-staging origin", () => {
@@ -42,7 +46,25 @@ test("staging deployment validation rejects a non-staging origin", () => {
   });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /must be https:\/\/staging\.movx\.club/);
-  assert.doesNotMatch(result.stderr, /sb_publishable_test-only|test-only@/);
+  assert.doesNotMatch(
+    result.stderr,
+    /sb_publishable_test-only|test-only@|pk\.test-header/,
+  );
+});
+
+test("staging deployment rejects a secret or malformed Mapbox token", () => {
+  const result = spawnSync(process.execPath, [script, "--validate-only"], {
+    cwd: root,
+    env: {
+      ...process.env,
+      ...validEnvironment,
+      NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN: "sk.secret-token.must-not-leak",
+    },
+    encoding: "utf8",
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /must be a public Mapbox token/);
+  assert.doesNotMatch(result.stderr, /sk\.secret-token/);
 });
 
 test("Wrangler declares exactly the approved staging runtime bindings", () => {
@@ -51,6 +73,7 @@ test("Wrangler declares exactly the approved staging runtime bindings", () => {
     "NEXT_PUBLIC_SUPABASE_URL",
     "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
     "NEXT_PUBLIC_SITE_URL",
+    "NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN",
     "SOLANA_CLUSTER",
     "NEXT_PUBLIC_SOLANA_RPC_URL",
     "SOLANA_RPC_URL",

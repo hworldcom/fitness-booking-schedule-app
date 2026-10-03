@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { normalizeCoachDirectoryFilters } from "@/domain/coaches";
 import { CoachDirectory } from "@/features/coaches/coach-discovery";
+import { resolveMapboxBrowserConfiguration } from "@/mapbox/provider";
 import { publicCoachDirectory } from "@/server/coaches/service";
 
 export const metadata: Metadata = {
@@ -15,5 +16,12 @@ export default async function Page({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const filters = normalizeCoachDirectoryFilters(await searchParams);
-  return <CoachDirectory state={await publicCoachDirectory(filters)} />;
+  return (
+    <CoachDirectory
+      state={await publicCoachDirectory(filters)}
+      mapboxConfiguration={resolveMapboxBrowserConfiguration(
+        process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
+      )}
+    />
+  );
 }

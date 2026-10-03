@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   ArrowLeft,
-  ArrowRight,
   CalendarClock,
   Clock3,
   MapPin,
@@ -20,10 +19,18 @@ import type {
   CoachFollowState,
   PublicCoachPostsState,
 } from "@/domain/coach-social";
-import { Avatar, Pill } from "@/components/ui";
+import type { MapboxBrowserConfiguration } from "@/mapbox/provider";
+import { Avatar } from "@/components/ui";
 import { CoachFollowControl, CoachRecentPosts } from "./coach-social";
+import { CoachExploreResults } from "./coach-explore-results";
 
-export function CoachDirectory({ state }: { state: CoachDirectoryState }) {
+export function CoachDirectory({
+  state,
+  mapboxConfiguration,
+}: {
+  state: CoachDirectoryState;
+  mapboxConfiguration: MapboxBrowserConfiguration;
+}) {
   const filters = state.filters;
   return (
     <div className="coach-discovery">
@@ -73,53 +80,10 @@ export function CoachDirectory({ state }: { state: CoachDirectoryState }) {
           </Link>
         </section>
       ) : (
-        <section
-          className="coach-results"
-          aria-label={`${state.coaches.length} matching coaches`}
-        >
-          <div className="coach-results-summary">
-            <span>
-              {state.coaches.length} coach
-              {state.coaches.length === 1 ? "" : "es"}
-            </span>
-            <small>Ordered by coach name</small>
-          </div>
-          <div className="coach-card-grid">
-            {state.coaches.map((coach) => (
-              <article className="coach-card" key={coach.profileId}>
-                <div className="coach-card-topline">
-                  <Avatar initials={profileInitials(coach.displayName)} />
-                  <Pill tone="lime">Demo coach</Pill>
-                </div>
-                <div>
-                  <h2>{coach.displayName}</h2>
-                  <div className="coach-discipline-list">
-                    {coach.disciplines.map((discipline) => (
-                      <span key={discipline}>{discipline}</span>
-                    ))}
-                  </div>
-                </div>
-                <p className="coach-card-bio">{coach.bio}</p>
-                <div className="coach-location-line">
-                  <MapPin size={17} aria-hidden="true" />
-                  <span>
-                    <strong>
-                      {coach.gymName ?? "Independent training place"}
-                    </strong>
-                    <small>{coach.location.label}</small>
-                  </span>
-                </div>
-                <Link
-                  href={`/coaches/${coach.slug}`}
-                  className="coach-card-link"
-                  aria-label={`View ${coach.displayName}'s coach profile`}
-                >
-                  View profile <ArrowRight size={17} aria-hidden="true" />
-                </Link>
-              </article>
-            ))}
-          </div>
-        </section>
+        <CoachExploreResults
+          coaches={state.coaches}
+          mapboxConfiguration={mapboxConfiguration}
+        />
       )}
     </div>
   );
