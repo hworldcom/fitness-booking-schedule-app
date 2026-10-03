@@ -2,11 +2,11 @@
 
 - Status: In progress
 - Created: 2026-09-23
-- Last updated: 2026-09-24
+- Last updated: 2026-10-03
 - Milestone: M0 hosted integration environment
 - Converted from: Not applicable — created as a coordination record
 - Tracked development tickets: [DEV0054 — Cloudflare Workers runtime foundation](../../archive/backend/DEV0054-cloudflare-workers-runtime-foundation.md), [DEV0055 — Hosted Supabase staging environment](../backend/DEV0055-hosted-supabase-staging-environment.md), and [DEV0056 — Staging release and domain rehearsal](../backend/DEV0056-staging-release-and-domain-rehearsal.md)
-- Related records: [DEV0015 — Supabase database foundation](../../archive/backend/DEV0015-supabase-database-foundation.md), [DEV0046 — Email OTP registration and application profiles](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md), [DEV0047 — Personal wallet linking and replacement](../backend/DEV0047-personal-wallet-linking-and-replacement.md), and [DEV0053 — Distinct personal and club guide](../../archive/frontend/DEV0053-distinct-personal-and-club-guide.md)
+- Related records: [DEV0015 — Supabase database foundation](../../archive/backend/DEV0015-supabase-database-foundation.md), [DEV0046 — Email OTP registration and application profiles](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md), [DEV0047 — Personal wallet linking and replacement](../backend/DEV0047-personal-wallet-linking-and-replacement.md), and current coach-first release ownership in [COR0009](COR0009-coach-first-training-package-mvp.md)
 
 ## Objective and boundaries
 
@@ -29,7 +29,7 @@ All required implementation parts have a direct development ticket. These ticket
 - DEV0015 is the historical schema, migration and least-privilege runtime-role baseline. DEV0055 deploys that contract to a hosted non-production project; it does not rewrite DEV0015.
 - DEV0046 supplies the email one-time-passcode (OTP) application flow that hosted Auth must support.
 - DEV0047 is a downstream hosted wallet-linking rehearsal when completed. It does not block deploying and testing the currently committed account flow.
-- DEV0053 is the separately committed interface baseline at `7038f2e`. Deployment tickets must preserve it and keep their implementation/commit evidence separate.
+- The preceding interface baseline is separately committed at `7038f2e`. Deployment tickets must preserve it and keep their implementation/commit evidence separate.
 - Cloudflare, Supabase, Porkbun DNS/email and the chosen Simple Mail Transfer Protocol (SMTP) service are external dependencies. Their credentials and private values must never be recorded in tickets or committed files.
 
 ## Delivery sequence and completion conditions
@@ -44,7 +44,7 @@ COR0004 completes only when all three direct tickets are Completed or explicitly
 
 - 2026-09-23: Split the staging initiative before further implementation because runtime adaptation, hosted identity/data setup and external release operations have different rollback and validation boundaries.
 - 2026-09-23: The user ran the vinext initializer before this coordination record was created. Its uncommitted output is assigned to DEV0054 for review; it is not accepted evidence merely because it was generated.
-- 2026-09-23: DEV0053 completed independently as commit `7038f2e`; the remaining deployment diff is no longer mixed with that feature implementation.
+- 2026-09-23: The preceding interface baseline completed independently as commit `7038f2e`; the remaining deployment diff is no longer mixed with that feature implementation.
 - 2026-09-23: Adopted `staging.movx.club` as the staging hostname. Cloudflare Workers is the application origin; Cloudflare should create its custom-domain DNS record and certificate after `movx.club` is an active Cloudflare zone.
 - 2026-09-23: DEV0054 now produces a complete Workers bundle, but its required local request smoke is blocked because Cloudflare `workerd` requires macOS 13.5+ and the current host reports 13.1. Continue that validation on a supported macOS or Linux host before DEV0056 begins.
 - 2026-09-23: The validation host was upgraded to macOS 27.0, removing DEV0054's `workerd` host-version blocker. Local Worker request validation has resumed before DEV0056 begins.

@@ -5,7 +5,7 @@
 - Last updated: 2026-09-20
 - Milestone: Cross-cutting application foundation
 - Coordination: [COR0001 — Project structure](../../current/organisatory/COR0001-project-structure.md)
-- Related records: direct peer development ticket tracked by [Coordination COR0001 — Project structure](../../current/organisatory/COR0001-project-structure.md); preserves the delivered behavior recorded by [DEV0008 — Frontend foundation](DEV0008-repx-club-frontend.md); precedes feature work that would otherwise expand the current shared component files
+- Related records: direct peer development ticket tracked by [Coordination COR0001 — Project structure](../../current/organisatory/COR0001-project-structure.md); preserves the delivered behavior recorded by DEV0008 — Frontend foundation; precedes feature work that would otherwise expand the current shared component files
 
 ## Objective and context
 

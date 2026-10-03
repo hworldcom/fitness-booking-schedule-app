@@ -1,8 +1,8 @@
 # DEV0043 visual assets
 
-The [MVP visual direction](../mvp-spec.md#visual-design-direction--21-september-2026) remains the product contract. [DEV0043](../../tickets/archive/frontend/DEV0043-playful-club-ui-redesign.md) records implementation and validation.
+The [current MVP decisions](../mvp-spec.md#confirmed-target-and-decisions) remain the product contract. This file preserves source provenance for the retained visual assets after the superseded delivery ticket was pruned.
 
-DEV0049 renamed the current platform to MovX Club without regenerating these assets. The verbatim historical prompt below retains the former product name as generation provenance; none of the generated images contains branding or text.
+The platform was renamed to MovX Club without regenerating these assets. The verbatim historical prompt below retains the former product name as generation provenance; none of the generated images contains branding or text.
 
 - [Preferred concept](DEV0043-preferred-concept.png): first generated homepage mockup accepted by the user. This is a design reference, never rendered as the application UI. Features pictured in it do not override the specification.
 - Existing [running-club image](../../public/images/run-club.webp): generated 19 September 2026 for the original preview; reused without changing the original file. CSS crops it responsively.

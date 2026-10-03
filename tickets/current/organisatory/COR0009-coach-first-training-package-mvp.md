@@ -6,7 +6,7 @@
 - Milestone: Coach-first private-class hackathon MVP
 - Converted from: Not applicable — created as a coordination record
 - Tracked development tickets: DEV0094–DEV0101 and DEV0103–DEV0110; DEV0102 is unrelated local-auth reliability work
-- Related records: replaces the product direction coordinated by [COR0007 — Core multi-gym membership MVP](../../archive/organisatory/COR0007-core-multigym-membership-mvp.md); reuses applicable identity/wallet work from [COR0003](COR0003-account-first-identity-and-wallet-linking.md) and hosted delivery from [COR0004](COR0004-hosted-staging-deployment.md)
+- Related records: replaces the superseded users-to-gyms product direction; reuses applicable identity/wallet work from [COR0003](COR0003-account-first-identity-and-wallet-linking.md) and hosted delivery from [COR0004](COR0004-hosted-staging-deployment.md)
 
 ## Objective and boundaries
 
@@ -41,8 +41,8 @@ Every listed DEV ticket links directly back to COR0009. No ticket belongs to ano
 
 - [COR0003](COR0003-account-first-identity-and-wallet-linking.md) provides email-first accounts and optional personal-wallet control. COR0009 consumes that authority but does not redefine it. Coach/client wallet replacement must not strand active on-chain authority; the applicable owning ticket must resolve that boundary before offer layout is frozen.
 - [COR0004](COR0004-hosted-staging-deployment.md) provides the hosted Worker/Supabase/Auth/domain environment. DEV0106 consumes it and owns coach-booking-specific release and integrated evidence.
-- COR0006/COR0007 and their completed peers are historical implementation baselines. DEV0094 decided the disposition of unfinished records; COR0009 does not silently reopen or rewrite their completed evidence.
-- Cancelled DEV0092 preserves the experimental membership-card evidence. Its program/runtime was removed by DEV0101 and is not the TrainingPass authority; DEV0097 owns a new explicitly reviewed Offer/TrainingPass program boundary.
+- Superseded product records were pruned from the working tree under DEV0112 at the user's request; Git history remains the recovery path. COR0009 does not silently restore that product direction.
+- DEV0097 owns a new explicitly reviewed Offer/TrainingPass program boundary. No legacy membership-card program or runtime is TrainingPass authority.
 
 ## Delivery sequence and completion conditions
 

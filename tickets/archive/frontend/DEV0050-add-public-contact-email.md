@@ -5,7 +5,7 @@
 - Last updated: 2026-09-22
 - Milestone: Product branding maintenance
 - Coordination: None — independent development ticket
-- Related records: follows completed [DEV0049 — Rename platform to MovX Club](DEV0049-rename-platform-to-movx-club.md)
+- Related records: follows completed DEV0049 — Rename platform to MovX Club
 
 ## Objective and context
 

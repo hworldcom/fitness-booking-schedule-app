@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Coach-first M3 package purchase
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on [DEV0097 — Create coach package offers](DEV0097-create-coach-package-offers.md), linked-wallet authority from [DEV0047](../backend/DEV0047-personal-wallet-linking-and-replacement.md), and reuses reviewed transaction/recovery patterns from superseded DEV0081–DEV0083 without inheriting their EURC pool contract; supplies eligible passes and purchase recovery to [DEV0105 — Book private classes with pass credits](../backend/DEV0105-book-private-classes-with-pass-credits.md)
+- Related records: depends on [DEV0097 — Create coach package offers](DEV0097-create-coach-package-offers.md), linked-wallet authority from [DEV0047](../backend/DEV0047-personal-wallet-linking-and-replacement.md), and reuses only generic reviewed transaction/recovery patterns without inheriting any legacy currency or pooled-payment contract; supplies eligible passes and purchase recovery to [DEV0105 — Book private classes with pass credits](../backend/DEV0105-book-private-classes-with-pass-credits.md)
 
 ## Objective and context
 

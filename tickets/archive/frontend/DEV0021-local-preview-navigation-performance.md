@@ -5,7 +5,7 @@
 - Last updated: 2026-09-20
 - Milestone: M0 local frontend maintenance
 - Coordination: None — independent development ticket
-- Related tickets: [DEV0020](DEV0020-discovery-and-how-it-works.md), [DEV0008](DEV0008-repx-club-frontend.md)
+- Related tickets: DEV0020, DEV0008
 
 ## Objective and context
 

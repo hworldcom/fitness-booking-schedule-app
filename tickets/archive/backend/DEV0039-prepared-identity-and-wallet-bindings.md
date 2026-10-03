@@ -4,14 +4,14 @@
 - Created: 2026-09-20
 - Last updated: 2026-09-21
 - Milestone: M0 identity / M2 wallet prerequisite
-- Coordination: [COR0002 — Phantom authentication and demo access](../organisatory/COR0002-phantom-auth-and-demo-access.md)
-- Related records: depends on completed [DEV0038 — Phantom Supabase Web3 authentication](DEV0038-phantom-supabase-web3-authentication.md) and [DEV0015 — Supabase database foundation](DEV0015-supabase-database-foundation.md); enabled completed [DEV0040 — Protected access and database context](DEV0040-protected-access-and-database-context.md) and enables [DEV0041 — Club wallet authorization](./DEV0041-club-wallet-authorization.md)
+- Coordination: None — former coordination record pruned under DEV0112; retained as a reusable identity/wallet foundation
+- Related records: depends on completed [DEV0038 — Phantom Supabase Web3 authentication](DEV0038-phantom-supabase-web3-authentication.md) and [DEV0015 — Supabase database foundation](DEV0015-supabase-database-foundation.md); enabled completed [DEV0040 — Protected access and database context](DEV0040-protected-access-and-database-context.md) and enables DEV0041 — Club wallet authorization
 
 ## Objective and context
 
 Map a verified Supabase Web3 subject to exactly one prepared RepX Club profile and active demo dataset through idempotent server-side enrollment. An active demo dataset is the server-selected `demo_runs` database row containing one isolated set of prepared users and product records; it is not a fitness activity or login session. Add the durable wallet-binding contract plus identity repositories needed to prevent arbitrary persona selection, wallet reuse and cross-dataset claims.
 
-DEV0038 authenticates control of a Phantom address but deliberately grants no application identity. This ticket owns the next boundary from the specification's [demo account model](../../../docs/mvp-spec.md#3-demo-fixtures-and-account-model): controlled prepared enrollment and personal-wallet binding.
+DEV0038 authenticates control of a Phantom address but deliberately grants no application identity. This ticket owns the next boundary under the current [actors and authority contract](../../../docs/mvp-spec.md#3-actors-and-authority): controlled prepared enrollment and personal-wallet binding.
 
 ## Scope and non-goals
 

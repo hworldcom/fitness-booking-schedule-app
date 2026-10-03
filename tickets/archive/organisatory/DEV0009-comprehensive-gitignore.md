@@ -5,7 +5,7 @@
 - Last updated: 2026-09-19
 - Milestone: M0 repository hygiene
 - Coordination: None — independent development ticket
-- Related tickets: [DEV0008 — RepX Club frontend foundation](../frontend/DEV0008-repx-club-frontend.md)
+- Related tickets: DEV0008 — RepX Club frontend foundation
 
 ## Objective and context
 

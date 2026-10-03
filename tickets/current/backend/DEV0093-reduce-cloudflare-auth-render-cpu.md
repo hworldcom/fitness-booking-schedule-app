@@ -5,13 +5,13 @@
 - Last updated: 2026-10-03
 - Milestone: Staging runtime reliability
 - Coordination: None — independent development ticket
-- Related records: staging runtime baseline in [DEV0054 — Cloudflare Workers runtime foundation](../../archive/backend/DEV0054-cloudflare-workers-runtime-foundation.md), hosted release work in [DEV0056 — Staging release and domain rehearsal](DEV0056-staging-release-and-domain-rehearsal.md), and the authenticated membership flows exercised by [DEV0081 — Devnet membership activation](../../archive/blockchain/DEV0081-devnet-membership-activation.md)
+- Related records: staging runtime baseline in [DEV0054 — Cloudflare Workers runtime foundation](../../archive/backend/DEV0054-cloudflare-workers-runtime-foundation.md), hosted release work in [DEV0056 — Staging release and domain rehearsal](DEV0056-staging-release-and-domain-rehearsal.md), and current coach-first delivery in [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
 
 ## Objective and context
 
 Reduce avoidable Cloudflare Worker CPU use in authenticated server rendering and browser hydration without weakening session verification, actor isolation or fail-closed behavior.
 
-During the real DEV0081 staging rehearsal, Cloudflare returned Error 1102 (`Worker exceeded resource limits`) after membership activation. A live trace of deployed version `818861bf-f738-4fae-9f68-445a30ad35b8` later measured 214 ms CPU for `GET /membership/setup` and 159 ms CPU for `GET /my-access`; the same retries returned HTTP 200 because Cloudflare permits occasional bursts above a configured CPU limit. Hydration then issued separate session, actor, club-wallet, personal-wallet and membership requests, with individual authenticated API invocations consuming 19–87 ms CPU.
+During a legacy staging rehearsal, Cloudflare returned Error 1102 (`Worker exceeded resource limits`) after an authenticated mutation. A live trace of deployed version `818861bf-f738-4fae-9f68-445a30ad35b8` later measured 214 ms CPU for `GET /membership/setup` and 159 ms CPU for `GET /my-access`; the same retries returned HTTP 200 because Cloudflare permits occasional bursts above a configured CPU limit. Hydration then issued separate session, actor, organization-wallet, personal-wallet and product requests, with individual authenticated API invocations consuming 19–87 ms CPU. Those routes are no longer current, so the ticket must rebaseline coach-first authenticated routes before selecting an optimization.
 
 Read-only code review found repeated work rather than one isolated expensive computation. A server render can verify the same Supabase session and resolve the same application identity in the root layout, protected-page guard and multiple feature services. The My Membership page also loads membership state directly and again through its class-schedule service. After hydration, the session and actor providers immediately refetch state already supplied by server rendering. This makes the staging application sensitive to strict Worker CPU limits and increases database/Auth traffic even when requests happen to succeed.
 
@@ -85,7 +85,7 @@ Pending implementation.
 
 ### Decisions and deviations
 
-- 2026-09-30: Keep the performance fix independent rather than adding it as a direct COR0007 or COR0004 deliverable. It supports both hosted runtime and membership rehearsal work but changes neither coordination record's product outcome.
+- 2026-09-30: Keep the performance fix independent rather than adding it as a direct COR0004 or coach-product deliverable. It supports the hosted runtime but changes neither coordination record's product outcome.
 - 2026-10-03: DEV0101 removed the profiled membership pages and their duplicate loaders. Preserve the Error 1102 trace as a baseline, but do not implement the stale My Membership refactor; first profile the remaining coach-first/auth routes and revise this ticket.
 
 ### Contracts, configuration, and operations

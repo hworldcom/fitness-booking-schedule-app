@@ -4,14 +4,14 @@
 - Created: 2026-09-20
 - Last updated: 2026-09-20
 - Milestone: M0 identity / M2 wallet prerequisite
-- Coordination: [COR0002 — Phantom authentication and demo access](../organisatory/COR0002-phantom-auth-and-demo-access.md)
-- Related records: depends on completed [DEV0015 — Supabase database foundation](DEV0015-supabase-database-foundation.md), [DEV0025 — Next.js backend boundary](DEV0025-nextjs-backend-boundary.md), and [DEV0027 — Phantom wallet connection foundation](../blockchain/DEV0027-phantom-wallet-connection-foundation.md); enables completed [DEV0039 — Prepared identity and wallet bindings](DEV0039-prepared-identity-and-wallet-bindings.md); [DEV0037 — Phantom embedded-wallet onboarding](../blockchain/DEV0037-phantom-embedded-wallet-onboarding.md) was later cancelled as optional post-MVP work
+- Coordination: None — former coordination record pruned under DEV0112; retained as a reusable authentication foundation
+- Related records: depends on completed [DEV0015 — Supabase database foundation](DEV0015-supabase-database-foundation.md), [DEV0025 — Next.js backend boundary](DEV0025-nextjs-backend-boundary.md), and [DEV0027 — Phantom wallet connection foundation](../blockchain/DEV0027-phantom-wallet-connection-foundation.md); enables completed [DEV0039 — Prepared identity and wallet bindings](DEV0039-prepared-identity-and-wallet-bindings.md); DEV0037 — Phantom embedded-wallet onboarding was later cancelled as optional post-MVP work
 
 ## Objective and context
 
 Prove the first real application-authentication slice: use DEV0027's selected Phantom Wallet Standard account to complete Supabase Auth's Solana Web3 sign-in, establish a server-verified session, reload it and sign out. The interface must distinguish an external wallet connection from a RepX Club session and must never imply profile, run, role or company authority before later tickets establish those mappings.
 
-This is the first implementation ticket under COR0002. It implements the provider/session boundary from the specification's [authentication recommendation](../../../docs/mvp-spec.md#authentication-and-data-access-recommendation) without adding application identity enrollment or protected product data.
+This was the first implementation ticket under its former coordination record. It implements the provider/session boundary under the current [actors and authority contract](../../../docs/mvp-spec.md#3-actors-and-authority) without adding application identity enrollment or protected product data.
 
 ## Scope and non-goals
 

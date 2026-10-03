@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Coach-first product pivot
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../../current/organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: supersedes the current multi-gym contract coordinated by [COR0007](./COR0007-core-multigym-membership-mvp.md); preserves completed multi-gym implementation as historical evidence; precedes DEV0095–DEV0101
+- Related records: supersedes the current multi-gym contract coordinated by COR0007; preserves completed multi-gym implementation as historical evidence; precedes DEV0095–DEV0101
 
 ## Objective and context
 

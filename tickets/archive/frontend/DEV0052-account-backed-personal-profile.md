@@ -5,11 +5,11 @@
 - Last updated: 2026-09-22
 - Milestone: M0 identity and interface integrity
 - Coordination: None — independent development ticket
-- Related records: consumes completed [DEV0046 — Email OTP registration and application profiles](../backend/DEV0046-email-otp-registration-and-application-profiles.md) and [DEV0040 — Protected access and database context](../backend/DEV0040-protected-access-and-database-context.md); completes before [COR0006 — Persistent access catalogue](../organisatory/COR0006-persistent-access-catalogue.md), converted from retired DEV0017, which coordinates richer persistent profile, draft, follow and bookmark data
+- Related records: consumes completed [DEV0046 — Email OTP registration and application profiles](../backend/DEV0046-email-otp-registration-and-application-profiles.md) and [DEV0040 — Protected access and database context](../backend/DEV0040-protected-access-and-database-context.md); completes before COR0006 — Persistent access catalogue, converted from retired DEV0017, which coordinates richer persistent profile, draft, follow and bookmark data
 
 ## Objective and context
 
-Remove the hardcoded Anna Klein current-user identity from the shared shell, home experience, personal profile and database seed. A personal profile becomes visible only after a person signs up or returns through the email one-time-passcode flow and has an enrolled application profile. This applies the specification's [Profile screen contract](../../../docs/mvp-spec.md#2-screens-and-actions) and [public browsing/sign-in boundary](../../../docs/mvp-spec.md#public-browsing-and-sign-in-boundaries).
+Remove the hardcoded Anna Klein current-user identity from the shared shell, home experience, personal profile and database seed. A personal profile becomes visible only after a person signs up or returns through the email one-time-passcode flow and has an enrolled application profile. This applies the specification's [primary user flows](../../../docs/mvp-spec.md#4-primary-user-flows) and [actors and authority boundary](../../../docs/mvp-spec.md#3-actors-and-authority).
 
 DEV0046 already exposes the authorized actor's server-derived display name and slug. The current interface does not consistently consume that contract: signed-out or configuration-free visitors can still see Anna's name/avatar/profile card, and the protected `/profile` page renders Anna plus illustrative personal history after any user signs in. This contradicts the account-first product model and can make fixture data look like the current person's data.
 

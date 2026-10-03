@@ -4,7 +4,7 @@ Last updated: 3 October 2026.
 
 This is the single current product contract for the MovX Club hackathon MVP. MovX connects clients with martial-arts coaches through discoverable profiles, optional fictional gym associations or independent public training locations, capacity-one availability for the coming week, private-class booking, one-session or ten-session passes purchased with test USDC on Solana Devnet, verifiable remaining-session balances and a lightweight coach-led social feed.
 
-The former multi-gym membership, group-class reservation, gym check-in, membership-card collectible and membership-pool payment product is superseded. Its completed tickets and additive migration files remain historical evidence even when a later forward migration removes their dormant runtime tables; they do not define current behavior.
+The former multi-gym membership, group-class reservation, gym check-in, membership-card collectible and membership-pool payment product is superseded. Reusable foundation/cleanup records, additive migration files and Git history retain the evidence needed by the current implementation; pruned legacy ticket identifiers remain permanently reserved and do not define current behavior.
 
 ## 1. Product status and document authority
 
@@ -12,7 +12,7 @@ This specification defines the target behavior. It does not claim that the compl
 
 The repository already contains reusable Next.js, Supabase/PostgreSQL, email identity, personal-wallet linking, Wallet Standard and Cloudflare staging foundations. DEV0101 removed the legacy multi-gym mutation runtime while preserving additive migrations and historical evidence. DEV0109 completed a forward cleanup of its dormant membership/class/check-in schema while preserving simple fictional gym locations. DEV0096 adds persistent self-declared coach profiles, optional fictional-gym affiliations or independent public locations, and list-based public discovery. Weekly availability, Mapbox discovery, on-chain offers, test-USDC pass purchase, private-class booking, completed-session redemption and coach posts remain planned work under COR0009 until their owning tickets record implementation and validation evidence.
 
-Completed and cancelled tickets are preserved as historical records. [The ticket index](../tickets/README.md) identifies current work; no ticket or blueprint overrides this specification.
+Retained completed/cancelled records and the compact pruned-identifier register in [the ticket index](../tickets/README.md) identify current work and recoverable history; no ticket or blueprint overrides this specification.
 
 <a id="confirmed-target-and-decisions"></a>
 

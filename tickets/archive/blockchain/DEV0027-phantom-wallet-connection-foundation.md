@@ -5,7 +5,7 @@
 - Last updated: 2026-09-20
 - Milestone: M0 wallet foundation / M2 prerequisite
 - Coordination: [COR0001 — Project structure](../../current/organisatory/COR0001-project-structure.md)
-- Related tickets: supersedes the implementation choice from [DEV0006 — Simple devnet demo wallet](DEV0006-simple-devnet-demo-wallet.md) while retaining the EURC and personal/company separation from [DEV0007 — EURC-only wallet contract](DEV0007-eurc-only-wallet-contract.md); enables [COR0002 — Phantom authentication and demo access](../organisatory/COR0002-phantom-auth-and-demo-access.md), converted from retired DEV0016; [DEV0037 — Phantom embedded-wallet onboarding](DEV0037-phantom-embedded-wallet-onboarding.md) was later cancelled as optional post-MVP work
+- Related tickets: supersedes the implementation choice from DEV0006 — Simple devnet demo wallet while retaining the EURC and personal/company separation from DEV0007 — EURC-only wallet contract; enables COR0002 — Phantom authentication and demo access, converted from retired DEV0016; DEV0037 — Phantom embedded-wallet onboarding was later cancelled as optional post-MVP work
 
 ## Objective and context
 
@@ -13,7 +13,7 @@ Add the browser-side foundation for connecting a standard Phantom wallet on Sola
 
 The ticket briefly changed to embedded-first Phantom Connect on 2026-09-20. During setup, Phantom Portal reported that new developer sign-ups were paused, so the required Portal account and App ID could not be obtained. The user chose to continue the hackathon MVP with their prepared Phantom extension and retain embedded onboarding as DEV0037 rather than blocking wallet delivery. The Node 24 prerequisite and evaluated Solana Kit wallet packages remain applicable.
 
-This ticket owns Wallet Standard discovery, connection state and accessible browser UI. [COR0002](../organisatory/COR0002-phantom-auth-and-demo-access.md) now coordinates the fresh tickets that separately own Sign-In With Solana, the Supabase/application session, profile/run enrollment and wallet bindings after the original DEV0016 plan was split. A visible address or approved wallet connection does not grant an application profile, company role, protected access, balance or payment status.
+This ticket owns Wallet Standard discovery, connection state and accessible browser UI. COR0002 now coordinates the fresh tickets that separately own Sign-In With Solana, the Supabase/application session, profile/run enrollment and wallet bindings after the original DEV0016 plan was split. A visible address or approved wallet connection does not grant an application profile, company role, protected access, balance or payment status.
 
 ## Scope and non-goals
 

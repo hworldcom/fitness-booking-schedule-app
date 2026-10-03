@@ -5,13 +5,13 @@
 - Last updated: 2026-09-20
 - Milestone: M0 backend foundation
 - Coordination: [COR0001 — Project structure](../../current/organisatory/COR0001-project-structure.md)
-- Related tickets: [DEV0014 — Database and backend plan](DEV0014-database-and-backend-plan.md); implemented with [DEV0015 — Supabase database foundation](DEV0015-supabase-database-foundation.md); establishes the boundary used by [COR0002](../organisatory/COR0002-phantom-auth-and-demo-access.md), converted from retired DEV0016, [COR0006](../organisatory/COR0006-persistent-access-catalogue.md), converted from retired DEV0017, later-cancelled [DEV0018](DEV0018-class-pass-reservations-and-confirmed-visits.md), [DEV0023](./DEV0023-minimal-shared-activity-feed.md), and later Solana integration tickets
+- Related tickets: DEV0014 — Database and backend plan; implemented with [DEV0015 — Supabase database foundation](DEV0015-supabase-database-foundation.md); establishes the boundary used by COR0002, converted from retired DEV0016, COR0006, converted from retired DEV0017, later-cancelled DEV0018, DEV0023, and later Solana integration tickets
 
 ## Objective and context
 
 Keep the MVP application backend in the existing Next.js package while establishing a strict boundary between request adapters, application workflows, database access, and Solana verification. The current repository has a frontend preview and browser-local state but no server application layer. Define and enforce the boundary when the first real backend code is introduced so later authentication, persistence, booking, social, and chain work do not accumulate business logic in route files or client components.
 
-This ticket implements the single-web-package architecture in [the MVP specification](../../../docs/mvp-spec.md#5-architecture-and-storage). It is deliberately paired with ticket DEV0015: start it as the first part of that database foundation, when `src/server` has real configuration and database modules to contain. Do not create an unused directory tree earlier, and do not postpone the boundary until feature endpoints have already been implemented.
+This ticket implements the single-web-package [architecture and delivery boundary](../../../docs/mvp-spec.md#6-architecture-and-delivery-boundaries). It is deliberately paired with ticket DEV0015: start it as the first part of that database foundation, when `src/server` has real configuration and database modules to contain. Do not create an unused directory tree earlier, and do not postpone the boundary until feature endpoints have already been implemented.
 
 ## Scope and non-goals
 

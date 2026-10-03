@@ -2,11 +2,11 @@
 
 - Status: In progress
 - Created: 2026-09-21
-- Last updated: 2026-09-25
+- Last updated: 2026-10-03
 - Milestone: Prioritized identity and onboarding
 - Converted from: Not applicable — created after DEV0046 already had planning commit history
 - Tracked development tickets: completed [DEV0046 — Email OTP registration and application profiles](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md) and [DEV0047 — Personal wallet linking and replacement](../backend/DEV0047-personal-wallet-linking-and-replacement.md)
-- Related records: follows completed [DEV0038](../../archive/backend/DEV0038-phantom-supabase-web3-authentication.md), [DEV0039](../../archive/backend/DEV0039-prepared-identity-and-wallet-bindings.md) and [DEV0040](../../archive/backend/DEV0040-protected-access-and-database-context.md); completed [DEV0048 — Remove gym membership access](../../archive/backend/DEV0048-remove-gym-membership-access.md) is an independent product cleanup; [DEV0041 — Club wallet authorization](../../archive/backend/DEV0041-club-wallet-authorization.md) later consumes the shared challenge boundary
+- Related records: follows completed [DEV0038](../../archive/backend/DEV0038-phantom-supabase-web3-authentication.md), [DEV0039](../../archive/backend/DEV0039-prepared-identity-and-wallet-bindings.md) and [DEV0040](../../archive/backend/DEV0040-protected-access-and-database-context.md); current coach-first consumers are coordinated by [COR0009](COR0009-coach-first-training-package-mvp.md)
 
 ## Objective and boundaries
 
@@ -26,16 +26,14 @@ Every implementation part is assigned exactly once. No implementation may be per
 ## Other relationships
 
 - DEV0038–DEV0040 are completed historical baselines. DEV0046 deliberately replaces their wallet-dependent login/enrollment/actor assumptions while preserving verified sessions, server-derived authority, row-level security and transaction-local isolation.
-- DEV0048 removed the separate gym-membership capability and does not belong to this identity coordination. DEV0046 can now start without accidentally creating the removed entitlement.
-- Cancelled DEV0041 remains historical COR0002 evidence only. DEV0047 owns the shared challenge schema for personal linking; no current coach-first flow extends it with organization-wallet authority.
-- Cancelled [DEV0037](../../archive/blockchain/DEV0037-phantom-embedded-wallet-onboarding.md) is optional embedded-wallet history. Embedded wallet creation is not part of the focused MVP and never becomes the application account authority.
+- Legacy gym-entitlement and organization-wallet work has been pruned from the current record set. DEV0047 owns the shared challenge schema for personal linking; no current coach-first flow extends it with organization-wallet authority.
+- Embedded wallet creation is not part of the focused MVP and never becomes the application account authority.
 
 ## Delivery sequence and completion conditions
 
-1. Completed prerequisite: DEV0048 removed gym-membership access.
-2. Deliver DEV0046 and prove two email accounts can register, reload isolated profiles, recover through email and access protected data without wallets.
-3. Deliver DEV0047 and prove one account can link/replace/unlink one personal Phantom wallet through message-only proof without changing account login.
-4. Complete COR0003 only when both direct tickets are Completed or explicitly cancelled/replaced, their coordination fields agree, account/wallet collision and recovery integration scenarios pass, and current specification/setup documentation matches the delivered result.
+1. Deliver DEV0046 and prove two email accounts can register, reload isolated profiles, recover through email and access protected data without wallets.
+2. Deliver DEV0047 and prove one account can link/replace/unlink one personal Phantom wallet through message-only proof without changing account login.
+3. Complete COR0003 only when both direct tickets are Completed or explicitly cancelled/replaced, their coordination fields agree, account/wallet collision and recovery integration scenarios pass, and current specification/setup documentation matches the delivered result.
 
 ## Progress and integration record
 

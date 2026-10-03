@@ -5,11 +5,11 @@
 - Last updated: 2026-09-20
 - Milestone: M0 database foundation
 - Coordination: [COR0001 — Project structure](../../current/organisatory/COR0001-project-structure.md)
-- Related tickets: [DEV0014 — Planning record](DEV0014-database-and-backend-plan.md), [DEV0008 — Frontend](../frontend/DEV0008-repx-club-frontend.md); implemented the server boundary with [DEV0025](DEV0025-nextjs-backend-boundary.md); next [COR0002](../organisatory/COR0002-phantom-auth-and-demo-access.md), converted from retired DEV0016
+- Related tickets: DEV0014 — Planning record, DEV0008 — Frontend; implemented the server boundary with [DEV0025](DEV0025-nextjs-backend-boundary.md); next COR0002, converted from retired DEV0016
 
 ## Objective and context
 
-Establish repeatable PostgreSQL schema, secure runtime access and seeded catalogue data before connecting the frontend to a shared backend. Implement the [database recommendation and phases](../../../docs/mvp-spec.md#database-provider-recommendation--19-september-2026) and [migration contract](../../../docs/mvp-spec.md#migrations-environments-and-seed-boundaries). Supabase is the recommended provider, not yet a provisioned account.
+Establish repeatable PostgreSQL schema, secure runtime access and seeded catalogue data before connecting the frontend to a shared backend. Implement the current [architecture and delivery boundary](../../../docs/mvp-spec.md#6-architecture-and-delivery-boundaries). Supabase is the recommended provider, not yet a provisioned account.
 
 ## Scope and non-goals
 
@@ -107,7 +107,7 @@ Project/region selection and credentials remain future inputs. SQL reset tests a
 
 ## Implementation record
 
-Planning update, 2026-09-19 ([DEV0019](../frontend/DEV0019-public-discovery-access.md)): C17 explicitly requires public discovery. Base private-data restrictions remain; guest catalogue privileges/services will be introduced and tested in DEV0017.
+Planning update, 2026-09-19 (DEV0019): C17 explicitly requires public discovery. Base private-data restrictions remain; guest catalogue privileges/services will be introduced and tested in DEV0017.
 
 Planning update, 2026-09-20 ([DEV0025](DEV0025-nextjs-backend-boundary.md)): keep the application backend in the existing Next.js package and establish its server-only/service/repository boundary as the first part of this ticket. The boundary must start with real DEV0015 modules rather than unused scaffolding.
 

@@ -5,7 +5,7 @@
 - Last updated: 2026-09-24
 - Milestone: M0 identity and schema clarity
 - Coordination: None — independent development ticket
-- Related records: follows the database foundation in [DEV0015](DEV0015-supabase-database-foundation.md), protected actor context in [DEV0040](DEV0040-protected-access-and-database-context.md), email identity in [DEV0046](DEV0046-email-otp-registration-and-application-profiles.md), and the consumer-membership removal in [DEV0048](DEV0048-remove-gym-membership-access.md)
+- Related records: follows the database foundation in [DEV0015](DEV0015-supabase-database-foundation.md), protected actor context in [DEV0040](DEV0040-protected-access-and-database-context.md), email identity in [DEV0046](DEV0046-email-otp-registration-and-application-profiles.md), and the consumer-membership removal in DEV0048
 
 ## Objective and context
 
@@ -66,13 +66,13 @@ The final Drizzle mapping exports `demoRunParticipants`; authorization queries, 
 
 ### Affected files
 
-| File or component | Change and purpose |
-| --- | --- |
-| `supabase/migrations/20260924000100_rename_demo_run_participants.sql` | Renames the relation and its owned object names, refreshes stored function references and documents the final meaning without rewriting prior migrations. |
-| `src/server/db/schema/foundation.ts`, `src/server/db/schema/identity.ts`, `src/server/db/authorization/repository.ts` | Map and query the final database relation through the `demoRunParticipants` export while preserving every existing foreign key and actor rule. |
-| `supabase/seed.sql`, `scripts/prepare-local-club-wallet.mjs`, `scripts/rehearse-local-club-wallet.mjs` | Seed and operate on participant rows using unambiguous table and query aliases. |
-| `supabase/tests/database/*.test.sql`, `tests/database/*.test.ts` | Verify the new table/object names, absence of the legacy relation, refreshed function source and unchanged identity/wallet behavior. |
-| `tickets/current/backend/DEV0018-class-pass-reservations-and-confirmed-visits.md`, `tickets/README.md` | Use participant terminology in current planning and register this development ticket. |
+| File or component                                                                                                     | Change and purpose                                                                                                                                        |
+| --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supabase/migrations/20260924000100_rename_demo_run_participants.sql`                                                 | Renames the relation and its owned object names, refreshes stored function references and documents the final meaning without rewriting prior migrations. |
+| `src/server/db/schema/foundation.ts`, `src/server/db/schema/identity.ts`, `src/server/db/authorization/repository.ts` | Map and query the final database relation through the `demoRunParticipants` export while preserving every existing foreign key and actor rule.            |
+| `supabase/seed.sql`, `scripts/prepare-local-club-wallet.mjs`, `scripts/rehearse-local-club-wallet.mjs`                | Seed and operate on participant rows using unambiguous table and query aliases.                                                                           |
+| `supabase/tests/database/*.test.sql`, `tests/database/*.test.ts`                                                      | Verify the new table/object names, absence of the legacy relation, refreshed function source and unchanged identity/wallet behavior.                      |
+| `tickets/current/backend/DEV0018-class-pass-reservations-and-confirmed-visits.md`, `tickets/README.md`                | Use participant terminology in current planning and register this development ticket.                                                                     |
 
 ### Decisions and deviations
 
@@ -96,13 +96,13 @@ Validated on 2026-09-24 against the disposable local Supabase PostgreSQL 17 stac
 - `npm run build` — the standard Turbopack build remained blocked by the host environment while its CSS loader attempted to create an internal process and bind a port (`Operation not permitted`). `npx --no-install next build --webpack`, the established repository fallback for this host restriction, compiled successfully, completed TypeScript and generated all 13 static pages.
 - Repository terminology audit — active source, scripts, seed, current tickets and tests contain the old relation name only in negative assertions proving its absence. Historical migrations, archived tickets and this migration/record retain it where necessary to describe or transform history.
 
-| Criterion | Evidence | Result |
-| --- | --- | --- |
-| AC1 | Clean eight-migration replay plus foundation catalogue assertions | Passed |
-| AC2 | Identity/authorization SQL tests and driver integration tests | Passed |
-| AC3 | Personal-wallet, club-wallet and foundation foreign-key suites | Passed |
-| AC4 | Active-file terminology audit and reviewed historical exclusions | Passed |
-| AC5 | SQL 89/89, driver 13/13, unit 51/51, lint/type/format/schema checks | Passed |
+| Criterion | Evidence                                                            | Result |
+| --------- | ------------------------------------------------------------------- | ------ |
+| AC1       | Clean eight-migration replay plus foundation catalogue assertions   | Passed |
+| AC2       | Identity/authorization SQL tests and driver integration tests       | Passed |
+| AC3       | Personal-wallet, club-wallet and foundation foreign-key suites      | Passed |
+| AC4       | Active-file terminology audit and reviewed historical exclusions    | Passed |
+| AC5       | SQL 89/89, driver 13/13, unit 51/51, lint/type/format/schema checks | Passed |
 
 ## Risks, limitations, and follow-ups
 
