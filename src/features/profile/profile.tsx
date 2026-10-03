@@ -91,10 +91,10 @@ export function Profile() {
       </section>
       <div className="account-profile-empty">
         <Empty
-          title="Want clients to discover your coaching?"
-          description="Create a self-declared coach profile, choose disciplines and confirm one public training place."
-          href="/profile/coach"
-          action="Set up coach profile"
+          title="Coach private classes?"
+          description="Open the coach workspace to set up your public profile and publish exact availability for the next seven days."
+          href="/coach"
+          action="Open coach workspace"
         />
       </div>
     </>

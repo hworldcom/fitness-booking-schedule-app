@@ -4,7 +4,6 @@ import { sql } from "drizzle-orm";
 import type {
   CoachDirectoryFilters,
   CoachDiscipline,
-  CoachGymOption,
   CoachProjection,
   CoachProfileInput,
 } from "@/domain/coaches";

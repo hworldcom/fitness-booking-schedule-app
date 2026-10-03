@@ -1,0 +1,403 @@
+.coach-workspace {
+  --coach-forest: #193126;
+  --coach-lime: #c8ef8e;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.coach-workspace-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  border-radius: 24px;
+  background: var(--coach-forest);
+  padding: clamp(31px, 5vw, 56px);
+  color: white;
+}
+
+.coach-workspace-header .eyebrow {
+  color: var(--coach-lime);
+}
+
+.coach-workspace-header h1 {
+  margin: 10px 0 15px;
+  font-size: clamp(35px, 5vw, 56px);
+  letter-spacing: -2.6px;
+}
+
+.coach-workspace-header p {
+  max-width: 680px;
+  color: #cfdbd1;
+  font-size: 12px;
+  line-height: 1.75;
+}
+
+.coach-workspace-header .button.secondary,
+.coach-editor-heading .button.secondary {
+  color: #304629;
+}
+
+.coach-workspace-nav {
+  display: flex;
+  gap: 7px;
+  margin: 16px 0;
+  border: 1px solid #dfe5da;
+  border-radius: 13px;
+  background: white;
+  padding: 6px;
+}
+
+.coach-workspace-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 9px;
+  padding: 10px 15px;
+  color: #687466;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.coach-workspace-nav a.active,
+.coach-workspace-nav a[aria-current="page"] {
+  background: #eaf3dc;
+  color: #344d29;
+}
+
+.coach-slot-create,
+.coach-availability-list,
+.coach-workspace-gate {
+  border: 1px solid #dfe5da;
+  border-radius: 19px;
+  background: white;
+  padding: clamp(22px, 4vw, 35px);
+}
+
+.coach-slot-create {
+  display: grid;
+  grid-template-columns:
+    minmax(180px, 1fr) minmax(150px, 0.55fr) minmax(230px, 1fr)
+    auto;
+  align-items: end;
+  gap: 17px;
+}
+
+.coach-availability-section-title {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: flex-start;
+  gap: 13px;
+}
+
+.coach-availability-section-title > span {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--coach-forest);
+  color: var(--coach-lime);
+}
+
+.coach-availability-section-title h2,
+.coach-availability-list-heading h2,
+.coach-workspace-gate h2 {
+  font-size: clamp(22px, 3vw, 30px);
+  letter-spacing: -1px;
+}
+
+.coach-availability-section-title p {
+  margin-top: 5px;
+  max-width: 680px;
+  color: #727d70;
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+.coach-slot-create-location {
+  display: flex;
+  min-height: 64px;
+  align-items: flex-start;
+  gap: 10px;
+  border-radius: 12px;
+  background: #f0f4eb;
+  padding: 12px;
+  color: #476038;
+}
+
+.coach-slot-create-location span,
+.coach-slot-create-location strong,
+.coach-slot-create-location small,
+.coach-slot-location span,
+.coach-slot-location strong,
+.coach-slot-location small {
+  display: block;
+  min-width: 0;
+}
+
+.coach-slot-create-location strong,
+.coach-slot-location strong {
+  font-size: 10px;
+}
+
+.coach-slot-create-location small,
+.coach-slot-location small {
+  margin-top: 3px;
+  color: #737f70;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.coach-availability-result {
+  grid-column: 1 / -1;
+  border-radius: 11px;
+  padding: 12px 14px;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.coach-availability-result.saved {
+  background: #e6f4d2;
+  color: #385126;
+}
+
+.coach-availability-result.invalid,
+.coach-availability-result.conflict,
+.coach-availability-result.unavailable {
+  background: #fff0e5;
+  color: #744824;
+}
+
+.coach-availability-result ul {
+  margin: 6px 0 0 17px;
+}
+
+.coach-availability-list {
+  margin-top: 16px;
+}
+
+.coach-availability-list-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.coach-availability-list-heading h2 {
+  margin-top: 5px;
+}
+
+.coach-slot-count {
+  border-radius: 999px;
+  background: #eaf3dc;
+  padding: 7px 11px;
+  color: #496037;
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.coach-slot-list {
+  display: grid;
+  gap: 12px;
+}
+
+.coach-slot-card {
+  border: 1px solid #e0e6dc;
+  border-radius: 15px;
+  background: #fdfefa;
+  padding: 18px;
+}
+
+.coach-slot-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.7fr);
+  gap: 20px;
+  align-items: center;
+}
+
+.coach-slot-status {
+  display: inline-block;
+  margin-bottom: 7px;
+  border-radius: 999px;
+  background: #e8f3d8;
+  padding: 4px 8px;
+  color: #476130;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.coach-slot-status.held,
+.coach-slot-status.booked {
+  background: #eee9f7;
+  color: #5c4975;
+}
+
+.coach-slot-summary h3 {
+  font-size: 18px;
+  letter-spacing: -0.45px;
+}
+
+.coach-slot-summary > div:first-child > p {
+  margin-top: 3px;
+  color: #788176;
+  font-size: 9px;
+}
+
+.coach-slot-location {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  border-left: 1px solid #e1e6dd;
+  padding-left: 20px;
+  color: #4d633f;
+}
+
+.coach-slot-edit-form {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(150px, 0.55fr) minmax(
+      230px,
+      1fr
+    );
+  gap: 13px;
+  margin-top: 17px;
+  border-top: 1px solid #e3e7df;
+  padding-top: 17px;
+}
+
+.coach-slot-refresh-location {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-radius: 10px;
+  background: #f1f4ee;
+  padding: 11px;
+  color: #667162;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.coach-slot-refresh-location input {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.coach-slot-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.coach-withdraw-button {
+  border: 1px solid #ebd7cd;
+  background: #fff8f3;
+  color: #744d39;
+}
+
+.coach-slot-locked {
+  margin-top: 14px;
+  border-top: 1px solid #e3e7df;
+  padding-top: 13px;
+  color: #737d71;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.coach-availability-empty,
+.coach-workspace-gate {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+
+.coach-availability-empty {
+  border-radius: 14px;
+  background: #f1f4ee;
+  padding: 24px;
+  color: #506344;
+}
+
+.coach-availability-empty h3 {
+  font-size: 17px;
+}
+
+.coach-availability-empty p,
+.coach-workspace-gate p {
+  max-width: 620px;
+  color: #737d71;
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+.coach-workspace-gate .button {
+  margin-top: 5px;
+}
+
+@media (max-width: 900px) {
+  .coach-slot-create {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .coach-slot-create-location,
+  .coach-slot-create .coach-availability-result {
+    grid-column: 1 / -1;
+  }
+
+  .coach-slot-create > .button {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 700px) {
+  .coach-workspace-header {
+    align-items: flex-start;
+    flex-direction: column;
+    border-radius: 18px;
+    padding: 28px 22px;
+  }
+
+  .coach-workspace-header h1 {
+    font-size: 37px;
+    letter-spacing: -2px;
+  }
+
+  .coach-slot-summary,
+  .coach-slot-edit-form {
+    grid-template-columns: 1fr;
+  }
+
+  .coach-slot-location {
+    border-top: 1px solid #e1e6dd;
+    border-left: 0;
+    padding-top: 13px;
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .coach-slot-create {
+    grid-template-columns: 1fr;
+  }
+
+  .coach-slot-create-location,
+  .coach-slot-create .coach-availability-result {
+    grid-column: auto;
+  }
+
+  .coach-availability-list-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .coach-workspace-nav a {
+    flex: 1;
+    justify-content: center;
+  }
+}

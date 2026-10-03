@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   ArrowRight,
   CalendarClock,
+  Clock3,
   MapPin,
   Search,
   ShieldCheck,
@@ -166,7 +167,7 @@ export function CoachProfileView({
 }: {
   state: Extract<PublicCoachProfileState, { status: "ready" }>;
 }) {
-  const { coach } = state;
+  const { coach, slots } = state;
   return (
     <article className="public-coach-profile">
       <Link className="coach-back-link" href="/explore">
@@ -212,15 +213,59 @@ export function CoachProfileView({
 
         <aside className="public-coach-next">
           <CalendarClock size={24} aria-hidden="true" />
-          <span className="eyebrow">PRIVATE TRAINING</span>
-          <h2>Weekly times are not published yet.</h2>
-          <p>
-            MovX will show only database-backed open slots here. No placeholder
-            availability or price is being presented as live inventory.
-          </p>
-          <Link className="button secondary" href="/coming-soon">
-            Join early access
-          </Link>
+          <span className="eyebrow">PRIVATE TRAINING · NEXT 7 DAYS</span>
+          {slots.length === 0 ? (
+            <>
+              <h2>No open times right now.</h2>
+              <p>
+                Only database-backed open slots appear here. No placeholder
+                availability or price is being presented as live inventory.
+              </p>
+              <Link className="button secondary" href="/coming-soon">
+                Join early access
+              </Link>
+            </>
+          ) : (
+            <>
+              <h2>
+                {slots.length} open time{slots.length === 1 ? "" : "s"} this
+                week.
+              </h2>
+              <ul className="public-coach-slot-list">
+                {slots.map((slot) => (
+                  <li key={slot.id}>
+                    <Clock3 size={17} aria-hidden="true" />
+                    <span>
+                      <strong>
+                        {new Intl.DateTimeFormat("en-GB", {
+                          timeZone: slot.coachTimezone,
+                          weekday: "short",
+                          day: "numeric",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }).format(new Date(slot.startsAt))}
+                      </strong>
+                      <small>
+                        {new Intl.DateTimeFormat("en-GB", {
+                          timeZone: slot.coachTimezone,
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }).format(new Date(slot.endsAt))}
+                        {" · "}
+                        {slot.location.gymName ?? "Independent place"}
+                      </small>
+                    </span>
+                    <em>Open</em>
+                  </li>
+                ))}
+              </ul>
+              <p>
+                Booking and pass purchase are being connected next. These
+                capacity-one times are the coach’s current public inventory.
+              </p>
+            </>
+          )}
         </aside>
       </div>
 

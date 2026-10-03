@@ -40,12 +40,12 @@ Completed and cancelled tickets are preserved as historical records. [The ticket
 | C18 | Mapbox is the P0 map provider because implementation speed is the current priority. Each coach explicitly chooses the public discovery location; MovX does not collect live/device location.                                                                                                                                         |
 | C19 | The accessible coach list remains primary and usable without Mapbox. P0 stores one provider-neutral confirmed coach location, new slots snapshot it so profile edits cannot move existing classes, and persisted Mapbox-derived results use a storage-permitted permanent-geocoding flow.                                            |
 | C20 | Retain gyms only as simple fictional public location records that coaches may optionally select. Gyms have no account, wallet, membership, class schedule, booking, access-claim or check-in authority; independent coaches remain supported.                                                                                        |
+| C21 | P0 availability uses explicit slots rather than recurring rules. Slots start on 15-minute boundaries, last 30–180 minutes in 15-minute increments and must end within the exact rolling seven-day publication horizon; the coach interface defaults new slots to 60 minutes.                                                         |
 
 ### Proposed defaults that are not yet confirmed implementation contracts
 
 - Offer validity may use `0` for no expiry and otherwise store a positive duration in seconds.
 - A purchase-time slot hold may expire after ten minutes; DEV0105 must adopt or replace the exact duration.
-- Slot-duration bounds and how coaches move from one seven-day window to the next must be adopted by DEV0104 before implementation.
 - MovX may offer an explicit, reversible follow prompt after a successful booking; purchase or booking must not silently follow a coach.
 - Redemption history may be represented by structured program events indexed off-chain rather than one paid account per redeemed session.
 - Images may initially use the existing application media/storage path; permanent or content-addressed media is not required for the hackathon.

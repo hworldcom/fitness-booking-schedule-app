@@ -59,7 +59,7 @@ test("guest opens a coach profile without fabricated offers or availability", as
   ).toBeVisible();
   await expect(
     page.getByRole("heading", {
-      name: "Weekly times are not published yet.",
+      name: "No open times right now.",
     }),
   ).toBeVisible();
   await expect(page.getByText("No active indexed offer yet")).toBeVisible();
@@ -76,6 +76,32 @@ test("guest opens a coach profile without fabricated offers or availability", as
     path: testInfo.outputPath("coach-profile.png"),
     fullPage: true,
   });
+});
+
+test("coach workspace stays protected and exposes no placeholder controls", async ({
+  page,
+}) => {
+  await page.goto("/coach");
+  const destination = new URL(page.url());
+  if (destination.pathname === "/sign-in") {
+    expect(destination.searchParams.get("returnTo")).toBe("/coach");
+  } else {
+    await expect(
+      page.getByRole("heading", {
+        name: "Sign in to manage coach availability.",
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Browse coaches" }),
+    ).toHaveAttribute("href", "/explore");
+  }
+  await expect(page.getByText("Bookings", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Analytics", { exact: true })).toHaveCount(0);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
 });
 
 test("coach profile setup stays behind application identity", async ({

@@ -196,6 +196,117 @@ export const coachProfileDisciplines = app.table(
   ],
 );
 
+export const coachAvailabilitySlots = app.table(
+  "coach_availability_slots",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    runId: uuid("run_id").notNull(),
+    profileId: uuid("profile_id").notNull(),
+    startsAt: timestamp("starts_at", {
+      withTimezone: true,
+      mode: "string",
+    }).notNull(),
+    endsAt: timestamp("ends_at", {
+      withTimezone: true,
+      mode: "string",
+    }).notNull(),
+    coachTimezone: text("coach_timezone").notNull(),
+    status: text("status").default("open").notNull(),
+    locationKind: text("location_kind").notNull(),
+    selectedGymId: uuid("selected_gym_id"),
+    gymName: text("gym_name"),
+    publicLocationLabel: text("public_location_label").notNull(),
+    latitude: numeric("latitude", {
+      precision: 9,
+      scale: 6,
+      mode: "string",
+    }).notNull(),
+    longitude: numeric("longitude", {
+      precision: 9,
+      scale: 6,
+      mode: "string",
+    }).notNull(),
+    locationSource: text("location_source").notNull(),
+    locationProvider: text("location_provider"),
+    locationConfirmedAt: timestamp("location_confirmed_at", {
+      withTimezone: true,
+      mode: "string",
+    }).notNull(),
+    ...auditColumns,
+  },
+  (table) => [
+    foreignKey({
+      name: "coach_availability_slots_coach_fkey",
+      columns: [table.runId, table.profileId],
+      foreignColumns: [coachProfiles.runId, coachProfiles.profileId],
+    }).onDelete("restrict"),
+    check(
+      "coach_availability_slots_time_order_check",
+      sql`${table.endsAt} > ${table.startsAt}`,
+    ),
+    check(
+      "coach_availability_slots_duration_check",
+      sql`${table.endsAt} - ${table.startsAt} between interval '30 minutes' and interval '180 minutes' and extract(epoch from (${table.endsAt} - ${table.startsAt}))::bigint % 900 = 0`,
+    ),
+    check(
+      "coach_availability_slots_start_boundary_check",
+      sql`extract(epoch from ${table.startsAt})::bigint % 900 = 0`,
+    ),
+    check(
+      "coach_availability_slots_timezone_format_check",
+      sql`${table.coachTimezone} = 'UTC' or ${table.coachTimezone} ~ '^[A-Za-z_]+(?:/[A-Za-z0-9_+.-]+)+$'`,
+    ),
+    check(
+      "coach_availability_slots_status_check",
+      sql`${table.status} in ('open', 'held', 'booked', 'withdrawn')`,
+    ),
+    check(
+      "coach_availability_slots_location_kind_check",
+      sql`${table.locationKind} in ('gym', 'independent')`,
+    ),
+    check(
+      "coach_availability_slots_gym_location_check",
+      sql`(${table.locationKind} = 'gym' and ${table.selectedGymId} is not null and ${table.gymName} is not null and char_length(${table.gymName}) between 2 and 120) or (${table.locationKind} = 'independent' and ${table.selectedGymId} is null and ${table.gymName} is null)`,
+    ),
+    check(
+      "coach_availability_slots_location_label_length_check",
+      sql`char_length(${table.publicLocationLabel}) between 2 and 240`,
+    ),
+    check(
+      "coach_availability_slots_latitude_check",
+      sql`${table.latitude} between -90 and 90`,
+    ),
+    check(
+      "coach_availability_slots_longitude_check",
+      sql`${table.longitude} between -180 and 180`,
+    ),
+    check(
+      "coach_availability_slots_location_source_check",
+      sql`${table.locationSource} in ('fixture', 'manual', 'permanent-geocoding')`,
+    ),
+    check(
+      "coach_availability_slots_location_provider_check",
+      sql`${table.locationProvider} is null or (char_length(${table.locationProvider}) between 2 and 40 and ${table.locationProvider} ~ '^[a-z0-9-]+$')`,
+    ),
+    check(
+      "coach_availability_slots_location_provenance_check",
+      sql`(${table.locationSource} in ('fixture', 'manual') and ${table.locationProvider} is null) or (${table.locationSource} = 'permanent-geocoding' and ${table.locationProvider} is not null)`,
+    ),
+    index("coach_availability_slots_public_lookup_idx")
+      .on(table.runId, table.profileId, table.startsAt, table.id)
+      .where(sql`${table.status} = 'open'`),
+    index("coach_availability_slots_owner_lookup_idx").on(
+      table.runId,
+      table.profileId,
+      table.status,
+      table.startsAt,
+      table.id,
+    ),
+  ],
+);
+
 export type CoachProfileRow = typeof coachProfiles.$inferSelect;
 export type CoachProfileDisciplineRow =
   typeof coachProfileDisciplines.$inferSelect;
+export type CoachAvailabilitySlotRow =
+  typeof coachAvailabilitySlots.$inferSelect;

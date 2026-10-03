@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Coach-first M4 private-class booking
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on weekly slots from [DEV0104 — Publish weekly coach availability](DEV0104-publish-weekly-coach-availability.md), eligible one-session/ten-session passes from [DEV0098 — Purchase training packages with Devnet USDC](../blockchain/DEV0098-purchase-training-packages-with-devnet-usdc.md), and supplies completed-booking context to [DEV0099 — Redeem and reconcile training sessions](../blockchain/DEV0099-redeem-and-reconcile-training-sessions.md)
+- Related records: depends on weekly slots from [DEV0104 — Publish weekly coach availability](../../archive/backend/DEV0104-publish-weekly-coach-availability.md), eligible one-session/ten-session passes from [DEV0098 — Purchase training packages with Devnet USDC](../blockchain/DEV0098-purchase-training-packages-with-devnet-usdc.md), and supplies completed-booking context to [DEV0099 — Redeem and reconcile training sessions](../blockchain/DEV0099-redeem-and-reconcile-training-sessions.md)
 
 ## Objective and context
 

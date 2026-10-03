@@ -2,13 +2,25 @@
 
 import Link from "next/link";
 import { useActionState, useState } from "react";
-import { Check, Eye, EyeOff, MapPin, Save, ShieldCheck } from "lucide-react";
+import {
+  CalendarClock,
+  Check,
+  Eye,
+  EyeOff,
+  MapPin,
+  Save,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 import type { CoachGymOption, CoachProjection } from "@/domain/coaches";
 import { COACH_DISCIPLINES } from "@/domain/coaches";
 import {
-  INITIAL_COACH_PROFILE_ACTION_STATE,
+  type CoachProfileActionState,
   updateCoachProfileAction,
 } from "@/app/profile/coach/actions";
+
+const INITIAL_COACH_PROFILE_ACTION_STATE: CoachProfileActionState =
+  Object.freeze({ status: "idle", message: "", errors: Object.freeze([]) });
 
 export function CoachProfileEditor({
   coach,
@@ -30,6 +42,14 @@ export function CoachProfileEditor({
 
   return (
     <div className="coach-editor">
+      <nav className="coach-workspace-nav" aria-label="Coach workspace">
+        <Link href="/coach">
+          <CalendarClock size={17} aria-hidden="true" /> Availability
+        </Link>
+        <Link href="/profile/coach" aria-current="page" className="active">
+          <UserRound size={17} aria-hidden="true" /> Profile
+        </Link>
+      </nav>
       <header className="coach-editor-heading">
         <div>
           <span className="eyebrow">SELF-DECLARED COACH PROFILE</span>

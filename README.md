@@ -113,6 +113,7 @@ The local stack uses port `55322`. `db:reset` recreates only the disposable loca
 ```sh
 npm test
 npm run test:auth
+npm run test:coach-availability
 npm run test:wallet-auth
 npm run lint
 npm run typecheck
@@ -121,7 +122,7 @@ npm run build
 npm run test:e2e
 ```
 
-`test:auth` and `test:wallet-auth` require the configured Auth-enabled local stack and an already-running application on port 3100. Database checks require the isolated local database. Playwright starts its own production server on port 3101 and writes ignored evidence to `test-results/`.
+`test:auth`, `test:coach-availability` and `test:wallet-auth` require the configured Auth-enabled local stack and an already-running application on port 3100. The coach-availability rehearsal creates a disposable local account and coach profile, then publishes, edits and withdraws one slot while checking its public projection. Database checks require the isolated local database. Playwright starts its own production server on port 3101 and writes ignored evidence to `test-results/`.
 
 ## Application structure
 

@@ -11,9 +11,6 @@ export type CoachProfileActionState = Readonly<{
   slug?: string;
 }>;
 
-export const INITIAL_COACH_PROFILE_ACTION_STATE: CoachProfileActionState =
-  Object.freeze({ status: "idle", message: "", errors: Object.freeze([]) });
-
 export async function updateCoachProfileAction(
   _previousState: CoachProfileActionState,
   formData: FormData,

@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  defaultCoachSlotLocalStart,
   isCoachPublicSlug,
+  localDateTimeValue,
   normalizeCoachDirectoryFilters,
+  validateCoachAvailabilityInput,
   validateCoachProfileInput,
 } from "@/domain/coaches";
 
@@ -95,4 +98,49 @@ test("public coach slugs are constrained", () => {
   assert.equal(isCoachPublicSlug("nora-klein"), true);
   assert.equal(isCoachPublicSlug("Nora Klein"), false);
   assert.equal(isCoachPublicSlug("../coach"), false);
+});
+
+test("coach availability accepts only explicit 15-minute bounded slots", () => {
+  assert.deepEqual(
+    validateCoachAvailabilityInput({
+      localStart: "2026-10-05T14:15",
+      durationMinutes: "60",
+      refreshLocation: true,
+    }),
+    {
+      valid: true,
+      value: {
+        localStart: "2026-10-05T14:15",
+        durationMinutes: 60,
+        refreshLocation: true,
+      },
+    },
+  );
+
+  for (const input of [
+    { localStart: "2026-10-05T14:07", durationMinutes: 60 },
+    { localStart: "2026-02-30T14:15", durationMinutes: 60 },
+    { localStart: "2026-10-05T14:15", durationMinutes: 15 },
+    { localStart: "2026-10-05T14:15", durationMinutes: 181 },
+  ]) {
+    assert.equal(validateCoachAvailabilityInput(input).valid, false);
+  }
+});
+
+test("coach slot values are rendered in the reviewed profile timezone", () => {
+  assert.equal(
+    localDateTimeValue("2026-10-03T12:00:00.000Z", "Europe/Berlin"),
+    "2026-10-03T14:00",
+  );
+  assert.equal(
+    localDateTimeValue("2026-12-03T12:00:00.000Z", "Europe/Berlin"),
+    "2026-12-03T13:00",
+  );
+  assert.equal(
+    defaultCoachSlotLocalStart(
+      "Europe/Berlin",
+      new Date("2026-10-03T12:01:00.000Z"),
+    ),
+    "2026-10-03T14:45",
+  );
 });

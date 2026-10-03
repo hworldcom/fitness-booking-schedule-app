@@ -10,6 +10,12 @@ export const COACH_DISCIPLINES = Object.freeze([
 export type CoachDiscipline = (typeof COACH_DISCIPLINES)[number];
 export type CoachVisibility = "visible" | "hidden";
 export type CoachLocationSource = "manual" | "permanent-geocoding";
+export const COACH_AVAILABILITY_DURATIONS = Object.freeze([
+  30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180,
+] as const);
+export type CoachAvailabilityDuration =
+  (typeof COACH_AVAILABILITY_DURATIONS)[number];
+export type CoachAvailabilityStatus = "open" | "held" | "booked" | "withdrawn";
 
 export type CoachDirectoryFilters = Readonly<{
   query: string;
@@ -57,6 +63,39 @@ export type CoachProjection = Readonly<{
   disciplines: readonly CoachDiscipline[];
 }>;
 
+export type CoachAvailabilityLocationSnapshot = Readonly<{
+  kind: "gym" | "independent";
+  selectedGymId: string | null;
+  gymName: string | null;
+  label: string;
+  latitude: number;
+  longitude: number;
+  source: "fixture" | "manual" | "permanent-geocoding";
+  provider: string | null;
+  confirmedAt: string;
+}>;
+
+export type PublicCoachAvailabilitySlot = Readonly<{
+  id: string;
+  startsAt: string;
+  endsAt: string;
+  coachTimezone: string;
+  location: CoachAvailabilityLocationSnapshot;
+}>;
+
+export type OwnedCoachAvailabilitySlot = PublicCoachAvailabilitySlot &
+  Readonly<{ status: CoachAvailabilityStatus }>;
+
+export type CoachAvailabilityInput = Readonly<{
+  localStart: string;
+  durationMinutes: CoachAvailabilityDuration;
+  refreshLocation: boolean;
+}>;
+
+export type CoachAvailabilityInputResult =
+  | Readonly<{ valid: true; value: CoachAvailabilityInput }>
+  | Readonly<{ valid: false; errors: readonly string[] }>;
+
 export type CoachGymOption = Readonly<{
   id: string;
   name: string;
@@ -73,7 +112,11 @@ export type CoachDirectoryState =
   | Readonly<{ status: "unavailable"; filters: CoachDirectoryFilters }>;
 
 export type PublicCoachProfileState =
-  | Readonly<{ status: "ready"; coach: CoachProjection }>
+  | Readonly<{
+      status: "ready";
+      coach: CoachProjection;
+      slots: readonly PublicCoachAvailabilitySlot[];
+    }>
   | Readonly<{ status: "not-found" | "unavailable" }>;
 
 export type CoachEditorState =
@@ -81,6 +124,17 @@ export type CoachEditorState =
       status: "authorized";
       coach: CoachProjection | null;
       gyms: readonly CoachGymOption[];
+      ownerDisplayName: string;
+    }>
+  | Readonly<{
+      status: "preview" | "signed-out" | "forbidden" | "unavailable";
+    }>;
+
+export type CoachAvailabilityWorkspaceState =
+  | Readonly<{
+      status: "authorized";
+      coach: CoachProjection | null;
+      slots: readonly OwnedCoachAvailabilitySlot[];
       ownerDisplayName: string;
     }>
   | Readonly<{
@@ -113,6 +167,29 @@ function isCoachDiscipline(value: unknown): value is CoachDiscipline {
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     value,
+  );
+}
+
+function isCoachAvailabilityDuration(
+  value: number,
+): value is CoachAvailabilityDuration {
+  return COACH_AVAILABILITY_DURATIONS.some((duration) => duration === value);
+}
+
+function isValidLocalDateTime(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
+  if (!match) return false;
+  const [, year, month, day, hour, minute] = match;
+  const parts = [year, month, day, hour, minute].map(Number);
+  const candidate = new Date(
+    Date.UTC(parts[0], parts[1] - 1, parts[2], parts[3], parts[4]),
+  );
+  return (
+    candidate.getUTCFullYear() === parts[0] &&
+    candidate.getUTCMonth() === parts[1] - 1 &&
+    candidate.getUTCDate() === parts[2] &&
+    candidate.getUTCHours() === parts[3] &&
+    candidate.getUTCMinutes() === parts[4]
   );
 }
 
@@ -259,6 +336,70 @@ export function validateCoachProfileInput(input: {
       independentLocation,
     }),
   });
+}
+
+export function validateCoachAvailabilityInput(input: {
+  localStart?: unknown;
+  durationMinutes?: unknown;
+  refreshLocation?: unknown;
+}): CoachAvailabilityInputResult {
+  const errors: string[] = [];
+  const localStart = normalizeSingleLine(input.localStart);
+  const durationMinutes = Number(input.durationMinutes);
+
+  if (!isValidLocalDateTime(localStart)) {
+    errors.push("Choose a valid local start date and time.");
+  } else if (Number(localStart.slice(-2)) % 15 !== 0) {
+    errors.push("Start times must use a 15-minute boundary.");
+  }
+  if (!isCoachAvailabilityDuration(durationMinutes)) {
+    errors.push(
+      "Session duration must be between 30 and 180 minutes in 15-minute steps.",
+    );
+  }
+
+  if (errors.length > 0) {
+    return Object.freeze({ valid: false, errors: Object.freeze(errors) });
+  }
+
+  return Object.freeze({
+    valid: true,
+    value: Object.freeze({
+      localStart,
+      durationMinutes: durationMinutes as CoachAvailabilityDuration,
+      refreshLocation: input.refreshLocation === true,
+    }),
+  });
+}
+
+export function isCoachAvailabilitySlotId(value: string) {
+  return isUuid(value);
+}
+
+function dateTimePart(
+  parts: Intl.DateTimeFormatPart[],
+  type: Intl.DateTimeFormatPartTypes,
+) {
+  return parts.find((part) => part.type === type)?.value ?? "";
+}
+
+export function localDateTimeValue(value: Date | string, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(value));
+  return `${dateTimePart(parts, "year")}-${dateTimePart(parts, "month")}-${dateTimePart(parts, "day")}T${dateTimePart(parts, "hour")}:${dateTimePart(parts, "minute")}`;
+}
+
+export function defaultCoachSlotLocalStart(timeZone: string, now = new Date()) {
+  const earliest = now.getTime() + 30 * 60 * 1000;
+  const rounded = Math.ceil(earliest / (15 * 60 * 1000)) * 15 * 60 * 1000;
+  return localDateTimeValue(new Date(rounded), timeZone);
 }
 
 export function isCoachPublicSlug(value: string) {
