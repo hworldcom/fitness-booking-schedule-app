@@ -18,6 +18,7 @@
     "test:coach-social": "node scripts/rehearse-local-coach-social.mjs",
     "test:wallet-auth": "node scripts/rehearse-local-personal-wallet.mjs",
     "test:coach-pass:integration": "NO_DNA=1 anchor build --skip-lint && tsx --test --test-concurrency=1 tests/coach-pass-surfpool.integration.ts",
+    "test:group-event:integration": "NO_DNA=1 anchor build --skip-lint && tsx --test --test-concurrency=1 tests/group-event-surfpool.integration.ts",
     "test:e2e": "playwright test",
     "db:start": "supabase start --exclude gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
     "auth:start": "supabase start --exclude realtime,storage-api,imgproxy,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",

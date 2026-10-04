@@ -7,7 +7,7 @@ pub mod instructions;
 pub mod state;
 
 use instructions::*;
-use state::CreateOfferArgs;
+use state::{CreateEventPoolArgs, CreateOfferArgs};
 
 declare_id!("GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU");
 
@@ -63,5 +63,28 @@ pub mod movx_coach_pass {
 
     pub fn consume_booking_credit(ctx: Context<ConsumeBookingCredit>) -> Result<()> {
         instructions::consume_booking_credit::handler(ctx)
+    }
+
+    pub fn create_event_pool(
+        ctx: Context<CreateEventPool>,
+        args: CreateEventPoolArgs,
+    ) -> Result<()> {
+        instructions::create_event_pool::handler(ctx, args)
+    }
+
+    pub fn fund_event(ctx: Context<FundEvent>) -> Result<()> {
+        instructions::fund_event::handler(ctx)
+    }
+
+    pub fn settle_event(ctx: Context<SettleEvent>) -> Result<()> {
+        instructions::settle_event::handler(ctx)
+    }
+
+    pub fn claim_event_payout(ctx: Context<ClaimEventPayout>) -> Result<()> {
+        instructions::claim_event_payout::handler(ctx)
+    }
+
+    pub fn claim_event_refund(ctx: Context<ClaimEventRefund>) -> Result<()> {
+        instructions::claim_event_refund::handler(ctx)
     }
 }

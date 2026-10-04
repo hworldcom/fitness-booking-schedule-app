@@ -92,4 +92,56 @@ pub enum CoachPassError {
     UnauthorizedReservationConsume,
     #[msg("A reserved credit cannot be consumed before the scheduled start")]
     ReservationConsumeTooEarly,
+    #[msg("The event pool has an invalid coach authority")]
+    InvalidEventCoachAuthority,
+    #[msg("The event pool has an invalid payout recipient")]
+    InvalidEventPayoutRecipient,
+    #[msg("The event pool vault or payment mint is invalid")]
+    InvalidEventVault,
+    #[msg("The event seat price is outside the supported range")]
+    InvalidEventPrice,
+    #[msg("The event participant bounds are invalid")]
+    InvalidEventCapacity,
+    #[msg("The event funding deadline must be after creation and before the event")]
+    InvalidEventFundingDeadline,
+    #[msg("The event schedule is outside the supported time bounds")]
+    InvalidEventSchedule,
+    #[msg("The event funding amount cannot be represented safely")]
+    EventFundingOverflow,
+    #[msg("The event pool is no longer accepting funding")]
+    EventPoolNotFunding,
+    #[msg("The event funding deadline has passed")]
+    EventFundingClosed,
+    #[msg("The event pool has reached its maximum participant capacity")]
+    EventPoolFull,
+    #[msg("The event participant count cannot increase further")]
+    EventParticipantCountOverflow,
+    #[msg("The event pool has already been settled")]
+    EventPoolAlreadySettled,
+    #[msg("The event pool cannot settle before its funding deadline")]
+    EventSettlementTooEarly,
+    #[msg("A coach payout is not available for this event pool")]
+    EventPayoutUnavailable,
+    #[msg("A participant refund is not available for this event pool")]
+    EventRefundUnavailable,
+    #[msg("The event vault cannot cover the recorded liability")]
+    EventVaultUnderfunded,
+    #[msg("The event refund total is inconsistent with recorded funding")]
+    EventRefundOverflow,
+    #[msg("The contribution has an invalid pool or participant authority")]
+    InvalidContributionAuthority,
+    #[msg("The contribution is already refunded")]
+    ContributionAlreadyRefunded,
+    #[msg("Only the recorded participant can claim this contribution refund")]
+    UnauthorizedContributionRefund,
+    #[msg("The contribution does not belong to the supplied event pool")]
+    ContributionPoolMismatch,
+    #[msg("The event pool does not belong to the supplied coach authority")]
+    EventPoolCoachMismatch,
+    #[msg("Only the current coach wallet can claim the event payout")]
+    UnauthorizedEventPayout,
+    #[msg("The destination token account is not owned by the frozen payout recipient")]
+    InvalidEventPayoutDestination,
+    #[msg("The refund destination is not owned by the recorded participant")]
+    InvalidEventRefundDestination,
 }

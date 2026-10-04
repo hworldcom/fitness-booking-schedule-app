@@ -104,16 +104,92 @@ export const MOVX_COACH_PASS_ERROR__CLIENT_RETURN_WINDOW_CLOSED = 0x179a; // 604
 export const MOVX_COACH_PASS_ERROR__UNAUTHORIZED_RESERVATION_CONSUME = 0x179b; // 6043
 /** ReservationConsumeTooEarly: A reserved credit cannot be consumed before the scheduled start */
 export const MOVX_COACH_PASS_ERROR__RESERVATION_CONSUME_TOO_EARLY = 0x179c; // 6044
+/** InvalidEventCoachAuthority: The event pool has an invalid coach authority */
+export const MOVX_COACH_PASS_ERROR__INVALID_EVENT_COACH_AUTHORITY = 0x179d; // 6045
+/** InvalidEventPayoutRecipient: The event pool has an invalid payout recipient */
+export const MOVX_COACH_PASS_ERROR__INVALID_EVENT_PAYOUT_RECIPIENT = 0x179e; // 6046
+/** InvalidEventVault: The event pool vault or payment mint is invalid */
+export const MOVX_COACH_PASS_ERROR__INVALID_EVENT_VAULT = 0x179f; // 6047
+/** InvalidEventPrice: The event seat price is outside the supported range */
+export const MOVX_COACH_PASS_ERROR__INVALID_EVENT_PRICE = 0x17a0; // 6048
+/** InvalidEventCapacity: The event participant bounds are invalid */
+export const MOVX_COACH_PASS_ERROR__INVALID_EVENT_CAPACITY = 0x17a1; // 6049
+/** InvalidEventFundingDeadline: The event funding deadline must be after creation and before the event */
+export const MOVX_COACH_PASS_ERROR__INVALID_EVENT_FUNDING_DEADLINE = 0x17a2; // 6050
+/** InvalidEventSchedule: The event schedule is outside the supported time bounds */
+export const MOVX_COACH_PASS_ERROR__INVALID_EVENT_SCHEDULE = 0x17a3; // 6051
+/** EventFundingOverflow: The event funding amount cannot be represented safely */
+export const MOVX_COACH_PASS_ERROR__EVENT_FUNDING_OVERFLOW = 0x17a4; // 6052
+/** EventPoolNotFunding: The event pool is no longer accepting funding */
+export const MOVX_COACH_PASS_ERROR__EVENT_POOL_NOT_FUNDING = 0x17a5; // 6053
+/** EventFundingClosed: The event funding deadline has passed */
+export const MOVX_COACH_PASS_ERROR__EVENT_FUNDING_CLOSED = 0x17a6; // 6054
+/** EventPoolFull: The event pool has reached its maximum participant capacity */
+export const MOVX_COACH_PASS_ERROR__EVENT_POOL_FULL = 0x17a7; // 6055
+/** EventParticipantCountOverflow: The event participant count cannot increase further */
+export const MOVX_COACH_PASS_ERROR__EVENT_PARTICIPANT_COUNT_OVERFLOW = 0x17a8; // 6056
+/** EventPoolAlreadySettled: The event pool has already been settled */
+export const MOVX_COACH_PASS_ERROR__EVENT_POOL_ALREADY_SETTLED = 0x17a9; // 6057
+/** EventSettlementTooEarly: The event pool cannot settle before its funding deadline */
+export const MOVX_COACH_PASS_ERROR__EVENT_SETTLEMENT_TOO_EARLY = 0x17aa; // 6058
+/** EventPayoutUnavailable: A coach payout is not available for this event pool */
+export const MOVX_COACH_PASS_ERROR__EVENT_PAYOUT_UNAVAILABLE = 0x17ab; // 6059
+/** EventRefundUnavailable: A participant refund is not available for this event pool */
+export const MOVX_COACH_PASS_ERROR__EVENT_REFUND_UNAVAILABLE = 0x17ac; // 6060
+/** EventVaultUnderfunded: The event vault cannot cover the recorded liability */
+export const MOVX_COACH_PASS_ERROR__EVENT_VAULT_UNDERFUNDED = 0x17ad; // 6061
+/** EventRefundOverflow: The event refund total is inconsistent with recorded funding */
+export const MOVX_COACH_PASS_ERROR__EVENT_REFUND_OVERFLOW = 0x17ae; // 6062
+/** InvalidContributionAuthority: The contribution has an invalid pool or participant authority */
+export const MOVX_COACH_PASS_ERROR__INVALID_CONTRIBUTION_AUTHORITY = 0x17af; // 6063
+/** ContributionAlreadyRefunded: The contribution is already refunded */
+export const MOVX_COACH_PASS_ERROR__CONTRIBUTION_ALREADY_REFUNDED = 0x17b0; // 6064
+/** UnauthorizedContributionRefund: Only the recorded participant can claim this contribution refund */
+export const MOVX_COACH_PASS_ERROR__UNAUTHORIZED_CONTRIBUTION_REFUND = 0x17b1; // 6065
+/** ContributionPoolMismatch: The contribution does not belong to the supplied event pool */
+export const MOVX_COACH_PASS_ERROR__CONTRIBUTION_POOL_MISMATCH = 0x17b2; // 6066
+/** EventPoolCoachMismatch: The event pool does not belong to the supplied coach authority */
+export const MOVX_COACH_PASS_ERROR__EVENT_POOL_COACH_MISMATCH = 0x17b3; // 6067
+/** UnauthorizedEventPayout: Only the current coach wallet can claim the event payout */
+export const MOVX_COACH_PASS_ERROR__UNAUTHORIZED_EVENT_PAYOUT = 0x17b4; // 6068
+/** InvalidEventPayoutDestination: The destination token account is not owned by the frozen payout recipient */
+export const MOVX_COACH_PASS_ERROR__INVALID_EVENT_PAYOUT_DESTINATION = 0x17b5; // 6069
+/** InvalidEventRefundDestination: The refund destination is not owned by the recorded participant */
+export const MOVX_COACH_PASS_ERROR__INVALID_EVENT_REFUND_DESTINATION = 0x17b6; // 6070
 
 export type MovxCoachPassError =
   | typeof MOVX_COACH_PASS_ERROR__AUTHORITY_EPOCH_OVERFLOW
   | typeof MOVX_COACH_PASS_ERROR__AVAILABLE_CREDITS_OVERFLOW
   | typeof MOVX_COACH_PASS_ERROR__CLIENT_RETURN_WINDOW_CLOSED
+  | typeof MOVX_COACH_PASS_ERROR__CONTRIBUTION_ALREADY_REFUNDED
+  | typeof MOVX_COACH_PASS_ERROR__CONTRIBUTION_POOL_MISMATCH
+  | typeof MOVX_COACH_PASS_ERROR__EVENT_FUNDING_CLOSED
+  | typeof MOVX_COACH_PASS_ERROR__EVENT_FUNDING_OVERFLOW
+  | typeof MOVX_COACH_PASS_ERROR__EVENT_PARTICIPANT_COUNT_OVERFLOW
+  | typeof MOVX_COACH_PASS_ERROR__EVENT_PAYOUT_UNAVAILABLE
+  | typeof MOVX_COACH_PASS_ERROR__EVENT_POOL_ALREADY_SETTLED
+  | typeof MOVX_COACH_PASS_ERROR__EVENT_POOL_COACH_MISMATCH
+  | typeof MOVX_COACH_PASS_ERROR__EVENT_POOL_FULL
+  | typeof MOVX_COACH_PASS_ERROR__EVENT_POOL_NOT_FUNDING
+  | typeof MOVX_COACH_PASS_ERROR__EVENT_REFUND_OVERFLOW
+  | typeof MOVX_COACH_PASS_ERROR__EVENT_REFUND_UNAVAILABLE
   | typeof MOVX_COACH_PASS_ERROR__EVENT_SEQUENCE_OVERFLOW
+  | typeof MOVX_COACH_PASS_ERROR__EVENT_SETTLEMENT_TOO_EARLY
+  | typeof MOVX_COACH_PASS_ERROR__EVENT_VAULT_UNDERFUNDED
   | typeof MOVX_COACH_PASS_ERROR__INVALID_BOOKING_SCHEDULE
   | typeof MOVX_COACH_PASS_ERROR__INVALID_COACH_WALLET
+  | typeof MOVX_COACH_PASS_ERROR__INVALID_CONTRIBUTION_AUTHORITY
   | typeof MOVX_COACH_PASS_ERROR__INVALID_CREDIT_LEDGER_AUTHORITY
   | typeof MOVX_COACH_PASS_ERROR__INVALID_EARLY_RETURN_CUTOFF
+  | typeof MOVX_COACH_PASS_ERROR__INVALID_EVENT_CAPACITY
+  | typeof MOVX_COACH_PASS_ERROR__INVALID_EVENT_COACH_AUTHORITY
+  | typeof MOVX_COACH_PASS_ERROR__INVALID_EVENT_FUNDING_DEADLINE
+  | typeof MOVX_COACH_PASS_ERROR__INVALID_EVENT_PAYOUT_DESTINATION
+  | typeof MOVX_COACH_PASS_ERROR__INVALID_EVENT_PAYOUT_RECIPIENT
+  | typeof MOVX_COACH_PASS_ERROR__INVALID_EVENT_PRICE
+  | typeof MOVX_COACH_PASS_ERROR__INVALID_EVENT_REFUND_DESTINATION
+  | typeof MOVX_COACH_PASS_ERROR__INVALID_EVENT_SCHEDULE
+  | typeof MOVX_COACH_PASS_ERROR__INVALID_EVENT_VAULT
   | typeof MOVX_COACH_PASS_ERROR__INVALID_PAYMENT_MINT
   | typeof MOVX_COACH_PASS_ERROR__INVALID_PAYMENT_MINT_DECIMALS
   | typeof MOVX_COACH_PASS_ERROR__INVALID_PRICE
@@ -146,6 +222,8 @@ export type MovxCoachPassError =
   | typeof MOVX_COACH_PASS_ERROR__STALE_OFFER_RECIPIENT
   | typeof MOVX_COACH_PASS_ERROR__TOTAL_PURCHASED_OVERFLOW
   | typeof MOVX_COACH_PASS_ERROR__UNAUTHORIZED_COACH
+  | typeof MOVX_COACH_PASS_ERROR__UNAUTHORIZED_CONTRIBUTION_REFUND
+  | typeof MOVX_COACH_PASS_ERROR__UNAUTHORIZED_EVENT_PAYOUT
   | typeof MOVX_COACH_PASS_ERROR__UNAUTHORIZED_RECOVERY_AUTHORITY
   | typeof MOVX_COACH_PASS_ERROR__UNAUTHORIZED_RESERVATION_CONSUME
   | typeof MOVX_COACH_PASS_ERROR__UNAUTHORIZED_RESERVATION_RETURN
@@ -158,11 +236,35 @@ if (process.env["NODE_ENV"] !== "production") {
     [MOVX_COACH_PASS_ERROR__AUTHORITY_EPOCH_OVERFLOW]: `The authority epoch cannot advance further`,
     [MOVX_COACH_PASS_ERROR__AVAILABLE_CREDITS_OVERFLOW]: `The available credit balance cannot increase further`,
     [MOVX_COACH_PASS_ERROR__CLIENT_RETURN_WINDOW_CLOSED]: `The client's automatic credit-return window has closed`,
+    [MOVX_COACH_PASS_ERROR__CONTRIBUTION_ALREADY_REFUNDED]: `The contribution is already refunded`,
+    [MOVX_COACH_PASS_ERROR__CONTRIBUTION_POOL_MISMATCH]: `The contribution does not belong to the supplied event pool`,
+    [MOVX_COACH_PASS_ERROR__EVENT_FUNDING_CLOSED]: `The event funding deadline has passed`,
+    [MOVX_COACH_PASS_ERROR__EVENT_FUNDING_OVERFLOW]: `The event funding amount cannot be represented safely`,
+    [MOVX_COACH_PASS_ERROR__EVENT_PARTICIPANT_COUNT_OVERFLOW]: `The event participant count cannot increase further`,
+    [MOVX_COACH_PASS_ERROR__EVENT_PAYOUT_UNAVAILABLE]: `A coach payout is not available for this event pool`,
+    [MOVX_COACH_PASS_ERROR__EVENT_POOL_ALREADY_SETTLED]: `The event pool has already been settled`,
+    [MOVX_COACH_PASS_ERROR__EVENT_POOL_COACH_MISMATCH]: `The event pool does not belong to the supplied coach authority`,
+    [MOVX_COACH_PASS_ERROR__EVENT_POOL_FULL]: `The event pool has reached its maximum participant capacity`,
+    [MOVX_COACH_PASS_ERROR__EVENT_POOL_NOT_FUNDING]: `The event pool is no longer accepting funding`,
+    [MOVX_COACH_PASS_ERROR__EVENT_REFUND_OVERFLOW]: `The event refund total is inconsistent with recorded funding`,
+    [MOVX_COACH_PASS_ERROR__EVENT_REFUND_UNAVAILABLE]: `A participant refund is not available for this event pool`,
     [MOVX_COACH_PASS_ERROR__EVENT_SEQUENCE_OVERFLOW]: `The event sequence cannot advance further`,
+    [MOVX_COACH_PASS_ERROR__EVENT_SETTLEMENT_TOO_EARLY]: `The event pool cannot settle before its funding deadline`,
+    [MOVX_COACH_PASS_ERROR__EVENT_VAULT_UNDERFUNDED]: `The event vault cannot cover the recorded liability`,
     [MOVX_COACH_PASS_ERROR__INVALID_BOOKING_SCHEDULE]: `The scheduled start must be in the future when the credit is reserved`,
     [MOVX_COACH_PASS_ERROR__INVALID_COACH_WALLET]: `The coach wallet address is invalid`,
+    [MOVX_COACH_PASS_ERROR__INVALID_CONTRIBUTION_AUTHORITY]: `The contribution has an invalid pool or participant authority`,
     [MOVX_COACH_PASS_ERROR__INVALID_CREDIT_LEDGER_AUTHORITY]: `The coach-client credit ledger has an invalid authority`,
     [MOVX_COACH_PASS_ERROR__INVALID_EARLY_RETURN_CUTOFF]: `The early-return cutoff cannot be later than the scheduled start`,
+    [MOVX_COACH_PASS_ERROR__INVALID_EVENT_CAPACITY]: `The event participant bounds are invalid`,
+    [MOVX_COACH_PASS_ERROR__INVALID_EVENT_COACH_AUTHORITY]: `The event pool has an invalid coach authority`,
+    [MOVX_COACH_PASS_ERROR__INVALID_EVENT_FUNDING_DEADLINE]: `The event funding deadline must be after creation and before the event`,
+    [MOVX_COACH_PASS_ERROR__INVALID_EVENT_PAYOUT_DESTINATION]: `The destination token account is not owned by the frozen payout recipient`,
+    [MOVX_COACH_PASS_ERROR__INVALID_EVENT_PAYOUT_RECIPIENT]: `The event pool has an invalid payout recipient`,
+    [MOVX_COACH_PASS_ERROR__INVALID_EVENT_PRICE]: `The event seat price is outside the supported range`,
+    [MOVX_COACH_PASS_ERROR__INVALID_EVENT_REFUND_DESTINATION]: `The refund destination is not owned by the recorded participant`,
+    [MOVX_COACH_PASS_ERROR__INVALID_EVENT_SCHEDULE]: `The event schedule is outside the supported time bounds`,
+    [MOVX_COACH_PASS_ERROR__INVALID_EVENT_VAULT]: `The event pool vault or payment mint is invalid`,
     [MOVX_COACH_PASS_ERROR__INVALID_PAYMENT_MINT]: `The offer payment mint is not the configured Devnet EURC mint`,
     [MOVX_COACH_PASS_ERROR__INVALID_PAYMENT_MINT_DECIMALS]: `The payment mint must use six decimals`,
     [MOVX_COACH_PASS_ERROR__INVALID_PRICE]: `The EURC price must be positive`,
@@ -195,6 +297,8 @@ if (process.env["NODE_ENV"] !== "production") {
     [MOVX_COACH_PASS_ERROR__STALE_OFFER_RECIPIENT]: `The offer payment recipient is no longer the current coach wallet`,
     [MOVX_COACH_PASS_ERROR__TOTAL_PURCHASED_OVERFLOW]: `The total purchased credit count cannot increase further`,
     [MOVX_COACH_PASS_ERROR__UNAUTHORIZED_COACH]: `Only the current coach wallet can perform this action`,
+    [MOVX_COACH_PASS_ERROR__UNAUTHORIZED_CONTRIBUTION_REFUND]: `Only the recorded participant can claim this contribution refund`,
+    [MOVX_COACH_PASS_ERROR__UNAUTHORIZED_EVENT_PAYOUT]: `Only the current coach wallet can claim the event payout`,
     [MOVX_COACH_PASS_ERROR__UNAUTHORIZED_RECOVERY_AUTHORITY]: `Only the configured recovery authority can rotate the coach wallet`,
     [MOVX_COACH_PASS_ERROR__UNAUTHORIZED_RESERVATION_CONSUME]: `Only the current coach wallet can consume this reserved credit`,
     [MOVX_COACH_PASS_ERROR__UNAUTHORIZED_RESERVATION_RETURN]: `Only the client within the early-return window or the current coach wallet can return this credit`,

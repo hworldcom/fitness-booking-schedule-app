@@ -101,3 +101,60 @@ pub struct BookingCreditConsumed {
     pub reserved_credits: u64,
     pub consumed_at: i64,
 }
+
+#[event]
+pub struct EventPoolCreated {
+    pub event_pool: Pubkey,
+    pub coach_authority: Pubkey,
+    pub payout_recipient: Pubkey,
+    pub payment_mint: Pubkey,
+    pub vault: Pubkey,
+    pub nonce: u64,
+    pub price_eurc_base_units: u64,
+    pub minimum_participants: u16,
+    pub maximum_participants: u16,
+    pub funding_deadline: i64,
+    pub event_start_at: i64,
+    pub event_end_at: i64,
+    pub created_at: i64,
+}
+
+#[event]
+pub struct EventSeatFunded {
+    pub event_pool: Pubkey,
+    pub contribution: Pubkey,
+    pub participant_wallet: Pubkey,
+    pub amount_eurc_base_units: u64,
+    pub participant_count: u16,
+    pub total_funded_base_units: u64,
+    pub funded_at: i64,
+}
+
+#[event]
+pub struct EventPoolSettled {
+    pub event_pool: Pubkey,
+    pub status: crate::state::EventPoolStatus,
+    pub participant_count: u16,
+    pub minimum_participants: u16,
+    pub total_funded_base_units: u64,
+    pub settled_at: i64,
+}
+
+#[event]
+pub struct EventPayoutClaimed {
+    pub event_pool: Pubkey,
+    pub coach_authority: Pubkey,
+    pub payout_recipient: Pubkey,
+    pub amount_eurc_base_units: u64,
+    pub paid_at: i64,
+}
+
+#[event]
+pub struct EventRefundClaimed {
+    pub event_pool: Pubkey,
+    pub contribution: Pubkey,
+    pub participant_wallet: Pubkey,
+    pub amount_eurc_base_units: u64,
+    pub total_refunded_base_units: u64,
+    pub refunded_at: i64,
+}

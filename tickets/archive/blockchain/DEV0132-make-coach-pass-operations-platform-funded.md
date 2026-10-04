@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Marketplace M2 platform-funded coach-pass program
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: changes the completed local contracts from [DEV0127](DEV0127-implement-coach-client-credit-ledger.md) and [DEV0131](DEV0131-implement-coach-credit-booking-lifecycle.md) without rewriting their history; supplies the completed payer interface to Devnet pass integration in [DEV0130](../../current/blockchain/DEV0130-integrate-devnet-coach-pass-operations.md); establishes the payer boundary that [DEV0121](../../current/blockchain/DEV0121-implement-group-event-funding-program.md) and [DEV0122](../../current/blockchain/DEV0122-integrate-devnet-group-event-funding.md) must follow for group funding
+- Related records: changes the completed local contracts from [DEV0127](DEV0127-implement-coach-client-credit-ledger.md) and [DEV0131](DEV0131-implement-coach-credit-booking-lifecycle.md) without rewriting their history; supplies the completed payer interface to Devnet pass integration in [DEV0130](../../current/blockchain/DEV0130-integrate-devnet-coach-pass-operations.md); establishes the payer boundary adopted by completed [DEV0121](DEV0121-implement-group-event-funding-program.md) and required by current [DEV0122](../../current/blockchain/DEV0122-integrate-devnet-group-event-funding.md) for group funding
 
 ## Objective and context
 

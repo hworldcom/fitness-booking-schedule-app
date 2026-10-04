@@ -5,7 +5,7 @@
 - Last updated: 2026-10-05
 - Milestone: Marketplace M6 Devnet funding integration
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: depends on [DEV0121 — Implement the group-event funding program](DEV0121-implement-group-event-funding-program.md), completed [DEV0120 — Persist group-event catalogue and projections](../../archive/backend/DEV0120-persist-group-event-catalogue-and-projections.md), the completed platform-payer boundary in [DEV0132](../../archive/blockchain/DEV0132-make-coach-pass-operations-platform-funded.md), the completed EURC contract in [DEV0134](../../archive/blockchain/DEV0134-adopt-eurc-for-marketplace-payments.md) and personal-wallet authority from [DEV0047](../backend/DEV0047-personal-wallet-linking-and-replacement.md); supplies contracts to [DEV0123](../frontend/DEV0123-present-group-event-creation-and-funding.md) and evidence to [DEV0125](../backend/DEV0125-rehearse-hosted-marketplace-loops.md)
+- Related records: depends on completed [DEV0121 — Implement the group-event funding program](../../archive/blockchain/DEV0121-implement-group-event-funding-program.md), completed [DEV0120 — Persist group-event catalogue and projections](../../archive/backend/DEV0120-persist-group-event-catalogue-and-projections.md), the completed platform-payer boundary in [DEV0132](../../archive/blockchain/DEV0132-make-coach-pass-operations-platform-funded.md), the completed EURC contract in [DEV0134](../../archive/blockchain/DEV0134-adopt-eurc-for-marketplace-payments.md) and personal-wallet authority from [DEV0047](../backend/DEV0047-personal-wallet-linking-and-replacement.md); supplies contracts to [DEV0123](../frontend/DEV0123-present-group-event-creation-and-funding.md) and evidence to [DEV0125](../backend/DEV0125-rehearse-hosted-marketplace-loops.md)
 
 ## Objective and context
 
@@ -67,7 +67,7 @@ Expected public program ID/browser RPC plus server-only credentialed RPC and man
 
 ## Validation results
 
-Not run — dependencies incomplete.
+Not run — implementation has not started. The local program dependency is complete; personal-wallet authority, deployment/RPC/sponsor configuration and the ticket's own implementation remain.
 
 ## Risks, limitations, and follow-ups
 

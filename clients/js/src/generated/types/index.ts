@@ -6,6 +6,9 @@
  * @see https://github.com/codama-idl/codama
  */
 
+export * from "./contributionStatus";
+export * from "./createEventPoolArgs";
 export * from "./createOfferArgs";
 export * from "./creditReservationStatus";
+export * from "./eventPoolStatus";
 export * from "./offerStatus";

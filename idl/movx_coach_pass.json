@@ -8,6 +8,284 @@
   },
   "instructions": [
     {
+      "name": "claim_event_payout",
+      "discriminator": [
+        65,
+        195,
+        154,
+        194,
+        131,
+        84,
+        189,
+        27
+      ],
+      "accounts": [
+        {
+          "name": "coach_wallet",
+          "signer": true
+        },
+        {
+          "name": "coach_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  97,
+                  99,
+                  104,
+                  45,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.run_id",
+                "account": "CoachAuthority"
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.profile_id",
+                "account": "CoachAuthority"
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.original_wallet",
+                "account": "CoachAuthority"
+              }
+            ]
+          },
+          "relations": [
+            "event_pool"
+          ]
+        },
+        {
+          "name": "event_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  45,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority"
+              },
+              {
+                "kind": "account",
+                "path": "event_pool.nonce",
+                "account": "EventPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "payment_mint",
+          "address": "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr"
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  45,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event_pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "payout_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "claim_event_refund",
+      "discriminator": [
+        32,
+        179,
+        112,
+        138,
+        222,
+        52,
+        248,
+        91
+      ],
+      "accounts": [
+        {
+          "name": "participant_wallet",
+          "signer": true
+        },
+        {
+          "name": "event_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  45,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event_pool.coach_authority",
+                "account": "EventPool"
+              },
+              {
+                "kind": "account",
+                "path": "event_pool.nonce",
+                "account": "EventPool"
+              }
+            ]
+          },
+          "relations": [
+            "contribution"
+          ]
+        },
+        {
+          "name": "contribution",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  116,
+                  114,
+                  105,
+                  98,
+                  117,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event_pool"
+              },
+              {
+                "kind": "account",
+                "path": "participant_wallet"
+              }
+            ]
+          }
+        },
+        {
+          "name": "payment_mint",
+          "address": "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr"
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  45,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event_pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "participant_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "consume_booking_credit",
       "discriminator": [
         104,
@@ -162,6 +440,159 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "create_event_pool",
+      "discriminator": [
+        159,
+        56,
+        217,
+        240,
+        84,
+        157,
+        252,
+        143
+      ],
+      "accounts": [
+        {
+          "name": "coach_wallet",
+          "signer": true
+        },
+        {
+          "name": "platform_payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "coach_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  97,
+                  99,
+                  104,
+                  45,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.run_id",
+                "account": "CoachAuthority"
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.profile_id",
+                "account": "CoachAuthority"
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.original_wallet",
+                "account": "CoachAuthority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "event_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  45,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority"
+              },
+              {
+                "kind": "arg",
+                "path": "args.nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "payment_mint",
+          "address": "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr"
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  45,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event_pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": {
+              "name": "CreateEventPoolArgs"
+            }
+          }
+        }
+      ]
     },
     {
       "name": "create_offer",
@@ -365,6 +796,147 @@
               }
             ]
           }
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "fund_event",
+      "discriminator": [
+        13,
+        26,
+        160,
+        218,
+        222,
+        126,
+        189,
+        169
+      ],
+      "accounts": [
+        {
+          "name": "participant_wallet",
+          "signer": true
+        },
+        {
+          "name": "platform_payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "event_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  45,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event_pool.coach_authority",
+                "account": "EventPool"
+              },
+              {
+                "kind": "account",
+                "path": "event_pool.nonce",
+                "account": "EventPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "contribution",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  116,
+                  114,
+                  105,
+                  98,
+                  117,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event_pool"
+              },
+              {
+                "kind": "account",
+                "path": "participant_wallet"
+              }
+            ]
+          }
+        },
+        {
+          "name": "payment_mint",
+          "address": "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr"
+        },
+        {
+          "name": "participant_token_account",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  45,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event_pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         },
         {
           "name": "event_authority"
@@ -1205,6 +1777,65 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "settle_event",
+      "discriminator": [
+        43,
+        34,
+        6,
+        191,
+        246,
+        190,
+        163,
+        128
+      ],
+      "accounts": [
+        {
+          "name": "settler",
+          "signer": true
+        },
+        {
+          "name": "event_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  45,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "event_pool.coach_authority",
+                "account": "EventPool"
+              },
+              {
+                "kind": "account",
+                "path": "event_pool.nonce",
+                "account": "EventPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -1235,6 +1866,19 @@
       ]
     },
     {
+      "name": "Contribution",
+      "discriminator": [
+        182,
+        187,
+        14,
+        111,
+        72,
+        167,
+        242,
+        212
+      ]
+    },
+    {
       "name": "CreditReservation",
       "discriminator": [
         12,
@@ -1245,6 +1889,19 @@
         231,
         93,
         223
+      ]
+    },
+    {
+      "name": "EventPool",
+      "discriminator": [
+        215,
+        237,
+        95,
+        130,
+        130,
+        9,
+        61,
+        11
       ]
     },
     {
@@ -1338,6 +1995,71 @@
         116,
         222,
         22
+      ]
+    },
+    {
+      "name": "EventPayoutClaimed",
+      "discriminator": [
+        30,
+        16,
+        21,
+        182,
+        25,
+        195,
+        6,
+        45
+      ]
+    },
+    {
+      "name": "EventPoolCreated",
+      "discriminator": [
+        87,
+        99,
+        72,
+        23,
+        4,
+        87,
+        52,
+        94
+      ]
+    },
+    {
+      "name": "EventPoolSettled",
+      "discriminator": [
+        89,
+        37,
+        100,
+        65,
+        218,
+        81,
+        130,
+        53
+      ]
+    },
+    {
+      "name": "EventRefundClaimed",
+      "discriminator": [
+        62,
+        195,
+        157,
+        91,
+        120,
+        102,
+        100,
+        161
+      ]
+    },
+    {
+      "name": "EventSeatFunded",
+      "discriminator": [
+        27,
+        19,
+        80,
+        46,
+        98,
+        215,
+        153,
+        110
       ]
     },
     {
@@ -1592,6 +2314,136 @@
       "code": 6044,
       "name": "ReservationConsumeTooEarly",
       "msg": "A reserved credit cannot be consumed before the scheduled start"
+    },
+    {
+      "code": 6045,
+      "name": "InvalidEventCoachAuthority",
+      "msg": "The event pool has an invalid coach authority"
+    },
+    {
+      "code": 6046,
+      "name": "InvalidEventPayoutRecipient",
+      "msg": "The event pool has an invalid payout recipient"
+    },
+    {
+      "code": 6047,
+      "name": "InvalidEventVault",
+      "msg": "The event pool vault or payment mint is invalid"
+    },
+    {
+      "code": 6048,
+      "name": "InvalidEventPrice",
+      "msg": "The event seat price is outside the supported range"
+    },
+    {
+      "code": 6049,
+      "name": "InvalidEventCapacity",
+      "msg": "The event participant bounds are invalid"
+    },
+    {
+      "code": 6050,
+      "name": "InvalidEventFundingDeadline",
+      "msg": "The event funding deadline must be after creation and before the event"
+    },
+    {
+      "code": 6051,
+      "name": "InvalidEventSchedule",
+      "msg": "The event schedule is outside the supported time bounds"
+    },
+    {
+      "code": 6052,
+      "name": "EventFundingOverflow",
+      "msg": "The event funding amount cannot be represented safely"
+    },
+    {
+      "code": 6053,
+      "name": "EventPoolNotFunding",
+      "msg": "The event pool is no longer accepting funding"
+    },
+    {
+      "code": 6054,
+      "name": "EventFundingClosed",
+      "msg": "The event funding deadline has passed"
+    },
+    {
+      "code": 6055,
+      "name": "EventPoolFull",
+      "msg": "The event pool has reached its maximum participant capacity"
+    },
+    {
+      "code": 6056,
+      "name": "EventParticipantCountOverflow",
+      "msg": "The event participant count cannot increase further"
+    },
+    {
+      "code": 6057,
+      "name": "EventPoolAlreadySettled",
+      "msg": "The event pool has already been settled"
+    },
+    {
+      "code": 6058,
+      "name": "EventSettlementTooEarly",
+      "msg": "The event pool cannot settle before its funding deadline"
+    },
+    {
+      "code": 6059,
+      "name": "EventPayoutUnavailable",
+      "msg": "A coach payout is not available for this event pool"
+    },
+    {
+      "code": 6060,
+      "name": "EventRefundUnavailable",
+      "msg": "A participant refund is not available for this event pool"
+    },
+    {
+      "code": 6061,
+      "name": "EventVaultUnderfunded",
+      "msg": "The event vault cannot cover the recorded liability"
+    },
+    {
+      "code": 6062,
+      "name": "EventRefundOverflow",
+      "msg": "The event refund total is inconsistent with recorded funding"
+    },
+    {
+      "code": 6063,
+      "name": "InvalidContributionAuthority",
+      "msg": "The contribution has an invalid pool or participant authority"
+    },
+    {
+      "code": 6064,
+      "name": "ContributionAlreadyRefunded",
+      "msg": "The contribution is already refunded"
+    },
+    {
+      "code": 6065,
+      "name": "UnauthorizedContributionRefund",
+      "msg": "Only the recorded participant can claim this contribution refund"
+    },
+    {
+      "code": 6066,
+      "name": "ContributionPoolMismatch",
+      "msg": "The contribution does not belong to the supplied event pool"
+    },
+    {
+      "code": 6067,
+      "name": "EventPoolCoachMismatch",
+      "msg": "The event pool does not belong to the supplied coach authority"
+    },
+    {
+      "code": 6068,
+      "name": "UnauthorizedEventPayout",
+      "msg": "Only the current coach wallet can claim the event payout"
+    },
+    {
+      "code": 6069,
+      "name": "InvalidEventPayoutDestination",
+      "msg": "The destination token account is not owned by the frozen payout recipient"
+    },
+    {
+      "code": 6070,
+      "name": "InvalidEventRefundDestination",
+      "msg": "The refund destination is not owned by the recorded participant"
     }
   ],
   "types": [
@@ -1941,6 +2793,111 @@
       }
     },
     {
+      "name": "Contribution",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "event_pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "participant_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount_eurc_base_units",
+            "type": "u64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "ContributionStatus"
+              }
+            }
+          },
+          {
+            "name": "funded_at",
+            "type": "i64"
+          },
+          {
+            "name": "refunded_at",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "reserved",
+            "type": {
+              "array": [
+                "u8",
+                36
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ContributionStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Funded"
+          },
+          {
+            "name": "Refunded"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CreateEventPoolArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "price_eurc_base_units",
+            "type": "u64"
+          },
+          {
+            "name": "minimum_participants",
+            "type": "u16"
+          },
+          {
+            "name": "maximum_participants",
+            "type": "u16"
+          },
+          {
+            "name": "funding_deadline",
+            "type": "i64"
+          },
+          {
+            "name": "event_start_at",
+            "type": "i64"
+          },
+          {
+            "name": "event_end_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "CreateOfferArgs",
       "type": {
         "kind": "struct",
@@ -2114,6 +3071,327 @@
           },
           {
             "name": "purchased_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EventPayoutClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "event_pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "coach_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "payout_recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount_eurc_base_units",
+            "type": "u64"
+          },
+          {
+            "name": "paid_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EventPool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "coach_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "payout_recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "payment_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "price_eurc_base_units",
+            "type": "u64"
+          },
+          {
+            "name": "minimum_participants",
+            "type": "u16"
+          },
+          {
+            "name": "maximum_participants",
+            "type": "u16"
+          },
+          {
+            "name": "participant_count",
+            "type": "u16"
+          },
+          {
+            "name": "total_funded_base_units",
+            "type": "u64"
+          },
+          {
+            "name": "total_refunded_base_units",
+            "type": "u64"
+          },
+          {
+            "name": "funding_deadline",
+            "type": "i64"
+          },
+          {
+            "name": "event_start_at",
+            "type": "i64"
+          },
+          {
+            "name": "event_end_at",
+            "type": "i64"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "EventPoolStatus"
+              }
+            }
+          },
+          {
+            "name": "settled_at",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "paid_at",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "vault_bump",
+            "type": "u8"
+          },
+          {
+            "name": "reserved",
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "EventPoolCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "event_pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "coach_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "payout_recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "payment_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "price_eurc_base_units",
+            "type": "u64"
+          },
+          {
+            "name": "minimum_participants",
+            "type": "u16"
+          },
+          {
+            "name": "maximum_participants",
+            "type": "u16"
+          },
+          {
+            "name": "funding_deadline",
+            "type": "i64"
+          },
+          {
+            "name": "event_start_at",
+            "type": "i64"
+          },
+          {
+            "name": "event_end_at",
+            "type": "i64"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EventPoolSettled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "event_pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "EventPoolStatus"
+              }
+            }
+          },
+          {
+            "name": "participant_count",
+            "type": "u16"
+          },
+          {
+            "name": "minimum_participants",
+            "type": "u16"
+          },
+          {
+            "name": "total_funded_base_units",
+            "type": "u64"
+          },
+          {
+            "name": "settled_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EventPoolStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Funding"
+          },
+          {
+            "name": "Succeeded"
+          },
+          {
+            "name": "Paid"
+          },
+          {
+            "name": "Failed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EventRefundClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "event_pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "contribution",
+            "type": "pubkey"
+          },
+          {
+            "name": "participant_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount_eurc_base_units",
+            "type": "u64"
+          },
+          {
+            "name": "total_refunded_base_units",
+            "type": "u64"
+          },
+          {
+            "name": "refunded_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EventSeatFunded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "event_pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "contribution",
+            "type": "pubkey"
+          },
+          {
+            "name": "participant_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount_eurc_base_units",
+            "type": "u64"
+          },
+          {
+            "name": "participant_count",
+            "type": "u16"
+          },
+          {
+            "name": "total_funded_base_units",
+            "type": "u64"
+          },
+          {
+            "name": "funded_at",
             "type": "i64"
           }
         ]

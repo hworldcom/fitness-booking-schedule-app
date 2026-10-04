@@ -36,54 +36,80 @@ import {
 import {
   getCoachAuthorityCodec,
   getCoachClientCreditsCodec,
+  getContributionCodec,
   getCreditReservationCodec,
+  getEventPoolCodec,
   getOfferCodec,
   type CoachAuthority,
   type CoachAuthorityArgs,
   type CoachClientCredits,
   type CoachClientCreditsArgs,
+  type Contribution,
+  type ContributionArgs,
   type CreditReservation,
   type CreditReservationArgs,
+  type EventPool,
+  type EventPoolArgs,
   type Offer,
   type OfferArgs,
 } from "../accounts";
 import {
+  getClaimEventPayoutInstructionAsync,
+  getClaimEventRefundInstructionAsync,
   getConsumeBookingCreditInstruction,
+  getCreateEventPoolInstructionAsync,
   getCreateOfferInstruction,
   getDeactivateOfferInstruction,
+  getFundEventInstructionAsync,
   getInitializeCoachAuthorityInstructionAsync,
   getPurchaseFirstOfferInstructionAsync,
   getPurchaseOfferInstructionAsync,
   getReserveBookingCreditInstructionAsync,
   getReturnBookingCreditInstruction,
   getRotateCoachAuthorityInstruction,
+  getSettleEventInstruction,
+  parseClaimEventPayoutInstruction,
+  parseClaimEventRefundInstruction,
   parseConsumeBookingCreditInstruction,
+  parseCreateEventPoolInstruction,
   parseCreateOfferInstruction,
   parseDeactivateOfferInstruction,
+  parseFundEventInstruction,
   parseInitializeCoachAuthorityInstruction,
   parsePurchaseFirstOfferInstruction,
   parsePurchaseOfferInstruction,
   parseReserveBookingCreditInstruction,
   parseReturnBookingCreditInstruction,
   parseRotateCoachAuthorityInstruction,
+  parseSettleEventInstruction,
+  type ClaimEventPayoutAsyncInput,
+  type ClaimEventRefundAsyncInput,
   type ConsumeBookingCreditInput,
+  type CreateEventPoolAsyncInput,
   type CreateOfferInput,
   type DeactivateOfferInput,
+  type FundEventAsyncInput,
   type InitializeCoachAuthorityAsyncInput,
+  type ParsedClaimEventPayoutInstruction,
+  type ParsedClaimEventRefundInstruction,
   type ParsedConsumeBookingCreditInstruction,
+  type ParsedCreateEventPoolInstruction,
   type ParsedCreateOfferInstruction,
   type ParsedDeactivateOfferInstruction,
+  type ParsedFundEventInstruction,
   type ParsedInitializeCoachAuthorityInstruction,
   type ParsedPurchaseFirstOfferInstruction,
   type ParsedPurchaseOfferInstruction,
   type ParsedReserveBookingCreditInstruction,
   type ParsedReturnBookingCreditInstruction,
   type ParsedRotateCoachAuthorityInstruction,
+  type ParsedSettleEventInstruction,
   type PurchaseFirstOfferAsyncInput,
   type PurchaseOfferAsyncInput,
   type ReserveBookingCreditAsyncInput,
   type ReturnBookingCreditInput,
   type RotateCoachAuthorityInput,
+  type SettleEventInput,
 } from "../instructions";
 
 export const MOVX_COACH_PASS_PROGRAM_ADDRESS =
@@ -92,7 +118,9 @@ export const MOVX_COACH_PASS_PROGRAM_ADDRESS =
 export enum MovxCoachPassAccount {
   CoachAuthority,
   CoachClientCredits,
+  Contribution,
   CreditReservation,
+  EventPool,
   Offer,
 }
 
@@ -126,12 +154,34 @@ export function identifyMovxCoachPassAccount(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([182, 187, 14, 111, 72, 167, 242, 212]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassAccount.Contribution;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([12, 93, 36, 179, 101, 231, 93, 223]),
       ),
       0,
     )
   ) {
     return MovxCoachPassAccount.CreditReservation;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([215, 237, 95, 130, 130, 9, 61, 11]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassAccount.EventPool;
   }
   if (
     containsBytes(
@@ -157,6 +207,11 @@ export enum MovxCoachPassEvent {
   CoachAuthorityInitialized,
   CoachAuthorityRotated,
   CreditsPurchased,
+  EventPayoutClaimed,
+  EventPoolCreated,
+  EventPoolSettled,
+  EventRefundClaimed,
+  EventSeatFunded,
   OfferCreated,
   OfferDeactivated,
 }
@@ -235,6 +290,61 @@ export function identifyMovxCoachPassEvent(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([30, 16, 21, 182, 25, 195, 6, 45]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassEvent.EventPayoutClaimed;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([87, 99, 72, 23, 4, 87, 52, 94]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassEvent.EventPoolCreated;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([89, 37, 100, 65, 218, 81, 130, 53]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassEvent.EventPoolSettled;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([62, 195, 157, 91, 120, 102, 100, 161]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassEvent.EventRefundClaimed;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([27, 19, 80, 46, 98, 215, 153, 110]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassEvent.EventSeatFunded;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([31, 236, 215, 144, 75, 45, 157, 87]),
       ),
       0,
@@ -259,15 +369,20 @@ export function identifyMovxCoachPassEvent(
 }
 
 export enum MovxCoachPassInstruction {
+  ClaimEventPayout,
+  ClaimEventRefund,
   ConsumeBookingCredit,
+  CreateEventPool,
   CreateOffer,
   DeactivateOffer,
+  FundEvent,
   InitializeCoachAuthority,
   PurchaseFirstOffer,
   PurchaseOffer,
   ReserveBookingCredit,
   ReturnBookingCredit,
   RotateCoachAuthority,
+  SettleEvent,
 }
 
 export function identifyMovxCoachPassInstruction(
@@ -278,12 +393,45 @@ export function identifyMovxCoachPassInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([65, 195, 154, 194, 131, 84, 189, 27]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassInstruction.ClaimEventPayout;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([32, 179, 112, 138, 222, 52, 248, 91]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassInstruction.ClaimEventRefund;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([104, 249, 113, 105, 233, 46, 129, 63]),
       ),
       0,
     )
   ) {
     return MovxCoachPassInstruction.ConsumeBookingCredit;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([159, 56, 217, 240, 84, 157, 252, 143]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassInstruction.CreateEventPool;
   }
   if (
     containsBytes(
@@ -306,6 +454,17 @@ export function identifyMovxCoachPassInstruction(
     )
   ) {
     return MovxCoachPassInstruction.DeactivateOffer;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([13, 26, 160, 218, 222, 126, 189, 169]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassInstruction.FundEvent;
   }
   if (
     containsBytes(
@@ -373,6 +532,17 @@ export function identifyMovxCoachPassInstruction(
   ) {
     return MovxCoachPassInstruction.RotateCoachAuthority;
   }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([43, 34, 6, 191, 246, 190, 163, 128]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassInstruction.SettleEvent;
+  }
   throw new SolanaError(
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
     { instructionData: data, programName: "movxCoachPass" },
@@ -383,14 +553,26 @@ export type ParsedMovxCoachPassInstruction<
   TProgram extends string = "GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU",
 > =
   | ({
+      instructionType: MovxCoachPassInstruction.ClaimEventPayout;
+    } & ParsedClaimEventPayoutInstruction<TProgram>)
+  | ({
+      instructionType: MovxCoachPassInstruction.ClaimEventRefund;
+    } & ParsedClaimEventRefundInstruction<TProgram>)
+  | ({
       instructionType: MovxCoachPassInstruction.ConsumeBookingCredit;
     } & ParsedConsumeBookingCreditInstruction<TProgram>)
+  | ({
+      instructionType: MovxCoachPassInstruction.CreateEventPool;
+    } & ParsedCreateEventPoolInstruction<TProgram>)
   | ({
       instructionType: MovxCoachPassInstruction.CreateOffer;
     } & ParsedCreateOfferInstruction<TProgram>)
   | ({
       instructionType: MovxCoachPassInstruction.DeactivateOffer;
     } & ParsedDeactivateOfferInstruction<TProgram>)
+  | ({
+      instructionType: MovxCoachPassInstruction.FundEvent;
+    } & ParsedFundEventInstruction<TProgram>)
   | ({
       instructionType: MovxCoachPassInstruction.InitializeCoachAuthority;
     } & ParsedInitializeCoachAuthorityInstruction<TProgram>)
@@ -408,18 +590,42 @@ export type ParsedMovxCoachPassInstruction<
     } & ParsedReturnBookingCreditInstruction<TProgram>)
   | ({
       instructionType: MovxCoachPassInstruction.RotateCoachAuthority;
-    } & ParsedRotateCoachAuthorityInstruction<TProgram>);
+    } & ParsedRotateCoachAuthorityInstruction<TProgram>)
+  | ({
+      instructionType: MovxCoachPassInstruction.SettleEvent;
+    } & ParsedSettleEventInstruction<TProgram>);
 
 export function parseMovxCoachPassInstruction<TProgram extends string>(
   instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
 ): ParsedMovxCoachPassInstruction<TProgram> {
   const instructionType = identifyMovxCoachPassInstruction(instruction);
   switch (instructionType) {
+    case MovxCoachPassInstruction.ClaimEventPayout: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: MovxCoachPassInstruction.ClaimEventPayout,
+        ...parseClaimEventPayoutInstruction(instruction),
+      };
+    }
+    case MovxCoachPassInstruction.ClaimEventRefund: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: MovxCoachPassInstruction.ClaimEventRefund,
+        ...parseClaimEventRefundInstruction(instruction),
+      };
+    }
     case MovxCoachPassInstruction.ConsumeBookingCredit: {
       assertIsInstructionWithAccounts(instruction);
       return {
         instructionType: MovxCoachPassInstruction.ConsumeBookingCredit,
         ...parseConsumeBookingCreditInstruction(instruction),
+      };
+    }
+    case MovxCoachPassInstruction.CreateEventPool: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: MovxCoachPassInstruction.CreateEventPool,
+        ...parseCreateEventPoolInstruction(instruction),
       };
     }
     case MovxCoachPassInstruction.CreateOffer: {
@@ -434,6 +640,13 @@ export function parseMovxCoachPassInstruction<TProgram extends string>(
       return {
         instructionType: MovxCoachPassInstruction.DeactivateOffer,
         ...parseDeactivateOfferInstruction(instruction),
+      };
+    }
+    case MovxCoachPassInstruction.FundEvent: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: MovxCoachPassInstruction.FundEvent,
+        ...parseFundEventInstruction(instruction),
       };
     }
     case MovxCoachPassInstruction.InitializeCoachAuthority: {
@@ -478,6 +691,13 @@ export function parseMovxCoachPassInstruction<TProgram extends string>(
         ...parseRotateCoachAuthorityInstruction(instruction),
       };
     }
+    case MovxCoachPassInstruction.SettleEvent: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: MovxCoachPassInstruction.SettleEvent,
+        ...parseSettleEventInstruction(instruction),
+      };
+    }
     default:
       throw new SolanaError(
         SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
@@ -502,16 +722,32 @@ export type MovxCoachPassPluginAccounts = {
     SelfFetchFunctions<CoachAuthorityArgs, CoachAuthority>;
   coachClientCredits: ReturnType<typeof getCoachClientCreditsCodec> &
     SelfFetchFunctions<CoachClientCreditsArgs, CoachClientCredits>;
+  contribution: ReturnType<typeof getContributionCodec> &
+    SelfFetchFunctions<ContributionArgs, Contribution>;
   creditReservation: ReturnType<typeof getCreditReservationCodec> &
     SelfFetchFunctions<CreditReservationArgs, CreditReservation>;
+  eventPool: ReturnType<typeof getEventPoolCodec> &
+    SelfFetchFunctions<EventPoolArgs, EventPool>;
   offer: ReturnType<typeof getOfferCodec> &
     SelfFetchFunctions<OfferArgs, Offer>;
 };
 
 export type MovxCoachPassPluginInstructions = {
+  claimEventPayout: (
+    input: ClaimEventPayoutAsyncInput,
+  ) => ReturnType<typeof getClaimEventPayoutInstructionAsync> &
+    SelfPlanAndSendFunctions;
+  claimEventRefund: (
+    input: ClaimEventRefundAsyncInput,
+  ) => ReturnType<typeof getClaimEventRefundInstructionAsync> &
+    SelfPlanAndSendFunctions;
   consumeBookingCredit: (
     input: ConsumeBookingCreditInput,
   ) => ReturnType<typeof getConsumeBookingCreditInstruction> &
+    SelfPlanAndSendFunctions;
+  createEventPool: (
+    input: CreateEventPoolAsyncInput,
+  ) => ReturnType<typeof getCreateEventPoolInstructionAsync> &
     SelfPlanAndSendFunctions;
   createOffer: (
     input: CreateOfferInput,
@@ -519,6 +755,10 @@ export type MovxCoachPassPluginInstructions = {
   deactivateOffer: (
     input: DeactivateOfferInput,
   ) => ReturnType<typeof getDeactivateOfferInstruction> &
+    SelfPlanAndSendFunctions;
+  fundEvent: (
+    input: FundEventAsyncInput,
+  ) => ReturnType<typeof getFundEventInstructionAsync> &
     SelfPlanAndSendFunctions;
   initializeCoachAuthority: (
     input: InitializeCoachAuthorityAsyncInput,
@@ -544,6 +784,9 @@ export type MovxCoachPassPluginInstructions = {
     input: RotateCoachAuthorityInput,
   ) => ReturnType<typeof getRotateCoachAuthorityInstruction> &
     SelfPlanAndSendFunctions;
+  settleEvent: (
+    input: SettleEventInput,
+  ) => ReturnType<typeof getSettleEventInstruction> & SelfPlanAndSendFunctions;
 };
 
 export type MovxCoachPassPluginRequirements = ClientWithRpc<
@@ -567,17 +810,34 @@ export function movxCoachPassProgram() {
             client,
             getCoachClientCreditsCodec(),
           ),
+          contribution: addSelfFetchFunctions(client, getContributionCodec()),
           creditReservation: addSelfFetchFunctions(
             client,
             getCreditReservationCodec(),
           ),
+          eventPool: addSelfFetchFunctions(client, getEventPoolCodec()),
           offer: addSelfFetchFunctions(client, getOfferCodec()),
         },
         instructions: {
+          claimEventPayout: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getClaimEventPayoutInstructionAsync(input),
+            ),
+          claimEventRefund: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getClaimEventRefundInstructionAsync(input),
+            ),
           consumeBookingCredit: (input) =>
             addSelfPlanAndSendFunctions(
               client,
               getConsumeBookingCreditInstruction(input),
+            ),
+          createEventPool: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getCreateEventPoolInstructionAsync(input),
             ),
           createOffer: (input) =>
             addSelfPlanAndSendFunctions(
@@ -588,6 +848,11 @@ export function movxCoachPassProgram() {
             addSelfPlanAndSendFunctions(
               client,
               getDeactivateOfferInstruction(input),
+            ),
+          fundEvent: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getFundEventInstructionAsync(input),
             ),
           initializeCoachAuthority: (input) =>
             addSelfPlanAndSendFunctions(
@@ -618,6 +883,11 @@ export function movxCoachPassProgram() {
             addSelfPlanAndSendFunctions(
               client,
               getRotateCoachAuthorityInstruction(input),
+            ),
+          settleEvent: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getSettleEventInstruction(input),
             ),
         },
         identifyAccount: identifyMovxCoachPassAccount,

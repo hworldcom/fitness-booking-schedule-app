@@ -6,12 +6,17 @@
  * @see https://github.com/codama-idl/codama
  */
 
+export * from "./claimEventPayout";
+export * from "./claimEventRefund";
 export * from "./consumeBookingCredit";
+export * from "./createEventPool";
 export * from "./createOffer";
 export * from "./deactivateOffer";
+export * from "./fundEvent";
 export * from "./initializeCoachAuthority";
 export * from "./purchaseFirstOffer";
 export * from "./purchaseOffer";
 export * from "./reserveBookingCredit";
 export * from "./returnBookingCredit";
 export * from "./rotateCoachAuthority";
+export * from "./settleEvent";

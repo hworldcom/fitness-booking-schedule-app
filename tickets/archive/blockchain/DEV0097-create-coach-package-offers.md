@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Coach-first M2 one-session/ten-session offers
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: historical implementation under cancelled [COR0009](../organisatory/COR0009-coach-first-training-package-mvp.md); replaced for the current product by [DEV0121 — Implement the group-event funding program](../../current/blockchain/DEV0121-implement-group-event-funding-program.md), which may review but does not automatically inherit this partial code; originally depended on DEV0094, DEV0096 and linked-wallet authority from current DEV0047
+- Related records: historical implementation under cancelled [COR0009](../organisatory/COR0009-coach-first-training-package-mvp.md); replaced for the current product by [DEV0121 — Implement the group-event funding program](DEV0121-implement-group-event-funding-program.md), which reviewed but did not automatically inherit this partial code; originally depended on DEV0094, DEV0096 and linked-wallet authority from current DEV0047
 
 ## Objective and context
 
