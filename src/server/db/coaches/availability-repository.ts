@@ -250,6 +250,7 @@ function isPostgresAvailabilityError(error: unknown) {
     if (
       "code" in current &&
       (current.code === "23P01" ||
+        current.code === "40P01" ||
         current.code === "23505" ||
         current.code === "23514" ||
         current.code === "23503" ||
