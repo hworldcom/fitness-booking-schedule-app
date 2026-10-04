@@ -29,6 +29,7 @@ import {
   type InstructionWithAccounts,
   type InstructionWithData,
   type ReadonlyAccount,
+  type ReadonlySignerAccount,
   type ReadonlyUint8Array,
   type WritableAccount,
   type WritableSignerAccount,
@@ -56,6 +57,7 @@ export function getPurchaseFirstOfferDiscriminatorBytes(): ReadonlyUint8Array {
 export type PurchaseFirstOfferInstruction<
   TProgram extends string = typeof MOVX_COACH_PASS_PROGRAM_ADDRESS,
   TAccountClientWallet extends string | AccountMeta<string> = string,
+  TAccountPlatformPayer extends string | AccountMeta<string> = string,
   TAccountCoachAuthority extends string | AccountMeta<string> = string,
   TAccountOffer extends string | AccountMeta<string> = string,
   TAccountCoachClientCredits extends string | AccountMeta<string> = string,
@@ -75,9 +77,13 @@ export type PurchaseFirstOfferInstruction<
   InstructionWithAccounts<
     [
       TAccountClientWallet extends string
-        ? WritableSignerAccount<TAccountClientWallet> &
+        ? ReadonlySignerAccount<TAccountClientWallet> &
             AccountSignerMeta<TAccountClientWallet>
         : TAccountClientWallet,
+      TAccountPlatformPayer extends string
+        ? WritableSignerAccount<TAccountPlatformPayer> &
+            AccountSignerMeta<TAccountPlatformPayer>
+        : TAccountPlatformPayer,
       TAccountCoachAuthority extends string
         ? ReadonlyAccount<TAccountCoachAuthority>
         : TAccountCoachAuthority,
@@ -146,6 +152,7 @@ export function getPurchaseFirstOfferInstructionDataCodec(): FixedSizeCodec<
 
 export type PurchaseFirstOfferAsyncInput<
   TAccountClientWallet extends InstructionSignerInput = InstructionSignerInput,
+  TAccountPlatformPayer extends InstructionSignerInput = InstructionSignerInput,
   TAccountCoachAuthority extends InstructionAccountInput =
     InstructionAccountInput,
   TAccountOffer extends InstructionAccountInput = InstructionAccountInput,
@@ -165,6 +172,7 @@ export type PurchaseFirstOfferAsyncInput<
   TAccountProgram extends InstructionAccountInput = InstructionAccountInput,
 > = {
   clientWallet: TAccountClientWallet;
+  platformPayer: TAccountPlatformPayer;
   coachAuthority: TAccountCoachAuthority;
   offer: TAccountOffer;
   coachClientCredits?: TAccountCoachClientCredits;
@@ -179,6 +187,7 @@ export type PurchaseFirstOfferAsyncInput<
 
 export async function getPurchaseFirstOfferInstructionAsync<
   TAccountClientWallet extends InstructionSignerInput,
+  TAccountPlatformPayer extends InstructionSignerInput,
   TAccountCoachAuthority extends InstructionAccountInput,
   TAccountOffer extends InstructionAccountInput,
   TAccountCoachClientCredits extends InstructionAccountInput,
@@ -193,6 +202,7 @@ export async function getPurchaseFirstOfferInstructionAsync<
 >(
   input: PurchaseFirstOfferAsyncInput<
     TAccountClientWallet,
+    TAccountPlatformPayer,
     TAccountCoachAuthority,
     TAccountOffer,
     TAccountCoachClientCredits,
@@ -211,6 +221,10 @@ export async function getPurchaseFirstOfferInstructionAsync<
     ResolvedInstructionAccountMeta<
       TAccountClientWallet,
       InstructionAccountInputAddress<TAccountClientWallet>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPlatformPayer,
+      InstructionAccountInputAddress<TAccountPlatformPayer>
     >,
     ResolvedInstructionAccountMeta<
       TAccountCoachAuthority,
@@ -265,6 +279,11 @@ export async function getPurchaseFirstOfferInstructionAsync<
   const originalAccounts = {
     clientWallet: {
       value: input.clientWallet ?? null,
+      isSigner: true,
+      isWritable: false,
+    },
+    platformPayer: {
+      value: input.platformPayer ?? null,
       isSigner: true,
       isWritable: true,
     },
@@ -362,6 +381,7 @@ export async function getPurchaseFirstOfferInstructionAsync<
   return Object.freeze({
     accounts: [
       getAccountMeta("clientWallet", accounts.clientWallet),
+      getAccountMeta("platformPayer", accounts.platformPayer),
       getAccountMeta("coachAuthority", accounts.coachAuthority),
       getAccountMeta("offer", accounts.offer),
       getAccountMeta("coachClientCredits", accounts.coachClientCredits),
@@ -380,6 +400,10 @@ export async function getPurchaseFirstOfferInstructionAsync<
     ResolvedInstructionAccountMeta<
       TAccountClientWallet,
       InstructionAccountInputAddress<TAccountClientWallet>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPlatformPayer,
+      InstructionAccountInputAddress<TAccountPlatformPayer>
     >,
     ResolvedInstructionAccountMeta<
       TAccountCoachAuthority,
@@ -426,6 +450,7 @@ export async function getPurchaseFirstOfferInstructionAsync<
 
 export type PurchaseFirstOfferInput<
   TAccountClientWallet extends InstructionSignerInput = InstructionSignerInput,
+  TAccountPlatformPayer extends InstructionSignerInput = InstructionSignerInput,
   TAccountCoachAuthority extends InstructionAccountInput =
     InstructionAccountInput,
   TAccountOffer extends InstructionAccountInput = InstructionAccountInput,
@@ -445,6 +470,7 @@ export type PurchaseFirstOfferInput<
   TAccountProgram extends InstructionAccountInput = InstructionAccountInput,
 > = {
   clientWallet: TAccountClientWallet;
+  platformPayer: TAccountPlatformPayer;
   coachAuthority: TAccountCoachAuthority;
   offer: TAccountOffer;
   coachClientCredits: TAccountCoachClientCredits;
@@ -459,6 +485,7 @@ export type PurchaseFirstOfferInput<
 
 export function getPurchaseFirstOfferInstruction<
   TAccountClientWallet extends InstructionSignerInput,
+  TAccountPlatformPayer extends InstructionSignerInput,
   TAccountCoachAuthority extends InstructionAccountInput,
   TAccountOffer extends InstructionAccountInput,
   TAccountCoachClientCredits extends InstructionAccountInput,
@@ -473,6 +500,7 @@ export function getPurchaseFirstOfferInstruction<
 >(
   input: PurchaseFirstOfferInput<
     TAccountClientWallet,
+    TAccountPlatformPayer,
     TAccountCoachAuthority,
     TAccountOffer,
     TAccountCoachClientCredits,
@@ -490,6 +518,10 @@ export function getPurchaseFirstOfferInstruction<
   ResolvedInstructionAccountMeta<
     TAccountClientWallet,
     InstructionAccountInputAddress<TAccountClientWallet>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountPlatformPayer,
+    InstructionAccountInputAddress<TAccountPlatformPayer>
   >,
   ResolvedInstructionAccountMeta<
     TAccountCoachAuthority,
@@ -543,6 +575,11 @@ export function getPurchaseFirstOfferInstruction<
   const originalAccounts = {
     clientWallet: {
       value: input.clientWallet ?? null,
+      isSigner: true,
+      isWritable: false,
+    },
+    platformPayer: {
+      value: input.platformPayer ?? null,
       isSigner: true,
       isWritable: true,
     },
@@ -615,6 +652,7 @@ export function getPurchaseFirstOfferInstruction<
   return Object.freeze({
     accounts: [
       getAccountMeta("clientWallet", accounts.clientWallet),
+      getAccountMeta("platformPayer", accounts.platformPayer),
       getAccountMeta("coachAuthority", accounts.coachAuthority),
       getAccountMeta("offer", accounts.offer),
       getAccountMeta("coachClientCredits", accounts.coachClientCredits),
@@ -633,6 +671,10 @@ export function getPurchaseFirstOfferInstruction<
     ResolvedInstructionAccountMeta<
       TAccountClientWallet,
       InstructionAccountInputAddress<TAccountClientWallet>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPlatformPayer,
+      InstructionAccountInputAddress<TAccountPlatformPayer>
     >,
     ResolvedInstructionAccountMeta<
       TAccountCoachAuthority,
@@ -684,16 +726,17 @@ export type ParsedPurchaseFirstOfferInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     clientWallet: TAccountMetas[0];
-    coachAuthority: TAccountMetas[1];
-    offer: TAccountMetas[2];
-    coachClientCredits: TAccountMetas[3];
-    paymentMint: TAccountMetas[4];
-    clientTokenAccount: TAccountMetas[5];
-    coachTokenAccount: TAccountMetas[6];
-    tokenProgram: TAccountMetas[7];
-    systemProgram: TAccountMetas[8];
-    eventAuthority: TAccountMetas[9];
-    program: TAccountMetas[10];
+    platformPayer: TAccountMetas[1];
+    coachAuthority: TAccountMetas[2];
+    offer: TAccountMetas[3];
+    coachClientCredits: TAccountMetas[4];
+    paymentMint: TAccountMetas[5];
+    clientTokenAccount: TAccountMetas[6];
+    coachTokenAccount: TAccountMetas[7];
+    tokenProgram: TAccountMetas[8];
+    systemProgram: TAccountMetas[9];
+    eventAuthority: TAccountMetas[10];
+    program: TAccountMetas[11];
   };
   data: PurchaseFirstOfferInstructionData;
 };
@@ -706,12 +749,12 @@ export function parsePurchaseFirstOfferInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedPurchaseFirstOfferInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 11) {
+  if (instruction.accounts.length < 12) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 11,
+        expectedAccountMetas: 12,
       },
     );
   }
@@ -725,6 +768,7 @@ export function parsePurchaseFirstOfferInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       clientWallet: getNextAccount(),
+      platformPayer: getNextAccount(),
       coachAuthority: getNextAccount(),
       offer: getNextAccount(),
       coachClientCredits: getNextAccount(),

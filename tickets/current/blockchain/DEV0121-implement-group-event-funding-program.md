@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Marketplace M5 local EventPool program
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: reviews but does not inherit cancelled [DEV0097 — Create coach package offers on Devnet](../../archive/blockchain/DEV0097-create-coach-package-offers.md); adopts the platform-payer boundary recorded by [DEV0132](DEV0132-make-coach-pass-operations-platform-funded.md); supplies account/instruction/client contracts to [DEV0122](DEV0122-integrate-devnet-group-event-funding.md)
+- Related records: reviews but does not inherit cancelled [DEV0097 — Create coach package offers on Devnet](../../archive/blockchain/DEV0097-create-coach-package-offers.md); adopts the platform-payer boundary completed by [DEV0132](../../archive/blockchain/DEV0132-make-coach-pass-operations-platform-funded.md); supplies account/instruction/client contracts to [DEV0122](DEV0122-integrate-devnet-group-event-funding.md)
 
 ## Objective and context
 

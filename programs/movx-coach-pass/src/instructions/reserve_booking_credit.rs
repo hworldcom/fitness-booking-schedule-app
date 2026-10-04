@@ -54,7 +54,7 @@ pub fn handler(
 pub struct ReserveBookingCredit<'info> {
     pub client_wallet: Signer<'info>,
     #[account(mut)]
-    pub fee_payer: Signer<'info>,
+    pub platform_payer: Signer<'info>,
     #[account(
         seeds = [
             COACH_AUTHORITY_SEED,
@@ -80,7 +80,7 @@ pub struct ReserveBookingCredit<'info> {
     pub coach_client_credits: Box<Account<'info, CoachClientCredits>>,
     #[account(
         init,
-        payer = fee_payer,
+        payer = platform_payer,
         space = 8 + CreditReservation::INIT_SPACE,
         seeds = [
             CREDIT_RESERVATION_SEED,

@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { address, isNone } from "@solana/kit";
+import {
+  AccountRole,
+  address,
+  generateKeyPairSigner,
+  getProgramDerivedAddress,
+  getUtf8Encoder,
+  isNone,
+} from "@solana/kit";
 import { getCoachAuthorityEncoder } from "../clients/js/src/generated/accounts/coachAuthority";
 import {
   getCoachClientCreditsDecoder,
@@ -20,12 +27,20 @@ import {
 } from "../clients/js/src/generated/instructions/consumeBookingCredit";
 import {
   CREATE_OFFER_DISCRIMINATOR,
+  getCreateOfferInstruction,
   getCreateOfferInstructionDataDecoder,
   getCreateOfferInstructionDataEncoder,
+  parseCreateOfferInstruction,
 } from "../clients/js/src/generated/instructions/createOffer";
 import {
+  getInitializeCoachAuthorityInstructionAsync,
+  parseInitializeCoachAuthorityInstruction,
+} from "../clients/js/src/generated/instructions/initializeCoachAuthority";
+import {
   PURCHASE_FIRST_OFFER_DISCRIMINATOR,
+  getPurchaseFirstOfferInstructionAsync,
   getPurchaseFirstOfferInstructionDataEncoder,
+  parsePurchaseFirstOfferInstruction,
 } from "../clients/js/src/generated/instructions/purchaseFirstOffer";
 import {
   PURCHASE_OFFER_DISCRIMINATOR,
@@ -34,8 +49,10 @@ import {
 } from "../clients/js/src/generated/instructions/purchaseOffer";
 import {
   RESERVE_BOOKING_CREDIT_DISCRIMINATOR,
+  getReserveBookingCreditInstructionAsync,
   getReserveBookingCreditInstructionDataDecoder,
   getReserveBookingCreditInstructionDataEncoder,
+  parseReserveBookingCreditInstruction,
 } from "../clients/js/src/generated/instructions/reserveBookingCredit";
 import {
   RETURN_BOOKING_CREDIT_DISCRIMINATOR,
@@ -155,6 +172,110 @@ test("UUID and PDA helpers produce stable coach and offer addresses", async () =
     }),
     /unsigned 64-bit/u,
   );
+});
+
+test("generated account-creation instructions separate platform payer and business authority", async () => {
+  const [coachWallet, recoveryAuthority, clientWallet, platformPayer] =
+    await Promise.all([
+      generateKeyPairSigner(),
+      generateKeyPairSigner(),
+      generateKeyPairSigner(),
+      generateKeyPairSigner(),
+    ]);
+  const [eventAuthority] = await getProgramDerivedAddress({
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    seeds: [getUtf8Encoder().encode("__event_authority")],
+  });
+  const [coachAuthority] = await deriveCoachAuthorityAddress({
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    runId: RUN_ID,
+    profileId: PROFILE_ID,
+    originalWallet: coachWallet.address,
+  });
+  const [offer] = await deriveOfferAddress({
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    coachAuthority,
+    nonce: BigInt(0),
+  });
+  const [coachClientCredits] = await deriveCoachClientCreditsAddress({
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    coachAuthority,
+    clientWallet: clientWallet.address,
+  });
+  const [creditReservation] = await deriveCreditReservationAddress({
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    coachClientCredits,
+    bookingId: BOOKING_ID,
+  });
+
+  const initialized = parseInitializeCoachAuthorityInstruction(
+    await getInitializeCoachAuthorityInstructionAsync({
+      coachWallet,
+      recoveryAuthority,
+      platformPayer,
+      coachAuthority,
+      eventAuthority,
+      program: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+      runId: [...uuidToSeed(RUN_ID)],
+      profileId: [...uuidToSeed(PROFILE_ID)],
+    }),
+  );
+  const createdOffer = parseCreateOfferInstruction(
+    getCreateOfferInstruction({
+      coachWallet,
+      platformPayer,
+      coachAuthority,
+      offer,
+      eventAuthority,
+      program: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+      args: {
+        nonce: BigInt(0),
+        priceUsdcBaseUnits: BigInt(10_000_000),
+        sessionCount: 1,
+        validitySeconds: 0,
+        restrictedClient: null,
+      },
+    }),
+  );
+  const firstPurchase = parsePurchaseFirstOfferInstruction(
+    await getPurchaseFirstOfferInstructionAsync({
+      clientWallet,
+      platformPayer,
+      coachAuthority,
+      offer,
+      coachClientCredits,
+      clientTokenAccount: CLIENT_WALLET,
+      coachTokenAccount: ORIGINAL_WALLET,
+      eventAuthority,
+      program: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    }),
+  );
+  const reserved = parseReserveBookingCreditInstruction(
+    await getReserveBookingCreditInstructionAsync({
+      clientWallet,
+      platformPayer,
+      coachAuthority,
+      coachClientCredits,
+      creditReservation,
+      eventAuthority,
+      program: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+      bookingId: [...uuidToSeed(BOOKING_ID)],
+      scheduledStartAt: BigInt(1_900_003_600),
+      earlyReturnUntil: BigInt(1_900_001_800),
+    }),
+  );
+
+  for (const [businessAuthority, payer] of [
+    [initialized.accounts.coachWallet, initialized.accounts.platformPayer],
+    [createdOffer.accounts.coachWallet, createdOffer.accounts.platformPayer],
+    [firstPurchase.accounts.clientWallet, firstPurchase.accounts.platformPayer],
+    [reserved.accounts.clientWallet, reserved.accounts.platformPayer],
+  ]) {
+    assert.equal(businessAuthority.role, AccountRole.READONLY_SIGNER);
+    assert.equal(payer.address, platformPayer.address);
+    assert.equal(payer.role, AccountRole.WRITABLE_SIGNER);
+    assert.notEqual(businessAuthority.address, payer.address);
+  }
 });
 
 test("generated booking-credit codecs preserve lifecycle identifiers and snapshots", () => {

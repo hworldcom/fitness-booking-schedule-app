@@ -43,8 +43,9 @@ pub fn handler(ctx: Context<CreateOffer>, args: CreateOfferArgs) -> Result<()> {
 #[derive(Accounts)]
 #[instruction(args: CreateOfferArgs)]
 pub struct CreateOffer<'info> {
-    #[account(mut)]
     pub coach_wallet: Signer<'info>,
+    #[account(mut)]
+    pub platform_payer: Signer<'info>,
     #[account(
         mut,
         seeds = [
@@ -60,7 +61,7 @@ pub struct CreateOffer<'info> {
     pub coach_authority: Account<'info, CoachAuthority>,
     #[account(
         init,
-        payer = coach_wallet,
+        payer = platform_payer,
         space = 8 + Offer::INIT_SPACE,
         seeds = [
             OFFER_SEED,

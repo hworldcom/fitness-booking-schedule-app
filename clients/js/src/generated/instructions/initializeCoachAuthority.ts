@@ -63,6 +63,7 @@ export type InitializeCoachAuthorityInstruction<
   TProgram extends string = typeof MOVX_COACH_PASS_PROGRAM_ADDRESS,
   TAccountCoachWallet extends string | AccountMeta<string> = string,
   TAccountRecoveryAuthority extends string | AccountMeta<string> = string,
+  TAccountPlatformPayer extends string | AccountMeta<string> = string,
   TAccountCoachAuthority extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends string | AccountMeta<string> =
     "11111111111111111111111111111111",
@@ -74,13 +75,17 @@ export type InitializeCoachAuthorityInstruction<
   InstructionWithAccounts<
     [
       TAccountCoachWallet extends string
-        ? WritableSignerAccount<TAccountCoachWallet> &
+        ? ReadonlySignerAccount<TAccountCoachWallet> &
             AccountSignerMeta<TAccountCoachWallet>
         : TAccountCoachWallet,
       TAccountRecoveryAuthority extends string
         ? ReadonlySignerAccount<TAccountRecoveryAuthority> &
             AccountSignerMeta<TAccountRecoveryAuthority>
         : TAccountRecoveryAuthority,
+      TAccountPlatformPayer extends string
+        ? WritableSignerAccount<TAccountPlatformPayer> &
+            AccountSignerMeta<TAccountPlatformPayer>
+        : TAccountPlatformPayer,
       TAccountCoachAuthority extends string
         ? WritableAccount<TAccountCoachAuthority>
         : TAccountCoachAuthority,
@@ -144,6 +149,7 @@ export type InitializeCoachAuthorityAsyncInput<
   TAccountCoachWallet extends InstructionSignerInput = InstructionSignerInput,
   TAccountRecoveryAuthority extends InstructionSignerInput =
     InstructionSignerInput,
+  TAccountPlatformPayer extends InstructionSignerInput = InstructionSignerInput,
   TAccountCoachAuthority extends InstructionAccountInput =
     InstructionAccountInput,
   TAccountSystemProgram extends InstructionAccountInput =
@@ -154,6 +160,7 @@ export type InitializeCoachAuthorityAsyncInput<
 > = {
   coachWallet: TAccountCoachWallet;
   recoveryAuthority: TAccountRecoveryAuthority;
+  platformPayer: TAccountPlatformPayer;
   coachAuthority?: TAccountCoachAuthority;
   systemProgram?: TAccountSystemProgram;
   eventAuthority: TAccountEventAuthority;
@@ -165,6 +172,7 @@ export type InitializeCoachAuthorityAsyncInput<
 export async function getInitializeCoachAuthorityInstructionAsync<
   TAccountCoachWallet extends InstructionSignerInput,
   TAccountRecoveryAuthority extends InstructionSignerInput,
+  TAccountPlatformPayer extends InstructionSignerInput,
   TAccountCoachAuthority extends InstructionAccountInput,
   TAccountSystemProgram extends InstructionAccountInput,
   TAccountEventAuthority extends InstructionAccountInput,
@@ -174,6 +182,7 @@ export async function getInitializeCoachAuthorityInstructionAsync<
   input: InitializeCoachAuthorityAsyncInput<
     TAccountCoachWallet,
     TAccountRecoveryAuthority,
+    TAccountPlatformPayer,
     TAccountCoachAuthority,
     TAccountSystemProgram,
     TAccountEventAuthority,
@@ -190,6 +199,10 @@ export async function getInitializeCoachAuthorityInstructionAsync<
     ResolvedInstructionAccountMeta<
       TAccountRecoveryAuthority,
       InstructionAccountInputAddress<TAccountRecoveryAuthority>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPlatformPayer,
+      InstructionAccountInputAddress<TAccountPlatformPayer>
     >,
     ResolvedInstructionAccountMeta<
       TAccountCoachAuthority,
@@ -221,12 +234,17 @@ export async function getInitializeCoachAuthorityInstructionAsync<
     coachWallet: {
       value: input.coachWallet ?? null,
       isSigner: true,
-      isWritable: true,
+      isWritable: false,
     },
     recoveryAuthority: {
       value: input.recoveryAuthority ?? null,
       isSigner: true,
       isWritable: false,
+    },
+    platformPayer: {
+      value: input.platformPayer ?? null,
+      isSigner: true,
+      isWritable: true,
     },
     coachAuthority: {
       value: input.coachAuthority ?? null,
@@ -292,6 +310,7 @@ export async function getInitializeCoachAuthorityInstructionAsync<
     accounts: [
       getAccountMeta("coachWallet", accounts.coachWallet),
       getAccountMeta("recoveryAuthority", accounts.recoveryAuthority),
+      getAccountMeta("platformPayer", accounts.platformPayer),
       getAccountMeta("coachAuthority", accounts.coachAuthority),
       getAccountMeta("systemProgram", accounts.systemProgram),
       getAccountMeta("eventAuthority", accounts.eventAuthority),
@@ -310,6 +329,10 @@ export async function getInitializeCoachAuthorityInstructionAsync<
     ResolvedInstructionAccountMeta<
       TAccountRecoveryAuthority,
       InstructionAccountInputAddress<TAccountRecoveryAuthority>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPlatformPayer,
+      InstructionAccountInputAddress<TAccountPlatformPayer>
     >,
     ResolvedInstructionAccountMeta<
       TAccountCoachAuthority,
@@ -334,6 +357,7 @@ export type InitializeCoachAuthorityInput<
   TAccountCoachWallet extends InstructionSignerInput = InstructionSignerInput,
   TAccountRecoveryAuthority extends InstructionSignerInput =
     InstructionSignerInput,
+  TAccountPlatformPayer extends InstructionSignerInput = InstructionSignerInput,
   TAccountCoachAuthority extends InstructionAccountInput =
     InstructionAccountInput,
   TAccountSystemProgram extends InstructionAccountInput =
@@ -344,6 +368,7 @@ export type InitializeCoachAuthorityInput<
 > = {
   coachWallet: TAccountCoachWallet;
   recoveryAuthority: TAccountRecoveryAuthority;
+  platformPayer: TAccountPlatformPayer;
   coachAuthority: TAccountCoachAuthority;
   systemProgram?: TAccountSystemProgram;
   eventAuthority: TAccountEventAuthority;
@@ -355,6 +380,7 @@ export type InitializeCoachAuthorityInput<
 export function getInitializeCoachAuthorityInstruction<
   TAccountCoachWallet extends InstructionSignerInput,
   TAccountRecoveryAuthority extends InstructionSignerInput,
+  TAccountPlatformPayer extends InstructionSignerInput,
   TAccountCoachAuthority extends InstructionAccountInput,
   TAccountSystemProgram extends InstructionAccountInput,
   TAccountEventAuthority extends InstructionAccountInput,
@@ -364,6 +390,7 @@ export function getInitializeCoachAuthorityInstruction<
   input: InitializeCoachAuthorityInput<
     TAccountCoachWallet,
     TAccountRecoveryAuthority,
+    TAccountPlatformPayer,
     TAccountCoachAuthority,
     TAccountSystemProgram,
     TAccountEventAuthority,
@@ -379,6 +406,10 @@ export function getInitializeCoachAuthorityInstruction<
   ResolvedInstructionAccountMeta<
     TAccountRecoveryAuthority,
     InstructionAccountInputAddress<TAccountRecoveryAuthority>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountPlatformPayer,
+    InstructionAccountInputAddress<TAccountPlatformPayer>
   >,
   ResolvedInstructionAccountMeta<
     TAccountCoachAuthority,
@@ -409,12 +440,17 @@ export function getInitializeCoachAuthorityInstruction<
     coachWallet: {
       value: input.coachWallet ?? null,
       isSigner: true,
-      isWritable: true,
+      isWritable: false,
     },
     recoveryAuthority: {
       value: input.recoveryAuthority ?? null,
       isSigner: true,
       isWritable: false,
+    },
+    platformPayer: {
+      value: input.platformPayer ?? null,
+      isSigner: true,
+      isWritable: true,
     },
     coachAuthority: {
       value: input.coachAuthority ?? null,
@@ -455,6 +491,7 @@ export function getInitializeCoachAuthorityInstruction<
     accounts: [
       getAccountMeta("coachWallet", accounts.coachWallet),
       getAccountMeta("recoveryAuthority", accounts.recoveryAuthority),
+      getAccountMeta("platformPayer", accounts.platformPayer),
       getAccountMeta("coachAuthority", accounts.coachAuthority),
       getAccountMeta("systemProgram", accounts.systemProgram),
       getAccountMeta("eventAuthority", accounts.eventAuthority),
@@ -473,6 +510,10 @@ export function getInitializeCoachAuthorityInstruction<
     ResolvedInstructionAccountMeta<
       TAccountRecoveryAuthority,
       InstructionAccountInputAddress<TAccountRecoveryAuthority>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPlatformPayer,
+      InstructionAccountInputAddress<TAccountPlatformPayer>
     >,
     ResolvedInstructionAccountMeta<
       TAccountCoachAuthority,
@@ -501,10 +542,11 @@ export type ParsedInitializeCoachAuthorityInstruction<
   accounts: {
     coachWallet: TAccountMetas[0];
     recoveryAuthority: TAccountMetas[1];
-    coachAuthority: TAccountMetas[2];
-    systemProgram: TAccountMetas[3];
-    eventAuthority: TAccountMetas[4];
-    program: TAccountMetas[5];
+    platformPayer: TAccountMetas[2];
+    coachAuthority: TAccountMetas[3];
+    systemProgram: TAccountMetas[4];
+    eventAuthority: TAccountMetas[5];
+    program: TAccountMetas[6];
   };
   data: InitializeCoachAuthorityInstructionData;
 };
@@ -517,12 +559,12 @@ export function parseInitializeCoachAuthorityInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedInitializeCoachAuthorityInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 6) {
+  if (instruction.accounts.length < 7) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 6,
+        expectedAccountMetas: 7,
       },
     );
   }
@@ -537,6 +579,7 @@ export function parseInitializeCoachAuthorityInstruction<
     accounts: {
       coachWallet: getNextAccount(),
       recoveryAuthority: getNextAccount(),
+      platformPayer: getNextAccount(),
       coachAuthority: getNextAccount(),
       systemProgram: getNextAccount(),
       eventAuthority: getNextAccount(),

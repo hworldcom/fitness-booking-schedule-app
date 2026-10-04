@@ -27,6 +27,7 @@ import {
   type InstructionWithAccounts,
   type InstructionWithData,
   type ReadonlyAccount,
+  type ReadonlySignerAccount,
   type ReadonlyUint8Array,
   type WritableAccount,
   type WritableSignerAccount,
@@ -60,6 +61,7 @@ export function getCreateOfferDiscriminatorBytes(): ReadonlyUint8Array {
 export type CreateOfferInstruction<
   TProgram extends string = typeof MOVX_COACH_PASS_PROGRAM_ADDRESS,
   TAccountCoachWallet extends string | AccountMeta<string> = string,
+  TAccountPlatformPayer extends string | AccountMeta<string> = string,
   TAccountCoachAuthority extends string | AccountMeta<string> = string,
   TAccountOffer extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends string | AccountMeta<string> =
@@ -72,9 +74,13 @@ export type CreateOfferInstruction<
   InstructionWithAccounts<
     [
       TAccountCoachWallet extends string
-        ? WritableSignerAccount<TAccountCoachWallet> &
+        ? ReadonlySignerAccount<TAccountCoachWallet> &
             AccountSignerMeta<TAccountCoachWallet>
         : TAccountCoachWallet,
+      TAccountPlatformPayer extends string
+        ? WritableSignerAccount<TAccountPlatformPayer> &
+            AccountSignerMeta<TAccountPlatformPayer>
+        : TAccountPlatformPayer,
       TAccountCoachAuthority extends string
         ? WritableAccount<TAccountCoachAuthority>
         : TAccountCoachAuthority,
@@ -130,6 +136,7 @@ export function getCreateOfferInstructionDataCodec(): Codec<
 
 export type CreateOfferInput<
   TAccountCoachWallet extends InstructionSignerInput = InstructionSignerInput,
+  TAccountPlatformPayer extends InstructionSignerInput = InstructionSignerInput,
   TAccountCoachAuthority extends InstructionAccountInput =
     InstructionAccountInput,
   TAccountOffer extends InstructionAccountInput = InstructionAccountInput,
@@ -140,6 +147,7 @@ export type CreateOfferInput<
   TAccountProgram extends InstructionAccountInput = InstructionAccountInput,
 > = {
   coachWallet: TAccountCoachWallet;
+  platformPayer: TAccountPlatformPayer;
   coachAuthority: TAccountCoachAuthority;
   offer: TAccountOffer;
   systemProgram?: TAccountSystemProgram;
@@ -150,6 +158,7 @@ export type CreateOfferInput<
 
 export function getCreateOfferInstruction<
   TAccountCoachWallet extends InstructionSignerInput,
+  TAccountPlatformPayer extends InstructionSignerInput,
   TAccountCoachAuthority extends InstructionAccountInput,
   TAccountOffer extends InstructionAccountInput,
   TAccountSystemProgram extends InstructionAccountInput,
@@ -159,6 +168,7 @@ export function getCreateOfferInstruction<
 >(
   input: CreateOfferInput<
     TAccountCoachWallet,
+    TAccountPlatformPayer,
     TAccountCoachAuthority,
     TAccountOffer,
     TAccountSystemProgram,
@@ -171,6 +181,10 @@ export function getCreateOfferInstruction<
   ResolvedInstructionAccountMeta<
     TAccountCoachWallet,
     InstructionAccountInputAddress<TAccountCoachWallet>
+  >,
+  ResolvedInstructionAccountMeta<
+    TAccountPlatformPayer,
+    InstructionAccountInputAddress<TAccountPlatformPayer>
   >,
   ResolvedInstructionAccountMeta<
     TAccountCoachAuthority,
@@ -204,6 +218,11 @@ export function getCreateOfferInstruction<
   const originalAccounts = {
     coachWallet: {
       value: input.coachWallet ?? null,
+      isSigner: true,
+      isWritable: false,
+    },
+    platformPayer: {
+      value: input.platformPayer ?? null,
       isSigner: true,
       isWritable: true,
     },
@@ -246,6 +265,7 @@ export function getCreateOfferInstruction<
   return Object.freeze({
     accounts: [
       getAccountMeta("coachWallet", accounts.coachWallet),
+      getAccountMeta("platformPayer", accounts.platformPayer),
       getAccountMeta("coachAuthority", accounts.coachAuthority),
       getAccountMeta("offer", accounts.offer),
       getAccountMeta("systemProgram", accounts.systemProgram),
@@ -261,6 +281,10 @@ export function getCreateOfferInstruction<
     ResolvedInstructionAccountMeta<
       TAccountCoachWallet,
       InstructionAccountInputAddress<TAccountCoachWallet>
+    >,
+    ResolvedInstructionAccountMeta<
+      TAccountPlatformPayer,
+      InstructionAccountInputAddress<TAccountPlatformPayer>
     >,
     ResolvedInstructionAccountMeta<
       TAccountCoachAuthority,
@@ -292,11 +316,12 @@ export type ParsedCreateOfferInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     coachWallet: TAccountMetas[0];
-    coachAuthority: TAccountMetas[1];
-    offer: TAccountMetas[2];
-    systemProgram: TAccountMetas[3];
-    eventAuthority: TAccountMetas[4];
-    program: TAccountMetas[5];
+    platformPayer: TAccountMetas[1];
+    coachAuthority: TAccountMetas[2];
+    offer: TAccountMetas[3];
+    systemProgram: TAccountMetas[4];
+    eventAuthority: TAccountMetas[5];
+    program: TAccountMetas[6];
   };
   data: CreateOfferInstructionData;
 };
@@ -309,12 +334,12 @@ export function parseCreateOfferInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedCreateOfferInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 6) {
+  if (instruction.accounts.length < 7) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 6,
+        expectedAccountMetas: 7,
       },
     );
   }
@@ -328,6 +353,7 @@ export function parseCreateOfferInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       coachWallet: getNextAccount(),
+      platformPayer: getNextAccount(),
       coachAuthority: getNextAccount(),
       offer: getNextAccount(),
       systemProgram: getNextAccount(),

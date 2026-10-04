@@ -178,6 +178,10 @@
       "accounts": [
         {
           "name": "coach_wallet",
+          "signer": true
+        },
+        {
+          "name": "platform_payer",
           "writable": true,
           "signer": true
         },
@@ -386,11 +390,15 @@
       "accounts": [
         {
           "name": "coach_wallet",
-          "writable": true,
           "signer": true
         },
         {
           "name": "recovery_authority",
+          "signer": true
+        },
+        {
+          "name": "platform_payer",
+          "writable": true,
           "signer": true
         },
         {
@@ -480,6 +488,10 @@
       "accounts": [
         {
           "name": "client_wallet",
+          "signer": true
+        },
+        {
+          "name": "platform_payer",
           "writable": true,
           "signer": true
         },
@@ -802,7 +814,7 @@
           "signer": true
         },
         {
-          "name": "fee_payer",
+          "name": "platform_payer",
           "writable": true,
           "signer": true
         },

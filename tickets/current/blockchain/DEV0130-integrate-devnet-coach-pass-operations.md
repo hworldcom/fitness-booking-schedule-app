@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Marketplace M6 Devnet pass integration
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: depends on completed [DEV0127](../../archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md), completed [DEV0131](../../archive/blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md), the platform-payer contract in [DEV0132](DEV0132-make-coach-pass-operations-platform-funded.md), personal-wallet work in DEV0047 and hosted infrastructure under COR0004; supplies transaction adapters to completed [DEV0128](../../archive/backend/DEV0128-persist-credit-backed-private-bookings.md) and [DEV0129](../frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md)
+- Related records: depends on completed [DEV0127](../../archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md), completed [DEV0131](../../archive/blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md), completed platform-payer contract [DEV0132](../../archive/blockchain/DEV0132-make-coach-pass-operations-platform-funded.md), personal-wallet work in DEV0047 and hosted infrastructure under COR0004; supplies transaction adapters to completed [DEV0128](../../archive/backend/DEV0128-persist-credit-backed-private-bookings.md) and [DEV0129](../frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md)
 
 ## Objective and context
 
@@ -22,11 +22,11 @@ Every purchase approval identifies Devnet, test USDC, coach, exact price, purcha
 
 ## Assumptions, decisions, and dependencies
 
-The DEV0127 purchase contract and DEV0131 reservation contract are stable, but DEV0132 must finish the forward platform-payer instruction/client change before deployment. Credentialed RPC, platform-payer, recovery and upgrade material remain separate server/operator secrets. The sponsor signs only an allowlisted transaction reconstructed and validated by the server; it cannot replace the required client or coach authority. Automation may not sign or send a user-authorized transaction without that user's explicit approval.
+The DEV0127 purchase contract, DEV0131 reservation contract and DEV0132 platform-payer instruction/client change are complete and stable for deployment. Credentialed RPC, platform-payer, recovery and upgrade material remain separate server/operator secrets. The sponsor signs only an allowlisted transaction reconstructed and validated by the server; it cannot replace the required client or coach authority. Automation may not sign or send a user-authorized transaction without that user's explicit approval.
 
 ## Implementation plan
 
-1. Freeze deployment/configuration, bounded platform-payer policy and operation records after DEV0132 completes.
+1. Freeze deployment/configuration, bounded platform-payer policy and operation records against DEV0132's completed interface.
 2. Implement first/subsequent purchase plus reserve/consume/return preparation and simulation.
 3. Implement submit/finalize/verify/recover plus pair-ledger/reservation projection indexing.
 4. Rehearse public/restricted purchases and each booking-credit terminal path on Devnet with public evidence.
@@ -49,7 +49,7 @@ Not started.
 
 ## Validation results
 
-Not run — the local DEV0131 contract is complete, but DEV0132 must revise the payer interface before this Devnet integration starts.
+Not run — the local DEV0131 contract and DEV0132 payer interface are complete, but this Devnet deployment/integration ticket has not started.
 
 ## Risks, limitations, and follow-ups
 

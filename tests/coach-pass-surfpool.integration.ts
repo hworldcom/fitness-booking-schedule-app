@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   address,
   createClient,
+  createNoopSigner,
   generateKeyPairSigner,
   getProgramDerivedAddress,
   getUtf8Encoder,
@@ -16,17 +17,23 @@ import {
 } from "@solana-program/token";
 import { surfpool } from "@solana/surfpool/kit";
 import {
+  fetchCoachAuthority,
+  fetchMaybeCoachAuthority,
+} from "../clients/js/src/generated/accounts/coachAuthority";
+import {
   fetchCoachClientCredits,
   fetchMaybeCoachClientCredits,
 } from "../clients/js/src/generated/accounts/coachClientCredits";
 import { fetchCreditReservation } from "../clients/js/src/generated/accounts/creditReservation";
 import { getConsumeBookingCreditInstruction } from "../clients/js/src/generated/instructions/consumeBookingCredit";
 import { getCreateOfferInstruction } from "../clients/js/src/generated/instructions/createOffer";
+import { getDeactivateOfferInstruction } from "../clients/js/src/generated/instructions/deactivateOffer";
 import { getInitializeCoachAuthorityInstructionAsync } from "../clients/js/src/generated/instructions/initializeCoachAuthority";
 import { getPurchaseFirstOfferInstructionAsync } from "../clients/js/src/generated/instructions/purchaseFirstOffer";
 import { getPurchaseOfferInstructionAsync } from "../clients/js/src/generated/instructions/purchaseOffer";
 import { getReserveBookingCreditInstructionAsync } from "../clients/js/src/generated/instructions/reserveBookingCredit";
 import { getReturnBookingCreditInstruction } from "../clients/js/src/generated/instructions/returnBookingCredit";
+import { getRotateCoachAuthorityInstruction } from "../clients/js/src/generated/instructions/rotateCoachAuthority";
 import { MOVX_COACH_PASS_PROGRAM_ADDRESS } from "../clients/js/src/generated/programs/movxCoachPass";
 import { CreditReservationStatus } from "../clients/js/src/generated/types/creditReservationStatus";
 import {
@@ -44,7 +51,6 @@ const PROFILE_ID = "22222222-2222-4222-8222-222222222222";
 const OFFER_PRICE = BigInt(80_000_000);
 const SEEDED_PURCHASES = BigInt(3);
 const SESSION_COUNT = 10;
-const TEST_SOL_BALANCE = 10_000_000_000;
 const MINT_RENT_LAMPORTS = 1_461_600;
 const BASE_TIMESTAMP = 1_900_000_000;
 const EARLY_RETURN_BOOKING_ID = "33333333-3333-4333-8333-333333333333";
@@ -79,11 +85,55 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
   const otherClient = await generateKeyPairSigner();
   const wrongRecipient = await generateKeyPairSigner();
   const alternateMint = await generateKeyPairSigner();
-  client.surfnet.fundSolMany([
-    { address: coachWallet.address, lamports: TEST_SOL_BALANCE },
-    { address: clientWallet.address, lamports: TEST_SOL_BALANCE },
-    { address: otherClient.address, lamports: TEST_SOL_BALANCE },
-  ]);
+  const platformPayer = client.payer;
+
+  assert.notEqual(platformPayer.address, coachWallet.address);
+  assert.notEqual(platformPayer.address, recoveryAuthority.address);
+  assert.notEqual(platformPayer.address, clientWallet.address);
+
+  const getLamports = async (accountAddress: Parameters<typeof address>[0]) =>
+    (await client.rpc.getBalance(address(accountAddress)).send()).value;
+  const userWallets = [
+    coachWallet.address,
+    recoveryAuthority.address,
+    clientWallet.address,
+    restrictedClient.address,
+    otherClient.address,
+    wrongRecipient.address,
+  ];
+  const assertUsersNeedNoSol = async () => {
+    const balances = await Promise.all(userWallets.map(getLamports));
+    assert.deepEqual(
+      balances,
+      userWallets.map(() => BigInt(0)),
+    );
+  };
+  const fundingEvidence: Array<{
+    account: string;
+    accountRentLamports: string;
+    platformDebitLamports: string;
+  }> = [];
+  const assertPlatformFundedAccount = async (
+    account: string,
+    platformBalanceBefore: bigint,
+    createdAccount: Parameters<typeof address>[0],
+  ) => {
+    const [platformBalanceAfter, accountRent] = await Promise.all([
+      getLamports(platformPayer.address),
+      getLamports(createdAccount),
+    ]);
+    assert.ok(accountRent > BigInt(0));
+    assert.ok(platformBalanceBefore - platformBalanceAfter >= accountRent);
+    fundingEvidence.push({
+      account,
+      accountRentLamports: accountRent.toString(),
+      platformDebitLamports: (
+        platformBalanceBefore - platformBalanceAfter
+      ).toString(),
+    });
+    await assertUsersNeedNoSol();
+    return platformBalanceAfter;
+  };
 
   const mintData = getMintEncoder().encode({
     decimals: 6,
@@ -183,6 +233,11 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
     coachAuthority,
     nonce: BigInt(1),
   });
+  const [sponsorRejectedOffer] = await deriveOfferAddress({
+    programAddress: MOVX_COACH_PASS_PROGRAM_ADDRESS,
+    coachAuthority,
+    nonce: BigInt(99),
+  });
   const [coachClientCredits] = await deriveCoachClientCreditsAddress({
     programAddress: MOVX_COACH_PASS_PROGRAM_ADDRESS,
     coachAuthority,
@@ -209,19 +264,97 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
     bookingId: CONSUMED_BOOKING_ID,
   });
 
+  await assertUsersNeedNoSol();
+  await assert.rejects(async () =>
+    client.sendTransaction([
+      await getInitializeCoachAuthorityInstructionAsync({
+        coachWallet: createNoopSigner(coachWallet.address),
+        recoveryAuthority: createNoopSigner(recoveryAuthority.address),
+        platformPayer,
+        eventAuthority,
+        program: MOVX_COACH_PASS_PROGRAM_ADDRESS,
+        runId: [...uuidToSeed(RUN_ID)],
+        profileId: [...uuidToSeed(PROFILE_ID)],
+      }),
+    ]),
+  );
+  assert.equal(
+    (await fetchMaybeCoachAuthority(client.rpc, coachAuthority)).exists,
+    false,
+  );
+
+  const platformBeforeAuthority = await getLamports(platformPayer.address);
   await client.sendTransaction([
     await getInitializeCoachAuthorityInstructionAsync({
       coachWallet,
       recoveryAuthority,
+      platformPayer,
       eventAuthority,
       program: MOVX_COACH_PASS_PROGRAM_ADDRESS,
       runId: [...uuidToSeed(RUN_ID)],
       profileId: [...uuidToSeed(PROFILE_ID)],
     }),
   ]);
+  await assertPlatformFundedAccount(
+    "CoachAuthority",
+    platformBeforeAuthority,
+    coachAuthority,
+  );
+
+  const authorityBeforeSponsorRotation = await fetchCoachAuthority(
+    client.rpc,
+    coachAuthority,
+  );
+  await assert.rejects(() =>
+    client.sendTransaction([
+      getRotateCoachAuthorityInstruction({
+        coachAuthority,
+        recoveryAuthority: platformPayer,
+        replacementWallet: platformPayer,
+        eventAuthority,
+        program: MOVX_COACH_PASS_PROGRAM_ADDRESS,
+      }),
+    ]),
+  );
+  const authorityAfterSponsorRotation = await fetchCoachAuthority(
+    client.rpc,
+    coachAuthority,
+  );
+  assert.equal(
+    authorityAfterSponsorRotation.data.currentWallet,
+    authorityBeforeSponsorRotation.data.currentWallet,
+  );
+  assert.equal(
+    authorityAfterSponsorRotation.data.authorityEpoch,
+    authorityBeforeSponsorRotation.data.authorityEpoch,
+  );
+
+  await assert.rejects(() =>
+    client.sendTransaction([
+      getCreateOfferInstruction({
+        coachWallet: createNoopSigner(coachWallet.address),
+        platformPayer,
+        coachAuthority,
+        offer: sponsorRejectedOffer,
+        eventAuthority,
+        program: MOVX_COACH_PASS_PROGRAM_ADDRESS,
+        args: {
+          nonce: BigInt(99),
+          priceUsdcBaseUnits: OFFER_PRICE,
+          sessionCount: SESSION_COUNT,
+          validitySeconds: 0,
+          restrictedClient: null,
+        },
+      }),
+    ]),
+  );
+  assert.equal(await getLamports(sponsorRejectedOffer), BigInt(0));
+
+  const platformBeforeOffer = await getLamports(platformPayer.address);
   await client.sendTransaction([
     getCreateOfferInstruction({
       coachWallet,
+      platformPayer,
       coachAuthority,
       offer,
       eventAuthority,
@@ -235,12 +368,64 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
       },
     }),
   ]);
+  await assertPlatformFundedAccount("Offer", platformBeforeOffer, offer);
+
+  await assert.rejects(() =>
+    client.sendTransaction([
+      getDeactivateOfferInstruction({
+        coachWallet: platformPayer,
+        coachAuthority,
+        offer,
+        eventAuthority,
+        program: MOVX_COACH_PASS_PROGRAM_ADDRESS,
+      }),
+    ]),
+  );
 
   const creditsBeforePurchase = await fetchMaybeCoachClientCredits(
     client.rpc,
     coachClientCredits,
   );
   assert.equal(creditsBeforePurchase.exists, false);
+
+  const [clientTokensBeforeSponsorPurchase, coachTokensBeforeSponsorPurchase] =
+    await Promise.all([
+      fetchToken(client.rpc, clientTokenAccount),
+      fetchToken(client.rpc, coachTokenAccount),
+    ]);
+  await assert.rejects(async () =>
+    client.sendTransaction([
+      await getPurchaseFirstOfferInstructionAsync({
+        clientWallet: createNoopSigner(clientWallet.address),
+        platformPayer,
+        coachAuthority,
+        offer,
+        coachClientCredits,
+        clientTokenAccount,
+        coachTokenAccount,
+        eventAuthority,
+        program: MOVX_COACH_PASS_PROGRAM_ADDRESS,
+      }),
+    ]),
+  );
+  const [
+    creditsAfterSponsorPurchase,
+    clientTokensAfterSponsorPurchase,
+    coachTokensAfterSponsorPurchase,
+  ] = await Promise.all([
+    fetchMaybeCoachClientCredits(client.rpc, coachClientCredits),
+    fetchToken(client.rpc, clientTokenAccount),
+    fetchToken(client.rpc, coachTokenAccount),
+  ]);
+  assert.equal(creditsAfterSponsorPurchase.exists, false);
+  assert.equal(
+    clientTokensAfterSponsorPurchase.data.amount,
+    clientTokensBeforeSponsorPurchase.data.amount,
+  );
+  assert.equal(
+    coachTokensAfterSponsorPurchase.data.amount,
+    coachTokensBeforeSponsorPurchase.data.amount,
+  );
 
   const readState = async () => {
     const [credits, clientTokens, coachTokens] = await Promise.all([
@@ -259,9 +444,11 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
     };
   };
 
+  const platformBeforeFirstPurchase = await getLamports(platformPayer.address);
   await client.sendTransaction([
     await getPurchaseFirstOfferInstructionAsync({
       clientWallet,
+      platformPayer,
       coachAuthority,
       offer,
       coachClientCredits,
@@ -271,6 +458,11 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
       program: MOVX_COACH_PASS_PROGRAM_ADDRESS,
     }),
   ]);
+  await assertPlatformFundedAccount(
+    "CoachClientCredits",
+    platformBeforeFirstPurchase,
+    coachClientCredits,
+  );
   const afterFirstPurchase = {
     availableCredits: BigInt(10),
     reservedCredits: BigInt(0),
@@ -433,9 +625,9 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
   );
   assert.deepEqual(await readState(), afterSecondPurchase);
 
-  const reserveEarlyReturn = await getReserveBookingCreditInstructionAsync({
-    clientWallet,
-    feePayer: coachWallet,
+  const sponsorOnlyReserve = await getReserveBookingCreditInstructionAsync({
+    clientWallet: createNoopSigner(clientWallet.address),
+    platformPayer,
     coachAuthority,
     coachClientCredits,
     creditReservation: earlyReturnReservation,
@@ -445,7 +637,30 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
     scheduledStartAt: BigInt(BASE_TIMESTAMP + 10_000),
     earlyReturnUntil: BigInt(BASE_TIMESTAMP + 5_000),
   });
+  await assert.rejects(() => client.sendTransaction([sponsorOnlyReserve]));
+  assert.equal(await getLamports(earlyReturnReservation), BigInt(0));
+
+  const reserveEarlyReturn = await getReserveBookingCreditInstructionAsync({
+    clientWallet,
+    platformPayer,
+    coachAuthority,
+    coachClientCredits,
+    creditReservation: earlyReturnReservation,
+    eventAuthority,
+    program: MOVX_COACH_PASS_PROGRAM_ADDRESS,
+    bookingId: [...uuidToSeed(EARLY_RETURN_BOOKING_ID)],
+    scheduledStartAt: BigInt(BASE_TIMESTAMP + 10_000),
+    earlyReturnUntil: BigInt(BASE_TIMESTAMP + 5_000),
+  });
+  const platformBeforeEarlyReservation = await getLamports(
+    platformPayer.address,
+  );
   await client.sendTransaction([reserveEarlyReturn]);
+  await assertPlatformFundedAccount(
+    "CreditReservation:early-return",
+    platformBeforeEarlyReservation,
+    earlyReturnReservation,
+  );
   assert.deepEqual(await readState(), {
     ...afterSecondPurchase,
     availableCredits: BigInt(19),
@@ -483,15 +698,15 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
     reservedCredits: BigInt(1),
   });
 
-  const attackerReturn = getReturnBookingCreditInstruction({
-    resolutionAuthority: otherClient,
+  const sponsorReturn = getReturnBookingCreditInstruction({
+    resolutionAuthority: platformPayer,
     coachAuthority,
     coachClientCredits,
     creditReservation: earlyReturnReservation,
     eventAuthority,
     program: MOVX_COACH_PASS_PROGRAM_ADDRESS,
   });
-  await assert.rejects(() => client.sendTransaction([attackerReturn]));
+  await assert.rejects(() => client.sendTransaction([sponsorReturn]));
 
   const clientReturn = getReturnBookingCreditInstruction({
     resolutionAuthority: clientWallet,
@@ -517,7 +732,7 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
 
   const reserveCoachReturn = await getReserveBookingCreditInstructionAsync({
     clientWallet,
-    feePayer: coachWallet,
+    platformPayer,
     coachAuthority,
     coachClientCredits,
     creditReservation: coachReturnReservation,
@@ -529,7 +744,7 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
   });
   const reserveConsumed = await getReserveBookingCreditInstructionAsync({
     clientWallet,
-    feePayer: coachWallet,
+    platformPayer,
     coachAuthority,
     coachClientCredits,
     creditReservation: consumedReservation,
@@ -539,8 +754,24 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
     scheduledStartAt: BigInt(BASE_TIMESTAMP + 1_000),
     earlyReturnUntil: BigInt(BASE_TIMESTAMP + 500),
   });
+  const platformBeforeCoachReturnReservation = await getLamports(
+    platformPayer.address,
+  );
   await client.sendTransaction([reserveCoachReturn]);
+  await assertPlatformFundedAccount(
+    "CreditReservation:coach-return",
+    platformBeforeCoachReturnReservation,
+    coachReturnReservation,
+  );
+  const platformBeforeConsumedReservation = await getLamports(
+    platformPayer.address,
+  );
   await client.sendTransaction([reserveConsumed]);
+  await assertPlatformFundedAccount(
+    "CreditReservation:consume",
+    platformBeforeConsumedReservation,
+    consumedReservation,
+  );
   assert.deepEqual(await readState(), {
     ...afterSecondPurchase,
     availableCredits: BigInt(18),
@@ -607,8 +838,8 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
     program: MOVX_COACH_PASS_PROGRAM_ADDRESS,
   });
   await assert.rejects(() => client.sendTransaction([prematureConsume]));
-  const attackerConsume = getConsumeBookingCreditInstruction({
-    coachWallet: otherClient,
+  const sponsorConsume = getConsumeBookingCreditInstruction({
+    coachWallet: platformPayer,
     coachAuthority,
     coachClientCredits,
     creditReservation: consumedReservation,
@@ -618,7 +849,7 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
   await client.cheatcodes
     .timeTravel({ absoluteTimestamp: (BASE_TIMESTAMP + 1_001) * 1_000 })
     .send();
-  await assert.rejects(() => client.sendTransaction([attackerConsume]));
+  await assert.rejects(() => client.sendTransaction([sponsorConsume]));
 
   const coachConsume = getConsumeBookingCreditInstruction({
     coachWallet,
@@ -662,6 +893,7 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
   await client.sendTransaction([
     getCreateOfferInstruction({
       coachWallet,
+      platformPayer,
       coachAuthority,
       offer: restrictedOffer,
       eventAuthority,
@@ -685,6 +917,7 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
 
   const wrongClientPurchase = await getPurchaseFirstOfferInstructionAsync({
     clientWallet: otherClient,
+    platformPayer,
     coachAuthority,
     offer: restrictedOffer,
     coachClientCredits: otherClientCredits,
@@ -704,4 +937,6 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
   assert.equal(otherTokensAfter.data.amount, otherTokensBefore.data.amount);
   assert.equal(coachTokensAfter.data.amount, coachTokensBefore.data.amount);
   assert.equal(otherCreditsAfter.exists, false);
+  await assertUsersNeedNoSol();
+  t.diagnostic(`platform funding evidence ${JSON.stringify(fundingEvidence)}`);
 });

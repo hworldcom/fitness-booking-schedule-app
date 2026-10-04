@@ -64,8 +64,9 @@ pub fn handler(ctx: Context<PurchaseFirstOffer>) -> Result<()> {
 #[event_cpi]
 #[derive(Accounts)]
 pub struct PurchaseFirstOffer<'info> {
-    #[account(mut)]
     pub client_wallet: Signer<'info>,
+    #[account(mut)]
+    pub platform_payer: Signer<'info>,
     #[account(
         seeds = [
             COACH_AUTHORITY_SEED,
@@ -88,7 +89,7 @@ pub struct PurchaseFirstOffer<'info> {
     pub offer: Box<Account<'info, Offer>>,
     #[account(
         init,
-        payer = client_wallet,
+        payer = platform_payer,
         space = 8 + CoachClientCredits::INIT_SPACE,
         seeds = [
             COACH_CLIENT_CREDITS_SEED,

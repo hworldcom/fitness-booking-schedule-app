@@ -37,12 +37,13 @@ pub fn handler(
 #[derive(Accounts)]
 #[instruction(run_id: [u8; 16], profile_id: [u8; 16])]
 pub struct InitializeCoachAuthority<'info> {
-    #[account(mut)]
     pub coach_wallet: Signer<'info>,
     pub recovery_authority: Signer<'info>,
+    #[account(mut)]
+    pub platform_payer: Signer<'info>,
     #[account(
         init,
-        payer = coach_wallet,
+        payer = platform_payer,
         space = 8 + CoachAuthority::INIT_SPACE,
         seeds = [
             COACH_AUTHORITY_SEED,

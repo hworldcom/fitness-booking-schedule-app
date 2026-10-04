@@ -64,7 +64,7 @@ export function getReserveBookingCreditDiscriminatorBytes(): ReadonlyUint8Array 
 export type ReserveBookingCreditInstruction<
   TProgram extends string = typeof MOVX_COACH_PASS_PROGRAM_ADDRESS,
   TAccountClientWallet extends string | AccountMeta<string> = string,
-  TAccountFeePayer extends string | AccountMeta<string> = string,
+  TAccountPlatformPayer extends string | AccountMeta<string> = string,
   TAccountCoachAuthority extends string | AccountMeta<string> = string,
   TAccountCoachClientCredits extends string | AccountMeta<string> = string,
   TAccountCreditReservation extends string | AccountMeta<string> = string,
@@ -81,10 +81,10 @@ export type ReserveBookingCreditInstruction<
         ? ReadonlySignerAccount<TAccountClientWallet> &
             AccountSignerMeta<TAccountClientWallet>
         : TAccountClientWallet,
-      TAccountFeePayer extends string
-        ? WritableSignerAccount<TAccountFeePayer> &
-            AccountSignerMeta<TAccountFeePayer>
-        : TAccountFeePayer,
+      TAccountPlatformPayer extends string
+        ? WritableSignerAccount<TAccountPlatformPayer> &
+            AccountSignerMeta<TAccountPlatformPayer>
+        : TAccountPlatformPayer,
       TAccountCoachAuthority extends string
         ? ReadonlyAccount<TAccountCoachAuthority>
         : TAccountCoachAuthority,
@@ -156,7 +156,7 @@ export function getReserveBookingCreditInstructionDataCodec(): FixedSizeCodec<
 
 export type ReserveBookingCreditAsyncInput<
   TAccountClientWallet extends InstructionSignerInput = InstructionSignerInput,
-  TAccountFeePayer extends InstructionSignerInput = InstructionSignerInput,
+  TAccountPlatformPayer extends InstructionSignerInput = InstructionSignerInput,
   TAccountCoachAuthority extends InstructionAccountInput =
     InstructionAccountInput,
   TAccountCoachClientCredits extends InstructionAccountInput =
@@ -170,7 +170,7 @@ export type ReserveBookingCreditAsyncInput<
   TAccountProgram extends InstructionAccountInput = InstructionAccountInput,
 > = {
   clientWallet: TAccountClientWallet;
-  feePayer: TAccountFeePayer;
+  platformPayer: TAccountPlatformPayer;
   coachAuthority: TAccountCoachAuthority;
   coachClientCredits?: TAccountCoachClientCredits;
   creditReservation?: TAccountCreditReservation;
@@ -184,7 +184,7 @@ export type ReserveBookingCreditAsyncInput<
 
 export async function getReserveBookingCreditInstructionAsync<
   TAccountClientWallet extends InstructionSignerInput,
-  TAccountFeePayer extends InstructionSignerInput,
+  TAccountPlatformPayer extends InstructionSignerInput,
   TAccountCoachAuthority extends InstructionAccountInput,
   TAccountCoachClientCredits extends InstructionAccountInput,
   TAccountCreditReservation extends InstructionAccountInput,
@@ -195,7 +195,7 @@ export async function getReserveBookingCreditInstructionAsync<
 >(
   input: ReserveBookingCreditAsyncInput<
     TAccountClientWallet,
-    TAccountFeePayer,
+    TAccountPlatformPayer,
     TAccountCoachAuthority,
     TAccountCoachClientCredits,
     TAccountCreditReservation,
@@ -212,8 +212,8 @@ export async function getReserveBookingCreditInstructionAsync<
       InstructionAccountInputAddress<TAccountClientWallet>
     >,
     ResolvedInstructionAccountMeta<
-      TAccountFeePayer,
-      InstructionAccountInputAddress<TAccountFeePayer>
+      TAccountPlatformPayer,
+      InstructionAccountInputAddress<TAccountPlatformPayer>
     >,
     ResolvedInstructionAccountMeta<
       TAccountCoachAuthority,
@@ -255,8 +255,8 @@ export async function getReserveBookingCreditInstructionAsync<
       isSigner: true,
       isWritable: false,
     },
-    feePayer: {
-      value: input.feePayer ?? null,
+    platformPayer: {
+      value: input.platformPayer ?? null,
       isSigner: true,
       isWritable: true,
     },
@@ -355,7 +355,7 @@ export async function getReserveBookingCreditInstructionAsync<
   return Object.freeze({
     accounts: [
       getAccountMeta("clientWallet", accounts.clientWallet),
-      getAccountMeta("feePayer", accounts.feePayer),
+      getAccountMeta("platformPayer", accounts.platformPayer),
       getAccountMeta("coachAuthority", accounts.coachAuthority),
       getAccountMeta("coachClientCredits", accounts.coachClientCredits),
       getAccountMeta("creditReservation", accounts.creditReservation),
@@ -374,8 +374,8 @@ export async function getReserveBookingCreditInstructionAsync<
       InstructionAccountInputAddress<TAccountClientWallet>
     >,
     ResolvedInstructionAccountMeta<
-      TAccountFeePayer,
-      InstructionAccountInputAddress<TAccountFeePayer>
+      TAccountPlatformPayer,
+      InstructionAccountInputAddress<TAccountPlatformPayer>
     >,
     ResolvedInstructionAccountMeta<
       TAccountCoachAuthority,
@@ -406,7 +406,7 @@ export async function getReserveBookingCreditInstructionAsync<
 
 export type ReserveBookingCreditInput<
   TAccountClientWallet extends InstructionSignerInput = InstructionSignerInput,
-  TAccountFeePayer extends InstructionSignerInput = InstructionSignerInput,
+  TAccountPlatformPayer extends InstructionSignerInput = InstructionSignerInput,
   TAccountCoachAuthority extends InstructionAccountInput =
     InstructionAccountInput,
   TAccountCoachClientCredits extends InstructionAccountInput =
@@ -420,7 +420,7 @@ export type ReserveBookingCreditInput<
   TAccountProgram extends InstructionAccountInput = InstructionAccountInput,
 > = {
   clientWallet: TAccountClientWallet;
-  feePayer: TAccountFeePayer;
+  platformPayer: TAccountPlatformPayer;
   coachAuthority: TAccountCoachAuthority;
   coachClientCredits: TAccountCoachClientCredits;
   creditReservation: TAccountCreditReservation;
@@ -434,7 +434,7 @@ export type ReserveBookingCreditInput<
 
 export function getReserveBookingCreditInstruction<
   TAccountClientWallet extends InstructionSignerInput,
-  TAccountFeePayer extends InstructionSignerInput,
+  TAccountPlatformPayer extends InstructionSignerInput,
   TAccountCoachAuthority extends InstructionAccountInput,
   TAccountCoachClientCredits extends InstructionAccountInput,
   TAccountCreditReservation extends InstructionAccountInput,
@@ -445,7 +445,7 @@ export function getReserveBookingCreditInstruction<
 >(
   input: ReserveBookingCreditInput<
     TAccountClientWallet,
-    TAccountFeePayer,
+    TAccountPlatformPayer,
     TAccountCoachAuthority,
     TAccountCoachClientCredits,
     TAccountCreditReservation,
@@ -461,8 +461,8 @@ export function getReserveBookingCreditInstruction<
     InstructionAccountInputAddress<TAccountClientWallet>
   >,
   ResolvedInstructionAccountMeta<
-    TAccountFeePayer,
-    InstructionAccountInputAddress<TAccountFeePayer>
+    TAccountPlatformPayer,
+    InstructionAccountInputAddress<TAccountPlatformPayer>
   >,
   ResolvedInstructionAccountMeta<
     TAccountCoachAuthority,
@@ -503,8 +503,8 @@ export function getReserveBookingCreditInstruction<
       isSigner: true,
       isWritable: false,
     },
-    feePayer: {
-      value: input.feePayer ?? null,
+    platformPayer: {
+      value: input.platformPayer ?? null,
       isSigner: true,
       isWritable: true,
     },
@@ -556,7 +556,7 @@ export function getReserveBookingCreditInstruction<
   return Object.freeze({
     accounts: [
       getAccountMeta("clientWallet", accounts.clientWallet),
-      getAccountMeta("feePayer", accounts.feePayer),
+      getAccountMeta("platformPayer", accounts.platformPayer),
       getAccountMeta("coachAuthority", accounts.coachAuthority),
       getAccountMeta("coachClientCredits", accounts.coachClientCredits),
       getAccountMeta("creditReservation", accounts.creditReservation),
@@ -575,8 +575,8 @@ export function getReserveBookingCreditInstruction<
       InstructionAccountInputAddress<TAccountClientWallet>
     >,
     ResolvedInstructionAccountMeta<
-      TAccountFeePayer,
-      InstructionAccountInputAddress<TAccountFeePayer>
+      TAccountPlatformPayer,
+      InstructionAccountInputAddress<TAccountPlatformPayer>
     >,
     ResolvedInstructionAccountMeta<
       TAccountCoachAuthority,
@@ -612,7 +612,7 @@ export type ParsedReserveBookingCreditInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     clientWallet: TAccountMetas[0];
-    feePayer: TAccountMetas[1];
+    platformPayer: TAccountMetas[1];
     coachAuthority: TAccountMetas[2];
     coachClientCredits: TAccountMetas[3];
     creditReservation: TAccountMetas[4];
@@ -650,7 +650,7 @@ export function parseReserveBookingCreditInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       clientWallet: getNextAccount(),
-      feePayer: getNextAccount(),
+      platformPayer: getNextAccount(),
       coachAuthority: getNextAccount(),
       coachClientCredits: getNextAccount(),
       creditReservation: getNextAccount(),

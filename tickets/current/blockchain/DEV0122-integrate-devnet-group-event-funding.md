@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Marketplace M6 Devnet funding integration
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: depends on [DEV0121 — Implement the group-event funding program](DEV0121-implement-group-event-funding-program.md), [DEV0120 — Persist group-event catalogue and projections](../backend/DEV0120-persist-group-event-catalogue-and-projections.md), the platform-payer boundary in [DEV0132](DEV0132-make-coach-pass-operations-platform-funded.md) and personal-wallet authority from [DEV0047](../backend/DEV0047-personal-wallet-linking-and-replacement.md); supplies contracts to [DEV0123](../frontend/DEV0123-present-group-event-creation-and-funding.md) and evidence to [DEV0125](../backend/DEV0125-rehearse-hosted-marketplace-loops.md)
+- Related records: depends on [DEV0121 — Implement the group-event funding program](DEV0121-implement-group-event-funding-program.md), [DEV0120 — Persist group-event catalogue and projections](../backend/DEV0120-persist-group-event-catalogue-and-projections.md), the completed platform-payer boundary in [DEV0132](../../archive/blockchain/DEV0132-make-coach-pass-operations-platform-funded.md) and personal-wallet authority from [DEV0047](../backend/DEV0047-personal-wallet-linking-and-replacement.md); supplies contracts to [DEV0123](../frontend/DEV0123-present-group-event-creation-and-funding.md) and evidence to [DEV0125](../backend/DEV0125-rehearse-hosted-marketplace-loops.md)
 
 ## Objective and context
 
