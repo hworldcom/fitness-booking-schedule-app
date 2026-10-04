@@ -4,6 +4,7 @@ import {
   date,
   foreignKey,
   index,
+  integer,
   numeric,
   primaryKey,
   smallint,
@@ -56,6 +57,9 @@ export const coachProfiles = app.table(
     }).notNull(),
     visibility: text("visibility").default("hidden").notNull(),
     recordSource: text("record_source").notNull(),
+    earlyCancellationMinutes: integer("early_cancellation_minutes")
+      .default(1440)
+      .notNull(),
     ...auditColumns,
   },
   (table) => [
@@ -136,6 +140,10 @@ export const coachProfiles = app.table(
     check(
       "coach_profiles_record_source_check",
       sql`${table.recordSource} in ('fixture', 'user')`,
+    ),
+    check(
+      "coach_profiles_early_cancellation_check",
+      sql`${table.earlyCancellationMinutes} between 0 and 10080`,
     ),
     index("coach_profiles_run_visibility_name_idx").on(
       table.runId,
@@ -390,6 +398,7 @@ export const coachAvailabilitySlots = app.table(
     uniqueIndex("coach_availability_slots_rule_occurrence_key")
       .on(table.recurrenceRuleId, table.recurrenceLocalDate)
       .where(sql`${table.recurrenceRuleId} is not null`),
+    unique("coach_availability_slots_run_id_id_key").on(table.runId, table.id),
     index("coach_availability_slots_rule_status_idx")
       .on(table.recurrenceRuleId, table.status, table.startsAt, table.id)
       .where(sql`${table.recurrenceRuleId} is not null`),

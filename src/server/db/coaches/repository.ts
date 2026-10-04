@@ -7,6 +7,7 @@ import type {
   CoachProjection,
   CoachProfileInput,
 } from "@/domain/coaches";
+import { validateEarlyCancellationMinutes } from "@/domain/coach-bookings";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
 import { withDatabaseConnection } from "@/server/db/client";
@@ -29,6 +30,7 @@ type CoachProjectionRow = Readonly<{
   location_confirmed_at: string | Date;
   visibility: string;
   record_source: string;
+  early_cancellation_minutes: number;
   disciplines: string[];
 }>;
 
@@ -75,7 +77,8 @@ function mapCoach(row: CoachProjectionRow): CoachProjection {
     !Number.isFinite(latitude) ||
     !Number.isFinite(longitude) ||
     row.disciplines.length < 1 ||
-    !row.disciplines.every(isDiscipline)
+    !row.disciplines.every(isDiscipline) ||
+    !validateEarlyCancellationMinutes(row.early_cancellation_minutes)
   ) {
     throw new CoachProfileConflictError();
   }
@@ -100,6 +103,7 @@ function mapCoach(row: CoachProjectionRow): CoachProjection {
     }),
     visibility: row.visibility,
     recordSource: row.record_source,
+    earlyCancellationMinutes: row.early_cancellation_minutes,
     disciplines: Object.freeze([...row.disciplines]),
   });
 }
@@ -123,6 +127,7 @@ function projectionSelect() {
     coach.location_confirmed_at,
     coach.visibility,
     coach.record_source,
+    coach.early_cancellation_minutes,
     array_agg(discipline.discipline order by discipline.sort_order)
       as disciplines
   `);
