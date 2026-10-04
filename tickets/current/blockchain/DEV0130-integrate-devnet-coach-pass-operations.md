@@ -3,13 +3,13 @@
 - Status: Draft
 - Created: 2026-10-04
 - Last updated: 2026-10-04
-- Milestone: Marketplace M5 Devnet pass integration
+- Milestone: Marketplace M6 Devnet pass integration
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: depends on completed [DEV0127](../../archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md) and [DEV0131](../../archive/blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md), personal-wallet work in DEV0047 and hosted infrastructure under COR0004; supplies transaction adapters to [DEV0128](../backend/DEV0128-persist-credit-backed-private-bookings.md) and [DEV0129](../frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md)
+- Related records: depends on completed [DEV0127](../../archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md), completed [DEV0131](../../archive/blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md), the platform-payer contract in [DEV0132](DEV0132-make-coach-pass-operations-platform-funded.md), personal-wallet work in DEV0047 and hosted infrastructure under COR0004; supplies transaction adapters to completed [DEV0128](../../archive/backend/DEV0128-persist-credit-backed-private-bookings.md) and [DEV0129](../frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md)
 
 ## Objective and context
 
-Connect the complete local coach-pass program to recoverable Devnet purchases and booking-credit operations with server-authoritative preparation, simulation, wallet approval, optional bounded fee sponsorship and finalized pair-ledger/reservation verification.
+Connect the complete local coach-pass program to recoverable Devnet purchases and booking-credit operations with server-authoritative preparation, simulation, wallet approval, bounded platform payment of every transaction fee and rent deposit, and finalized pair-ledger/reservation verification.
 
 ## Scope and non-goals
 
@@ -18,15 +18,15 @@ Connect the complete local coach-pass program to recoverable Devnet purchases an
 
 ## Expected behavior and edge cases
 
-Every purchase approval identifies Devnet, test USDC, coach, exact price, purchased credits, destination and fee payer. Every booking-credit approval identifies the pair ledger, booking reference, scheduled time/cutoff, exact transition, authority and fee payer. A lost response is recovered from the pair PDA, purchase nonce or deterministic reservation receipt. Wallet rejection, insufficient balance, missing token account, stale blockhash or RPC ambiguity never causes a blind repeat.
+Every purchase approval identifies Devnet, test USDC, coach, exact price, purchased credits, destination and the MovX platform payer. Every booking-credit approval identifies the pair ledger, booking reference, scheduled time/cutoff, exact transition, authority and platform payer. Clients and coaches need no test SOL; the client still supplies the exact purchase price in test USDC and every business action still requires its client or coach signature. A lost response is recovered from the pair PDA, purchase nonce or deterministic reservation receipt. Wallet rejection, insufficient balance, missing token account, stale blockhash or RPC ambiguity never causes a blind repeat.
 
 ## Assumptions, decisions, and dependencies
 
-The DEV0127 purchase contract and DEV0131 reservation contract must be stable before deployment. Credentialed RPC, sponsor and upgrade material remain server/operator secrets. Automation may not sign or send a transaction without explicit user approval.
+The DEV0127 purchase contract and DEV0131 reservation contract are stable, but DEV0132 must finish the forward platform-payer instruction/client change before deployment. Credentialed RPC, platform-payer, recovery and upgrade material remain separate server/operator secrets. The sponsor signs only an allowlisted transaction reconstructed and validated by the server; it cannot replace the required client or coach authority. Automation may not sign or send a user-authorized transaction without that user's explicit approval.
 
 ## Implementation plan
 
-1. Freeze deployment/configuration and operation records after DEV0131 completes.
+1. Freeze deployment/configuration, bounded platform-payer policy and operation records after DEV0132 completes.
 2. Implement first/subsequent purchase plus reserve/consume/return preparation and simulation.
 3. Implement submit/finalize/verify/recover plus pair-ledger/reservation projection indexing.
 4. Rehearse public/restricted purchases and each booking-credit terminal path on Devnet with public evidence.
@@ -36,7 +36,7 @@ The DEV0127 purchase contract and DEV0131 reservation contract must be stable be
 - [ ] AC1: First and later exact test-USDC purchases finalize with verified pair-ledger balances.
 - [ ] AC2: Reserve, consume and return operations finalize with verified pair-ledger/reservation state.
 - [ ] AC3: Rejection and ambiguous outcomes recover without duplicate payment, reservation or terminal resolution.
-- [ ] AC4: Secrets remain server-only and sponsorship cannot buy or mutate credits without the required client/coach authority.
+- [ ] AC4: Every transaction fee and rent deposit is paid by the configured platform payer, users need no test SOL, secrets remain server-only and sponsorship cannot buy or mutate credits without the required client/coach authority.
 - [ ] AC5: Real Devnet transaction/account evidence and applicable server/client tests pass.
 
 ## Validation plan
@@ -49,11 +49,11 @@ Not started.
 
 ## Validation results
 
-Not run — the local DEV0131 contract is complete, but this Devnet integration ticket has not started.
+Not run — the local DEV0131 contract is complete, but DEV0132 must revise the payer interface before this Devnet integration starts.
 
 ## Risks, limitations, and follow-ups
 
-Devnet and RPC availability can interrupt rehearsal. Provider failure must remain distinguishable from program rejection.
+Devnet and RPC availability can interrupt rehearsal. Provider failure must remain distinguishable from program rejection. The platform payer is an availability and abuse-control boundary, so the adapter must allowlist exact instructions/accounts, cap spend and rate, validate the wallet-signed message before countersigning and never reuse sponsor authority as recovery or upgrade authority.
 
 ## Completion and review references
 

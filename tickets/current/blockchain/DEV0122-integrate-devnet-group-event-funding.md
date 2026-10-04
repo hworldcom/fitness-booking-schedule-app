@@ -3,26 +3,26 @@
 - Status: Draft
 - Created: 2026-10-04
 - Last updated: 2026-10-04
-- Milestone: Marketplace M5 Devnet funding integration
+- Milestone: Marketplace M6 Devnet funding integration
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: depends on [DEV0121 — Implement the group-event funding program](DEV0121-implement-group-event-funding-program.md), [DEV0120 — Persist group-event catalogue and projections](../backend/DEV0120-persist-group-event-catalogue-and-projections.md) and personal-wallet authority from [DEV0047](../backend/DEV0047-personal-wallet-linking-and-replacement.md); supplies contracts to [DEV0123](../frontend/DEV0123-present-group-event-creation-and-funding.md) and evidence to [DEV0125](../backend/DEV0125-rehearse-hosted-marketplace-loops.md)
+- Related records: depends on [DEV0121 — Implement the group-event funding program](DEV0121-implement-group-event-funding-program.md), [DEV0120 — Persist group-event catalogue and projections](../backend/DEV0120-persist-group-event-catalogue-and-projections.md), the platform-payer boundary in [DEV0132](DEV0132-make-coach-pass-operations-platform-funded.md) and personal-wallet authority from [DEV0047](../backend/DEV0047-personal-wallet-linking-and-replacement.md); supplies contracts to [DEV0123](../frontend/DEV0123-present-group-event-creation-and-funding.md) and evidence to [DEV0125](../backend/DEV0125-rehearse-hosted-marketplace-loops.md)
 
 ## Objective and context
 
-Connect the local EventPool contract to recoverable official Devnet test-USDC operations: coach creation, participant funding, permissionless settlement, coach payout and participant refund.
+Connect the local EventPool contract to recoverable official Devnet test-USDC operations—coach creation, participant funding, permissionless settlement, coach payout and participant refund—without requiring test SOL in coach or participant wallets.
 
 ## Scope and non-goals
 
-- In scope: server-authoritative transaction preparation; readiness and token-account checks; simulation; wallet plus bounded sponsor signing; idempotent operation/reference records; submission/finalized verification; lost-response recovery; chain indexing into DEV0120 projections; deploy/configuration documentation; real Devnet success and failure rehearsals.
+- In scope: server-authoritative transaction preparation; readiness and token-account checks; simulation; wallet plus bounded platform-payer signing; platform payment of every fee and rent deposit; idempotent operation/reference records; submission/finalized verification; lost-response recovery; chain indexing into DEV0120 projections; deploy/configuration documentation; real Devnet success and failure rehearsals.
 - Out of scope: final page composition, mainnet, automatic attendance/disputes, production keeper guarantees, Kora migration, fiat onramp or arbitrary tokens.
 
 ## Expected behavior and edge cases
 
-Every approval clearly identifies Devnet, test USDC, amount, authority, vault/destination and fee payer. Browser values never define financial terms. Rejection, insufficient balance, missing account, stale blockhash, RPC timeout or ambiguous response remains recoverable and cannot duplicate value movement. Settlement may be initiated by any caller, while payout/refund authority remains program-enforced.
+Every approval clearly identifies Devnet, test USDC, amount, authority, vault/destination and the MovX platform payer. The platform pays every fee and rent deposit; coaches and participants still sign their actions and participants supply exact test-USDC contributions. Browser values never define financial terms. Rejection, insufficient balance, missing account, stale blockhash, RPC timeout or ambiguous response remains recoverable and cannot duplicate value movement. Settlement may be initiated by any caller, while payout/refund authority remains program-enforced.
 
 ## Assumptions, decisions, and dependencies
 
-Pin/verify official Devnet mint, program and decimals plus deployable program/upgrade authority before use. Credentialed RPC and sponsor material stay server-only. Reuse generic transaction/recovery patterns only after reviewing their current dependencies and Cloudflare resource behavior.
+Pin/verify official Devnet mint, program and decimals plus deployable program/upgrade authority before use. Credentialed RPC and platform-payer material stay server-only and remain separate from recovery/deployment authority. Reuse generic transaction/recovery patterns only after reviewing their current dependencies and Cloudflare resource behavior.
 
 ## Implementation plan
 
@@ -38,7 +38,8 @@ Pin/verify official Devnet mint, program and decimals plus deployable program/up
 - [ ] AC2: Permissionless settlement plus authorized payout/refund produce the exact mutually exclusive finalized outcomes.
 - [ ] AC3: Rejection, missing balance/account, RPC ambiguity and reload recover without duplicate contribution, payout or refund.
 - [ ] AC4: Secrets stay server-only, sponsorship cannot grant business authority and every indexed projection matches finalized state.
-- [ ] AC5: Focused server/client/index tests and real public Devnet success/failure evidence pass.
+- [ ] AC5: Every fee and rent deposit is paid by the configured platform payer, while exact event contributions still come from the authorizing participant's test-USDC account.
+- [ ] AC6: Focused server/client/index tests and real public Devnet success/failure evidence pass.
 
 ## Validation plan
 
@@ -62,7 +63,7 @@ None yet.
 
 ### Contracts, configuration, and operations
 
-Expected public program ID/browser RPC plus server-only credentialed RPC and optional sponsor configuration. Exact names are frozen during implementation.
+Expected public program ID/browser RPC plus server-only credentialed RPC and mandatory bounded platform-payer configuration. Exact names are frozen during implementation.
 
 ## Validation results
 

@@ -123,6 +123,6 @@ The local test uses a privileged, transaction-scoped timestamp adjustment to exe
 ## Completion and review references
 
 - Completed: 2026-10-04 — local booking persistence, recovery and authorized projections satisfy all acceptance criteria.
-- Commit: Not created.
+- Commit: `a703417` — `[DEV0128] Persist credit-backed private bookings`.
 - Review: Self-review completed against the ticket acceptance criteria; no independent review created.
 - Deployment or release: Not deployed; the migration and server code were validated locally only.

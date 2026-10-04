@@ -93,6 +93,6 @@ The repository does not automatically retry the mutation; the caller receives th
 ## Completion and review references
 
 - Completed: 2026-10-04 — the availability race now returns the existing stable domain conflict for PostgreSQL `40P01`.
-- Commit: Not created.
+- Commit: `f2ece82` — `[DEV0133] Normalize availability deadlock conflicts`.
 - Review: Self-review completed; no independent review created.
 - Deployment or release: Not applicable — local repository maintenance only.

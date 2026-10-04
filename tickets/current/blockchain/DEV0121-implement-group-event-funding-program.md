@@ -3,9 +3,9 @@
 - Status: Ready
 - Created: 2026-10-04
 - Last updated: 2026-10-04
-- Milestone: Marketplace M4 local EventPool program
+- Milestone: Marketplace M5 local EventPool program
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: reviews but does not inherit cancelled [DEV0097 — Create coach package offers on Devnet](../../archive/blockchain/DEV0097-create-coach-package-offers.md); supplies account/instruction/client contracts to [DEV0122](DEV0122-integrate-devnet-group-event-funding.md)
+- Related records: reviews but does not inherit cancelled [DEV0097 — Create coach package offers on Devnet](../../archive/blockchain/DEV0097-create-coach-package-offers.md); adopts the platform-payer boundary recorded by [DEV0132](DEV0132-make-coach-pass-operations-platform-funded.md); supplies account/instruction/client contracts to [DEV0122](DEV0122-integrate-devnet-group-event-funding.md)
 
 ## Objective and context
 
@@ -13,16 +13,16 @@ Implement and locally prove the smallest Solana program that holds exact test-US
 
 ## Scope and non-goals
 
-- In scope: reviewed deployable program identity strategy; `EventPool` and `Contribution` PDA layouts; PDA-controlled SPL Token vault; create, fund, settle, claim-payout and claim-refund instructions; immutable bounded price/capacity/deadline/schedule/recipient; exact official Devnet test-USDC contract; events/errors; Anchor IDL, Codama Solana Kit client and Surfpool/local adversarial lifecycle tests.
+- In scope: reviewed deployable program identity strategy; `EventPool` and `Contribution` PDA layouts; PDA-controlled SPL Token vault; a distinct platform payer for all fees and account/token-account rent; create, fund, settle, claim-payout and claim-refund instructions; immutable bounded price/capacity/deadline/schedule/recipient; exact official Devnet test-USDC contract; events/errors; Anchor IDL, Codama Solana Kit client and Surfpool/local adversarial lifecycle tests.
 - Out of scope: application schema/UI, Devnet deployment/rehearsal, production assets, attendance proof, disputes, coach cancellation/no-show, partial deposits, multi-seat wallets, waitlists, payment splitting or automatic scheduler.
 
 ## Expected behavior and edge cases
 
-One coach-authorized pool accepts at most one exact contribution per participant before deadline and maximum capacity. Anyone may settle after the deadline; the program deterministically chooses success or failure. Only the frozen coach recipient receives a successful pool exactly once. Only the recorded participant receives one exact refund after failure. Wrong signer/mint/program/vault/amount/recipient, early settlement, duplicate contribution, overflow and payout/refund replay fail atomically.
+One coach-authorized pool accepts at most one exact contribution per participant before deadline and maximum capacity. The platform payer funds every transaction fee and rent deposit, while the participant signs and supplies the exact test-USDC contribution. Anyone may settle after the deadline; the program deterministically chooses success or failure. Only the frozen coach recipient receives a successful pool exactly once. Only the recorded participant receives one exact refund after failure. Wrong signer/mint/program/vault/amount/recipient, early settlement, duplicate contribution, overflow and payout/refund replay fail atomically.
 
 ## Assumptions, decisions, and dependencies
 
-Adopt exact numeric/time/account bounds before code. Use checked arithmetic and explicit SPL Token versus Token-2022 ownership. Review generic authority/client work from DEV0097, but do not repurpose its private Offer semantics or local-only nondeployable ID. No transaction may be sent by automation during implementation without explicit user approval.
+Adopt exact numeric/time/account bounds before code. Use checked arithmetic and explicit SPL Token versus Token-2022 ownership. The user confirmed that a distinct platform payer funds all fees and rent without replacing coach/participant authority or supplying marketplace test USDC. Review generic authority/client work from DEV0097, but do not repurpose its private Offer semantics or local-only nondeployable ID. No transaction may be sent by automation during implementation without explicit user approval.
 
 ## Implementation plan
 
@@ -38,7 +38,8 @@ Adopt exact numeric/time/account bounds before code. Use checked arithmetic and 
 - [ ] AC2: Deterministic post-deadline success pays the frozen coach exactly once and makes refunds impossible.
 - [ ] AC3: Deterministic failure makes coach payout impossible and lets every tested participant refund exactly once without an all-participant loop.
 - [ ] AC4: Wrong/duplicate/late/full/overflow/early/replay and account-substitution paths fail without value loss.
-- [ ] AC5: IDL/client, Rust/unit, Surfpool integration, security/autofixer, clippy/format/build and fee/rent/compute evidence pass.
+- [ ] AC5: Every lifecycle transaction and created program/token account is platform-funded in SOL while coach/participant signatures and exact participant test-USDC value remain mandatory.
+- [ ] AC6: IDL/client, Rust/unit, Surfpool integration, security/autofixer, clippy/format/build and fee/rent/compute evidence pass.
 
 ## Validation plan
 
