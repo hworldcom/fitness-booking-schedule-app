@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Coach-first M4 private-class booking
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on weekly slots from [DEV0104 — Publish weekly coach availability](../../archive/backend/DEV0104-publish-weekly-coach-availability.md), eligible one-session/ten-session passes from [DEV0098 — Purchase training packages with Devnet USDC](../blockchain/DEV0098-purchase-training-packages-with-devnet-usdc.md), and supplies completed-booking context to [DEV0099 — Redeem and reconcile training sessions](../blockchain/DEV0099-redeem-and-reconcile-training-sessions.md)
+- Related records: depends on the explicit-slot baseline from [DEV0104 — Publish weekly coach availability](../../archive/backend/DEV0104-publish-weekly-coach-availability.md), durable recurring occurrences from [DEV0114 — Persist recurring coach availability](DEV0114-persist-recurring-coach-availability.md), eligible one-session/ten-session passes from [DEV0098 — Purchase training packages with Devnet USDC](../blockchain/DEV0098-purchase-training-packages-with-devnet-usdc.md), and supplies completed-booking context to [DEV0099 — Redeem and reconcile training sessions](../blockchain/DEV0099-redeem-and-reconcile-training-sessions.md)
 
 ## Objective and context
 
@@ -14,7 +14,7 @@ Let a client book one open private-class slot with an eligible coach-specific Tr
 ## Scope and non-goals
 
 - In scope: bounded purchase-time slot holds; hold expiry; pass-backed confirmed bookings; coach/client/pass/slot eligibility; off-chain reservation of future session credits; atomic capacity and credit checks; client and coach booking views showing the stable slot-location label and optional fictional gym name; future-booking cancellation by either party with credit retained; payment/booking recovery; booking states needed for later completion/redemption; idempotent operations; responsive accessible UI and authorization/concurrency tests.
-- Out of scope: gym-managed classes, memberships, access claims or check-ins, recurring calendars, group capacity, waitlists, automatic USDC refunds, pass transfer, booking fees, late-cancellation/no-show charges, disputes, reminders, external calendars, direct messaging or on-chain calendar accounts.
+- Out of scope: creating or editing recurrence rules/occurrences owned by DEV0114; gym-managed classes, memberships, access claims or check-ins; group capacity; waitlists; automatic USDC refunds; pass transfer; booking fees; late-cancellation/no-show charges; disputes; reminders; external calendars; direct messaging or on-chain calendar accounts.
 
 ## Expected behavior and edge cases
 
@@ -28,7 +28,7 @@ Client or coach cancellation before the scheduled start changes the booking to c
 
 Confirmed by the user on 2026-10-03: cancellation keeps the class available to the purchaser. This means the entitlement is a reusable coach-specific credit, not payment for an irrevocable timestamp. No automatic USDC refund is created.
 
-PostgreSQL owns slot, hold, booking and future-credit reservation state. Solana owns pass existence, coach/client lineage, expiry and remaining sessions. Booking services must refresh or verify finalized pass state at security-sensitive transitions and cannot increase entitlement from a cache. The exact hold duration is an implementation default to adopt before work; ten minutes is the proposed starting value.
+PostgreSQL owns recurring availability rules, concrete dated occurrences, holds, bookings and future-credit reservation state. DEV0105 accepts only a durable DEV0114 occurrence as booking inventory; it never books an abstract recurrence rule. Solana owns pass existence, coach/client lineage, expiry and remaining sessions. Booking services must refresh or verify finalized pass state at security-sensitive transitions and cannot increase entitlement from a cache. The exact hold duration is an implementation default to adopt before work; ten minutes is the proposed starting value.
 
 ## Implementation plan
 
