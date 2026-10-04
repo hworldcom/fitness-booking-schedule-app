@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Marketplace M5 Devnet pass integration
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: depends on completed [DEV0127](../../archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md), ready [DEV0131](DEV0131-implement-coach-credit-booking-lifecycle.md), personal-wallet work in DEV0047 and hosted infrastructure under COR0004; supplies transaction adapters to [DEV0128](../backend/DEV0128-persist-credit-backed-private-bookings.md) and [DEV0129](../frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md)
+- Related records: depends on completed [DEV0127](../../archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md) and [DEV0131](../../archive/blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md), personal-wallet work in DEV0047 and hosted infrastructure under COR0004; supplies transaction adapters to [DEV0128](../backend/DEV0128-persist-credit-backed-private-bookings.md) and [DEV0129](../frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md)
 
 ## Objective and context
 
@@ -49,7 +49,7 @@ Not started.
 
 ## Validation results
 
-Not run — DEV0131 is not implemented.
+Not run — the local DEV0131 contract is complete, but this Devnet integration ticket has not started.
 
 ## Risks, limitations, and follow-ups
 

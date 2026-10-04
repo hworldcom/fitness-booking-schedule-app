@@ -64,4 +64,32 @@ pub enum CoachPassError {
     PurchaseCountOverflow,
     #[msg("The coach-client credit ledger has an invalid authority")]
     InvalidCreditLedgerAuthority,
+    #[msg("The booking identifier cannot be nil")]
+    NilBookingId,
+    #[msg("The scheduled start must be in the future when the credit is reserved")]
+    InvalidBookingSchedule,
+    #[msg("The early-return cutoff cannot be later than the scheduled start")]
+    InvalidEarlyReturnCutoff,
+    #[msg("No available coach credit can be reserved")]
+    NoAvailableCredits,
+    #[msg("No reserved coach credit can be resolved")]
+    NoReservedCredits,
+    #[msg("The reserved credit balance cannot increase further")]
+    ReservedCreditsOverflow,
+    #[msg("The booking credit reservation is already resolved")]
+    ReservationAlreadyResolved,
+    #[msg("The reservation does not belong to the supplied credit ledger")]
+    ReservationLedgerMismatch,
+    #[msg("The reservation does not belong to the supplied coach authority")]
+    ReservationCoachMismatch,
+    #[msg("The reservation does not belong to the supplied client wallet")]
+    ReservationClientMismatch,
+    #[msg("Only the client within the early-return window or the current coach wallet can return this credit")]
+    UnauthorizedReservationReturn,
+    #[msg("The client's automatic credit-return window has closed")]
+    ClientReturnWindowClosed,
+    #[msg("Only the current coach wallet can consume this reserved credit")]
+    UnauthorizedReservationConsume,
+    #[msg("A reserved credit cannot be consumed before the scheduled start")]
+    ReservationConsumeTooEarly,
 }

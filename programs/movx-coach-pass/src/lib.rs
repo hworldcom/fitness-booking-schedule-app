@@ -42,4 +42,26 @@ pub mod movx_coach_pass {
     pub fn purchase_offer(ctx: Context<PurchaseOffer>, expected_purchase_nonce: u64) -> Result<()> {
         instructions::purchase_offer::handler(ctx, expected_purchase_nonce)
     }
+
+    pub fn reserve_booking_credit(
+        ctx: Context<ReserveBookingCredit>,
+        booking_id: [u8; 16],
+        scheduled_start_at: i64,
+        early_return_until: i64,
+    ) -> Result<()> {
+        instructions::reserve_booking_credit::handler(
+            ctx,
+            booking_id,
+            scheduled_start_at,
+            early_return_until,
+        )
+    }
+
+    pub fn return_booking_credit(ctx: Context<ReturnBookingCredit>) -> Result<()> {
+        instructions::return_booking_credit::handler(ctx)
+    }
+
+    pub fn consume_booking_credit(ctx: Context<ConsumeBookingCredit>) -> Result<()> {
+        instructions::consume_booking_credit::handler(ctx)
+    }
 }

@@ -8,6 +8,162 @@
   },
   "instructions": [
     {
+      "name": "consume_booking_credit",
+      "discriminator": [
+        104,
+        249,
+        113,
+        105,
+        233,
+        46,
+        129,
+        63
+      ],
+      "accounts": [
+        {
+          "name": "coach_wallet",
+          "signer": true
+        },
+        {
+          "name": "coach_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  97,
+                  99,
+                  104,
+                  45,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.run_id",
+                "account": "CoachAuthority"
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.profile_id",
+                "account": "CoachAuthority"
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.original_wallet",
+                "account": "CoachAuthority"
+              }
+            ]
+          },
+          "relations": [
+            "coach_client_credits"
+          ]
+        },
+        {
+          "name": "coach_client_credits",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  97,
+                  99,
+                  104,
+                  45,
+                  99,
+                  108,
+                  105,
+                  101,
+                  110,
+                  116,
+                  45,
+                  99,
+                  114,
+                  101,
+                  100,
+                  105,
+                  116,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority"
+              },
+              {
+                "kind": "account",
+                "path": "coach_client_credits.client_wallet",
+                "account": "CoachClientCredits"
+              }
+            ]
+          },
+          "relations": [
+            "credit_reservation"
+          ]
+        },
+        {
+          "name": "credit_reservation",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  114,
+                  101,
+                  100,
+                  105,
+                  116,
+                  45,
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "coach_client_credits"
+              },
+              {
+                "kind": "account",
+                "path": "credit_reservation.booking_id",
+                "account": "CreditReservation"
+              }
+            ]
+          }
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "create_offer",
       "discriminator": [
         237,
@@ -629,6 +785,340 @@
       ]
     },
     {
+      "name": "reserve_booking_credit",
+      "discriminator": [
+        35,
+        157,
+        117,
+        199,
+        220,
+        0,
+        121,
+        77
+      ],
+      "accounts": [
+        {
+          "name": "client_wallet",
+          "signer": true
+        },
+        {
+          "name": "fee_payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "coach_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  97,
+                  99,
+                  104,
+                  45,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.run_id",
+                "account": "CoachAuthority"
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.profile_id",
+                "account": "CoachAuthority"
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.original_wallet",
+                "account": "CoachAuthority"
+              }
+            ]
+          },
+          "relations": [
+            "coach_client_credits"
+          ]
+        },
+        {
+          "name": "coach_client_credits",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  97,
+                  99,
+                  104,
+                  45,
+                  99,
+                  108,
+                  105,
+                  101,
+                  110,
+                  116,
+                  45,
+                  99,
+                  114,
+                  101,
+                  100,
+                  105,
+                  116,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority"
+              },
+              {
+                "kind": "account",
+                "path": "client_wallet"
+              }
+            ]
+          }
+        },
+        {
+          "name": "credit_reservation",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  114,
+                  101,
+                  100,
+                  105,
+                  116,
+                  45,
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "coach_client_credits"
+              },
+              {
+                "kind": "arg",
+                "path": "booking_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": [
+        {
+          "name": "booking_id",
+          "type": {
+            "array": [
+              "u8",
+              16
+            ]
+          }
+        },
+        {
+          "name": "scheduled_start_at",
+          "type": "i64"
+        },
+        {
+          "name": "early_return_until",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "return_booking_credit",
+      "discriminator": [
+        168,
+        29,
+        83,
+        160,
+        168,
+        244,
+        75,
+        56
+      ],
+      "accounts": [
+        {
+          "name": "resolution_authority",
+          "signer": true
+        },
+        {
+          "name": "coach_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  97,
+                  99,
+                  104,
+                  45,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.run_id",
+                "account": "CoachAuthority"
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.profile_id",
+                "account": "CoachAuthority"
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority.original_wallet",
+                "account": "CoachAuthority"
+              }
+            ]
+          },
+          "relations": [
+            "coach_client_credits"
+          ]
+        },
+        {
+          "name": "coach_client_credits",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  97,
+                  99,
+                  104,
+                  45,
+                  99,
+                  108,
+                  105,
+                  101,
+                  110,
+                  116,
+                  45,
+                  99,
+                  114,
+                  101,
+                  100,
+                  105,
+                  116,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "coach_authority"
+              },
+              {
+                "kind": "account",
+                "path": "coach_client_credits.client_wallet",
+                "account": "CoachClientCredits"
+              }
+            ]
+          },
+          "relations": [
+            "credit_reservation"
+          ]
+        },
+        {
+          "name": "credit_reservation",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  114,
+                  101,
+                  100,
+                  105,
+                  116,
+                  45,
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "coach_client_credits"
+              },
+              {
+                "kind": "account",
+                "path": "credit_reservation.booking_id",
+                "account": "CreditReservation"
+              }
+            ]
+          }
+        },
+        {
+          "name": "event_authority"
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "rotate_coach_authority",
       "discriminator": [
         218,
@@ -733,6 +1223,19 @@
       ]
     },
     {
+      "name": "CreditReservation",
+      "discriminator": [
+        12,
+        93,
+        36,
+        179,
+        101,
+        231,
+        93,
+        223
+      ]
+    },
+    {
       "name": "Offer",
       "discriminator": [
         215,
@@ -747,6 +1250,45 @@
     }
   ],
   "events": [
+    {
+      "name": "BookingCreditConsumed",
+      "discriminator": [
+        119,
+        107,
+        92,
+        194,
+        19,
+        118,
+        75,
+        24
+      ]
+    },
+    {
+      "name": "BookingCreditReserved",
+      "discriminator": [
+        98,
+        165,
+        125,
+        80,
+        53,
+        194,
+        23,
+        168
+      ]
+    },
+    {
+      "name": "BookingCreditReturned",
+      "discriminator": [
+        18,
+        189,
+        160,
+        102,
+        181,
+        198,
+        80,
+        231
+      ]
+    },
     {
       "name": "CoachAuthorityInitialized",
       "discriminator": [
@@ -968,9 +1510,230 @@
       "code": 6030,
       "name": "InvalidCreditLedgerAuthority",
       "msg": "The coach-client credit ledger has an invalid authority"
+    },
+    {
+      "code": 6031,
+      "name": "NilBookingId",
+      "msg": "The booking identifier cannot be nil"
+    },
+    {
+      "code": 6032,
+      "name": "InvalidBookingSchedule",
+      "msg": "The scheduled start must be in the future when the credit is reserved"
+    },
+    {
+      "code": 6033,
+      "name": "InvalidEarlyReturnCutoff",
+      "msg": "The early-return cutoff cannot be later than the scheduled start"
+    },
+    {
+      "code": 6034,
+      "name": "NoAvailableCredits",
+      "msg": "No available coach credit can be reserved"
+    },
+    {
+      "code": 6035,
+      "name": "NoReservedCredits",
+      "msg": "No reserved coach credit can be resolved"
+    },
+    {
+      "code": 6036,
+      "name": "ReservedCreditsOverflow",
+      "msg": "The reserved credit balance cannot increase further"
+    },
+    {
+      "code": 6037,
+      "name": "ReservationAlreadyResolved",
+      "msg": "The booking credit reservation is already resolved"
+    },
+    {
+      "code": 6038,
+      "name": "ReservationLedgerMismatch",
+      "msg": "The reservation does not belong to the supplied credit ledger"
+    },
+    {
+      "code": 6039,
+      "name": "ReservationCoachMismatch",
+      "msg": "The reservation does not belong to the supplied coach authority"
+    },
+    {
+      "code": 6040,
+      "name": "ReservationClientMismatch",
+      "msg": "The reservation does not belong to the supplied client wallet"
+    },
+    {
+      "code": 6041,
+      "name": "UnauthorizedReservationReturn",
+      "msg": "Only the client within the early-return window or the current coach wallet can return this credit"
+    },
+    {
+      "code": 6042,
+      "name": "ClientReturnWindowClosed",
+      "msg": "The client's automatic credit-return window has closed"
+    },
+    {
+      "code": 6043,
+      "name": "UnauthorizedReservationConsume",
+      "msg": "Only the current coach wallet can consume this reserved credit"
+    },
+    {
+      "code": 6044,
+      "name": "ReservationConsumeTooEarly",
+      "msg": "A reserved credit cannot be consumed before the scheduled start"
     }
   ],
   "types": [
+    {
+      "name": "BookingCreditConsumed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "credit_reservation",
+            "type": "pubkey"
+          },
+          {
+            "name": "coach_client_credits",
+            "type": "pubkey"
+          },
+          {
+            "name": "coach_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "client_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "booking_id",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
+            "name": "coach_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "available_credits",
+            "type": "u64"
+          },
+          {
+            "name": "reserved_credits",
+            "type": "u64"
+          },
+          {
+            "name": "consumed_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BookingCreditReserved",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "credit_reservation",
+            "type": "pubkey"
+          },
+          {
+            "name": "coach_client_credits",
+            "type": "pubkey"
+          },
+          {
+            "name": "coach_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "client_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "booking_id",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
+            "name": "scheduled_start_at",
+            "type": "i64"
+          },
+          {
+            "name": "early_return_until",
+            "type": "i64"
+          },
+          {
+            "name": "available_credits",
+            "type": "u64"
+          },
+          {
+            "name": "reserved_credits",
+            "type": "u64"
+          },
+          {
+            "name": "reserved_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BookingCreditReturned",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "credit_reservation",
+            "type": "pubkey"
+          },
+          {
+            "name": "coach_client_credits",
+            "type": "pubkey"
+          },
+          {
+            "name": "coach_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "client_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "booking_id",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
+            "name": "resolution_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "available_credits",
+            "type": "u64"
+          },
+          {
+            "name": "reserved_credits",
+            "type": "u64"
+          },
+          {
+            "name": "returned_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
     {
       "name": "CoachAuthority",
       "type": {
@@ -1191,6 +1954,95 @@
             "type": {
               "option": "pubkey"
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "CreditReservation",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "coach_client_credits",
+            "type": "pubkey"
+          },
+          {
+            "name": "coach_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "client_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "booking_id",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
+            "name": "scheduled_start_at",
+            "type": "i64"
+          },
+          {
+            "name": "early_return_until",
+            "type": "i64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "CreditReservationStatus"
+              }
+            }
+          },
+          {
+            "name": "reserved_at",
+            "type": "i64"
+          },
+          {
+            "name": "resolved_at",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "reserved",
+            "type": {
+              "array": [
+                "u8",
+                44
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "CreditReservationStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Reserved"
+          },
+          {
+            "name": "Returned"
+          },
+          {
+            "name": "Consumed"
           }
         ]
       }

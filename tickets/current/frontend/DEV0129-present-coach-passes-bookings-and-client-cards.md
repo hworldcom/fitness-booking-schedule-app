@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Marketplace M4 coach-pass experience
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: depends on completed [DEV0127](../../archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md), [DEV0131](../blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md), [DEV0128](../backend/DEV0128-persist-credit-backed-private-bookings.md), [DEV0130](../blockchain/DEV0130-integrate-devnet-coach-pass-operations.md) and personal-wallet work in DEV0047
+- Related records: depends on completed [DEV0127](../../archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md), completed [DEV0131](../../archive/blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md), [DEV0128](../backend/DEV0128-persist-credit-backed-private-bookings.md), [DEV0130](../blockchain/DEV0130-integrate-devnet-coach-pass-operations.md) and personal-wallet work in DEV0047
 
 ## Objective and context
 

@@ -7,4 +7,5 @@
  */
 
 export * from "./createOfferArgs";
+export * from "./creditReservationStatus";
 export * from "./offerStatus";

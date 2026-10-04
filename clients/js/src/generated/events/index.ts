@@ -6,6 +6,9 @@
  * @see https://github.com/codama-idl/codama
  */
 
+export * from "./bookingCreditConsumed";
+export * from "./bookingCreditReserved";
+export * from "./bookingCreditReturned";
 export * from "./coachAuthorityInitialized";
 export * from "./coachAuthorityRotated";
 export * from "./creditsPurchased";

@@ -29,7 +29,7 @@ Profiles, locations, calendars, bookings, cancellation requests, requests, propo
 | Hosted integrated proof      | [DEV0125 — Rehearse the hosted marketplace loops](../backend/DEV0125-rehearse-hosted-marketplace-loops.md)                                     | Staging/Devnet proof for pass booking plus successful-pool payout and failed-pool refund         | After every runtime peer completes and COR0004 staging prerequisites are ready            |
 | Product-contract revision    | [DEV0126 — Adopt the coach-pass and group-funding contract](../../archive/organisatory/DEV0126-adopt-coach-pass-and-group-funding-contract.md) | Current specification, navigation and work map for both hackathon loops                          | Completed; supplies the shared contract                                                   |
 | Local coach-credit ledger    | [DEV0127 — Implement the coach-client credit ledger](../../archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md)                 | Atomic one/ten-credit test-USDC purchases and one bounded PDA per coach-client pair              | Completed after DEV0126; supplies the aggregate ledger extended by DEV0131                |
-| Booking-credit lifecycle     | [DEV0131 — Implement the coach-credit booking lifecycle](../blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md)                    | Deterministic booking receipt plus atomic reserve, consume and return transitions                | Ready after DEV0127; must complete before DEV0128/DEV0130                                 |
+| Booking-credit lifecycle     | [DEV0131 — Implement the coach-credit booking lifecycle](../../archive/blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md)         | Deterministic booking receipt plus atomic reserve, consume and return transitions                | Completed after DEV0127; stable generated contract now unblocks DEV0128/DEV0130           |
 | Credit-backed bookings       | [DEV0128 — Persist credit-backed private bookings](../backend/DEV0128-persist-credit-backed-private-bookings.md)                               | Capacity-one bookings, cancellation policy, credit lifecycle and coach client projections        | After DEV0131 freezes and validates its generated account/instruction contract            |
 | Pass and client-card UI      | [DEV0129 — Present coach passes, bookings and client cards](../frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md)             | Purchase, booking/cancellation and authorized coach client-card experience                       | After DEV0128/DEV0130 interfaces stabilize                                                |
 | Devnet pass integration      | [DEV0130 — Integrate Devnet coach-pass operations](../blockchain/DEV0130-integrate-devnet-coach-pass-operations.md)                            | Deploy, prepare, simulate, recover, verify and index purchases plus booking-credit transitions   | After DEV0131; also consumes DEV0047 and hosted/RPC foundations                           |
@@ -57,10 +57,11 @@ Complete COR0010 only when each direct ticket is Completed or explicitly Cancell
 - 2026-10-04: The user restored simple one/ten-credit calendar booking as the first feature and kept group funding as the second. DEV0126–DEV0131 now own the new pass contract and implementation rather than reopening cancelled records.
 - 2026-10-04: DEV0126 completed the reconciled product contract. DEV0127 then completed the pair-ledger source, exact token-transfer constraints, IDL/generated client and adversarial embedded-Surfpool lifecycle. The platform-tools syscall-table warning remains visible but did not prevent the built SBF program from executing its PDA, event CPI and legacy SPL Token CPI paths locally.
 - 2026-10-04: DEV0131 was added after review showed that aggregate available/reserved counters alone could not bind a terminal result to one booking. It owns a bounded reservation receipt and local reserve/consume/return transitions before DEV0128 or DEV0130 starts.
+- 2026-10-04: DEV0131 completed the fixed-size booking receipt, checked reserve/return/consume instructions, generated client and adversarial compiled-SBF Surfpool lifecycle. DEV0128 and DEV0130 are no longer blocked by the local chain contract and may proceed independently.
 
 ## Validation results
 
-DEV0117 records initial specification/work-map/link consistency validation, and DEV0126 records the later pass-first contract revision. DEV0127 records passing source/unit/IDL/build checks plus successful and adversarial local-runtime purchase transactions. DEV0131 currently records planning evidence only. Database, browser, booking-credit runtime, Devnet and hosted evidence remain owned by the direct development tickets.
+DEV0117 records initial specification/work-map/link consistency validation, and DEV0126 records the later pass-first contract revision. DEV0127 records passing source/unit/IDL/build checks plus successful and adversarial local-runtime purchase transactions. DEV0131 records passing Rust/static/generated-client/build checks plus successful and adversarial multi-booking reserve/return/consume transactions against the compiled SBF program in embedded Surfpool. Database, browser, Devnet and hosted evidence remain owned by the remaining direct development tickets.
 
 ## Risks, limitations, and follow-ups
 
@@ -69,7 +70,7 @@ The main risks are coupling scheduling to value movement without idempotency, pu
 ## Completion and review references
 
 - Completed: Not completed.
-- Direct development tickets: DEV0126 and DEV0127 completed; DEV0108, DEV0118–DEV0125 and DEV0128–DEV0131 remain open.
+- Direct development tickets: DEV0126, DEV0127 and DEV0131 completed; DEV0108, DEV0118–DEV0125 and DEV0128–DEV0130 remain open.
 - Commit: Not applicable — coordination-record IDs are not used in commit subjects.
 - Review: Planning self-review only; no independent review.
 - Deployment or release: None.

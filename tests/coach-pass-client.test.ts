@@ -7,9 +7,17 @@ import {
   getCoachClientCreditsEncoder,
 } from "../clients/js/src/generated/accounts/coachClientCredits";
 import {
+  getCreditReservationDecoder,
+  getCreditReservationEncoder,
+} from "../clients/js/src/generated/accounts/creditReservation";
+import {
   getOfferDecoder,
   getOfferEncoder,
 } from "../clients/js/src/generated/accounts/offer";
+import {
+  CONSUME_BOOKING_CREDIT_DISCRIMINATOR,
+  getConsumeBookingCreditInstructionDataEncoder,
+} from "../clients/js/src/generated/instructions/consumeBookingCredit";
 import {
   CREATE_OFFER_DISCRIMINATOR,
   getCreateOfferInstructionDataDecoder,
@@ -25,19 +33,32 @@ import {
   getPurchaseOfferInstructionDataEncoder,
 } from "../clients/js/src/generated/instructions/purchaseOffer";
 import {
+  RESERVE_BOOKING_CREDIT_DISCRIMINATOR,
+  getReserveBookingCreditInstructionDataDecoder,
+  getReserveBookingCreditInstructionDataEncoder,
+} from "../clients/js/src/generated/instructions/reserveBookingCredit";
+import {
+  RETURN_BOOKING_CREDIT_DISCRIMINATOR,
+  getReturnBookingCreditInstructionDataEncoder,
+} from "../clients/js/src/generated/instructions/returnBookingCredit";
+import {
   identifyMovxCoachPassInstruction,
   MovxCoachPassInstruction,
 } from "../clients/js/src/generated/programs/movxCoachPass";
+import { CreditReservationStatus } from "../clients/js/src/generated/types/creditReservationStatus";
 import { OfferStatus } from "../clients/js/src/generated/types/offerStatus";
 import {
   DEVNET_USDC_MINT_ADDRESS,
   MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
   deriveCoachAuthorityAddress,
   deriveCoachClientCreditsAddress,
+  deriveCreditReservationAddress,
   deriveOfferAddress,
   isOfferPurchaseEligible,
   parseCoachOfferMetadata,
   projectCoachClientCreditSummary,
+  projectCreditReservationSummary,
+  seedToUuid,
   uuidToSeed,
 } from "../src/solana/coach-pass";
 
@@ -48,6 +69,8 @@ const RECOVERY_AUTHORITY = address(
   "HULis5PpFFL5ajU9k8WzPjtJ8wZKXg4HHbKVvSEhFCfR",
 );
 const CLIENT_WALLET = address("3idZ8hddpfAZ1JWW3gmH7YD6yokUuFDb1Txem2H6kPFe");
+const BOOKING_ID = "33333333-3333-4333-8333-333333333333";
+const OTHER_BOOKING_ID = "44444444-4444-4444-8444-444444444444";
 
 test("UUID and PDA helpers produce stable coach and offer addresses", async () => {
   assert.equal(uuidToSeed(RUN_ID).length, 16);
@@ -101,6 +124,29 @@ test("UUID and PDA helpers produce stable coach and offer addresses", async () =
   assert.equal(creditsAddress, sameCreditsAddress);
   assert.equal(creditsBump, sameCreditsBump);
   assert.notEqual(creditsAddress, otherClientCreditsAddress);
+
+  const [reservationAddress, reservationBump] =
+    await deriveCreditReservationAddress({
+      programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+      coachClientCredits: creditsAddress,
+      bookingId: BOOKING_ID,
+    });
+  const [sameReservationAddress, sameReservationBump] =
+    await deriveCreditReservationAddress({
+      programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+      coachClientCredits: creditsAddress,
+      bookingId: BOOKING_ID,
+    });
+  const [otherReservationAddress] = await deriveCreditReservationAddress({
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    coachClientCredits: creditsAddress,
+    bookingId: OTHER_BOOKING_ID,
+  });
+  assert.equal(reservationAddress, sameReservationAddress);
+  assert.equal(reservationBump, sameReservationBump);
+  assert.notEqual(reservationAddress, otherReservationAddress);
+  assert.equal(seedToUuid([...uuidToSeed(BOOKING_ID)]), BOOKING_ID);
+  assert.throws(() => seedToUuid([1, 2, 3]), /16-byte UUID seed/u);
   await assert.rejects(
     deriveOfferAddress({
       programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
@@ -109,6 +155,46 @@ test("UUID and PDA helpers produce stable coach and offer addresses", async () =
     }),
     /unsigned 64-bit/u,
   );
+});
+
+test("generated booking-credit codecs preserve lifecycle identifiers and snapshots", () => {
+  const reserve = getReserveBookingCreditInstructionDataEncoder().encode({
+    bookingId: [...uuidToSeed(BOOKING_ID)],
+    scheduledStartAt: BigInt(1_900_003_600),
+    earlyReturnUntil: BigInt(1_900_001_800),
+  });
+  const decodedReserve =
+    getReserveBookingCreditInstructionDataDecoder().decode(reserve);
+  const returned = getReturnBookingCreditInstructionDataEncoder().encode({});
+  const consumed = getConsumeBookingCreditInstructionDataEncoder().encode({});
+
+  assert.deepEqual(
+    Array.from(reserve.slice(0, 8)),
+    Array.from(RESERVE_BOOKING_CREDIT_DISCRIMINATOR),
+  );
+  assert.deepEqual(
+    Array.from(returned),
+    Array.from(RETURN_BOOKING_CREDIT_DISCRIMINATOR),
+  );
+  assert.deepEqual(
+    Array.from(consumed),
+    Array.from(CONSUME_BOOKING_CREDIT_DISCRIMINATOR),
+  );
+  assert.equal(
+    identifyMovxCoachPassInstruction(reserve),
+    MovxCoachPassInstruction.ReserveBookingCredit,
+  );
+  assert.equal(
+    identifyMovxCoachPassInstruction(returned),
+    MovxCoachPassInstruction.ReturnBookingCredit,
+  );
+  assert.equal(
+    identifyMovxCoachPassInstruction(consumed),
+    MovxCoachPassInstruction.ConsumeBookingCredit,
+  );
+  assert.equal(seedToUuid(decodedReserve.bookingId), BOOKING_ID);
+  assert.equal(decodedReserve.scheduledStartAt, BigInt(1_900_003_600));
+  assert.equal(decodedReserve.earlyReturnUntil, BigInt(1_900_001_800));
 });
 
 test("generated create-offer codec preserves exact commercial terms", () => {
@@ -293,6 +379,81 @@ test("credit ledger codec and projection expose bounded coach client-card data",
         credits,
         expectedCoachAuthority: coachAuthorityAddress,
         expectedClientWallet: RECOVERY_AUTHORITY,
+      }),
+    /different client wallet/u,
+  );
+});
+
+test("reservation codec and projection expose one immutable booking receipt", async () => {
+  const [coachAuthorityAddress] = await deriveCoachAuthorityAddress({
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    runId: RUN_ID,
+    profileId: PROFILE_ID,
+    originalWallet: ORIGINAL_WALLET,
+  });
+  const [creditsAddress] = await deriveCoachClientCreditsAddress({
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    coachAuthority: coachAuthorityAddress,
+    clientWallet: CLIENT_WALLET,
+  });
+  const encoded = getCreditReservationEncoder().encode({
+    version: 1,
+    coachClientCredits: creditsAddress,
+    coachAuthority: coachAuthorityAddress,
+    clientWallet: CLIENT_WALLET,
+    bookingId: [...uuidToSeed(BOOKING_ID)],
+    scheduledStartAt: BigInt(1_900_003_600),
+    earlyReturnUntil: BigInt(1_900_001_800),
+    status: CreditReservationStatus.Reserved,
+    reservedAt: BigInt(1_900_000_000),
+    resolvedAt: null,
+    bump: 248,
+    reserved: Array(44).fill(0),
+  });
+  const reservation = getCreditReservationDecoder().decode(encoded);
+
+  // The generated codec emits the serialized `None` form; Anchor allocates the
+  // account's full 200-byte maximum so a later `Some(i64)` fits in place.
+  assert.equal(encoded.length, 192);
+  assert.deepEqual(
+    projectCreditReservationSummary({
+      reservation,
+      expectedCoachClientCredits: creditsAddress,
+      expectedCoachAuthority: coachAuthorityAddress,
+      expectedClientWallet: CLIENT_WALLET,
+      expectedBookingId: BOOKING_ID,
+    }),
+    {
+      coachClientCredits: creditsAddress,
+      coachAuthority: coachAuthorityAddress,
+      clientWallet: CLIENT_WALLET,
+      bookingId: BOOKING_ID,
+      scheduledStartAt: BigInt(1_900_003_600),
+      earlyReturnUntil: BigInt(1_900_001_800),
+      status: CreditReservationStatus.Reserved,
+      reservedAt: BigInt(1_900_000_000),
+      resolvedAt: null,
+    },
+  );
+  assert.throws(
+    () =>
+      projectCreditReservationSummary({
+        reservation,
+        expectedCoachClientCredits: creditsAddress,
+        expectedCoachAuthority: coachAuthorityAddress,
+        expectedClientWallet: CLIENT_WALLET,
+        expectedBookingId: OTHER_BOOKING_ID,
+      }),
+    /different booking/u,
+  );
+  assert.throws(
+    () =>
+      projectCreditReservationSummary({
+        reservation,
+        expectedCoachClientCredits: creditsAddress,
+        expectedCoachAuthority: coachAuthorityAddress,
+        expectedClientWallet: RECOVERY_AUTHORITY,
+        expectedBookingId: BOOKING_ID,
       }),
     /different client wallet/u,
   );

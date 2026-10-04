@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Marketplace M3 pass-backed booking
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: depends on completed [DEV0127](../../archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md), [DEV0131](../blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md) and completed coach availability under DEV0114; supplies booking/client-card projections to [DEV0129](../frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md) and hosted evidence to DEV0125
+- Related records: depends on completed [DEV0127](../../archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md), completed [DEV0131](../../archive/blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md) and completed coach availability under DEV0114; supplies booking/client-card projections to [DEV0129](../frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md) and hosted evidence to DEV0125
 
 ## Objective and context
 
@@ -49,11 +49,11 @@ Not started.
 
 ## Validation results
 
-Not run — dependencies incomplete.
+Not run — the chain contract dependency is complete, but this database ticket has not started.
 
 ## Risks, limitations, and follow-ups
 
-DEV0131 owns the exact reserve/consume/return program contract. This ticket must not duplicate those transitions in PostgreSQL or begin against an unstable generated client.
+DEV0131 owns the completed exact reserve/consume/return program contract. This ticket must not duplicate those transitions in PostgreSQL; it must consume and reconcile the stable generated client contract.
 
 ## Completion and review references
 

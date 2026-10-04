@@ -76,13 +76,44 @@ export const MOVX_COACH_PASS_ERROR__TOTAL_PURCHASED_OVERFLOW = 0x178c; // 6028
 export const MOVX_COACH_PASS_ERROR__PURCHASE_COUNT_OVERFLOW = 0x178d; // 6029
 /** InvalidCreditLedgerAuthority: The coach-client credit ledger has an invalid authority */
 export const MOVX_COACH_PASS_ERROR__INVALID_CREDIT_LEDGER_AUTHORITY = 0x178e; // 6030
+/** NilBookingId: The booking identifier cannot be nil */
+export const MOVX_COACH_PASS_ERROR__NIL_BOOKING_ID = 0x178f; // 6031
+/** InvalidBookingSchedule: The scheduled start must be in the future when the credit is reserved */
+export const MOVX_COACH_PASS_ERROR__INVALID_BOOKING_SCHEDULE = 0x1790; // 6032
+/** InvalidEarlyReturnCutoff: The early-return cutoff cannot be later than the scheduled start */
+export const MOVX_COACH_PASS_ERROR__INVALID_EARLY_RETURN_CUTOFF = 0x1791; // 6033
+/** NoAvailableCredits: No available coach credit can be reserved */
+export const MOVX_COACH_PASS_ERROR__NO_AVAILABLE_CREDITS = 0x1792; // 6034
+/** NoReservedCredits: No reserved coach credit can be resolved */
+export const MOVX_COACH_PASS_ERROR__NO_RESERVED_CREDITS = 0x1793; // 6035
+/** ReservedCreditsOverflow: The reserved credit balance cannot increase further */
+export const MOVX_COACH_PASS_ERROR__RESERVED_CREDITS_OVERFLOW = 0x1794; // 6036
+/** ReservationAlreadyResolved: The booking credit reservation is already resolved */
+export const MOVX_COACH_PASS_ERROR__RESERVATION_ALREADY_RESOLVED = 0x1795; // 6037
+/** ReservationLedgerMismatch: The reservation does not belong to the supplied credit ledger */
+export const MOVX_COACH_PASS_ERROR__RESERVATION_LEDGER_MISMATCH = 0x1796; // 6038
+/** ReservationCoachMismatch: The reservation does not belong to the supplied coach authority */
+export const MOVX_COACH_PASS_ERROR__RESERVATION_COACH_MISMATCH = 0x1797; // 6039
+/** ReservationClientMismatch: The reservation does not belong to the supplied client wallet */
+export const MOVX_COACH_PASS_ERROR__RESERVATION_CLIENT_MISMATCH = 0x1798; // 6040
+/** UnauthorizedReservationReturn: Only the client within the early-return window or the current coach wallet can return this credit */
+export const MOVX_COACH_PASS_ERROR__UNAUTHORIZED_RESERVATION_RETURN = 0x1799; // 6041
+/** ClientReturnWindowClosed: The client's automatic credit-return window has closed */
+export const MOVX_COACH_PASS_ERROR__CLIENT_RETURN_WINDOW_CLOSED = 0x179a; // 6042
+/** UnauthorizedReservationConsume: Only the current coach wallet can consume this reserved credit */
+export const MOVX_COACH_PASS_ERROR__UNAUTHORIZED_RESERVATION_CONSUME = 0x179b; // 6043
+/** ReservationConsumeTooEarly: A reserved credit cannot be consumed before the scheduled start */
+export const MOVX_COACH_PASS_ERROR__RESERVATION_CONSUME_TOO_EARLY = 0x179c; // 6044
 
 export type MovxCoachPassError =
   | typeof MOVX_COACH_PASS_ERROR__AUTHORITY_EPOCH_OVERFLOW
   | typeof MOVX_COACH_PASS_ERROR__AVAILABLE_CREDITS_OVERFLOW
+  | typeof MOVX_COACH_PASS_ERROR__CLIENT_RETURN_WINDOW_CLOSED
   | typeof MOVX_COACH_PASS_ERROR__EVENT_SEQUENCE_OVERFLOW
+  | typeof MOVX_COACH_PASS_ERROR__INVALID_BOOKING_SCHEDULE
   | typeof MOVX_COACH_PASS_ERROR__INVALID_COACH_WALLET
   | typeof MOVX_COACH_PASS_ERROR__INVALID_CREDIT_LEDGER_AUTHORITY
+  | typeof MOVX_COACH_PASS_ERROR__INVALID_EARLY_RETURN_CUTOFF
   | typeof MOVX_COACH_PASS_ERROR__INVALID_PAYMENT_MINT
   | typeof MOVX_COACH_PASS_ERROR__INVALID_PAYMENT_MINT_DECIMALS
   | typeof MOVX_COACH_PASS_ERROR__INVALID_PRICE
@@ -90,8 +121,11 @@ export type MovxCoachPassError =
   | typeof MOVX_COACH_PASS_ERROR__INVALID_REPLACEMENT_WALLET
   | typeof MOVX_COACH_PASS_ERROR__INVALID_RESTRICTED_CLIENT
   | typeof MOVX_COACH_PASS_ERROR__INVALID_VALIDITY
+  | typeof MOVX_COACH_PASS_ERROR__NIL_BOOKING_ID
   | typeof MOVX_COACH_PASS_ERROR__NIL_PROFILE_ID
   | typeof MOVX_COACH_PASS_ERROR__NIL_RUN_ID
+  | typeof MOVX_COACH_PASS_ERROR__NO_AVAILABLE_CREDITS
+  | typeof MOVX_COACH_PASS_ERROR__NO_RESERVED_CREDITS
   | typeof MOVX_COACH_PASS_ERROR__OFFER_ALREADY_DEACTIVATED
   | typeof MOVX_COACH_PASS_ERROR__OFFER_AUTHORITY_MISMATCH
   | typeof MOVX_COACH_PASS_ERROR__OFFER_EXPIRED
@@ -100,6 +134,12 @@ export type MovxCoachPassError =
   | typeof MOVX_COACH_PASS_ERROR__PURCHASE_NONCE_OVERFLOW
   | typeof MOVX_COACH_PASS_ERROR__RECOVERY_AUTHORITY_MATCHES_COACH
   | typeof MOVX_COACH_PASS_ERROR__REPLACEMENT_WALLET_UNCHANGED
+  | typeof MOVX_COACH_PASS_ERROR__RESERVATION_ALREADY_RESOLVED
+  | typeof MOVX_COACH_PASS_ERROR__RESERVATION_CLIENT_MISMATCH
+  | typeof MOVX_COACH_PASS_ERROR__RESERVATION_COACH_MISMATCH
+  | typeof MOVX_COACH_PASS_ERROR__RESERVATION_CONSUME_TOO_EARLY
+  | typeof MOVX_COACH_PASS_ERROR__RESERVATION_LEDGER_MISMATCH
+  | typeof MOVX_COACH_PASS_ERROR__RESERVED_CREDITS_OVERFLOW
   | typeof MOVX_COACH_PASS_ERROR__RESTRICTED_CLIENT_MISMATCH
   | typeof MOVX_COACH_PASS_ERROR__SELF_PURCHASE
   | typeof MOVX_COACH_PASS_ERROR__STALE_OFFER_AUTHORITY
@@ -107,6 +147,8 @@ export type MovxCoachPassError =
   | typeof MOVX_COACH_PASS_ERROR__TOTAL_PURCHASED_OVERFLOW
   | typeof MOVX_COACH_PASS_ERROR__UNAUTHORIZED_COACH
   | typeof MOVX_COACH_PASS_ERROR__UNAUTHORIZED_RECOVERY_AUTHORITY
+  | typeof MOVX_COACH_PASS_ERROR__UNAUTHORIZED_RESERVATION_CONSUME
+  | typeof MOVX_COACH_PASS_ERROR__UNAUTHORIZED_RESERVATION_RETURN
   | typeof MOVX_COACH_PASS_ERROR__UNEXPECTED_PURCHASE_NONCE
   | typeof MOVX_COACH_PASS_ERROR__UNSUPPORTED_SESSION_COUNT;
 
@@ -115,9 +157,12 @@ if (process.env["NODE_ENV"] !== "production") {
   movxCoachPassErrorMessages = {
     [MOVX_COACH_PASS_ERROR__AUTHORITY_EPOCH_OVERFLOW]: `The authority epoch cannot advance further`,
     [MOVX_COACH_PASS_ERROR__AVAILABLE_CREDITS_OVERFLOW]: `The available credit balance cannot increase further`,
+    [MOVX_COACH_PASS_ERROR__CLIENT_RETURN_WINDOW_CLOSED]: `The client's automatic credit-return window has closed`,
     [MOVX_COACH_PASS_ERROR__EVENT_SEQUENCE_OVERFLOW]: `The event sequence cannot advance further`,
+    [MOVX_COACH_PASS_ERROR__INVALID_BOOKING_SCHEDULE]: `The scheduled start must be in the future when the credit is reserved`,
     [MOVX_COACH_PASS_ERROR__INVALID_COACH_WALLET]: `The coach wallet address is invalid`,
     [MOVX_COACH_PASS_ERROR__INVALID_CREDIT_LEDGER_AUTHORITY]: `The coach-client credit ledger has an invalid authority`,
+    [MOVX_COACH_PASS_ERROR__INVALID_EARLY_RETURN_CUTOFF]: `The early-return cutoff cannot be later than the scheduled start`,
     [MOVX_COACH_PASS_ERROR__INVALID_PAYMENT_MINT]: `The offer payment mint is not the configured Devnet test-USDC mint`,
     [MOVX_COACH_PASS_ERROR__INVALID_PAYMENT_MINT_DECIMALS]: `The payment mint must use six decimals`,
     [MOVX_COACH_PASS_ERROR__INVALID_PRICE]: `The test-USDC price must be positive`,
@@ -125,8 +170,11 @@ if (process.env["NODE_ENV"] !== "production") {
     [MOVX_COACH_PASS_ERROR__INVALID_REPLACEMENT_WALLET]: `The replacement wallet address is invalid`,
     [MOVX_COACH_PASS_ERROR__INVALID_RESTRICTED_CLIENT]: `The restricted client wallet address is invalid`,
     [MOVX_COACH_PASS_ERROR__INVALID_VALIDITY]: `Validity must be no-expiry or between one and 365 days`,
+    [MOVX_COACH_PASS_ERROR__NIL_BOOKING_ID]: `The booking identifier cannot be nil`,
     [MOVX_COACH_PASS_ERROR__NIL_PROFILE_ID]: `The coach profile identifier cannot be nil`,
     [MOVX_COACH_PASS_ERROR__NIL_RUN_ID]: `The application dataset identifier cannot be nil`,
+    [MOVX_COACH_PASS_ERROR__NO_AVAILABLE_CREDITS]: `No available coach credit can be reserved`,
+    [MOVX_COACH_PASS_ERROR__NO_RESERVED_CREDITS]: `No reserved coach credit can be resolved`,
     [MOVX_COACH_PASS_ERROR__OFFER_ALREADY_DEACTIVATED]: `The offer is already deactivated`,
     [MOVX_COACH_PASS_ERROR__OFFER_AUTHORITY_MISMATCH]: `The offer belongs to a different coach authority`,
     [MOVX_COACH_PASS_ERROR__OFFER_EXPIRED]: `The offer purchase window has expired`,
@@ -135,6 +183,12 @@ if (process.env["NODE_ENV"] !== "production") {
     [MOVX_COACH_PASS_ERROR__PURCHASE_NONCE_OVERFLOW]: `The purchase nonce cannot advance further`,
     [MOVX_COACH_PASS_ERROR__RECOVERY_AUTHORITY_MATCHES_COACH]: `The recovery authority must be different from the coach wallet`,
     [MOVX_COACH_PASS_ERROR__REPLACEMENT_WALLET_UNCHANGED]: `The replacement wallet is already the current coach wallet`,
+    [MOVX_COACH_PASS_ERROR__RESERVATION_ALREADY_RESOLVED]: `The booking credit reservation is already resolved`,
+    [MOVX_COACH_PASS_ERROR__RESERVATION_CLIENT_MISMATCH]: `The reservation does not belong to the supplied client wallet`,
+    [MOVX_COACH_PASS_ERROR__RESERVATION_COACH_MISMATCH]: `The reservation does not belong to the supplied coach authority`,
+    [MOVX_COACH_PASS_ERROR__RESERVATION_CONSUME_TOO_EARLY]: `A reserved credit cannot be consumed before the scheduled start`,
+    [MOVX_COACH_PASS_ERROR__RESERVATION_LEDGER_MISMATCH]: `The reservation does not belong to the supplied credit ledger`,
+    [MOVX_COACH_PASS_ERROR__RESERVED_CREDITS_OVERFLOW]: `The reserved credit balance cannot increase further`,
     [MOVX_COACH_PASS_ERROR__RESTRICTED_CLIENT_MISMATCH]: `This offer is restricted to a different client wallet`,
     [MOVX_COACH_PASS_ERROR__SELF_PURCHASE]: `A coach cannot purchase credits from their own offer`,
     [MOVX_COACH_PASS_ERROR__STALE_OFFER_AUTHORITY]: `The offer was created under a stale coach authority epoch`,
@@ -142,6 +196,8 @@ if (process.env["NODE_ENV"] !== "production") {
     [MOVX_COACH_PASS_ERROR__TOTAL_PURCHASED_OVERFLOW]: `The total purchased credit count cannot increase further`,
     [MOVX_COACH_PASS_ERROR__UNAUTHORIZED_COACH]: `Only the current coach wallet can perform this action`,
     [MOVX_COACH_PASS_ERROR__UNAUTHORIZED_RECOVERY_AUTHORITY]: `Only the configured recovery authority can rotate the coach wallet`,
+    [MOVX_COACH_PASS_ERROR__UNAUTHORIZED_RESERVATION_CONSUME]: `Only the current coach wallet can consume this reserved credit`,
+    [MOVX_COACH_PASS_ERROR__UNAUTHORIZED_RESERVATION_RETURN]: `Only the client within the early-return window or the current coach wallet can return this credit`,
     [MOVX_COACH_PASS_ERROR__UNEXPECTED_PURCHASE_NONCE]: `The purchase nonce does not match the credit ledger's next nonce`,
     [MOVX_COACH_PASS_ERROR__UNSUPPORTED_SESSION_COUNT]: `An offer must contain exactly one or ten sessions`,
   };

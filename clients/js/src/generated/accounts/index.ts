@@ -8,4 +8,5 @@
 
 export * from "./coachAuthority";
 export * from "./coachClientCredits";
+export * from "./creditReservation";
 export * from "./offer";

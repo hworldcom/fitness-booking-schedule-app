@@ -11,6 +11,12 @@ pub struct AppliedPurchase {
     pub purchase_count: u64,
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub struct CreditBalances {
+    pub available_credits: u64,
+    pub reserved_credits: u64,
+}
+
 #[account]
 #[derive(InitSpace)]
 pub struct CoachClientCredits {
@@ -96,6 +102,54 @@ impl CoachClientCredits {
             purchase_count,
         })
     }
+
+    pub fn reserve_credit(&mut self) -> Result<CreditBalances> {
+        require!(
+            self.available_credits > 0,
+            CoachPassError::NoAvailableCredits
+        );
+        let reserved_credits = self
+            .reserved_credits
+            .checked_add(1)
+            .ok_or(CoachPassError::ReservedCreditsOverflow)?;
+        let available_credits = self.available_credits - 1;
+
+        self.available_credits = available_credits;
+        self.reserved_credits = reserved_credits;
+
+        Ok(CreditBalances {
+            available_credits,
+            reserved_credits,
+        })
+    }
+
+    pub fn return_reserved_credit(&mut self) -> Result<CreditBalances> {
+        require!(self.reserved_credits > 0, CoachPassError::NoReservedCredits);
+        let available_credits = self
+            .available_credits
+            .checked_add(1)
+            .ok_or(CoachPassError::AvailableCreditsOverflow)?;
+        let reserved_credits = self.reserved_credits - 1;
+
+        self.available_credits = available_credits;
+        self.reserved_credits = reserved_credits;
+
+        Ok(CreditBalances {
+            available_credits,
+            reserved_credits,
+        })
+    }
+
+    pub fn consume_reserved_credit(&mut self) -> Result<CreditBalances> {
+        require!(self.reserved_credits > 0, CoachPassError::NoReservedCredits);
+        let reserved_credits = self.reserved_credits - 1;
+        self.reserved_credits = reserved_credits;
+
+        Ok(CreditBalances {
+            available_credits: self.available_credits,
+            reserved_credits,
+        })
+    }
 }
 
 #[cfg(test)]
@@ -171,5 +225,68 @@ mod tests {
     fn allocated_account_space_is_fixed_and_includes_reserved_capacity() {
         assert_eq!(CoachClientCredits::INIT_SPACE, 192);
         assert_eq!(8 + CoachClientCredits::INIT_SPACE, 200);
+    }
+
+    #[test]
+    fn reserve_return_and_consume_preserve_aggregate_invariants() {
+        let mut credits =
+            CoachClientCredits::initialize(Pubkey::new_unique(), Pubkey::new_unique(), 250)
+                .unwrap();
+        credits.available_credits = 2;
+        credits.total_purchased = 2;
+
+        assert_eq!(
+            credits.reserve_credit().unwrap(),
+            CreditBalances {
+                available_credits: 1,
+                reserved_credits: 1,
+            }
+        );
+        assert_eq!(
+            credits.return_reserved_credit().unwrap(),
+            CreditBalances {
+                available_credits: 2,
+                reserved_credits: 0,
+            }
+        );
+        credits.reserve_credit().unwrap();
+        assert_eq!(
+            credits.consume_reserved_credit().unwrap(),
+            CreditBalances {
+                available_credits: 1,
+                reserved_credits: 0,
+            }
+        );
+        assert_eq!(credits.total_purchased, 2);
+    }
+
+    #[test]
+    fn invalid_credit_transitions_do_not_partially_mutate_balances() {
+        let mut credits =
+            CoachClientCredits::initialize(Pubkey::new_unique(), Pubkey::new_unique(), 250)
+                .unwrap();
+        assert!(credits.reserve_credit().is_err());
+        assert_eq!(
+            (credits.available_credits, credits.reserved_credits),
+            (0, 0)
+        );
+        assert!(credits.return_reserved_credit().is_err());
+        assert!(credits.consume_reserved_credit().is_err());
+
+        credits.available_credits = u64::MAX;
+        credits.reserved_credits = 1;
+        assert!(credits.return_reserved_credit().is_err());
+        assert_eq!(
+            (credits.available_credits, credits.reserved_credits),
+            (u64::MAX, 1)
+        );
+
+        credits.available_credits = 1;
+        credits.reserved_credits = u64::MAX;
+        assert!(credits.reserve_credit().is_err());
+        assert_eq!(
+            (credits.available_credits, credits.reserved_credits),
+            (1, u64::MAX)
+        );
     }
 }

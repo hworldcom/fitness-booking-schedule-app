@@ -9,7 +9,9 @@ import {
 } from "@solana/kit";
 import type { CoachAuthority } from "../../clients/js/src/generated/accounts/coachAuthority";
 import type { CoachClientCredits } from "../../clients/js/src/generated/accounts/coachClientCredits";
+import type { CreditReservation } from "../../clients/js/src/generated/accounts/creditReservation";
 import type { Offer } from "../../clients/js/src/generated/accounts/offer";
+import type { CreditReservationStatus } from "../../clients/js/src/generated/types/creditReservationStatus";
 import { OfferStatus } from "../../clients/js/src/generated/types/offerStatus";
 
 export const MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS = address(
@@ -25,6 +27,7 @@ const COACH_AUTHORITY_SEED = getUtf8Encoder().encode("coach-authority");
 const COACH_CLIENT_CREDITS_SEED = getUtf8Encoder().encode(
   "coach-client-credits",
 );
+const CREDIT_RESERVATION_SEED = getUtf8Encoder().encode("credit-reservation");
 const OFFER_SEED = getUtf8Encoder().encode("offer");
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
@@ -52,6 +55,18 @@ export type CoachClientCreditSummary = Readonly<{
   lastPurchaseAt: bigint;
 }>;
 
+export type CreditReservationSummary = Readonly<{
+  coachClientCredits: Address;
+  coachAuthority: Address;
+  clientWallet: Address;
+  bookingId: string;
+  scheduledStartAt: bigint;
+  earlyReturnUntil: bigint;
+  status: CreditReservationStatus;
+  reservedAt: bigint;
+  resolvedAt: bigint | null;
+}>;
+
 export function uuidToSeed(value: string): Uint8Array {
   const normalized = value.trim().toLowerCase();
   if (!UUID_PATTERN.test(normalized)) {
@@ -64,6 +79,23 @@ export function uuidToSeed(value: string): Uint8Array {
       .match(/.{2}/gu)!
       .map((byte) => Number.parseInt(byte, 16)),
   );
+}
+
+export function seedToUuid(value: readonly number[]): string {
+  if (value.length !== 16) {
+    throw new Error("Expected a 16-byte UUID seed.");
+  }
+
+  const hex = value
+    .map((byte) => {
+      if (!Number.isInteger(byte) || byte < 0 || byte > 255) {
+        throw new Error("UUID seed bytes must be unsigned 8-bit integers.");
+      }
+      return byte.toString(16).padStart(2, "0");
+    })
+    .join("");
+
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 export async function deriveCoachAuthorityAddress(input: {
@@ -113,6 +145,21 @@ export async function deriveCoachClientCreditsAddress(input: {
       COACH_CLIENT_CREDITS_SEED,
       getAddressEncoder().encode(input.coachAuthority),
       getAddressEncoder().encode(input.clientWallet),
+    ],
+  });
+}
+
+export async function deriveCreditReservationAddress(input: {
+  programAddress: Address;
+  coachClientCredits: Address;
+  bookingId: string;
+}): Promise<readonly [Address, number]> {
+  return getProgramDerivedAddress({
+    programAddress: input.programAddress,
+    seeds: [
+      CREDIT_RESERVATION_SEED,
+      getAddressEncoder().encode(input.coachClientCredits),
+      uuidToSeed(input.bookingId),
     ],
   });
 }
@@ -167,6 +214,51 @@ export function projectCoachClientCreditSummary(input: {
     nextPurchaseNonce: input.credits.nextPurchaseNonce,
     lastOffer: input.credits.lastOffer,
     lastPurchaseAt: input.credits.lastPurchaseAt,
+  };
+}
+
+export function projectCreditReservationSummary(input: {
+  reservation: CreditReservation;
+  expectedCoachClientCredits: Address;
+  expectedCoachAuthority: Address;
+  expectedClientWallet: Address;
+  expectedBookingId: string;
+}): CreditReservationSummary {
+  if (input.reservation.version !== 1) {
+    throw new Error("Unsupported credit reservation version.");
+  }
+  if (
+    input.reservation.coachClientCredits !== input.expectedCoachClientCredits
+  ) {
+    throw new Error("Reservation belongs to a different credit ledger.");
+  }
+  if (input.reservation.coachAuthority !== input.expectedCoachAuthority) {
+    throw new Error("Reservation belongs to a different coach authority.");
+  }
+  if (input.reservation.clientWallet !== input.expectedClientWallet) {
+    throw new Error("Reservation belongs to a different client wallet.");
+  }
+
+  const bookingId = seedToUuid(input.reservation.bookingId);
+  const expectedBookingId = seedToUuid([
+    ...uuidToSeed(input.expectedBookingId),
+  ]);
+  if (bookingId !== expectedBookingId) {
+    throw new Error("Reservation belongs to a different booking.");
+  }
+
+  return {
+    coachClientCredits: input.reservation.coachClientCredits,
+    coachAuthority: input.reservation.coachAuthority,
+    clientWallet: input.reservation.clientWallet,
+    bookingId,
+    scheduledStartAt: input.reservation.scheduledStartAt,
+    earlyReturnUntil: input.reservation.earlyReturnUntil,
+    status: input.reservation.status,
+    reservedAt: input.reservation.reservedAt,
+    resolvedAt: isNone(input.reservation.resolvedAt)
+      ? null
+      : input.reservation.resolvedAt.value,
   };
 }
 

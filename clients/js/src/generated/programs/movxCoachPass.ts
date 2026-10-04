@@ -36,38 +36,53 @@ import {
 import {
   getCoachAuthorityCodec,
   getCoachClientCreditsCodec,
+  getCreditReservationCodec,
   getOfferCodec,
   type CoachAuthority,
   type CoachAuthorityArgs,
   type CoachClientCredits,
   type CoachClientCreditsArgs,
+  type CreditReservation,
+  type CreditReservationArgs,
   type Offer,
   type OfferArgs,
 } from "../accounts";
 import {
+  getConsumeBookingCreditInstruction,
   getCreateOfferInstruction,
   getDeactivateOfferInstruction,
   getInitializeCoachAuthorityInstructionAsync,
   getPurchaseFirstOfferInstructionAsync,
   getPurchaseOfferInstructionAsync,
+  getReserveBookingCreditInstructionAsync,
+  getReturnBookingCreditInstruction,
   getRotateCoachAuthorityInstruction,
+  parseConsumeBookingCreditInstruction,
   parseCreateOfferInstruction,
   parseDeactivateOfferInstruction,
   parseInitializeCoachAuthorityInstruction,
   parsePurchaseFirstOfferInstruction,
   parsePurchaseOfferInstruction,
+  parseReserveBookingCreditInstruction,
+  parseReturnBookingCreditInstruction,
   parseRotateCoachAuthorityInstruction,
+  type ConsumeBookingCreditInput,
   type CreateOfferInput,
   type DeactivateOfferInput,
   type InitializeCoachAuthorityAsyncInput,
+  type ParsedConsumeBookingCreditInstruction,
   type ParsedCreateOfferInstruction,
   type ParsedDeactivateOfferInstruction,
   type ParsedInitializeCoachAuthorityInstruction,
   type ParsedPurchaseFirstOfferInstruction,
   type ParsedPurchaseOfferInstruction,
+  type ParsedReserveBookingCreditInstruction,
+  type ParsedReturnBookingCreditInstruction,
   type ParsedRotateCoachAuthorityInstruction,
   type PurchaseFirstOfferAsyncInput,
   type PurchaseOfferAsyncInput,
+  type ReserveBookingCreditAsyncInput,
+  type ReturnBookingCreditInput,
   type RotateCoachAuthorityInput,
 } from "../instructions";
 
@@ -77,6 +92,7 @@ export const MOVX_COACH_PASS_PROGRAM_ADDRESS =
 export enum MovxCoachPassAccount {
   CoachAuthority,
   CoachClientCredits,
+  CreditReservation,
   Offer,
 }
 
@@ -110,6 +126,17 @@ export function identifyMovxCoachPassAccount(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([12, 93, 36, 179, 101, 231, 93, 223]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassAccount.CreditReservation;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([215, 88, 60, 71, 170, 162, 73, 229]),
       ),
       0,
@@ -124,6 +151,9 @@ export function identifyMovxCoachPassAccount(
 }
 
 export enum MovxCoachPassEvent {
+  BookingCreditConsumed,
+  BookingCreditReserved,
+  BookingCreditReturned,
   CoachAuthorityInitialized,
   CoachAuthorityRotated,
   CreditsPurchased,
@@ -135,6 +165,39 @@ export function identifyMovxCoachPassEvent(
   event: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
 ): MovxCoachPassEvent {
   const data = "data" in event ? event.data : event;
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([119, 107, 92, 194, 19, 118, 75, 24]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassEvent.BookingCreditConsumed;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([98, 165, 125, 80, 53, 194, 23, 168]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassEvent.BookingCreditReserved;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([18, 189, 160, 102, 181, 198, 80, 231]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassEvent.BookingCreditReturned;
+  }
   if (
     containsBytes(
       data,
@@ -196,11 +259,14 @@ export function identifyMovxCoachPassEvent(
 }
 
 export enum MovxCoachPassInstruction {
+  ConsumeBookingCredit,
   CreateOffer,
   DeactivateOffer,
   InitializeCoachAuthority,
   PurchaseFirstOffer,
   PurchaseOffer,
+  ReserveBookingCredit,
+  ReturnBookingCredit,
   RotateCoachAuthority,
 }
 
@@ -208,6 +274,17 @@ export function identifyMovxCoachPassInstruction(
   instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
 ): MovxCoachPassInstruction {
   const data = "data" in instruction ? instruction.data : instruction;
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([104, 249, 113, 105, 233, 46, 129, 63]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassInstruction.ConsumeBookingCredit;
+  }
   if (
     containsBytes(
       data,
@@ -267,6 +344,28 @@ export function identifyMovxCoachPassInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([35, 157, 117, 199, 220, 0, 121, 77]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassInstruction.ReserveBookingCredit;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([168, 29, 83, 160, 168, 244, 75, 56]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassInstruction.ReturnBookingCredit;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([218, 117, 187, 15, 9, 198, 160, 199]),
       ),
       0,
@@ -284,6 +383,9 @@ export type ParsedMovxCoachPassInstruction<
   TProgram extends string = "GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU",
 > =
   | ({
+      instructionType: MovxCoachPassInstruction.ConsumeBookingCredit;
+    } & ParsedConsumeBookingCreditInstruction<TProgram>)
+  | ({
       instructionType: MovxCoachPassInstruction.CreateOffer;
     } & ParsedCreateOfferInstruction<TProgram>)
   | ({
@@ -299,6 +401,12 @@ export type ParsedMovxCoachPassInstruction<
       instructionType: MovxCoachPassInstruction.PurchaseOffer;
     } & ParsedPurchaseOfferInstruction<TProgram>)
   | ({
+      instructionType: MovxCoachPassInstruction.ReserveBookingCredit;
+    } & ParsedReserveBookingCreditInstruction<TProgram>)
+  | ({
+      instructionType: MovxCoachPassInstruction.ReturnBookingCredit;
+    } & ParsedReturnBookingCreditInstruction<TProgram>)
+  | ({
       instructionType: MovxCoachPassInstruction.RotateCoachAuthority;
     } & ParsedRotateCoachAuthorityInstruction<TProgram>);
 
@@ -307,6 +415,13 @@ export function parseMovxCoachPassInstruction<TProgram extends string>(
 ): ParsedMovxCoachPassInstruction<TProgram> {
   const instructionType = identifyMovxCoachPassInstruction(instruction);
   switch (instructionType) {
+    case MovxCoachPassInstruction.ConsumeBookingCredit: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: MovxCoachPassInstruction.ConsumeBookingCredit,
+        ...parseConsumeBookingCreditInstruction(instruction),
+      };
+    }
     case MovxCoachPassInstruction.CreateOffer: {
       assertIsInstructionWithAccounts(instruction);
       return {
@@ -342,6 +457,20 @@ export function parseMovxCoachPassInstruction<TProgram extends string>(
         ...parsePurchaseOfferInstruction(instruction),
       };
     }
+    case MovxCoachPassInstruction.ReserveBookingCredit: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: MovxCoachPassInstruction.ReserveBookingCredit,
+        ...parseReserveBookingCreditInstruction(instruction),
+      };
+    }
+    case MovxCoachPassInstruction.ReturnBookingCredit: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: MovxCoachPassInstruction.ReturnBookingCredit,
+        ...parseReturnBookingCreditInstruction(instruction),
+      };
+    }
     case MovxCoachPassInstruction.RotateCoachAuthority: {
       assertIsInstructionWithAccounts(instruction);
       return {
@@ -373,11 +502,17 @@ export type MovxCoachPassPluginAccounts = {
     SelfFetchFunctions<CoachAuthorityArgs, CoachAuthority>;
   coachClientCredits: ReturnType<typeof getCoachClientCreditsCodec> &
     SelfFetchFunctions<CoachClientCreditsArgs, CoachClientCredits>;
+  creditReservation: ReturnType<typeof getCreditReservationCodec> &
+    SelfFetchFunctions<CreditReservationArgs, CreditReservation>;
   offer: ReturnType<typeof getOfferCodec> &
     SelfFetchFunctions<OfferArgs, Offer>;
 };
 
 export type MovxCoachPassPluginInstructions = {
+  consumeBookingCredit: (
+    input: ConsumeBookingCreditInput,
+  ) => ReturnType<typeof getConsumeBookingCreditInstruction> &
+    SelfPlanAndSendFunctions;
   createOffer: (
     input: CreateOfferInput,
   ) => ReturnType<typeof getCreateOfferInstruction> & SelfPlanAndSendFunctions;
@@ -396,6 +531,14 @@ export type MovxCoachPassPluginInstructions = {
   purchaseOffer: (
     input: PurchaseOfferAsyncInput,
   ) => ReturnType<typeof getPurchaseOfferInstructionAsync> &
+    SelfPlanAndSendFunctions;
+  reserveBookingCredit: (
+    input: ReserveBookingCreditAsyncInput,
+  ) => ReturnType<typeof getReserveBookingCreditInstructionAsync> &
+    SelfPlanAndSendFunctions;
+  returnBookingCredit: (
+    input: ReturnBookingCreditInput,
+  ) => ReturnType<typeof getReturnBookingCreditInstruction> &
     SelfPlanAndSendFunctions;
   rotateCoachAuthority: (
     input: RotateCoachAuthorityInput,
@@ -424,9 +567,18 @@ export function movxCoachPassProgram() {
             client,
             getCoachClientCreditsCodec(),
           ),
+          creditReservation: addSelfFetchFunctions(
+            client,
+            getCreditReservationCodec(),
+          ),
           offer: addSelfFetchFunctions(client, getOfferCodec()),
         },
         instructions: {
+          consumeBookingCredit: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getConsumeBookingCreditInstruction(input),
+            ),
           createOffer: (input) =>
             addSelfPlanAndSendFunctions(
               client,
@@ -451,6 +603,16 @@ export function movxCoachPassProgram() {
             addSelfPlanAndSendFunctions(
               client,
               getPurchaseOfferInstructionAsync(input),
+            ),
+          reserveBookingCredit: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getReserveBookingCreditInstructionAsync(input),
+            ),
+          returnBookingCredit: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getReturnBookingCreditInstruction(input),
             ),
           rotateCoachAuthority: (input) =>
             addSelfPlanAndSendFunctions(

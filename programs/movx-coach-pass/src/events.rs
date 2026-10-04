@@ -61,3 +61,43 @@ pub struct CreditsPurchased {
     pub purchase_count: u64,
     pub purchased_at: i64,
 }
+
+#[event]
+pub struct BookingCreditReserved {
+    pub credit_reservation: Pubkey,
+    pub coach_client_credits: Pubkey,
+    pub coach_authority: Pubkey,
+    pub client_wallet: Pubkey,
+    pub booking_id: [u8; 16],
+    pub scheduled_start_at: i64,
+    pub early_return_until: i64,
+    pub available_credits: u64,
+    pub reserved_credits: u64,
+    pub reserved_at: i64,
+}
+
+#[event]
+pub struct BookingCreditReturned {
+    pub credit_reservation: Pubkey,
+    pub coach_client_credits: Pubkey,
+    pub coach_authority: Pubkey,
+    pub client_wallet: Pubkey,
+    pub booking_id: [u8; 16],
+    pub resolution_authority: Pubkey,
+    pub available_credits: u64,
+    pub reserved_credits: u64,
+    pub returned_at: i64,
+}
+
+#[event]
+pub struct BookingCreditConsumed {
+    pub credit_reservation: Pubkey,
+    pub coach_client_credits: Pubkey,
+    pub coach_authority: Pubkey,
+    pub client_wallet: Pubkey,
+    pub booking_id: [u8; 16],
+    pub coach_wallet: Pubkey,
+    pub available_credits: u64,
+    pub reserved_credits: u64,
+    pub consumed_at: i64,
+}
