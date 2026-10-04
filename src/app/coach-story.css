@@ -128,7 +128,8 @@
 
 .coach-location-preview,
 .coach-week-preview,
-.coach-pass-preview {
+.coach-pass-preview,
+.coach-group-preview {
   display: flex;
   align-items: center;
   gap: 13px;
@@ -147,9 +148,14 @@
   background: var(--story-lime);
 }
 
+.coach-group-preview {
+  background: #ede7f6;
+}
+
 .coach-location-preview small,
 .coach-week-preview small,
-.coach-pass-preview small {
+.coach-pass-preview small,
+.coach-group-preview small {
   display: block;
   margin-bottom: 3px;
   color: #687466;
@@ -160,7 +166,8 @@
 
 .coach-location-preview strong,
 .coach-week-preview strong,
-.coach-pass-preview strong {
+.coach-pass-preview strong,
+.coach-group-preview strong {
   display: block;
   font-family: var(--font-display);
   font-size: 13px;
@@ -168,7 +175,8 @@
 }
 
 .coach-location-icon,
-.coach-pass-count {
+.coach-pass-count,
+.coach-group-count {
   display: grid;
   flex: 0 0 auto;
   place-items: center;
@@ -183,6 +191,11 @@
   font-family: var(--font-display);
   font-size: 20px;
   font-weight: 800;
+}
+
+.coach-group-count {
+  background: #4a3d59;
+  color: #eef6d9;
 }
 
 .coach-time-chip {
@@ -332,6 +345,76 @@
   color: #6a6770;
   font-size: 10px;
   line-height: 1.6;
+}
+
+.coach-group-story {
+  margin-top: clamp(62px, 8vw, 92px);
+  border: 1px solid #d7e2ca;
+  border-radius: 24px;
+  background: #f1f6ec;
+  padding: clamp(30px, 5vw, 56px);
+}
+
+.coach-group-story .coach-section-heading {
+  max-width: 790px;
+}
+
+.coach-group-story .coach-step-card {
+  background: rgb(255 255 255 / 72%);
+}
+
+.coach-group-story .coach-step-card:last-child {
+  border-color: #a8c765;
+  background: #ddf5ae;
+}
+
+.coach-group-outcomes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  align-items: stretch;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.coach-group-outcomes article {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 10px;
+  border: 1px solid #d6dfcd;
+  border-radius: 15px;
+  background: #fff;
+  padding: 16px;
+}
+
+.coach-group-outcomes article > svg {
+  box-sizing: content-box;
+  border-radius: 50%;
+  background: #edf4e7;
+  padding: 5px;
+  color: #445b35;
+}
+
+.coach-group-outcomes strong {
+  display: block;
+  margin-bottom: 4px;
+  font-family: var(--font-display);
+  font-size: 14px;
+}
+
+.coach-group-outcomes p {
+  color: #697268;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.coach-group-outcomes .button {
+  align-self: center;
+  white-space: nowrap;
+}
+
+.how-group-story {
+  border-color: #ddd6e8;
+  background: #f7f3fb;
 }
 
 .coach-benefit-grid {
@@ -619,6 +702,15 @@
   .coach-pass-story {
     gap: 30px;
   }
+
+  .coach-group-outcomes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .coach-group-outcomes .button {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
 }
 
 @media (max-width: 900px) {
@@ -691,6 +783,20 @@
     padding: 27px 21px;
   }
 
+  .coach-group-story {
+    padding: 27px 21px;
+  }
+
+  .coach-group-outcomes {
+    grid-template-columns: 1fr;
+  }
+
+  .coach-group-outcomes .button {
+    grid-column: auto;
+    justify-self: stretch;
+    width: 100%;
+  }
+
   .coach-story-section,
   .coach-two-sides {
     padding-right: 0;
@@ -718,7 +824,8 @@
   }
 
   .coach-location-preview,
-  .coach-pass-preview {
+  .coach-pass-preview,
+  .coach-group-preview {
     align-items: flex-start;
   }
 

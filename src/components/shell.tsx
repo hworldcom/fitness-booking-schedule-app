@@ -48,7 +48,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <div className="sidebar-caption">
           FIND YOUR COACH.
           <br />
-          TRAIN TOGETHER.
+          BOOK OR FUND.
         </div>
         <nav aria-label="Main navigation">
           {navigation.map(({ label, href, Icon }) => (
@@ -92,9 +92,9 @@ export function Shell({ children }: { children: ReactNode }) {
             </Link>
           )}
           <span className="sidebar-tagline">
-            Coaches. Packages.
+            Private passes. Group events.
             <br />
-            <span>Sessions that stay clear.</span>
+            <span>Two clear ways to train.</span>
           </span>
         </div>
       </aside>
@@ -132,7 +132,10 @@ export function Shell({ children }: { children: ReactNode }) {
           <span>
             <i /> DEMO WORLD
           </span>
-          <p>Coach discovery live · booking still in progress.</p>
+          <p>
+            Coach discovery live · pass booking and group funding still in
+            progress.
+          </p>
           <button onClick={() => setModal("about")}>
             Fixtures · No real funds <Info size={13} />
           </button>
@@ -185,19 +188,22 @@ export function Shell({ children }: { children: ReactNode }) {
           ) : (
             <>
               <p className="dialog-copy">
-                MovX Club is becoming a coach-first marketplace for prepaid
-                training packages and verifiable session balances.
+                MovX Club is becoming a two-feature coach marketplace: buy
+                coach-specific credits for private calendar booking, or fund one
+                seat in a threshold-based group event.
               </p>
               <div className="notice">
                 <strong>Everything here is demonstration data.</strong>
                 <p>
                   The current public preview is transitional. Coaches, offers,
-                  packages and posts shown during the rebuild are fixtures, not
-                  live partnerships or financial records.
+                  events, locations and posts shown during the rebuild are
+                  fictional fixtures, not live partnerships or financial
+                  records.
                 </p>
               </div>
               <p className="small-copy">
-                Coach-package purchase and redemption are not live yet.
+                Pass purchase, private booking and group funding are not live
+                yet. No real funds are used.
               </p>
               <button
                 className="button lime full"

@@ -4,9 +4,9 @@ import { WaitlistRequest } from "./waitlist-request";
 
 const previewSteps = [
   "Discover coaches and public training locations",
-  "Choose a capacity-one private weekly slot",
-  "Use or buy a one-session or ten-session pass",
-  "Deduct a session only after completed training",
+  "Buy one or ten coach-specific credits",
+  "Book one capacity-one private calendar hour",
+  "Fund one group-event seat with payout-or-refund rules",
 ];
 
 export function ComingSoonScreen() {
@@ -16,13 +16,13 @@ export function ComingSoonScreen() {
         <div className="coming-soon-copy">
           <span className="eyebrow">MOVX CLUB · COMING SOON</span>
           <h1 id="coming-soon-title">
-            Find the right martial arts coach for you.
+            Book private training or help a group event happen.
           </h1>
           <p>
             Discover independent or fictional-gym-associated coaches, explore
-            their disciplines and availability, and book private training that
-            fits your goals and schedule. Cancel before it starts and your
-            unused credit remains.
+            their disciplines and schedules, then choose one of two clear paths:
+            use coach-specific credits for a private calendar booking, or fund
+            one seat in a group event whose minimum decides payout or refunds.
           </p>
           <ul>
             {previewSteps.map((step) => (
@@ -45,7 +45,7 @@ export function ComingSoonScreen() {
           <span className="coming-soon-orbit-center">
             <Dumbbell size={35} />
           </span>
-          <strong>ONE COACH · ONE CLEAR PACKAGE</strong>
+          <strong>PRIVATE BOOKING · GROUP FUNDING</strong>
         </div>
       </section>
 
@@ -55,7 +55,7 @@ export function ComingSoonScreen() {
           <h2>Get an invitation when the complete demo is ready.</h2>
           <p>
             Join the early-access list for product updates, demo availability
-            and the first complete coach-package walkthrough.
+            and the first complete pass-booking and group-funding walkthrough.
           </p>
           <Link href="/" className="coming-soon-text-link">
             <ArrowLeft size={15} aria-hidden="true" /> MovX Club home
@@ -67,7 +67,7 @@ export function ComingSoonScreen() {
       <section className="coming-soon-return">
         <div>
           <span className="eyebrow">FOLLOW THE REBUILD</span>
-          <h2>The coach-first experience is coming next.</h2>
+          <h2>The complete two-feature experience is coming next.</h2>
         </div>
         <a className="button dark" href="#waitlist-email">
           Join the waitlist <ArrowRight size={17} aria-hidden="true" />

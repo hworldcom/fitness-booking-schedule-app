@@ -7,17 +7,18 @@ test("coming soon page prepares a truthful waitlist email request", async ({
 
   await expect(
     page.getByRole("heading", {
-      name: "Find the right martial arts coach for you.",
+      name: "Book private training or help a group event happen.",
     }),
   ).toBeVisible();
   await expect(
     page.locator(".coming-soon-copy").getByRole("paragraph"),
   ).toHaveText(
-    "Discover independent or fictional-gym-associated coaches, explore their disciplines and availability, and book private training that fits your goals and schedule. Cancel before it starts and your unused credit remains.",
+    "Discover independent or fictional-gym-associated coaches, explore their disciplines and schedules, then choose one of two clear paths: use coach-specific credits for a private calendar booking, or fund one seat in a group event whose minimum decides payout or refunds.",
   );
   await expect(page.locator(".coming-soon-status")).toContainText(
     "Solana Devnet · Test EURC · No real funds",
   );
+  await expect(page.getByText("PRIVATE BOOKING · GROUP FUNDING")).toBeVisible();
 
   const email = page.getByLabel("Email address", { exact: true });
   const continueButton = page.getByRole("button", {

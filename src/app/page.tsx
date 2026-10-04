@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { CoachStoryHome } from "@/features/public/coach-story";
 
 export const metadata: Metadata = {
-  title: "Find your martial-arts coach",
+  title: "Private coaching and group-funded training",
   description:
-    "Discover martial-arts coaches, choose a private weekly slot and use a clear one-session or ten-session TrainingPass.",
+    "Discover martial-arts coaches, buy coach-specific credits for private calendar booking, or help a threshold-funded group event happen.",
 };
 
 export default function Page() {
