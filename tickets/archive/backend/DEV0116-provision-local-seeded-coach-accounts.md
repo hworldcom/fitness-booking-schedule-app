@@ -99,7 +99,7 @@ Final review tightened the reuse and seed preconditions: a tagged Auth user must
 - `npm run typecheck` — passed after Next.js route type generation and strict TypeScript checking.
 - `npm run lint` — passed with no findings.
 - `npm run format:check` — passed for all configured implementation files; the affected Markdown records were also formatted with Prettier.
-- Final review after concurrent DEV0114 work — focused tests still passed 5/5, the live provisioning command reused all five identities, `npm test` passed 68/68, `npm run typecheck` and `npm run lint` passed, and a targeted Prettier check passed for every DEV0116 file. The repository-wide format check currently reports only `src/server/db/schema/coaches.ts`, an in-progress DEV0114 file outside this ticket.
+- Final shared-tree review after DEV0114 completed — focused tests still passed 5/5, the live provisioning command reused all five identities, `npm test` passed 69/69 with the completed recurring-availability coverage, and `npm run typecheck`, `npm run lint`, `npm run format:check` plus `git diff --check` passed.
 - Production build, full database migration suites, Mapbox, Solana and hosted checks were not run because this ticket changes only guarded local provisioning/tooling and does not change application runtime, schema or provider integration.
 
 | Criterion | Evidence                                                                                                                           | Result |
