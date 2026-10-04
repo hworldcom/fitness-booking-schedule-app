@@ -1,11 +1,11 @@
 # Ticket DEV0118: Persist training requests and coach proposals
 
-- Status: Ready
+- Status: Cancelled
 - Created: 2026-10-04
 - Last updated: 2026-10-05
 - Milestone: Marketplace M2 two-sided demand
-- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: uses completed [DEV0046](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md), [DEV0096](../../archive/backend/DEV0096-persist-coach-profiles-and-discovery.md) and [DEV0110](../../archive/backend/DEV0110-activate-coaching-during-account-onboarding.md); supplies browser workflows to [DEV0119](../frontend/DEV0119-present-training-requests-and-coach-proposals.md) and selected-proposal context to completed [DEV0120](../../archive/backend/DEV0120-persist-group-event-catalogue-and-projections.md)
+- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
+- Related records: uses completed [DEV0046](DEV0046-email-otp-registration-and-application-profiles.md), [DEV0096](DEV0096-persist-coach-profiles-and-discovery.md) and [DEV0110](DEV0110-activate-coaching-during-account-onboarding.md); cancelled peer [DEV0119](../frontend/DEV0119-present-training-requests-and-coach-proposals.md); completed [DEV0120](DEV0120-persist-group-event-catalogue-and-projections.md) retains an unused nullable proposal-origin compatibility field; cancellation is owned by [DEV0135](../organisatory/DEV0135-narrow-marketplace-mvp-to-two-loops.md)
 
 ## Objective and context
 
@@ -45,35 +45,35 @@ Run migration reset/repeat/upgrade validation, pgTAP/RLS checks, two-client/two-
 
 ## Implementation record
 
-Not started.
+Cancelled before implementation.
 
 ### Changes and rationale
 
-Pending implementation.
+On 2026-10-05 the user limited the hackathon MVP to pass-backed private bookings and coach-created threshold-funded group events. This proposed third workflow was therefore cancelled before any migration, schema, service, seed or test was added. The planning record is retained so the scope decision and original boundary remain reviewable.
 
 ### Affected files
 
-Planned: additive Supabase migration/seed/tests, server database mappings/repository/services/actions, domain contracts and focused tests.
+No runtime files changed under this ticket. DEV0135 updates the current specification, coordination map and ticket index and archives this record.
 
 ### Decisions and deviations
 
-None yet.
+- 2026-10-05: Cancelled before implementation because the focused MVP now contains exactly two product loops. Training requests/proposals may be reconsidered only through a new future product decision and ticket.
 
 ### Contracts, configuration, and operations
 
-Expected additive request/proposal tables and statuses; no new secret or external provider.
+No contract, schema, migration, configuration, dependency, secret or operational change was delivered. The proposed request/proposal tables and statuses do not exist.
 
 ## Validation results
 
-Not run — no implementation.
+No runtime validation was run because implementation never started. DEV0135 validates removal of this workflow from the current specification, work map and open-ticket index.
 
 ## Risks, limitations, and follow-ups
 
-Free-form location/messages can leak personal information, so field bounds and public/private projections are security requirements. Matching and messaging remain deferred.
+Historical records may continue to describe the proposal as earlier planning. The current contract controls. Any future request/proposal feature requires a new reviewed ticket with privacy and authorization requirements; this cancelled ticket must not be reopened.
 
 ## Completion and review references
 
-- Completed: Not completed.
-- Commit: Not created.
-- Review: Planning self-review only.
-- Deployment or release: None.
+- Completed: Cancelled on 2026-10-05 before implementation; no acceptance criterion is claimed as delivered.
+- Commit: Cancellation is recorded by DEV0135; that consolidation is not yet committed, and no DEV0118 implementation commit exists.
+- Review: Scope cancellation reviewed through DEV0135; no independent review.
+- Deployment or release: Not applicable — no runtime change existed.

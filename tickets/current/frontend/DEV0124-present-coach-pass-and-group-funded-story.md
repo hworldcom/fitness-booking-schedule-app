@@ -5,7 +5,7 @@
 - Last updated: 2026-10-05
 - Milestone: Marketplace M0 truthful public story
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: replaces the copy delivered historically by [DEV0095](../../archive/frontend/DEV0095-present-coach-first-public-story.md); follows the revised contract in [DEV0126](../../archive/organisatory/DEV0126-adopt-coach-pass-and-group-funding-contract.md), the completed EURC compatibility contract in [DEV0134](../../archive/blockchain/DEV0134-adopt-eurc-for-marketplace-payments.md) and the [current MVP specification](../../../docs/mvp-spec.md)
+- Related records: replaces the copy delivered historically by [DEV0095](../../archive/frontend/DEV0095-present-coach-first-public-story.md); follows the revised contract in [DEV0126](../../archive/organisatory/DEV0126-adopt-coach-pass-and-group-funding-contract.md), the completed EURC compatibility contract in [DEV0134](../../archive/blockchain/DEV0134-adopt-eurc-for-marketplace-payments.md), the two-loop consolidation in [DEV0135](../../archive/organisatory/DEV0135-narrow-marketplace-mvp-to-two-loops.md) and the [current MVP specification](../../../docs/mvp-spec.md)
 
 ## Objective and context
 
@@ -13,16 +13,16 @@ Rewrite Home, How it works, calls to action and public navigation so visitors un
 
 ## Scope and non-goals
 
-- In scope: concise client/coach value proposition; one/ten-credit purchase and cancellation-policy explanation; client request/coach response context; threshold-funded event story; Devnet/test-EURC disclosure; truthful early-access calls to action; responsive visual hierarchy and accessibility.
-- Out of scope: marketplace/event runtime, invented metrics/partners, real-money claims, detailed disputes, rebranding or broad visual-system replacement.
+- In scope: concise client/coach value proposition; one/ten-credit purchase and cancellation-policy explanation; threshold-funded event story; Devnet/test-EURC disclosure; truthful early-access calls to action; responsive visual hierarchy and accessibility.
+- Out of scope: client-authored training requests, coach proposals, any third acquisition workflow, marketplace/event runtime, invented metrics/partners, real-money claims, detailed disputes, rebranding or broad visual-system replacement.
 
 ## Expected behavior and edge cases
 
-The page leads with finding a coach, buying a small pass and booking from the calendar. It then explains how participants can collectively make a group event viable and receive refunds from a failed pool, while avoiding “automatic” execution, guaranteed service or production escrow claims. Unimplemented actions use honest preview/coming-soon states.
+The page leads with finding a coach, buying a small pass and booking from the calendar. It then explains how a coach publishes a group event and participants can collectively make it viable or receive refunds from a failed pool. It does not introduce training requests/proposals or another marketplace loop and avoids “automatic” execution, guaranteed service or production escrow claims. Unimplemented actions use honest preview/coming-soon states.
 
 ## Assumptions, decisions, and dependencies
 
-Copy must follow `docs/mvp-spec.md`; completed historical screenshots/copy do not override it. Preserve accessible navigation and the existing coach discovery entry point.
+Copy must follow `docs/mvp-spec.md`; completed historical screenshots/copy do not override it. Preserve accessible navigation and the existing coach discovery entry point. Supporting profiles, locations and social content may provide context but must not compete with the two retained product loops.
 
 ## Implementation plan
 

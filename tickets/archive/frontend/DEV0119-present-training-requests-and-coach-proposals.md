@@ -1,11 +1,11 @@
 # Ticket DEV0119: Present training requests and coach proposals
 
-- Status: Draft
+- Status: Cancelled
 - Created: 2026-10-04
-- Last updated: 2026-10-04
+- Last updated: 2026-10-05
 - Milestone: Marketplace M2 two-sided demand
-- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: depends on [DEV0118 — Persist training requests and coach proposals](../backend/DEV0118-persist-training-requests-and-coach-proposals.md); selected group proposals may seed coach event creation through completed [DEV0120](../../archive/backend/DEV0120-persist-group-event-catalogue-and-projections.md) and current DEV0123
+- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
+- Related records: cancelled with [DEV0118 — Persist training requests and coach proposals](../backend/DEV0118-persist-training-requests-and-coach-proposals.md); completed [DEV0120](../backend/DEV0120-persist-group-event-catalogue-and-projections.md) retains an unused nullable proposal-origin compatibility field; cancellation is owned by [DEV0135](../organisatory/DEV0135-narrow-marketplace-mvp-to-two-loops.md)
 
 ## Objective and context
 
@@ -44,35 +44,35 @@ Run focused component tests, server-boundary tests, Playwright owner/coach/unrel
 
 ## Implementation record
 
-Not started.
+Cancelled before implementation.
 
 ### Changes and rationale
 
-Pending implementation.
+On 2026-10-05 the user limited the hackathon MVP to pass-backed private bookings and coach-created threshold-funded group events. This proposed request/proposal interface was cancelled before any route, component, action integration or browser test was added.
 
 ### Affected files
 
-Planned: request/proposal routes, feature components, styles, actions integration and browser tests.
+No runtime files changed under this ticket. DEV0135 removes this workflow from the current product story and archives this record.
 
 ### Decisions and deviations
 
-None yet.
+- 2026-10-05: Cancelled before implementation together with its backend dependency DEV0118. Public storytelling remains limited to the two retained loops.
 
 ### Contracts, configuration, and operations
 
-No new configuration expected; consumes DEV0118 contracts.
+No interface, route, configuration or operational contract was delivered. DEV0118 supplied no server contract because it was also cancelled before implementation.
 
 ## Validation results
 
-Not run — dependency incomplete.
+No browser or runtime validation was run because implementation never started. DEV0135 validates that current public-story and hosted-rehearsal tickets no longer depend on this workflow.
 
 ## Risks, limitations, and follow-ups
 
-Do not overstate proposal selection as acceptance of financial terms. Messaging and notifications remain future work.
+Historical records may continue to describe this earlier plan. Any future request/proposal interface requires a new reviewed ticket and backend authority contract; this cancelled ticket must not be reopened.
 
 ## Completion and review references
 
-- Completed: Not completed.
-- Commit: Not created.
-- Review: Planning self-review only.
-- Deployment or release: None.
+- Completed: Cancelled on 2026-10-05 before implementation; no acceptance criterion is claimed as delivered.
+- Commit: Cancellation is recorded by DEV0135; that consolidation is not yet committed, and no DEV0119 implementation commit exists.
+- Review: Scope cancellation reviewed through DEV0135; no independent review.
+- Deployment or release: Not applicable — no runtime change existed.

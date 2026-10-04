@@ -4,13 +4,13 @@ Last updated: 5 October 2026.
 
 MovX is a two-sided marketplace where clients discover martial-arts coaches and pay for coach-led training. The first hackathon loop is intentionally simple: a coach publishes a one-session or ten-session offer, a client buys credits with test EURC and uses one credit to reserve a session from that coach's calendar. The second loop is conditional group funding: participants fund seats, a program-controlled vault pays the coach only when the published minimum is reached, and an underfunded event gives every contributor an individually enforceable refund.
 
-Coach profiles, public locations, availability, calendar occurrences, booking records, cancellation decisions, client requests, coach proposals, event descriptions and social content remain in the application layer. Solana owns immutable coach offers, exact pass payment, aggregate coach-client credits and group-funding value movement. The superseded multi-gym membership remains historical context and does not define current behavior.
+Coach profiles, public locations, availability, calendar occurrences, booking records, cancellation decisions, event descriptions and social content remain in the application layer. Solana owns immutable coach offers, exact pass payment, aggregate coach-client credits and group-funding value movement. The superseded multi-gym membership remains historical context and does not define current behavior.
 
 ## 1. Product status and document authority
 
 This is the single current product contract for the MovX Club hackathon MVP. It defines the target and does not claim that every target flow is implemented.
 
-The repository already contains reusable Next.js, Supabase/PostgreSQL, email identity, Wallet Standard and Cloudflare staging foundations. Persistent coach profiles, fictional-gym or independent public locations, list discovery, recurring one-hour availability, the responsive coach calendar, follows, chronological coach posts, the PostgreSQL credit-backed booking/client-card projection workflow and the group-event metadata/finalized-projection boundary are implemented. The local `CoachAuthority`/`Offer` program contains a coach-client credit ledger, exact first/subsequent purchase instructions and deterministic per-booking reserve/return/consume receipts, with passing source, generated-client and adversarial compiled-SBF Surfpool checks; its platform-payer interface is also complete, while Devnet evidence remains open. Mapbox operational validation and personal-wallet rehearsal also remain open. The client-card interface, client requests/proposals, EventPool program, Devnet group-funding adapter, event interface and hosted integrated rehearsal remain unfinished under [COR0010](../tickets/current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md). [DEV0120](../tickets/archive/backend/DEV0120-persist-group-event-catalogue-and-projections.md) records the completed group-event persistence boundary.
+The repository already contains reusable Next.js, Supabase/PostgreSQL, email identity, Wallet Standard and Cloudflare staging foundations. Persistent coach profiles, fictional-gym or independent public locations, list discovery, recurring one-hour availability, the responsive coach calendar, follows, chronological coach posts, the PostgreSQL credit-backed booking/client-card projection workflow and the group-event metadata/finalized-projection boundary are implemented. The local `CoachAuthority`/`Offer` program contains a coach-client credit ledger, exact first/subsequent purchase instructions and deterministic per-booking reserve/return/consume receipts, with passing source, generated-client and adversarial compiled-SBF Surfpool checks; its platform-payer interface is also complete, while Devnet evidence remains open. Mapbox operational validation and personal-wallet rehearsal also remain open. The client-card interface, EventPool program, Devnet group-funding adapter, event interface and hosted integrated rehearsal remain unfinished under [COR0010](../tickets/current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md). [DEV0120](../tickets/archive/backend/DEV0120-persist-group-event-catalogue-and-projections.md) records the completed group-event persistence boundary.
 
 Completed and cancelled tickets are historical evidence. Neither a ticket, external brief nor prototype overrides this specification. [DEV0117](../tickets/archive/organisatory/DEV0117-adopt-group-funded-coach-marketplace-mvp.md) records the earlier group-funding-only decision; [DEV0126](../tickets/archive/organisatory/DEV0126-adopt-coach-pass-and-group-funding-contract.md) records the later user decision that restored a new, smaller pass implementation without rewriting that history.
 
@@ -21,10 +21,10 @@ Completed and cancelled tickets are historical evidence. Neither a ticket, exter
 | ID  | Confirmed decision                                                                                                                                                                                                                                                                                           |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | C01 | The target is a focused Solana Devnet hackathon demonstration, not a production escrow, financial, ticketing or general-purpose scheduling service.                                                                                                                                                          |
-| C02 | MovX is a two-sided marketplace: clients discover coaches, buy coach-specific credits, book calendar sessions and may publish training requests; coaches publish profiles, pass offers, availability, proposals and group events.                                                                            |
-| C03 | Public terminology uses **coach**, **client**, **pass credit**, **booking**, **training request**, **proposal**, **group event**, **seat funding** and **refund**. A coach may be independent or associated with one fictional gym location.                                                                 |
+| C02 | MovX is a focused two-sided marketplace with exactly two hackathon product loops: clients buy coach-specific credits and book calendar sessions; coaches create group events whose seats are conditionally funded.                                                                                           |
+| C03 | Public terminology uses **coach**, **client**, **pass credit**, **booking**, **group event**, **seat funding** and **refund**. A coach may be independent or associated with one fictional gym location.                                                                                                     |
 | C04 | One email-code account may act as a client and may self-activate coaching. Email identity, coaching activation, public-profile visibility and personal-wallet ownership remain separate authority boundaries.                                                                                                |
-| C05 | Profiles, locations, availability, bookings, cancellation decisions, requests, proposals, event descriptions/media, follows and posts are authoritative off-chain. They never manufacture on-chain credits, contributions, payouts or refunds.                                                               |
+| C05 | Profiles, locations, availability, bookings, cancellation decisions, event descriptions/media, follows and posts are authoritative off-chain. They never manufacture on-chain credits, contributions, payouts or refunds.                                                                                    |
 | C06 | A coach publishes immutable public or wallet-restricted offers for exactly one or ten credits. The offer freezes exact test-EURC price, current recipient, purchase window and authority epoch; purchased P0 credits do not expire.                                                                          |
 | C07 | Circle's official configured Solana Devnet EURC mint is the only payment asset. Test SOL is used only for transaction fees and account deposits, all of which the MovX platform funds for MVP transactions. No production asset or real-money claim is supported.                                            |
 | C08 | One stable `CoachAuthority` PDA represents each coach. One bounded `CoachClientCredits` PDA per coach/client pair stores aggregate available/reserved credits, purchase totals and the next purchase nonce; there is no unbounded client map inside the coach account.                                       |
@@ -34,7 +34,7 @@ Completed and cancelled tickets are historical evidence. Neither a ticket, exter
 | C12 | Solana programs do not execute automatically at a deadline. A participant, coach, other caller or bounded MovX reconciler submits settlement, payout or refund transactions; retries converge on existing state.                                                                                             |
 | C13 | A succeeded pool permits one coach payout of the vault's funded seat total. A failed pool prohibits coach payout and lets each contributor claim exactly one refund. Refunds are pull-based per contribution rather than an unbounded all-participant loop.                                                  |
 | C14 | Coach no-show, attendance proof, service-quality disputes, chargebacks and post-payout reversals are deliberately outside the hackathon contract. The UI must not imply that the chain proves a private session or group event occurred.                                                                     |
-| C15 | Guests may browse public coaches, pass offers, availability, requests where permitted, selected proposals, group events and posts. Sign-in is required to buy/book/cancel, create a request/proposal/event, follow or fund; value movement also requires the linked connected wallet.                        |
+| C15 | Guests may browse public coaches, pass offers, availability, group events and posts. Sign-in is required to buy/book/cancel, create an event, follow or fund; value movement also requires the linked connected wallet.                                                                                      |
 | C16 | The accessible coach/event lists remain usable without Mapbox. Mapbox pins represent confirmed public locations, not live tracking, current presence, verification or guaranteed event availability.                                                                                                         |
 | C17 | Gyms remain simple fictional public locations. They have no account, wallet, payout, event-administration, membership, access-claim or check-in authority. Independent coaches remain supported.                                                                                                             |
 | C18 | MovX funds all MVP Solana transaction fees and rent-exempt account deposits through a bounded platform payer, so clients, coaches and participants need no test SOL. They still sign their actions and transfer the exact required test EURC; sponsorship grants no business, recovery or upgrade authority. |
@@ -43,7 +43,7 @@ Completed and cancelled tickets are historical evidence. Neither a ticket, exter
 | C21 | Each coach publishes an early-cancellation cutoff, such as 24 hours. Cancellation before it automatically returns one reserved credit; a later request returns it only when that coach approves, otherwise the credit remains spent.                                                                         |
 | C22 | A coach may create a scheduled group event with immutable full-seat test-EURC price, minimum/maximum participants, deadline and payout recipient. This second feature uses one exact seat payment rather than a partial deposit plus another rail.                                                           |
 | C23 | Each confirmed booking has one bounded deterministic `CreditReservation` PDA. Reserve moves one credit from available to reserved; exactly one authorized terminal transition either returns it to available or consumes it at/after the session start. The retained receipt prevents replay.                |
-| C24 | Coach/gym splitting, attendance proofs, referrals, funded requests, waitlists, pass transfer/resale, subscriptions, reactions, comments, direct messages, reviews and rankings are deferred.                                                                                                                 |
+| C24 | Client-authored training requests, coach proposals, coach/gym splitting, attendance proofs, referrals, funded requests, waitlists, pass transfer/resale, subscriptions, reactions, comments, direct messages, reviews and rankings are deferred.                                                             |
 
 ### Proposed implementation defaults
 
@@ -61,15 +61,15 @@ An owning development ticket must adopt or replace each proposed default before 
 
 ### Guest
 
-A guest can browse fictional coaches, their selected public locations, public pass offers, availability, group events and posts. Public training requests expose only the bounded fields deliberately published by their author. A guest cannot buy, book, cancel, fund, request, propose, create, settle through a protected application action or see private proposal state.
+A guest can browse fictional coaches, their selected public locations, public pass offers, availability, group events and posts. A guest cannot buy, book, cancel, fund, create or settle through a protected application action.
 
 ### Client
 
-A client has an email-backed MovX account and may link one personal wallet through explicit signed-message proof. The client can buy one or ten credits from a coach, reserve a capacity-one calendar occurrence, request cancellation, create a training request, receive proposals, fund one group-event seat and recover that contribution when its pool fails. The application account does not replace the wallet signature required for value or credit authority.
+A client has an email-backed MovX account and may link one personal wallet through explicit signed-message proof. The client can buy one or ten credits from a coach, reserve a capacity-one calendar occurrence, request cancellation, fund one group-event seat and recover that contribution when its pool fails. The application account does not replace the wallet signature required for value or credit authority.
 
 ### Coach
 
-A coach is also a client and explicitly activates coaching without administrator approval. Activation permits profile setup but is not credential verification. The coach chooses one public discovery location, manages recurring availability, publishes one/ten-credit offers and a cancellation cutoff, sees authorized cards for clients who bought from them, decides late cancellation requests, responds to training requests and creates group events. The linked current wallet authorizes pass terms, receives pass payments and signs EventPool creation; a selected gym receives no financial authority.
+A coach is also a client and explicitly activates coaching without administrator approval. Activation permits profile setup but is not credential verification. The coach chooses one public discovery location, manages recurring availability, publishes one/ten-credit offers and a cancellation cutoff, sees authorized cards for clients who bought from them, decides late cancellation requests and creates group events. The linked current wallet authorizes pass terms, receives pass payments and signs EventPool creation; a selected gym receives no financial authority.
 
 ### MovX service
 
@@ -108,15 +108,7 @@ MovX stores and authorizes off-chain marketplace data, indexes finalized credit/
 4. A later cancellation becomes `CancellationRequested`. The coach explicitly approves a credit return or denies it; denial keeps the credit spent. Retries and reload recover the same decision.
 5. PostgreSQL owns the booking, occurrence and human-readable cancellation workflow. The program owns aggregate available/reserved credit transitions; neither layer fabricates the other's state.
 
-### 4.4 Client publishes a training request and coaches propose
-
-1. A signed-in client creates a bounded request describing discipline, experience, goal, preferred area/times, desired private or group format, optional participant target/budget and expiry.
-2. The client controls request visibility and may close it. Sensitive contact data is not published.
-3. Eligible coaches respond with a bounded proposal containing format, session/event concept, location, schedule, capacity or sessions, price indication and an optional message.
-4. Only the request owner and proposing coach can see private proposal details. Choosing a proposal records an off-chain marketplace decision; it does not move funds.
-5. A coach may use an accepted group proposal as the basis for creating one immutable EventPool, but browser-supplied proposal fields are never on-chain authority.
-
-### 4.5 Coach creates a group event
+### 4.4 Coach creates a group event
 
 1. The coach creates off-chain event details: title, discipline, description, location, start/end and optional image.
 2. The coach chooses the exact full-seat test-EURC price, minimum/maximum participants and funding deadline.
@@ -124,7 +116,7 @@ MovX stores and authorizes off-chain marketplace data, indexes finalized credit/
 4. The coach signs once. Finalized chain state is verified before the event is presented as fundable; metadata is keyed to the EventPool address.
 5. Financial terms are immutable. A failed or rejected creation produces no fundable event.
 
-### 4.6 Client funds one seat
+### 4.5 Client funds one seat
 
 1. A signed-in client opens an active event and sees the coach, schedule, location, exact test-EURC price, participant progress, minimum/maximum, deadline, refund rule, network and vault-backed funding status.
 2. MovX reads finalized EventPool state and the client's token account; it never trusts a browser-supplied amount, mint or recipient.
@@ -132,7 +124,7 @@ MovX stores and authorizes off-chain marketplace data, indexes finalized credit/
 4. The client signs one transaction that transfers exactly one seat price into the vault and creates exactly one Contribution PDA.
 5. Finalized state is indexed. Wallet rejection, wrong mint/amount, expired funding, full capacity, duplicate contribution or RPC ambiguity produces a bounded failure/recovery state and no invented participation.
 
-### 4.7 Settle a successfully funded event and pay the coach
+### 4.6 Settle a successfully funded event and pay the coach
 
 1. At or after the funding deadline, any caller submits settlement.
 2. The program compares finalized participant count with the immutable minimum and records `Succeeded` when the threshold was reached.
@@ -140,7 +132,7 @@ MovX stores and authorizes off-chain marketplace data, indexes finalized credit/
 4. One payout changes the pool to `Paid`; replay or a different recipient cannot pay twice.
 5. MovX refreshes event and contribution projections from finalized chain state.
 
-### 4.8 Settle an underfunded event and refund participants
+### 4.7 Settle an underfunded event and refund participants
 
 1. At or after the deadline, settlement records `Failed` when participant count is below the immutable minimum.
 2. Coach payout is permanently unavailable.
@@ -148,7 +140,7 @@ MovX stores and authorizes off-chain marketplace data, indexes finalized credit/
 4. One participant's refund does not require or block another's. A replay, unrelated wallet or altered destination cannot refund twice.
 5. MovX pays the transaction fee and any account rent and may submit it, but the participant still authorizes the refund and the program decides eligibility and amount.
 
-### 4.9 Follow and feed
+### 4.8 Follow and feed
 
 1. A signed-in client follows or unfollows a coach explicitly.
 2. A coach publishes a bounded text post with an optional image.
@@ -182,17 +174,9 @@ Minimum fields: client profile, coach profile, dated one-hour occurrence, chain 
 
 The coach workspace joins the public pair-ledger address/balances with coach-authorized client display identity and relevant booking history. It is a projection, not another chain account and not a permission to expose unrelated profile/contact data.
 
-### Off-chain request
-
-Minimum fields: owner, discipline, experience level, goal, preferred area, preferred days/times, private/group preference, optional participant/session target, optional budget, visibility, expiry and `Open | Closed | Matched` status. The exact schema and privacy projection belong to DEV0118.
-
-### Off-chain proposal
-
-Minimum fields: request, coach, format, bounded description/message, proposed schedule/location, capacity or sessions, price indication, expiry and `Pending | Selected | Declined | Withdrawn` status. Selection is not payment authority.
-
 ### Off-chain group event
 
-Minimum fields: coach profile, EventPool address, title, discipline, description, confirmed public location snapshot, start/end, optional image and publication state. Finalized chain state supplies price, capacity, deadline, participant count and funding outcome.
+Minimum fields: coach profile, EventPool address, title, discipline, description, confirmed public location snapshot, start/end, optional image and publication state. Finalized chain state supplies price, capacity, deadline, participant count and funding outcome. The completed persistence schema retains an optional `source_proposal_id` compatibility field, but the current product leaves it null; it has no foreign key, user flow or financial authority.
 
 ### EventPool PDA
 
@@ -247,7 +231,7 @@ The program does not prove attendance or satisfactory service. For the hackathon
 - Every pass-payment or funding screen says **Solana Devnet** and **test EURC**, and displays exact amount, credits or pool/outcome rule, recipient/vault and the MovX platform payer; it states that the user needs test EURC but no test SOL.
 - Wallet connection, email identity and linked-wallet proof remain visibly distinct.
 - Credentialed RPC URLs, sponsor keys and deployment/upgrade keys remain server/operator secrets.
-- The demo uses fictional coaches, locations, requests and events and implies no real partnership.
+- The demo uses fictional coaches, locations and events and implies no real partnership.
 - CoachAuthority, CoachClientCredits, EventPool and Contribution PDAs appear inside MovX and may link to Explorer; no NFT or Phantom collectible is promised.
 - Prepared demo wallets, pools and contributions may be seeded through a documented bounded rehearsal process, but no primary-path outcome may require manual database or chain-account editing.
 - The demo can be reset/reseeded without touching production or mainnet.
@@ -288,15 +272,13 @@ The MVP is complete only when:
 - every demonstrated client, coach and participant chain action uses the platform payer for SOL fees and rent without granting it product authority or requiring test SOL in a user wallet;
 - the same client can reserve one open calendar occurrence with one credit, receive an automatic early-cancellation return and submit a late cancellation for coach approval/denial;
 - a coach can see one authorized client card whose available/reserved credits and bookings match chain/database authority;
-- a client can publish one bounded training request and at least two coaches can respond with private authorized proposals;
-- a selected proposal can lead to a coach-created public group event without making off-chain proposal fields financial authority;
 - an authorized coach can create a fundable EventPool with exact immutable test-EURC price, minimum/maximum, deadline, schedule and recipient;
 - a linked participant wallet can fund exactly one seat and receive exactly one matching Contribution PDA;
 - a prepared pool below threshold settles to `Failed`, rejects coach payout and allows each demonstrated participant to reclaim exactly their contribution once;
 - a prepared pool reaching threshold settles to `Succeeded` and pays the immutable coach recipient exactly once;
 - wrong signer/client/mint/amount/token owner/recipient/nonce, duplicate credit operation/contribution, full capacity, early/duplicate settlement, payout/refund conflict and replay paths are tested;
 - RPC ambiguity and reload recover existing finalized state rather than repeating value movement;
-- booking/cancellation/request/proposal/event/profile/follow/post authorization and privacy survive reload;
+- booking/cancellation/event/profile/follow/post authorization and privacy survive reload;
 - no legacy membership or fixture-only pass/group-funding state masquerades as current live state;
 - relevant unit, database, authorization, program, Surfpool, static, build and responsive browser checks pass;
 - one hosted 2–3 minute staging/Devnet rehearsal completes with public transaction/account evidence and no manual repair.
@@ -307,7 +289,7 @@ The MVP is complete only when:
 2. **M1 — Reusable identity/discovery/network:** retain coach profiles, locations, recurring availability, list/Mapbox discovery, personal-wallet linking and coach social behavior.
 3. **M2 — Local coach-pass purchase:** extend CoachAuthority/Offer with one pair ledger per paying relationship and exact atomic one/ten-credit test-EURC purchases.
 4. **M3 — Credit-backed booking:** persist capacity-one bookings, coach cutoff policy, automatic early return, late coach decision and authorized client-card projection.
-5. **M4 — Pass interface and demand:** present pass/payment/booking/client-card flows and persist optional client requests/coach proposals.
+5. **M4 — Pass interface:** present pass/payment/booking/client-card flows.
 6. **M5 — Group-event catalogue and local pool:** persist group-event metadata and implement/test EventPool, Contribution, vault, settlement, payout and pull refunds.
 7. **M6 — Devnet integration:** integrate simulation, wallet approvals, bounded sponsorship, finalized verification, indexing and lost-response recovery for both value loops.
 8. **M7 — Hosted rehearsal:** deploy and prove one pass/booking/cancellation/client-card loop plus successful and failed group funding on staging with public Devnet evidence.
@@ -316,34 +298,31 @@ Gym accounts/payouts, coach/gym splitting, attendance proofs, production escrow/
 
 ## 13. Acceptance matrix
 
-| Scenario                              | Expected result                                                                                                                                        |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Guest opens Explore                   | Fictional coach, pass-offer and event lists load without sign-in; configured Mapbox pins match confirmed locations and failure leaves lists usable.    |
-| New user activates coaching           | The verified owner gains coach setup capability while retaining client behavior; no wallet or public visibility is inferred.                           |
-| Coach publishes pass offer            | Immutable active offer contains current authority epoch/recipient, exact positive test-EURC price, one or ten credits and optional client restriction. |
-| Client makes first purchase           | Exact test EURC reaches a coach-owned token account and one deterministic pair PDA records the exact available credits and next nonce atomically.      |
-| Client purchases again                | The same pair PDA accumulates credits/totals and advances one nonce; no second relationship account is created.                                        |
-| Wrong/replayed pass purchase          | Wrong client/mint/decimals/source/destination/offer/nonce fails without payment or credit mutation.                                                    |
-| Client books one open time            | Capacity-one occurrence becomes booked and exactly one coach-specific credit moves to the reviewed reserved/spent state.                               |
-| Client cancels early                  | Booking is cancelled and exactly one credit returns automatically before the frozen coach cutoff.                                                      |
-| Client cancels late                   | Request waits for the coach; approval returns one credit, denial leaves it spent, and retries cannot decide twice.                                     |
-| Coach opens client cards              | Only that coach sees authorized client identity plus correct pair balance and relevant bookings; unrelated contact/profile data remains private.       |
-| Client creates request                | One bounded request owned by that client persists with reviewed visibility and no public contact leakage.                                              |
-| Coach proposes                        | Only an activated eligible coach creates a proposal; request owner and proposing coach see private details.                                            |
-| Unrelated user reads private proposal | Access fails without exposing content.                                                                                                                 |
-| Coach creates valid pool              | EventPool/vault contain the expected immutable mint, price, minimum/maximum, deadline, schedule and recipient; metadata references its address.        |
-| Unauthorized user creates pool        | Transaction/application mutation fails without a fundable event.                                                                                       |
-| Participant funds seat                | Exact test EURC enters the expected vault and one Contribution PDA records the participant/amount.                                                     |
-| Same wallet funds again               | Program rejects without a second transfer or contribution.                                                                                             |
-| Funding is late or pool is full       | Program rejects without moving funds.                                                                                                                  |
-| Settlement is early                   | Program rejects and leaves `Funding` unchanged.                                                                                                        |
-| Threshold is reached                  | Permissionless settlement records `Succeeded`; refund is unavailable and exact coach payout succeeds once.                                             |
-| Threshold is missed                   | Settlement records `Failed`; coach payout fails and each contributor can refund exactly once.                                                          |
-| Unrelated wallet requests refund      | Program rejects and leaves contribution/vault unchanged.                                                                                               |
-| Payout/refund response is lost        | Reload/reconciliation finds the finalized existing operation and does not repeat the transfer.                                                         |
-| Wallet merely connects                | No account, coach role, event, contribution, payout or refund authority is inferred.                                                                   |
-| Coach posts/client follows            | Authorized state survives reload and the coach post appears chronologically.                                                                           |
-| Legacy membership URL is requested    | It is unavailable and cannot mutate current state.                                                                                                     |
+| Scenario                           | Expected result                                                                                                                                        |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Guest opens Explore                | Fictional coach, pass-offer and event lists load without sign-in; configured Mapbox pins match confirmed locations and failure leaves lists usable.    |
+| New user activates coaching        | The verified owner gains coach setup capability while retaining client behavior; no wallet or public visibility is inferred.                           |
+| Coach publishes pass offer         | Immutable active offer contains current authority epoch/recipient, exact positive test-EURC price, one or ten credits and optional client restriction. |
+| Client makes first purchase        | Exact test EURC reaches a coach-owned token account and one deterministic pair PDA records the exact available credits and next nonce atomically.      |
+| Client purchases again             | The same pair PDA accumulates credits/totals and advances one nonce; no second relationship account is created.                                        |
+| Wrong/replayed pass purchase       | Wrong client/mint/decimals/source/destination/offer/nonce fails without payment or credit mutation.                                                    |
+| Client books one open time         | Capacity-one occurrence becomes booked and exactly one coach-specific credit moves to the reviewed reserved/spent state.                               |
+| Client cancels early               | Booking is cancelled and exactly one credit returns automatically before the frozen coach cutoff.                                                      |
+| Client cancels late                | Request waits for the coach; approval returns one credit, denial leaves it spent, and retries cannot decide twice.                                     |
+| Coach opens client cards           | Only that coach sees authorized client identity plus correct pair balance and relevant bookings; unrelated contact/profile data remains private.       |
+| Coach creates valid pool           | EventPool/vault contain the expected immutable mint, price, minimum/maximum, deadline, schedule and recipient; metadata references its address.        |
+| Unauthorized user creates pool     | Transaction/application mutation fails without a fundable event.                                                                                       |
+| Participant funds seat             | Exact test EURC enters the expected vault and one Contribution PDA records the participant/amount.                                                     |
+| Same wallet funds again            | Program rejects without a second transfer or contribution.                                                                                             |
+| Funding is late or pool is full    | Program rejects without moving funds.                                                                                                                  |
+| Settlement is early                | Program rejects and leaves `Funding` unchanged.                                                                                                        |
+| Threshold is reached               | Permissionless settlement records `Succeeded`; refund is unavailable and exact coach payout succeeds once.                                             |
+| Threshold is missed                | Settlement records `Failed`; coach payout fails and each contributor can refund exactly once.                                                          |
+| Unrelated wallet requests refund   | Program rejects and leaves contribution/vault unchanged.                                                                                               |
+| Payout/refund response is lost     | Reload/reconciliation finds the finalized existing operation and does not repeat the transfer.                                                         |
+| Wallet merely connects             | No account, coach role, event, contribution, payout or refund authority is inferred.                                                                   |
+| Coach posts/client follows         | Authorized state survives reload and the coach post appears chronologically.                                                                           |
+| Legacy membership URL is requested | It is unavailable and cannot mutate current state.                                                                                                     |
 
 ## 14. Judge demo
 

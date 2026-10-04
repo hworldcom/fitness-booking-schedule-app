@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Marketplace M3 group-event catalogue
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: uses coach/profile/location identity from completed [DEV0096](DEV0096-persist-coach-profiles-and-discovery.md) and [DEV0110](DEV0110-activate-coaching-during-account-onboarding.md), may reference selected proposals from [DEV0118](../../current/backend/DEV0118-persist-training-requests-and-coach-proposals.md), and supplies contracts to [DEV0122](../../current/blockchain/DEV0122-integrate-devnet-group-event-funding.md) and [DEV0123](../../current/frontend/DEV0123-present-group-event-creation-and-funding.md)
+- Related records: uses coach/profile/location identity from completed [DEV0096](DEV0096-persist-coach-profiles-and-discovery.md) and [DEV0110](DEV0110-activate-coaching-during-account-onboarding.md), retains a nullable compatibility field from cancelled [DEV0118](DEV0118-persist-training-requests-and-coach-proposals.md), and supplies contracts to [DEV0122](../../current/blockchain/DEV0122-integrate-devnet-group-event-funding.md) and [DEV0123](../../current/frontend/DEV0123-present-group-event-creation-and-funding.md)
 
 ## Objective and context
 
@@ -26,7 +26,7 @@ The chain address is the durable join key. Store provider-neutral location snaps
 
 Implementation started on 2026-10-04. A draft snapshots the coach's public identity and confirmed location when it is created. Its descriptive fields remain editable only before a pool address is bound; after binding, schedule and location must remain identical to the verified pool contract. Public publication requires a matching finalized pool projection. A later `pending` or `unavailable` projection-availability label may hide stale financial details, but it cannot alter the last finalized projection or an on-chain lifecycle.
 
-P0 database bounds are: title 3–120 characters, description 20–2,000 characters, optional HTTPS or root-relative media reference up to 1,024 characters, event duration 30 minutes–12 hours, capacity 2–50, positive seat price up to `9,000,000,000,000,000` base units, and one contribution per participant wallet/event. Pool and contribution updates reject lower observed slots, conflicting equal-slot evidence, immutable-term changes, decreasing participant counts and lifecycle regression. The optional proposal UUID is stored without a foreign key until DEV0118 owns the proposal table; it grants no financial authority.
+P0 database bounds are: title 3–120 characters, description 20–2,000 characters, optional HTTPS or root-relative media reference up to 1,024 characters, event duration 30 minutes–12 hours, capacity 2–50, positive seat price up to `9,000,000,000,000,000` base units, and one contribution per participant wallet/event. Pool and contribution updates reject lower observed slots, conflicting equal-slot evidence, immutable-term changes, decreasing participant counts and lifecycle regression. At completion, the optional proposal UUID was stored without a foreign key pending DEV0118 and granted no financial authority. DEV0118 was later cancelled; the field remains nullable and unused under the narrowed contract.
 
 Binding snapshots the coach's one active Devnet wallet, and verified EventPool evidence must use it as coach authority. The immutable payout recipient remains a separate coach-chosen chain field rather than an application-owned identity assumption. Evidence must also use the official Devnet USDC mint and legacy SPL Token program.
 
@@ -76,7 +76,7 @@ Completed on 2026-10-04.
 
 - The original plan allowed either operation records or projections. The implementation uses monotonic finalized projections because DEV0122 already owns submission/recovery operation records and this ticket must not duplicate transaction orchestration.
 - A bound or published event cannot be descriptively edited. An unbound draft may be withdrawn; a bound pool cannot be hidden by pretending its metadata never existed.
-- Proposal references remain nullable UUID context without a foreign key until DEV0118 supplies an authoritative proposal table.
+- 2026-10-05 correction: DEV0118 was cancelled before implementation. Proposal references remain nullable UUID compatibility context without a foreign key, current user flow or authority.
 - No browser route or action was added. DEV0123 owns interface composition after the program and Devnet adapter contracts settle.
 
 ### Contracts, configuration, and operations

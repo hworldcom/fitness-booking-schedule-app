@@ -5,7 +5,7 @@
 - Last updated: 2026-10-05
 - Milestone: Marketplace M7 hosted rehearsal
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: integrates every COR0010 runtime peer after completion, including the completed EURC compatibility contract in [DEV0134](../../archive/blockchain/DEV0134-adopt-eurc-for-marketplace-payments.md); depends on hosted staging infrastructure under [COR0004](../organisatory/COR0004-hosted-staging-deployment.md) without replacing its ownership
+- Related records: integrates every retained COR0010 runtime peer after completion, including the completed EURC compatibility contract in [DEV0134](../../archive/blockchain/DEV0134-adopt-eurc-for-marketplace-payments.md) and two-loop scope consolidation in [DEV0135](../../archive/organisatory/DEV0135-narrow-marketplace-mvp-to-two-loops.md); depends on hosted staging infrastructure under [COR0004](../organisatory/COR0004-hosted-staging-deployment.md) without replacing its ownership
 
 ## Objective and context
 
@@ -14,7 +14,7 @@ Deploy and prove the primary coach-pass/calendar-booking loop and secondary cond
 ## Scope and non-goals
 
 - In scope: peer-completion/configuration audit; one live exact pass purchase; one booking and cancellation-policy proof; coach client-card consistency; deterministic fictional event setup; prepared funded wallets/pools; one live threshold-completing contribution; success payout; failed-pool refund; reload/recovery; Explorer/database/view consistency; desktop/mobile smoke; secret-safe reset/rollback evidence.
-- Out of scope: finishing peer work, production/mainnet, real participants, attendance/disputes, external monitoring guarantees or CI/CD.
+- Out of scope: finishing peer work, client-authored training requests, coach proposals, any third marketplace loop, production/mainnet, real participants, attendance/disputes, external monitoring guarantees or CI/CD.
 
 ## Expected behavior and edge cases
 
@@ -22,7 +22,7 @@ The primary path purchases a fictional coach's pass, reloads the same pair ledge
 
 ## Assumptions, decisions, and dependencies
 
-Every owning runtime ticket must be Completed before rehearsal. Exact Devnet program/mint/RPC/sponsor, deploy/upgrade authority and funding provenance must be documented without secrets. Prepared wallets are acceptable; private keys are never committed or included in evidence.
+Every owning runtime ticket for the two retained loops must be Completed before rehearsal. Cancelled request/proposal work is not a rehearsal dependency. Exact Devnet program/mint/RPC/sponsor, deploy/upgrade authority and funding provenance must be documented without secrets. Prepared wallets are acceptable; private keys are never committed or included in evidence.
 
 ## Implementation plan
 
