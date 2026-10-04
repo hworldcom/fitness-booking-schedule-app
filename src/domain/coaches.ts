@@ -16,6 +16,7 @@ export const COACH_AVAILABILITY_DURATIONS = Object.freeze([
 export type CoachAvailabilityDuration =
   (typeof COACH_AVAILABILITY_DURATIONS)[number];
 export type CoachAvailabilityStatus = "open" | "held" | "booked" | "withdrawn";
+export type CoachAvailabilityIsoWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 export type CoachDirectoryFilters = Readonly<{
   query: string;
@@ -84,7 +85,27 @@ export type PublicCoachAvailabilitySlot = Readonly<{
 }>;
 
 export type OwnedCoachAvailabilitySlot = PublicCoachAvailabilitySlot &
-  Readonly<{ status: CoachAvailabilityStatus }>;
+  Readonly<{
+    status: CoachAvailabilityStatus;
+    recurrenceRuleId: string | null;
+    recurrenceLocalDate: string | null;
+  }>;
+
+export type OwnedCoachAvailabilityRule = Readonly<{
+  id: string;
+  isoWeekday: CoachAvailabilityIsoWeekday;
+  localStartTime: string;
+  coachTimezone: string;
+}>;
+
+export type CoachAvailabilityRuleInput = Readonly<{
+  isoWeekday: CoachAvailabilityIsoWeekday;
+  localStartTime: string;
+}>;
+
+export type CoachAvailabilityRuleInputResult =
+  | Readonly<{ valid: true; value: CoachAvailabilityRuleInput }>
+  | Readonly<{ valid: false; errors: readonly string[] }>;
 
 export type CoachAvailabilityInput = Readonly<{
   localStart: string;
@@ -135,6 +156,7 @@ export type CoachAvailabilityWorkspaceState =
   | Readonly<{
       status: "authorized";
       coach: CoachProjection | null;
+      rules: readonly OwnedCoachAvailabilityRule[];
       slots: readonly OwnedCoachAvailabilitySlot[];
       ownerDisplayName: string;
       coachingActivated: boolean;
@@ -375,7 +397,41 @@ export function validateCoachAvailabilityInput(input: {
   });
 }
 
+export function validateCoachAvailabilityRuleInput(input: {
+  isoWeekday?: unknown;
+  localStartTime?: unknown;
+}): CoachAvailabilityRuleInputResult {
+  const errors: string[] = [];
+  const isoWeekday = Number(input.isoWeekday);
+  const localStartTime = normalizeSingleLine(input.localStartTime);
+
+  if (!Number.isInteger(isoWeekday) || isoWeekday < 1 || isoWeekday > 7) {
+    errors.push("Choose a weekday from Monday through Sunday.");
+  }
+  if (!/^(?:[01]\d|2[0-2]):00$/.test(localStartTime)) {
+    errors.push(
+      "Choose a whole-hour start between 00:00 and 22:00 local time.",
+    );
+  }
+
+  if (errors.length > 0) {
+    return Object.freeze({ valid: false, errors: Object.freeze(errors) });
+  }
+
+  return Object.freeze({
+    valid: true,
+    value: Object.freeze({
+      isoWeekday: isoWeekday as CoachAvailabilityIsoWeekday,
+      localStartTime,
+    }),
+  });
+}
+
 export function isCoachAvailabilitySlotId(value: string) {
+  return isUuid(value);
+}
+
+export function isCoachAvailabilityRuleId(value: string) {
   return isUuid(value);
 }
 

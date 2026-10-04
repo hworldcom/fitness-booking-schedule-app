@@ -6,6 +6,7 @@ import {
   localDateTimeValue,
   normalizeCoachDirectoryFilters,
   validateCoachAvailabilityInput,
+  validateCoachAvailabilityRuleInput,
   validateCoachProfileInput,
 } from "@/domain/coaches";
 
@@ -152,6 +153,30 @@ test("coach availability accepts only explicit 15-minute bounded slots", () => {
     { localStart: "2026-10-05T14:15", durationMinutes: 181 },
   ]) {
     assert.equal(validateCoachAvailabilityInput(input).valid, false);
+  }
+});
+
+test("weekly coach availability accepts exact non-cross-midnight hours", () => {
+  assert.deepEqual(
+    validateCoachAvailabilityRuleInput({
+      isoWeekday: "1",
+      localStartTime: "18:00",
+    }),
+    {
+      valid: true,
+      value: { isoWeekday: 1, localStartTime: "18:00" },
+    },
+  );
+
+  for (const input of [
+    { isoWeekday: 0, localStartTime: "18:00" },
+    { isoWeekday: 8, localStartTime: "18:00" },
+    { isoWeekday: 1.5, localStartTime: "18:00" },
+    { isoWeekday: 1, localStartTime: "18:30" },
+    { isoWeekday: 1, localStartTime: "23:00" },
+    { isoWeekday: 1, localStartTime: "24:00" },
+  ]) {
+    assert.equal(validateCoachAvailabilityRuleInput(input).valid, false);
   }
 });
 

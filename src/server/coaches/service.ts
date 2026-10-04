@@ -2,6 +2,7 @@ import "server-only";
 
 import type {
   CoachAvailabilityInput,
+  CoachAvailabilityRuleInput,
   CoachAvailabilityWorkspaceState,
   CoachDirectoryState,
   CoachDirectoryFilters,
@@ -15,8 +16,11 @@ import { currentActorProjection } from "@/server/db/authorization/repository";
 import {
   CoachAvailabilityConflictError,
   createOwnedCoachAvailabilityRecord,
+  createOwnedCoachAvailabilityRuleRecord,
   currentOwnedCoachAvailabilityRecords,
+  currentOwnedCoachAvailabilityRuleRecords,
   publicCoachAvailabilityRecords,
+  removeOwnedCoachAvailabilityRuleRecord,
   updateOwnedCoachAvailabilityRecord,
   withdrawOwnedCoachAvailabilityRecord,
 } from "@/server/db/coaches/availability-repository";
@@ -112,6 +116,7 @@ export async function currentCoachAvailabilityWorkspace(): Promise<CoachAvailabi
     if (!owner.coachingActivated) {
       return Object.freeze({
         coach: null,
+        rules: Object.freeze([]),
         slots: Object.freeze([]),
         ownerDisplayName: owner.displayName,
         coachingActivated: false,
@@ -122,8 +127,13 @@ export async function currentCoachAvailabilityWorkspace(): Promise<CoachAvailabi
       transaction,
       actor,
     );
+    const rules = await currentOwnedCoachAvailabilityRuleRecords(
+      transaction,
+      actor,
+    );
     return Object.freeze({
       coach,
+      rules,
       slots,
       ownerDisplayName: owner.displayName,
       coachingActivated: true,
@@ -183,5 +193,19 @@ export function updateOwnedCoachAvailability(
 export function withdrawOwnedCoachAvailability(slotId: string) {
   return mutateCoachAvailability((transaction) =>
     withdrawOwnedCoachAvailabilityRecord(transaction, slotId),
+  );
+}
+
+export function createOwnedCoachAvailabilityRule(
+  input: CoachAvailabilityRuleInput,
+) {
+  return mutateCoachAvailability((transaction) =>
+    createOwnedCoachAvailabilityRuleRecord(transaction, input),
+  );
+}
+
+export function removeOwnedCoachAvailabilityRule(ruleId: string) {
+  return mutateCoachAvailability((transaction) =>
+    removeOwnedCoachAvailabilityRuleRecord(transaction, ruleId),
   );
 }

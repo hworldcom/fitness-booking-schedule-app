@@ -22,7 +22,7 @@ Start with the [MVP specification](docs/mvp-spec.md). It is the single current p
 
 Delivered reusable foundations include the responsive Next.js application shell, local Supabase/PostgreSQL workflow, server-only database boundary, email-code accounts, protected application profiles, self-service coaching activation, Phantom discovery through Wallet Standard and Cloudflare staging tooling. The optional personal-wallet proof flow is implemented locally under [DEV0047](tickets/current/backend/DEV0047-personal-wallet-linking-and-replacement.md), but remains in progress pending its required real-Phantom and signed-in responsive-keyboard evidence.
 
-Persistent self-declared coach profiles, coach-selected public locations and list-based coach discovery are implemented under [DEV0096](tickets/archive/backend/DEV0096-persist-coach-profiles-and-discovery.md); explicit seven-day availability and the protected coach workspace are implemented under [DEV0104](tickets/archive/backend/DEV0104-publish-weekly-coach-availability.md); one-way follows, coach-only posts, public recent posts and the chronological Following feed are implemented under [DEV0100](tickets/archive/backend/DEV0100-coach-follows-and-chronological-posts.md). The Mapbox Explore view, one-session/ten-session Offer accounts, test-USDC purchase, TrainingPass state, private booking and completed-session redemption are not complete until their COR0009 development tickets record implementation and validation. The public home and coach directory present a truthful coach-first early-access state while those later capabilities are built. Retired gym and membership routes return not found rather than exposing a second product.
+Persistent self-declared coach profiles, coach-selected public locations and list-based coach discovery are implemented under [DEV0096](tickets/archive/backend/DEV0096-persist-coach-profiles-and-discovery.md); the protected coach workspace and explicit-slot baseline are implemented under [DEV0104](tickets/archive/backend/DEV0104-publish-weekly-coach-availability.md); and [DEV0114](tickets/archive/backend/DEV0114-persist-recurring-coach-availability.md) adds exact one-hour recurring rules plus durable seven-day occurrences while DEV0115 still owns the calendar interface. One-way follows, coach-only posts, public recent posts and the chronological Following feed are implemented under [DEV0100](tickets/archive/backend/DEV0100-coach-follows-and-chronological-posts.md). The Mapbox Explore release, editable schedule calendar, one-session/ten-session Offer accounts, test-USDC purchase, TrainingPass state, private booking and completed-session redemption are not complete until their COR0009 development tickets record implementation and validation. The public home and coach directory present a truthful coach-first early-access state while those later capabilities are built. Retired gym and membership routes return not found rather than exposing a second product.
 
 ## Run locally
 
@@ -66,6 +66,14 @@ npm run db:runtime
 Copy the printed public `API_URL` and `PUBLISHABLE_KEY` (or legacy `ANON_KEY`) to `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `.env.local`. Keep `NEXT_PUBLIC_SITE_URL=http://localhost:3100`. Never expose the service-role/secret key.
 
 Open `/sign-in`, request a code and read it from local Mailpit at [127.0.0.1:55324](http://127.0.0.1:55324). The first verified login creates an application profile, then offers Find a coach or Offer coaching as starting paths. Offer coaching immediately records owner-scoped activation without administrator approval and opens coach-profile setup; it does not publish or verify the coach. Subsequent codes restore the same account. Optional personal-wallet linking is a separate signed-message proof and connecting Phantom alone does not authenticate or activate coaching.
+
+To exercise owner flows as the five existing fictional coaches, provision their passwordless local accounts after `auth:start` and `db:reset`:
+
+```sh
+npm run auth:provision:coaches
+```
+
+Use `daniel.park@coaches.movx.test`, `sam.lee@coaches.movx.test`, `nora.klein@coaches.movx.test`, `idris.malik@coaches.movx.test` or `elif.demir@coaches.movx.test` on `/sign-in`; request each code normally and read it from Mailpit. These reserved `.test` addresses are fictional identifiers, not credentials. The command refuses non-loopback Auth/database targets, supplies or exposes no password, and converts only the matching seeded local profiles to owner-managed demo records. It is safe to rerun. `npm run db:reset` removes the disposable local accounts and is the supported rollback; this workflow does not create hosted accounts.
 
 ## Mapbox configuration
 

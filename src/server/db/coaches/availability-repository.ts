@@ -3,8 +3,11 @@ import "server-only";
 import { sql } from "drizzle-orm";
 import type {
   CoachAvailabilityInput,
+  CoachAvailabilityIsoWeekday,
+  CoachAvailabilityRuleInput,
   CoachAvailabilityStatus,
   OwnedCoachAvailabilitySlot,
+  OwnedCoachAvailabilityRule,
   PublicCoachAvailabilitySlot,
 } from "@/domain/coaches";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
@@ -13,6 +16,8 @@ import { withDatabaseConnection } from "@/server/db/client";
 
 type AvailabilityRow = Readonly<{
   id: string;
+  recurrence_rule_id: string | null;
+  recurrence_local_date: string | null;
   starts_at: string | Date;
   ends_at: string | Date;
   coach_timezone: string;
@@ -26,6 +31,13 @@ type AvailabilityRow = Readonly<{
   location_source: string;
   location_provider: string | null;
   location_confirmed_at: string | Date;
+}>;
+
+type AvailabilityRuleRow = Readonly<{
+  id: string;
+  iso_weekday: number;
+  local_start_time: string;
+  coach_timezone: string;
 }>;
 
 export class CoachAvailabilityConflictError extends Error {
@@ -50,6 +62,8 @@ function isAvailabilityStatus(value: string): value is CoachAvailabilityStatus {
 function availabilitySelect() {
   return sql.raw(`
     slot.id,
+    slot.recurrence_rule_id,
+    slot.recurrence_local_date,
     slot.starts_at,
     slot.ends_at,
     slot.coach_timezone,
@@ -117,7 +131,42 @@ function mapAvailabilityBase(row: AvailabilityRow) {
 function mapOwnedAvailability(
   row: AvailabilityRow,
 ): OwnedCoachAvailabilitySlot {
-  return mapAvailabilityBase(row);
+  const slot = mapAvailabilityBase(row);
+  if (
+    (row.recurrence_rule_id === null) !==
+      (row.recurrence_local_date === null) ||
+    (row.recurrence_local_date !== null &&
+      !/^\d{4}-\d{2}-\d{2}$/.test(row.recurrence_local_date))
+  ) {
+    throw new CoachAvailabilityConflictError();
+  }
+  return Object.freeze({
+    ...slot,
+    recurrenceRuleId: row.recurrence_rule_id,
+    recurrenceLocalDate: row.recurrence_local_date,
+  });
+}
+
+function isIsoWeekday(value: number): value is CoachAvailabilityIsoWeekday {
+  return Number.isInteger(value) && value >= 1 && value <= 7;
+}
+
+function mapAvailabilityRule(
+  row: AvailabilityRuleRow,
+): OwnedCoachAvailabilityRule {
+  const localStartTime = row.local_start_time.slice(0, 5);
+  if (
+    !isIsoWeekday(row.iso_weekday) ||
+    !/^(?:[01]\d|2[0-2]):00$/.test(localStartTime)
+  ) {
+    throw new CoachAvailabilityConflictError();
+  }
+  return Object.freeze({
+    id: row.id,
+    isoWeekday: row.iso_weekday,
+    localStartTime,
+    coachTimezone: row.coach_timezone,
+  });
 }
 
 function mapPublicAvailability(
@@ -135,6 +184,11 @@ function mapPublicAvailability(
 
 export async function publicCoachAvailabilityRecords(profileId: string) {
   return withDatabaseConnection(async ({ db }) => {
+    await db.execute(sql`
+      select app.synchronize_public_coach_availability(
+        ${profileId}::uuid
+      )
+    `);
     const rows = await db.execute<AvailabilityRow>(sql`
       select ${availabilitySelect()}
       from app.coach_availability_slots as slot
@@ -153,6 +207,9 @@ export async function currentOwnedCoachAvailabilityRecords(
   transaction: ActorDatabaseTransaction,
   actor: AuthorizedActor,
 ) {
+  await transaction.execute(sql`
+    select app.synchronize_owned_coach_availability()
+  `);
   const rows = await transaction.execute<AvailabilityRow>(sql`
     select ${availabilitySelect()}
     from app.coach_availability_slots as slot
@@ -167,6 +224,25 @@ export async function currentOwnedCoachAvailabilityRecords(
   return Object.freeze(rows.map(mapOwnedAvailability));
 }
 
+export async function currentOwnedCoachAvailabilityRuleRecords(
+  transaction: ActorDatabaseTransaction,
+  actor: AuthorizedActor,
+) {
+  const rows = await transaction.execute<AvailabilityRuleRow>(sql`
+    select
+      rule.id,
+      rule.iso_weekday,
+      rule.local_start_time::text,
+      rule.coach_timezone
+    from app.coach_availability_rules as rule
+    where rule.run_id = ${actor.runId}::uuid
+      and rule.profile_id = ${actor.profileId}::uuid
+      and rule.status = 'active'
+    order by rule.iso_weekday, rule.local_start_time, rule.id
+  `);
+  return Object.freeze(rows.map(mapAvailabilityRule));
+}
+
 function isPostgresAvailabilityError(error: unknown) {
   let current = error;
   for (let depth = 0; depth < 4; depth += 1) {
@@ -174,6 +250,7 @@ function isPostgresAvailabilityError(error: unknown) {
     if (
       "code" in current &&
       (current.code === "23P01" ||
+        current.code === "23505" ||
         current.code === "23514" ||
         current.code === "23503" ||
         (current.code === "P0001" &&
@@ -186,6 +263,52 @@ function isPostgresAvailabilityError(error: unknown) {
     current = "cause" in current ? current.cause : null;
   }
   return false;
+}
+
+async function availabilityRuleMutation(
+  work: () => Promise<readonly Readonly<{ rule_id: string }>[]>,
+) {
+  try {
+    const rows = await work();
+    const ruleId = rows[0]?.rule_id;
+    if (!ruleId || rows.length !== 1) {
+      throw new CoachAvailabilityConflictError();
+    }
+    return ruleId;
+  } catch (error) {
+    if (error instanceof CoachAvailabilityConflictError) throw error;
+    if (isPostgresAvailabilityError(error)) {
+      throw new CoachAvailabilityConflictError(undefined, { cause: error });
+    }
+    throw error;
+  }
+}
+
+export async function createOwnedCoachAvailabilityRuleRecord(
+  transaction: ActorDatabaseTransaction,
+  input: CoachAvailabilityRuleInput,
+) {
+  return availabilityRuleMutation(() =>
+    transaction.execute<{ rule_id: string }>(sql`
+      select app.create_owned_coach_availability_rule(
+        ${input.isoWeekday}::smallint,
+        ${input.localStartTime}::time without time zone
+      ) as rule_id
+    `),
+  );
+}
+
+export async function removeOwnedCoachAvailabilityRuleRecord(
+  transaction: ActorDatabaseTransaction,
+  ruleId: string,
+) {
+  return availabilityRuleMutation(() =>
+    transaction.execute<{ rule_id: string }>(sql`
+      select app.remove_owned_coach_availability_rule(
+        ${ruleId}::uuid
+      ) as rule_id
+    `),
+  );
 }
 
 async function availabilityMutation(

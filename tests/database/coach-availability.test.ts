@@ -11,8 +11,11 @@ import { withActorDatabaseContext } from "@/server/db/authorization/repository";
 import {
   CoachAvailabilityConflictError,
   createOwnedCoachAvailabilityRecord,
+  createOwnedCoachAvailabilityRuleRecord,
   currentOwnedCoachAvailabilityRecords,
+  currentOwnedCoachAvailabilityRuleRecords,
   publicCoachAvailabilityRecords,
+  removeOwnedCoachAvailabilityRuleRecord,
   updateOwnedCoachAvailabilityRecord,
   withdrawOwnedCoachAvailabilityRecord,
 } from "@/server/db/coaches/availability-repository";
@@ -61,6 +64,16 @@ function actorFromRecord(
 async function removeFixtures() {
   await admin`
     delete from app.coach_availability_slots
+    where profile_id in (
+      select id from app.profiles
+      where auth_user_id in (
+        ${firstAuthUserId}::uuid,
+        ${secondAuthUserId}::uuid
+      )
+    )
+  `;
+  await admin`
+    delete from app.coach_availability_rules
     where profile_id in (
       select id from app.profiles
       where auth_user_id in (
@@ -158,6 +171,19 @@ function availabilityInput(
   });
 }
 
+function recurringRuleInput(daysFromNow: number, localStartTime: string) {
+  const localDate = localDateTimeValue(
+    new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000),
+    "Europe/Berlin",
+  ).slice(0, 10);
+  const [year, month, day] = localDate.split("-").map(Number);
+  const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+  return Object.freeze({
+    isoWeekday: (weekday === 0 ? 7 : weekday) as 1 | 2 | 3 | 4 | 5 | 6 | 7,
+    localStartTime,
+  });
+}
+
 before(async () => {
   await removeFixtures();
   await admin`
@@ -204,6 +230,8 @@ test("owner publishes a public slot with a stable location snapshot", async () =
   assert.equal(owned.length, 1);
   assert.equal(owned[0]?.id, slotId);
   assert.equal(owned[0]?.status, "open");
+  assert.equal(owned[0]?.recurrenceRuleId, null);
+  assert.equal(owned[0]?.recurrenceLocalDate, null);
   assert.equal(owned[0]?.location.gymName, "Northside Combat");
 
   const visible = await publicCoachAvailabilityRecords(firstActor.profileId);
@@ -425,5 +453,308 @@ test("database rejects unsupported local times and publication horizons", async 
       createOwnedCoachAvailabilityRecord(transaction, availabilityInput(-2)),
     ),
     CoachAvailabilityConflictError,
+  );
+});
+
+test("weekly rules materialize once, preserve snapshots and remove only open occurrences", async () => {
+  const earlyRuleInput = recurringRuleInput(2, "06:00");
+  const adjacentRuleInput = recurringRuleInput(2, "07:00");
+  const openRuleInput = recurringRuleInput(2, "08:00");
+  const earlyRuleId = await withActorDatabaseContext(
+    secondActor,
+    (transaction) =>
+      createOwnedCoachAvailabilityRuleRecord(transaction, earlyRuleInput),
+  );
+
+  const duplicateAttempts = await Promise.allSettled([
+    withActorDatabaseContext(secondActor, (transaction) =>
+      createOwnedCoachAvailabilityRuleRecord(transaction, adjacentRuleInput),
+    ),
+    withActorDatabaseContext(secondActor, (transaction) =>
+      createOwnedCoachAvailabilityRuleRecord(transaction, adjacentRuleInput),
+    ),
+  ]);
+  assert.equal(
+    duplicateAttempts.filter((attempt) => attempt.status === "fulfilled")
+      .length,
+    1,
+  );
+  const rejected = duplicateAttempts.find(
+    (attempt) => attempt.status === "rejected",
+  );
+  assert.ok(
+    rejected && rejected.reason instanceof CoachAvailabilityConflictError,
+  );
+  const adjacentRuleId = duplicateAttempts.find(
+    (attempt) => attempt.status === "fulfilled",
+  )?.value;
+  assert.ok(adjacentRuleId);
+  const openRuleId = await withActorDatabaseContext(
+    secondActor,
+    (transaction) =>
+      createOwnedCoachAvailabilityRuleRecord(transaction, openRuleInput),
+  );
+
+  let rules = await withActorDatabaseContext(secondActor, (transaction) =>
+    currentOwnedCoachAvailabilityRuleRecords(transaction, secondActor),
+  );
+  assert.deepEqual(
+    rules.map((rule) => [rule.localStartTime, rule.coachTimezone]),
+    [
+      ["06:00", "Europe/Berlin"],
+      ["07:00", "Europe/Berlin"],
+      ["08:00", "Europe/Berlin"],
+    ],
+  );
+
+  const firstRead = await withActorDatabaseContext(secondActor, (transaction) =>
+    currentOwnedCoachAvailabilityRecords(transaction, secondActor),
+  );
+  const secondRead = await publicCoachAvailabilityRecords(
+    secondActor.profileId,
+  );
+  await publicCoachAvailabilityRecords(secondActor.profileId);
+  const generated = firstRead.filter((slot) => slot.recurrenceRuleId !== null);
+  assert.equal(generated.length, 3);
+  assert.equal(secondRead.length, 3);
+  assert.equal(
+    new Set(generated.map((slot) => slot.recurrenceLocalDate)).size,
+    1,
+  );
+  assert.ok(
+    generated.every(
+      (slot) =>
+        new Date(slot.endsAt).getTime() - new Date(slot.startsAt).getTime() ===
+        60 * 60 * 1000,
+    ),
+  );
+
+  const occurrenceCounts = await admin<
+    { recurrence_rule_id: string; occurrence_count: number }[]
+  >`
+    select recurrence_rule_id::text, count(*)::integer as occurrence_count
+    from app.coach_availability_slots
+    where recurrence_rule_id in (
+      ${earlyRuleId}::uuid,
+      ${adjacentRuleId}::uuid,
+      ${openRuleId}::uuid
+    )
+    group by recurrence_rule_id
+    order by recurrence_rule_id
+  `;
+  assert.equal(occurrenceCounts.length, 3);
+  assert.ok(occurrenceCounts.every((row) => row.occurrence_count === 1));
+
+  const movedProfile: CoachProfileInput = Object.freeze({
+    ...secondProfile,
+    timezone: "UTC",
+    independentLocation: Object.freeze({
+      label: "Mauerpark — west entrance",
+      latitude: 52.543308,
+      longitude: 13.402481,
+      source: "manual",
+      provider: null,
+    }),
+  });
+  await withActorDatabaseContext(secondActor, (transaction) =>
+    upsertOwnedCoachProfileRecord(transaction, movedProfile),
+  );
+  rules = await withActorDatabaseContext(secondActor, (transaction) =>
+    currentOwnedCoachAvailabilityRuleRecords(transaction, secondActor),
+  );
+  assert.ok(rules.every((rule) => rule.coachTimezone === "Europe/Berlin"));
+  const stable = await withActorDatabaseContext(secondActor, (transaction) =>
+    currentOwnedCoachAvailabilityRecords(transaction, secondActor),
+  );
+  assert.ok(
+    stable
+      .filter((slot) => slot.recurrenceRuleId !== null)
+      .every(
+        (slot) => slot.location.label === "Tempelhofer Feld — north entrance",
+      ),
+  );
+
+  await assert.rejects(
+    withActorDatabaseContext(firstActor, (transaction) =>
+      removeOwnedCoachAvailabilityRuleRecord(transaction, earlyRuleId),
+    ),
+    CoachAvailabilityConflictError,
+  );
+
+  const earlyOccurrence = generated.find(
+    (slot) => slot.recurrenceRuleId === earlyRuleId,
+  );
+  const adjacentOccurrence = generated.find(
+    (slot) => slot.recurrenceRuleId === adjacentRuleId,
+  );
+  const openOccurrence = generated.find(
+    (slot) => slot.recurrenceRuleId === openRuleId,
+  );
+  assert.ok(earlyOccurrence);
+  assert.ok(adjacentOccurrence);
+  assert.ok(openOccurrence);
+  await assert.rejects(
+    withActorDatabaseContext(secondActor, (transaction) =>
+      updateOwnedCoachAvailabilityRecord(
+        transaction,
+        earlyOccurrence.id,
+        availabilityInput(5),
+      ),
+    ),
+    CoachAvailabilityConflictError,
+  );
+  await assert.rejects(
+    withActorDatabaseContext(secondActor, (transaction) =>
+      withdrawOwnedCoachAvailabilityRecord(transaction, openOccurrence.id),
+    ),
+    CoachAvailabilityConflictError,
+  );
+  await admin.begin(async (transaction) => {
+    await transaction`
+      select set_config('app.coach_booking_management', 'on', true)
+    `;
+    await transaction`
+      update app.coach_availability_slots
+      set status = case
+        when id = ${earlyOccurrence.id}::uuid then 'booked'
+        when id = ${adjacentOccurrence.id}::uuid then 'held'
+        else status
+      end
+      where id in (
+        ${earlyOccurrence.id}::uuid,
+        ${adjacentOccurrence.id}::uuid
+      )
+    `;
+  });
+
+  await withActorDatabaseContext(secondActor, (transaction) =>
+    removeOwnedCoachAvailabilityRuleRecord(transaction, earlyRuleId),
+  );
+  await withActorDatabaseContext(secondActor, (transaction) =>
+    removeOwnedCoachAvailabilityRuleRecord(transaction, adjacentRuleId),
+  );
+  await withActorDatabaseContext(secondActor, (transaction) =>
+    removeOwnedCoachAvailabilityRuleRecord(transaction, openRuleId),
+  );
+  assert.equal(
+    await withActorDatabaseContext(secondActor, (transaction) =>
+      removeOwnedCoachAvailabilityRuleRecord(transaction, openRuleId),
+    ),
+    openRuleId,
+  );
+
+  const lifecycle = await admin<
+    { id: string; status: string; starts_at: Date; ends_at: Date }[]
+  >`
+    select id::text, status, starts_at, ends_at
+    from app.coach_availability_slots
+    where id in (
+      ${earlyOccurrence.id}::uuid,
+      ${adjacentOccurrence.id}::uuid,
+      ${openOccurrence.id}::uuid
+    )
+    order by id
+  `;
+  assert.equal(
+    lifecycle.find((slot) => slot.id === earlyOccurrence.id)?.status,
+    "booked",
+  );
+  assert.equal(
+    lifecycle.find((slot) => slot.id === adjacentOccurrence.id)?.status,
+    "held",
+  );
+  assert.equal(
+    lifecycle.find((slot) => slot.id === openOccurrence.id)?.status,
+    "withdrawn",
+  );
+  assert.equal(
+    lifecycle
+      .find((slot) => slot.id === earlyOccurrence.id)
+      ?.starts_at.getTime(),
+    new Date(earlyOccurrence.startsAt).getTime(),
+  );
+  assert.equal(
+    lifecycle.find((slot) => slot.id === earlyOccurrence.id)?.ends_at.getTime(),
+    new Date(earlyOccurrence.endsAt).getTime(),
+  );
+
+  assert.deepEqual(
+    await withActorDatabaseContext(secondActor, (transaction) =>
+      currentOwnedCoachAvailabilityRuleRecords(transaction, secondActor),
+    ),
+    [],
+  );
+  await withActorDatabaseContext(secondActor, (transaction) =>
+    upsertOwnedCoachProfileRecord(transaction, secondProfile),
+  );
+});
+
+test("recurring rules reject invalid hours and omit ambiguous local times", async () => {
+  for (const localStartTime of ["06:30", "23:00"]) {
+    await assert.rejects(
+      withActorDatabaseContext(secondActor, (transaction) =>
+        createOwnedCoachAvailabilityRuleRecord(transaction, {
+          isoWeekday: 1,
+          localStartTime,
+        }),
+      ),
+      CoachAvailabilityConflictError,
+    );
+  }
+
+  const [times] = await admin<
+    { spring_gap: boolean; fall_overlap: boolean; ordinary: boolean }[]
+  >`
+    select
+      app.coach_local_time_is_unambiguous(
+        timestamp '2027-03-28 02:00:00',
+        'Europe/Berlin'
+      ) as spring_gap,
+      app.coach_local_time_is_unambiguous(
+        timestamp '2026-10-25 02:00:00',
+        'Europe/Berlin'
+      ) as fall_overlap,
+      app.coach_local_time_is_unambiguous(
+        timestamp '2026-10-25 04:00:00',
+        'Europe/Berlin'
+      ) as ordinary
+  `;
+  assert.deepEqual(times, {
+    spring_gap: false,
+    fall_overlap: false,
+    ordinary: true,
+  });
+});
+
+test("a recurring occurrence cannot overlap retained explicit inventory", async () => {
+  const ruleInput = recurringRuleInput(3, "09:00");
+  const localDate = localDateTimeValue(
+    new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+    "Europe/Berlin",
+  ).slice(0, 10);
+  const explicitSlotId = await withActorDatabaseContext(
+    secondActor,
+    (transaction) =>
+      createOwnedCoachAvailabilityRecord(transaction, {
+        localStart: `${localDate}T09:00`,
+        durationMinutes: 60,
+        refreshLocation: false,
+      }),
+  );
+
+  await assert.rejects(
+    withActorDatabaseContext(secondActor, (transaction) =>
+      createOwnedCoachAvailabilityRuleRecord(transaction, ruleInput),
+    ),
+    CoachAvailabilityConflictError,
+  );
+  assert.deepEqual(
+    await withActorDatabaseContext(secondActor, (transaction) =>
+      currentOwnedCoachAvailabilityRuleRecords(transaction, secondActor),
+    ),
+    [],
+  );
+  await withActorDatabaseContext(secondActor, (transaction) =>
+    withdrawOwnedCoachAvailabilityRecord(transaction, explicitSlotId),
   );
 });

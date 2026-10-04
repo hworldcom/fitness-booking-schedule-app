@@ -1,14 +1,17 @@
 import { sql } from "drizzle-orm";
 import {
   check,
+  date,
   foreignKey,
   index,
   numeric,
   primaryKey,
   smallint,
   text,
+  time,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 import { app, demoRunParticipants, gyms } from "./foundation";
@@ -196,12 +199,77 @@ export const coachProfileDisciplines = app.table(
   ],
 );
 
+export const coachAvailabilityRules = app.table(
+  "coach_availability_rules",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    runId: uuid("run_id").notNull(),
+    profileId: uuid("profile_id").notNull(),
+    isoWeekday: smallint("iso_weekday").notNull(),
+    localStartTime: time("local_start_time").notNull(),
+    coachTimezone: text("coach_timezone").notNull(),
+    status: text("status").default("active").notNull(),
+    removedAt: timestamp("removed_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    ...auditColumns,
+  },
+  (table) => [
+    foreignKey({
+      name: "coach_availability_rules_coach_fkey",
+      columns: [table.runId, table.profileId],
+      foreignColumns: [coachProfiles.runId, coachProfiles.profileId],
+    }).onDelete("restrict"),
+    unique("coach_availability_rules_run_profile_id_key").on(
+      table.runId,
+      table.profileId,
+      table.id,
+    ),
+    check(
+      "coach_availability_rules_weekday_check",
+      sql`${table.isoWeekday} between 1 and 7`,
+    ),
+    check(
+      "coach_availability_rules_start_check",
+      sql`extract(minute from ${table.localStartTime}) = 0 and extract(second from ${table.localStartTime}) = 0 and ${table.localStartTime} < time '23:00:00'`,
+    ),
+    check(
+      "coach_availability_rules_timezone_format_check",
+      sql`${table.coachTimezone} = 'UTC' or ${table.coachTimezone} ~ '^[A-Za-z_]+(?:/[A-Za-z0-9_+.-]+)+$'`,
+    ),
+    check(
+      "coach_availability_rules_status_check",
+      sql`${table.status} in ('active', 'removed')`,
+    ),
+    check(
+      "coach_availability_rules_removed_state_check",
+      sql`(${table.status} = 'removed') = (${table.removedAt} is not null)`,
+    ),
+    uniqueIndex("coach_availability_rules_active_time_key")
+      .on(table.runId, table.profileId, table.isoWeekday, table.localStartTime)
+      .where(sql`${table.status} = 'active'`),
+    index("coach_availability_rules_owner_lookup_idx").on(
+      table.runId,
+      table.profileId,
+      table.status,
+      table.isoWeekday,
+      table.localStartTime,
+      table.id,
+    ),
+  ],
+);
+
 export const coachAvailabilitySlots = app.table(
   "coach_availability_slots",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     runId: uuid("run_id").notNull(),
     profileId: uuid("profile_id").notNull(),
+    recurrenceRuleId: uuid("recurrence_rule_id"),
+    recurrenceLocalDate: date("recurrence_local_date", {
+      mode: "string",
+    }),
     startsAt: timestamp("starts_at", {
       withTimezone: true,
       mode: "string",
@@ -240,6 +308,23 @@ export const coachAvailabilitySlots = app.table(
       columns: [table.runId, table.profileId],
       foreignColumns: [coachProfiles.runId, coachProfiles.profileId],
     }).onDelete("restrict"),
+    foreignKey({
+      name: "coach_availability_slots_rule_fkey",
+      columns: [table.runId, table.profileId, table.recurrenceRuleId],
+      foreignColumns: [
+        coachAvailabilityRules.runId,
+        coachAvailabilityRules.profileId,
+        coachAvailabilityRules.id,
+      ],
+    }).onDelete("restrict"),
+    check(
+      "coach_availability_slots_recurrence_pair_check",
+      sql`(${table.recurrenceRuleId} is null) = (${table.recurrenceLocalDate} is null)`,
+    ),
+    check(
+      "coach_availability_slots_recurring_duration_check",
+      sql`${table.recurrenceRuleId} is null or ${table.endsAt} - ${table.startsAt} = interval '1 hour'`,
+    ),
     check(
       "coach_availability_slots_time_order_check",
       sql`${table.endsAt} > ${table.startsAt}`,
@@ -302,6 +387,12 @@ export const coachAvailabilitySlots = app.table(
       table.startsAt,
       table.id,
     ),
+    uniqueIndex("coach_availability_slots_rule_occurrence_key")
+      .on(table.recurrenceRuleId, table.recurrenceLocalDate)
+      .where(sql`${table.recurrenceRuleId} is not null`),
+    index("coach_availability_slots_rule_status_idx")
+      .on(table.recurrenceRuleId, table.status, table.startsAt, table.id)
+      .where(sql`${table.recurrenceRuleId} is not null`),
   ],
 );
 
@@ -310,3 +401,5 @@ export type CoachProfileDisciplineRow =
   typeof coachProfileDisciplines.$inferSelect;
 export type CoachAvailabilitySlotRow =
   typeof coachAvailabilitySlots.$inferSelect;
+export type CoachAvailabilityRuleRow =
+  typeof coachAvailabilityRules.$inferSelect;
