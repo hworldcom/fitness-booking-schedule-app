@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Coach-first local integration support
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../../current/organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: builds on the email-code identity boundary from [DEV0046 — Email OTP registration and application profiles](DEV0046-email-otp-registration-and-application-profiles.md), converts the five fictional profiles delivered by [DEV0096 — Persist coach profiles and discovery](DEV0096-persist-coach-profiles-and-discovery.md) only in the disposable local environment, and supplies stable coach identities for [DEV0114 — Persist recurring coach availability](DEV0114-persist-recurring-coach-availability.md) and [DEV0115 — Add the coach schedule calendar](../../current/frontend/DEV0115-add-coach-schedule-calendar.md) validation
+- Related records: builds on the email-code identity boundary from [DEV0046 — Email OTP registration and application profiles](DEV0046-email-otp-registration-and-application-profiles.md), converts the five fictional profiles delivered by [DEV0096 — Persist coach profiles and discovery](DEV0096-persist-coach-profiles-and-discovery.md) only in the disposable local environment, and supplies stable coach identities for [DEV0114 — Persist recurring coach availability](DEV0114-persist-recurring-coach-availability.md) and [DEV0115 — Add the coach schedule calendar](../frontend/DEV0115-add-coach-schedule-calendar.md) validation
 
 ## Objective and context
 

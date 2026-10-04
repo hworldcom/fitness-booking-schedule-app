@@ -28,21 +28,13 @@ async function submitForm(page, selector = "form.auth-form") {
   await page.locator(selector).locator('button[type="submit"]').click();
 }
 
-function futureLocalStart(hoursFromNow) {
-  const target = Date.now() + hoursFromNow * 60 * 60 * 1000;
-  const rounded = Math.ceil(target / (15 * 60 * 1000)) * 15 * 60 * 1000;
-  const parts = new Intl.DateTimeFormat("en-CA", {
+function futureWorkingDay() {
+  const target = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const weekday = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Berlin",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(new Date(rounded));
-  const part = (type) =>
-    parts.find((candidate) => candidate.type === type)?.value;
-  return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
+    weekday: "long",
+  }).format(target);
+  return { weekday, firstHour: "10:00", secondHour: "11:00" };
 }
 
 async function signInAndEnroll(page) {
@@ -97,15 +89,20 @@ async function createCoachProfile(page) {
 
 async function rehearseAvailability(page, gymName) {
   await page.goto(`${siteUrl}/coach`, { waitUntil: "domcontentloaded" });
-  await page.getByRole("heading", { name: "Plan your next week." }).waitFor();
-  await page.getByLabel("Local start").fill(futureLocalStart(2));
-  await page.getByLabel("Duration").selectOption("60");
-  await page.getByRole("button", { name: "Publish slot" }).click();
-  await page.getByText("1 active slot").waitFor({ timeout: 20_000 });
-
-  const slot = page.locator(".coach-slot-card");
-  await slot.getByText("open", { exact: true }).waitFor();
-  await slot.getByText(gymName, { exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Set your working week." }).waitFor();
+  const workingDay = futureWorkingDay();
+  const firstCell = page.getByRole("button", {
+    name: `Add ${workingDay.weekday} ${workingDay.firstHour}–11:00`,
+  });
+  const secondCell = page.getByRole("button", {
+    name: `Add ${workingDay.weekday} ${workingDay.secondHour}–12:00`,
+  });
+  await firstCell.click();
+  await page.getByText("1 selected hour").waitFor({ timeout: 20_000 });
+  await secondCell.click();
+  await page.getByText("2 selected hours").waitFor({ timeout: 20_000 });
+  await page.getByText("2 upcoming times").waitFor({ timeout: 20_000 });
+  await expectText(page, gymName);
   await page.screenshot({
     path: `${evidenceDirectory}/coach-availability-desktop.png`,
     fullPage: true,
@@ -118,31 +115,28 @@ async function rehearseAvailability(page, gymName) {
   await page.goto(`${siteUrl}${publicProfileHref}`, {
     waitUntil: "domcontentloaded",
   });
-  await page.getByRole("heading", { name: "1 open time this week." }).waitFor();
+  await page
+    .getByRole("heading", { name: "2 open times this week." })
+    .waitFor();
+  await page.getByText(workingDay.weekday, { exact: false }).first().waitFor();
   await page.getByText(gymName, { exact: true }).last().waitFor();
+  await page.screenshot({
+    path: `${evidenceDirectory}/coach-public-schedule.png`,
+    fullPage: true,
+  });
 
   await page.goto(`${siteUrl}/coach`, { waitUntil: "domcontentloaded" });
-  const updatedStart = futureLocalStart(3);
-  await page
-    .locator(".coach-slot-card")
-    .getByLabel("Local start")
-    .fill(updatedStart);
-  await page.getByRole("button", { name: "Save changes" }).click();
-  await page
-    .locator(".coach-slot-card")
-    .getByLabel("Local start")
-    .waitFor({ state: "visible" });
-  assert.equal(
-    await page
-      .locator(".coach-slot-card")
-      .getByLabel("Local start")
-      .inputValue(),
-    updatedStart,
-  );
-
-  await page.getByRole("button", { name: "Withdraw" }).click();
-  await page.getByRole("heading", { name: "No upcoming slots yet." }).waitFor();
   await page.setViewportSize({ width: 393, height: 852 });
+  const removeFirstCell = page.getByRole("button", {
+    name: `Remove ${workingDay.weekday} ${workingDay.firstHour}–11:00`,
+  });
+  await removeFirstCell.focus();
+  assert.equal(
+    await removeFirstCell.evaluate(
+      (element) => element === document.activeElement,
+    ),
+    true,
+  );
   const workspaceProfileLink = page
     .getByRole("navigation", { name: "Coach workspace" })
     .getByRole("link", { name: "Profile", exact: true });
@@ -164,12 +158,30 @@ async function rehearseAvailability(page, gymName) {
     fullPage: true,
   });
 
+  await removeFirstCell.click();
+  await page.getByText("1 selected hour").waitFor({ timeout: 20_000 });
+  await page
+    .getByRole("button", {
+      name: `Remove ${workingDay.weekday} ${workingDay.secondHour}–12:00`,
+    })
+    .click();
+  await page.getByText("0 selected hours").waitFor({ timeout: 20_000 });
+  await page
+    .getByRole("heading", {
+      name: "No dated times in the next seven days.",
+    })
+    .waitFor();
+
   await page.goto(`${siteUrl}${publicProfileHref}`, {
     waitUntil: "domcontentloaded",
   });
   await page
     .getByRole("heading", { name: "No open times right now." })
     .waitFor();
+}
+
+async function expectText(page, text) {
+  await page.getByText(text, { exact: true }).first().waitFor();
 }
 
 await mkdir(evidenceDirectory, { recursive: true });
@@ -188,7 +200,7 @@ try {
 
   assert.deepEqual(pageErrors, []);
   console.log(
-    "Coach availability rehearsal passed for authenticated profile setup, publish, public projection, edit, withdrawal, keyboard focus and responsive layout.",
+    "Coach availability rehearsal passed for authenticated profile setup, adjacent working-week toggles, public dated projection, removal, keyboard focus and responsive layout.",
   );
 } finally {
   await browser.close();

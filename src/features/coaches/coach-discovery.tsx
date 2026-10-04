@@ -13,6 +13,7 @@ import {
   COACH_DISCIPLINES,
   type CoachDirectoryState,
   type CoachDirectoryFilters,
+  type PublicCoachAvailabilitySlot,
   type PublicCoachProfileState,
 } from "@/domain/coaches";
 import type {
@@ -131,6 +132,46 @@ function CoachFilters({ filters }: { filters: CoachDirectoryFilters }) {
   );
 }
 
+function publicScheduleDays(slots: readonly PublicCoachAvailabilitySlot[]) {
+  const days = new Map<
+    string,
+    { label: string; slots: PublicCoachAvailabilitySlot[] }
+  >();
+  for (const slot of slots) {
+    const date = new Date(slot.startsAt);
+    const dateParts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: slot.coachTimezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(date);
+    const value = (type: Intl.DateTimeFormatPartTypes) =>
+      dateParts.find((part) => part.type === type)?.value ?? "";
+    const key = `${value("year")}-${value("month")}-${value("day")}`;
+    const label = new Intl.DateTimeFormat("en-GB", {
+      timeZone: slot.coachTimezone,
+      weekday: "long",
+      day: "numeric",
+      month: "short",
+    }).format(date);
+    const day = days.get(key) ?? { label, slots: [] };
+    day.slots.push(slot);
+    days.set(key, day);
+  }
+  return [...days.values()];
+}
+
+function publicSlotTime(slot: PublicCoachAvailabilitySlot) {
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: slot.coachTimezone,
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return `${formatter.format(new Date(slot.startsAt))}–${formatter.format(
+    new Date(slot.endsAt),
+  )}`;
+}
+
 export function CoachProfileView({
   state,
   postsState,
@@ -141,6 +182,7 @@ export function CoachProfileView({
   followState: CoachFollowState;
 }) {
   const { coach, slots } = state;
+  const scheduleDays = publicScheduleDays(slots);
   return (
     <article className="public-coach-profile">
       <Link className="coach-back-link" href="/explore">
@@ -210,38 +252,39 @@ export function CoachProfileView({
                 {slots.length} open time{slots.length === 1 ? "" : "s"} this
                 week.
               </h2>
-              <ul className="public-coach-slot-list">
-                {slots.map((slot) => (
-                  <li key={slot.id}>
-                    <Clock3 size={17} aria-hidden="true" />
-                    <span>
-                      <strong>
-                        {new Intl.DateTimeFormat("en-GB", {
-                          timeZone: slot.coachTimezone,
-                          weekday: "short",
-                          day: "numeric",
-                          month: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        }).format(new Date(slot.startsAt))}
-                      </strong>
+              <ol className="public-coach-day-list">
+                {scheduleDays.map((day) => (
+                  <li key={day.label}>
+                    <div className="public-coach-day-heading">
+                      <strong>{day.label}</strong>
                       <small>
-                        {new Intl.DateTimeFormat("en-GB", {
-                          timeZone: slot.coachTimezone,
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        }).format(new Date(slot.endsAt))}
-                        {" · "}
-                        {slot.location.gymName ?? "Independent place"}
+                        {day.slots.length} open hour
+                        {day.slots.length === 1 ? "" : "s"}
                       </small>
-                    </span>
-                    <em>Open</em>
+                    </div>
+                    <ul className="public-coach-slot-list">
+                      {day.slots.map((slot) => (
+                        <li key={slot.id}>
+                          <Clock3 size={17} aria-hidden="true" />
+                          <span>
+                            <strong>{publicSlotTime(slot)}</strong>
+                            <small>
+                              {slot.location.gymName ?? "Independent place"}
+                              {" · "}
+                              {slot.coachTimezone}
+                            </small>
+                          </span>
+                          <em>Open</em>
+                        </li>
+                      ))}
+                    </ul>
                   </li>
                 ))}
-              </ul>
+              </ol>
               <p>
-                Booking and pass purchase are being connected next. These
-                capacity-one times are the coach’s current public inventory.
+                These capacity-one times are the coach’s current public
+                inventory. Viewing is public; sign-in, a valid pass and booking
+                controls will be required once booking is connected.
               </p>
             </>
           )}

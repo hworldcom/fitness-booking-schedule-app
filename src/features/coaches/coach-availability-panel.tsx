@@ -1,31 +1,59 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import {
   CalendarClock,
+  Check,
   Clock3,
   Eye,
   MapPin,
-  Plus,
-  Save,
   Settings2,
-  Trash2,
   UserRound,
 } from "lucide-react";
-import {
-  type CoachAvailabilityActionState,
-  mutateCoachAvailabilityAction,
-} from "@/app/coach/actions";
-import {
-  COACH_AVAILABILITY_DURATIONS,
-  localDateTimeValue,
-  type CoachProjection,
-  type OwnedCoachAvailabilitySlot,
+import type { CoachAvailabilityActionState } from "@/app/coach/actions";
+import type {
+  CoachAvailabilityIsoWeekday,
+  CoachProjection,
+  OwnedCoachAvailabilityRule,
+  OwnedCoachAvailabilitySlot,
 } from "@/domain/coaches";
 
 const INITIAL_COACH_AVAILABILITY_ACTION_STATE: CoachAvailabilityActionState =
   Object.freeze({ status: "idle", message: "", errors: Object.freeze([]) });
+
+type CoachAvailabilityRuleAction = (
+  previousState: CoachAvailabilityActionState,
+  formData: FormData,
+) => Promise<CoachAvailabilityActionState>;
+
+const WEEKDAYS = Object.freeze([
+  { isoWeekday: 1, short: "Mon", long: "Monday" },
+  { isoWeekday: 2, short: "Tue", long: "Tuesday" },
+  { isoWeekday: 3, short: "Wed", long: "Wednesday" },
+  { isoWeekday: 4, short: "Thu", long: "Thursday" },
+  { isoWeekday: 5, short: "Fri", long: "Friday" },
+  { isoWeekday: 6, short: "Sat", long: "Saturday" },
+  { isoWeekday: 7, short: "Sun", long: "Sunday" },
+] as const);
+
+const WORKING_WEEK_HOURS = Object.freeze(
+  Array.from(
+    { length: 23 },
+    (_, hour) => `${String(hour).padStart(2, "0")}:00`,
+  ),
+);
+
+function endTime(localStartTime: string) {
+  return `${String(Number(localStartTime.slice(0, 2)) + 1).padStart(2, "0")}:00`;
+}
+
+function ruleKey(
+  isoWeekday: CoachAvailabilityIsoWeekday,
+  localStartTime: string,
+) {
+  return `${isoWeekday}:${localStartTime}`;
+}
 
 function slotDateTime(slot: OwnedCoachAvailabilitySlot) {
   return new Intl.DateTimeFormat("en-GB", {
@@ -46,18 +74,7 @@ function slotEndTime(slot: OwnedCoachAvailabilitySlot) {
   }).format(new Date(slot.endsAt));
 }
 
-function slotDuration(slot: OwnedCoachAvailabilitySlot) {
-  return Math.round(
-    (new Date(slot.endsAt).getTime() - new Date(slot.startsAt).getTime()) /
-      60_000,
-  );
-}
-
-function ActionResult({
-  state,
-}: {
-  state: typeof INITIAL_COACH_AVAILABILITY_ACTION_STATE;
-}) {
+function ActionResult({ state }: { state: CoachAvailabilityActionState }) {
   if (state.status === "idle") return null;
   return (
     <div
@@ -77,178 +94,267 @@ function ActionResult({
   );
 }
 
-function SlotEditor({ slot }: { slot: OwnedCoachAvailabilitySlot }) {
-  const [state, formAction, pending] = useActionState(
-    mutateCoachAvailabilityAction,
-    INITIAL_COACH_AVAILABILITY_ACTION_STATE,
-  );
-  const editable = slot.status === "open";
+function ScheduleCell({
+  isoWeekday,
+  weekday,
+  localStartTime,
+  rule,
+  pending,
+  gridColumn,
+  gridRow,
+}: {
+  isoWeekday: CoachAvailabilityIsoWeekday;
+  weekday: string;
+  localStartTime: string;
+  rule: OwnedCoachAvailabilityRule | undefined;
+  pending: boolean;
+  gridColumn: number;
+  gridRow: number;
+}) {
+  const selected = Boolean(rule);
+  const interval = `${localStartTime}–${endTime(localStartTime)}`;
+  const action = selected ? "Remove" : "Add";
 
   return (
-    <article className="coach-slot-card">
-      <div className="coach-slot-summary">
-        <div>
-          <span className={`coach-slot-status ${slot.status}`}>
-            {slot.status}
-          </span>
-          <h3>{slotDateTime(slot)}</h3>
-          <p>
-            Until {slotEndTime(slot)} · {slot.coachTimezone}
-          </p>
-        </div>
-        <div className="coach-slot-location">
-          <MapPin size={17} aria-hidden="true" />
-          <span>
-            <strong>
-              {slot.location.gymName ?? "Independent training place"}
-            </strong>
-            <small>{slot.location.label}</small>
-          </span>
-        </div>
-      </div>
-
-      {editable ? (
-        <form className="coach-slot-edit-form" action={formAction}>
-          <input type="hidden" name="slotId" value={slot.id} />
-          <label className="coach-field">
-            <span>Local start</span>
-            <input
-              type="datetime-local"
-              name="localStart"
-              defaultValue={localDateTimeValue(
-                slot.startsAt,
-                slot.coachTimezone,
-              )}
-              step={900}
-              required
-            />
-          </label>
-          <label className="coach-field">
-            <span>Duration</span>
-            <select
-              name="durationMinutes"
-              defaultValue={slotDuration(slot)}
-              required
-            >
-              {COACH_AVAILABILITY_DURATIONS.map((duration) => (
-                <option key={duration} value={duration}>
-                  {duration} minutes
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="coach-slot-refresh-location">
-            <input type="checkbox" name="refreshLocation" />
-            <span>
-              Use my current profile location instead of this snapshot
-            </span>
-          </label>
-          <div className="coach-slot-actions">
-            <button
-              className="button secondary"
-              type="submit"
-              name="intent"
-              value="update"
-              disabled={pending}
-            >
-              <Save size={15} aria-hidden="true" />
-              {pending ? "Saving…" : "Save changes"}
-            </button>
-            <button
-              className="button coach-withdraw-button"
-              type="submit"
-              name="intent"
-              value="withdraw"
-              formNoValidate
-              disabled={pending}
-            >
-              <Trash2 size={15} aria-hidden="true" /> Withdraw
-            </button>
-          </div>
-          <ActionResult state={state} />
-        </form>
-      ) : (
-        <p className="coach-slot-locked">
-          This slot cannot be moved or withdrawn while it is {slot.status}.
-          Booking lifecycle controls arrive with the booking feature.
-        </p>
-      )}
-    </article>
+    <button
+      type="submit"
+      name="scheduleCell"
+      value={`${selected ? "remove-rule" : "create-rule"}|${isoWeekday}|${localStartTime}|${rule?.id ?? ""}`}
+      className={`coach-week-cell${selected ? " selected" : ""}`}
+      style={{ gridColumn, gridRow }}
+      aria-pressed={selected}
+      aria-label={`${action} ${weekday} ${interval}`}
+      title={`${action} ${weekday} ${interval}`}
+      disabled={pending}
+    >
+      {selected && <Check size={14} strokeWidth={3} aria-hidden="true" />}
+      <span aria-hidden="true">{selected ? "Available" : "Add"}</span>
+    </button>
   );
 }
 
-function CreateSlotForm({
+function WorkingWeekEditor({
   coach,
-  suggestedLocalStart,
+  rules,
+  mutateRuleAction,
 }: {
   coach: CoachProjection;
-  suggestedLocalStart: string;
+  rules: readonly OwnedCoachAvailabilityRule[];
+  mutateRuleAction: CoachAvailabilityRuleAction;
 }) {
   const [state, formAction, pending] = useActionState(
-    mutateCoachAvailabilityAction,
+    mutateRuleAction,
     INITIAL_COACH_AVAILABILITY_ACTION_STATE,
   );
+  const rulesByCell = new Map(
+    rules.map((rule) => [ruleKey(rule.isoWeekday, rule.localStartTime), rule]),
+  );
+  const [mobileDay, setMobileDay] = useState<CoachAvailabilityIsoWeekday>(
+    rules[0]?.isoWeekday ?? 1,
+  );
+
   return (
-    <form className="coach-slot-create" action={formAction}>
-      <input type="hidden" name="intent" value="create" />
-      <div className="coach-availability-section-title">
-        <span>
-          <Plus size={18} aria-hidden="true" />
-        </span>
+    <section className="coach-working-week" aria-busy={pending}>
+      <div className="coach-working-week-heading">
         <div>
-          <h2>Publish a private-class slot</h2>
+          <span className="eyebrow">YOUR REPEATING SCHEDULE</span>
+          <h2>Your working week</h2>
           <p>
-            Enter time in {coach.timezone}. The slot copies your confirmed
-            public place and stays there if your profile changes later.
+            Choose each hour you normally teach. Selected cells repeat every
+            week in {coach.timezone}; you do not need to add future dates one by
+            one.
           </p>
         </div>
+        <span className="coach-slot-count">
+          {rules.length} selected hour{rules.length === 1 ? "" : "s"}
+        </span>
       </div>
-      <label className="coach-field">
-        <span>Local start</span>
-        <input
-          type="datetime-local"
-          name="localStart"
-          defaultValue={suggestedLocalStart}
-          step={900}
-          required
-        />
-      </label>
-      <label className="coach-field">
-        <span>Duration</span>
-        <select name="durationMinutes" defaultValue={60} required>
-          {COACH_AVAILABILITY_DURATIONS.map((duration) => (
-            <option key={duration} value={duration}>
-              {duration} minutes
-            </option>
-          ))}
-        </select>
-      </label>
-      <div className="coach-slot-create-location">
+
+      <div className="coach-week-context">
+        <CalendarClock size={18} aria-hidden="true" />
+        <span>
+          <strong>Every selected cell is one hour.</strong>
+          <small>
+            Removing one stops future open times. Held or booked classes stay
+            unchanged.
+          </small>
+        </span>
         <MapPin size={18} aria-hidden="true" />
         <span>
           <strong>{coach.gymName ?? "Independent training place"}</strong>
-          <small>{coach.location.label}</small>
+          <small>
+            New dated times copy {coach.location.label}; later profile edits do
+            not move existing classes.
+          </small>
         </span>
       </div>
-      <button className="button dark" type="submit" disabled={pending}>
-        <CalendarClock size={16} aria-hidden="true" />
-        {pending ? "Publishing…" : "Publish slot"}
-      </button>
-      <ActionResult state={state} />
-    </form>
+
+      <form action={formAction}>
+        <ActionResult state={state} />
+        <label className="coach-week-mobile-picker">
+          <span>Day</span>
+          <select
+            value={mobileDay}
+            onChange={(event) =>
+              setMobileDay(
+                Number(event.target.value) as CoachAvailabilityIsoWeekday,
+              )
+            }
+          >
+            {WEEKDAYS.map((day) => {
+              const selectedCount = rules.filter(
+                (rule) => rule.isoWeekday === day.isoWeekday,
+              ).length;
+              return (
+                <option key={day.isoWeekday} value={day.isoWeekday}>
+                  {day.long} · {selectedCount} selected
+                </option>
+              );
+            })}
+          </select>
+        </label>
+        <div
+          className="coach-week-grid"
+          role="grid"
+          aria-label={`Repeating weekly availability in ${coach.timezone}`}
+        >
+          <div className="coach-week-corner" role="columnheader">
+            Time
+          </div>
+          {WORKING_WEEK_HOURS.map((localStartTime, hourIndex) => (
+            <div
+              className="coach-week-time-label"
+              role="rowheader"
+              style={{ gridColumn: 1, gridRow: hourIndex + 2 }}
+              key={localStartTime}
+            >
+              <span>{localStartTime}</span>
+              <small>{endTime(localStartTime)}</small>
+            </div>
+          ))}
+          {WEEKDAYS.map((day, dayIndex) => {
+            const selectedCount = rules.filter(
+              (rule) => rule.isoWeekday === day.isoWeekday,
+            ).length;
+            return (
+              <section
+                className={`coach-week-day${mobileDay === day.isoWeekday ? " current" : ""}`}
+                aria-label={day.long}
+                key={day.isoWeekday}
+              >
+                <h3
+                  className="coach-week-day-heading"
+                  role="columnheader"
+                  style={{ gridColumn: dayIndex + 2, gridRow: 1 }}
+                >
+                  <span>{day.short}</span>
+                  <small>
+                    {day.long} · {selectedCount}
+                  </small>
+                </h3>
+                <div className="coach-week-day-slots">
+                  {WORKING_WEEK_HOURS.map((localStartTime, hourIndex) => (
+                    <div className="coach-mobile-hour" key={localStartTime}>
+                      <span className="coach-mobile-time">
+                        {`${localStartTime}–${endTime(localStartTime)}`}
+                      </span>
+                      <ScheduleCell
+                        isoWeekday={day.isoWeekday}
+                        weekday={day.long}
+                        localStartTime={localStartTime}
+                        rule={rulesByCell.get(
+                          ruleKey(day.isoWeekday, localStartTime),
+                        )}
+                        pending={pending}
+                        gridColumn={dayIndex + 2}
+                        gridRow={hourIndex + 2}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      </form>
+    </section>
+  );
+}
+
+function UpcomingOccurrences({
+  slots,
+}: {
+  slots: readonly OwnedCoachAvailabilitySlot[];
+}) {
+  return (
+    <section className="coach-availability-list">
+      <div className="coach-availability-list-heading">
+        <div>
+          <span className="eyebrow">NEXT SEVEN DAYS</span>
+          <h2>Dated class times</h2>
+          <p>
+            These are the concrete capacity-one times clients can see. Your
+            working week creates them automatically.
+          </p>
+        </div>
+        <span className="coach-slot-count">
+          {slots.length} upcoming time{slots.length === 1 ? "" : "s"}
+        </span>
+      </div>
+      {slots.length === 0 ? (
+        <div className="coach-availability-empty">
+          <Clock3 size={25} aria-hidden="true" />
+          <h3>No dated times in the next seven days.</h3>
+          <p>
+            Choose an hour in your working week above. Valid future occurrences
+            will appear here automatically.
+          </p>
+        </div>
+      ) : (
+        <ul className="coach-occurrence-list">
+          {slots.map((slot) => (
+            <li key={slot.id}>
+              <div>
+                <span className={`coach-slot-status ${slot.status}`}>
+                  {slot.status}
+                </span>
+                <strong>{slotDateTime(slot)}</strong>
+                <small>
+                  Until {slotEndTime(slot)} · {slot.coachTimezone}
+                </small>
+              </div>
+              <div>
+                <MapPin size={16} aria-hidden="true" />
+                <span>
+                  <strong>
+                    {slot.location.gymName ?? "Independent training place"}
+                  </strong>
+                  <small>{slot.location.label}</small>
+                </span>
+              </div>
+              <em>
+                {slot.recurrenceRuleId ? "Working week" : "Earlier one-off"}
+              </em>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 
 export function CoachAvailabilityPanel({
   coach,
+  rules,
   slots,
   ownerDisplayName,
-  suggestedLocalStart,
+  mutateRuleAction,
 }: {
   coach: CoachProjection | null;
+  rules: readonly OwnedCoachAvailabilityRule[];
   slots: readonly OwnedCoachAvailabilitySlot[];
   ownerDisplayName: string;
-  suggestedLocalStart?: string;
+  mutateRuleAction: CoachAvailabilityRuleAction;
 }) {
   return (
     <div className="coach-workspace">
@@ -256,11 +362,12 @@ export function CoachAvailabilityPanel({
         <div>
           <span className="eyebrow">COACH WORKSPACE</span>
           <h1>
-            Plan your next week<span className="lime-text">.</span>
+            Set your working week<span className="lime-text">.</span>
           </h1>
           <p>
-            Welcome, {ownerDisplayName}. Publish exact capacity-one times that
-            clients can discover. Nothing here tracks your live location.
+            Welcome, {ownerDisplayName}. Choose the one-hour times you normally
+            teach once, and MovX keeps the next seven days ready for clients.
+            Nothing here tracks your live location.
           </p>
         </div>
         {coach?.visibility === "visible" && (
@@ -272,7 +379,7 @@ export function CoachAvailabilityPanel({
 
       <nav className="coach-workspace-nav" aria-label="Coach workspace">
         <Link href="/coach" aria-current="page" className="active">
-          <CalendarClock size={17} aria-hidden="true" /> Availability
+          <CalendarClock size={17} aria-hidden="true" /> Schedule
         </Link>
         <Link href="/profile/coach">
           <UserRound size={17} aria-hidden="true" /> Profile
@@ -285,8 +392,8 @@ export function CoachAvailabilityPanel({
           <span className="eyebrow">PROFILE REQUIRED</span>
           <h2>Create your coach profile first.</h2>
           <p>
-            Availability needs a reviewed timezone and one confirmed public
-            training place to snapshot into every slot.
+            Your working week needs a reviewed timezone and one confirmed public
+            training place to snapshot into every dated class time.
           </p>
           <Link className="button dark" href="/profile/coach">
             Set up coach profile
@@ -298,7 +405,7 @@ export function CoachAvailabilityPanel({
           <span className="eyebrow">PROFILE HIDDEN</span>
           <h2>Publish your profile before offering times.</h2>
           <p>
-            Hidden coaches cannot create public availability. Existing slot
+            Hidden coaches cannot create public availability. Existing class
             snapshots remain stored but are not shown to guests.
           </p>
           <Link className="button dark" href="/profile/coach">
@@ -307,40 +414,12 @@ export function CoachAvailabilityPanel({
         </section>
       ) : (
         <>
-          <CreateSlotForm
+          <WorkingWeekEditor
             coach={coach}
-            suggestedLocalStart={suggestedLocalStart ?? ""}
+            rules={rules}
+            mutateRuleAction={mutateRuleAction}
           />
-          <section className="coach-availability-list">
-            <div className="coach-availability-list-heading">
-              <div>
-                <span className="eyebrow">ROLLING SEVEN-DAY WINDOW</span>
-                <h2>Your upcoming availability</h2>
-              </div>
-              <span className="coach-slot-count">
-                {slots.length} active slot{slots.length === 1 ? "" : "s"}
-              </span>
-            </div>
-            {slots.length === 0 ? (
-              <div className="coach-availability-empty">
-                <Clock3 size={25} aria-hidden="true" />
-                <h3>No upcoming slots yet.</h3>
-                <p>
-                  Publish an exact start time above. Recurring schedules are
-                  intentionally outside this P0 flow.
-                </p>
-              </div>
-            ) : (
-              <div className="coach-slot-list">
-                {slots.map((slot) => (
-                  <SlotEditor
-                    key={`${slot.id}:${slot.startsAt}:${slot.endsAt}:${slot.location.confirmedAt}`}
-                    slot={slot}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
+          <UpcomingOccurrences slots={slots} />
         </>
       )}
     </div>

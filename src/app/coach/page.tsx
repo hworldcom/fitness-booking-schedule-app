@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signInHref } from "@/auth/return-to";
-import { defaultCoachSlotLocalStart } from "@/domain/coaches";
+import { mutateCoachAvailabilityRuleAction } from "./actions";
 import { CoachAvailabilityPanel } from "@/features/coaches/coach-availability-panel";
 import { CoachActivationGate } from "@/features/coaches/coach-activation-gate";
 import { currentCoachAvailabilityWorkspace } from "@/server/coaches/service";
@@ -53,13 +53,10 @@ export default async function Page() {
   return (
     <CoachAvailabilityPanel
       coach={state.coach}
+      rules={state.rules}
       slots={state.slots}
       ownerDisplayName={state.ownerDisplayName}
-      suggestedLocalStart={
-        state.coach
-          ? defaultCoachSlotLocalStart(state.coach.timezone)
-          : undefined
-      }
+      mutateRuleAction={mutateCoachAvailabilityRuleAction}
     />
   );
 }
