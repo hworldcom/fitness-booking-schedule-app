@@ -36,7 +36,7 @@ test("wallet-free visitors get safe Phantom guidance without losing public acces
   await page.getByRole("button", { name: "Close dialog" }).click();
   await expect(
     page.getByRole("heading", {
-      name: "Private training built around the way you want to move.",
+      name: "Book a private session. Or help a group event happen.",
     }),
   ).toBeVisible();
   await page.getByRole("link", { name: "Home", exact: true }).last().click();
