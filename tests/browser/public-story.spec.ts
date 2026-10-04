@@ -18,7 +18,7 @@ test("home explains the coach-first private-training loop", async ({
   ).toBeVisible();
   await expect(page.getByText("One session", { exact: true })).toBeVisible();
   await expect(page.getByText("Ten sessions", { exact: true })).toBeVisible();
-  await expect(page.getByText(/Devnet test USDC only/)).toBeVisible();
+  await expect(page.getByText(/Devnet test EURC only/)).toBeVisible();
   await expect(page.getByText(/not live tracking/)).toBeVisible();
 
   const howLink = page

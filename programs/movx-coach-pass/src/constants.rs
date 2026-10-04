@@ -5,10 +5,10 @@ pub const OFFER_SEED: &[u8] = b"offer";
 pub const COACH_CLIENT_CREDITS_SEED: &[u8] = b"coach-client-credits";
 pub const CREDIT_RESERVATION_SEED: &[u8] = b"credit-reservation";
 
-/// Circle's public Solana Devnet test-USDC mint. This program is Devnet-only.
-pub const DEVNET_USDC_MINT: Pubkey =
-    anchor_lang::pubkey!("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
-pub const DEVNET_USDC_DECIMALS: u8 = 6;
+/// Circle's public Solana Devnet EURC mint. This program is Devnet-only.
+pub const DEVNET_EURC_MINT: Pubkey =
+    anchor_lang::pubkey!("HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr");
+pub const DEVNET_EURC_DECIMALS: u8 = 6;
 pub const COACH_CLIENT_CREDITS_VERSION: u8 = 1;
 pub const CREDIT_RESERVATION_VERSION: u8 = 1;
 

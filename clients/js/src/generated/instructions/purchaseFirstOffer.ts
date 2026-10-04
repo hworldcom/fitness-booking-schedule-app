@@ -62,7 +62,7 @@ export type PurchaseFirstOfferInstruction<
   TAccountOffer extends string | AccountMeta<string> = string,
   TAccountCoachClientCredits extends string | AccountMeta<string> = string,
   TAccountPaymentMint extends string | AccountMeta<string> =
-    "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+    "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr",
   TAccountClientTokenAccount extends string | AccountMeta<string> = string,
   TAccountCoachTokenAccount extends string | AccountMeta<string> = string,
   TAccountTokenProgram extends string | AccountMeta<string> =
@@ -367,7 +367,7 @@ export async function getPurchaseFirstOfferInstructionAsync<
   }
   if (!accounts.paymentMint.value) {
     accounts.paymentMint.value =
-      "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU" as Address<"4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU">;
+      "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr" as Address<"HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr">;
   }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
@@ -638,7 +638,7 @@ export function getPurchaseFirstOfferInstruction<
   // Resolve default values.
   if (!accounts.paymentMint.value) {
     accounts.paymentMint.value =
-      "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU" as Address<"4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU">;
+      "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr" as Address<"HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr">;
   }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =

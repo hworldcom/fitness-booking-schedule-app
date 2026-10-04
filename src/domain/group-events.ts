@@ -5,8 +5,8 @@ export const GROUP_EVENT_MAXIMUM_PARTICIPANTS = 50;
 export const GROUP_EVENT_MAX_BASE_UNITS = BigInt("9000000000000000");
 export const GROUP_EVENT_MINIMUM_DURATION_MINUTES = 30;
 export const GROUP_EVENT_MAXIMUM_DURATION_MINUTES = 12 * 60;
-export const GROUP_EVENT_DEVNET_USDC_MINT_ADDRESS =
-  "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
+export const GROUP_EVENT_DEVNET_EURC_MINT_ADDRESS =
+  "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr";
 export const GROUP_EVENT_SPL_TOKEN_PROGRAM_ADDRESS =
   "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
@@ -242,7 +242,7 @@ export function validateVerifiedGroupEventPoolProjection(
       evidence.mintAddress,
       evidence.tokenProgramAddress,
     ].every(isGroupEventSolanaAddress) &&
-    evidence.mintAddress === GROUP_EVENT_DEVNET_USDC_MINT_ADDRESS &&
+    evidence.mintAddress === GROUP_EVENT_DEVNET_EURC_MINT_ADDRESS &&
     evidence.tokenProgramAddress === GROUP_EVENT_SPL_TOKEN_PROGRAM_ADDRESS &&
     isGroupEventSolanaSignature(evidence.transactionSignature) &&
     evidence.seatPriceBaseUnits >= BigInt(1) &&

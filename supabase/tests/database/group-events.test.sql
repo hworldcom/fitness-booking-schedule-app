@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = extensions, public, pg_catalog;
 
-select plan(21);
+select plan(22);
 
 select has_table('app', 'group_events', 'group events table exists');
 select has_table(
@@ -259,7 +259,7 @@ select throws_ok(
       'AjrQdXjR9y7B4oniU5TT7PTuiqubySQuvEDJaabkJP8C',
       '7EcXv8cRWYEbaYjvcXn37Bq6STqS2QwRkX8EBXjKn5Ge',
       '7EcXv8cRWYEbaYjvcXn37Bq6STqS2QwRkX8EBXjKn5Ge',
-      '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
+      'HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr',
       'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
       25000000,
       1,
@@ -277,6 +277,43 @@ select throws_ok(
   '23514',
   null,
   'pool capacity below the adopted minimum fails the constraint'
+);
+
+select throws_ok(
+  $$
+    insert into app.group_event_pool_projections (
+      event_id, run_id, program_address, event_pool_address, vault_address,
+      coach_authority_address, payout_recipient_address, mint_address,
+      token_program_address,
+      seat_price_base_units, minimum_participants, maximum_participants,
+      participant_count, funding_deadline, event_starts_at, event_ends_at,
+      lifecycle_status, transaction_signature, observed_slot, finalized_at
+    ) values (
+      '83000000-0000-4000-8000-000000000001',
+      '20000000-0000-4000-8000-000000000001',
+      'GEUMk7SoYEsAvTgbFxohHTPbDfdX1citFT6Xxr6E4ULr',
+      'GU3Ty9KXYFJ1m5g8t7EJC5H7h4n6Zx8JqQz7b9WmVQDA',
+      'AjrQdXjR9y7B4oniU5TT7PTuiqubySQuvEDJaabkJP8C',
+      '7EcXv8cRWYEbaYjvcXn37Bq6STqS2QwRkX8EBXjKn5Ge',
+      '7EcXv8cRWYEbaYjvcXn37Bq6STqS2QwRkX8EBXjKn5Ge',
+      '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+      25000000,
+      4,
+      12,
+      0,
+      '2026-10-17T10:00:00Z',
+      '2026-10-18T09:00:00Z',
+      '2026-10-18T11:00:00Z',
+      'funding',
+      repeat('2', 88),
+      1,
+      statement_timestamp()
+    )
+  $$,
+  '23514',
+  null,
+  'official Devnet USDC fails the adopted EURC projection constraint'
 );
 
 select throws_ok(

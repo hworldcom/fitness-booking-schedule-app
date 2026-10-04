@@ -16,7 +16,7 @@ test("coming soon page prepares a truthful waitlist email request", async ({
     "Discover independent or fictional-gym-associated coaches, explore their disciplines and availability, and book private training that fits your goals and schedule. Cancel before it starts and your unused credit remains.",
   );
   await expect(page.locator(".coming-soon-status")).toContainText(
-    "Solana Devnet · Test USDC · No real funds",
+    "Solana Devnet · Test EURC · No real funds",
   );
 
   const email = page.getByLabel("Email address", { exact: true });

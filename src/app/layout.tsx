@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: "%s | MovX Club",
   },
   description:
-    "Discover martial-arts coaches, buy prepaid training packages with test USDC and track every session.",
+    "Discover martial-arts coaches, buy prepaid training packages with test EURC and track every session.",
   robots: { index: false, follow: false },
 };
 export default async function RootLayout({

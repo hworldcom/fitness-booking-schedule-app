@@ -45,7 +45,7 @@ const otherCoachWallet = "HULis5PpFFL5ajU9k8WzPjtJ8wZKXg4HHbKVvSEhFCfR";
 const programAddress = "GEUMk7SoYEsAvTgbFxohHTPbDfdX1citFT6Xxr6E4ULr";
 const poolAddress = "GU3Ty9KXYFJ1m5g8t7EJC5H7h4n6Zx8JqQz7b9WmVQDA";
 const vaultAddress = "AjrQdXjR9y7B4oniU5TT7PTuiqubySQuvEDJaabkJP8C";
-const mintAddress = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
+const mintAddress = "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr";
 const tokenProgramAddress = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 const contributionAddress = "9xQeWvG816bUx9EPf3fD2U7X1cmZ5Qw8YJ4nN6hKTpLs";
 

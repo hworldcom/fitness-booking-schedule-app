@@ -65,7 +65,7 @@ import {
 import { CreditReservationStatus } from "../clients/js/src/generated/types/creditReservationStatus";
 import { OfferStatus } from "../clients/js/src/generated/types/offerStatus";
 import {
-  DEVNET_USDC_MINT_ADDRESS,
+  DEVNET_EURC_MINT_ADDRESS,
   MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
   deriveCoachAuthorityAddress,
   deriveCoachClientCreditsAddress,
@@ -230,7 +230,7 @@ test("generated account-creation instructions separate platform payer and busine
       program: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
       args: {
         nonce: BigInt(0),
-        priceUsdcBaseUnits: BigInt(10_000_000),
+        priceEurcBaseUnits: BigInt(10_000_000),
         sessionCount: 1,
         validitySeconds: 0,
         restrictedClient: null,
@@ -249,6 +249,10 @@ test("generated account-creation instructions separate platform payer and busine
       eventAuthority,
       program: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
     }),
+  );
+  assert.equal(
+    firstPurchase.accounts.paymentMint.address,
+    DEVNET_EURC_MINT_ADDRESS,
   );
   const reserved = parseReserveBookingCreditInstruction(
     await getReserveBookingCreditInstructionAsync({
@@ -322,7 +326,7 @@ test("generated create-offer codec preserves exact commercial terms", () => {
   const encoded = getCreateOfferInstructionDataEncoder().encode({
     args: {
       nonce: BigInt(9),
-      priceUsdcBaseUnits: BigInt(10_000_000),
+      priceEurcBaseUnits: BigInt(10_000_000),
       sessionCount: 10,
       validitySeconds: 90 * 24 * 60 * 60,
       restrictedClient: null,
@@ -339,7 +343,7 @@ test("generated create-offer codec preserves exact commercial terms", () => {
     MovxCoachPassInstruction.CreateOffer,
   );
   assert.equal(decoded.args.nonce, BigInt(9));
-  assert.equal(decoded.args.priceUsdcBaseUnits, BigInt(10_000_000));
+  assert.equal(decoded.args.priceEurcBaseUnits, BigInt(10_000_000));
   assert.equal(decoded.args.sessionCount, 10);
   assert.equal(decoded.args.validitySeconds, 7_776_000);
   assert.equal(isNone(decoded.args.restrictedClient), true);
@@ -394,9 +398,9 @@ test("account codecs and eligibility reject stale wallet epochs", async () => {
   const offerBytes = getOfferEncoder().encode({
     coachAuthority: coachAuthorityAddress,
     paymentRecipient: ORIGINAL_WALLET,
-    paymentMint: DEVNET_USDC_MINT_ADDRESS,
+    paymentMint: DEVNET_EURC_MINT_ADDRESS,
     nonce: BigInt(1),
-    priceUsdcBaseUnits: BigInt(2_000_000),
+    priceEurcBaseUnits: BigInt(2_000_000),
     authorityEpoch: BigInt(0),
     createdAt: BigInt(1_800_000_000),
     validitySeconds: 90 * 24 * 60 * 60,
@@ -588,7 +592,7 @@ test("offer display metadata remains bounded and non-authoritative", () => {
       description:
         "Ten private boxing sessions with a fictional MovX demo coach.",
       imagePath: "/demo/coaches/boxing.webp",
-      priceUsdcBaseUnits: 1,
+      priceEurcBaseUnits: 1,
     }),
     {
       valid: true,

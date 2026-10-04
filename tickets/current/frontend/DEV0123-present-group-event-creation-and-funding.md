@@ -2,10 +2,10 @@
 
 - Status: Draft
 - Created: 2026-10-04
-- Last updated: 2026-10-04
+- Last updated: 2026-10-05
 - Milestone: Marketplace M3/M5 group-event experience
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: depends on completed [DEV0120 — Persist group-event catalogue and projections](../../archive/backend/DEV0120-persist-group-event-catalogue-and-projections.md) and [DEV0122 — Integrate Devnet group-event funding](../blockchain/DEV0122-integrate-devnet-group-event-funding.md); consumes coach/location/calendar foundations and supplies the primary browser flow to DEV0125
+- Related records: depends on completed [DEV0120 — Persist group-event catalogue and projections](../../archive/backend/DEV0120-persist-group-event-catalogue-and-projections.md), [DEV0122 — Integrate Devnet group-event funding](../blockchain/DEV0122-integrate-devnet-group-event-funding.md) and completed EURC contract [DEV0134](../../archive/blockchain/DEV0134-adopt-eurc-for-marketplace-payments.md); consumes coach/location/calendar foundations and supplies the primary browser flow to DEV0125
 
 ## Objective and context
 
@@ -18,7 +18,7 @@ Give coaches and clients an understandable interface for creating, discovering a
 
 ## Expected behavior and edge cases
 
-The interface explains that the full seat price is conditional, identifies Devnet/test USDC and shows the exact minimum, maximum, deadline, vault-backed state and refund rule. It never calls an unfinalized transaction successful. Only eligible coach/participant actions render, while permissionless settlement remains available without implying caller control over outcome.
+The interface explains that the full seat price is conditional, identifies Devnet/test EURC and shows the exact minimum, maximum, deadline, vault-backed state and refund rule. It never calls an unfinalized transaction successful. Only eligible coach/participant actions render, while permissionless settlement remains available without implying caller control over outcome.
 
 ## Assumptions, decisions, and dependencies
 

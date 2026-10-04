@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, TransferChecked};
 
-use crate::{constants::DEVNET_USDC_DECIMALS, errors::CoachPassError};
+use crate::{constants::DEVNET_EURC_DECIMALS, errors::CoachPassError};
 
 pub fn transfer_offer_payment<'info>(
     client_wallet: &Signer<'info>,
@@ -12,7 +12,7 @@ pub fn transfer_offer_payment<'info>(
     amount: u64,
 ) -> Result<()> {
     require!(
-        payment_mint.decimals == DEVNET_USDC_DECIMALS,
+        payment_mint.decimals == DEVNET_EURC_DECIMALS,
         CoachPassError::InvalidPaymentMintDecimals
     );
 
@@ -27,6 +27,6 @@ pub fn transfer_offer_payment<'info>(
             },
         ),
         amount,
-        DEVNET_USDC_DECIMALS,
+        DEVNET_EURC_DECIMALS,
     )
 }

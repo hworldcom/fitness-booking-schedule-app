@@ -69,7 +69,7 @@ test("verified pool evidence enforces exact bounded financial terms", () => {
     vaultAddress: address,
     coachAuthorityAddress: address,
     payoutRecipientAddress: address,
-    mintAddress: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+    mintAddress: "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr",
     tokenProgramAddress: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
     seatPriceBaseUnits: BigInt(25_000_000),
     minimumParticipants: 4,
@@ -94,7 +94,7 @@ test("verified pool evidence enforces exact bounded financial terms", () => {
   assert.equal(
     validateVerifiedGroupEventPoolProjection({
       ...evidence,
-      mintAddress: secondAddress,
+      mintAddress: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
     }),
     false,
   );

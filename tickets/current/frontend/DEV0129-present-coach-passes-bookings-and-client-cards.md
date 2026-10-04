@@ -2,10 +2,10 @@
 
 - Status: Draft
 - Created: 2026-10-04
-- Last updated: 2026-10-04
+- Last updated: 2026-10-05
 - Milestone: Marketplace M4 coach-pass experience
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: depends on completed [DEV0127](../../archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md), completed [DEV0131](../../archive/blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md), completed platform-payer contract [DEV0132](../../archive/blockchain/DEV0132-make-coach-pass-operations-platform-funded.md), completed [DEV0128](../../archive/backend/DEV0128-persist-credit-backed-private-bookings.md), [DEV0130](../blockchain/DEV0130-integrate-devnet-coach-pass-operations.md) and personal-wallet work in DEV0047
+- Related records: depends on completed [DEV0127](../../archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md), completed [DEV0131](../../archive/blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md), completed platform-payer contract [DEV0132](../../archive/blockchain/DEV0132-make-coach-pass-operations-platform-funded.md), completed [DEV0128](../../archive/backend/DEV0128-persist-credit-backed-private-bookings.md), completed EURC contract [DEV0134](../../archive/blockchain/DEV0134-adopt-eurc-for-marketplace-payments.md), [DEV0130](../blockchain/DEV0130-integrate-devnet-coach-pass-operations.md) and personal-wallet work in DEV0047
 
 ## Objective and context
 
@@ -18,7 +18,7 @@ Provide the client flow for buying one or ten coach credits and booking a calend
 
 ## Expected behavior and edge cases
 
-The interface clearly distinguishes email account, linked wallet, Devnet/test USDC and coach-specific credits. Every approval explains that MovX pays SOL fees/rent while the user supplies the exact test-USDC value and required wallet signature, so no user test SOL is required. Coach cards show the authorized client's display identity, available/reserved credits and relevant bookings while using the wallet/PDA only as a verifiable reference. Rejection, stale balance, reload and provider failure remain recoverable and never invent a purchase or booking.
+The interface clearly distinguishes email account, linked wallet, Devnet/test EURC and coach-specific credits. Every approval explains that MovX pays SOL fees/rent while the user supplies the exact test-EURC value and required wallet signature, so no user test SOL is required. Coach cards show the authorized client's display identity, available/reserved credits and relevant bookings while using the wallet/PDA only as a verifiable reference. Rejection, stale balance, reload and provider failure remain recoverable and never invent a purchase or booking.
 
 ## Assumptions, decisions, and dependencies
 
@@ -34,7 +34,7 @@ The browser consumes server/chain contracts owned by DEV0127, DEV0131, DEV0128 a
 
 ## Acceptance criteria
 
-- [ ] AC1: A client can understand and initiate one/ten-credit purchase with exact Devnet terms, including platform-funded SOL fees/rent and user-funded test-USDC value.
+- [ ] AC1: A client can understand and initiate one/ten-credit purchase with exact Devnet terms, including platform-funded SOL fees/rent and user-funded test-EURC value.
 - [ ] AC2: A client can book and cancel with truthful credit/cutoff outcomes.
 - [ ] AC3: A coach can view authorized client cards with accurate balances and booking state.
 - [ ] AC4: Mobile, desktop, keyboard, rejection, pending, empty and reload states pass.

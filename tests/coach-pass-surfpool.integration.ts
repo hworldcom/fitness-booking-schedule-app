@@ -37,7 +37,7 @@ import { getRotateCoachAuthorityInstruction } from "../clients/js/src/generated/
 import { MOVX_COACH_PASS_PROGRAM_ADDRESS } from "../clients/js/src/generated/programs/movxCoachPass";
 import { CreditReservationStatus } from "../clients/js/src/generated/types/creditReservationStatus";
 import {
-  DEVNET_USDC_MINT_ADDRESS,
+  DEVNET_EURC_MINT_ADDRESS,
   MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
   deriveCoachAuthorityAddress,
   deriveCoachClientCreditsAddress,
@@ -57,6 +57,9 @@ const EARLY_RETURN_BOOKING_ID = "33333333-3333-4333-8333-333333333333";
 const COACH_RETURN_BOOKING_ID = "44444444-4444-4444-8444-444444444444";
 const CONSUMED_BOOKING_ID = "55555555-5555-4555-8555-555555555555";
 const SYSTEM_PROGRAM_ADDRESS = address("11111111111111111111111111111111");
+const DEVNET_USDC_MINT_ADDRESS = address(
+  "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+);
 
 test("Surfpool executes atomic first and later coach-pass purchases", async (t) => {
   const client = await createClient().use(
@@ -84,7 +87,6 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
   const restrictedClient = await generateKeyPairSigner();
   const otherClient = await generateKeyPairSigner();
   const wrongRecipient = await generateKeyPairSigner();
-  const alternateMint = await generateKeyPairSigner();
   const platformPayer = client.payer;
 
   assert.notEqual(platformPayer.address, coachWallet.address);
@@ -143,22 +145,54 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
     supply: OFFER_PRICE * SEEDED_PURCHASES,
   });
   client.surfnet.setAccount(
-    DEVNET_USDC_MINT_ADDRESS,
+    DEVNET_EURC_MINT_ADDRESS,
     MINT_RENT_LAMPORTS,
     Uint8Array.from(mintData),
     TOKEN_PROGRAM_ADDRESS,
   );
   client.surfnet.setAccount(
-    alternateMint.address,
+    DEVNET_USDC_MINT_ADDRESS,
     MINT_RENT_LAMPORTS,
     Uint8Array.from(mintData),
     TOKEN_PROGRAM_ADDRESS,
   );
   client.surfnet.setTokenAccount(
     clientWallet.address,
-    DEVNET_USDC_MINT_ADDRESS,
+    DEVNET_EURC_MINT_ADDRESS,
     {
       amount: Number(OFFER_PRICE * BigInt(2)),
+      state: "initialized",
+    },
+  );
+  client.surfnet.setTokenAccount(
+    coachWallet.address,
+    DEVNET_EURC_MINT_ADDRESS,
+    {
+      amount: 0,
+      state: "initialized",
+    },
+  );
+  client.surfnet.setTokenAccount(
+    otherClient.address,
+    DEVNET_EURC_MINT_ADDRESS,
+    {
+      amount: Number(OFFER_PRICE),
+      state: "initialized",
+    },
+  );
+  client.surfnet.setTokenAccount(
+    wrongRecipient.address,
+    DEVNET_EURC_MINT_ADDRESS,
+    {
+      amount: 0,
+      state: "initialized",
+    },
+  );
+  client.surfnet.setTokenAccount(
+    clientWallet.address,
+    DEVNET_USDC_MINT_ADDRESS,
+    {
+      amount: Number(OFFER_PRICE),
       state: "initialized",
     },
   );
@@ -170,48 +204,24 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
       state: "initialized",
     },
   );
-  client.surfnet.setTokenAccount(
-    otherClient.address,
-    DEVNET_USDC_MINT_ADDRESS,
-    {
-      amount: Number(OFFER_PRICE),
-      state: "initialized",
-    },
-  );
-  client.surfnet.setTokenAccount(
-    wrongRecipient.address,
-    DEVNET_USDC_MINT_ADDRESS,
-    {
-      amount: 0,
-      state: "initialized",
-    },
-  );
-  client.surfnet.setTokenAccount(clientWallet.address, alternateMint.address, {
-    amount: Number(OFFER_PRICE),
-    state: "initialized",
-  });
-  client.surfnet.setTokenAccount(coachWallet.address, alternateMint.address, {
-    amount: 0,
-    state: "initialized",
-  });
 
   const clientTokenAccount = address(
-    client.surfnet.getAta(clientWallet.address, DEVNET_USDC_MINT_ADDRESS),
+    client.surfnet.getAta(clientWallet.address, DEVNET_EURC_MINT_ADDRESS),
   );
   const coachTokenAccount = address(
-    client.surfnet.getAta(coachWallet.address, DEVNET_USDC_MINT_ADDRESS),
+    client.surfnet.getAta(coachWallet.address, DEVNET_EURC_MINT_ADDRESS),
   );
   const wrongRecipientTokenAccount = address(
-    client.surfnet.getAta(wrongRecipient.address, DEVNET_USDC_MINT_ADDRESS),
+    client.surfnet.getAta(wrongRecipient.address, DEVNET_EURC_MINT_ADDRESS),
   );
   const otherClientTokenAccount = address(
-    client.surfnet.getAta(otherClient.address, DEVNET_USDC_MINT_ADDRESS),
+    client.surfnet.getAta(otherClient.address, DEVNET_EURC_MINT_ADDRESS),
   );
   const alternateClientTokenAccount = address(
-    client.surfnet.getAta(clientWallet.address, alternateMint.address),
+    client.surfnet.getAta(clientWallet.address, DEVNET_USDC_MINT_ADDRESS),
   );
   const alternateCoachTokenAccount = address(
-    client.surfnet.getAta(coachWallet.address, alternateMint.address),
+    client.surfnet.getAta(coachWallet.address, DEVNET_USDC_MINT_ADDRESS),
   );
   const [eventAuthority] = await getProgramDerivedAddress({
     programAddress: MOVX_COACH_PASS_PROGRAM_ADDRESS,
@@ -340,7 +350,7 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
         program: MOVX_COACH_PASS_PROGRAM_ADDRESS,
         args: {
           nonce: BigInt(99),
-          priceUsdcBaseUnits: OFFER_PRICE,
+          priceEurcBaseUnits: OFFER_PRICE,
           sessionCount: SESSION_COUNT,
           validitySeconds: 0,
           restrictedClient: null,
@@ -361,7 +371,7 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
       program: MOVX_COACH_PASS_PROGRAM_ADDRESS,
       args: {
         nonce: BigInt(0),
-        priceUsdcBaseUnits: OFFER_PRICE,
+        priceEurcBaseUnits: OFFER_PRICE,
         sessionCount: SESSION_COUNT,
         validitySeconds: 0,
         restrictedClient: null,
@@ -528,7 +538,7 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
     coachAuthority,
     offer,
     coachClientCredits,
-    paymentMint: alternateMint.address,
+    paymentMint: DEVNET_USDC_MINT_ADDRESS,
     clientTokenAccount: alternateClientTokenAccount,
     coachTokenAccount: alternateCoachTokenAccount,
     eventAuthority,
@@ -546,7 +556,7 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
     supply: OFFER_PRICE * SEEDED_PURCHASES,
   });
   client.surfnet.setAccount(
-    DEVNET_USDC_MINT_ADDRESS,
+    DEVNET_EURC_MINT_ADDRESS,
     MINT_RENT_LAMPORTS,
     Uint8Array.from(invalidDecimalsMintData),
     TOKEN_PROGRAM_ADDRESS,
@@ -565,7 +575,7 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
   await assert.rejects(() => client.sendTransaction([invalidDecimalsPurchase]));
   assert.deepEqual(await readState(), afterFirstPurchase);
   client.surfnet.setAccount(
-    DEVNET_USDC_MINT_ADDRESS,
+    DEVNET_EURC_MINT_ADDRESS,
     MINT_RENT_LAMPORTS,
     Uint8Array.from(mintData),
     TOKEN_PROGRAM_ADDRESS,
@@ -900,7 +910,7 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
       program: MOVX_COACH_PASS_PROGRAM_ADDRESS,
       args: {
         nonce: BigInt(1),
-        priceUsdcBaseUnits: OFFER_PRICE,
+        priceEurcBaseUnits: OFFER_PRICE,
         sessionCount: 1,
         validitySeconds: 0,
         restrictedClient: restrictedClient.address,

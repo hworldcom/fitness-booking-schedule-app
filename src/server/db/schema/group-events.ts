@@ -173,7 +173,7 @@ export const groupEventPoolProjections = app.table(
     ),
     check(
       "group_event_pool_projections_token_check",
-      sql`${table.mintAddress} = '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU' and ${table.tokenProgramAddress} = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'`,
+      sql`${table.mintAddress} = 'HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr' and ${table.tokenProgramAddress} = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'`,
     ),
     check(
       "group_event_pool_projections_capacity_check",

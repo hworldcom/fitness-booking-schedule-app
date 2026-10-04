@@ -48,7 +48,7 @@ export type CreditsPurchasedEvent = {
   clientWallet: Address;
   paymentRecipient: Address;
   purchaseNonce: bigint;
-  priceUsdcBaseUnits: bigint;
+  priceEurcBaseUnits: bigint;
   creditsPurchased: number;
   availableCredits: bigint;
   reservedCredits: bigint;
@@ -64,7 +64,7 @@ export type CreditsPurchasedEventArgs = {
   clientWallet: Address;
   paymentRecipient: Address;
   purchaseNonce: number | bigint;
-  priceUsdcBaseUnits: number | bigint;
+  priceEurcBaseUnits: number | bigint;
   creditsPurchased: number;
   availableCredits: number | bigint;
   reservedCredits: number | bigint;
@@ -83,7 +83,7 @@ export function getCreditsPurchasedEventEncoder(): FixedSizeEncoder<CreditsPurch
       ["clientWallet", getAddressEncoder()],
       ["paymentRecipient", getAddressEncoder()],
       ["purchaseNonce", getU64Encoder()],
-      ["priceUsdcBaseUnits", getU64Encoder()],
+      ["priceEurcBaseUnits", getU64Encoder()],
       ["creditsPurchased", getU8Encoder()],
       ["availableCredits", getU64Encoder()],
       ["reservedCredits", getU64Encoder()],
@@ -105,7 +105,7 @@ export function getCreditsPurchasedEventDecoder(): FixedSizeDecoder<CreditsPurch
       ["clientWallet", getAddressDecoder()],
       ["paymentRecipient", getAddressDecoder()],
       ["purchaseNonce", getU64Decoder()],
-      ["priceUsdcBaseUnits", getU64Decoder()],
+      ["priceEurcBaseUnits", getU64Decoder()],
       ["creditsPurchased", getU8Decoder()],
       ["availableCredits", getU64Decoder()],
       ["reservedCredits", getU64Decoder()],

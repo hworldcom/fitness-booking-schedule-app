@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::{
-    constants::{DEVNET_USDC_MINT, MAX_VALIDITY_SECONDS, MIN_VALIDITY_SECONDS, NO_EXPIRY},
+    constants::{DEVNET_EURC_MINT, MAX_VALIDITY_SECONDS, MIN_VALIDITY_SECONDS, NO_EXPIRY},
     errors::CoachPassError,
 };
 
@@ -14,7 +14,7 @@ pub enum OfferStatus {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug)]
 pub struct CreateOfferArgs {
     pub nonce: u64,
-    pub price_usdc_base_units: u64,
+    pub price_eurc_base_units: u64,
     pub session_count: u8,
     pub validity_seconds: u32,
     pub restricted_client: Option<Pubkey>,
@@ -26,7 +26,7 @@ impl CreateOfferArgs {
             matches!(self.session_count, 1 | 10),
             CoachPassError::UnsupportedSessionCount
         );
-        require!(self.price_usdc_base_units > 0, CoachPassError::InvalidPrice);
+        require!(self.price_eurc_base_units > 0, CoachPassError::InvalidPrice);
         require!(
             self.validity_seconds == NO_EXPIRY
                 || (MIN_VALIDITY_SECONDS..=MAX_VALIDITY_SECONDS).contains(&self.validity_seconds),
@@ -47,7 +47,7 @@ pub struct Offer {
     pub payment_recipient: Pubkey,
     pub payment_mint: Pubkey,
     pub nonce: u64,
-    pub price_usdc_base_units: u64,
+    pub price_eurc_base_units: u64,
     pub authority_epoch: u64,
     pub created_at: i64,
     pub validity_seconds: u32,
@@ -74,9 +74,9 @@ impl Offer {
         Ok(Self {
             coach_authority,
             payment_recipient: coach_wallet,
-            payment_mint: DEVNET_USDC_MINT,
+            payment_mint: DEVNET_EURC_MINT,
             nonce: args.nonce,
-            price_usdc_base_units: args.price_usdc_base_units,
+            price_eurc_base_units: args.price_eurc_base_units,
             authority_epoch,
             created_at,
             validity_seconds: args.validity_seconds,
@@ -126,7 +126,7 @@ impl Offer {
         );
         require_keys_eq!(
             self.payment_mint,
-            DEVNET_USDC_MINT,
+            DEVNET_EURC_MINT,
             CoachPassError::InvalidPaymentMint
         );
         require_keys_neq!(
@@ -174,7 +174,7 @@ mod tests {
     fn args(session_count: u8, validity_seconds: u32) -> CreateOfferArgs {
         CreateOfferArgs {
             nonce: 7,
-            price_usdc_base_units: 2_000_000,
+            price_eurc_base_units: 2_000_000,
             session_count,
             validity_seconds,
             restricted_client: None,
@@ -213,7 +213,7 @@ mod tests {
         assert!(args(2, MIN_VALIDITY_SECONDS).validate().is_err());
 
         let mut invalid = args(1, MIN_VALIDITY_SECONDS);
-        invalid.price_usdc_base_units = 0;
+        invalid.price_eurc_base_units = 0;
         assert!(invalid.validate().is_err());
 
         assert!(args(1, MIN_VALIDITY_SECONDS - 1).validate().is_err());
@@ -238,7 +238,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(offer.payment_recipient, authority.current_wallet);
-        assert_eq!(offer.payment_mint, DEVNET_USDC_MINT);
+        assert_eq!(offer.payment_mint, DEVNET_EURC_MINT);
         assert_eq!(offer.status, OfferStatus::Active);
         let client = Pubkey::new_unique();
         assert!(offer.is_purchase_eligible(authority_address, &authority, client, 1_800_000_001));

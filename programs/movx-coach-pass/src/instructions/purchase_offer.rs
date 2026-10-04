@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
 use crate::{
-    constants::{COACH_AUTHORITY_SEED, COACH_CLIENT_CREDITS_SEED, DEVNET_USDC_MINT, OFFER_SEED},
+    constants::{COACH_AUTHORITY_SEED, COACH_CLIENT_CREDITS_SEED, DEVNET_EURC_MINT, OFFER_SEED},
     errors::CoachPassError,
     events::CreditsPurchased,
     state::{CoachAuthority, CoachClientCredits, Offer},
@@ -33,7 +33,7 @@ pub fn handler(ctx: Context<PurchaseOffer>, expected_purchase_nonce: u64) -> Res
         &ctx.accounts.coach_token_account,
         &ctx.accounts.payment_mint,
         &ctx.accounts.token_program,
-        ctx.accounts.offer.price_usdc_base_units,
+        ctx.accounts.offer.price_eurc_base_units,
     )?;
 
     emit_cpi!(CreditsPurchased {
@@ -43,7 +43,7 @@ pub fn handler(ctx: Context<PurchaseOffer>, expected_purchase_nonce: u64) -> Res
         client_wallet,
         payment_recipient: ctx.accounts.offer.payment_recipient,
         purchase_nonce: applied.purchase_nonce,
-        price_usdc_base_units: ctx.accounts.offer.price_usdc_base_units,
+        price_eurc_base_units: ctx.accounts.offer.price_eurc_base_units,
         credits_purchased: applied.credits_purchased,
         available_credits: applied.available_credits,
         reserved_credits: ctx.accounts.coach_client_credits.reserved_credits,
@@ -92,7 +92,7 @@ pub struct PurchaseOffer<'info> {
             @ CoachPassError::InvalidCreditLedgerAuthority,
     )]
     pub coach_client_credits: Box<Account<'info, CoachClientCredits>>,
-    #[account(address = DEVNET_USDC_MINT @ CoachPassError::InvalidPaymentMint)]
+    #[account(address = DEVNET_EURC_MINT @ CoachPassError::InvalidPaymentMint)]
     pub payment_mint: Box<Account<'info, Mint>>,
     #[account(
         mut,

@@ -17,8 +17,8 @@ import { OfferStatus } from "../../clients/js/src/generated/types/offerStatus";
 export const MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS = address(
   "GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU",
 );
-export const DEVNET_USDC_MINT_ADDRESS = address(
-  "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+export const DEVNET_EURC_MINT_ADDRESS = address(
+  "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr",
 );
 export const MIN_OFFER_VALIDITY_SECONDS = 24 * 60 * 60;
 export const MAX_OFFER_VALIDITY_SECONDS = 365 * 24 * 60 * 60;
@@ -181,7 +181,7 @@ export function isOfferPurchaseEligible(input: {
     input.offer.coachAuthority === input.offerCoachAuthorityAddress &&
     input.offer.authorityEpoch === input.authority.authorityEpoch &&
     input.offer.paymentRecipient === input.authority.currentWallet &&
-    input.offer.paymentMint === DEVNET_USDC_MINT_ADDRESS &&
+    input.offer.paymentMint === DEVNET_EURC_MINT_ADDRESS &&
     input.clientWallet !== input.authority.currentWallet &&
     (isNone(input.offer.restrictedClient) ||
       input.offer.restrictedClient.value === input.clientWallet) &&

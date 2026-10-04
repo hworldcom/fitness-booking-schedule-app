@@ -35,7 +35,7 @@ export function ComingSoonScreen() {
           <div className="coming-soon-status">
             <Sparkles size={17} aria-hidden="true" />
             <span>
-              Product preview · Solana Devnet · Test USDC · No real funds
+              Product preview · Solana Devnet · Test EURC · No real funds
             </span>
           </div>
         </div>

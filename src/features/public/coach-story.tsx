@@ -34,7 +34,7 @@ const memberSteps = [
     number: "03",
     title: "Use or buy a pass",
     description:
-      "Use a valid TrainingPass or purchase a one-session or ten-session pass with test USDC on Solana Devnet.",
+      "Use a valid TrainingPass or purchase a one-session or ten-session pass with test EURC on Solana Devnet.",
     Icon: WalletCards,
   },
   {
@@ -49,7 +49,7 @@ const memberSteps = [
 const coachSteps = [
   "Create a coach profile and choose one public training location.",
   "Publish capacity-one private slots for the coming seven days.",
-  "Offer a one-session or ten-session pass with clear test-USDC terms.",
+  "Offer a one-session or ten-session pass with clear test-EURC terms.",
   "Confirm completed training, then keep clients connected through posts.",
 ] as const;
 
@@ -78,7 +78,7 @@ export function CoachStoryHome() {
           <div className="coach-preview-note">
             <ShieldCheck size={17} aria-hidden="true" />
             <span>
-              Product preview · fictional coaches and gyms · Devnet test USDC
+              Product preview · fictional coaches and gyms · Devnet test EURC
               only
             </span>
           </div>
@@ -228,7 +228,7 @@ export function CoachStoryHome() {
           <h2 id="devnet-title">The product stays understandable first.</h2>
           <p>
             Email handles the account experience. Solana Devnet records offer,
-            payment and TrainingPass state using test USDC—never real funds in
+            payment and TrainingPass state using test EURC—never real funds in
             this preview.
           </p>
         </div>
@@ -237,7 +237,7 @@ export function CoachStoryHome() {
             <span>1</span> Email account
           </li>
           <li>
-            <span>2</span> Test-USDC purchase
+            <span>2</span> Test-EURC purchase
           </li>
           <li>
             <span>3</span> Verifiable balance
@@ -368,7 +368,7 @@ export function HowItWorksStory() {
             What the current preview does—and does not—claim.
           </h2>
           <p>
-            The demo targets Solana Devnet and test USDC. It does not use real
+            The demo targets Solana Devnet and test EURC. It does not use real
             money, promise a real coach or gym partnership, show live location,
             or claim that preview availability can already be booked.
           </p>

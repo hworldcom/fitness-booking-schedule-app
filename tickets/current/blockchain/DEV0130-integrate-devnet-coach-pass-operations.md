@@ -2,10 +2,10 @@
 
 - Status: Draft
 - Created: 2026-10-04
-- Last updated: 2026-10-04
+- Last updated: 2026-10-05
 - Milestone: Marketplace M6 Devnet pass integration
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: depends on completed [DEV0127](../../archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md), completed [DEV0131](../../archive/blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md), completed platform-payer contract [DEV0132](../../archive/blockchain/DEV0132-make-coach-pass-operations-platform-funded.md), personal-wallet work in DEV0047 and hosted infrastructure under COR0004; supplies transaction adapters to completed [DEV0128](../../archive/backend/DEV0128-persist-credit-backed-private-bookings.md) and [DEV0129](../frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md)
+- Related records: depends on completed [DEV0127](../../archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md), completed [DEV0131](../../archive/blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md), completed platform-payer contract [DEV0132](../../archive/blockchain/DEV0132-make-coach-pass-operations-platform-funded.md), completed EURC compatibility contract [DEV0134](../../archive/blockchain/DEV0134-adopt-eurc-for-marketplace-payments.md), personal-wallet work in DEV0047 and hosted infrastructure under COR0004; supplies transaction adapters to completed [DEV0128](../../archive/backend/DEV0128-persist-credit-backed-private-bookings.md) and [DEV0129](../frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md)
 
 ## Objective and context
 
@@ -18,7 +18,7 @@ Connect the complete local coach-pass program to recoverable Devnet purchases an
 
 ## Expected behavior and edge cases
 
-Every purchase approval identifies Devnet, test USDC, coach, exact price, purchased credits, destination and the MovX platform payer. Every booking-credit approval identifies the pair ledger, booking reference, scheduled time/cutoff, exact transition, authority and platform payer. Clients and coaches need no test SOL; the client still supplies the exact purchase price in test USDC and every business action still requires its client or coach signature. A lost response is recovered from the pair PDA, purchase nonce or deterministic reservation receipt. Wallet rejection, insufficient balance, missing token account, stale blockhash or RPC ambiguity never causes a blind repeat.
+Every purchase approval identifies Devnet, test EURC, coach, exact price, purchased credits, destination and the MovX platform payer. Every booking-credit approval identifies the pair ledger, booking reference, scheduled time/cutoff, exact transition, authority and platform payer. Clients and coaches need no test SOL; the client still supplies the exact purchase price in test EURC and every business action still requires its client or coach signature. A lost response is recovered from the pair PDA, purchase nonce or deterministic reservation receipt. Wallet rejection, insufficient balance, missing token account, stale blockhash or RPC ambiguity never causes a blind repeat.
 
 ## Assumptions, decisions, and dependencies
 
@@ -33,7 +33,7 @@ The DEV0127 purchase contract, DEV0131 reservation contract and DEV0132 platform
 
 ## Acceptance criteria
 
-- [ ] AC1: First and later exact test-USDC purchases finalize with verified pair-ledger balances.
+- [ ] AC1: First and later exact test-EURC purchases finalize with verified pair-ledger balances.
 - [ ] AC2: Reserve, consume and return operations finalize with verified pair-ledger/reservation state.
 - [ ] AC3: Rejection and ambiguous outcomes recover without duplicate payment, reservation or terminal resolution.
 - [ ] AC4: Every transaction fee and rent deposit is paid by the configured platform payer, users need no test SOL, secrets remain server-only and sponsorship cannot buy or mutate credits without the required client/coach authority.

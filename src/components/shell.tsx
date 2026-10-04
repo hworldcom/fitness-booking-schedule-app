@@ -150,7 +150,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <span className="footer-tagline">
             Find a coach. Train with clarity.
           </span>
-          <Pill>Solana Devnet target · Test USDC</Pill>
+          <Pill>Solana Devnet target · Test EURC</Pill>
         </footer>
       </div>
       <nav className="mobile-nav" aria-label="Mobile navigation">

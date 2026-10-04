@@ -69,7 +69,7 @@ export type Offer = {
   paymentRecipient: Address;
   paymentMint: Address;
   nonce: bigint;
-  priceUsdcBaseUnits: bigint;
+  priceEurcBaseUnits: bigint;
   authorityEpoch: bigint;
   createdAt: bigint;
   validitySeconds: number;
@@ -86,7 +86,7 @@ export type OfferArgs = {
   paymentRecipient: Address;
   paymentMint: Address;
   nonce: number | bigint;
-  priceUsdcBaseUnits: number | bigint;
+  priceEurcBaseUnits: number | bigint;
   authorityEpoch: number | bigint;
   createdAt: number | bigint;
   validitySeconds: number;
@@ -107,7 +107,7 @@ export function getOfferEncoder(): Encoder<OfferArgs> {
       ["paymentRecipient", getAddressEncoder()],
       ["paymentMint", getAddressEncoder()],
       ["nonce", getU64Encoder()],
-      ["priceUsdcBaseUnits", getU64Encoder()],
+      ["priceEurcBaseUnits", getU64Encoder()],
       ["authorityEpoch", getU64Encoder()],
       ["createdAt", getI64Encoder()],
       ["validitySeconds", getU32Encoder()],
@@ -130,7 +130,7 @@ export function getOfferDecoder(): Decoder<Offer> {
     ["paymentRecipient", getAddressDecoder()],
     ["paymentMint", getAddressDecoder()],
     ["nonce", getU64Decoder()],
-    ["priceUsdcBaseUnits", getU64Decoder()],
+    ["priceEurcBaseUnits", getU64Decoder()],
     ["authorityEpoch", getU64Decoder()],
     ["createdAt", getI64Decoder()],
     ["validitySeconds", getU32Decoder()],

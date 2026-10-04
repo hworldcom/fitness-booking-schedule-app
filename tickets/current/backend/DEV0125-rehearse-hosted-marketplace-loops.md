@@ -2,10 +2,10 @@
 
 - Status: Draft
 - Created: 2026-10-04
-- Last updated: 2026-10-04
+- Last updated: 2026-10-05
 - Milestone: Marketplace M7 hosted rehearsal
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: integrates every COR0010 runtime peer after completion; depends on hosted staging infrastructure under [COR0004](../organisatory/COR0004-hosted-staging-deployment.md) without replacing its ownership
+- Related records: integrates every COR0010 runtime peer after completion, including the completed EURC compatibility contract in [DEV0134](../../archive/blockchain/DEV0134-adopt-eurc-for-marketplace-payments.md); depends on hosted staging infrastructure under [COR0004](../organisatory/COR0004-hosted-staging-deployment.md) without replacing its ownership
 
 ## Objective and context
 

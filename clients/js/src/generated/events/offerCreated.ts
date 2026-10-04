@@ -50,7 +50,7 @@ export type OfferCreatedEvent = {
   coachAuthority: Address;
   coachWallet: Address;
   nonce: bigint;
-  priceUsdcBaseUnits: bigint;
+  priceEurcBaseUnits: bigint;
   sessionCount: number;
   validitySeconds: number;
   restrictedClient: Option<Address>;
@@ -64,7 +64,7 @@ export type OfferCreatedEventArgs = {
   coachAuthority: Address;
   coachWallet: Address;
   nonce: number | bigint;
-  priceUsdcBaseUnits: number | bigint;
+  priceEurcBaseUnits: number | bigint;
   sessionCount: number;
   validitySeconds: number;
   restrictedClient: OptionOrNullable<Address>;
@@ -81,7 +81,7 @@ export function getOfferCreatedEventEncoder(): Encoder<OfferCreatedEventArgs> {
       ["coachAuthority", getAddressEncoder()],
       ["coachWallet", getAddressEncoder()],
       ["nonce", getU64Encoder()],
-      ["priceUsdcBaseUnits", getU64Encoder()],
+      ["priceEurcBaseUnits", getU64Encoder()],
       ["sessionCount", getU8Encoder()],
       ["validitySeconds", getU32Encoder()],
       ["restrictedClient", getOptionEncoder(getAddressEncoder())],
@@ -101,7 +101,7 @@ export function getOfferCreatedEventDecoder(): Decoder<OfferCreatedEvent> {
       ["coachAuthority", getAddressDecoder()],
       ["coachWallet", getAddressDecoder()],
       ["nonce", getU64Decoder()],
-      ["priceUsdcBaseUnits", getU64Decoder()],
+      ["priceEurcBaseUnits", getU64Decoder()],
       ["sessionCount", getU8Decoder()],
       ["validitySeconds", getU32Decoder()],
       ["restrictedClient", getOptionDecoder(getAddressDecoder())],

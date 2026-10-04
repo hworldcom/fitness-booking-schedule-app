@@ -85,7 +85,7 @@ async function verifyAccountProfile(page, displayName) {
     .getByRole("heading", { name: displayName, exact: true })
     .waitFor({ timeout: 20_000 });
   await page.getByText("Email-backed MovX profile").waitFor();
-  assert.equal(await page.getByText("Available test USDC").count(), 0);
+  assert.equal(await page.getByText("Available test EURC").count(), 0);
   assert.equal(await page.getByText("Confirmed visits").count(), 0);
   assert.equal(await page.getByText("Illustrative history").count(), 0);
 }

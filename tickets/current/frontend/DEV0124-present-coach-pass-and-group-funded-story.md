@@ -2,10 +2,10 @@
 
 - Status: Ready
 - Created: 2026-10-04
-- Last updated: 2026-10-04
+- Last updated: 2026-10-05
 - Milestone: Marketplace M0 truthful public story
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: replaces the copy delivered historically by [DEV0095](../../archive/frontend/DEV0095-present-coach-first-public-story.md); follows the revised contract in [DEV0126](../../archive/organisatory/DEV0126-adopt-coach-pass-and-group-funding-contract.md) and must stay consistent with the [current MVP specification](../../../docs/mvp-spec.md)
+- Related records: replaces the copy delivered historically by [DEV0095](../../archive/frontend/DEV0095-present-coach-first-public-story.md); follows the revised contract in [DEV0126](../../archive/organisatory/DEV0126-adopt-coach-pass-and-group-funding-contract.md), the completed EURC compatibility contract in [DEV0134](../../archive/blockchain/DEV0134-adopt-eurc-for-marketplace-payments.md) and the [current MVP specification](../../../docs/mvp-spec.md)
 
 ## Objective and context
 
@@ -13,7 +13,7 @@ Rewrite Home, How it works, calls to action and public navigation so visitors un
 
 ## Scope and non-goals
 
-- In scope: concise client/coach value proposition; one/ten-credit purchase and cancellation-policy explanation; client request/coach response context; threshold-funded event story; Devnet/test-USDC disclosure; truthful early-access calls to action; responsive visual hierarchy and accessibility.
+- In scope: concise client/coach value proposition; one/ten-credit purchase and cancellation-policy explanation; client request/coach response context; threshold-funded event story; Devnet/test-EURC disclosure; truthful early-access calls to action; responsive visual hierarchy and accessibility.
 - Out of scope: marketplace/event runtime, invented metrics/partners, real-money claims, detailed disputes, rebranding or broad visual-system replacement.
 
 ## Expected behavior and edge cases

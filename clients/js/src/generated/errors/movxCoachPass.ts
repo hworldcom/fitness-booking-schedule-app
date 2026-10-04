@@ -38,7 +38,7 @@ export const MOVX_COACH_PASS_ERROR__AUTHORITY_EPOCH_OVERFLOW = 0x1779; // 6009
 export const MOVX_COACH_PASS_ERROR__EVENT_SEQUENCE_OVERFLOW = 0x177a; // 6010
 /** UnsupportedSessionCount: An offer must contain exactly one or ten sessions */
 export const MOVX_COACH_PASS_ERROR__UNSUPPORTED_SESSION_COUNT = 0x177b; // 6011
-/** InvalidPrice: The test-USDC price must be positive */
+/** InvalidPrice: The EURC price must be positive */
 export const MOVX_COACH_PASS_ERROR__INVALID_PRICE = 0x177c; // 6012
 /** InvalidValidity: Validity must be no-expiry or between one and 365 days */
 export const MOVX_COACH_PASS_ERROR__INVALID_VALIDITY = 0x177d; // 6013
@@ -54,7 +54,7 @@ export const MOVX_COACH_PASS_ERROR__OFFER_AUTHORITY_MISMATCH = 0x1781; // 6017
 export const MOVX_COACH_PASS_ERROR__STALE_OFFER_AUTHORITY = 0x1782; // 6018
 /** StaleOfferRecipient: The offer payment recipient is no longer the current coach wallet */
 export const MOVX_COACH_PASS_ERROR__STALE_OFFER_RECIPIENT = 0x1783; // 6019
-/** InvalidPaymentMint: The offer payment mint is not the configured Devnet test-USDC mint */
+/** InvalidPaymentMint: The offer payment mint is not the configured Devnet EURC mint */
 export const MOVX_COACH_PASS_ERROR__INVALID_PAYMENT_MINT = 0x1784; // 6020
 /** OfferExpired: The offer purchase window has expired */
 export const MOVX_COACH_PASS_ERROR__OFFER_EXPIRED = 0x1785; // 6021
@@ -163,9 +163,9 @@ if (process.env["NODE_ENV"] !== "production") {
     [MOVX_COACH_PASS_ERROR__INVALID_COACH_WALLET]: `The coach wallet address is invalid`,
     [MOVX_COACH_PASS_ERROR__INVALID_CREDIT_LEDGER_AUTHORITY]: `The coach-client credit ledger has an invalid authority`,
     [MOVX_COACH_PASS_ERROR__INVALID_EARLY_RETURN_CUTOFF]: `The early-return cutoff cannot be later than the scheduled start`,
-    [MOVX_COACH_PASS_ERROR__INVALID_PAYMENT_MINT]: `The offer payment mint is not the configured Devnet test-USDC mint`,
+    [MOVX_COACH_PASS_ERROR__INVALID_PAYMENT_MINT]: `The offer payment mint is not the configured Devnet EURC mint`,
     [MOVX_COACH_PASS_ERROR__INVALID_PAYMENT_MINT_DECIMALS]: `The payment mint must use six decimals`,
-    [MOVX_COACH_PASS_ERROR__INVALID_PRICE]: `The test-USDC price must be positive`,
+    [MOVX_COACH_PASS_ERROR__INVALID_PRICE]: `The EURC price must be positive`,
     [MOVX_COACH_PASS_ERROR__INVALID_RECOVERY_AUTHORITY]: `The recovery authority address is invalid`,
     [MOVX_COACH_PASS_ERROR__INVALID_REPLACEMENT_WALLET]: `The replacement wallet address is invalid`,
     [MOVX_COACH_PASS_ERROR__INVALID_RESTRICTED_CLIENT]: `The restricted client wallet address is invalid`,

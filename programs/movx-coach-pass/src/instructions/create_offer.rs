@@ -27,11 +27,11 @@ pub fn handler(ctx: Context<CreateOffer>, args: CreateOfferArgs) -> Result<()> {
         coach_authority: ctx.accounts.coach_authority.key(),
         coach_wallet,
         nonce: args.nonce,
-        price_usdc_base_units: args.price_usdc_base_units,
+        price_eurc_base_units: args.price_eurc_base_units,
         session_count: args.session_count,
         validity_seconds: args.validity_seconds,
         restricted_client: args.restricted_client,
-        payment_mint: crate::constants::DEVNET_USDC_MINT,
+        payment_mint: crate::constants::DEVNET_EURC_MINT,
         authority_epoch,
         event_sequence,
     });

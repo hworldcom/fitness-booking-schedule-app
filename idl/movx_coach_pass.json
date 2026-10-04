@@ -609,7 +609,7 @@
         },
         {
           "name": "payment_mint",
-          "address": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
+          "address": "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr"
         },
         {
           "name": "client_token_account",
@@ -768,7 +768,7 @@
         },
         {
           "name": "payment_mint",
-          "address": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
+          "address": "HzwqbKZw8HxMN6bF2yFZNrht3c2iXXzpKcFu7uBEDKtr"
         },
         {
           "name": "client_token_account",
@@ -1431,7 +1431,7 @@
     {
       "code": 6012,
       "name": "InvalidPrice",
-      "msg": "The test-USDC price must be positive"
+      "msg": "The EURC price must be positive"
     },
     {
       "code": 6013,
@@ -1471,7 +1471,7 @@
     {
       "code": 6020,
       "name": "InvalidPaymentMint",
-      "msg": "The offer payment mint is not the configured Devnet test-USDC mint"
+      "msg": "The offer payment mint is not the configured Devnet EURC mint"
     },
     {
       "code": 6021,
@@ -1950,7 +1950,7 @@
             "type": "u64"
           },
           {
-            "name": "price_usdc_base_units",
+            "name": "price_eurc_base_units",
             "type": "u64"
           },
           {
@@ -2089,7 +2089,7 @@
             "type": "u64"
           },
           {
-            "name": "price_usdc_base_units",
+            "name": "price_eurc_base_units",
             "type": "u64"
           },
           {
@@ -2141,7 +2141,7 @@
             "type": "u64"
           },
           {
-            "name": "price_usdc_base_units",
+            "name": "price_eurc_base_units",
             "type": "u64"
           },
           {
@@ -2218,7 +2218,7 @@
             "type": "u64"
           },
           {
-            "name": "price_usdc_base_units",
+            "name": "price_eurc_base_units",
             "type": "u64"
           },
           {

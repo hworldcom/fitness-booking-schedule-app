@@ -26,7 +26,7 @@ pub enum CoachPassError {
     EventSequenceOverflow,
     #[msg("An offer must contain exactly one or ten sessions")]
     UnsupportedSessionCount,
-    #[msg("The test-USDC price must be positive")]
+    #[msg("The EURC price must be positive")]
     InvalidPrice,
     #[msg("Validity must be no-expiry or between one and 365 days")]
     InvalidValidity,
@@ -42,7 +42,7 @@ pub enum CoachPassError {
     StaleOfferAuthority,
     #[msg("The offer payment recipient is no longer the current coach wallet")]
     StaleOfferRecipient,
-    #[msg("The offer payment mint is not the configured Devnet test-USDC mint")]
+    #[msg("The offer payment mint is not the configured Devnet EURC mint")]
     InvalidPaymentMint,
     #[msg("The offer purchase window has expired")]
     OfferExpired,
