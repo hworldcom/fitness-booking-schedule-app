@@ -34,4 +34,34 @@ pub enum CoachPassError {
     InvalidRestrictedClient,
     #[msg("The offer is already deactivated")]
     OfferAlreadyDeactivated,
+    #[msg("The offer is not active")]
+    OfferNotActive,
+    #[msg("The offer belongs to a different coach authority")]
+    OfferAuthorityMismatch,
+    #[msg("The offer was created under a stale coach authority epoch")]
+    StaleOfferAuthority,
+    #[msg("The offer payment recipient is no longer the current coach wallet")]
+    StaleOfferRecipient,
+    #[msg("The offer payment mint is not the configured Devnet test-USDC mint")]
+    InvalidPaymentMint,
+    #[msg("The offer purchase window has expired")]
+    OfferExpired,
+    #[msg("This offer is restricted to a different client wallet")]
+    RestrictedClientMismatch,
+    #[msg("A coach cannot purchase credits from their own offer")]
+    SelfPurchase,
+    #[msg("The payment mint must use six decimals")]
+    InvalidPaymentMintDecimals,
+    #[msg("The purchase nonce does not match the credit ledger's next nonce")]
+    UnexpectedPurchaseNonce,
+    #[msg("The purchase nonce cannot advance further")]
+    PurchaseNonceOverflow,
+    #[msg("The available credit balance cannot increase further")]
+    AvailableCreditsOverflow,
+    #[msg("The total purchased credit count cannot increase further")]
+    TotalPurchasedOverflow,
+    #[msg("The purchase count cannot increase further")]
+    PurchaseCountOverflow,
+    #[msg("The coach-client credit ledger has an invalid authority")]
+    InvalidCreditLedgerAuthority,
 }

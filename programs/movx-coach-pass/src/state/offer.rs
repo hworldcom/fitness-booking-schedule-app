@@ -99,29 +99,77 @@ impl Offer {
         Ok(())
     }
 
-    pub fn is_purchase_eligible(&self, authority: &super::CoachAuthority) -> bool {
-        self.status == OfferStatus::Active
-            && self.coach_authority
-                == Pubkey::find_program_address(
-                    &[
-                        crate::constants::COACH_AUTHORITY_SEED,
-                        &authority.run_id,
-                        &authority.profile_id,
-                        authority.original_wallet.as_ref(),
-                    ],
-                    &crate::ID,
-                )
-                .0
-            && self.authority_epoch == authority.authority_epoch
-            && self.payment_recipient == authority.current_wallet
-            && self.payment_mint == DEVNET_USDC_MINT
+    pub fn validate_purchase(
+        &self,
+        authority_address: Pubkey,
+        authority: &super::CoachAuthority,
+        client_wallet: Pubkey,
+        purchased_at: i64,
+    ) -> Result<()> {
+        require!(
+            self.status == OfferStatus::Active,
+            CoachPassError::OfferNotActive
+        );
+        require_keys_eq!(
+            self.coach_authority,
+            authority_address,
+            CoachPassError::OfferAuthorityMismatch
+        );
+        require!(
+            self.authority_epoch == authority.authority_epoch,
+            CoachPassError::StaleOfferAuthority
+        );
+        require_keys_eq!(
+            self.payment_recipient,
+            authority.current_wallet,
+            CoachPassError::StaleOfferRecipient
+        );
+        require_keys_eq!(
+            self.payment_mint,
+            DEVNET_USDC_MINT,
+            CoachPassError::InvalidPaymentMint
+        );
+        require_keys_neq!(
+            client_wallet,
+            authority.current_wallet,
+            CoachPassError::SelfPurchase
+        );
+
+        if let Some(restricted_client) = self.restricted_client {
+            require_keys_eq!(
+                restricted_client,
+                client_wallet,
+                CoachPassError::RestrictedClientMismatch
+            );
+        }
+
+        if self.validity_seconds != NO_EXPIRY {
+            let expires_at = self
+                .created_at
+                .checked_add(i64::from(self.validity_seconds))
+                .ok_or(CoachPassError::InvalidValidity)?;
+            require!(purchased_at < expires_at, CoachPassError::OfferExpired);
+        }
+
+        Ok(())
+    }
+
+    pub fn is_purchase_eligible(
+        &self,
+        authority_address: Pubkey,
+        authority: &super::CoachAuthority,
+        client_wallet: Pubkey,
+        purchased_at: i64,
+    ) -> bool {
+        self.validate_purchase(authority_address, authority, client_wallet, purchased_at)
+            .is_ok()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::state::CoachAuthority;
+    use crate::state::{CoachAuthority, CoachClientCredits};
 
     fn args(session_count: u8, validity_seconds: u32) -> CreateOfferArgs {
         CreateOfferArgs {
@@ -192,12 +240,13 @@ mod tests {
         assert_eq!(offer.payment_recipient, authority.current_wallet);
         assert_eq!(offer.payment_mint, DEVNET_USDC_MINT);
         assert_eq!(offer.status, OfferStatus::Active);
-        assert!(offer.is_purchase_eligible(&authority));
+        let client = Pubkey::new_unique();
+        assert!(offer.is_purchase_eligible(authority_address, &authority, client, 1_800_000_001));
 
         offer.deactivate(1_800_000_100).unwrap();
         assert_eq!(offer.status, OfferStatus::Deactivated);
         assert_eq!(offer.deactivated_at, Some(1_800_000_100));
-        assert!(!offer.is_purchase_eligible(&authority));
+        assert!(!offer.is_purchase_eligible(authority_address, &authority, client, 1_800_000_101));
         assert!(offer.deactivate(1_800_000_200).is_err());
     }
 
@@ -219,13 +268,79 @@ mod tests {
 
         assert_eq!(offer.payment_recipient, original_wallet);
         assert_eq!(offer.authority_epoch, 0);
-        assert!(!offer.is_purchase_eligible(&authority));
+        assert!(!offer.is_purchase_eligible(
+            authority_address,
+            &authority,
+            Pubkey::new_unique(),
+            1_800_000_001
+        ));
+    }
+
+    #[test]
+    fn purchase_checks_client_restriction_window_and_self_purchase() {
+        let (authority_address, authority) = authority();
+        let restricted_client = Pubkey::new_unique();
+        let mut restricted_args = args(10, MIN_VALIDITY_SECONDS);
+        restricted_args.restricted_client = Some(restricted_client);
+        let offer = Offer::initialize(
+            authority_address,
+            authority.current_wallet,
+            authority.authority_epoch,
+            restricted_args,
+            1_800_000_000,
+            253,
+        )
+        .unwrap();
+
+        assert!(offer
+            .validate_purchase(
+                authority_address,
+                &authority,
+                restricted_client,
+                1_800_000_001,
+            )
+            .is_ok());
+        assert!(offer
+            .validate_purchase(
+                authority_address,
+                &authority,
+                Pubkey::new_unique(),
+                1_800_000_001,
+            )
+            .is_err());
+        assert!(offer
+            .validate_purchase(
+                authority_address,
+                &authority,
+                restricted_client,
+                1_800_000_000 + i64::from(MIN_VALIDITY_SECONDS),
+            )
+            .is_err());
+
+        let public_offer = Offer::initialize(
+            authority_address,
+            authority.current_wallet,
+            authority.authority_epoch,
+            args(1, NO_EXPIRY),
+            1_800_000_000,
+            252,
+        )
+        .unwrap();
+        assert!(public_offer
+            .validate_purchase(
+                authority_address,
+                &authority,
+                authority.current_wallet,
+                1_900_000_000,
+            )
+            .is_err());
     }
 
     #[test]
     fn allocated_account_space_includes_discriminator_and_reserved_capacity() {
         assert_eq!(CoachAuthority::INIT_SPACE, 192);
         assert_eq!(Offer::INIT_SPACE, 224);
+        assert_eq!(CoachClientCredits::INIT_SPACE, 192);
         assert_eq!(8 + CoachAuthority::INIT_SPACE, 200);
         assert_eq!(8 + Offer::INIT_SPACE, 232);
     }

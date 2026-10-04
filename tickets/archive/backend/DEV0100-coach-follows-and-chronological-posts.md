@@ -4,7 +4,7 @@
 - Created: 2026-10-02
 - Last updated: 2026-10-03
 - Milestone: Coach-first M6 network loop
-- Coordination: [COR0009 — Coach-first private-class booking MVP](../../current/organisatory/COR0009-coach-first-training-package-mvp.md)
+- Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
 - Related records: depends on persistent coaches from [DEV0096](DEV0096-persist-coach-profiles-and-discovery.md) and integrates with self-service activation from [DEV0110](DEV0110-activate-coaching-during-account-onboarding.md); replaces the unimplemented member-check-in feed in DEV0023 after DEV0094 reconciles that record
 
 ## Objective and context

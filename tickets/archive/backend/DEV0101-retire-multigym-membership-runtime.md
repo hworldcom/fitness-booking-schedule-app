@@ -4,8 +4,8 @@
 - Created: 2026-10-02
 - Last updated: 2026-10-03
 - Milestone: Coach-first legacy runtime cleanup
-- Coordination: [COR0009 — Coach-first private-class booking MVP](../../current/organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on the coach-first contract adoption portion of [DEV0094](../organisatory/DEV0094-adopt-coach-first-training-package-mvp.md) and must preserve payment-boundary evidence for [DEV0098](../../current/blockchain/DEV0098-purchase-training-packages-with-devnet-usdc.md); DEV0095/DEV0096 provide later replacement presentation and discovery; preserves completed COR0007/COR0008 history and the partial evidence of DEV0081/DEV0082/DEV0089/DEV0092
+- Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
+- Related records: depends on the coach-first contract adoption portion of [DEV0094](../organisatory/DEV0094-adopt-coach-first-training-package-mvp.md) and preserves payment-boundary evidence historically intended for cancelled [DEV0098](../blockchain/DEV0098-purchase-training-packages-with-devnet-usdc.md); DEV0095/DEV0096 provide later replacement presentation and discovery; preserves completed COR0007/COR0008 history and the partial evidence of DEV0081/DEV0082/DEV0089/DEV0092
 
 ## Objective and context
 

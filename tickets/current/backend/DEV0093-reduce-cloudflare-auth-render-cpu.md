@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Staging runtime reliability
 - Coordination: None — independent development ticket
-- Related records: staging runtime baseline in [DEV0054 — Cloudflare Workers runtime foundation](../../archive/backend/DEV0054-cloudflare-workers-runtime-foundation.md), hosted release work in [DEV0056 — Staging release and domain rehearsal](DEV0056-staging-release-and-domain-rehearsal.md), and current coach-first delivery in [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
+- Related records: staging runtime baseline in [DEV0054 — Cloudflare Workers runtime foundation](../../archive/backend/DEV0054-cloudflare-workers-runtime-foundation.md), hosted release work in [DEV0056 — Staging release and domain rehearsal](DEV0056-staging-release-and-domain-rehearsal.md), and current marketplace delivery in [COR0010 — Group-funded coach marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
 
 ## Objective and context
 

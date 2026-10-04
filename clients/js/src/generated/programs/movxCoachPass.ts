@@ -35,9 +35,12 @@ import {
 } from "@solana/program-client-core";
 import {
   getCoachAuthorityCodec,
+  getCoachClientCreditsCodec,
   getOfferCodec,
   type CoachAuthority,
   type CoachAuthorityArgs,
+  type CoachClientCredits,
+  type CoachClientCreditsArgs,
   type Offer,
   type OfferArgs,
 } from "../accounts";
@@ -45,10 +48,14 @@ import {
   getCreateOfferInstruction,
   getDeactivateOfferInstruction,
   getInitializeCoachAuthorityInstructionAsync,
+  getPurchaseFirstOfferInstructionAsync,
+  getPurchaseOfferInstructionAsync,
   getRotateCoachAuthorityInstruction,
   parseCreateOfferInstruction,
   parseDeactivateOfferInstruction,
   parseInitializeCoachAuthorityInstruction,
+  parsePurchaseFirstOfferInstruction,
+  parsePurchaseOfferInstruction,
   parseRotateCoachAuthorityInstruction,
   type CreateOfferInput,
   type DeactivateOfferInput,
@@ -56,15 +63,20 @@ import {
   type ParsedCreateOfferInstruction,
   type ParsedDeactivateOfferInstruction,
   type ParsedInitializeCoachAuthorityInstruction,
+  type ParsedPurchaseFirstOfferInstruction,
+  type ParsedPurchaseOfferInstruction,
   type ParsedRotateCoachAuthorityInstruction,
+  type PurchaseFirstOfferAsyncInput,
+  type PurchaseOfferAsyncInput,
   type RotateCoachAuthorityInput,
 } from "../instructions";
 
 export const MOVX_COACH_PASS_PROGRAM_ADDRESS =
-  "DfpqcSwSer4MrPehwFk2Jota3yJVhqobWWD2Aq1crARB" as Address<"DfpqcSwSer4MrPehwFk2Jota3yJVhqobWWD2Aq1crARB">;
+  "GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU" as Address<"GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU">;
 
 export enum MovxCoachPassAccount {
   CoachAuthority,
+  CoachClientCredits,
   Offer,
 }
 
@@ -87,6 +99,17 @@ export function identifyMovxCoachPassAccount(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([132, 153, 198, 165, 173, 57, 127, 110]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassAccount.CoachClientCredits;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([215, 88, 60, 71, 170, 162, 73, 229]),
       ),
       0,
@@ -103,6 +126,7 @@ export function identifyMovxCoachPassAccount(
 export enum MovxCoachPassEvent {
   CoachAuthorityInitialized,
   CoachAuthorityRotated,
+  CreditsPurchased,
   OfferCreated,
   OfferDeactivated,
 }
@@ -137,6 +161,17 @@ export function identifyMovxCoachPassEvent(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([176, 67, 39, 167, 11, 116, 222, 22]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassEvent.CreditsPurchased;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([31, 236, 215, 144, 75, 45, 157, 87]),
       ),
       0,
@@ -164,6 +199,8 @@ export enum MovxCoachPassInstruction {
   CreateOffer,
   DeactivateOffer,
   InitializeCoachAuthority,
+  PurchaseFirstOffer,
+  PurchaseOffer,
   RotateCoachAuthority,
 }
 
@@ -208,6 +245,28 @@ export function identifyMovxCoachPassInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([62, 10, 36, 98, 185, 7, 219, 69]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassInstruction.PurchaseFirstOffer;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([144, 73, 153, 47, 106, 193, 212, 64]),
+      ),
+      0,
+    )
+  ) {
+    return MovxCoachPassInstruction.PurchaseOffer;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([218, 117, 187, 15, 9, 198, 160, 199]),
       ),
       0,
@@ -222,7 +281,7 @@ export function identifyMovxCoachPassInstruction(
 }
 
 export type ParsedMovxCoachPassInstruction<
-  TProgram extends string = "DfpqcSwSer4MrPehwFk2Jota3yJVhqobWWD2Aq1crARB",
+  TProgram extends string = "GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU",
 > =
   | ({
       instructionType: MovxCoachPassInstruction.CreateOffer;
@@ -233,6 +292,12 @@ export type ParsedMovxCoachPassInstruction<
   | ({
       instructionType: MovxCoachPassInstruction.InitializeCoachAuthority;
     } & ParsedInitializeCoachAuthorityInstruction<TProgram>)
+  | ({
+      instructionType: MovxCoachPassInstruction.PurchaseFirstOffer;
+    } & ParsedPurchaseFirstOfferInstruction<TProgram>)
+  | ({
+      instructionType: MovxCoachPassInstruction.PurchaseOffer;
+    } & ParsedPurchaseOfferInstruction<TProgram>)
   | ({
       instructionType: MovxCoachPassInstruction.RotateCoachAuthority;
     } & ParsedRotateCoachAuthorityInstruction<TProgram>);
@@ -261,6 +326,20 @@ export function parseMovxCoachPassInstruction<TProgram extends string>(
       return {
         instructionType: MovxCoachPassInstruction.InitializeCoachAuthority,
         ...parseInitializeCoachAuthorityInstruction(instruction),
+      };
+    }
+    case MovxCoachPassInstruction.PurchaseFirstOffer: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: MovxCoachPassInstruction.PurchaseFirstOffer,
+        ...parsePurchaseFirstOfferInstruction(instruction),
+      };
+    }
+    case MovxCoachPassInstruction.PurchaseOffer: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: MovxCoachPassInstruction.PurchaseOffer,
+        ...parsePurchaseOfferInstruction(instruction),
       };
     }
     case MovxCoachPassInstruction.RotateCoachAuthority: {
@@ -292,6 +371,8 @@ export type MovxCoachPassPlugin = {
 export type MovxCoachPassPluginAccounts = {
   coachAuthority: ReturnType<typeof getCoachAuthorityCodec> &
     SelfFetchFunctions<CoachAuthorityArgs, CoachAuthority>;
+  coachClientCredits: ReturnType<typeof getCoachClientCreditsCodec> &
+    SelfFetchFunctions<CoachClientCreditsArgs, CoachClientCredits>;
   offer: ReturnType<typeof getOfferCodec> &
     SelfFetchFunctions<OfferArgs, Offer>;
 };
@@ -307,6 +388,14 @@ export type MovxCoachPassPluginInstructions = {
   initializeCoachAuthority: (
     input: InitializeCoachAuthorityAsyncInput,
   ) => ReturnType<typeof getInitializeCoachAuthorityInstructionAsync> &
+    SelfPlanAndSendFunctions;
+  purchaseFirstOffer: (
+    input: PurchaseFirstOfferAsyncInput,
+  ) => ReturnType<typeof getPurchaseFirstOfferInstructionAsync> &
+    SelfPlanAndSendFunctions;
+  purchaseOffer: (
+    input: PurchaseOfferAsyncInput,
+  ) => ReturnType<typeof getPurchaseOfferInstructionAsync> &
     SelfPlanAndSendFunctions;
   rotateCoachAuthority: (
     input: RotateCoachAuthorityInput,
@@ -331,6 +420,10 @@ export function movxCoachPassProgram() {
             client,
             getCoachAuthorityCodec(),
           ),
+          coachClientCredits: addSelfFetchFunctions(
+            client,
+            getCoachClientCreditsCodec(),
+          ),
           offer: addSelfFetchFunctions(client, getOfferCodec()),
         },
         instructions: {
@@ -348,6 +441,16 @@ export function movxCoachPassProgram() {
             addSelfPlanAndSendFunctions(
               client,
               getInitializeCoachAuthorityInstructionAsync(input),
+            ),
+          purchaseFirstOffer: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getPurchaseFirstOfferInstructionAsync(input),
+            ),
+          purchaseOffer: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getPurchaseOfferInstructionAsync(input),
             ),
           rotateCoachAuthority: (input) =>
             addSelfPlanAndSendFunctions(

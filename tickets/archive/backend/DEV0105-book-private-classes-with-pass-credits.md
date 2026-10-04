@@ -1,11 +1,11 @@
 # Ticket DEV0105: Book private classes with pass credits
 
-- Status: Draft
+- Status: Cancelled
 - Created: 2026-10-03
-- Last updated: 2026-10-03
+- Last updated: 2026-10-04
 - Milestone: Coach-first M4 private-class booking
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on the explicit-slot baseline from [DEV0104 — Publish weekly coach availability](../../archive/backend/DEV0104-publish-weekly-coach-availability.md), durable recurring occurrences from [DEV0114 — Persist recurring coach availability](../../archive/backend/DEV0114-persist-recurring-coach-availability.md), eligible one-session/ten-session passes from [DEV0098 — Purchase training packages with Devnet USDC](../blockchain/DEV0098-purchase-training-packages-with-devnet-usdc.md), and supplies completed-booking context to [DEV0099 — Redeem and reconcile training sessions](../blockchain/DEV0099-redeem-and-reconcile-training-sessions.md)
+- Related records: historical plan under cancelled [COR0009](../organisatory/COR0009-coach-first-training-package-mvp.md); recurring availability from archived DEV0104/DEV0114 remains reusable discovery/planning infrastructure, while current group-event catalogue and interface work moves to [DEV0120](../../current/backend/DEV0120-persist-group-event-catalogue-and-projections.md) and [DEV0123](../../current/frontend/DEV0123-present-group-event-creation-and-funding.md)
 
 ## Objective and context
 
@@ -53,11 +53,11 @@ Run database constraints/RLS and transaction-race tests for slot and last-credit
 
 ## Implementation record
 
-Not started.
+Cancelled before implementation on 2026-10-04 when pass-backed capacity-one booking left the hackathon target.
 
 ### Changes and rationale
 
-Pending implementation.
+No runtime change was made. Completed recurring coach availability/calendar work remains in place, but the new core transaction is a scheduled capacity-bounded group event rather than a private slot reserved against TrainingPass credit.
 
 ### Affected files
 
@@ -65,7 +65,7 @@ Planned: additive hold/booking migration, Drizzle mappings, repositories/service
 
 ### Decisions and deviations
 
-None yet.
+- 2026-10-04: Cancelled instead of rewriting the private-booking contract into unrelated group-event persistence.
 
 ### Contracts, configuration, and operations
 
@@ -73,7 +73,7 @@ New off-chain hold, booking, reservation and operation contracts are planned. No
 
 ## Validation results
 
-Not run — no implementation.
+Not applicable — cancelled before implementation. Documentation/replacement links are validated by DEV0117.
 
 ## Risks, limitations, and follow-ups
 
@@ -81,7 +81,7 @@ Database reservations and on-chain balance cannot commit atomically. The recover
 
 ## Completion and review references
 
-- Completed: Not completed.
+- Completed: Cancelled on 2026-10-04 before runtime implementation.
 - Commit: Not created.
 - Review: Planning self-review only.
 - Deployment or release: None.

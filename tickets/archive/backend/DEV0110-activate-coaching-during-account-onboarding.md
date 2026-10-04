@@ -4,7 +4,7 @@
 - Created: 2026-10-03
 - Last updated: 2026-10-03
 - Milestone: Coach-first M1 identity and discovery
-- Coordination: [COR0009 — Coach-first private-class booking MVP](../../current/organisatory/COR0009-coach-first-training-package-mvp.md)
+- Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
 - Related records: extends completed email registration in [DEV0046 — Email OTP registration and application profiles](DEV0046-email-otp-registration-and-application-profiles.md), refines the self-declared coach boundary in [DEV0096 — Persist coach profiles and discovery](DEV0096-persist-coach-profiles-and-discovery.md), and gates the coach workspace delivered by [DEV0104 — Publish weekly coach availability](DEV0104-publish-weekly-coach-availability.md)
 
 ## Objective and context

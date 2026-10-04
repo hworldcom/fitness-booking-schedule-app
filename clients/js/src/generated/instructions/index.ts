@@ -9,4 +9,6 @@
 export * from "./createOffer";
 export * from "./deactivateOffer";
 export * from "./initializeCoachAuthority";
+export * from "./purchaseFirstOffer";
+export * from "./purchaseOffer";
 export * from "./rotateCoachAuthority";

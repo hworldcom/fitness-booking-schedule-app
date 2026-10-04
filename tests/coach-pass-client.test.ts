@@ -3,6 +3,10 @@ import test from "node:test";
 import { address, isNone } from "@solana/kit";
 import { getCoachAuthorityEncoder } from "../clients/js/src/generated/accounts/coachAuthority";
 import {
+  getCoachClientCreditsDecoder,
+  getCoachClientCreditsEncoder,
+} from "../clients/js/src/generated/accounts/coachClientCredits";
+import {
   getOfferDecoder,
   getOfferEncoder,
 } from "../clients/js/src/generated/accounts/offer";
@@ -12,6 +16,15 @@ import {
   getCreateOfferInstructionDataEncoder,
 } from "../clients/js/src/generated/instructions/createOffer";
 import {
+  PURCHASE_FIRST_OFFER_DISCRIMINATOR,
+  getPurchaseFirstOfferInstructionDataEncoder,
+} from "../clients/js/src/generated/instructions/purchaseFirstOffer";
+import {
+  PURCHASE_OFFER_DISCRIMINATOR,
+  getPurchaseOfferInstructionDataDecoder,
+  getPurchaseOfferInstructionDataEncoder,
+} from "../clients/js/src/generated/instructions/purchaseOffer";
+import {
   identifyMovxCoachPassInstruction,
   MovxCoachPassInstruction,
 } from "../clients/js/src/generated/programs/movxCoachPass";
@@ -20,9 +33,11 @@ import {
   DEVNET_USDC_MINT_ADDRESS,
   MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
   deriveCoachAuthorityAddress,
+  deriveCoachClientCreditsAddress,
   deriveOfferAddress,
   isOfferPurchaseEligible,
   parseCoachOfferMetadata,
+  projectCoachClientCreditSummary,
   uuidToSeed,
 } from "../src/solana/coach-pass";
 
@@ -32,6 +47,7 @@ const ORIGINAL_WALLET = address("7EcXv8cRWYEbaYjvcXn37Bq6STqS2QwRkX8EBXjKn5Ge");
 const RECOVERY_AUTHORITY = address(
   "HULis5PpFFL5ajU9k8WzPjtJ8wZKXg4HHbKVvSEhFCfR",
 );
+const CLIENT_WALLET = address("3idZ8hddpfAZ1JWW3gmH7YD6yokUuFDb1Txem2H6kPFe");
 
 test("UUID and PDA helpers produce stable coach and offer addresses", async () => {
   assert.equal(uuidToSeed(RUN_ID).length, 16);
@@ -65,6 +81,26 @@ test("UUID and PDA helpers produce stable coach and offer addresses", async () =
   assert.equal(coachAuthority, sameCoachAuthority);
   assert.equal(coachBump, sameCoachBump);
   assert.notEqual(firstOffer, secondOffer);
+
+  const [creditsAddress, creditsBump] = await deriveCoachClientCreditsAddress({
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    coachAuthority,
+    clientWallet: CLIENT_WALLET,
+  });
+  const [sameCreditsAddress, sameCreditsBump] =
+    await deriveCoachClientCreditsAddress({
+      programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+      coachAuthority,
+      clientWallet: CLIENT_WALLET,
+    });
+  const [otherClientCreditsAddress] = await deriveCoachClientCreditsAddress({
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    coachAuthority,
+    clientWallet: RECOVERY_AUTHORITY,
+  });
+  assert.equal(creditsAddress, sameCreditsAddress);
+  assert.equal(creditsBump, sameCreditsBump);
+  assert.notEqual(creditsAddress, otherClientCreditsAddress);
   await assert.rejects(
     deriveOfferAddress({
       programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
@@ -100,6 +136,32 @@ test("generated create-offer codec preserves exact commercial terms", () => {
   assert.equal(decoded.args.sessionCount, 10);
   assert.equal(decoded.args.validitySeconds, 7_776_000);
   assert.equal(isNone(decoded.args.restrictedClient), true);
+});
+
+test("generated purchase codecs preserve first and monotonic later operations", () => {
+  const first = getPurchaseFirstOfferInstructionDataEncoder().encode({});
+  const later = getPurchaseOfferInstructionDataEncoder().encode({
+    expectedPurchaseNonce: BigInt(7),
+  });
+  const decodedLater = getPurchaseOfferInstructionDataDecoder().decode(later);
+
+  assert.deepEqual(
+    Array.from(first),
+    Array.from(PURCHASE_FIRST_OFFER_DISCRIMINATOR),
+  );
+  assert.deepEqual(
+    Array.from(later.slice(0, 8)),
+    Array.from(PURCHASE_OFFER_DISCRIMINATOR),
+  );
+  assert.equal(
+    identifyMovxCoachPassInstruction(first),
+    MovxCoachPassInstruction.PurchaseFirstOffer,
+  );
+  assert.equal(
+    identifyMovxCoachPassInstruction(later),
+    MovxCoachPassInstruction.PurchaseOffer,
+  );
+  assert.equal(decodedLater.expectedPurchaseNonce, BigInt(7));
 });
 
 test("account codecs and eligibility reject stale wallet epochs", async () => {
@@ -157,6 +219,8 @@ test("account codecs and eligibility reject stale wallet epochs", async () => {
       offer,
       offerCoachAuthorityAddress: coachAuthorityAddress,
       authority,
+      clientWallet: CLIENT_WALLET,
+      purchasedAtUnixSeconds: BigInt(1_800_000_001),
     }),
     true,
   );
@@ -169,8 +233,68 @@ test("account codecs and eligibility reject stale wallet epochs", async () => {
         currentWallet: RECOVERY_AUTHORITY,
         authorityEpoch: BigInt(1),
       },
+      clientWallet: CLIENT_WALLET,
+      purchasedAtUnixSeconds: BigInt(1_800_000_001),
     }),
     false,
+  );
+});
+
+test("credit ledger codec and projection expose bounded coach client-card data", async () => {
+  const [coachAuthorityAddress] = await deriveCoachAuthorityAddress({
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    runId: RUN_ID,
+    profileId: PROFILE_ID,
+    originalWallet: ORIGINAL_WALLET,
+  });
+  const [lastOffer] = await deriveOfferAddress({
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    coachAuthority: coachAuthorityAddress,
+    nonce: BigInt(4),
+  });
+  const encoded = getCoachClientCreditsEncoder().encode({
+    version: 1,
+    coachAuthority: coachAuthorityAddress,
+    clientWallet: CLIENT_WALLET,
+    availableCredits: BigInt(8),
+    reservedCredits: BigInt(1),
+    totalPurchased: BigInt(11),
+    purchaseCount: BigInt(2),
+    nextPurchaseNonce: BigInt(2),
+    lastOffer,
+    lastPurchaseAt: BigInt(1_800_000_100),
+    bump: 249,
+    reserved: Array(46).fill(0),
+  });
+  const credits = getCoachClientCreditsDecoder().decode(encoded);
+
+  assert.equal(encoded.length, 200);
+  assert.deepEqual(
+    projectCoachClientCreditSummary({
+      credits,
+      expectedCoachAuthority: coachAuthorityAddress,
+      expectedClientWallet: CLIENT_WALLET,
+    }),
+    {
+      coachAuthority: coachAuthorityAddress,
+      clientWallet: CLIENT_WALLET,
+      availableCredits: BigInt(8),
+      reservedCredits: BigInt(1),
+      totalPurchased: BigInt(11),
+      purchaseCount: BigInt(2),
+      nextPurchaseNonce: BigInt(2),
+      lastOffer,
+      lastPurchaseAt: BigInt(1_800_000_100),
+    },
+  );
+  assert.throws(
+    () =>
+      projectCoachClientCreditSummary({
+        credits,
+        expectedCoachAuthority: coachAuthorityAddress,
+        expectedClientWallet: RECOVERY_AUTHORITY,
+      }),
+    /different client wallet/u,
   );
 });
 

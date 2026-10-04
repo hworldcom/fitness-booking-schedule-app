@@ -7,7 +7,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-movx_coach_pass = "DfpqcSwSer4MrPehwFk2Jota3yJVhqobWWD2Aq1crARB"
+movx_coach_pass = "GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU"
 
 [provider]
 cluster = "Localnet"

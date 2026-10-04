@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Coach-marketplace repository consolidation
 - Coordination: None — independent development ticket
-- Related records: current coach-first delivery is coordinated by [COR0009 — Coach-first private-class booking MVP](../../current/organisatory/COR0009-coach-first-training-package-mvp.md); [DEV0094 — Adopt the coach-first training-package MVP](DEV0094-adopt-coach-first-training-package-mvp.md) established the replacement product contract
+- Related records: coach-first delivery was coordinated by [COR0009 — Coach-first private-class booking MVP](COR0009-coach-first-training-package-mvp.md); [DEV0094 — Adopt the coach-first training-package MVP](DEV0094-adopt-coach-first-training-package-mvp.md) established that historical replacement contract
 
 ## Objective and context
 

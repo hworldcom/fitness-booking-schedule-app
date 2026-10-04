@@ -68,7 +68,7 @@ Use the development ticket's implementation record and validation results as the
 
 ## Product requirements
 
-Implement against the specification's [core coach passes and private classes](docs/mvp-spec.md#core-coach-packages), [purchase, booking and redemption](docs/mvp-spec.md#purchase-and-redemption), [asset, wallet and demo integrity](docs/mvp-spec.md#asset-wallet-and-demo-integrity), and [social behavior and permissions](docs/mvp-spec.md#social-behavior-and-permissions). Use its [confirmed decision register](docs/mvp-spec.md#confirmed-target-and-decisions), [definition of done](docs/mvp-spec.md#11-definition-of-done) and [acceptance matrix](docs/mvp-spec.md#13-acceptance-matrix) to select checks. Keep the requirements in that document rather than restating them here.
+Implement against the specification's [marketplace state model](docs/mvp-spec.md#marketplace-state-model), [event funding and recovery](docs/mvp-spec.md#event-funding-and-recovery), [asset, wallet and demo integrity](docs/mvp-spec.md#asset-wallet-and-demo-integrity), and [social behavior and permissions](docs/mvp-spec.md#social-behavior-and-permissions). Use its [confirmed decision register](docs/mvp-spec.md#confirmed-target-and-decisions), [definition of done](docs/mvp-spec.md#11-definition-of-done) and [acceptance matrix](docs/mvp-spec.md#13-acceptance-matrix) to select checks. Keep the requirements in that document rather than restating them here.
 
 ## Validation and definition of done
 

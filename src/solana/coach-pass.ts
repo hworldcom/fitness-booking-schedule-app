@@ -4,14 +4,16 @@ import {
   getProgramDerivedAddress,
   getU64Encoder,
   getUtf8Encoder,
+  isNone,
   type Address,
 } from "@solana/kit";
 import type { CoachAuthority } from "../../clients/js/src/generated/accounts/coachAuthority";
+import type { CoachClientCredits } from "../../clients/js/src/generated/accounts/coachClientCredits";
 import type { Offer } from "../../clients/js/src/generated/accounts/offer";
 import { OfferStatus } from "../../clients/js/src/generated/types/offerStatus";
 
 export const MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS = address(
-  "DfpqcSwSer4MrPehwFk2Jota3yJVhqobWWD2Aq1crARB",
+  "GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU",
 );
 export const DEVNET_USDC_MINT_ADDRESS = address(
   "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
@@ -20,6 +22,9 @@ export const MIN_OFFER_VALIDITY_SECONDS = 24 * 60 * 60;
 export const MAX_OFFER_VALIDITY_SECONDS = 365 * 24 * 60 * 60;
 
 const COACH_AUTHORITY_SEED = getUtf8Encoder().encode("coach-authority");
+const COACH_CLIENT_CREDITS_SEED = getUtf8Encoder().encode(
+  "coach-client-credits",
+);
 const OFFER_SEED = getUtf8Encoder().encode("offer");
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
@@ -34,6 +39,18 @@ export type CoachOfferMetadata = Readonly<{
 export type CoachOfferMetadataResult =
   | Readonly<{ valid: true; value: CoachOfferMetadata }>
   | Readonly<{ valid: false; errors: readonly string[] }>;
+
+export type CoachClientCreditSummary = Readonly<{
+  coachAuthority: Address;
+  clientWallet: Address;
+  availableCredits: bigint;
+  reservedCredits: bigint;
+  totalPurchased: bigint;
+  purchaseCount: bigint;
+  nextPurchaseNonce: bigint;
+  lastOffer: Address;
+  lastPurchaseAt: bigint;
+}>;
 
 export function uuidToSeed(value: string): Uint8Array {
   const normalized = value.trim().toLowerCase();
@@ -85,18 +102,72 @@ export async function deriveOfferAddress(input: {
   });
 }
 
+export async function deriveCoachClientCreditsAddress(input: {
+  programAddress: Address;
+  coachAuthority: Address;
+  clientWallet: Address;
+}): Promise<readonly [Address, number]> {
+  return getProgramDerivedAddress({
+    programAddress: input.programAddress,
+    seeds: [
+      COACH_CLIENT_CREDITS_SEED,
+      getAddressEncoder().encode(input.coachAuthority),
+      getAddressEncoder().encode(input.clientWallet),
+    ],
+  });
+}
+
 export function isOfferPurchaseEligible(input: {
   offer: Offer;
   offerCoachAuthorityAddress: Address;
   authority: CoachAuthority;
+  clientWallet: Address;
+  purchasedAtUnixSeconds: bigint;
 }): boolean {
+  const expiresAt =
+    input.offer.validitySeconds === 0
+      ? null
+      : input.offer.createdAt + BigInt(input.offer.validitySeconds);
+
   return (
     input.offer.status === OfferStatus.Active &&
     input.offer.coachAuthority === input.offerCoachAuthorityAddress &&
     input.offer.authorityEpoch === input.authority.authorityEpoch &&
     input.offer.paymentRecipient === input.authority.currentWallet &&
-    input.offer.paymentMint === DEVNET_USDC_MINT_ADDRESS
+    input.offer.paymentMint === DEVNET_USDC_MINT_ADDRESS &&
+    input.clientWallet !== input.authority.currentWallet &&
+    (isNone(input.offer.restrictedClient) ||
+      input.offer.restrictedClient.value === input.clientWallet) &&
+    (expiresAt === null || input.purchasedAtUnixSeconds < expiresAt)
   );
+}
+
+export function projectCoachClientCreditSummary(input: {
+  credits: CoachClientCredits;
+  expectedCoachAuthority: Address;
+  expectedClientWallet: Address;
+}): CoachClientCreditSummary {
+  if (input.credits.version !== 1) {
+    throw new Error("Unsupported coach-client credit ledger version.");
+  }
+  if (input.credits.coachAuthority !== input.expectedCoachAuthority) {
+    throw new Error("Credit ledger belongs to a different coach authority.");
+  }
+  if (input.credits.clientWallet !== input.expectedClientWallet) {
+    throw new Error("Credit ledger belongs to a different client wallet.");
+  }
+
+  return {
+    coachAuthority: input.credits.coachAuthority,
+    clientWallet: input.credits.clientWallet,
+    availableCredits: input.credits.availableCredits,
+    reservedCredits: input.credits.reservedCredits,
+    totalPurchased: input.credits.totalPurchased,
+    purchaseCount: input.credits.purchaseCount,
+    nextPurchaseNonce: input.credits.nextPurchaseNonce,
+    lastOffer: input.credits.lastOffer,
+    lastPurchaseAt: input.credits.lastPurchaseAt,
+  };
 }
 
 export function parseCoachOfferMetadata(

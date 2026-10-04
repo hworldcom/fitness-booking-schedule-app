@@ -1,28 +1,28 @@
 # MovX Club
 
-**Find the right coach. Book a private class. Train on your terms.**
+**Find a coach. Buy a pass. Book the session that fits.**
 
-MovX Club is a coach-first hackathon product for independent martial-arts coaches and their clients. Coaches choose one public discovery location, publish capacity-one availability for the coming week and offer one-session and ten-session passes. Clients explore coaches through an accessible list and planned Mapbox view, choose a private slot, buy or use a pass, and keep the credit when a future booking is cancelled. Pass purchase and completed-session balances use test USDC and a Solana Devnet program; profiles, locations, availability, bookings, follows and a small chronological coach feed live in the application layer.
+MovX Club is a two-sided hackathon marketplace for martial-arts clients and coaches. The primary flow lets a client buy one or ten coach-specific credits with test USDC on Solana Devnet and reserve an open calendar session. A coach controls the early-cancellation cutoff and decides later requests. The secondary flow lets participants conditionally fund a group event; its program-controlled pool pays the coach only when the published minimum is reached and otherwise permits exact refunds. Profiles, locations, schedules, bookings, requests, proposals, event descriptions, follows and posts remain in the application layer.
 
-The former multi-gym membership product is superseded. Relevant evidence remains in retained reusable foundation and cleanup records, additive migrations, the [reserved legacy-identifier register](tickets/README.md#pruned-legacy-product-identifiers) and Git history; 61 superseded ticket records were pruned under [DEV0112](tickets/archive/organisatory/DEV0112-prune-superseded-product-tickets.md). Its membership activation, reservation, check-in, gym-wallet and wallet-card runtime was removed under [DEV0101](tickets/archive/backend/DEV0101-retire-multigym-membership-runtime.md). The coach-first runtime is coordinated under [COR0009](tickets/current/organisatory/COR0009-coach-first-training-package-mvp.md); do not infer that every target flow is already implemented.
+The former multi-gym membership product is superseded. Relevant evidence remains in retained reusable foundation and cleanup records, additive migrations, the [reserved legacy-identifier register](tickets/README.md#pruned-legacy-product-identifiers) and Git history; 61 older product records were pruned under [DEV0112](tickets/archive/organisatory/DEV0112-prune-superseded-product-tickets.md). Membership runtime was removed under [DEV0101](tickets/archive/backend/DEV0101-retire-multigym-membership-runtime.md). The earlier private-pass work map was cancelled under [COR0009](tickets/archive/organisatory/COR0009-coach-first-training-package-mvp.md), but a new smaller pass design is now explicitly planned under current tickets rather than reopening that history. Current delivery is coordinated under [COR0010](tickets/current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md); do not infer that every target flow is already implemented.
 
 Start with the [MVP specification](docs/mvp-spec.md). It is the single current product contract, including authority boundaries, milestones, acceptance scenarios and the judge demo.
 
 ## Repository guide
 
-| Location                                             | Responsibility                                              |
-| ---------------------------------------------------- | ----------------------------------------------------------- |
-| [docs/mvp-spec.md](docs/mvp-spec.md)                 | Current coach-first product behavior and delivery contract. |
-| [AGENTS.md](AGENTS.md)                               | Contributor workflow, ticket, validation and commit rules.  |
-| [tickets/README.md](tickets/README.md)               | Current and archived development/coordination records.      |
-| [docs/archive/2026-09-18/](docs/archive/2026-09-18/) | Superseded product drafts retained for context only.        |
-| [supabase/README.md](supabase/README.md)             | Local database and hosted migration operations.             |
+| Location                                             | Responsibility                                             |
+| ---------------------------------------------------- | ---------------------------------------------------------- |
+| [docs/mvp-spec.md](docs/mvp-spec.md)                 | Current marketplace behavior and delivery contract.        |
+| [AGENTS.md](AGENTS.md)                               | Contributor workflow, ticket, validation and commit rules. |
+| [tickets/README.md](tickets/README.md)               | Current and archived development/coordination records.     |
+| [docs/archive/2026-09-18/](docs/archive/2026-09-18/) | Superseded product drafts retained for context only.       |
+| [supabase/README.md](supabase/README.md)             | Local database and hosted migration operations.            |
 
 ## Current foundation
 
 Delivered reusable foundations include the responsive Next.js application shell, local Supabase/PostgreSQL workflow, server-only database boundary, email-code accounts, protected application profiles, self-service coaching activation, Phantom discovery through Wallet Standard and Cloudflare staging tooling. The optional personal-wallet proof flow is implemented locally under [DEV0047](tickets/current/backend/DEV0047-personal-wallet-linking-and-replacement.md), but remains in progress pending its required real-Phantom and signed-in responsive-keyboard evidence.
 
-Persistent self-declared coach profiles, coach-selected public locations and list-based coach discovery are implemented under [DEV0096](tickets/archive/backend/DEV0096-persist-coach-profiles-and-discovery.md); the protected coach workspace and explicit-slot baseline are implemented under [DEV0104](tickets/archive/backend/DEV0104-publish-weekly-coach-availability.md); [DEV0114](tickets/archive/backend/DEV0114-persist-recurring-coach-availability.md) adds exact one-hour recurring rules plus durable seven-day occurrences; and [DEV0115](tickets/archive/frontend/DEV0115-add-coach-schedule-calendar.md) supplies the responsive coach working-week editor and dated public schedule. One-way follows, coach-only posts, public recent posts and the chronological Following feed are implemented under [DEV0100](tickets/archive/backend/DEV0100-coach-follows-and-chronological-posts.md). The Mapbox Explore release, one-session/ten-session Offer accounts, test-USDC purchase, TrainingPass state, private booking and completed-session redemption are not complete until their COR0009 development tickets record implementation and validation. The public home and coach directory present a truthful coach-first early-access state while those later capabilities are built. Retired gym and membership routes return not found rather than exposing a second product.
+Persistent self-declared coach profiles, coach-selected public locations and list-based coach discovery are implemented under [DEV0096](tickets/archive/backend/DEV0096-persist-coach-profiles-and-discovery.md); the protected coach workspace and explicit-slot baseline are implemented under [DEV0104](tickets/archive/backend/DEV0104-publish-weekly-coach-availability.md); [DEV0114](tickets/archive/backend/DEV0114-persist-recurring-coach-availability.md) adds exact one-hour recurring rules plus durable seven-day occurrences; and [DEV0115](tickets/archive/frontend/DEV0115-add-coach-schedule-calendar.md) supplies the responsive coach working-week editor and dated public schedule. One-way follows, coach-only posts, public recent posts and the chronological Following feed are implemented under [DEV0100](tickets/archive/backend/DEV0100-coach-follows-and-chronological-posts.md). Mapbox operational validation remains open under DEV0108. [DEV0127](tickets/archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md) implements and adversarially tests the local pair-ledger purchase contract and generated client; Devnet proof plus booking and client-card interfaces remain open under DEV0128–DEV0130. Requests/proposals and group events remain under DEV0118–DEV0125. Retired gym/membership routes are not current product surfaces.
 
 ## Run locally
 
@@ -87,7 +87,7 @@ Independent-place search uses an explicit Mapbox Geocoding v6 request with `perm
 
 Current and planned chain work is Devnet-only. `.env.example` documents the public browser RPC, private server RPC and bounded fee-sponsor variable names. Credentialed RPC URLs and sponsor keypairs are server-only and must never use a `NEXT_PUBLIC_` prefix or enter committed configuration.
 
-The coach-pass implementation will use official Devnet test USDC. One-session and ten-session purchases create the same non-transferable TrainingPass contract with different initial balances. Booking and cancellation remain off-chain; only a completed booked class decrements the authoritative on-chain balance. The removed multi-gym EURC recipient, quote and card contracts are not reusable product configuration. No mainnet transaction, production custody or real-money claim is supported.
+Both payment loops use official Devnet test USDC. A pass offer freezes one/ten credits, exact price, coach recipient, authority epoch, purchase window and optional client restriction. The first purchase creates one `CoachClientCredits` program-derived account (PDA) for that coach/client pair; later purchases reuse it. A separate EventPool PDA freezes each group event's price, capacity, deadline and recipient, with deterministic payout or pull-refund behavior. The removed multi-gym EURC contract is not reusable product configuration. No mainnet transaction, production custody, attendance guarantee, dispute resolution or real-money claim is supported.
 
 ## Cloudflare staging
 
@@ -144,12 +144,12 @@ npm run test:e2e
 
 - `src/app/`: thin App Router pages, route handlers and shared styles.
 - `src/features/`: capability-owned browser behavior and screens.
-- `src/domain/`: framework-independent validation and state rules, including future slot/booking rules.
+- `src/domain/`: framework-independent validation and state rules, including future marketplace and event-funding rules.
 - `src/auth/` and `src/server/auth/`: browser/server Supabase identity boundaries.
 - `src/server/identity/` and `src/server/wallet/`: application profile and personal-wallet proof services.
-- `src/server/db/`: server-only PostgreSQL configuration, schema mappings and narrow repositories; availability and booking persistence arrives under DEV0104–DEV0105.
+- `src/server/db/`: server-only PostgreSQL configuration, schema mappings and narrow repositories; request/proposal and group-event persistence arrive under DEV0118 and DEV0120.
 - Mapbox remains a browser-side rendering/selection adapter behind a client-only lazy boundary; provider-neutral coach and slot location snapshots remain in PostgreSQL, and list discovery works without Mapbox.
-- `src/solana/`: shared chain contracts plus browser-safe Wallet Standard clients; coach-pass modules arrive under DEV0097–DEV0099.
+- `src/solana/`: shared chain contracts plus browser-safe Wallet Standard clients; the local coach-pass contract is complete under DEV0127, its Devnet integration continues under DEV0130, and group-event funding remains under DEV0121/DEV0122.
 - `supabase/`: sole additive SQL migration history, deterministic seeds and database tests.
 - `tests/`: unit, integration and browser validation.
 - `public/`: local illustrative assets only; no real coach or venue affiliation is implied.

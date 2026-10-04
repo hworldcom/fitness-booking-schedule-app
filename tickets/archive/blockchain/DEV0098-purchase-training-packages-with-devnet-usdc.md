@@ -1,11 +1,11 @@
 # Ticket DEV0098: Purchase training packages with Devnet USDC
 
-- Status: Draft
+- Status: Cancelled
 - Created: 2026-10-02
-- Last updated: 2026-10-03
+- Last updated: 2026-10-04
 - Milestone: Coach-first M3 package purchase
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on [DEV0097 — Create coach package offers](DEV0097-create-coach-package-offers.md), linked-wallet authority from [DEV0047](../backend/DEV0047-personal-wallet-linking-and-replacement.md), and reuses only generic reviewed transaction/recovery patterns without inheriting any legacy currency or pooled-payment contract; supplies eligible passes and purchase recovery to [DEV0105 — Book private classes with pass credits](../backend/DEV0105-book-private-classes-with-pass-credits.md)
+- Related records: historical plan under cancelled [COR0009](../organisatory/COR0009-coach-first-training-package-mvp.md); replaced by [DEV0121](../../current/blockchain/DEV0121-implement-group-event-funding-program.md) and [DEV0122](../../current/blockchain/DEV0122-integrate-devnet-group-event-funding.md), which define conditional pooled funding rather than TrainingPass purchase
 
 ## Objective and context
 
@@ -48,11 +48,11 @@ Cover atomicity and adversarial program cases locally, deterministic quote/spons
 
 ## Implementation record
 
-Not started.
+Cancelled before implementation on 2026-10-04 when the user adopted conditional group-event funding as the hackathon's single payment story.
 
 ### Changes and rationale
 
-Pending implementation.
+No runtime change was made. The planned direct-to-coach TrainingPass transaction is superseded by a program-controlled EventPool vault with threshold settlement, payout or refunds.
 
 ### Affected files
 
@@ -60,7 +60,7 @@ Planned: pass-program purchase instruction, server/client Solana boundaries, pas
 
 ### Decisions and deviations
 
-None yet.
+- 2026-10-04: Cancelled rather than rewritten so this private-pass plan remains honest historical context.
 
 ### Contracts, configuration, and operations
 
@@ -68,7 +68,7 @@ New configured mint/program/decimals, package program ID and sponsor policy are 
 
 ## Validation results
 
-Not run — no implementation.
+Not applicable — cancelled before implementation. Documentation/replacement links are validated by DEV0117.
 
 ## Risks, limitations, and follow-ups
 
@@ -76,7 +76,7 @@ Test-USDC faucet/provider availability and Cloudflare RPC limits can block rehea
 
 ## Completion and review references
 
-- Completed: Not completed.
+- Completed: Cancelled on 2026-10-04 before runtime implementation.
 - Commit: Not created.
 - Review: Planning self-review only.
 - Deployment or release: None.

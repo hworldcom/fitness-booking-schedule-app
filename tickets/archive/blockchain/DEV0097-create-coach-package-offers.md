@@ -1,11 +1,11 @@
 # Ticket DEV0097: Create coach package offers on Devnet
 
-- Status: In progress
+- Status: Cancelled
 - Created: 2026-10-02
-- Last updated: 2026-10-03
+- Last updated: 2026-10-04
 - Milestone: Coach-first M2 one-session/ten-session offers
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on [DEV0094](../../archive/organisatory/DEV0094-adopt-coach-first-training-package-mvp.md), applicable coach identity from [DEV0096](../../archive/backend/DEV0096-persist-coach-profiles-and-discovery.md) and linked-wallet authority from [DEV0047](../backend/DEV0047-personal-wallet-linking-and-replacement.md); supplies authoritative one-session/ten-session terms to DEV0098 and booking eligibility to DEV0105
+- Related records: historical implementation under cancelled [COR0009](../organisatory/COR0009-coach-first-training-package-mvp.md); replaced for the current product by [DEV0121 — Implement the group-event funding program](../../current/blockchain/DEV0121-implement-group-event-funding-program.md), which may review but does not automatically inherit this partial code; originally depended on DEV0094, DEV0096 and linked-wallet authority from current DEV0047
 
 ## Objective and context
 
@@ -98,9 +98,11 @@ The application still needs an expected recovery-authority address and custody p
 
 Recovery-authority compromise could rotate coach control when paired with an attacker-controlled replacement wallet, so its custody is a deployment blocker rather than an incidental sponsor setting. Program rent/fees, a deployable program ID, SBF runtime behavior, upgrade authority and recovery-key custody need explicit evidence before deployment. DEV0096 is still in progress; this ticket must not bind UI/metadata persistence to an unstable schema. Repository dependency advisories require a separate scoped upgrade rather than an unsafe `npm audit fix --force` during this ticket.
 
+Cancelled on 2026-10-04 after the user replaced the unfinished private-pass flow with conditional group-event funding as the hackathon's primary blockchain contract. The committed CoachAuthority/Offer/IDL/client foundation remains historical partial implementation and is not a deployed or current product authority. DEV0121 must explicitly review any reusable authority, codec or test pattern and must not relabel private Offer behavior as EventPool delivery.
+
 ## Completion and review references
 
-- Completed: Not completed.
+- Completed: Cancelled on 2026-10-04; partial program foundation preserved, remaining acceptance criteria intentionally not completed.
 - Commit: `[DEV0097] Establish coach offer program foundation` (this commit).
 - Review: Planning self-review only.
 - Deployment or release: None.

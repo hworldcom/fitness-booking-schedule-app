@@ -4,8 +4,8 @@
 - Created: 2026-10-04
 - Last updated: 2026-10-04
 - Milestone: Coach-first M2 recurring availability
-- Coordination: [COR0009 — Coach-first private-class booking MVP](../../current/organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on recurring rules and dated occurrences from [DEV0114 — Persist recurring coach availability](../backend/DEV0114-persist-recurring-coach-availability.md), replaces the form/list presentation delivered by [DEV0104 — Publish weekly coach availability](../backend/DEV0104-publish-weekly-coach-availability.md), and supplies client slot selection context to [DEV0105 — Book private classes with pass credits](../../current/backend/DEV0105-book-private-classes-with-pass-credits.md)
+- Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
+- Related records: depends on recurring rules and dated occurrences from [DEV0114 — Persist recurring coach availability](../backend/DEV0114-persist-recurring-coach-availability.md), replaces the form/list presentation delivered by [DEV0104 — Publish weekly coach availability](../backend/DEV0104-publish-weekly-coach-availability.md), and historically supplied client slot selection context to cancelled [DEV0105 — Book private classes with pass credits](../backend/DEV0105-book-private-classes-with-pass-credits.md)
 
 ## Objective and context
 

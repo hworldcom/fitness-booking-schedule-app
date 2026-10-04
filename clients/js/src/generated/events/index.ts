@@ -8,5 +8,6 @@
 
 export * from "./coachAuthorityInitialized";
 export * from "./coachAuthorityRotated";
+export * from "./creditsPurchased";
 export * from "./offerCreated";
 export * from "./offerDeactivated";

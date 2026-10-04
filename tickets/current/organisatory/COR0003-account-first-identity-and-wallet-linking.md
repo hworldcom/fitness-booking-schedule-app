@@ -6,7 +6,7 @@
 - Milestone: Prioritized identity and onboarding
 - Converted from: Not applicable — created after DEV0046 already had planning commit history
 - Tracked development tickets: completed [DEV0046 — Email OTP registration and application profiles](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md) and [DEV0047 — Personal wallet linking and replacement](../backend/DEV0047-personal-wallet-linking-and-replacement.md)
-- Related records: follows completed [DEV0038](../../archive/backend/DEV0038-phantom-supabase-web3-authentication.md), [DEV0039](../../archive/backend/DEV0039-prepared-identity-and-wallet-bindings.md) and [DEV0040](../../archive/backend/DEV0040-protected-access-and-database-context.md); current coach-first consumers are coordinated by [COR0009](COR0009-coach-first-training-package-mvp.md)
+- Related records: follows completed [DEV0038](../../archive/backend/DEV0038-phantom-supabase-web3-authentication.md), [DEV0039](../../archive/backend/DEV0039-prepared-identity-and-wallet-bindings.md) and [DEV0040](../../archive/backend/DEV0040-protected-access-and-database-context.md); current marketplace consumers are coordinated by [COR0010](COR0010-group-funded-coach-marketplace-mvp.md)
 
 ## Objective and boundaries
 

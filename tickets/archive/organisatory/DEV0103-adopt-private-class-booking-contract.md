@@ -4,7 +4,7 @@
 - Created: 2026-10-03
 - Last updated: 2026-10-03
 - Milestone: Coach-first booking-contract correction
-- Coordination: [COR0009 — Coach-first private-class booking MVP](../../current/organisatory/COR0009-coach-first-training-package-mvp.md)
+- Coordination: [COR0009 — Coach-first private-class booking MVP](COR0009-coach-first-training-package-mvp.md)
 - Related records: corrects the package-only contract adopted by [DEV0094 — Adopt the coach-first training-package MVP](../../archive/organisatory/DEV0094-adopt-coach-first-training-package-mvp.md); revises DEV0095–DEV0100 and creates direct COR0009 peers for weekly availability, private-class booking and hosted integration
 
 ## Objective and context

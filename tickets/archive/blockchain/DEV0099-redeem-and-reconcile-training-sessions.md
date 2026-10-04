@@ -1,11 +1,11 @@
 # Ticket DEV0099: Redeem and reconcile training sessions
 
-- Status: Draft
+- Status: Cancelled
 - Created: 2026-10-02
-- Last updated: 2026-10-03
+- Last updated: 2026-10-04
 - Milestone: Coach-first M5 completed-class consumption
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on purchased passes from [DEV0098](DEV0098-purchase-training-packages-with-devnet-usdc.md), confirmed bookings from [DEV0105 — Book private classes with pass credits](../backend/DEV0105-book-private-classes-with-pass-credits.md) and coach identity from [DEV0096](../../archive/backend/DEV0096-persist-coach-profiles-and-discovery.md)
+- Related records: historical plan under cancelled [COR0009](../organisatory/COR0009-coach-first-training-package-mvp.md); superseded by deterministic group-event settlement/payout/refund in [DEV0121](../../current/blockchain/DEV0121-implement-group-event-funding-program.md) and [DEV0122](../../current/blockchain/DEV0122-integrate-devnet-group-event-funding.md), not by an attendance-redemption equivalent
 
 ## Objective and context
 
@@ -48,11 +48,11 @@ Use program tests for every state/authority/concurrency branch, event-index repl
 
 ## Implementation record
 
-Not started.
+Cancelled before implementation on 2026-10-04 when completed-session redemption left the hackathon target.
 
 ### Changes and rationale
 
-Pending implementation.
+No runtime change was made. The current product deliberately does not prove or redeem real-world attendance; its blockchain rule ends at group-funding success/payout or failure/refund.
 
 ### Affected files
 
@@ -60,7 +60,7 @@ Planned: package program redemption instruction/event, operation/index schema an
 
 ### Decisions and deviations
 
-None yet.
+- 2026-10-04: Cancelled without a one-for-one replacement because attendance proof, no-show and post-event disputes are explicitly outside the new MVP.
 
 ### Contracts, configuration, and operations
 
@@ -68,7 +68,7 @@ No new payment asset is planned. Redemption operation/event and possibly sponsor
 
 ## Validation results
 
-Not run — no implementation.
+Not applicable — cancelled before implementation. Documentation/replacement links are validated by DEV0117.
 
 ## Risks, limitations, and follow-ups
 
@@ -76,7 +76,7 @@ Unilateral coach attestation/redemption requires product trust and a future no-s
 
 ## Completion and review references
 
-- Completed: Not completed.
+- Completed: Cancelled on 2026-10-04 before runtime implementation.
 - Commit: Not created.
 - Review: Planning self-review only.
 - Deployment or release: None.

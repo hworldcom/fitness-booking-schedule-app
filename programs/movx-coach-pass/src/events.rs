@@ -44,3 +44,20 @@ pub struct OfferDeactivated {
     pub deactivated_at: i64,
     pub event_sequence: u64,
 }
+
+#[event]
+pub struct CreditsPurchased {
+    pub coach_client_credits: Pubkey,
+    pub coach_authority: Pubkey,
+    pub offer: Pubkey,
+    pub client_wallet: Pubkey,
+    pub payment_recipient: Pubkey,
+    pub purchase_nonce: u64,
+    pub price_usdc_base_units: u64,
+    pub credits_purchased: u8,
+    pub available_credits: u64,
+    pub reserved_credits: u64,
+    pub total_purchased: u64,
+    pub purchase_count: u64,
+    pub purchased_at: i64,
+}

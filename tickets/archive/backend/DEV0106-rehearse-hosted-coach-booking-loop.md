@@ -1,11 +1,11 @@
 # Ticket DEV0106: Rehearse the hosted coach booking loop
 
-- Status: Draft
+- Status: Cancelled
 - Created: 2026-10-03
 - Last updated: 2026-10-04
 - Milestone: Coach-first M7 hosted rehearsal
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: integrates DEV0095–DEV0100, DEV0104–DEV0105, [DEV0108 — Add the Mapbox coach Explore map](../frontend/DEV0108-add-mapbox-coach-explore-map.md), [DEV0114 — Persist recurring coach availability](../../archive/backend/DEV0114-persist-recurring-coach-availability.md), [DEV0115 — Add the coach schedule calendar](../../archive/frontend/DEV0115-add-coach-schedule-calendar.md) and the reviewed migration outcome of [DEV0109 — Retire membership schema and preserve gyms](../../archive/backend/DEV0109-retire-membership-schema-and-preserve-gyms.md) after their completion; depends on the staging foundation coordinated by [COR0004 — Hosted staging deployment](../organisatory/COR0004-hosted-staging-deployment.md), including DEV0055/DEV0056; does not replace their infrastructure ownership
+- Related records: historical integration plan under cancelled [COR0009](../organisatory/COR0009-coach-first-training-package-mvp.md); replaced by [DEV0125 — Rehearse the hosted marketplace loops](../../current/backend/DEV0125-rehearse-hosted-marketplace-loops.md), which owns the new pass/booking path and group-funding proof without reopening this record
 
 ## Objective and context
 
@@ -52,11 +52,11 @@ Run all peer-required unit/database/program/static/build/browser suites against 
 
 ## Implementation record
 
-Not started.
+Cancelled before implementation on 2026-10-04 because the private-pass hosted path was superseded before its dependencies completed.
 
 ### Changes and rationale
 
-Pending implementation.
+No deployment or rehearsal occurred. DEV0125 owns the replacement request/proposal, group-event success and failed-pool refund evidence.
 
 ### Affected files
 
@@ -64,7 +64,7 @@ Planned: bounded rehearsal/setup scripts, staging configuration only where peers
 
 ### Decisions and deviations
 
-None yet.
+- 2026-10-04: Cancelled rather than editing historical rehearsal criteria into a different product.
 
 ### Contracts, configuration, and operations
 
@@ -72,7 +72,7 @@ No new product contract is planned. Staging program/mint/RPC/sponsor identifiers
 
 ## Validation results
 
-Not run — dependencies are incomplete.
+Not applicable — cancelled before implementation or deployment. Documentation/replacement links are validated by DEV0117.
 
 ## Risks, limitations, and follow-ups
 
@@ -80,7 +80,7 @@ Devnet faucet/RPC availability and Worker limits can block a rehearsal without i
 
 ## Completion and review references
 
-- Completed: Not completed.
+- Completed: Cancelled on 2026-10-04 before runtime implementation or deployment.
 - Commit: Not created.
 - Review: Planning self-review only.
 - Deployment or release: None.

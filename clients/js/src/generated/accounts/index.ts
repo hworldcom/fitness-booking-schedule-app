@@ -7,4 +7,5 @@
  */
 
 export * from "./coachAuthority";
+export * from "./coachClientCredits";
 export * from "./offer";

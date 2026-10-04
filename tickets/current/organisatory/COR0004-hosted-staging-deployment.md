@@ -6,7 +6,7 @@
 - Milestone: M0 hosted integration environment
 - Converted from: Not applicable — created as a coordination record
 - Tracked development tickets: [DEV0054 — Cloudflare Workers runtime foundation](../../archive/backend/DEV0054-cloudflare-workers-runtime-foundation.md), [DEV0055 — Hosted Supabase staging environment](../backend/DEV0055-hosted-supabase-staging-environment.md), and [DEV0056 — Staging release and domain rehearsal](../backend/DEV0056-staging-release-and-domain-rehearsal.md)
-- Related records: [DEV0015 — Supabase database foundation](../../archive/backend/DEV0015-supabase-database-foundation.md), [DEV0046 — Email OTP registration and application profiles](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md), [DEV0047 — Personal wallet linking and replacement](../backend/DEV0047-personal-wallet-linking-and-replacement.md), and current coach-first release ownership in [COR0009](COR0009-coach-first-training-package-mvp.md)
+- Related records: [DEV0015 — Supabase database foundation](../../archive/backend/DEV0015-supabase-database-foundation.md), [DEV0046 — Email OTP registration and application profiles](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md), [DEV0047 — Personal wallet linking and replacement](../backend/DEV0047-personal-wallet-linking-and-replacement.md), and current marketplace release ownership in [COR0010](COR0010-group-funded-coach-marketplace-mvp.md)
 
 ## Objective and boundaries
 

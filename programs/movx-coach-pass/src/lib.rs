@@ -9,7 +9,7 @@ pub mod state;
 use instructions::*;
 use state::CreateOfferArgs;
 
-declare_id!("DfpqcSwSer4MrPehwFk2Jota3yJVhqobWWD2Aq1crARB");
+declare_id!("GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU");
 
 #[program]
 pub mod movx_coach_pass {
@@ -33,5 +33,13 @@ pub mod movx_coach_pass {
 
     pub fn deactivate_offer(ctx: Context<DeactivateOffer>) -> Result<()> {
         instructions::deactivate_offer::handler(ctx)
+    }
+
+    pub fn purchase_first_offer(ctx: Context<PurchaseFirstOffer>) -> Result<()> {
+        instructions::purchase_first_offer::handler(ctx)
+    }
+
+    pub fn purchase_offer(ctx: Context<PurchaseOffer>, expected_purchase_nonce: u64) -> Result<()> {
+        instructions::purchase_offer::handler(ctx, expected_purchase_nonce)
     }
 }
