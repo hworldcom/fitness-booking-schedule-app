@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Marketplace M2 two-sided demand
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: uses completed [DEV0046](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md), [DEV0096](../../archive/backend/DEV0096-persist-coach-profiles-and-discovery.md) and [DEV0110](../../archive/backend/DEV0110-activate-coaching-during-account-onboarding.md); supplies browser workflows to [DEV0119](../frontend/DEV0119-present-training-requests-and-coach-proposals.md) and selected-proposal context to [DEV0120](DEV0120-persist-group-event-catalogue-and-projections.md)
+- Related records: uses completed [DEV0046](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md), [DEV0096](../../archive/backend/DEV0096-persist-coach-profiles-and-discovery.md) and [DEV0110](../../archive/backend/DEV0110-activate-coaching-during-account-onboarding.md); supplies browser workflows to [DEV0119](../frontend/DEV0119-present-training-requests-and-coach-proposals.md) and selected-proposal context to completed [DEV0120](../../archive/backend/DEV0120-persist-group-event-catalogue-and-projections.md)
 
 ## Objective and context
 

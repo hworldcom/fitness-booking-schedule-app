@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Marketplace M3/M5 group-event experience
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: depends on [DEV0120 — Persist group-event catalogue and projections](../backend/DEV0120-persist-group-event-catalogue-and-projections.md) and [DEV0122 — Integrate Devnet group-event funding](../blockchain/DEV0122-integrate-devnet-group-event-funding.md); consumes coach/location/calendar foundations and supplies the primary browser flow to DEV0125
+- Related records: depends on completed [DEV0120 — Persist group-event catalogue and projections](../../archive/backend/DEV0120-persist-group-event-catalogue-and-projections.md) and [DEV0122 — Integrate Devnet group-event funding](../blockchain/DEV0122-integrate-devnet-group-event-funding.md); consumes coach/location/calendar foundations and supplies the primary browser flow to DEV0125
 
 ## Objective and context
 

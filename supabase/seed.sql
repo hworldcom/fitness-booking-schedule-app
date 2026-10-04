@@ -346,6 +346,81 @@ where coach_profiles.record_source = 'fixture'
     excluded.visibility
   );
 
+insert into app.group_events (
+  id,
+  run_id,
+  coach_profile_id,
+  public_slug,
+  title,
+  discipline,
+  description,
+  coach_slug_snapshot,
+  coach_display_name_snapshot,
+  location_kind_snapshot,
+  location_label_snapshot,
+  location_timezone_snapshot,
+  latitude_snapshot,
+  longitude_snapshot,
+  starts_at,
+  ends_at,
+  media_url,
+  source_proposal_id,
+  publication_status,
+  published_at,
+  withdrawn_at,
+  projection_availability,
+  projection_status_updated_at,
+  record_source,
+  created_at,
+  updated_at
+)
+values (
+  '83000000-0000-4000-8000-000000000001',
+  '20000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000005',
+  'muay-thai-fundamentals-workshop-830000000000',
+  'Muay Thai Fundamentals Workshop',
+  'Muay Thai',
+  'A coach-owned draft for a small technical workshop. Funding remains unavailable until a matching EventPool is verified.',
+  'sam-lee',
+  'Sam Lee',
+  'gym',
+  'Near Amerika-Gedenkbibliothek — Blücherplatz 1, 10961 Berlin',
+  'Europe/Berlin',
+  52.496568,
+  13.392365,
+  '2026-10-18T09:00:00Z',
+  '2026-10-18T11:00:00Z',
+  null,
+  null,
+  'draft',
+  null,
+  null,
+  'unbound',
+  null,
+  'fixture',
+  '2026-10-04T00:00:00Z',
+  '2026-10-04T00:00:00Z'
+)
+on conflict (id) do update
+set title = excluded.title,
+    discipline = excluded.discipline,
+    description = excluded.description,
+    coach_slug_snapshot = excluded.coach_slug_snapshot,
+    coach_display_name_snapshot = excluded.coach_display_name_snapshot,
+    location_kind_snapshot = excluded.location_kind_snapshot,
+    location_label_snapshot = excluded.location_label_snapshot,
+    location_timezone_snapshot = excluded.location_timezone_snapshot,
+    latitude_snapshot = excluded.latitude_snapshot,
+    longitude_snapshot = excluded.longitude_snapshot,
+    starts_at = excluded.starts_at,
+    ends_at = excluded.ends_at,
+    media_url = excluded.media_url,
+    updated_at = excluded.updated_at
+where group_events.record_source = 'fixture'
+  and group_events.publication_status = 'draft'
+  and group_events.projection_availability = 'unbound';
+
 insert into app.coach_profile_disciplines (
   run_id,
   profile_id,

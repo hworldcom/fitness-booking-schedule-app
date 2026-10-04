@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Marketplace M2 two-sided demand
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: depends on [DEV0118 — Persist training requests and coach proposals](../backend/DEV0118-persist-training-requests-and-coach-proposals.md); selected group proposals may seed coach event creation under DEV0120/DEV0123
+- Related records: depends on [DEV0118 — Persist training requests and coach proposals](../backend/DEV0118-persist-training-requests-and-coach-proposals.md); selected group proposals may seed coach event creation through completed [DEV0120](../../archive/backend/DEV0120-persist-group-event-catalogue-and-projections.md) and current DEV0123
 
 ## Objective and context
 
