@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Marketplace M3 pass-backed booking
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: depends on completed [DEV0127](../../archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md) and completed coach availability under DEV0114; supplies booking/client-card projections to [DEV0129](../frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md) and hosted evidence to DEV0125
+- Related records: depends on completed [DEV0127](../../archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md), [DEV0131](../blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md) and completed coach availability under DEV0114; supplies booking/client-card projections to [DEV0129](../frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md) and hosted evidence to DEV0125
 
 ## Objective and context
 
@@ -22,7 +22,7 @@ A client with available coach credits can reserve one open calendar occurrence o
 
 ## Assumptions, decisions, and dependencies
 
-PostgreSQL owns scheduling, occurrence capacity and cancellation workflow. The Solana pair ledger owns aggregate credit quantities, with reviewed reservation/consume/return instructions added before this ticket begins if DEV0127 intentionally limits itself to purchase. Client cards expose only data the coach is authorized to see.
+PostgreSQL owns scheduling, occurrence capacity and cancellation workflow. The Solana pair ledger and deterministic booking receipt own aggregate credit quantities and reserve/consume/return finality under DEV0131. Client cards expose only data the coach is authorized to see. This ticket starts after DEV0131 freezes those account and instruction contracts.
 
 ## Implementation plan
 
@@ -53,7 +53,7 @@ Not run — dependencies incomplete.
 
 ## Risks, limitations, and follow-ups
 
-The exact reserve/consume/return instruction contract must be reviewed before implementation; it may require a dedicated blockchain peer if it cannot remain small and atomic.
+DEV0131 owns the exact reserve/consume/return program contract. This ticket must not duplicate those transitions in PostgreSQL or begin against an unstable generated client.
 
 ## Completion and review references
 

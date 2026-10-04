@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Marketplace M2 local coach-pass program
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: implements the chain boundary adopted by [DEV0126](../organisatory/DEV0126-adopt-coach-pass-and-group-funding-contract.md); extends the committed partial foundation preserved in cancelled [DEV0097](DEV0097-create-coach-package-offers.md); supplies contracts to [DEV0128](../../current/backend/DEV0128-persist-credit-backed-private-bookings.md), [DEV0129](../../current/frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md) and [DEV0130](../../current/blockchain/DEV0130-integrate-devnet-coach-pass-purchases.md)
+- Related records: implements the chain boundary adopted by [DEV0126](../organisatory/DEV0126-adopt-coach-pass-and-group-funding-contract.md); extends the committed partial foundation preserved in cancelled [DEV0097](DEV0097-create-coach-package-offers.md); supplies contracts to [DEV0128](../../current/backend/DEV0128-persist-credit-backed-private-bookings.md), [DEV0129](../../current/frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md), [DEV0130](../../current/blockchain/DEV0130-integrate-devnet-coach-pass-operations.md) and [DEV0131](../../current/blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md)
 
 ## Objective and context
 
@@ -105,6 +105,8 @@ The program continues to accept only the configured official Devnet test-USDC mi
 ## Risks, limitations, and follow-ups
 
 Aggregate credits deliberately omit per-purchase expiry and financial history receipts. Finalized transaction history plus the pair nonce provides hackathon recovery evidence; production accounting would need a reviewed index/receipt retention policy. Booking reservations and returned/consumed credits remain DEV0128 work. DEV0130 must repeat the exact token constraints, atomic rollback, lost-response recovery and pair reuse on Devnet before any hosted flow treats them as externally proven.
+
+Follow-up clarification, 2026-10-04: [DEV0131](../../current/blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md) now owns the on-chain reservation/consume/return instructions that were intentionally excluded here; DEV0128 retains the PostgreSQL booking workflow. This does not change DEV0127's delivered purchase scope or evidence.
 
 ## Completion and review references
 
