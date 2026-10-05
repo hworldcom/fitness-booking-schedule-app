@@ -234,6 +234,7 @@ button {
 }
 .button.secondary {
   background: white;
+  color: var(--ink);
   border: 1px solid #dfe3d6;
 }
 .button.secondary:hover {
