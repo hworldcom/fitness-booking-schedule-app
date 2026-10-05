@@ -29,6 +29,7 @@ const COACH_CLIENT_CREDITS_SEED = getUtf8Encoder().encode(
 );
 const CREDIT_RESERVATION_SEED = getUtf8Encoder().encode("credit-reservation");
 const OFFER_SEED = getUtf8Encoder().encode("offer");
+const EVENT_AUTHORITY_SEED = getUtf8Encoder().encode("__event_authority");
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 
@@ -161,6 +162,15 @@ export async function deriveCreditReservationAddress(input: {
       getAddressEncoder().encode(input.coachClientCredits),
       uuidToSeed(input.bookingId),
     ],
+  });
+}
+
+export async function deriveEventAuthorityAddress(input: {
+  programAddress: Address;
+}): Promise<readonly [Address, number]> {
+  return getProgramDerivedAddress({
+    programAddress: input.programAddress,
+    seeds: [EVENT_AUTHORITY_SEED],
   });
 }
 

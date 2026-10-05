@@ -17,6 +17,7 @@ const expectedDatabaseUser = "movx_staging_runtime_login";
 const expectedWorkerName = "movx-club-staging";
 const expectedHyperdriveBinding = "MOVX_DATABASE";
 const expectedHyperdriveId = "390007706c314f3f808535332a802f7d";
+const expectedCoachPassProgram = "GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU";
 const uploadedBindings = [
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
@@ -25,6 +26,7 @@ const uploadedBindings = [
   "SOLANA_CLUSTER",
   "NEXT_PUBLIC_SOLANA_RPC_URL",
   "SOLANA_RPC_URL",
+  "NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID",
   "SOLANA_FEE_SPONSOR_ADDRESS",
   "SOLANA_FEE_SPONSOR_KEYPAIR_BASE64",
 ];
@@ -62,6 +64,13 @@ function validatedEnvironment() {
     if (rpcUrl.protocol !== "https:") {
       fail(`${name} must use HTTPS in staging.`);
     }
+  }
+  if (
+    values.NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID !== expectedCoachPassProgram
+  ) {
+    fail(
+      `NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID must be ${expectedCoachPassProgram}.`,
+    );
   }
   if (
     !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(values.SOLANA_FEE_SPONSOR_ADDRESS)

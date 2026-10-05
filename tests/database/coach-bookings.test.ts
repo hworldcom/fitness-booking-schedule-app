@@ -29,6 +29,16 @@ import {
 import { upsertOwnedCoachProfileRecord } from "@/server/db/coaches/repository";
 import { enrollApplicationProfile } from "@/server/db/identity/repository";
 import {
+  CoachPassOperationConflictError,
+  coachPassOperationRecord,
+  failCoachPassOperationRecord,
+  finalizeCoachPassPurchaseRecord,
+  markCoachPassOperationSubmittedRecord,
+  saveCoachPassBookingPreparationRecord,
+  saveCoachPassPurchasePreparationRecord,
+} from "@/server/db/solana/coach-pass-repository";
+import {
+  DEVNET_EURC_MINT_ADDRESS,
   MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
   deriveCoachAuthorityAddress,
   deriveCoachClientCreditsAddress,
@@ -166,6 +176,15 @@ async function removeFixtures() {
     firstClientAuthUserId,
     secondClientAuthUserId,
   ];
+  await admin`
+    delete from app.coach_pass_purchase_operations
+    where run_id in (
+      select participant.run_id
+      from app.demo_run_participants as participant
+      join app.profiles as profile on profile.id = participant.profile_id
+      where profile.auth_user_id in ${admin(authIds)}
+    )
+  `;
   await admin`
     delete from app.coach_booking_credit_operations
     where run_id in (
@@ -883,4 +902,197 @@ test("concurrent clients cannot hold the same slot and a failed wallet flow rele
     where id = ${expiringSlotId}::uuid
   `;
   assert.equal(expiredSlot?.status, "open");
+});
+
+test("purchase attempts persist exact messages, isolate actors and finalize atomically", async () => {
+  const operationId = crypto.randomUUID();
+  const prepared = Object.freeze({
+    summary: Object.freeze({
+      cluster: "devnet" as const,
+      operation: "purchase-offer" as const,
+      programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+      authorityAddress: firstClientWallet,
+      platformPayerAddress: coachWallet,
+      coachAuthorityAddress: address(coachAuthorityAddress),
+      coachClientCreditsAddress: address(firstCreditsAddress),
+      creditReservationAddress: null,
+      testAsset: "EURC" as const,
+      paymentMintAddress: DEVNET_EURC_MINT_ADDRESS,
+      userPaysSol: false as const,
+      offerAddress: address(offerAddress),
+      paymentRecipientAddress: coachWallet,
+      priceEurcBaseUnits: "8000000",
+      creditsPurchased: 1 as const,
+      expectedPurchaseNonce: "1",
+      clientTokenAccountAddress: firstClientWallet,
+      coachTokenAccountAddress: coachWallet,
+    }),
+    transactionBase64: "AQID",
+    messageBase64: "BAUG",
+    recentBlockhash: "11111111111111111111111111111111",
+    lastValidBlockHeight: "1234",
+  });
+
+  await withActorDatabaseContext(firstClientActor, (transaction) =>
+    saveCoachPassPurchasePreparationRecord(transaction, {
+      operationId,
+      coachProfileId: coachActor.profileId,
+      prepared,
+      simulationSlot: BigInt(300),
+      simulationUnitsConsumed: BigInt(45_000),
+      baselineLedgerExists: true,
+      baselineAvailableCredits: BigInt(3),
+      baselineReservedCredits: BigInt(0),
+      baselineTotalPurchased: BigInt(4),
+      baselinePurchaseCount: BigInt(1),
+    }),
+  );
+  const stored = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) => coachPassOperationRecord(transaction, operationId),
+  );
+  assert.equal(stored.status, "prepared");
+  assert.deepEqual(stored.prepared, prepared);
+  assert.deepEqual(stored.simulation, {
+    slot: "300",
+    unitsConsumed: "45000",
+  });
+  await assert.rejects(
+    withActorDatabaseContext(secondClientActor, (transaction) =>
+      coachPassOperationRecord(transaction, operationId),
+    ),
+    CoachPassOperationConflictError,
+  );
+
+  const transactionSignature = signature("B");
+  await withActorDatabaseContext(firstClientActor, (transaction) =>
+    markCoachPassOperationSubmittedRecord(
+      transaction,
+      stored,
+      transactionSignature,
+    ),
+  );
+  const submitted = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) => coachPassOperationRecord(transaction, operationId),
+  );
+  assert.equal(submitted.status, "submitted");
+  await withActorDatabaseContext(firstClientActor, (transaction) =>
+    finalizeCoachPassPurchaseRecord(transaction, {
+      operation: submitted,
+      projection: {
+        programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+        coachProfileId: coachActor.profileId,
+        coachAuthorityAddress,
+        clientWalletAddress: firstClientWallet,
+        coachClientCreditsAddress: firstCreditsAddress,
+        availableCredits: BigInt(4),
+        reservedCredits: BigInt(0),
+        totalPurchased: BigInt(5),
+        purchaseCount: BigInt(2),
+        nextPurchaseNonce: BigInt(2),
+        lastOfferAddress: offerAddress,
+        lastPurchaseAt: new Date().toISOString(),
+        transactionSignature,
+        observedSlot: BigInt(301),
+      },
+    }),
+  );
+  const finalized = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) => coachPassOperationRecord(transaction, operationId),
+  );
+  assert.equal(finalized.status, "finalized");
+  assert.equal(finalized.finalizedSlot, BigInt(301));
+});
+
+test("booking preparations bind the active authority and release failed reserves", async () => {
+  const slotId = await withActorDatabaseContext(coachActor, (transaction) =>
+    createOwnedCoachAvailabilityRecord(transaction, availabilityInput(110)),
+  );
+  const created = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) =>
+      prepareCreditBackedPrivateBookingRecord(transaction, {
+        slotId,
+        creditProjectionId: firstProjectionId,
+      }),
+  );
+  const booking = await currentBooking(firstClientActor, created.bookingId);
+  const prepared = Object.freeze({
+    summary: Object.freeze({
+      cluster: "devnet" as const,
+      operation: "reserve-booking-credit" as const,
+      programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+      authorityAddress: firstClientWallet,
+      platformPayerAddress: coachWallet,
+      coachAuthorityAddress: address(coachAuthorityAddress),
+      coachClientCreditsAddress: address(firstCreditsAddress),
+      creditReservationAddress: address(booking.creditReservationAddress),
+      testAsset: "EURC" as const,
+      paymentMintAddress: DEVNET_EURC_MINT_ADDRESS,
+      userPaysSol: false as const,
+      bookingId: booking.id,
+      clientWalletAddress: firstClientWallet,
+      scheduledStartUnixSeconds: unixSeconds(
+        booking.scheduledStartAt,
+      ).toString(),
+      earlyReturnUntilUnixSeconds: unixSeconds(
+        booking.earlyReturnUntil,
+      ).toString(),
+    }),
+    transactionBase64: "AQID",
+    messageBase64: "BAUG",
+    recentBlockhash: "11111111111111111111111111111111",
+    lastValidBlockHeight: "2234",
+  });
+  await withActorDatabaseContext(firstClientActor, (transaction) =>
+    saveCoachPassBookingPreparationRecord(transaction, {
+      operationId: created.operationId,
+      prepared,
+      simulationSlot: BigInt(400),
+      simulationUnitsConsumed: null,
+    }),
+  );
+  const stored = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) => coachPassOperationRecord(transaction, created.operationId),
+  );
+  assert.equal(stored.authorityAddress, firstClientWallet);
+  assert.equal(stored.status, "prepared");
+  await assert.rejects(
+    withActorDatabaseContext(coachActor, (transaction) =>
+      saveCoachPassBookingPreparationRecord(transaction, {
+        operationId: created.operationId,
+        prepared: {
+          ...prepared,
+          summary: { ...prepared.summary, authorityAddress: coachWallet },
+        },
+        simulationSlot: BigInt(401),
+        simulationUnitsConsumed: null,
+      }),
+    ),
+    CoachPassOperationConflictError,
+  );
+
+  await withActorDatabaseContext(firstClientActor, (transaction) =>
+    failCoachPassOperationRecord(
+      transaction,
+      stored,
+      "failed",
+      "simulation-failed",
+    ),
+  );
+  const failed = await currentBooking(firstClientActor, created.bookingId);
+  assert.equal(failed.status, "expired");
+  assert.equal(
+    failed.operations.find((operation) => operation.id === created.operationId)
+      ?.status,
+    "failed",
+  );
+  const [slot] = await admin<{ status: string }[]>`
+    select status from app.coach_availability_slots
+    where id = ${slotId}::uuid
+  `;
+  assert.equal(slot?.status, "open");
 });

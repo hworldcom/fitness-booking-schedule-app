@@ -17,6 +17,8 @@ const validEnvironment = {
   SOLANA_CLUSTER: "devnet",
   NEXT_PUBLIC_SOLANA_RPC_URL: "https://api.devnet.solana.com",
   SOLANA_RPC_URL: "https://api.devnet.solana.com",
+  NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID:
+    "GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU",
   SOLANA_FEE_SPONSOR_ADDRESS: "11111111111111111111111111111111",
   SOLANA_FEE_SPONSOR_KEYPAIR_BASE64: Buffer.alloc(64).toString("base64"),
 };
@@ -67,6 +69,24 @@ test("staging deployment rejects a secret or malformed Mapbox token", () => {
   assert.doesNotMatch(result.stderr, /sk\.secret-token/);
 });
 
+test("staging deployment pins the reviewed coach-pass program", () => {
+  const result = spawnSync(process.execPath, [script, "--validate-only"], {
+    cwd: root,
+    env: {
+      ...process.env,
+      ...validEnvironment,
+      NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID:
+        "11111111111111111111111111111111",
+    },
+    encoding: "utf8",
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(
+    result.stderr,
+    /must be GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU/u,
+  );
+});
+
 test("Wrangler declares exactly the approved staging runtime bindings", () => {
   const wrangler = readFileSync(path.join(root, "wrangler.jsonc"), "utf8");
   const names = [
@@ -77,6 +97,7 @@ test("Wrangler declares exactly the approved staging runtime bindings", () => {
     "SOLANA_CLUSTER",
     "NEXT_PUBLIC_SOLANA_RPC_URL",
     "SOLANA_RPC_URL",
+    "NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID",
     "SOLANA_FEE_SPONSOR_ADDRESS",
     "SOLANA_FEE_SPONSOR_KEYPAIR_BASE64",
   ];
