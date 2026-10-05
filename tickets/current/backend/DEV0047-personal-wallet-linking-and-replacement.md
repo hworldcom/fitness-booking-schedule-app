@@ -2,10 +2,10 @@
 
 - Status: In progress
 - Created: 2026-09-21
-- Last updated: 2026-10-03
+- Last updated: 2026-10-05
 - Milestone: Prioritized identity and onboarding
 - Coordination: [COR0003 — Account-first identity and wallet linking](../organisatory/COR0003-account-first-identity-and-wallet-linking.md)
-- Related records: follows completed [DEV0046 — Email OTP registration and application profiles](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md); reuses the wallet connection delivered by [DEV0027](../../archive/blockchain/DEV0027-phantom-wallet-connection-foundation.md), the binding foundation from [DEV0039](../../archive/backend/DEV0039-prepared-identity-and-wallet-bindings.md), and the actor boundary from [DEV0040](../../archive/backend/DEV0040-protected-access-and-database-context.md)
+- Related records: follows completed [DEV0046 — Email OTP registration and application profiles](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md); reuses the wallet connection delivered by [DEV0027](../../archive/blockchain/DEV0027-phantom-wallet-connection-foundation.md), the binding foundation from [DEV0039](../../archive/backend/DEV0039-prepared-identity-and-wallet-bindings.md), and the actor boundary from [DEV0040](../../archive/backend/DEV0040-protected-access-and-database-context.md); [DEV0136 — Integrate coach wallet replacement](../blockchain/DEV0136-integrate-coach-wallet-replacement.md) owns the later chain-aware replacement flow for coaches with an on-chain authority
 
 ## Objective and context
 
@@ -14,7 +14,7 @@ Let a signed-in email account optionally prove and link one personal Phantom wal
 ## Scope and non-goals
 
 - In scope: one active personal wallet per account; server-issued short-lived, single-use message challenges; account/origin/cluster/address/purpose binding; atomic unique ownership; wallet settings; connection versus linked state; recent email reauthentication before unlink/replacement; new-wallet proof; audit history; collision-safe errors; tests and real Phantom rehearsal.
-- Out of scope: account registration/profile creation owned by DEV0046; wallet login; automatic account merging; requiring the lost old wallet to approve replacement; several active personal wallets; organization-wallet authority; embedded wallet creation; transactions, balances, payments, delegated signing, fee sponsorship or custody.
+- Out of scope: account registration/profile creation owned by DEV0046; wallet login; automatic account merging; requiring the lost old wallet to approve replacement; several active personal wallets; organization-wallet authority; embedded wallet creation; transactions, balances, payments, delegated signing, fee sponsorship or custody. DEV0136 owns the transaction and finalized-state coordination required when a coach already has an on-chain `CoachAuthority`.
 
 ## Expected behavior and edge cases
 
@@ -23,6 +23,8 @@ Connecting Phantom exposes a selected address but creates no durable link. A sig
 The first delivery permits exactly one active personal wallet per account and one active application owner per wallet. A wallet already linked elsewhere fails with a generic conflict that reveals no account details. Concurrent or replayed proofs cannot create duplicate owners.
 
 Provider disconnect preserves the durable link but disables live wallet-required actions. Explicit unlink or replacement requires application reauthentication within ten minutes. Replacement also requires a valid proof from the new wallet, but not from the old wallet so loss of the old device does not make recovery impossible. The old binding remains active until the replacement transaction succeeds, then becomes revoked audit history. Historical financial records must retain their original wallet addresses rather than following the current link.
+
+The completed DEV0047 implementation treats "replacement transaction" as the atomic PostgreSQL binding change because it predates marketplace chain integration. Once a coach has an on-chain `CoachAuthority`, DEV0136 must wrap that binding change in finalized authority rotation and EventPool-liability checks. DEV0047 must not be interpreted as permission to replace only the database binding for such a coach.
 
 ## Assumptions, decisions, and dependencies
 
@@ -91,6 +93,8 @@ On 2026-09-22 the planned notification risk was bounded to an immediate in-app r
 
 The binding row uses its verifying challenge UUID as its own UUID. Replacement uses a deferred self-reference so the old active row can be revoked and point to the new row before the new active row is inserted, while all uniqueness and audit checks still commit atomically. Expected invalid, replayed or expired proofs return a bounded result from PostgreSQL instead of raising an exception that aborts the surrounding actor transaction.
 
+On 2026-10-05 the marketplace contract added a chain-aware boundary without rewriting this implementation history. The existing atomic database replacement remains valid for accounts without a `CoachAuthority`; coaches with one require DEV0136's finalized rotation and outstanding-EventPool checks before the database binding may change.
+
 ### Contracts, configuration, and operations
 
 The new contract adds `app.auth_challenges`, extends `app.wallet_bindings` with proof, reauthentication, revocation-reason and replacement references, and grants the restricted runtime role execute access only to four actor-scoped functions. Challenges retain SHA-256 nonce/message hashes, not plaintext messages, signatures or OTPs. The browser/server JSON contract is bounded to current state, challenge issue, proof completion and unlink results. No new environment variable or secret is required. Hosted Supabase credentials were not changed during local validation.
@@ -108,7 +112,7 @@ The user explicitly approved resetting the disposable local Supabase database on
 
 ## Risks, limitations, and follow-ups
 
-Wallet replacement is an account-takeover target. Bind and consume challenges atomically, require recent application authentication, show the result immediately and retain its audit history. A later transactional-email capability should add out-of-band security notifications. One active wallet is intentional first-release scope; multiple wallets require a new product decision.
+Wallet replacement is an account-takeover target. Bind and consume challenges atomically, require recent application authentication, show the result immediately and retain its audit history. A later transactional-email capability should add out-of-band security notifications. One active wallet is intentional first-release scope; multiple wallets require a new product decision. Until DEV0136 is implemented, off-chain-only replacement must not be enabled for a coach whose authority or immutable recipient obligations already exist on-chain.
 
 Before completion, run the prepared real Phantom link/disconnect/reconnect/replace flow and signed-in responsive keyboard checks. Record the observed message prompts, cancellation recovery and confirmation that Phantom never requests a transaction. Local rehearsal users and wallet data are disposable; the hosted project still needs this migration applied through the normal deployment process before hosted testing.
 
