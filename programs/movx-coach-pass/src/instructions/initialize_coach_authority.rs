@@ -11,6 +11,11 @@ pub fn handler(
 ) -> Result<()> {
     let coach_wallet = ctx.accounts.coach_wallet.key();
     let recovery_authority = ctx.accounts.recovery_authority.key();
+    require_keys_neq!(
+        recovery_authority,
+        ctx.accounts.platform_payer.key(),
+        crate::errors::CoachPassError::InvalidRecoveryAuthority
+    );
     let authority = CoachAuthority::initialize(
         run_id,
         profile_id,
@@ -38,7 +43,10 @@ pub fn handler(
 #[instruction(run_id: [u8; 16], profile_id: [u8; 16])]
 pub struct InitializeCoachAuthority<'info> {
     pub coach_wallet: Signer<'info>,
-    pub recovery_authority: Signer<'info>,
+    /// CHECK: This public key is stored as the immutable recovery authority.
+    /// It is deliberately not a signer during initialization; only a later
+    /// authority rotation requires recovery approval.
+    pub recovery_authority: UncheckedAccount<'info>,
     #[account(mut)]
     pub platform_payer: Signer<'info>,
     #[account(

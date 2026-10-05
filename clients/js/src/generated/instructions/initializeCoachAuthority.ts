@@ -79,8 +79,7 @@ export type InitializeCoachAuthorityInstruction<
             AccountSignerMeta<TAccountCoachWallet>
         : TAccountCoachWallet,
       TAccountRecoveryAuthority extends string
-        ? ReadonlySignerAccount<TAccountRecoveryAuthority> &
-            AccountSignerMeta<TAccountRecoveryAuthority>
+        ? ReadonlyAccount<TAccountRecoveryAuthority>
         : TAccountRecoveryAuthority,
       TAccountPlatformPayer extends string
         ? WritableSignerAccount<TAccountPlatformPayer> &
@@ -147,8 +146,8 @@ export function getInitializeCoachAuthorityInstructionDataCodec(): FixedSizeCode
 
 export type InitializeCoachAuthorityAsyncInput<
   TAccountCoachWallet extends InstructionSignerInput = InstructionSignerInput,
-  TAccountRecoveryAuthority extends InstructionSignerInput =
-    InstructionSignerInput,
+  TAccountRecoveryAuthority extends InstructionAccountInput =
+    InstructionAccountInput,
   TAccountPlatformPayer extends InstructionSignerInput = InstructionSignerInput,
   TAccountCoachAuthority extends InstructionAccountInput =
     InstructionAccountInput,
@@ -159,6 +158,10 @@ export type InitializeCoachAuthorityAsyncInput<
   TAccountProgram extends InstructionAccountInput = InstructionAccountInput,
 > = {
   coachWallet: TAccountCoachWallet;
+  /**
+   * It is deliberately not a signer during initialization; only a later
+   * authority rotation requires recovery approval.
+   */
   recoveryAuthority: TAccountRecoveryAuthority;
   platformPayer: TAccountPlatformPayer;
   coachAuthority?: TAccountCoachAuthority;
@@ -171,7 +174,7 @@ export type InitializeCoachAuthorityAsyncInput<
 
 export async function getInitializeCoachAuthorityInstructionAsync<
   TAccountCoachWallet extends InstructionSignerInput,
-  TAccountRecoveryAuthority extends InstructionSignerInput,
+  TAccountRecoveryAuthority extends InstructionAccountInput,
   TAccountPlatformPayer extends InstructionSignerInput,
   TAccountCoachAuthority extends InstructionAccountInput,
   TAccountSystemProgram extends InstructionAccountInput,
@@ -238,7 +241,7 @@ export async function getInitializeCoachAuthorityInstructionAsync<
     },
     recoveryAuthority: {
       value: input.recoveryAuthority ?? null,
-      isSigner: true,
+      isSigner: false,
       isWritable: false,
     },
     platformPayer: {
@@ -355,8 +358,8 @@ export async function getInitializeCoachAuthorityInstructionAsync<
 
 export type InitializeCoachAuthorityInput<
   TAccountCoachWallet extends InstructionSignerInput = InstructionSignerInput,
-  TAccountRecoveryAuthority extends InstructionSignerInput =
-    InstructionSignerInput,
+  TAccountRecoveryAuthority extends InstructionAccountInput =
+    InstructionAccountInput,
   TAccountPlatformPayer extends InstructionSignerInput = InstructionSignerInput,
   TAccountCoachAuthority extends InstructionAccountInput =
     InstructionAccountInput,
@@ -367,6 +370,10 @@ export type InitializeCoachAuthorityInput<
   TAccountProgram extends InstructionAccountInput = InstructionAccountInput,
 > = {
   coachWallet: TAccountCoachWallet;
+  /**
+   * It is deliberately not a signer during initialization; only a later
+   * authority rotation requires recovery approval.
+   */
   recoveryAuthority: TAccountRecoveryAuthority;
   platformPayer: TAccountPlatformPayer;
   coachAuthority: TAccountCoachAuthority;
@@ -379,7 +386,7 @@ export type InitializeCoachAuthorityInput<
 
 export function getInitializeCoachAuthorityInstruction<
   TAccountCoachWallet extends InstructionSignerInput,
-  TAccountRecoveryAuthority extends InstructionSignerInput,
+  TAccountRecoveryAuthority extends InstructionAccountInput,
   TAccountPlatformPayer extends InstructionSignerInput,
   TAccountCoachAuthority extends InstructionAccountInput,
   TAccountSystemProgram extends InstructionAccountInput,
@@ -444,7 +451,7 @@ export function getInitializeCoachAuthorityInstruction<
     },
     recoveryAuthority: {
       value: input.recoveryAuthority ?? null,
-      isSigner: true,
+      isSigner: false,
       isWritable: false,
     },
     platformPayer: {
@@ -541,6 +548,10 @@ export type ParsedInitializeCoachAuthorityInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     coachWallet: TAccountMetas[0];
+    /**
+     * It is deliberately not a signer during initialization; only a later
+     * authority rotation requires recovery approval.
+     */
     recoveryAuthority: TAccountMetas[1];
     platformPayer: TAccountMetas[2];
     coachAuthority: TAccountMetas[3];

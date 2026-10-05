@@ -92,7 +92,7 @@ test("bootstrap browser signing preserves exact bytes and simulation slot", asyn
       return { signedTransaction: Uint8Array.from([9, 8, 7]) };
     },
   );
-  assert.equal(transactionByteLength, 648);
+  assert.equal(transactionByteLength, 584);
   assert.equal(minContextSlot, BigInt(900));
   assert.equal(signed, Buffer.from([9, 8, 7]).toString("base64"));
 });

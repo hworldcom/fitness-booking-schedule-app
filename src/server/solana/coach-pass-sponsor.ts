@@ -122,7 +122,7 @@ export async function validateAndSponsorCoachPassBootstrapTransaction(input: {
       decodeCoachPassTransactionBase64(input.walletSignedTransactionBase64),
     );
   } catch (error) {
-    throw new Error("Wallets returned an invalid Solana transaction.", {
+    throw new Error("Wallet returned an invalid Solana transaction.", {
       cause: error,
     });
   }
@@ -135,11 +135,11 @@ export async function validateAndSponsorCoachPassBootstrapTransaction(input: {
     throw new Error("Wallet-signed bootstrap does not match the preparation.");
   }
 
-  const walletSigners = [
-    prepared.summary.coachWalletAddress,
-    prepared.summary.recoveryAuthorityAddress,
-  ] as const;
-  const expectedSigners = new Set<Address>([sponsor.address, ...walletSigners]);
+  const coachWalletAddress = prepared.summary.coachWalletAddress;
+  const expectedSigners = new Set<Address>([
+    sponsor.address,
+    coachWalletAddress,
+  ]);
   const actualSigners = Object.keys(transaction.signatures) as Address[];
   if (
     actualSigners.length !== expectedSigners.size ||
@@ -152,25 +152,19 @@ export async function validateAndSponsorCoachPassBootstrapTransaction(input: {
       "Bootstrap transaction already contains a platform signature.",
     );
   }
-  for (const signerAddress of walletSigners) {
-    const walletSignature = transaction.signatures[signerAddress];
-    if (!walletSignature) {
-      throw new Error(
-        `Required bootstrap signature is missing: ${signerAddress}`,
-      );
-    }
-    const publicKey = await getPublicKeyFromAddress(signerAddress);
-    if (
-      !(await verifySignature(
-        publicKey,
-        walletSignature,
-        transaction.messageBytes,
-      ))
-    ) {
-      throw new Error(
-        `Required bootstrap signature is invalid: ${signerAddress}`,
-      );
-    }
+  const coachSignature = transaction.signatures[coachWalletAddress];
+  if (!coachSignature) {
+    throw new Error("Required coach bootstrap signature is missing.");
+  }
+  const coachPublicKey = await getPublicKeyFromAddress(coachWalletAddress);
+  if (
+    !(await verifySignature(
+      coachPublicKey,
+      coachSignature,
+      transaction.messageBytes,
+    ))
+  ) {
+    throw new Error("Required coach bootstrap signature is invalid.");
   }
 
   const sponsoredTransaction = await partiallySignTransactionWithSigners(

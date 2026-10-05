@@ -966,7 +966,10 @@
         },
         {
           "name": "recovery_authority",
-          "signer": true
+          "docs": [
+            "It is deliberately not a signer during initialization; only a later",
+            "authority rotation requires recovery approval."
+          ]
         },
         {
           "name": "platform_payer",

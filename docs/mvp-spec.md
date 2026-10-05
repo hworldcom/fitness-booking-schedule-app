@@ -152,7 +152,7 @@ MovX stores and authorizes off-chain marketplace data, indexes finalized credit/
 
 ### CoachAuthority PDA
 
-One stable account identifies the application dataset and coach profile, original/current wallet, recovery authority and authority epoch. Wallet rotation preserves the coach identity while making earlier-recipient offers ineligible for new purchases. It does not rewrite historical payments or grant MovX unilateral coach authority.
+One stable account identifies the application dataset and coach profile, original/current wallet, recovery authority and authority epoch. Initialization requires the coach user-facing wallet signature and records the configured recovery public address without requiring that recovery authority to sign or appear in the coach wallet interface. Wallet rotation preserves the coach identity while making earlier-recipient offers ineligible for new purchases. It does not rewrite historical payments or grant MovX unilateral coach authority.
 
 ### Offer PDA
 

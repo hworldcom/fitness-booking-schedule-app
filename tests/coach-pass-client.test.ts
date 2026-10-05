@@ -211,7 +211,7 @@ test("generated account-creation instructions separate platform payer and busine
   const initialized = parseInitializeCoachAuthorityInstruction(
     await getInitializeCoachAuthorityInstructionAsync({
       coachWallet,
-      recoveryAuthority,
+      recoveryAuthority: recoveryAuthority.address,
       platformPayer,
       coachAuthority,
       eventAuthority,
@@ -219,6 +219,10 @@ test("generated account-creation instructions separate platform payer and busine
       runId: [...uuidToSeed(RUN_ID)],
       profileId: [...uuidToSeed(PROFILE_ID)],
     }),
+  );
+  assert.equal(
+    initialized.accounts.recoveryAuthority.role,
+    AccountRole.READONLY,
   );
   const createdOffer = parseCreateOfferInstruction(
     getCreateOfferInstruction({

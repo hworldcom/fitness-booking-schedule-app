@@ -289,7 +289,7 @@ test("platform payer cryptographically rejects an invalid authority signature", 
   );
 });
 
-test("platform payer adds only its signature after both bootstrap authorities sign", async () => {
+test("platform payer adds only its signature after the coach signs bootstrap", async () => {
   const [coach, recovery, platformPayer] = await Promise.all([
     generateKeyPairSigner(),
     generateKeyPairSigner(),
@@ -312,32 +312,27 @@ test("platform payer adds only its signature after both bootstrap authorities si
   const unsigned = getTransactionDecoder().decode(
     decodeCoachPassTransactionBase64(prepared.transactionBase64),
   );
+  await assert.rejects(
+    validateAndSponsorCoachPassBootstrapTransaction({
+      prepared,
+      walletSignedTransactionBase64: encodeTransaction(unsigned),
+      sponsor: { address: platformPayer.address, signer: platformPayer },
+    }),
+    /coach bootstrap signature is missing/u,
+  );
   const coachSigned = await partiallySignTransactionWithSigners(
     [coach],
     unsigned,
   );
-  await assert.rejects(
-    validateAndSponsorCoachPassBootstrapTransaction({
-      prepared,
-      walletSignedTransactionBase64: encodeTransaction(coachSigned),
-      sponsor: { address: platformPayer.address, signer: platformPayer },
-    }),
-    /bootstrap signature is missing/u,
-  );
-
-  const walletSigned = await partiallySignTransactionWithSigners(
-    [recovery],
-    coachSigned,
-  );
   const sponsored = await validateAndSponsorCoachPassBootstrapTransaction({
     prepared,
-    walletSignedTransactionBase64: encodeTransaction(walletSigned),
+    walletSignedTransactionBase64: encodeTransaction(coachSigned),
     sponsor: { address: platformPayer.address, signer: platformPayer },
   });
   const finalTransaction = getTransactionDecoder().decode(
     decodeCoachPassTransactionBase64(sponsored.transactionBase64),
   );
   assert.ok(finalTransaction.signatures[coach.address]);
-  assert.ok(finalTransaction.signatures[recovery.address]);
+  assert.equal(finalTransaction.signatures[recovery.address], undefined);
   assert.ok(finalTransaction.signatures[platformPayer.address]);
 });

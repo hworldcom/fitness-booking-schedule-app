@@ -210,7 +210,7 @@ test("Surfpool executes platform-funded threshold payout and pull-refund lifecyc
   const authoritySignature = await client.sendTransaction([
     await getInitializeCoachAuthorityInstructionAsync({
       coachWallet,
-      recoveryAuthority,
+      recoveryAuthority: recoveryAuthority.address,
       platformPayer,
       eventAuthority,
       program: MOVX_COACH_PASS_PROGRAM_ADDRESS,

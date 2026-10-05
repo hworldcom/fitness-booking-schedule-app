@@ -287,13 +287,12 @@ export async function prepareCoachPassBootstrap(
     programAddress: input.programAddress,
   });
   const coachWallet = createNoopSigner(input.coachWalletAddress);
-  const recoveryAuthority = createNoopSigner(input.recoveryAuthorityAddress);
   const platformPayer = createNoopSigner(input.platformPayerAddress);
   const instructions: Instruction[] = [
     await getInitializeCoachAuthorityInstructionAsync(
       {
         coachWallet,
-        recoveryAuthority,
+        recoveryAuthority: input.recoveryAuthorityAddress,
         platformPayer,
         coachAuthority: coachAuthorityAddress,
         eventAuthority: eventAuthorityAddress,

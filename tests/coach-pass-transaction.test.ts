@@ -242,17 +242,9 @@ test("bootstrap preparation freezes exact coach, recovery and public offer terms
   assert.equal(decoded.message.feePayer.address, fixture.platformPayer.address);
   assert.deepEqual(
     Object.keys(decoded.transaction.signatures).sort(),
-    [
-      fixture.coachWallet.address,
-      fixture.recoveryAuthority.address,
-      fixture.platformPayer.address,
-    ].sort(),
+    [fixture.coachWallet.address, fixture.platformPayer.address].sort(),
   );
-  assert.deepEqual(Object.values(decoded.transaction.signatures), [
-    null,
-    null,
-    null,
-  ]);
+  assert.deepEqual(Object.values(decoded.transaction.signatures), [null, null]);
   assert.equal(decoded.message.instructions.length, 3);
 
   const initializeInstruction = decoded.message.instructions[0]!;
@@ -264,6 +256,10 @@ test("bootstrap preparation freezes exact coach, recovery and public offer terms
   assert.equal(
     initialize.accounts.recoveryAuthority.address,
     fixture.recoveryAuthority.address,
+  );
+  assert.equal(
+    initialize.accounts.recoveryAuthority.role,
+    AccountRole.READONLY,
   );
   assert.deepEqual(initialize.data.runId, [...uuidToSeed(RUN_ID)]);
   assert.deepEqual(initialize.data.profileId, [...uuidToSeed(PROFILE_ID)]);

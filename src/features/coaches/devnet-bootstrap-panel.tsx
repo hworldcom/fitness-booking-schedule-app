@@ -22,8 +22,6 @@ type ConnectedAccount = NonNullable<
   ReturnType<(typeof walletClient.wallet)["getState"]>["connected"]
 >["account"];
 
-type SigningStage = "coach" | "recovery";
-
 function shortAddress(value: string) {
   return `${value.slice(0, 5)}…${value.slice(-5)}`;
 }
@@ -35,7 +33,7 @@ function explorerTransaction(signature: string) {
 function resultMessage(result: CoachPassBootstrapApiResult) {
   switch (result.status) {
     case "prepared":
-      return "Fresh Devnet simulation passed. The exact transaction is ready for both wallet signatures.";
+      return "Fresh Devnet simulation passed. The exact transaction is ready for Tom’s wallet signature.";
     case "submitted":
       return "The platform signature was added and the exact transaction was submitted once. Recheck finality without preparing a replacement.";
     case "finalized":
@@ -54,30 +52,25 @@ function resultMessage(result: CoachPassBootstrapApiResult) {
     case "invalid-request":
       return "The signed payload is not a valid approved bootstrap transaction.";
     case "unavailable":
-      return "The local database, sponsor, or Devnet RPC is unavailable. Nothing was submitted by this response.";
+      return "The local database, signature check, sponsor, or Devnet RPC was unavailable. If the wallet already signed, recheck these exact bytes before preparing a replacement.";
   }
 }
 
 function BootstrapSigner({
   account,
   prepared,
-  stage,
   transactionBase64,
   onSigned,
 }: {
   account: ConnectedAccount;
   prepared: PreparedCoachPassBootstrapResult;
-  stage: SigningStage;
   transactionBase64: string;
   onSigned: (value: string) => void;
 }) {
   const signTransaction = useSignTransaction(account, SOLANA_WALLET_CHAIN);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const expected =
-    stage === "coach"
-      ? prepared.prepared.summary.coachWalletAddress
-      : prepared.prepared.summary.recoveryAuthorityAddress;
+  const expected = prepared.prepared.summary.coachWalletAddress;
   const matches = account.address === expected;
 
   async function sign() {
@@ -104,9 +97,8 @@ function BootstrapSigner({
   if (!matches) {
     return (
       <p className="coach-operation-alert" role="alert">
-        <TriangleAlert size={17} aria-hidden="true" /> Switch Phantom to the{" "}
-        {stage === "coach" ? "Tom coach" : "dedicated recovery"} account{" "}
-        {shortAddress(expected)}. The connected account is{" "}
+        <TriangleAlert size={17} aria-hidden="true" /> Switch Phantom to the Tom
+        coach account {shortAddress(expected)}. The connected account is{" "}
         {shortAddress(account.address)}.
       </p>
     );
@@ -125,11 +117,7 @@ function BootstrapSigner({
         disabled={busy}
         onClick={() => void sign()}
       >
-        {busy
-          ? "Waiting for Phantom…"
-          : stage === "coach"
-            ? "Sign as Tom"
-            : "Sign as recovery authority"}
+        {busy ? "Waiting for Phantom…" : "Sign as Tom"}
       </button>
     </>
   );
@@ -142,7 +130,6 @@ export function DevnetBootstrapPanel() {
   );
   const [prepared, setPrepared] =
     useState<PreparedCoachPassBootstrapResult | null>(null);
-  const [coachSigned, setCoachSigned] = useState<string | null>(null);
   const [fullyWalletSigned, setFullyWalletSigned] = useState<string | null>(
     null,
   );
@@ -152,7 +139,6 @@ export function DevnetBootstrapPanel() {
     if (busy) return;
     setBusy(true);
     setError(null);
-    setCoachSigned(null);
     setFullyWalletSigned(null);
     setPrepared(null);
     try {
@@ -205,9 +191,10 @@ export function DevnetBootstrapPanel() {
           <h1>Devnet coach bootstrap</h1>
           <p>
             One atomic, zero-EURC transaction initializes Tom’s coach authority
-            and publishes the approved one-credit and ten-credit offers. Tom and
-            the dedicated recovery wallet sign the same bytes; MovX pays the SOL
-            fee and rent.
+            and publishes the approved one-credit and ten-credit offers. Tom is
+            the only user-facing signer; the configured recovery address is
+            recorded for later wallet replacement, and MovX pays the SOL fee and
+            rent.
           </p>
         </div>
       </header>
@@ -239,7 +226,7 @@ export function DevnetBootstrapPanel() {
           </div>
           <div>
             <dt>SOL fee and rent</dt>
-            <dd>Paid by MovX; approved ceiling 0.00533884 SOL</dd>
+            <dd>Paid by MovX; approved ceiling 0.00533384 SOL</dd>
           </div>
         </dl>
 
@@ -285,21 +272,11 @@ export function DevnetBootstrapPanel() {
               Connect Phantom from the header, starting with Tom’s account.
             </p>
           )}
-          {prepared && connected && !coachSigned && (
+          {prepared && connected && !fullyWalletSigned && (
             <BootstrapSigner
               account={connected.account}
               prepared={prepared}
-              stage="coach"
               transactionBase64={prepared.prepared.transactionBase64}
-              onSigned={setCoachSigned}
-            />
-          )}
-          {prepared && connected && coachSigned && !fullyWalletSigned && (
-            <BootstrapSigner
-              account={connected.account}
-              prepared={prepared}
-              stage="recovery"
-              transactionBase64={coachSigned}
               onSigned={(signed) => void submit(signed)}
             />
           )}
@@ -323,6 +300,18 @@ export function DevnetBootstrapPanel() {
               {busy ? "Checking server…" : "Recheck exact signed transaction"}
             </button>
           )}
+          {result?.status === "unavailable" &&
+            fullyWalletSigned &&
+            prepared && (
+              <button
+                className="button dark"
+                type="button"
+                disabled={busy}
+                onClick={() => void submit(fullyWalletSigned)}
+              >
+                {busy ? "Checking server…" : "Recheck exact signed transaction"}
+              </button>
+            )}
         </div>
       </section>
     </section>

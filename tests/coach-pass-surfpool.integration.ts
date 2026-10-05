@@ -279,7 +279,24 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
     client.sendTransaction([
       await getInitializeCoachAuthorityInstructionAsync({
         coachWallet: createNoopSigner(coachWallet.address),
-        recoveryAuthority: createNoopSigner(recoveryAuthority.address),
+        recoveryAuthority: recoveryAuthority.address,
+        platformPayer,
+        eventAuthority,
+        program: MOVX_COACH_PASS_PROGRAM_ADDRESS,
+        runId: [...uuidToSeed(RUN_ID)],
+        profileId: [...uuidToSeed(PROFILE_ID)],
+      }),
+    ]),
+  );
+  assert.equal(
+    (await fetchMaybeCoachAuthority(client.rpc, coachAuthority)).exists,
+    false,
+  );
+  await assert.rejects(async () =>
+    client.sendTransaction([
+      await getInitializeCoachAuthorityInstructionAsync({
+        coachWallet,
+        recoveryAuthority: platformPayer.address,
         platformPayer,
         eventAuthority,
         program: MOVX_COACH_PASS_PROGRAM_ADDRESS,
@@ -297,7 +314,7 @@ test("Surfpool executes atomic first and later coach-pass purchases", async (t) 
   await client.sendTransaction([
     await getInitializeCoachAuthorityInstructionAsync({
       coachWallet,
-      recoveryAuthority,
+      recoveryAuthority: recoveryAuthority.address,
       platformPayer,
       eventAuthority,
       program: MOVX_COACH_PASS_PROGRAM_ADDRESS,
