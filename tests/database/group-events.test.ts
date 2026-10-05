@@ -40,6 +40,7 @@ const participantAuthUserId = "99000000-0000-4000-8000-000000000002";
 const otherCoachAuthUserId = "99000000-0000-4000-8000-000000000003";
 const fixtureGymId = "40000000-0000-4000-8000-000000000001";
 const coachWallet = "7EcXv8cRWYEbaYjvcXn37Bq6STqS2QwRkX8EBXjKn5Ge";
+const coachAuthority = "6qaz3bzwxXPgxgRpox1FyvPPKGMdYfpGTFqPSf4r4rcH";
 const participantWallet = "3idZ8hddpfAZ1JWW3gmH7YD6yokUuFDb1Txem2H6kPFe";
 const otherCoachWallet = "HULis5PpFFL5ajU9k8WzPjtJ8wZKXg4HHbKVvSEhFCfR";
 const programAddress = "GEUMk7SoYEsAvTgbFxohHTPbDfdX1citFT6Xxr6E4ULr";
@@ -78,6 +79,22 @@ function signature(character: string) {
   return character.repeat(88);
 }
 
+function hasErrorMessage(error: unknown, expected: RegExp) {
+  let current = error;
+  for (let depth = 0; depth < 5; depth += 1) {
+    if (typeof current !== "object" || current === null) return false;
+    if (
+      "message" in current &&
+      typeof current.message === "string" &&
+      expected.test(current.message)
+    ) {
+      return true;
+    }
+    current = "cause" in current ? current.cause : null;
+  }
+  return false;
+}
+
 function futureTimestamp(days: number, hour: number) {
   const date = new Date();
   date.setUTCDate(date.getUTCDate() + days);
@@ -111,6 +128,16 @@ async function removeFixtures() {
     participantAuthUserId,
     otherCoachAuthUserId,
   ];
+  await admin`
+    delete from app.group_event_chain_operations
+    where actor_profile_id in (
+      select id from app.profiles where auth_user_id in ${admin(authIds)}
+    ) or event_id in (
+      select event.id from app.group_events as event
+      join app.profiles as profile on profile.id = event.coach_profile_id
+      where profile.auth_user_id in ${admin(authIds)}
+    )
+  `;
   await admin`
     delete from app.group_event_contribution_projections
     where participant_profile_id in (
@@ -320,8 +347,8 @@ test("owner draft, verified pool and public catalogue preserve authority boundar
     programAddress,
     eventPoolAddress: poolAddress,
     vaultAddress,
-    coachAuthorityAddress: coachWallet,
-    payoutRecipientAddress: participantWallet,
+    coachAuthorityAddress: coachAuthority,
+    payoutRecipientAddress: coachWallet,
     mintAddress,
     tokenProgramAddress,
     seatPriceBaseUnits: BigInt(25_000_000),
@@ -338,6 +365,13 @@ test("owner draft, verified pool and public catalogue preserve authority boundar
   });
   await recordVerifiedGroupEventPoolProjectionRecord(poolEvidence);
   await recordVerifiedGroupEventPoolProjectionRecord(poolEvidence);
+  await assert.rejects(
+    recordVerifiedGroupEventPoolProjectionRecord({
+      ...poolEvidence,
+      payoutRecipientAddress: participantWallet,
+    }),
+    GroupEventConflictError,
+  );
   await assert.rejects(
     recordVerifiedGroupEventPoolProjectionRecord({
       ...poolEvidence,
@@ -500,4 +534,191 @@ test("duplicate pool binding and direct runtime writes fail closed", async () =>
   } finally {
     await runtime.end();
   }
+});
+
+test("group-event operation journal is actor-scoped, idempotent and recoverable", async () => {
+  const operationId = "99000000-0000-4000-8000-000000000099";
+  const summary = {
+    cluster: "devnet",
+    operation: "fund-event-seat",
+    eventId,
+    programAddress,
+    authorityAddress: participantWallet,
+    eventPoolAddress: poolAddress,
+    vaultAddress,
+    coachAuthorityAddress: coachAuthority,
+    contributionAddress,
+    testAsset: "EURC",
+    paymentMintAddress: mintAddress,
+    userPaysSol: false,
+    participantWalletAddress: participantWallet,
+    participantTokenAccountAddress: participantWallet,
+    seatPriceEurcBaseUnits: "25000000",
+  };
+  await assert.rejects(
+    withActorDatabaseContext(participantActor, (transaction) =>
+      transaction.execute(sql`
+        select app.record_group_event_operation_preparation(
+          ${operationId}::uuid,
+          ${eventId}::uuid,
+          'fund-event-seat'::text,
+          ${programAddress}::text,
+          ${coachWallet}::text,
+          ${coachAuthority}::text,
+          ${poolAddress}::text,
+          ${vaultAddress}::text,
+          ${contributionAddress}::text,
+          ${JSON.stringify(summary)}::jsonb,
+          'AQID'::text,
+          'BAUG'::text,
+          '11111111111111111111111111111111'::text,
+          200::bigint,
+          100::bigint,
+          50000::bigint
+        )
+      `),
+    ),
+    (error: unknown) => hasErrorMessage(error, /unauthorized/u),
+  );
+
+  await withActorDatabaseContext(participantActor, (transaction) =>
+    transaction.execute(sql`
+      select app.record_group_event_operation_preparation(
+        ${operationId}::uuid,
+        ${eventId}::uuid,
+        'fund-event-seat'::text,
+        ${programAddress}::text,
+        ${participantWallet}::text,
+        ${coachAuthority}::text,
+        ${poolAddress}::text,
+        ${vaultAddress}::text,
+        ${contributionAddress}::text,
+        ${JSON.stringify(summary)}::jsonb,
+        'AQID'::text,
+        'BAUG'::text,
+        '11111111111111111111111111111111'::text,
+        200::bigint,
+        100::bigint,
+        50000::bigint
+      )
+    `),
+  );
+
+  const participantRows = await withActorDatabaseContext(
+    participantActor,
+    (transaction) =>
+      transaction.execute<{ id: string; status: string }>(sql`
+        select id, status
+        from app.group_event_chain_operations
+        where id = ${operationId}::uuid
+      `),
+  );
+  assert.equal(participantRows.length, 1);
+  assert.equal(participantRows[0]?.id, operationId);
+  assert.equal(participantRows[0]?.status, "prepared");
+  const coachRows = await withActorDatabaseContext(coachActor, (transaction) =>
+    transaction.execute<{ id: string }>(sql`
+      select id
+      from app.group_event_chain_operations
+      where id = ${operationId}::uuid
+    `),
+  );
+  assert.equal(coachRows.length, 0);
+
+  await assert.rejects(
+    withActorDatabaseContext(participantActor, (transaction) =>
+      transaction.execute(sql`
+        select app.record_group_event_operation_preparation(
+          gen_random_uuid(),
+          ${eventId}::uuid,
+          'fund-event-seat'::text,
+          ${programAddress}::text,
+          ${participantWallet}::text,
+          ${coachAuthority}::text,
+          ${poolAddress}::text,
+          ${vaultAddress}::text,
+          ${contributionAddress}::text,
+          ${JSON.stringify(summary)}::jsonb,
+          'AQID'::text,
+          'BAUG'::text,
+          '11111111111111111111111111111111'::text,
+          200::bigint,
+          100::bigint,
+          null::bigint
+        )
+      `),
+    ),
+    (error: unknown) => hasErrorMessage(error, /duplicate key value/u),
+  );
+
+  await withActorDatabaseContext(participantActor, async (transaction) => {
+    await transaction.execute(sql`
+      select app.mark_group_event_operation_submitted(
+        ${operationId}::uuid,
+        ${signature("8")}::text
+      )
+    `);
+    await transaction.execute(sql`
+      select app.finalize_group_event_operation(
+        ${operationId}::uuid,
+        123::bigint
+      )
+    `);
+  });
+  const finalized = await withActorDatabaseContext(
+    participantActor,
+    (transaction) =>
+      transaction.execute<{ status: string; observed_slot: string }>(sql`
+        select status, observed_slot
+        from app.group_event_chain_operations
+        where id = ${operationId}::uuid
+      `),
+  );
+  assert.equal(finalized[0]?.status, "finalized");
+  assert.equal(BigInt(finalized[0]!.observed_slot), BigInt(123));
+
+  await admin`
+    update app.group_events
+    set
+      starts_at = statement_timestamp() - interval '2 hours',
+      ends_at = statement_timestamp() - interval '1 hour'
+    where id = ${eventId}::uuid
+  `;
+  const refundOperationId = "99000000-0000-4000-8000-000000000098";
+  await withActorDatabaseContext(participantActor, (transaction) =>
+    transaction.execute(sql`
+      select app.record_group_event_operation_preparation(
+        ${refundOperationId}::uuid,
+        ${eventId}::uuid,
+        'claim-event-refund'::text,
+        ${programAddress}::text,
+        ${participantWallet}::text,
+        ${coachAuthority}::text,
+        ${poolAddress}::text,
+        ${vaultAddress}::text,
+        ${contributionAddress}::text,
+        ${JSON.stringify({
+          ...summary,
+          operation: "claim-event-refund",
+          amountEurcBaseUnits: "25000000",
+        })}::jsonb,
+        'AQID'::text,
+        'BAUG'::text,
+        '11111111111111111111111111111111'::text,
+        300::bigint,
+        200::bigint,
+        45000::bigint
+      )
+    `),
+  );
+  const terminal = await withActorDatabaseContext(
+    participantActor,
+    (transaction) =>
+      transaction.execute<{ status: string }>(sql`
+        select status
+        from app.group_event_chain_operations
+        where id = ${refundOperationId}::uuid
+      `),
+  );
+  assert.equal(terminal[0]?.status, "prepared");
 });

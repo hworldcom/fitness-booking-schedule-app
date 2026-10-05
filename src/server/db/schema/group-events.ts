@@ -4,11 +4,13 @@ import {
   check,
   foreignKey,
   index,
+  jsonb,
   numeric,
   smallint,
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 import { coachProfiles } from "./coaches";
@@ -243,6 +245,93 @@ export const groupEventContributionProjections = app.table(
       table.participantProfileId,
       table.finalizedAt,
       table.id,
+    ),
+  ],
+);
+
+export const groupEventChainOperations = app.table(
+  "group_event_chain_operations",
+  {
+    id: uuid("id").primaryKey(),
+    runId: uuid("run_id").notNull(),
+    eventId: uuid("event_id").notNull(),
+    actorProfileId: uuid("actor_profile_id").notNull(),
+    operationKind: text("operation_kind").notNull(),
+    status: text("status").notNull(),
+    programAddress: text("program_address").notNull(),
+    authorityAddress: text("authority_address").notNull(),
+    coachAuthorityAddress: text("coach_authority_address").notNull(),
+    eventPoolAddress: text("event_pool_address").notNull(),
+    vaultAddress: text("vault_address").notNull(),
+    contributionAddress: text("contribution_address"),
+    preparedSummary: jsonb("prepared_summary").notNull(),
+    preparedTransactionBase64: text("prepared_transaction_base64").notNull(),
+    preparedMessageBase64: text("prepared_message_base64").notNull(),
+    recentBlockhash: text("recent_blockhash").notNull(),
+    lastValidBlockHeight: bigint("last_valid_block_height", {
+      mode: "bigint",
+    }).notNull(),
+    preparedAt: timestamp("prepared_at", {
+      withTimezone: true,
+      mode: "string",
+    }).notNull(),
+    simulationSlot: bigint("simulation_slot", { mode: "bigint" }).notNull(),
+    simulationUnitsConsumed: bigint("simulation_units_consumed", {
+      mode: "bigint",
+    }),
+    transactionSignature: text("transaction_signature"),
+    priorTransactionSignatures: text("prior_transaction_signatures")
+      .array()
+      .notNull(),
+    submittedAt: timestamp("submitted_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    observedSlot: bigint("observed_slot", { mode: "bigint" }),
+    finalizedAt: timestamp("finalized_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    failureCode: text("failure_code"),
+    failedAt: timestamp("failed_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    ...auditColumns,
+  },
+  (table) => [
+    foreignKey({
+      name: "group_event_chain_operations_event_fkey",
+      columns: [table.runId, table.eventId],
+      foreignColumns: [groupEvents.runId, groupEvents.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "group_event_chain_operations_actor_fkey",
+      columns: [table.runId, table.actorProfileId],
+      foreignColumns: [
+        demoRunParticipants.runId,
+        demoRunParticipants.profileId,
+      ],
+    }).onDelete("restrict"),
+    check(
+      "group_event_chain_operations_status_check",
+      sql`${table.status} in ('prepared', 'submitted', 'finalized', 'failed', 'expired')`,
+    ),
+    check(
+      "group_event_chain_operations_kind_check",
+      sql`${table.operationKind} in ('create-event-pool', 'fund-event-seat', 'settle-event-pool', 'claim-event-payout', 'claim-event-refund')`,
+    ),
+    uniqueIndex("group_event_chain_operations_signature_key")
+      .on(table.transactionSignature)
+      .where(sql`${table.transactionSignature} is not null`),
+    uniqueIndex("group_event_chain_operations_active_actor_key")
+      .on(table.runId, table.eventId, table.actorProfileId, table.operationKind)
+      .where(sql`${table.status} in ('prepared', 'submitted')`),
+    index("group_event_chain_operations_actor_status_idx").on(
+      table.runId,
+      table.actorProfileId,
+      table.status,
+      table.createdAt,
     ),
   ],
 );

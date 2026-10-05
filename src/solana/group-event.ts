@@ -23,6 +23,8 @@ const EVENT_POOL_SEED = getUtf8Encoder().encode("event-pool");
 const EVENT_VAULT_SEED = getUtf8Encoder().encode("event-vault");
 const CONTRIBUTION_SEED = getUtf8Encoder().encode("contribution");
 const MAX_U64 = BigInt("18446744073709551615");
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 
 export type EventPoolSummary = Readonly<{
   coachAuthority: Address;
@@ -58,6 +60,13 @@ function assertU64(value: bigint, label: string): void {
   if (value < BigInt(0) || value > MAX_U64) {
     throw new Error(`${label} must fit an unsigned 64-bit integer.`);
   }
+}
+
+export function groupEventNonceFromId(eventId: string) {
+  if (!UUID_PATTERN.test(eventId)) {
+    throw new Error("Group-event ID must be a UUID.");
+  }
+  return BigInt(`0x${eventId.replaceAll("-", "").slice(0, 16)}`);
 }
 
 export async function deriveEventPoolAddress(input: {

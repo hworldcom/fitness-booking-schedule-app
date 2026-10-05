@@ -31,6 +31,7 @@ import {
   deriveContributionAddress,
   deriveEventPoolAddress,
   deriveEventVaultAddress,
+  groupEventNonceFromId,
   projectContributionSummary,
   projectEventPoolSummary,
 } from "../src/solana/group-event";
@@ -227,4 +228,9 @@ test("UUID seed helper remains compatible with existing coach authority derivati
   });
   assert.equal(uuidToSeed(RUN_ID).length, 16);
   assert.ok(derived.length > 0);
+});
+
+test("group-event UUIDs map to stable unsigned pool nonces", () => {
+  assert.equal(groupEventNonceFromId(RUN_ID), BigInt("0x1111111111114111"));
+  assert.throws(() => groupEventNonceFromId("not-a-uuid"), /UUID/u);
 });
