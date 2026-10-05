@@ -7,7 +7,7 @@ import {
   ShieldCheck,
   TriangleAlert,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useConnectedWallet } from "@solana/kit-plugin-wallet/react";
 import {
   formatEurcBaseUnits,
@@ -240,9 +240,18 @@ export function CoachPassOperationReview({
   onClose: () => void;
 }) {
   const connected = useConnectedWallet(walletClient);
+  const reviewRef = useRef<HTMLElement>(null);
   const [result, setResult] = useState<CoachPassOperationApiResult>(prepared);
   const [recovering, setRecovering] = useState(false);
   const [recoveryError, setRecoveryError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      reviewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      reviewRef.current?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   async function recover() {
     if (recovering) return;
@@ -277,7 +286,12 @@ export function CoachPassOperationReview({
     "transactionSignature" in result ? result.transactionSignature : null;
 
   return (
-    <section className="coach-operation-review" aria-live="polite">
+    <section
+      ref={reviewRef}
+      className="coach-operation-review"
+      aria-live="polite"
+      tabIndex={-1}
+    >
       <div className="coach-operation-heading">
         <ShieldCheck size={23} aria-hidden="true" />
         <div>
