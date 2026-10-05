@@ -12,6 +12,8 @@ import {
   getBase64Encoder,
   getTransactionEncoder,
   pipe,
+  setTransactionMessageComputeUnitLimit,
+  setTransactionMessageComputeUnitPrice,
   setTransactionMessageFeePayer,
   setTransactionMessageLifetimeUsingBlockhash,
   type Address,
@@ -47,6 +49,8 @@ import {
 
 export const COACH_PASS_CLUSTER = "devnet" as const;
 export const EURC_DECIMALS = 6;
+export const COACH_PASS_COMPUTE_UNIT_LIMIT = 200_000;
+export const COACH_PASS_COMPUTE_UNIT_PRICE_MICROLAMPORTS = BigInt(0);
 
 export type CoachPassOperationKind =
   | "purchase-first-offer"
@@ -226,6 +230,16 @@ function compilePreparedTransaction<
     (current) =>
       setTransactionMessageLifetimeUsingBlockhash(
         input.lifetimeConstraint,
+        current,
+      ),
+    (current) =>
+      setTransactionMessageComputeUnitLimit(
+        COACH_PASS_COMPUTE_UNIT_LIMIT,
+        current,
+      ),
+    (current) =>
+      setTransactionMessageComputeUnitPrice(
+        COACH_PASS_COMPUTE_UNIT_PRICE_MICROLAMPORTS,
         current,
       ),
     (current) =>

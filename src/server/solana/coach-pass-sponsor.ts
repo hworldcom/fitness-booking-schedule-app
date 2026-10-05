@@ -18,11 +18,22 @@ import {
   type PreparedCoachPassBootstrapTransaction,
 } from "@/solana/coach-pass-transaction";
 import type { FeeSponsor } from "@/solana/fee-sponsor";
+import type { CoachPassBootstrapInvalidReason } from "@/solana/coach-pass-bootstrap";
 
 export type SponsoredCoachPassTransaction = Readonly<{
   transactionBase64: string;
   transactionSignature: string;
 }>;
+
+export class CoachPassBootstrapValidationError extends Error {
+  readonly code: CoachPassBootstrapInvalidReason;
+
+  constructor(code: CoachPassBootstrapInvalidReason, message: string) {
+    super(message);
+    this.name = "CoachPassBootstrapValidationError";
+    this.code = code;
+  }
+}
 
 export async function validateAndSponsorCoachPassTransaction(input: {
   prepared: PreparedCoachPassTransaction;
@@ -111,7 +122,8 @@ export async function validateAndSponsorCoachPassBootstrapTransaction(input: {
 }): Promise<SponsoredCoachPassTransaction> {
   const { prepared, sponsor } = input;
   if (sponsor.address !== prepared.summary.platformPayerAddress) {
-    throw new Error(
+    throw new CoachPassBootstrapValidationError(
+      "sponsor-mismatch",
       "Configured platform payer does not match the preparation.",
     );
   }
@@ -121,10 +133,11 @@ export async function validateAndSponsorCoachPassBootstrapTransaction(input: {
     transaction = getTransactionDecoder().decode(
       decodeCoachPassTransactionBase64(input.walletSignedTransactionBase64),
     );
-  } catch (error) {
-    throw new Error("Wallet returned an invalid Solana transaction.", {
-      cause: error,
-    });
+  } catch {
+    throw new CoachPassBootstrapValidationError(
+      "wallet-transaction-invalid",
+      "Wallet returned an invalid Solana transaction.",
+    );
   }
   if (
     !matchesPreparedCoachPassMessage({
@@ -132,7 +145,10 @@ export async function validateAndSponsorCoachPassBootstrapTransaction(input: {
       preparedMessageBase64: prepared.messageBase64,
     })
   ) {
-    throw new Error("Wallet-signed bootstrap does not match the preparation.");
+    throw new CoachPassBootstrapValidationError(
+      "wallet-message-mismatch",
+      "Wallet-signed bootstrap does not match the preparation.",
+    );
   }
 
   const coachWalletAddress = prepared.summary.coachWalletAddress;
@@ -145,16 +161,23 @@ export async function validateAndSponsorCoachPassBootstrapTransaction(input: {
     actualSigners.length !== expectedSigners.size ||
     actualSigners.some((signer) => !expectedSigners.has(signer))
   ) {
-    throw new Error("Bootstrap transaction has an unexpected signer set.");
+    throw new CoachPassBootstrapValidationError(
+      "wallet-signer-set-invalid",
+      "Bootstrap transaction has an unexpected signer set.",
+    );
   }
   if (transaction.signatures[sponsor.address] !== null) {
-    throw new Error(
+    throw new CoachPassBootstrapValidationError(
+      "wallet-sponsor-pre-signed",
       "Bootstrap transaction already contains a platform signature.",
     );
   }
   const coachSignature = transaction.signatures[coachWalletAddress];
   if (!coachSignature) {
-    throw new Error("Required coach bootstrap signature is missing.");
+    throw new CoachPassBootstrapValidationError(
+      "wallet-coach-signature-missing",
+      "Required coach bootstrap signature is missing.",
+    );
   }
   const coachPublicKey = await getPublicKeyFromAddress(coachWalletAddress);
   if (
@@ -164,7 +187,10 @@ export async function validateAndSponsorCoachPassBootstrapTransaction(input: {
       transaction.messageBytes,
     ))
   ) {
-    throw new Error("Required coach bootstrap signature is invalid.");
+    throw new CoachPassBootstrapValidationError(
+      "wallet-coach-signature-invalid",
+      "Required coach bootstrap signature is invalid.",
+    );
   }
 
   const sponsoredTransaction = await partiallySignTransactionWithSigners(

@@ -21,17 +21,29 @@ export type CoachPassBootstrapSnapshot = Readonly<{
   finalizedSlot: string | null;
 }>;
 
+export const COACH_PASS_BOOTSTRAP_INVALID_REASONS = [
+  "sponsor-mismatch",
+  "wallet-transaction-invalid",
+  "wallet-message-mismatch",
+  "wallet-signer-set-invalid",
+  "wallet-sponsor-pre-signed",
+  "wallet-coach-signature-missing",
+  "wallet-coach-signature-invalid",
+] as const;
+
+export type CoachPassBootstrapInvalidReason =
+  (typeof COACH_PASS_BOOTSTRAP_INVALID_REASONS)[number];
+
 export type CoachPassBootstrapApiResult =
   | PreparedCoachPassBootstrapResult
   | CoachPassBootstrapSnapshot
   | Readonly<{
       status:
-        | "signed-out"
-        | "preview"
-        | "forbidden"
-        | "conflict"
-        | "invalid-request"
-        | "unavailable";
+        "signed-out" | "preview" | "forbidden" | "conflict" | "unavailable";
+    }>
+  | Readonly<{
+      status: "invalid-request";
+      reason?: CoachPassBootstrapInvalidReason;
     }>;
 
 export type SubmitCoachPassBootstrapRequest = Readonly<{
@@ -119,10 +131,18 @@ export function isCoachPassBootstrapApiResult(
     value.status === "preview" ||
     value.status === "forbidden" ||
     value.status === "conflict" ||
-    value.status === "invalid-request" ||
     value.status === "unavailable"
   ) {
     return true;
+  }
+  if (value.status === "invalid-request") {
+    return (
+      value.reason === undefined ||
+      (typeof value.reason === "string" &&
+        COACH_PASS_BOOTSTRAP_INVALID_REASONS.includes(
+          value.reason as CoachPassBootstrapInvalidReason,
+        ))
+    );
   }
   if (value.status === "prepared") {
     return (

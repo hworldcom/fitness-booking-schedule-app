@@ -50,6 +50,22 @@ function resultMessage(result: CoachPassBootstrapApiResult) {
     case "forbidden":
       return "This local operator flow is not available to the current account.";
     case "invalid-request":
+      switch (result.reason) {
+        case "sponsor-mismatch":
+          return "The configured sponsor no longer matches the reviewed transaction.";
+        case "wallet-transaction-invalid":
+          return "Phantom returned bytes that are not a valid Solana transaction.";
+        case "wallet-message-mismatch":
+          return "Phantom changed the reviewed transaction message. Nothing was submitted.";
+        case "wallet-signer-set-invalid":
+          return "Phantom returned an unexpected signer layout. Nothing was submitted.";
+        case "wallet-sponsor-pre-signed":
+          return "The wallet response unexpectedly included the MovX sponsor signature.";
+        case "wallet-coach-signature-missing":
+          return "Phantom returned the transaction without Tom’s required signature.";
+        case "wallet-coach-signature-invalid":
+          return "Phantom returned a Tom signature that does not verify against the reviewed message.";
+      }
       return "The signed payload is not a valid approved bootstrap transaction.";
     case "unavailable":
       return "The local database, signature check, sponsor, or Devnet RPC was unavailable. If the wallet already signed, recheck these exact bytes before preparing a replacement.";

@@ -13,6 +13,8 @@ import {
   decompileTransactionMessage,
   generateKeyPairSigner,
   getCompiledTransactionMessageDecoder,
+  getTransactionMessageComputeUnitLimit,
+  getTransactionMessageComputeUnitPrice,
   getTransactionDecoder,
   none,
 } from "@solana/kit";
@@ -39,6 +41,8 @@ import {
   uuidToSeed,
 } from "../src/solana/coach-pass";
 import {
+  COACH_PASS_COMPUTE_UNIT_LIMIT,
+  COACH_PASS_COMPUTE_UNIT_PRICE_MICROLAMPORTS,
   decodeCoachPassTransactionBase64,
   matchesPreparedCoachPassMessage,
   prepareCoachPassBootstrap,
@@ -245,9 +249,17 @@ test("bootstrap preparation freezes exact coach, recovery and public offer terms
     [fixture.coachWallet.address, fixture.platformPayer.address].sort(),
   );
   assert.deepEqual(Object.values(decoded.transaction.signatures), [null, null]);
-  assert.equal(decoded.message.instructions.length, 3);
+  assert.equal(
+    getTransactionMessageComputeUnitLimit(decoded.message),
+    COACH_PASS_COMPUTE_UNIT_LIMIT,
+  );
+  assert.equal(
+    getTransactionMessageComputeUnitPrice(decoded.message),
+    COACH_PASS_COMPUTE_UNIT_PRICE_MICROLAMPORTS,
+  );
+  assert.equal(decoded.message.instructions.length, 5);
 
-  const initializeInstruction = decoded.message.instructions[0]!;
+  const initializeInstruction = decoded.message.instructions[2]!;
   assertIsInstructionWithAccounts(initializeInstruction);
   assertIsInstructionWithData(initializeInstruction);
   const initialize = parseInitializeCoachAuthorityInstruction(
@@ -264,7 +276,7 @@ test("bootstrap preparation freezes exact coach, recovery and public offer terms
   assert.deepEqual(initialize.data.runId, [...uuidToSeed(RUN_ID)]);
   assert.deepEqual(initialize.data.profileId, [...uuidToSeed(PROFILE_ID)]);
 
-  const offers = decoded.message.instructions.slice(1).map((instruction) => {
+  const offers = decoded.message.instructions.slice(3).map((instruction) => {
     assertIsInstructionWithAccounts(instruction);
     assertIsInstructionWithData(instruction);
     return parseCreateOfferInstruction(instruction);
@@ -386,8 +398,8 @@ test("purchase messages allowlist ATA setup and the exact coach-pass instruction
     null,
     null,
   ]);
-  assert.equal(firstDecoded.message.instructions.length, 2);
-  const ataInstruction = firstDecoded.message.instructions[0]!;
+  assert.equal(firstDecoded.message.instructions.length, 4);
+  const ataInstruction = firstDecoded.message.instructions[2]!;
   assert.equal(ataInstruction.programAddress, ASSOCIATED_TOKEN_PROGRAM_ADDRESS);
   assertIsInstructionWithAccounts(ataInstruction);
   assert.deepEqual(
@@ -403,7 +415,7 @@ test("purchase messages allowlist ATA setup and the exact coach-pass instruction
   );
   assert.equal(ataInstruction.accounts[0]!.role, AccountRole.WRITABLE_SIGNER);
 
-  const firstPurchaseInstruction = firstDecoded.message.instructions[1]!;
+  const firstPurchaseInstruction = firstDecoded.message.instructions[3]!;
   assert.equal(
     firstPurchaseInstruction.programAddress,
     MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
@@ -430,8 +442,8 @@ test("purchase messages allowlist ATA setup and the exact coach-pass instruction
     AccountRole.WRITABLE_SIGNER,
   );
 
-  assert.equal(laterDecoded.message.instructions.length, 2);
-  const laterPurchaseInstruction = laterDecoded.message.instructions[1]!;
+  assert.equal(laterDecoded.message.instructions.length, 4);
+  const laterPurchaseInstruction = laterDecoded.message.instructions[3]!;
   assertIsInstructionWithAccounts(laterPurchaseInstruction);
   assertIsInstructionWithData(laterPurchaseInstruction);
   const parsedLater = parsePurchaseOfferInstruction(laterPurchaseInstruction);
@@ -662,7 +674,7 @@ test("booking messages contain one exact reserve, return or consume instruction"
   });
 
   const reserveInstruction =
-    decompilePrepared(preparedReserve).message.instructions[0]!;
+    decompilePrepared(preparedReserve).message.instructions[2]!;
   assertIsInstructionWithAccounts(reserveInstruction);
   assertIsInstructionWithData(reserveInstruction);
   const parsedReserve =
@@ -675,7 +687,7 @@ test("booking messages contain one exact reserve, return or consume instruction"
   );
 
   const returnInstruction =
-    decompilePrepared(preparedReturn).message.instructions[0]!;
+    decompilePrepared(preparedReturn).message.instructions[2]!;
   assertIsInstructionWithAccounts(returnInstruction);
   assertIsInstructionWithData(returnInstruction);
   const parsedReturn = parseReturnBookingCreditInstruction(returnInstruction);
@@ -685,7 +697,7 @@ test("booking messages contain one exact reserve, return or consume instruction"
   );
 
   const consumeInstruction =
-    decompilePrepared(preparedConsume).message.instructions[0]!;
+    decompilePrepared(preparedConsume).message.instructions[2]!;
   assertIsInstructionWithAccounts(consumeInstruction);
   assertIsInstructionWithData(consumeInstruction);
   const parsedConsume =
@@ -696,9 +708,9 @@ test("booking messages contain one exact reserve, return or consume instruction"
   );
   for (const prepared of [preparedReserve, preparedReturn, preparedConsume]) {
     const decoded = decompilePrepared(prepared);
-    assert.equal(decoded.message.instructions.length, 1);
+    assert.equal(decoded.message.instructions.length, 3);
     assert.equal(
-      decoded.message.instructions[0]!.programAddress,
+      decoded.message.instructions[2]!.programAddress,
       MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
     );
     assert.deepEqual(

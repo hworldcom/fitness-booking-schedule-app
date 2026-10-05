@@ -26,7 +26,10 @@ import {
   validateCoachPassProgramAccount,
   type CoachPassRpcGateway,
 } from "./coach-pass-rpc";
-import { validateAndSponsorCoachPassBootstrapTransaction } from "./coach-pass-sponsor";
+import {
+  CoachPassBootstrapValidationError,
+  validateAndSponsorCoachPassBootstrapTransaction,
+} from "./coach-pass-sponsor";
 
 const APPROVED_BOOTSTRAP = Object.freeze({
   runId: "20000000-0000-4000-8000-000000000001",
@@ -87,6 +90,9 @@ function mapError(error: unknown): CoachPassBootstrapApiResult {
     return Object.freeze({
       status: error.code === "rpc-unavailable" ? "unavailable" : "conflict",
     });
+  }
+  if (error instanceof CoachPassBootstrapValidationError) {
+    return Object.freeze({ status: "invalid-request", reason: error.code });
   }
   return Object.freeze({ status: "unavailable" });
 }

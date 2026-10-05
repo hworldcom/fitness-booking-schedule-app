@@ -92,7 +92,10 @@ test("bootstrap browser signing preserves exact bytes and simulation slot", asyn
       return { signedTransaction: Uint8Array.from([9, 8, 7]) };
     },
   );
-  assert.equal(transactionByteLength, 584);
+  assert.equal(
+    transactionByteLength,
+    Buffer.from(result.prepared.transactionBase64, "base64").byteLength,
+  );
   assert.equal(minContextSlot, BigInt(900));
   assert.equal(signed, Buffer.from([9, 8, 7]).toString("base64"));
 });
@@ -137,5 +140,22 @@ test("bootstrap browser API uses same-origin prepare and exact signed submit", a
   assert.equal(
     body.walletSignedTransactionBase64,
     prepared.prepared.transactionBase64,
+  );
+});
+
+test("bootstrap API accepts only bounded wallet-validation diagnostics", () => {
+  assert.equal(
+    isCoachPassBootstrapApiResult({
+      status: "invalid-request",
+      reason: "wallet-coach-signature-invalid",
+    }),
+    true,
+  );
+  assert.equal(
+    isCoachPassBootstrapApiResult({
+      status: "invalid-request",
+      reason: "private-key-leaked",
+    }),
+    false,
   );
 });
