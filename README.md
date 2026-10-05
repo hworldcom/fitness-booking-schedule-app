@@ -89,6 +89,28 @@ Current and planned chain work is Devnet-only. The MovX platform pays every MVP 
 
 Both payment loops use Circle's official Solana Devnet EURC mint. Users still authorize and supply the exact pass price or seat contribution; platform sponsorship supplies only SOL fees and account rent and grants no client, coach, participant, recovery or upgrade authority. A pass offer freezes one/ten credits, exact price, coach recipient, authority epoch, purchase window and optional client restriction. The first purchase creates one `CoachClientCredits` program-derived account (PDA) for that coach/client pair; later purchases reuse it. A separate EventPool PDA freezes each group event's price, capacity, deadline and recipient, with deterministic payout or pull-refund behavior. The removed multi-gym EURC runtime remains historical and is not reused as current product configuration. No mainnet transaction, production custody, attendance guarantee, dispute resolution or real-money claim is supported.
 
+The reviewed program identity is `GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU`, shared by `declare_id!`, the generated client and runtime configuration. Deployment and upgrade authority must use operator-controlled material that is separate from the platform payer and every user/recovery wallet. Before an explicitly approved Devnet deployment, build and confirm that the local program key resolves to that identity:
+
+```sh
+anchor build
+solana-keygen pubkey target/deploy/movx_coach_pass-keypair.json
+solana program show --url devnet GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU
+```
+
+For the approved initial deployment, use explicit operator key paths; do not rely on the default Solana CLI wallet:
+
+```sh
+solana program deploy \
+  --url devnet \
+  --keypair "$DEPLOYER_KEYPAIR_PATH" \
+  --fee-payer "$DEPLOYER_KEYPAIR_PATH" \
+  --program-id target/deploy/movx_coach_pass-keypair.json \
+  --upgrade-authority "$UPGRADE_AUTHORITY_KEYPAIR_PATH" \
+  target/deploy/movx_coach_pass.so
+```
+
+Afterward, verify the executable program ID and upgrade authority with `solana program show`, set `NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID` to the same reviewed address, and only then run read-only readiness checks. Never reuse `SOLANA_FEE_SPONSOR_KEYPAIR_BASE64` for deployment or upgrades. Deployment, wallet signing and transaction submission are real chain mutations and require a reviewed summary plus explicit approval.
+
 ## Cloudflare staging
 
 The vinext toolchain targets the staging Worker `movx-club-staging` while standard Next.js commands remain available:
