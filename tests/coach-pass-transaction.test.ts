@@ -21,6 +21,8 @@ import type { CoachClientCredits } from "../clients/js/src/generated/accounts/co
 import type { CreditReservation } from "../clients/js/src/generated/accounts/creditReservation";
 import type { Offer } from "../clients/js/src/generated/accounts/offer";
 import { parseConsumeBookingCreditInstruction } from "../clients/js/src/generated/instructions/consumeBookingCredit";
+import { parseCreateOfferInstruction } from "../clients/js/src/generated/instructions/createOffer";
+import { parseInitializeCoachAuthorityInstruction } from "../clients/js/src/generated/instructions/initializeCoachAuthority";
 import { parsePurchaseFirstOfferInstruction } from "../clients/js/src/generated/instructions/purchaseFirstOffer";
 import { parsePurchaseOfferInstruction } from "../clients/js/src/generated/instructions/purchaseOffer";
 import { parseReserveBookingCreditInstruction } from "../clients/js/src/generated/instructions/reserveBookingCredit";
@@ -39,6 +41,7 @@ import {
 import {
   decodeCoachPassTransactionBase64,
   matchesPreparedCoachPassMessage,
+  prepareCoachPassBootstrap,
   prepareCoachPassPurchase,
   prepareCoachPassReservation,
   prepareCoachPassResolution,
@@ -147,6 +150,7 @@ async function coachPassFixture() {
 
   return {
     coachWallet,
+    recoveryAuthority,
     clientWallet,
     platformPayer,
     coachAuthorityAddress,
@@ -190,7 +194,12 @@ function resolutionInput(
   } as const;
 }
 
-function decompilePrepared(prepared: PreparedCoachPassTransaction) {
+function decompilePrepared(
+  prepared: Pick<
+    PreparedCoachPassTransaction,
+    "transactionBase64" | "lastValidBlockHeight"
+  >,
+) {
   const transaction = getTransactionDecoder().decode(
     decodeCoachPassTransactionBase64(prepared.transactionBase64),
   );
@@ -204,6 +213,119 @@ function decompilePrepared(prepared: PreparedCoachPassTransaction) {
     }),
   };
 }
+
+test("bootstrap preparation freezes exact coach, recovery and public offer terms", async () => {
+  const fixture = await coachPassFixture();
+  const prepared = await prepareCoachPassBootstrap({
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    platformPayerAddress: fixture.platformPayer.address,
+    lifetimeConstraint: LIFETIME,
+    runId: RUN_ID,
+    profileId: PROFILE_ID,
+    coachWalletAddress: fixture.coachWallet.address,
+    recoveryAuthorityAddress: fixture.recoveryAuthority.address,
+    oneCreditPriceEurcBaseUnits: BigInt(10_000_000),
+    tenCreditPriceEurcBaseUnits: BigInt(100_000_000),
+  });
+  const decoded = decompilePrepared(prepared);
+
+  assert.equal(prepared.summary.operation, "initialize-coach-and-offers");
+  assert.equal(
+    prepared.summary.coachAuthorityAddress,
+    fixture.coachAuthorityAddress,
+  );
+  assert.equal(prepared.summary.oneCreditPriceEurcBaseUnits, "10000000");
+  assert.equal(prepared.summary.tenCreditPriceEurcBaseUnits, "100000000");
+  assert.equal(prepared.summary.eurcMovedBaseUnits, "0");
+  assert.equal(prepared.summary.userPaysSol, false);
+  assert.equal(decoded.message.version, "legacy");
+  assert.equal(decoded.message.feePayer.address, fixture.platformPayer.address);
+  assert.deepEqual(
+    Object.keys(decoded.transaction.signatures).sort(),
+    [
+      fixture.coachWallet.address,
+      fixture.recoveryAuthority.address,
+      fixture.platformPayer.address,
+    ].sort(),
+  );
+  assert.deepEqual(Object.values(decoded.transaction.signatures), [
+    null,
+    null,
+    null,
+  ]);
+  assert.equal(decoded.message.instructions.length, 3);
+
+  const initializeInstruction = decoded.message.instructions[0]!;
+  assertIsInstructionWithAccounts(initializeInstruction);
+  assertIsInstructionWithData(initializeInstruction);
+  const initialize = parseInitializeCoachAuthorityInstruction(
+    initializeInstruction,
+  );
+  assert.equal(
+    initialize.accounts.recoveryAuthority.address,
+    fixture.recoveryAuthority.address,
+  );
+  assert.deepEqual(initialize.data.runId, [...uuidToSeed(RUN_ID)]);
+  assert.deepEqual(initialize.data.profileId, [...uuidToSeed(PROFILE_ID)]);
+
+  const offers = decoded.message.instructions.slice(1).map((instruction) => {
+    assertIsInstructionWithAccounts(instruction);
+    assertIsInstructionWithData(instruction);
+    return parseCreateOfferInstruction(instruction);
+  });
+  assert.deepEqual(
+    offers.map(({ data }) => ({
+      nonce: data.args.nonce,
+      price: data.args.priceEurcBaseUnits,
+      sessions: data.args.sessionCount,
+      validity: data.args.validitySeconds,
+    })),
+    [
+      {
+        nonce: BigInt(0),
+        price: BigInt(10_000_000),
+        sessions: 1,
+        validity: 0,
+      },
+      {
+        nonce: BigInt(1),
+        price: BigInt(100_000_000),
+        sessions: 10,
+        validity: 0,
+      },
+    ],
+  );
+});
+
+test("bootstrap preparation rejects shared authorities and inconsistent pricing", async () => {
+  const fixture = await coachPassFixture();
+  const input = {
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    platformPayerAddress: fixture.platformPayer.address,
+    lifetimeConstraint: LIFETIME,
+    runId: RUN_ID,
+    profileId: PROFILE_ID,
+    coachWalletAddress: fixture.coachWallet.address,
+    recoveryAuthorityAddress: fixture.recoveryAuthority.address,
+    oneCreditPriceEurcBaseUnits: BigInt(10_000_000),
+    tenCreditPriceEurcBaseUnits: BigInt(100_000_000),
+  } as const;
+
+  await assert.rejects(
+    prepareCoachPassBootstrap({
+      ...input,
+      recoveryAuthorityAddress: fixture.coachWallet.address,
+    }),
+    /must be distinct/u,
+  );
+  await assert.rejects(
+    prepareCoachPassBootstrap({
+      ...input,
+      tenCreditPriceEurcBaseUnits: BigInt(99_000_000),
+    }),
+    /price one and ten credits consistently/u,
+  );
+});
 
 test("purchase preparation freezes exact first and later Devnet terms", async () => {
   const fixture = await coachPassFixture();

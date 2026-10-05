@@ -29,6 +29,7 @@ const uploadedBindings = [
   "NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID",
   "SOLANA_FEE_SPONSOR_ADDRESS",
   "SOLANA_FEE_SPONSOR_KEYPAIR_BASE64",
+  "SOLANA_RECOVERY_AUTHORITY_ADDRESS",
 ];
 const requiredInputs = [...uploadedBindings, "DATABASE_URL"];
 
@@ -76,6 +77,19 @@ function validatedEnvironment() {
     !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(values.SOLANA_FEE_SPONSOR_ADDRESS)
   ) {
     fail("SOLANA_FEE_SPONSOR_ADDRESS must be a base58 Solana address.");
+  }
+  if (
+    !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(
+      values.SOLANA_RECOVERY_AUTHORITY_ADDRESS,
+    )
+  ) {
+    fail("SOLANA_RECOVERY_AUTHORITY_ADDRESS must be a base58 Solana address.");
+  }
+  if (
+    values.SOLANA_RECOVERY_AUTHORITY_ADDRESS ===
+    values.SOLANA_FEE_SPONSOR_ADDRESS
+  ) {
+    fail("the recovery authority must be separate from the fee sponsor.");
   }
   let sponsorKeypair;
   try {

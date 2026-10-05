@@ -14,7 +14,10 @@ import {
 import type { CoachAuthority } from "../../clients/js/src/generated/accounts/coachAuthority";
 import type { Offer } from "../../clients/js/src/generated/accounts/offer";
 import { OfferStatus } from "../../clients/js/src/generated/types/offerStatus";
-import { validateAndSponsorCoachPassTransaction } from "../../src/server/solana/coach-pass-sponsor";
+import {
+  validateAndSponsorCoachPassBootstrapTransaction,
+  validateAndSponsorCoachPassTransaction,
+} from "../../src/server/solana/coach-pass-sponsor";
 import {
   DEVNET_EURC_MINT_ADDRESS,
   MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
@@ -24,6 +27,7 @@ import {
 } from "../../src/solana/coach-pass";
 import {
   decodeCoachPassTransactionBase64,
+  prepareCoachPassBootstrap,
   prepareCoachPassPurchase,
 } from "../../src/solana/coach-pass-transaction";
 
@@ -283,4 +287,57 @@ test("platform payer cryptographically rejects an invalid authority signature", 
     }),
     /wallet signature is invalid/u,
   );
+});
+
+test("platform payer adds only its signature after both bootstrap authorities sign", async () => {
+  const [coach, recovery, platformPayer] = await Promise.all([
+    generateKeyPairSigner(),
+    generateKeyPairSigner(),
+    generateKeyPairSigner(),
+  ]);
+  const prepared = await prepareCoachPassBootstrap({
+    programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+    platformPayerAddress: platformPayer.address,
+    lifetimeConstraint: {
+      blockhash: blockhash("11111111111111111111111111111111"),
+      lastValidBlockHeight: BigInt(1_234),
+    },
+    runId: RUN_ID,
+    profileId: PROFILE_ID,
+    coachWalletAddress: coach.address,
+    recoveryAuthorityAddress: recovery.address,
+    oneCreditPriceEurcBaseUnits: BigInt(10_000_000),
+    tenCreditPriceEurcBaseUnits: BigInt(100_000_000),
+  });
+  const unsigned = getTransactionDecoder().decode(
+    decodeCoachPassTransactionBase64(prepared.transactionBase64),
+  );
+  const coachSigned = await partiallySignTransactionWithSigners(
+    [coach],
+    unsigned,
+  );
+  await assert.rejects(
+    validateAndSponsorCoachPassBootstrapTransaction({
+      prepared,
+      walletSignedTransactionBase64: encodeTransaction(coachSigned),
+      sponsor: { address: platformPayer.address, signer: platformPayer },
+    }),
+    /bootstrap signature is missing/u,
+  );
+
+  const walletSigned = await partiallySignTransactionWithSigners(
+    [recovery],
+    coachSigned,
+  );
+  const sponsored = await validateAndSponsorCoachPassBootstrapTransaction({
+    prepared,
+    walletSignedTransactionBase64: encodeTransaction(walletSigned),
+    sponsor: { address: platformPayer.address, signer: platformPayer },
+  });
+  const finalTransaction = getTransactionDecoder().decode(
+    decodeCoachPassTransactionBase64(sponsored.transactionBase64),
+  );
+  assert.ok(finalTransaction.signatures[coach.address]);
+  assert.ok(finalTransaction.signatures[recovery.address]);
+  assert.ok(finalTransaction.signatures[platformPayer.address]);
 });

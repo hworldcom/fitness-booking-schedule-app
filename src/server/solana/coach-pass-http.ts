@@ -2,9 +2,13 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 import { supabasePublicConfig } from "@/auth/config";
+import type { CoachPassBootstrapApiResult } from "@/solana/coach-pass-bootstrap";
 import type { CoachPassOperationApiResult } from "@/solana/coach-pass-operation";
 
-const responseStatus: Record<CoachPassOperationApiResult["status"], number> = {
+type CoachPassHttpResult =
+  CoachPassOperationApiResult | CoachPassBootstrapApiResult;
+
+const responseStatus: Record<CoachPassHttpResult["status"], number> = {
   preview: 200,
   prepared: 200,
   submitted: 200,
@@ -23,7 +27,7 @@ export function hasCoachPassCanonicalOrigin(request: Request) {
   return config !== null && request.headers.get("origin") === config.siteUrl;
 }
 
-export function coachPassResponse(value: CoachPassOperationApiResult) {
+export function coachPassResponse(value: CoachPassHttpResult) {
   return NextResponse.json(value, {
     status: responseStatus[value.status],
     headers: { "cache-control": "private, no-store" },

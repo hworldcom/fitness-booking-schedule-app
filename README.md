@@ -109,7 +109,7 @@ solana program deploy \
   target/deploy/movx_coach_pass.so
 ```
 
-Afterward, verify the executable program ID and upgrade authority with `solana program show`, set `NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID` to the same reviewed address, and only then run read-only readiness checks. Never reuse `SOLANA_FEE_SPONSOR_KEYPAIR_BASE64` for deployment or upgrades. Deployment, wallet signing and transaction submission are real chain mutations and require a reviewed summary plus explicit approval.
+Afterward, verify the executable program ID and upgrade authority with `solana program show`, set `NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID` to the same reviewed address, and only then run read-only readiness checks. Set `SOLANA_RECOVERY_AUTHORITY_ADDRESS` to the public address of the separately controlled wallet that approves coach initialization and replacement; its private key remains in that wallet and never enters application configuration. Never reuse `SOLANA_FEE_SPONSOR_KEYPAIR_BASE64` for recovery, deployment or upgrades. Deployment, wallet signing and transaction submission are real chain mutations and require a reviewed summary plus explicit approval.
 
 ## Cloudflare staging
 

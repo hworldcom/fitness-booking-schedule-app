@@ -24,6 +24,8 @@ import type { CoachClientCredits } from "../../clients/js/src/generated/accounts
 import type { CreditReservation } from "../../clients/js/src/generated/accounts/creditReservation";
 import type { Offer } from "../../clients/js/src/generated/accounts/offer";
 import { getConsumeBookingCreditInstruction } from "../../clients/js/src/generated/instructions/consumeBookingCredit";
+import { getCreateOfferInstruction } from "../../clients/js/src/generated/instructions/createOffer";
+import { getInitializeCoachAuthorityInstructionAsync } from "../../clients/js/src/generated/instructions/initializeCoachAuthority";
 import { getPurchaseFirstOfferInstruction } from "../../clients/js/src/generated/instructions/purchaseFirstOffer";
 import { getPurchaseOfferInstruction } from "../../clients/js/src/generated/instructions/purchaseOffer";
 import { getReserveBookingCreditInstruction } from "../../clients/js/src/generated/instructions/reserveBookingCredit";
@@ -94,19 +96,53 @@ export type CoachPassBookingApprovalSummary = CoachPassApprovalSummaryBase &
 export type CoachPassApprovalSummary =
   CoachPassPurchaseApprovalSummary | CoachPassBookingApprovalSummary;
 
-export type PreparedCoachPassTransaction = Readonly<{
-  summary: CoachPassApprovalSummary;
+export type CoachPassBootstrapApprovalSummary = Readonly<{
+  cluster: typeof COACH_PASS_CLUSTER;
+  operation: "initialize-coach-and-offers";
+  programAddress: Address;
+  coachWalletAddress: Address;
+  recoveryAuthorityAddress: Address;
+  platformPayerAddress: Address;
+  coachAuthorityAddress: Address;
+  oneCreditOfferAddress: Address;
+  tenCreditOfferAddress: Address;
+  oneCreditPriceEurcBaseUnits: string;
+  tenCreditPriceEurcBaseUnits: string;
+  testAsset: "EURC";
+  paymentMintAddress: Address;
+  userPaysSol: false;
+  eurcMovedBaseUnits: "0";
+}>;
+
+type PreparedTransaction<TSummary> = Readonly<{
+  summary: TSummary;
   transactionBase64: string;
   messageBase64: string;
   recentBlockhash: string;
   lastValidBlockHeight: string;
 }>;
 
+export type PreparedCoachPassTransaction =
+  PreparedTransaction<CoachPassApprovalSummary>;
+
+export type PreparedCoachPassBootstrapTransaction =
+  PreparedTransaction<CoachPassBootstrapApprovalSummary>;
+
 type CommonPreparationInput = Readonly<{
   programAddress: Address;
   platformPayerAddress: Address;
   lifetimeConstraint: BlockhashLifetimeConstraint;
 }>;
+
+export type PrepareCoachPassBootstrapInput = CommonPreparationInput &
+  Readonly<{
+    runId: string;
+    profileId: string;
+    coachWalletAddress: Address;
+    recoveryAuthorityAddress: Address;
+    oneCreditPriceEurcBaseUnits: bigint;
+    tenCreditPriceEurcBaseUnits: bigint;
+  }>;
 
 export type PrepareCoachPassPurchaseInput = CommonPreparationInput &
   Readonly<{
@@ -175,12 +211,14 @@ function assertCoachAuthority(input: {
   });
 }
 
-function compilePreparedTransaction(input: {
-  summary: CoachPassApprovalSummary;
+function compilePreparedTransaction<
+  TSummary extends CoachPassApprovalSummary | CoachPassBootstrapApprovalSummary,
+>(input: {
+  summary: TSummary;
   instructions: readonly Instruction[];
   platformPayerAddress: Address;
   lifetimeConstraint: BlockhashLifetimeConstraint;
-}): PreparedCoachPassTransaction {
+}): PreparedTransaction<TSummary> {
   const message = pipe(
     createTransactionMessage({ version: "legacy" }),
     (current) =>
@@ -204,6 +242,126 @@ function compilePreparedTransaction(input: {
     recentBlockhash: input.lifetimeConstraint.blockhash,
     lastValidBlockHeight:
       input.lifetimeConstraint.lastValidBlockHeight.toString(),
+  });
+}
+
+export async function prepareCoachPassBootstrap(
+  input: PrepareCoachPassBootstrapInput,
+): Promise<PreparedCoachPassBootstrapTransaction> {
+  if (
+    input.coachWalletAddress === input.recoveryAuthorityAddress ||
+    input.coachWalletAddress === input.platformPayerAddress ||
+    input.recoveryAuthorityAddress === input.platformPayerAddress
+  ) {
+    throw new Error(
+      "Coach, recovery authority and platform payer must be distinct.",
+    );
+  }
+  if (
+    input.oneCreditPriceEurcBaseUnits <= BigInt(0) ||
+    input.tenCreditPriceEurcBaseUnits !==
+      input.oneCreditPriceEurcBaseUnits * BigInt(10)
+  ) {
+    throw new Error(
+      "Bootstrap offers must price one and ten credits consistently.",
+    );
+  }
+
+  const [coachAuthorityAddress] = await deriveCoachAuthorityAddress({
+    programAddress: input.programAddress,
+    runId: input.runId,
+    profileId: input.profileId,
+    originalWallet: input.coachWalletAddress,
+  });
+  const [oneCreditOfferAddress] = await deriveOfferAddress({
+    programAddress: input.programAddress,
+    coachAuthority: coachAuthorityAddress,
+    nonce: BigInt(0),
+  });
+  const [tenCreditOfferAddress] = await deriveOfferAddress({
+    programAddress: input.programAddress,
+    coachAuthority: coachAuthorityAddress,
+    nonce: BigInt(1),
+  });
+  const [eventAuthorityAddress] = await deriveEventAuthorityAddress({
+    programAddress: input.programAddress,
+  });
+  const coachWallet = createNoopSigner(input.coachWalletAddress);
+  const recoveryAuthority = createNoopSigner(input.recoveryAuthorityAddress);
+  const platformPayer = createNoopSigner(input.platformPayerAddress);
+  const instructions: Instruction[] = [
+    await getInitializeCoachAuthorityInstructionAsync(
+      {
+        coachWallet,
+        recoveryAuthority,
+        platformPayer,
+        coachAuthority: coachAuthorityAddress,
+        eventAuthority: eventAuthorityAddress,
+        program: input.programAddress,
+        runId: [...uuidToSeed(input.runId)],
+        profileId: [...uuidToSeed(input.profileId)],
+      },
+      { programAddress: input.programAddress },
+    ),
+    getCreateOfferInstruction(
+      {
+        coachWallet,
+        platformPayer,
+        coachAuthority: coachAuthorityAddress,
+        offer: oneCreditOfferAddress,
+        eventAuthority: eventAuthorityAddress,
+        program: input.programAddress,
+        args: {
+          nonce: BigInt(0),
+          priceEurcBaseUnits: input.oneCreditPriceEurcBaseUnits,
+          sessionCount: 1,
+          validitySeconds: 0,
+          restrictedClient: null,
+        },
+      },
+      { programAddress: input.programAddress },
+    ),
+    getCreateOfferInstruction(
+      {
+        coachWallet,
+        platformPayer,
+        coachAuthority: coachAuthorityAddress,
+        offer: tenCreditOfferAddress,
+        eventAuthority: eventAuthorityAddress,
+        program: input.programAddress,
+        args: {
+          nonce: BigInt(1),
+          priceEurcBaseUnits: input.tenCreditPriceEurcBaseUnits,
+          sessionCount: 10,
+          validitySeconds: 0,
+          restrictedClient: null,
+        },
+      },
+      { programAddress: input.programAddress },
+    ),
+  ];
+
+  return compilePreparedTransaction({
+    summary: {
+      cluster: COACH_PASS_CLUSTER,
+      operation: "initialize-coach-and-offers",
+      programAddress: input.programAddress,
+      coachWalletAddress: input.coachWalletAddress,
+      recoveryAuthorityAddress: input.recoveryAuthorityAddress,
+      platformPayerAddress: input.platformPayerAddress,
+      coachAuthorityAddress,
+      oneCreditOfferAddress,
+      tenCreditOfferAddress,
+      oneCreditPriceEurcBaseUnits: input.oneCreditPriceEurcBaseUnits.toString(),
+      tenCreditPriceEurcBaseUnits: input.tenCreditPriceEurcBaseUnits.toString(),
+      testAsset: "EURC",
+      paymentMintAddress: DEVNET_EURC_MINT_ADDRESS,
+      userPaysSol: false,
+      eurcMovedBaseUnits: "0",
+    },
+    instructions,
+    platformPayerAddress: input.platformPayerAddress,
+    lifetimeConstraint: input.lifetimeConstraint,
   });
 }
 

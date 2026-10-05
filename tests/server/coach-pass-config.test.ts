@@ -7,7 +7,9 @@ import {
 } from "@solana/kit";
 import {
   CoachPassConfigurationError,
+  coachPassBootstrapConfig,
   coachPassDevnetConfig,
+  parseCoachPassBootstrapConfig,
   parseCoachPassDevnetConfig,
 } from "../../src/server/solana/coach-pass-config";
 import { MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS } from "../../src/solana/coach-pass";
@@ -59,6 +61,29 @@ test("coach-pass configuration rejects unsafe or incomplete runtime values", asy
   }
 });
 
+test("bootstrap configuration requires a distinct recovery authority", async () => {
+  const input = await validInput();
+  const recovery = await generateKeyPairSigner();
+  const config = parseCoachPassBootstrapConfig({
+    ...input,
+    recoveryAuthority: recovery.address,
+  });
+
+  assert.equal(config.recoveryAuthority, recovery.address);
+  assert.notEqual(config.recoveryAuthority, config.sponsor.address);
+
+  for (const recoveryAuthority of [
+    undefined,
+    "not-an-address",
+    input.sponsor.address,
+  ]) {
+    assert.throws(
+      () => parseCoachPassBootstrapConfig({ ...input, recoveryAuthority }),
+      (error: unknown) => error instanceof CoachPassConfigurationError,
+    );
+  }
+});
+
 test("runtime configuration wires the documented environment without exposing key bytes", async (t) => {
   const names = [
     "SOLANA_CLUSTER",
@@ -67,6 +92,7 @@ test("runtime configuration wires the documented environment without exposing ke
     "NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID",
     "SOLANA_FEE_SPONSOR_ADDRESS",
     "SOLANA_FEE_SPONSOR_KEYPAIR_BASE64",
+    "SOLANA_RECOVERY_AUTHORITY_ADDRESS",
   ] as const;
   const previous = Object.fromEntries(
     names.map((name) => [name, process.env[name]]),
@@ -88,6 +114,7 @@ test("runtime configuration wires the documented environment without exposing ke
   keypairBytes.set(privateKeyBytes, 0);
   keypairBytes.set(publicKeyBytes, 32);
   const sponsorAddress = await getAddressFromPublicKey(keyPair.publicKey);
+  const recovery = await generateKeyPairSigner();
 
   process.env.SOLANA_CLUSTER = "devnet";
   process.env.NEXT_PUBLIC_SOLANA_RPC_URL = "https://api.devnet.solana.com";
@@ -97,6 +124,7 @@ test("runtime configuration wires the documented environment without exposing ke
   process.env.SOLANA_FEE_SPONSOR_ADDRESS = sponsorAddress;
   process.env.SOLANA_FEE_SPONSOR_KEYPAIR_BASE64 =
     Buffer.from(keypairBytes).toString("base64");
+  process.env.SOLANA_RECOVERY_AUTHORITY_ADDRESS = recovery.address;
 
   try {
     const config = await coachPassDevnetConfig();
@@ -106,6 +134,8 @@ test("runtime configuration wires the documented environment without exposing ke
       false,
       "runtime config must expose only the signer object, never encoded key bytes",
     );
+    const bootstrapConfig = await coachPassBootstrapConfig();
+    assert.equal(bootstrapConfig.recoveryAuthority, recovery.address);
   } finally {
     privateKeyBytes.fill(0);
     publicKeyBytes.fill(0);

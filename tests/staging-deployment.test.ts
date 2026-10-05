@@ -21,6 +21,8 @@ const validEnvironment = {
     "GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU",
   SOLANA_FEE_SPONSOR_ADDRESS: "11111111111111111111111111111111",
   SOLANA_FEE_SPONSOR_KEYPAIR_BASE64: Buffer.alloc(64).toString("base64"),
+  SOLANA_RECOVERY_AUTHORITY_ADDRESS:
+    "Stake11111111111111111111111111111111111111",
 };
 
 test("staging deployment validation accepts only the staging contract", () => {
@@ -100,6 +102,7 @@ test("Wrangler declares exactly the approved staging runtime bindings", () => {
     "NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID",
     "SOLANA_FEE_SPONSOR_ADDRESS",
     "SOLANA_FEE_SPONSOR_KEYPAIR_BASE64",
+    "SOLANA_RECOVERY_AUTHORITY_ADDRESS",
   ];
   for (const name of names) assert.match(wrangler, new RegExp(`"${name}"`));
   assert.match(wrangler, /"binding":\s*"MOVX_DATABASE"/);

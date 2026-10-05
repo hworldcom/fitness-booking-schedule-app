@@ -13,6 +13,12 @@ export type CoachPassDevnetConfig = Readonly<{
   sponsor: FeeSponsor;
 }>;
 
+export type CoachPassBootstrapConfig = Readonly<
+  CoachPassDevnetConfig & {
+    recoveryAuthority: Address;
+  }
+>;
+
 export class CoachPassConfigurationError extends Error {
   constructor(message: string) {
     super(message);
@@ -70,7 +76,6 @@ export function parseCoachPassDevnetConfig(input: {
       "A matching server-only fee sponsor is required.",
     );
   }
-
   return Object.freeze({
     cluster: "devnet",
     browserRpcUrl,
@@ -80,6 +85,31 @@ export function parseCoachPassDevnetConfig(input: {
   });
 }
 
+export function parseCoachPassBootstrapConfig(input: {
+  cluster: string | undefined;
+  browserRpcUrl: string | undefined;
+  serverRpcUrl: string | undefined;
+  programAddress: string | undefined;
+  sponsor: FeeSponsor | null;
+  recoveryAuthority: string | undefined;
+}): CoachPassBootstrapConfig {
+  const config = parseCoachPassDevnetConfig(input);
+  let recoveryAuthority: Address;
+  try {
+    recoveryAuthority = address(input.recoveryAuthority?.trim() ?? "");
+  } catch {
+    throw new CoachPassConfigurationError(
+      "SOLANA_RECOVERY_AUTHORITY_ADDRESS must be a valid address.",
+    );
+  }
+  if (recoveryAuthority === config.sponsor.address) {
+    throw new CoachPassConfigurationError(
+      "The recovery authority must be separate from the fee sponsor.",
+    );
+  }
+  return Object.freeze({ ...config, recoveryAuthority });
+}
+
 export async function coachPassDevnetConfig() {
   return parseCoachPassDevnetConfig({
     cluster: process.env.SOLANA_CLUSTER,
@@ -87,5 +117,16 @@ export async function coachPassDevnetConfig() {
     serverRpcUrl: process.env.SOLANA_RPC_URL,
     programAddress: process.env.NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID,
     sponsor: await feeSponsorConfig(),
+  });
+}
+
+export async function coachPassBootstrapConfig() {
+  return parseCoachPassBootstrapConfig({
+    cluster: process.env.SOLANA_CLUSTER,
+    browserRpcUrl: process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
+    serverRpcUrl: process.env.SOLANA_RPC_URL,
+    programAddress: process.env.NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID,
+    sponsor: await feeSponsorConfig(),
+    recoveryAuthority: process.env.SOLANA_RECOVERY_AUTHORITY_ADDRESS,
   });
 }
