@@ -67,7 +67,10 @@ import {
   type GroupEventPoolChainState,
   type GroupEventRefundChainState,
 } from "./group-event-rpc";
-import { validateAndSponsorGroupEventTransaction } from "./group-event-sponsor";
+import {
+  GroupEventSponsorValidationError,
+  validateAndSponsorGroupEventTransaction,
+} from "./group-event-sponsor";
 
 type ActorStep<T> =
   | Readonly<{
@@ -589,8 +592,14 @@ export async function submitGroupEventOperation(
         walletSignedTransactionBase64: request.walletSignedTransactionBase64,
         sponsor: config.sponsor,
       });
-    } catch {
-      return Object.freeze({ status: "invalid-request" });
+    } catch (error) {
+      if (error instanceof GroupEventSponsorValidationError) {
+        return Object.freeze({
+          status: "invalid-request",
+          reason: error.code,
+        });
+      }
+      throw error;
     }
     const submitted = await actorStep(async (transaction, actor) => {
       if (!sameActor(loaded.actor, actor)) {

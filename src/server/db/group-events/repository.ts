@@ -2,7 +2,9 @@ import "server-only";
 
 import { sql } from "drizzle-orm";
 import {
+  GROUP_EVENT_MAX_BASE_UNITS,
   isGroupEventSolanaAddress,
+  isGroupEventSolanaSignature,
   isGroupEventUuid,
   parseGroupEventDraftInput,
   validateVerifiedGroupEventContributionProjection,
@@ -16,6 +18,7 @@ import {
   type VerifiedGroupEventContributionProjection,
   type VerifiedGroupEventPoolProjection,
 } from "@/domain/group-events";
+import type { GroupEventActorContribution } from "@/domain/group-event-marketplace";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
 import { withDatabaseConnection } from "@/server/db/client";
@@ -57,6 +60,15 @@ type GroupEventRow = Readonly<{
   transaction_signature: string | null;
   observed_slot: string | number | bigint | null;
   finalized_at: string | Date | null;
+}>;
+
+type GroupEventActorContributionRow = Readonly<{
+  contribution_address: string;
+  participant_wallet_address: string;
+  amount_base_units: string | number | bigint;
+  lifecycle_status: string;
+  transaction_signature: string;
+  finalized_at: string | Date;
 }>;
 
 export class GroupEventConflictError extends Error {
@@ -436,6 +448,70 @@ export async function currentOwnedGroupEventRecords(
     order by event.starts_at, event.id
   `);
   return Object.freeze(rows.map(mapEvent));
+}
+
+export async function currentGroupEventActorRecord(
+  transaction: ActorDatabaseTransaction,
+  actor: AuthorizedActor,
+  eventId: string,
+) {
+  if (!isGroupEventUuid(eventId)) throw new GroupEventConflictError();
+  const events = await transaction.execute<{ coach_profile_id: string }>(sql`
+    select coach_profile_id
+    from app.group_events
+    where id = ${eventId}::uuid
+      and run_id = ${actor.runId}::uuid
+      and publication_status = 'published'
+  `);
+  if (events.length !== 1 || !events[0]) throw new GroupEventConflictError();
+
+  const rows = await transaction.execute<GroupEventActorContributionRow>(sql`
+    select
+      contribution_address,
+      participant_wallet_address,
+      amount_base_units,
+      lifecycle_status,
+      transaction_signature,
+      finalized_at
+    from app.group_event_contribution_projections
+    where event_id = ${eventId}::uuid
+      and run_id = ${actor.runId}::uuid
+      and participant_profile_id = ${actor.profileId}::uuid
+  `);
+  if (rows.length > 1) throw new GroupEventConflictError();
+  const row = rows[0];
+  let contribution: GroupEventActorContribution | null = null;
+  if (row) {
+    if (
+      !isGroupEventSolanaAddress(row.contribution_address) ||
+      !isGroupEventSolanaAddress(row.participant_wallet_address) ||
+      !isGroupEventSolanaSignature(row.transaction_signature) ||
+      !isGroupEventContributionLifecycle(row.lifecycle_status)
+    ) {
+      throw new GroupEventConflictError();
+    }
+    const amountBaseUnits = BigInt(row.amount_base_units);
+    const finalizedAt = isoTimestamp(row.finalized_at);
+    if (
+      amountBaseUnits < BigInt(1) ||
+      amountBaseUnits > GROUP_EVENT_MAX_BASE_UNITS ||
+      finalizedAt === null
+    ) {
+      throw new GroupEventConflictError();
+    }
+    contribution = Object.freeze({
+      contributionAddress: row.contribution_address,
+      participantWalletAddress: row.participant_wallet_address,
+      amountBaseUnits: amountBaseUnits.toString(),
+      lifecycleStatus: row.lifecycle_status,
+      transactionSignature: row.transaction_signature,
+      finalizedAt,
+    });
+  }
+  return Object.freeze({
+    isCoach: events[0].coach_profile_id === actor.profileId,
+    contribution,
+  });
 }
 
 export async function publicGroupEventCatalogueRecords() {

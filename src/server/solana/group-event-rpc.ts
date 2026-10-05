@@ -18,10 +18,7 @@ import {
   type EventPool,
 } from "../../../clients/js/src/generated/accounts/eventPool";
 import { EventPoolStatus } from "../../../clients/js/src/generated/types/eventPoolStatus";
-import {
-  DEVNET_EURC_MINT_ADDRESS,
-  deriveEventAuthorityAddress,
-} from "@/solana/coach-pass";
+import { DEVNET_EURC_MINT_ADDRESS } from "@/solana/coach-pass";
 import type { PreparedGroupEventTransaction } from "@/solana/group-event-transaction";
 import {
   deriveContributionAddress,
@@ -209,13 +206,10 @@ async function decodePoolAndVault(input: {
     expectedCoachAuthority: eventPool.coachAuthority,
     expectedVault: vaultAddress,
   });
-  const [eventAuthorityAddress] = await deriveEventAuthorityAddress({
-    programAddress: input.programAddress,
-  });
   const vault = decodeExpectedEurcAccount({
     account: input.values[input.vaultIndex]!,
     expectedAddress: vaultAddress,
-    expectedOwner: eventAuthorityAddress,
+    expectedOwner: input.eventPoolAddress,
     label: "Event EURC vault",
   });
   const expectedVaultAmount =

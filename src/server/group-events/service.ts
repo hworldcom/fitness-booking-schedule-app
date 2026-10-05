@@ -10,6 +10,7 @@ import {
   GroupEventConflictError,
   bindOwnedGroupEventPoolRecord,
   createOwnedGroupEventDraftRecord,
+  currentGroupEventActorRecord,
   currentOwnedGroupEventRecords,
   markGroupEventProjectionAvailabilityRecord,
   publicGroupEventCatalogueRecords,
@@ -95,6 +96,21 @@ export async function currentOwnedGroupEventWorkspace() {
     status: "authorized" as const,
     events: result.value,
   });
+}
+
+export async function currentGroupEventActorState(eventId: string) {
+  try {
+    const result = await withAuthorizedActor((transaction, actor) =>
+      currentGroupEventActorRecord(transaction, actor, eventId),
+    );
+    if (result.status !== "authorized") return result;
+    return Object.freeze({
+      status: "authorized" as const,
+      ...result.value,
+    });
+  } catch {
+    return Object.freeze({ status: "unavailable" as const });
+  }
 }
 
 export function publicGroupEventCatalogue() {

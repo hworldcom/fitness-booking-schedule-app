@@ -14,7 +14,10 @@ export async function POST(request: Request) {
   }
   const body = await groupEventRequestJson(request);
   if (!isSubmitGroupEventOperationRequest(body)) {
-    return groupEventResponse({ status: "invalid-request" });
+    return groupEventResponse({
+      status: "invalid-request",
+      reason: "submit-payload-invalid",
+    });
   }
   return groupEventResponse(await submitGroupEventOperation(body));
 }

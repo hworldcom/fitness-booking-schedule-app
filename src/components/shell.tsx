@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import {
+  CalendarDays,
   House,
   UserRound,
   MapPin,
@@ -25,6 +26,7 @@ import {
 const navigation = [
   { label: "Home", href: "/", Icon: House },
   { label: "Explore", href: "/explore", Icon: MapPin },
+  { label: "Events", href: "/events", Icon: CalendarDays },
   { label: "Following", href: "/following", Icon: Rss },
   { label: "How it works", href: "/how-it-works", Icon: ListChecks },
   { label: "Profile", href: "/profile", Icon: UserRound },

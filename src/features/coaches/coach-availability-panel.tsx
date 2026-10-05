@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState, useState, type ReactNode } from "react";
 import {
+  CalendarDays,
   CalendarClock,
   Check,
   Clock3,
@@ -385,6 +386,9 @@ export function CoachAvailabilityPanel({
         </Link>
         <Link href="/profile/coach">
           <UserRound size={17} aria-hidden="true" /> Profile
+        </Link>
+        <Link href="/coach/events">
+          <CalendarDays size={17} aria-hidden="true" /> Group events
         </Link>
         {coach?.visibility === "visible" && (
           <Link href="#client-cards">

@@ -12,6 +12,7 @@ import {
   GroupEventConflictError,
   bindOwnedGroupEventPoolRecord,
   createOwnedGroupEventDraftRecord,
+  currentGroupEventActorRecord,
   currentOwnedGroupEventRecords,
   markGroupEventProjectionAvailabilityRecord,
   publicGroupEventCatalogueRecords,
@@ -41,7 +42,7 @@ const otherCoachAuthUserId = "99000000-0000-4000-8000-000000000003";
 const fixtureGymId = "40000000-0000-4000-8000-000000000001";
 const coachWallet = "7EcXv8cRWYEbaYjvcXn37Bq6STqS2QwRkX8EBXjKn5Ge";
 const coachAuthority = "6qaz3bzwxXPgxgRpox1FyvPPKGMdYfpGTFqPSf4r4rcH";
-const participantWallet = "3idZ8hddpfAZ1JWW3gmH7YD6yokUuFDb1Txem2H6kPFe";
+const participantWallet = "4idZ8hddpfAZ1JWW3gmH7YD6yokUuFDb1Txem2H6kPFe";
 const otherCoachWallet = "HULis5PpFFL5ajU9k8WzPjtJ8wZKXg4HHbKVvSEhFCfR";
 const programAddress = "GEUMk7SoYEsAvTgbFxohHTPbDfdX1citFT6Xxr6E4ULr";
 const poolAddress = "GU3Ty9KXYFJ1m5g8t7EJC5H7h4n6Zx8JqQz7b9WmVQDA";
@@ -403,6 +404,12 @@ test("owner draft, verified pool and public catalogue preserve authority boundar
     (await publicGroupEventDetailRecord(published.slug))?.id,
     eventId,
   );
+  assert.deepEqual(
+    await withActorDatabaseContext(coachActor, (transaction) =>
+      currentGroupEventActorRecord(transaction, coachActor, eventId),
+    ),
+    { isCoach: true, contribution: null },
+  );
 
   await markGroupEventProjectionAvailabilityRecord({
     eventId,
@@ -472,6 +479,22 @@ test("one linked participant receives one private replay-safe contribution proje
   assert.deepEqual(
     participantRows.map((row) => row.id),
     [projectionId],
+  );
+  assert.deepEqual(
+    await withActorDatabaseContext(participantActor, (transaction) =>
+      currentGroupEventActorRecord(transaction, participantActor, eventId),
+    ),
+    {
+      isCoach: false,
+      contribution: {
+        contributionAddress,
+        participantWalletAddress: participantWallet,
+        amountBaseUnits: "25000000",
+        lifecycleStatus: "funded",
+        transactionSignature: signature("5"),
+        finalizedAt: futureTimestamp(1, 12),
+      },
+    },
   );
 
   const coachRows = await withActorDatabaseContext(coachActor, (transaction) =>

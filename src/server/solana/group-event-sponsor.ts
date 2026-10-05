@@ -12,16 +12,32 @@ import {
   type Address,
 } from "@solana/kit";
 import type { FeeSponsor } from "@/solana/fee-sponsor";
+import type { GroupEventInvalidReason } from "@/solana/group-event-operation";
 import {
   decodeGroupEventTransactionBase64,
   matchesPreparedGroupEventMessage,
   type PreparedGroupEventTransaction,
 } from "@/solana/group-event-transaction";
 
+type GroupEventSponsorInvalidReason = Exclude<
+  GroupEventInvalidReason,
+  "submit-payload-invalid"
+>;
+
 export type SponsoredGroupEventTransaction = Readonly<{
   transactionBase64: string;
   transactionSignature: string;
 }>;
+
+export class GroupEventSponsorValidationError extends Error {
+  readonly code: GroupEventSponsorInvalidReason;
+
+  constructor(code: GroupEventSponsorInvalidReason, message: string) {
+    super(message);
+    this.name = "GroupEventSponsorValidationError";
+    this.code = code;
+  }
+}
 
 export async function validateAndSponsorGroupEventTransaction(input: {
   prepared: PreparedGroupEventTransaction;
@@ -29,7 +45,8 @@ export async function validateAndSponsorGroupEventTransaction(input: {
   sponsor: FeeSponsor;
 }): Promise<SponsoredGroupEventTransaction> {
   if (input.sponsor.address !== input.prepared.summary.platformPayerAddress) {
-    throw new Error(
+    throw new GroupEventSponsorValidationError(
+      "sponsor-mismatch",
       "Configured platform payer does not match the preparation.",
     );
   }
@@ -39,10 +56,11 @@ export async function validateAndSponsorGroupEventTransaction(input: {
     transaction = getTransactionDecoder().decode(
       decodeGroupEventTransactionBase64(input.walletSignedTransactionBase64),
     );
-  } catch (error) {
-    throw new Error("Wallet returned an invalid Solana transaction.", {
-      cause: error,
-    });
+  } catch {
+    throw new GroupEventSponsorValidationError(
+      "wallet-transaction-invalid",
+      "Wallet returned an invalid Solana transaction.",
+    );
   }
   if (
     !matchesPreparedGroupEventMessage({
@@ -50,7 +68,8 @@ export async function validateAndSponsorGroupEventTransaction(input: {
       preparedMessageBase64: input.prepared.messageBase64,
     })
   ) {
-    throw new Error(
+    throw new GroupEventSponsorValidationError(
+      "wallet-message-mismatch",
       "Wallet-signed transaction does not match the preparation.",
     );
   }
@@ -64,17 +83,24 @@ export async function validateAndSponsorGroupEventTransaction(input: {
     actualSigners.length !== expectedSigners.size ||
     actualSigners.some((signer) => !expectedSigners.has(signer))
   ) {
-    throw new Error("Transaction has an unexpected signer set.");
+    throw new GroupEventSponsorValidationError(
+      "wallet-signer-set-invalid",
+      "Transaction has an unexpected signer set.",
+    );
   }
   if (transaction.signatures[input.sponsor.address] !== null) {
-    throw new Error(
+    throw new GroupEventSponsorValidationError(
+      "wallet-sponsor-pre-signed",
       "Wallet transaction already contains a platform signature.",
     );
   }
   const authoritySignature =
     transaction.signatures[input.prepared.summary.authorityAddress];
   if (!authoritySignature) {
-    throw new Error("Required wallet signature is missing.");
+    throw new GroupEventSponsorValidationError(
+      "wallet-authority-signature-missing",
+      "Required wallet signature is missing.",
+    );
   }
   const authorityPublicKey = await getPublicKeyFromAddress(
     input.prepared.summary.authorityAddress,
@@ -86,7 +112,10 @@ export async function validateAndSponsorGroupEventTransaction(input: {
       transaction.messageBytes,
     ))
   ) {
-    throw new Error("Required wallet signature is invalid.");
+    throw new GroupEventSponsorValidationError(
+      "wallet-authority-signature-invalid",
+      "Required wallet signature is invalid.",
+    );
   }
 
   const sponsoredTransaction = await partiallySignTransactionWithSigners(

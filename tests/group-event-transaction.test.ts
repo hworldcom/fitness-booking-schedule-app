@@ -9,6 +9,8 @@ import {
   decompileTransactionMessage,
   generateKeyPairSigner,
   getCompiledTransactionMessageDecoder,
+  getTransactionMessageComputeUnitLimit,
+  getTransactionMessageComputeUnitPrice,
   getTransactionDecoder,
   none,
 } from "@solana/kit";
@@ -34,6 +36,8 @@ import {
   deriveEventVaultAddress,
 } from "../src/solana/group-event";
 import {
+  GROUP_EVENT_COMPUTE_UNIT_LIMIT,
+  GROUP_EVENT_COMPUTE_UNIT_PRICE_MICROLAMPORTS,
   decodeGroupEventTransactionBase64,
   matchesPreparedGroupEventMessage,
   prepareGroupEventCreation,
@@ -171,6 +175,21 @@ function decompilePrepared(prepared: PreparedGroupEventTransaction) {
   };
 }
 
+function assertExplicitComputeBudget(prepared: PreparedGroupEventTransaction) {
+  const { message } = decompilePrepared(prepared);
+  if (message.version !== "legacy" && message.version !== 0) {
+    assert.fail("Expected a legacy or version-zero transaction message.");
+  }
+  assert.equal(
+    getTransactionMessageComputeUnitLimit(message),
+    GROUP_EVENT_COMPUTE_UNIT_LIMIT,
+  );
+  assert.equal(
+    getTransactionMessageComputeUnitPrice(message),
+    GROUP_EVENT_COMPUTE_UNIT_PRICE_MICROLAMPORTS,
+  );
+}
+
 test("pool creation freezes exact EURC terms and distinct coach identities", async () => {
   const fixture = await groupEventFixture();
   const prepared = await prepareGroupEventCreation({
@@ -205,14 +224,15 @@ test("pool creation freezes exact EURC terms and distinct coach identities", asy
   );
   assert.equal(prepared.summary.userPaysSol, false);
   assert.doesNotThrow(() => JSON.stringify(prepared));
+  assertExplicitComputeBudget(prepared);
 
   const decoded = decompilePrepared(prepared);
   assert.deepEqual(
     Object.keys(decoded.transaction.signatures).sort(),
     [fixture.coachWallet.address, fixture.platformPayer.address].sort(),
   );
-  assert.equal(decoded.message.instructions.length, 1);
-  const instruction = decoded.message.instructions[0]!;
+  assert.equal(decoded.message.instructions.length, 3);
+  const instruction = decoded.message.instructions[2]!;
   assertIsInstructionWithAccounts(instruction);
   assertIsInstructionWithData(instruction);
   const parsed = parseCreateEventPoolInstruction(instruction);
@@ -250,7 +270,8 @@ test("funding and settlement prepare only the exact eligible pool transition", a
     fixture.contributionAddress,
   );
   assert.equal(funding.summary.seatPriceEurcBaseUnits, "25000000");
-  const fundInstruction = decompilePrepared(funding).message.instructions[0]!;
+  assertExplicitComputeBudget(funding);
+  const fundInstruction = decompilePrepared(funding).message.instructions[2]!;
   assertIsInstructionWithAccounts(fundInstruction);
   assertIsInstructionWithData(fundInstruction);
   const parsedFund = parseFundEventInstruction(fundInstruction);
@@ -262,8 +283,9 @@ test("funding and settlement prepare only the exact eligible pool transition", a
 
   assert.equal(settlement.summary.operation, "settle-event-pool");
   assert.equal(settlement.summary.expectedOutcome, "failed");
+  assertExplicitComputeBudget(settlement);
   const settleInstruction =
-    decompilePrepared(settlement).message.instructions[0]!;
+    decompilePrepared(settlement).message.instructions[2]!;
   assertIsInstructionWithAccounts(settleInstruction);
   assertIsInstructionWithData(settleInstruction);
   assert.equal(
@@ -314,8 +336,9 @@ test("payout and refund preserve immutable destinations and platform-paid ATA re
   assert.equal(refund.summary.amountEurcBaseUnits, "25000000");
   for (const prepared of [payout, refund]) {
     const decoded = decompilePrepared(prepared);
+    assertExplicitComputeBudget(prepared);
     assert.equal(
-      decoded.message.instructions[0]!.programAddress,
+      decoded.message.instructions[2]!.programAddress,
       ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
     );
     assert.deepEqual(
@@ -324,7 +347,7 @@ test("payout and refund preserve immutable destinations and platform-paid ATA re
     );
   }
 
-  const payoutInstruction = decompilePrepared(payout).message.instructions[1]!;
+  const payoutInstruction = decompilePrepared(payout).message.instructions[3]!;
   assertIsInstructionWithAccounts(payoutInstruction);
   assertIsInstructionWithData(payoutInstruction);
   const parsedPayout = parseClaimEventPayoutInstruction(payoutInstruction);
@@ -332,7 +355,7 @@ test("payout and refund preserve immutable destinations and platform-paid ATA re
     parsedPayout.accounts.payoutTokenAccount.address,
     payout.summary.payoutTokenAccountAddress,
   );
-  const refundInstruction = decompilePrepared(refund).message.instructions[1]!;
+  const refundInstruction = decompilePrepared(refund).message.instructions[3]!;
   assertIsInstructionWithAccounts(refundInstruction);
   assertIsInstructionWithData(refundInstruction);
   const parsedRefund = parseClaimEventRefundInstruction(refundInstruction);

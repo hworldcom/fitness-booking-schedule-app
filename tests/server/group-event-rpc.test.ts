@@ -168,7 +168,7 @@ async function chainFixture() {
   const vaultData = new Uint8Array(
     getTokenEncoder().encode({
       mint: DEVNET_EURC_MINT_ADDRESS,
-      owner: eventAuthorityAddress,
+      owner: eventPoolAddress,
       amount: BigInt(25_000_000),
       delegate: null,
       state: AccountState.Initialized,
@@ -324,6 +324,36 @@ test("funding reads verify the program, EURC vault, absent contribution and bala
         getTokenEncoder().encode({
           mint: DEVNET_EURC_MINT_ADDRESS,
           owner: fixture.eventAuthorityAddress,
+          amount: BigInt(25_000_000),
+          delegate: null,
+          state: AccountState.Initialized,
+          isNative: null,
+          delegatedAmount: BigInt(0),
+          closeAuthority: null,
+        }),
+      ),
+    }),
+  );
+  await assert.rejects(
+    readGroupEventFundingState({
+      rpc: fixture.rpc,
+      commitment: "confirmed",
+      programAddress: MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
+      eventPoolAddress: fixture.eventPoolAddress,
+      participantWalletAddress: fixture.participant.address,
+    }),
+    /unexpected owner or mint/u,
+  );
+
+  fixture.accounts.set(
+    fixture.vaultAddress,
+    rawAccount({
+      address: fixture.vaultAddress,
+      owner: TOKEN_PROGRAM_ADDRESS,
+      data: new Uint8Array(
+        getTokenEncoder().encode({
+          mint: DEVNET_EURC_MINT_ADDRESS,
+          owner: fixture.eventPoolAddress,
           amount: BigInt(25_000_001),
           delegate: null,
           state: AccountState.Initialized,
@@ -354,7 +384,7 @@ test("funding reads verify the program, EURC vault, absent contribution and bala
       data: new Uint8Array(
         getTokenEncoder().encode({
           mint: DEVNET_EURC_MINT_ADDRESS,
-          owner: fixture.eventAuthorityAddress,
+          owner: fixture.eventPoolAddress,
           amount: BigInt(24_999_999),
           delegate: null,
           state: AccountState.Initialized,
@@ -383,7 +413,7 @@ test("funding reads verify the program, EURC vault, absent contribution and bala
       data: new Uint8Array(
         getTokenEncoder().encode({
           mint: DEVNET_EURC_MINT_ADDRESS,
-          owner: fixture.eventAuthorityAddress,
+          owner: fixture.eventPoolAddress,
           amount: BigInt(25_000_000),
           delegate: null,
           state: AccountState.Initialized,

@@ -12,7 +12,10 @@ import {
 } from "@solana/kit";
 import type { EventPool } from "../../clients/js/src/generated/accounts/eventPool";
 import { EventPoolStatus } from "../../clients/js/src/generated/types/eventPoolStatus";
-import { validateAndSponsorGroupEventTransaction } from "../../src/server/solana/group-event-sponsor";
+import {
+  GroupEventSponsorValidationError,
+  validateAndSponsorGroupEventTransaction,
+} from "../../src/server/solana/group-event-sponsor";
 import {
   DEVNET_EURC_MINT_ADDRESS,
   MOVX_COACH_PASS_LOCAL_PROGRAM_ADDRESS,
@@ -88,6 +91,17 @@ function encodeTransaction(transaction: Transaction) {
   return getBase64Decoder().decode(getTransactionEncoder().encode(transaction));
 }
 
+async function rejectsWithCode(
+  promise: Promise<unknown>,
+  code: GroupEventSponsorValidationError["code"],
+) {
+  await assert.rejects(
+    promise,
+    (error) =>
+      error instanceof GroupEventSponsorValidationError && error.code === code,
+  );
+}
+
 test("platform payer countersigns only the exact group-event message", async () => {
   const fixture = await preparedSettlement();
   const unsigned = getTransactionDecoder().decode(
@@ -122,20 +136,20 @@ test("platform payer rejects unsigned, changed and already-sponsored messages", 
     address: fixture.platformPayer.address,
     signer: fixture.platformPayer,
   };
-  await assert.rejects(
+  await rejectsWithCode(
     validateAndSponsorGroupEventTransaction({
       prepared: fixture.prepared,
       walletSignedTransactionBase64: encodeTransaction(unsigned),
       sponsor,
     }),
-    /wallet signature is missing/u,
+    "wallet-authority-signature-missing",
   );
 
   const walletSigned = await partiallySignTransactionWithSigners(
     [fixture.authority],
     unsigned,
   );
-  await assert.rejects(
+  await rejectsWithCode(
     validateAndSponsorGroupEventTransaction({
       prepared: {
         ...fixture.prepared,
@@ -144,19 +158,48 @@ test("platform payer rejects unsigned, changed and already-sponsored messages", 
       walletSignedTransactionBase64: encodeTransaction(walletSigned),
       sponsor,
     }),
-    /does not match/u,
+    "wallet-message-mismatch",
   );
 
   const fullySigned = await partiallySignTransactionWithSigners(
     [fixture.authority, fixture.platformPayer],
     unsigned,
   );
-  await assert.rejects(
+  await rejectsWithCode(
     validateAndSponsorGroupEventTransaction({
       prepared: fixture.prepared,
       walletSignedTransactionBase64: encodeTransaction(fullySigned),
       sponsor,
     }),
-    /already contains a platform signature/u,
+    "wallet-sponsor-pre-signed",
+  );
+});
+
+test("platform payer exposes only bounded pre-sponsorship rejection categories", async () => {
+  const fixture = await preparedSettlement();
+  const differentSponsor = await generateKeyPairSigner();
+  const sponsor = {
+    address: fixture.platformPayer.address,
+    signer: fixture.platformPayer,
+  };
+
+  await rejectsWithCode(
+    validateAndSponsorGroupEventTransaction({
+      prepared: fixture.prepared,
+      walletSignedTransactionBase64: "not-a-transaction",
+      sponsor,
+    }),
+    "wallet-transaction-invalid",
+  );
+  await rejectsWithCode(
+    validateAndSponsorGroupEventTransaction({
+      prepared: fixture.prepared,
+      walletSignedTransactionBase64: fixture.prepared.transactionBase64,
+      sponsor: {
+        address: differentSponsor.address,
+        signer: differentSponsor,
+      },
+    }),
+    "sponsor-mismatch",
   );
 });

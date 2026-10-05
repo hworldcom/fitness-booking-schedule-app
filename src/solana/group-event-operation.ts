@@ -55,17 +55,30 @@ export type GroupEventOperationSnapshot = Readonly<{
   finalizedSlot: string | null;
 }>;
 
+export const GROUP_EVENT_INVALID_REASONS = [
+  "submit-payload-invalid",
+  "sponsor-mismatch",
+  "wallet-transaction-invalid",
+  "wallet-message-mismatch",
+  "wallet-signer-set-invalid",
+  "wallet-sponsor-pre-signed",
+  "wallet-authority-signature-missing",
+  "wallet-authority-signature-invalid",
+] as const;
+
+export type GroupEventInvalidReason =
+  (typeof GROUP_EVENT_INVALID_REASONS)[number];
+
 export type GroupEventOperationApiResult =
   | PreparedGroupEventOperationResult
   | GroupEventOperationSnapshot
   | Readonly<{
       status:
-        | "preview"
-        | "signed-out"
-        | "forbidden"
-        | "invalid-request"
-        | "conflict"
-        | "unavailable";
+        "preview" | "signed-out" | "forbidden" | "conflict" | "unavailable";
+    }>
+  | Readonly<{
+      status: "invalid-request";
+      reason?: GroupEventInvalidReason;
     }>;
 
 const UUID_PATTERN =
@@ -256,16 +269,20 @@ export function isGroupEventOperationApiResult(
 ): value is GroupEventOperationApiResult {
   if (!isRecord(value) || typeof value.status !== "string") return false;
   if (
-    [
-      "preview",
-      "signed-out",
-      "forbidden",
-      "invalid-request",
-      "conflict",
-      "unavailable",
-    ].includes(value.status)
+    ["preview", "signed-out", "forbidden", "conflict", "unavailable"].includes(
+      value.status,
+    )
   ) {
     return true;
+  }
+  if (value.status === "invalid-request") {
+    return (
+      value.reason === undefined ||
+      (typeof value.reason === "string" &&
+        GROUP_EVENT_INVALID_REASONS.includes(
+          value.reason as GroupEventInvalidReason,
+        ))
+    );
   }
   if (!isUuid(value.operationId)) return false;
   if (value.status === "prepared") {

@@ -12,6 +12,8 @@ import {
   getBase64Encoder,
   getTransactionEncoder,
   pipe,
+  setTransactionMessageComputeUnitLimit,
+  setTransactionMessageComputeUnitPrice,
   setTransactionMessageFeePayer,
   setTransactionMessageLifetimeUsingBlockhash,
   type Address,
@@ -50,6 +52,8 @@ import {
 } from "./group-event";
 
 export const GROUP_EVENT_CLUSTER = "devnet" as const;
+export const GROUP_EVENT_COMPUTE_UNIT_LIMIT = 200_000;
+export const GROUP_EVENT_COMPUTE_UNIT_PRICE_MICROLAMPORTS = BigInt(0);
 
 export type GroupEventOperationKind =
   | "create-event-pool"
@@ -264,6 +268,16 @@ function compilePreparedTransaction(input: {
     (current) =>
       setTransactionMessageLifetimeUsingBlockhash(
         input.lifetimeConstraint,
+        current,
+      ),
+    (current) =>
+      setTransactionMessageComputeUnitLimit(
+        GROUP_EVENT_COMPUTE_UNIT_LIMIT,
+        current,
+      ),
+    (current) =>
+      setTransactionMessageComputeUnitPrice(
+        GROUP_EVENT_COMPUTE_UNIT_PRICE_MICROLAMPORTS,
         current,
       ),
     (current) =>

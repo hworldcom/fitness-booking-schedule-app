@@ -1,0 +1,651 @@
+.group-events-page,
+.group-event-detail,
+.group-event-manager {
+  --event-forest: #193126;
+  --event-lime: #c8ef8e;
+  --event-ink: #203126;
+  --event-muted: #687468;
+  --event-border: #dfe5da;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.group-events-header,
+.group-event-detail-hero {
+  border-radius: 24px;
+  background: var(--event-forest);
+  padding: clamp(32px, 6vw, 66px);
+  color: white;
+}
+
+.group-events-header .eyebrow,
+.group-event-detail-hero .eyebrow {
+  color: var(--event-lime);
+}
+
+.group-events-header h1,
+.group-event-detail-hero h1 {
+  max-width: 780px;
+  margin: 10px 0 16px;
+  font-size: clamp(38px, 6vw, 68px);
+  letter-spacing: -3px;
+  line-height: 0.98;
+}
+
+.group-events-header p,
+.group-event-detail-hero p {
+  max-width: 720px;
+  color: #cfdbd1;
+  font-size: 12px;
+  line-height: 1.75;
+}
+
+.group-event-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.group-event-card,
+.group-events-empty,
+.group-event-funding-card,
+.group-event-action-card,
+.group-event-chain-card,
+.group-event-contribution-card,
+.group-event-create-card,
+.group-event-owned-list,
+.group-event-managed-card {
+  border: 1px solid var(--event-border, #dfe5da);
+  border-radius: 19px;
+  background: white;
+}
+
+.group-event-card {
+  display: flex;
+  min-height: 420px;
+  flex-direction: column;
+  padding: clamp(22px, 4vw, 36px);
+}
+
+.group-event-card-topline,
+.group-event-managed-heading,
+.group-event-funding-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.group-event-card-topline span {
+  border-radius: 999px;
+  background: #edf3e8;
+  padding: 6px 9px;
+  color: #52654b;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.group-event-card h2,
+.group-event-funding-card h2,
+.group-event-action-card h2,
+.group-event-chain-card h2,
+.group-event-create-card h2,
+.group-event-owned-list > div h2,
+.group-event-managed-heading h2 {
+  color: var(--event-ink, #203126);
+  letter-spacing: -1.2px;
+}
+
+.group-event-card h2 {
+  margin-top: 22px;
+  font-size: clamp(25px, 3.5vw, 35px);
+}
+
+.group-event-coach {
+  margin-top: 5px;
+  color: #71806d;
+  font-size: 11px;
+}
+
+.group-event-card-facts {
+  display: grid;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.group-event-card-facts div {
+  display: grid;
+  grid-template-columns: 94px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.group-event-card-facts dt,
+.group-event-card-facts dd {
+  margin: 0;
+  font-size: 10px;
+}
+
+.group-event-card-facts dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #778374;
+  font-weight: 750;
+}
+
+.group-event-card-facts dd {
+  color: #394937;
+  line-height: 1.5;
+}
+
+.group-event-progress {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e7ece3;
+}
+
+.group-event-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #79a84d;
+}
+
+.group-event-progress.large {
+  height: 12px;
+  margin: 18px 0 24px;
+}
+
+.group-event-price {
+  margin: 10px 0 22px;
+  color: #344a2e;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.group-event-price small {
+  color: #778374;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.group-event-refund-rule {
+  margin: 15px 0 0;
+  border-left: 3px solid #a9cc79;
+  padding-left: 12px;
+  color: #63715f;
+  font-size: 9px;
+  line-height: 1.65;
+}
+
+.group-event-card-link,
+.group-event-chain-card a,
+.group-event-operation-link,
+.group-event-coach-link,
+.group-event-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #416134;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.group-event-card-link {
+  margin-top: auto;
+}
+
+.group-events-empty {
+  max-width: 780px;
+  margin: 20px auto;
+  padding: clamp(30px, 6vw, 60px);
+  text-align: center;
+}
+
+.group-events-empty h1,
+.group-events-empty h2 {
+  margin: 8px 0;
+  color: #263b2c;
+}
+
+.group-events-empty p {
+  margin: 0 auto 18px;
+  color: #6b7769;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.group-event-detail-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(250px, 0.6fr);
+  gap: clamp(30px, 5vw, 70px);
+  align-items: end;
+}
+
+.group-event-back {
+  margin-bottom: 22px;
+  color: #d3dfd1;
+}
+
+.group-event-coach-link {
+  margin-top: 20px;
+  color: var(--event-lime);
+}
+
+.group-event-state-card {
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 16px;
+  background: rgb(255 255 255 / 7%);
+  padding: 22px;
+}
+
+.group-event-state-card span,
+.group-event-state-card strong {
+  display: block;
+}
+
+.group-event-state-card span {
+  color: #aebcaf;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.group-event-state-card strong {
+  margin: 6px 0 10px;
+  color: var(--event-lime);
+  font-size: 27px;
+  text-transform: capitalize;
+}
+
+.group-event-state-card p {
+  font-size: 10px;
+}
+
+.group-event-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(260px, 0.7fr);
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.group-event-detail-main {
+  display: grid;
+  gap: 18px;
+}
+
+.group-event-detail-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.group-event-detail-facts > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid var(--event-border);
+  border-radius: 15px;
+  background: white;
+  padding: 18px;
+  color: #46603e;
+}
+
+.group-event-detail-facts span,
+.group-event-detail-facts small,
+.group-event-detail-facts strong {
+  display: block;
+}
+
+.group-event-detail-facts small {
+  margin-bottom: 4px;
+  color: #788374;
+  font-size: 9px;
+}
+
+.group-event-detail-facts strong {
+  color: #31432f;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.group-event-funding-card,
+.group-event-action-card,
+.group-event-chain-card,
+.group-event-contribution-card,
+.group-event-create-card,
+.group-event-owned-list,
+.group-event-managed-card {
+  padding: clamp(22px, 4vw, 36px);
+}
+
+.group-event-funding-heading h2,
+.group-event-action-card h2,
+.group-event-chain-card h2,
+.group-event-create-card h2 {
+  margin-top: 5px;
+  font-size: clamp(22px, 3vw, 30px);
+}
+
+.group-event-terms,
+.group-event-operation-terms {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid #e1e7dd;
+  border-radius: 13px;
+  background: #e1e7dd;
+}
+
+.group-event-terms div,
+.group-event-operation-terms div {
+  min-width: 0;
+  background: #f8faf6;
+  padding: 14px;
+}
+
+.group-event-terms dt,
+.group-event-operation-terms dt {
+  color: #788374;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.group-event-terms dd,
+.group-event-operation-terms dd {
+  overflow-wrap: anywhere;
+  margin: 4px 0 0;
+  color: #31432f;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.group-event-contribution-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #edf6df;
+  color: #3f5d32;
+}
+
+.group-event-contribution-card h2 {
+  margin: 4px 0;
+  text-transform: capitalize;
+}
+
+.group-event-contribution-card p,
+.group-event-action-card > p,
+.group-event-chain-card p,
+.group-event-create-card > p,
+.group-event-owned-list > p,
+.group-event-managed-card p,
+.group-event-operation-launcher > p,
+.group-event-operation-review > p,
+.group-event-pool-form > p {
+  color: #6e7b6d;
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+.group-event-action-card,
+.group-event-chain-card {
+  align-self: start;
+}
+
+.group-event-chain-card {
+  position: sticky;
+  top: 100px;
+}
+
+.group-event-chain-card a {
+  margin-top: 13px;
+}
+
+.group-event-operation-launcher {
+  margin-top: 18px;
+  border-top: 1px solid #e6ebe2;
+  padding-top: 18px;
+}
+
+.group-event-operation-review {
+  margin-top: 18px;
+  border: 1px solid #b9d596;
+  border-radius: 16px;
+  background: #f4f9ed;
+  padding: clamp(18px, 3vw, 26px);
+  outline: none;
+}
+
+.group-event-operation-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+  color: #456337;
+}
+
+.group-event-operation-heading h3 {
+  margin-top: 3px;
+  color: #2f472b;
+  font-size: 20px;
+}
+
+.group-event-operation-id {
+  overflow-wrap: anywhere;
+}
+
+.group-event-operation-alert,
+.group-event-operation-success,
+.group-event-form-result {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 12px 0;
+  border-radius: 11px;
+  padding: 11px 13px;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.group-event-operation-alert,
+.group-event-form-result.invalid,
+.group-event-form-result.conflict,
+.group-event-form-result.signed-out,
+.group-event-form-result.forbidden,
+.group-event-form-result.unavailable {
+  background: #fff0e5;
+  color: #754a27;
+}
+
+.group-event-operation-success,
+.group-event-form-result.saved {
+  background: #e5f4d2;
+  color: #385229;
+}
+
+.group-event-operation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.group-event-manager .coach-workspace-header {
+  margin-bottom: 0;
+}
+
+.group-event-create-card,
+.group-event-owned-list {
+  margin-top: 16px;
+}
+
+.group-event-form {
+  margin-top: 20px;
+}
+
+.group-event-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.group-event-form-grid.compact {
+  margin-top: 16px;
+}
+
+.group-event-form-grid label,
+.group-event-form-grid label span {
+  display: block;
+}
+
+.group-event-form-grid label.wide {
+  grid-column: 1 / -1;
+}
+
+.group-event-form-grid label span {
+  margin-bottom: 6px;
+  color: #566552;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.group-event-form-grid input,
+.group-event-form-grid select,
+.group-event-form-grid textarea {
+  width: 100%;
+  border: 1px solid #dbe2d7;
+  border-radius: 10px;
+  background: #fbfcfa;
+  padding: 11px 12px;
+  color: #263c2c;
+  font: inherit;
+  font-size: 10px;
+}
+
+.group-event-form-grid textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.group-event-owned-list {
+  display: grid;
+  gap: 14px;
+}
+
+.group-event-managed-card {
+  background: #fbfcfa;
+}
+
+.group-event-managed-heading h2 {
+  margin-top: 5px;
+}
+
+.group-event-editor {
+  margin: 18px 0;
+  border-top: 1px solid #e4e9e0;
+  border-bottom: 1px solid #e4e9e0;
+  padding: 14px 0;
+}
+
+.group-event-editor summary {
+  cursor: pointer;
+  color: #46603e;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.group-event-pool-form,
+.group-event-authority-gate,
+.group-event-publish-ready {
+  margin-top: 18px;
+  border-radius: 14px;
+  background: #eef4e8;
+  padding: 18px;
+}
+
+.group-event-pool-form h3 {
+  color: #30452e;
+  font-size: 18px;
+}
+
+.group-event-authority-gate {
+  display: grid;
+  gap: 10px;
+  color: #4e663e;
+}
+
+.group-event-transition {
+  margin-top: 14px;
+}
+
+.group-event-recovery-card {
+  margin-top: 18px;
+  border: 1px solid #e4d1bd;
+  border-radius: 14px;
+  background: #fffaf5;
+  padding: 16px;
+}
+
+.group-event-recovery-card .group-event-operation-launcher {
+  margin-top: 0;
+  border-top: 0;
+  padding-top: 0;
+}
+
+.group-event-recovery-note {
+  color: #6e7b6d;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+@media (max-width: 840px) {
+  .group-event-grid,
+  .group-event-detail-hero,
+  .group-event-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .group-event-chain-card {
+    position: static;
+  }
+}
+
+@media (max-width: 620px) {
+  .group-events-header,
+  .group-event-detail-hero {
+    border-radius: 17px;
+  }
+
+  .group-events-header h1,
+  .group-event-detail-hero h1 {
+    letter-spacing: -2px;
+  }
+
+  .group-event-detail-facts,
+  .group-event-form-grid,
+  .group-event-terms,
+  .group-event-operation-terms {
+    grid-template-columns: 1fr;
+  }
+
+  .group-event-card-facts div {
+    grid-template-columns: 78px minmax(0, 1fr);
+  }
+
+  .group-event-managed-heading,
+  .group-event-funding-heading {
+    flex-direction: column;
+  }
+
+  .group-event-operation-actions .button,
+  .group-event-action-card .button,
+  .group-event-pool-form .button {
+    width: 100%;
+  }
+}

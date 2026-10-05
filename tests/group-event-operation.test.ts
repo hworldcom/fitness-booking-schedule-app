@@ -114,6 +114,20 @@ test("group-event request and response guards reject malformed financial boundar
   assert.equal(isGroupEventOperationApiResult(prepared), true);
   assert.equal(
     isGroupEventOperationApiResult({
+      status: "invalid-request",
+      reason: "wallet-message-mismatch",
+    }),
+    true,
+  );
+  assert.equal(
+    isGroupEventOperationApiResult({
+      status: "invalid-request",
+      reason: "private-key-leaked",
+    }),
+    false,
+  );
+  assert.equal(
+    isGroupEventOperationApiResult({
       ...prepared,
       prepared: {
         ...prepared.prepared,
