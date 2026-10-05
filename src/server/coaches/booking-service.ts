@@ -8,6 +8,7 @@ import { withAuthorizedActor } from "@/server/authorization/service";
 import { currentActorProjection } from "@/server/db/authorization/repository";
 import {
   CoachBookingConflictError,
+  currentClientCoachCreditRecords,
   currentClientPrivateBookingRecords,
   currentCoachClientCardRecords,
   decideOwnedLateBookingCancellationRecord,
@@ -53,6 +54,7 @@ export async function currentPrivateBookingWorkspace() {
     const owner = await currentActorProjection(transaction, actor);
     return Object.freeze({
       bookings: await currentClientPrivateBookingRecords(transaction, actor),
+      clientCredits: await currentClientCoachCreditRecords(transaction, actor),
       clientCards: owner.coachingActivated
         ? await currentCoachClientCardRecords(transaction, actor)
         : Object.freeze([]),

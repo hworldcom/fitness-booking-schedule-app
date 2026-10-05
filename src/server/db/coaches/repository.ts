@@ -41,6 +41,11 @@ type GymProjectionRow = Readonly<{
   timezone: string;
 }>;
 
+type PublicCoachChainIdentityRow = Readonly<{
+  run_id: string;
+  profile_id: string;
+}>;
+
 export class CoachProfileConflictError extends Error {
   constructor(message = "The coach profile conflicts with current state.") {
     super(message);
@@ -213,6 +218,24 @@ export async function publicCoachProfileRecord(slug: string) {
     `);
     if (rows.length > 1) throw new CoachProfileConflictError();
     return rows[0] ? mapCoach(rows[0]) : null;
+  });
+}
+
+export async function publicCoachChainIdentityRecord(profileId: string) {
+  return withDatabaseConnection(async ({ db }) => {
+    const rows = await db.execute<PublicCoachChainIdentityRow>(sql`
+      select coach.run_id, coach.profile_id
+      from app.coach_profiles as coach
+      where coach.profile_id = ${profileId}::uuid
+        and coach.visibility = 'visible'
+    `);
+    if (rows.length > 1) throw new CoachProfileConflictError();
+    return rows[0]
+      ? Object.freeze({
+          runId: rows[0].run_id,
+          profileId: rows[0].profile_id,
+        })
+      : null;
   });
 }
 

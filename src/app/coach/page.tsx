@@ -5,12 +5,17 @@ import { signInHref } from "@/auth/return-to";
 import { mutateCoachAvailabilityRuleAction } from "./actions";
 import { CoachAvailabilityPanel } from "@/features/coaches/coach-availability-panel";
 import { CoachActivationGate } from "@/features/coaches/coach-activation-gate";
+import { CoachClientCards } from "@/features/coaches/coach-client-cards";
+import { currentPrivateBookingWorkspace } from "@/server/coaches/booking-service";
 import { currentCoachAvailabilityWorkspace } from "@/server/coaches/service";
 
 export const metadata: Metadata = { title: "Coach workspace" };
 
 export default async function Page() {
-  const state = await currentCoachAvailabilityWorkspace();
+  const [state, bookingState] = await Promise.all([
+    currentCoachAvailabilityWorkspace(),
+    currentPrivateBookingWorkspace(),
+  ]);
   if (state.status !== "authorized") {
     if (state.status === "signed-out") redirect(signInHref("/coach"));
     if (state.status === "forbidden") {
@@ -55,6 +60,19 @@ export default async function Page() {
       coach={state.coach}
       rules={state.rules}
       slots={state.slots}
+      clientCards={
+        state.coach?.visibility === "visible" ? (
+          <CoachClientCards
+            key="client-cards"
+            cards={
+              bookingState.status === "authorized"
+                ? bookingState.clientCards
+                : null
+            }
+            earlyCancellationMinutes={state.coach.earlyCancellationMinutes}
+          />
+        ) : null
+      }
       ownerDisplayName={state.ownerDisplayName}
       mutateRuleAction={mutateCoachAvailabilityRuleAction}
     />

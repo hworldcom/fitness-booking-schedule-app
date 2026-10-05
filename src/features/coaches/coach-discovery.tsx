@@ -1,19 +1,17 @@
 import Link from "next/link";
 import {
   ArrowLeft,
-  CalendarClock,
-  Clock3,
   MapPin,
   Search,
   ShieldCheck,
   UserRoundSearch,
 } from "lucide-react";
+import type { ReactNode } from "react";
 import { profileInitials } from "@/auth/profile-presentation";
 import {
   COACH_DISCIPLINES,
   type CoachDirectoryState,
   type CoachDirectoryFilters,
-  type PublicCoachAvailabilitySlot,
   type PublicCoachProfileState,
 } from "@/domain/coaches";
 import type {
@@ -132,57 +130,18 @@ function CoachFilters({ filters }: { filters: CoachDirectoryFilters }) {
   );
 }
 
-function publicScheduleDays(slots: readonly PublicCoachAvailabilitySlot[]) {
-  const days = new Map<
-    string,
-    { label: string; slots: PublicCoachAvailabilitySlot[] }
-  >();
-  for (const slot of slots) {
-    const date = new Date(slot.startsAt);
-    const dateParts = new Intl.DateTimeFormat("en-CA", {
-      timeZone: slot.coachTimezone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).formatToParts(date);
-    const value = (type: Intl.DateTimeFormatPartTypes) =>
-      dateParts.find((part) => part.type === type)?.value ?? "";
-    const key = `${value("year")}-${value("month")}-${value("day")}`;
-    const label = new Intl.DateTimeFormat("en-GB", {
-      timeZone: slot.coachTimezone,
-      weekday: "long",
-      day: "numeric",
-      month: "short",
-    }).format(date);
-    const day = days.get(key) ?? { label, slots: [] };
-    day.slots.push(slot);
-    days.set(key, day);
-  }
-  return [...days.values()];
-}
-
-function publicSlotTime(slot: PublicCoachAvailabilitySlot) {
-  const formatter = new Intl.DateTimeFormat("en-GB", {
-    timeZone: slot.coachTimezone,
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  return `${formatter.format(new Date(slot.startsAt))}–${formatter.format(
-    new Date(slot.endsAt),
-  )}`;
-}
-
 export function CoachProfileView({
   state,
   postsState,
   followState,
+  marketplace,
 }: {
   state: Extract<PublicCoachProfileState, { status: "ready" }>;
   postsState: PublicCoachPostsState;
   followState: CoachFollowState;
+  marketplace: ReactNode;
 }) {
-  const { coach, slots } = state;
-  const scheduleDays = publicScheduleDays(slots);
+  const { coach } = state;
   return (
     <article className="public-coach-profile">
       <Link className="coach-back-link" href="/explore">
@@ -232,75 +191,8 @@ export function CoachProfileView({
           </div>
         </section>
 
-        <aside className="public-coach-next">
-          <CalendarClock size={24} aria-hidden="true" />
-          <span className="eyebrow">PRIVATE TRAINING · NEXT 7 DAYS</span>
-          {slots.length === 0 ? (
-            <>
-              <h2>No open times right now.</h2>
-              <p>
-                Only database-backed open slots appear here. No placeholder
-                availability or price is being presented as live inventory.
-              </p>
-              <Link className="button secondary" href="/coming-soon">
-                Join early access
-              </Link>
-            </>
-          ) : (
-            <>
-              <h2>
-                {slots.length} open time{slots.length === 1 ? "" : "s"} this
-                week.
-              </h2>
-              <ol className="public-coach-day-list">
-                {scheduleDays.map((day) => (
-                  <li key={day.label}>
-                    <div className="public-coach-day-heading">
-                      <strong>{day.label}</strong>
-                      <small>
-                        {day.slots.length} open hour
-                        {day.slots.length === 1 ? "" : "s"}
-                      </small>
-                    </div>
-                    <ul className="public-coach-slot-list">
-                      {day.slots.map((slot) => (
-                        <li key={slot.id}>
-                          <Clock3 size={17} aria-hidden="true" />
-                          <span>
-                            <strong>{publicSlotTime(slot)}</strong>
-                            <small>
-                              {slot.location.gymName ?? "Independent place"}
-                              {" · "}
-                              {slot.coachTimezone}
-                            </small>
-                          </span>
-                          <em>Open</em>
-                        </li>
-                      ))}
-                    </ul>
-                  </li>
-                ))}
-              </ol>
-              <p>
-                These capacity-one times are the coach’s current public
-                inventory. Viewing is public; sign-in, a valid pass and booking
-                controls will be required once booking is connected.
-              </p>
-            </>
-          )}
-        </aside>
+        {marketplace}
       </div>
-
-      <section className="coach-future-sections" aria-label="Coach offers">
-        <article>
-          <span>TrainingPass offers</span>
-          <strong>No active indexed offer yet</strong>
-          <p>
-            Prices and session counts will appear only after an authoritative
-            Devnet offer has been indexed.
-          </p>
-        </article>
-      </section>
       {postsState.status === "ready" ? (
         <CoachRecentPosts posts={postsState.posts} />
       ) : (

@@ -17,6 +17,7 @@ import {
   type VerifiedBookingCreditOperation,
   type VerifiedCoachCreditProjection,
 } from "@/domain/coach-bookings";
+import type { ClientCoachCreditProjection } from "@/domain/coach-marketplace";
 import { deriveCreditReservationAddress } from "@/solana/coach-pass";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
@@ -61,6 +62,20 @@ type ClientCardRow = Readonly<{
   client_profile_id: string;
   client_display_name: string;
   client_wallet_address: string;
+  coach_client_credits_address: string;
+  available_credits: string | number | bigint;
+  reserved_credits: string | number | bigint;
+  total_purchased: string | number | bigint;
+  observed_slot: string | number | bigint;
+}>;
+
+type ClientCreditRow = Readonly<{
+  credit_projection_id: string;
+  coach_profile_id: string;
+  coach_display_name: string;
+  coach_slug: string;
+  client_wallet_address: string;
+  coach_authority_address: string;
   coach_client_credits_address: string;
   available_credits: string | number | bigint;
   reserved_credits: string | number | bigint;
@@ -552,6 +567,50 @@ export function currentClientPrivateBookingRecords(
   return bookingRecords(
     transaction,
     sql`booking.run_id = ${actor.runId}::uuid and booking.client_profile_id = ${actor.profileId}::uuid`,
+  );
+}
+
+export async function currentClientCoachCreditRecords(
+  transaction: ActorDatabaseTransaction,
+  actor: AuthorizedActor,
+): Promise<readonly ClientCoachCreditProjection[]> {
+  const rows = await transaction.execute<ClientCreditRow>(sql`
+    select
+      projection.id as credit_projection_id,
+      projection.coach_profile_id,
+      coach.display_name as coach_display_name,
+      coach.public_slug as coach_slug,
+      projection.client_wallet_address,
+      projection.coach_authority_address,
+      projection.coach_client_credits_address,
+      projection.available_credits,
+      projection.reserved_credits,
+      projection.total_purchased,
+      projection.observed_slot
+    from app.coach_client_credit_projections as projection
+    join app.coach_profiles as coach
+      on coach.run_id = projection.run_id
+      and coach.profile_id = projection.coach_profile_id
+    where projection.run_id = ${actor.runId}::uuid
+      and projection.client_profile_id = ${actor.profileId}::uuid
+    order by coach.display_name, projection.coach_profile_id
+  `);
+  return Object.freeze(
+    rows.map((row) =>
+      Object.freeze({
+        creditProjectionId: row.credit_projection_id,
+        coachProfileId: row.coach_profile_id,
+        coachDisplayName: row.coach_display_name,
+        coachSlug: row.coach_slug,
+        clientWalletAddress: row.client_wallet_address,
+        coachAuthorityAddress: row.coach_authority_address,
+        coachClientCreditsAddress: row.coach_client_credits_address,
+        availableCredits: BigInt(row.available_credits),
+        reservedCredits: BigInt(row.reserved_credits),
+        totalPurchased: BigInt(row.total_purchased),
+        observedSlot: BigInt(row.observed_slot),
+      }),
+    ),
   );
 }
 

@@ -14,6 +14,7 @@ import { activateOwnedCoachingRecord } from "@/server/db/coaches/activation-repo
 import { createOwnedCoachAvailabilityRecord } from "@/server/db/coaches/availability-repository";
 import {
   CoachBookingConflictError,
+  currentClientCoachCreditRecords,
   currentClientPrivateBookingRecords,
   currentCoachClientCardRecords,
   decideOwnedLateBookingCancellationRecord,
@@ -777,6 +778,42 @@ test("credit-backed booking lifecycle is idempotent, authorized and policy-bound
   assert.equal(firstCard.availableCredits, BigInt(3));
   assert.equal(firstCard.reservedCredits, BigInt(0));
   assert.equal(firstCard.bookings.length, 3);
+  const firstClientCredits = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) =>
+      currentClientCoachCreditRecords(transaction, firstClientActor),
+  );
+  assert.deepEqual(
+    firstClientCredits.map((credit) => ({
+      coachProfileId: credit.coachProfileId,
+      coachDisplayName: credit.coachDisplayName,
+      clientWalletAddress: credit.clientWalletAddress,
+      availableCredits: credit.availableCredits,
+      reservedCredits: credit.reservedCredits,
+      totalPurchased: credit.totalPurchased,
+    })),
+    [
+      {
+        coachProfileId: coachActor.profileId,
+        coachDisplayName: "Booking Coach",
+        clientWalletAddress: firstClientWallet,
+        availableCredits: BigInt(3),
+        reservedCredits: BigInt(0),
+        totalPurchased: BigInt(4),
+      },
+    ],
+  );
+  const secondClientCredits = await withActorDatabaseContext(
+    secondClientActor,
+    (transaction) =>
+      currentClientCoachCreditRecords(transaction, secondClientActor),
+  );
+  assert.equal(secondClientCredits.length, 1);
+  assert.equal(secondClientCredits[0]?.clientWalletAddress, secondClientWallet);
+  assert.notEqual(
+    secondClientCredits[0]?.clientWalletAddress,
+    firstClientWallet,
+  );
   assert.deepEqual(
     (
       await withActorDatabaseContext(secondClientActor, (transaction) =>

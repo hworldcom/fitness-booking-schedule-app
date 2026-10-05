@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useState, type ReactNode } from "react";
 import {
   CalendarClock,
   Check,
@@ -347,12 +347,14 @@ export function CoachAvailabilityPanel({
   coach,
   rules,
   slots,
+  clientCards,
   ownerDisplayName,
   mutateRuleAction,
 }: {
   coach: CoachProjection | null;
   rules: readonly OwnedCoachAvailabilityRule[];
   slots: readonly OwnedCoachAvailabilitySlot[];
+  clientCards?: ReactNode;
   ownerDisplayName: string;
   mutateRuleAction: CoachAvailabilityRuleAction;
 }) {
@@ -384,6 +386,11 @@ export function CoachAvailabilityPanel({
         <Link href="/profile/coach">
           <UserRound size={17} aria-hidden="true" /> Profile
         </Link>
+        {coach?.visibility === "visible" && (
+          <Link href="#client-cards">
+            <UserRound size={17} aria-hidden="true" /> Clients
+          </Link>
+        )}
       </nav>
 
       {!coach ? (
@@ -420,6 +427,7 @@ export function CoachAvailabilityPanel({
             mutateRuleAction={mutateRuleAction}
           />
           <UpcomingOccurrences slots={slots} />
+          {clientCards}
         </>
       )}
     </div>

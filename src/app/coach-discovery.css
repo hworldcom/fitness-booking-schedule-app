@@ -653,6 +653,312 @@
   line-height: 1.65;
 }
 
+.coach-marketplace {
+  display: grid;
+  gap: 18px;
+}
+
+.coach-marketplace-heading,
+.coach-section-heading,
+.coach-credit-summary > div,
+.coach-booking-policy {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.coach-marketplace-heading h2,
+.coach-section-heading h3 {
+  margin: 5px 0 0;
+}
+
+.coach-offer-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.coach-offer-card,
+.coach-marketplace-empty,
+.coach-credit-summary,
+.coach-booking-policy,
+.coach-open-slots,
+.coach-client-bookings,
+.coach-operation-review {
+  border: 1px solid #d4e2c0;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 66%);
+  padding: 15px;
+}
+
+.coach-offer-card {
+  display: grid;
+  gap: 8px;
+}
+
+.coach-offer-card > span,
+.coach-offer-card > strong,
+.coach-offer-card > p,
+.coach-offer-card > a {
+  display: block;
+}
+
+.coach-offer-card > span {
+  color: #526447;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.coach-offer-card > strong {
+  color: #22351f;
+  font-size: 23px;
+}
+
+.coach-offer-card > strong small,
+.coach-offer-card > p,
+.coach-offer-card > a,
+.coach-marketplace-empty p,
+.coach-credit-summary p,
+.coach-booking-policy p,
+.coach-open-slots > p,
+.coach-client-bookings small {
+  color: #677461;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.coach-offer-card > a,
+.coach-operation-link {
+  color: #3d5b2e;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.coach-marketplace .button {
+  width: 100%;
+  justify-content: center;
+  margin-top: 3px;
+}
+
+.coach-marketplace-empty {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 7px 10px;
+  color: #506442;
+}
+
+.coach-marketplace-empty p {
+  grid-column: 2;
+}
+
+.coach-credit-summary {
+  display: grid;
+  gap: 11px;
+}
+
+.coach-credit-summary > div {
+  align-items: center;
+  color: #435b36;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.coach-credit-summary dl,
+.coach-operation-terms {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin: 0;
+}
+
+.coach-credit-summary dl > div,
+.coach-operation-terms > div {
+  border-radius: 9px;
+  background: #eff5e7;
+  padding: 9px;
+}
+
+.coach-credit-summary dt,
+.coach-operation-terms dt {
+  color: #71806a;
+  font-size: 7px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.coach-credit-summary dd,
+.coach-operation-terms dd {
+  margin: 4px 0 0;
+  color: #304327;
+  font-size: 13px;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
+.coach-booking-policy {
+  color: #4a623c;
+}
+
+.coach-open-slots,
+.coach-client-bookings {
+  display: grid;
+  gap: 13px;
+}
+
+.coach-section-heading {
+  justify-content: space-between;
+}
+
+.coach-section-heading h3 {
+  color: #2e4029;
+  font-size: 17px;
+}
+
+.coach-bookable-slot-list,
+.coach-client-bookings ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coach-bookable-slot-list li,
+.coach-client-bookings li {
+  display: grid;
+  gap: 8px;
+  border-radius: 10px;
+  background: #f5f8f1;
+  padding: 11px;
+}
+
+.coach-bookable-slot-list li {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.coach-bookable-slot-list span,
+.coach-bookable-slot-list strong,
+.coach-bookable-slot-list small {
+  display: block;
+}
+
+.coach-bookable-slot-list strong,
+.coach-client-bookings strong {
+  color: #304329;
+  font-size: 10px;
+}
+
+.coach-bookable-slot-list small {
+  margin-top: 3px;
+  color: #6f796b;
+  font-size: 8px;
+}
+
+.coach-bookable-slot-list .button {
+  grid-column: 1 / -1;
+}
+
+.coach-client-bookings li > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.coach-booking-status {
+  border-radius: 999px;
+  background: #e5efd7;
+  padding: 4px 7px;
+  color: #465d37;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.coach-booking-status.cancellation-requested,
+.coach-booking-status.pending {
+  background: #fff0d7;
+  color: #73552e;
+}
+
+.coach-booking-status.cancelled,
+.coach-booking-status.expired {
+  background: #eee;
+  color: #666;
+}
+
+.coach-marketplace-message,
+.coach-client-message,
+.coach-operation-alert,
+.coach-operation-copy {
+  border-radius: 10px;
+  padding: 11px 12px;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.coach-marketplace-message.success,
+.coach-client-message.success,
+.coach-operation-copy {
+  background: #e3f2d1;
+  color: #3b532c;
+}
+
+.coach-marketplace-message.error,
+.coach-client-message.error,
+.coach-operation-alert {
+  background: #fff0e5;
+  color: #7c4327;
+}
+
+.coach-operation-review {
+  display: grid;
+  gap: 12px;
+  border-color: #9bb978;
+  background: white;
+}
+
+.coach-operation-heading,
+.coach-operation-actions,
+.coach-operation-link,
+.coach-operation-success,
+.coach-operation-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.coach-operation-heading h3 {
+  margin-top: 4px;
+  font-size: 17px;
+}
+
+.coach-operation-terms {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.coach-operation-id {
+  color: #697567;
+  font-size: 8px;
+  overflow-wrap: anywhere;
+}
+
+.coach-operation-success {
+  color: #3d5b2e;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.coach-operation-actions {
+  align-items: stretch;
+  flex-direction: column;
+}
+
 .coach-editor-heading {
   display: flex;
   align-items: flex-end;
@@ -1498,5 +1804,10 @@
   .coach-post-composer-actions .button,
   .coach-post-visibility-form .button {
     width: 100%;
+  }
+
+  .coach-credit-summary dl,
+  .coach-operation-terms {
+    grid-template-columns: 1fr;
   }
 }
