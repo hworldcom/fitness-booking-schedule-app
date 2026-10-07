@@ -61,7 +61,6 @@ export type CoachProjection = Readonly<{
   }>;
   visibility: "visible" | "hidden";
   recordSource: "fixture" | "user";
-  earlyCancellationMinutes: number;
   disciplines: readonly CoachDiscipline[];
 }>;
 

@@ -12,21 +12,27 @@ test("secondary buttons stay readable inside dark surfaces", async ({
 }) => {
   await page.setContent(`
     <main style="min-height: 100vh; background: #193126; color: white; padding: 32px">
-      <a class="button secondary" href="#posts">Manage posts</a>
+      <a class="button secondary" href="#bookings">Manage bookings</a>
     </main>
   `);
   await page.addStyleTag({ content: globalStyles });
 
-  const managePosts = page.getByRole("link", { name: "Manage posts" });
-  await expect(managePosts).toBeVisible();
-  await expect(managePosts).toHaveCSS("background-color", "rgb(255, 255, 255)");
-  await expect(managePosts).toHaveCSS("color", "rgb(34, 37, 31)");
+  const manageBookings = page.getByRole("link", { name: "Manage bookings" });
+  await expect(manageBookings).toBeVisible();
+  await expect(manageBookings).toHaveCSS(
+    "background-color",
+    "rgb(255, 255, 255)",
+  );
+  await expect(manageBookings).toHaveCSS("color", "rgb(34, 37, 31)");
 
-  await managePosts.focus();
-  await expect(managePosts).toBeFocused();
-  await expect(managePosts).toHaveCSS("color", "rgb(34, 37, 31)");
+  await manageBookings.focus();
+  await expect(manageBookings).toBeFocused();
+  await expect(manageBookings).toHaveCSS("color", "rgb(34, 37, 31)");
 
-  await managePosts.hover();
-  await expect(managePosts).toHaveCSS("background-color", "rgb(243, 245, 238)");
-  await expect(managePosts).toHaveCSS("color", "rgb(34, 37, 31)");
+  await manageBookings.hover();
+  await expect(manageBookings).toHaveCSS(
+    "background-color",
+    "rgb(243, 245, 238)",
+  );
+  await expect(manageBookings).toHaveCSS("color", "rgb(34, 37, 31)");
 });

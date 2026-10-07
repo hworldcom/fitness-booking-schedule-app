@@ -28,7 +28,9 @@ async function emailCodeFor(email) {
 }
 
 async function submitForm(page) {
-  await page.locator("form.auth-form").evaluate((form) => form.requestSubmit());
+  await page
+    .locator('form.auth-form button[type="submit"]')
+    .click({ timeout: 20_000 });
 }
 
 async function requestAndVerify(
@@ -75,7 +77,6 @@ async function completeProfile(page, displayName) {
   assert.equal(actor.status, "authorized");
   assert.equal(actor.profile.displayName, displayName);
   assert.equal(actor.role, "member");
-  assert.equal("wallet" in actor, false);
   return actor;
 }
 
@@ -85,8 +86,10 @@ async function verifyAccountProfile(page, displayName) {
     .getByRole("heading", { name: displayName, exact: true })
     .waitFor({ timeout: 20_000 });
   await page.getByText("Email-backed MovX profile").waitFor();
-  assert.equal(await page.getByText("Available test EURC").count(), 0);
-  assert.equal(await page.getByText("Confirmed visits").count(), 0);
+  await page
+    .getByRole("heading", { name: "Your private-session schedule" })
+    .waitFor();
+  await page.getByText("No sessions booked yet.").waitFor();
   assert.equal(await page.getByText("Illustrative history").count(), 0);
 }
 

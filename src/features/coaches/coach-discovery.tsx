@@ -8,19 +8,14 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { profileInitials } from "@/auth/profile-presentation";
+import { Avatar } from "@/components/ui";
 import {
   COACH_DISCIPLINES,
-  type CoachDirectoryState,
   type CoachDirectoryFilters,
+  type CoachDirectoryState,
   type PublicCoachProfileState,
 } from "@/domain/coaches";
-import type {
-  CoachFollowState,
-  PublicCoachPostsState,
-} from "@/domain/coach-social";
 import type { MapboxBrowserConfiguration } from "@/mapbox/provider";
-import { Avatar } from "@/components/ui";
-import { CoachFollowControl, CoachRecentPosts } from "./coach-social";
 import { CoachExploreResults } from "./coach-explore-results";
 
 export function CoachDirectory({
@@ -30,41 +25,39 @@ export function CoachDirectory({
   state: CoachDirectoryState;
   mapboxConfiguration: MapboxBrowserConfiguration;
 }) {
-  const filters = state.filters;
   return (
     <div className="coach-discovery">
       <header className="coach-directory-hero">
         <div>
           <span className="eyebrow">FICTIONAL DEMO COACHES · BERLIN</span>
           <h1>
-            Find a coach who fits your training
+            Find a coach and a time that fits
             <span className="lime-text">.</span>
           </h1>
           <p>
-            Compare disciplines and coach-confirmed public training places.
-            Availability and passes appear only when their authoritative
-            features are live.
+            Compare disciplines, coach-confirmed places and real published
+            availability. The list remains usable when the optional map is
+            unavailable.
           </p>
         </div>
         <div className="coach-directory-disclosure">
           <ShieldCheck size={23} aria-hidden="true" />
           <div>
-            <strong>Discovery preview</strong>
-            <span>No real coaches, gyms, schedules or endorsements.</span>
+            <strong>Scheduling preview</strong>
+            <span>
+              Fictional coaches and places; database-backed open times.
+            </span>
           </div>
         </div>
       </header>
 
-      <CoachFilters filters={filters} />
+      <CoachFilters filters={state.filters} />
 
       {state.status === "unavailable" ? (
         <section className="coach-directory-state" role="alert">
           <UserRoundSearch size={29} aria-hidden="true" />
           <h2>Coach discovery is temporarily unavailable.</h2>
-          <p>
-            MovX could not verify the public coach catalogue. No fixture
-            fallback or invented availability was shown.
-          </p>
+          <p>No fixture fallback or invented availability was shown.</p>
           <Link className="button secondary" href="/explore">
             Try again
           </Link>
@@ -132,13 +125,9 @@ function CoachFilters({ filters }: { filters: CoachDirectoryFilters }) {
 
 export function CoachProfileView({
   state,
-  postsState,
-  followState,
   marketplace,
 }: {
   state: Extract<PublicCoachProfileState, { status: "ready" }>;
-  postsState: PublicCoachPostsState;
-  followState: CoachFollowState;
   marketplace: ReactNode;
 }) {
   const { coach } = state;
@@ -158,12 +147,6 @@ export function CoachProfileView({
                 <span key={discipline}>{discipline}</span>
               ))}
             </div>
-            <CoachFollowControl
-              coachProfileId={coach.profileId}
-              coachSlug={coach.slug}
-              coachDisplayName={coach.displayName}
-              state={followState}
-            />
           </div>
         </div>
         <div className="public-coach-place">
@@ -175,7 +158,6 @@ export function CoachProfileView({
           </div>
         </div>
       </header>
-
       <div className="public-coach-content">
         <section className="public-coach-about">
           <span className="eyebrow">ABOUT THE COACH</span>
@@ -184,24 +166,14 @@ export function CoachProfileView({
           <div className="coach-location-note">
             <ShieldCheck size={20} aria-hidden="true" />
             <p>
-              This is a fictional profile. The place is a public discovery point
-              selected by the coach—not live tracking, current presence or a gym
+              This fictional profile uses a public discovery point selected by
+              the coach—not live tracking, current presence or a gym
               endorsement.
             </p>
           </div>
         </section>
-
         {marketplace}
       </div>
-      {postsState.status === "ready" ? (
-        <CoachRecentPosts posts={postsState.posts} />
-      ) : (
-        <section className="coach-recent-posts" role="alert">
-          <span className="eyebrow">COACH NOTES</span>
-          <h2>Recent posts are temporarily unavailable.</h2>
-          <p>No fabricated post fallback was shown.</p>
-        </section>
-      )}
     </article>
   );
 }

@@ -4,8 +4,8 @@
 - Created: 2026-10-04
 - Last updated: 2026-10-04
 - Milestone: Marketplace M3 local booking-credit program
-- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: extends the completed pair ledger in [DEV0127](DEV0127-implement-coach-client-credit-ledger.md); supplies authoritative credit mutations to completed [DEV0128](../backend/DEV0128-persist-credit-backed-private-bookings.md), [DEV0129](../../current/frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md) and [DEV0130](../../current/blockchain/DEV0130-integrate-devnet-coach-pass-operations.md)
+- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../archive/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
+- Related records: extends the completed pair ledger in [DEV0127](DEV0127-implement-coach-client-credit-ledger.md); supplies authoritative credit mutations to completed [DEV0128](../backend/DEV0128-persist-credit-backed-private-bookings.md), [DEV0129](../../archive/frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md) and [DEV0130](../../archive/blockchain/DEV0130-integrate-devnet-coach-pass-operations.md)
 
 ## Objective and context
 

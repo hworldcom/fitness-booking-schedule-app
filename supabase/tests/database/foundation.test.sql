@@ -14,8 +14,8 @@ select is(
     where table_schema = 'app'
       and table_type = 'BASE TABLE'
   ),
-  18,
-  'app contains identity, coach, booking, social and group-event tables'
+  20,
+  'app retains all current and historical migration tables'
 );
 
 select ok(
@@ -112,7 +112,7 @@ select is(
       and c.relkind = 'r'
       and r.rolname = 'app_owner'
   ),
-  18,
+  20,
   'app_owner owns every app table'
 );
 

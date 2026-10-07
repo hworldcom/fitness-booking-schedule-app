@@ -1,55 +1,30 @@
 import { expect, test } from "@playwright/test";
 
-test("home explains pass booking first and group funding second", async ({
+test("home presents the focused scheduling loop", async ({
   page,
 }, testInfo) => {
   await page.goto("/");
-
-  await expect(page).toHaveTitle(/Private coaching and group-funded training/);
+  await expect(page).toHaveTitle(/Discover coaches and book private sessions/);
   await expect(
     page.getByRole("heading", {
-      name: "Book a private session. Or help a group event happen.",
+      name: "Find the right coach. Book one clear hour.",
     }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", {
-      name: "Buy coach credits, then book the right hour.",
-    }),
-  ).toBeVisible();
-  await expect(page.getByText("One credit", { exact: true })).toBeVisible();
-  await expect(page.getByText("Ten credits", { exact: true })).toBeVisible();
-  await expect(
-    page.getByRole("heading", {
-      name: "Fund one seat. Let the published threshold decide.",
+      name: "Discovery and scheduling in four steps.",
     }),
   ).toBeVisible();
   await expect(
-    page.getByText("Minimum reached", { exact: true }),
+    page.getByText("See real open hours", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByText("Minimum missed", { exact: true })).toBeVisible();
+  await expect(page.getByText("Book directly", { exact: true })).toBeVisible();
   await expect(
-    page.getByText(/Devnet test EURC · no real funds/),
-  ).toBeVisible();
-  await expect(
-    page.getByText(/remain clearly labelled preview flows/),
-  ).toBeVisible();
-
-  const howLink = page
-    .getByRole("link", { name: "See both features", exact: true })
-    .first();
-  await expect(howLink).toHaveAttribute("href", "/how-it-works");
-  await howLink.focus();
-  await expect(howLink).toBeFocused();
-  await expect(
-    page.getByRole("link", { name: /Join early access/ }).first(),
-  ).toHaveAttribute("href", "/coming-soon");
-  await expect(
-    page.getByRole("link", { name: "Group funding is coming soon" }),
-  ).toHaveAttribute("href", "/coming-soon");
-
+    page.getByRole("link", { name: "See how scheduling works" }),
+  ).toHaveAttribute("href", "/how-it-works");
   const copy = await page.locator("main").innerText();
   expect(copy).not.toMatch(
-    /four gyms|Basic membership|Classic membership|training request|coach proposal/i,
+    /Solana|wallet|EURC|credits|group funding|pass purchase/i,
   );
   expect(
     await page.evaluate(
@@ -57,83 +32,60 @@ test("home explains pass booking first and group funding second", async ({
     ),
   ).toBe(true);
   await page.screenshot({
-    path: testInfo.outputPath("coach-story-home.png"),
+    path: testInfo.outputPath("scheduling-story-home.png"),
     fullPage: true,
   });
 });
 
-test("how it works distinguishes both loops and their preview boundaries", async ({
+test("how it works explains authoritative scheduling transitions", async ({
   page,
 }, testInfo) => {
   await page.goto("/how-it-works");
-
   await expect(page).toHaveTitle(/How it works/);
   await expect(
     page.getByRole("heading", {
-      name: "Two clear paths to train with a coach.",
+      name: "Published time in. Confirmed booking out.",
     }),
-  ).toBeVisible();
-  await expect(
-    page.getByText("Public preview, not live transactions"),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", {
-      name: "A public training location, not live tracking.",
+      name: "One occurrence has one active booking.",
     }),
   ).toBeVisible();
   await expect(
-    page.getByText(/fictional gym is a place label only/),
+    page.getByText(/Cancellation reopens a future occurrence/),
   ).toBeVisible();
-  await expect(
-    page.getByText(/automatic return or a later coach/),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("heading", {
-      name: "One funded seat, with a deterministic outcome.",
-    }),
-  ).toBeVisible();
-  await expect(
-    page.getByText(/deadline itself sends no transaction/),
-  ).toBeVisible();
-  await expect(page.getByText(/no real funds/)).toBeVisible();
-  await expect(page.getByText(/does not execute automatically/)).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: /Join early access/ }).first(),
-  ).toHaveAttribute("href", "/coming-soon");
-
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
   await page.screenshot({
-    path: testInfo.outputPath("coach-story-how-it-works.png"),
+    path: testInfo.outputPath("scheduling-how-it-works.png"),
     fullPage: true,
   });
 });
 
-test("public navigation keeps unfinished marketplace actions honest", async ({
+test("public navigation exposes scheduling routes only", async ({
   page,
 }, testInfo) => {
   await page.goto("/");
-
   await expect(page.locator(".demo-strip")).toContainText(
-    "Coach discovery live · pass booking and group funding still in progress.",
+    "Coach discovery and direct scheduling preview.",
   );
+  for (const name of ["Explore", "Coach", "How it works", "Profile"]) {
+    await expect(
+      page.getByRole("link", { name, exact: true }).first(),
+    ).toBeVisible();
+  }
   await expect(
-    page.getByRole("link", { name: "Explore", exact: true }).first(),
-  ).toHaveAttribute("href", "/explore");
+    page.getByRole("link", { name: "Events", exact: true }),
+  ).toHaveCount(0);
   await expect(
-    page.getByRole("link", { name: "How it works", exact: true }).first(),
-  ).toHaveAttribute("href", "/how-it-works");
-
+    page.getByRole("link", { name: "Following", exact: true }),
+  ).toHaveCount(0);
   if (testInfo.project.name === "desktop") {
     await page.getByRole("button", { name: "About this preview" }).click();
-    await expect(page.getByText(/two-feature coach marketplace/)).toBeVisible();
-    await expect(
-      page.getByText(
-        /Pass purchase, private booking and group funding are not live yet/,
-      ),
-    ).toBeVisible();
+    await expect(page.getByText(/focused scheduling preview/)).toBeVisible();
   }
 });

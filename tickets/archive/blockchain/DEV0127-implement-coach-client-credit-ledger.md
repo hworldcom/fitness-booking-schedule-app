@@ -4,8 +4,8 @@
 - Created: 2026-10-04
 - Last updated: 2026-10-04
 - Milestone: Marketplace M2 local coach-pass program
-- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: implements the chain boundary adopted by [DEV0126](../organisatory/DEV0126-adopt-coach-pass-and-group-funding-contract.md); extends the committed partial foundation preserved in cancelled [DEV0097](DEV0097-create-coach-package-offers.md); supplies contracts to completed [DEV0128](../backend/DEV0128-persist-credit-backed-private-bookings.md), [DEV0129](../../current/frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md), [DEV0130](../../current/blockchain/DEV0130-integrate-devnet-coach-pass-operations.md) and completed [DEV0131](DEV0131-implement-coach-credit-booking-lifecycle.md)
+- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../archive/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
+- Related records: implements the chain boundary adopted by [DEV0126](../organisatory/DEV0126-adopt-coach-pass-and-group-funding-contract.md); extends the committed partial foundation preserved in cancelled [DEV0097](DEV0097-create-coach-package-offers.md); supplies contracts to completed [DEV0128](../backend/DEV0128-persist-credit-backed-private-bookings.md), [DEV0129](../../archive/frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md), [DEV0130](../../archive/blockchain/DEV0130-integrate-devnet-coach-pass-operations.md) and completed [DEV0131](DEV0131-implement-coach-credit-booking-lifecycle.md)
 
 ## Objective and context
 

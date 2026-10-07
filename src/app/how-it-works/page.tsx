@@ -4,7 +4,7 @@ import { HowItWorksStory } from "@/features/public/coach-story";
 export const metadata: Metadata = {
   title: "How it works",
   description:
-    "See how MovX connects coach-specific pass booking with threshold-funded group events, exact test EURC and platform-paid Solana fees.",
+    "See how MovX connects coach discovery, recurring availability and direct capacity-one private-session booking.",
 };
 
 export default function Page() {

@@ -6,7 +6,7 @@
 - Milestone: Coach-first private-class hackathon MVP
 - Converted from: Not applicable — created as a coordination record
 - Tracked development tickets: DEV0094–DEV0101, DEV0103–DEV0110 and DEV0114–DEV0116; DEV0102 and DEV0111–DEV0113 are unrelated reliability/maintenance work
-- Related records: replaced by [COR0010 — Group-funded coach marketplace MVP](../../current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md); reuses applicable identity/wallet work from [COR0003](../../current/organisatory/COR0003-account-first-identity-and-wallet-linking.md) and historical hosted delivery from [COR0004](COR0004-hosted-staging-deployment.md)
+- Related records: replaced by [COR0010 — Group-funded coach marketplace MVP](../../archive/organisatory/COR0010-group-funded-coach-marketplace-mvp.md); reuses applicable identity/wallet work from [COR0003](../../archive/organisatory/COR0003-account-first-identity-and-wallet-linking.md) and historical hosted delivery from [COR0004](COR0004-hosted-staging-deployment.md)
 
 ## Objective and boundaries
 
@@ -42,7 +42,7 @@ Every listed DEV ticket links directly back to COR0009. No ticket belongs to ano
 
 ## Other relationships
 
-- [COR0003](../../current/organisatory/COR0003-account-first-identity-and-wallet-linking.md) provides email-first accounts and optional personal-wallet control. COR0009 consumed that authority without redefining it.
+- [COR0003](../../archive/organisatory/COR0003-account-first-identity-and-wallet-linking.md) provides email-first accounts and optional personal-wallet control. COR0009 consumed that authority without redefining it.
 - [COR0004](COR0004-hosted-staging-deployment.md) records the historical hosted Worker/Supabase/Auth/domain environment. Its Cloudflare path was later retired while reusable hosted Supabase work continued independently.
 - Superseded product records were pruned from the working tree under DEV0112 at the user's request; Git history remains the recovery path. COR0009 does not silently restore that product direction.
 - DEV0097 owns a new explicitly reviewed Offer/TrainingPass program boundary. No legacy membership-card program or runtime is TrainingPass authority.

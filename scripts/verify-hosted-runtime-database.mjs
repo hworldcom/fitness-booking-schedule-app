@@ -113,8 +113,8 @@ try {
       has_database_privilege(current_user, current_database(), 'create') as can_create_schema,
       has_schema_privilege(current_user, 'app', 'usage') as has_app_schema_usage,
       has_table_privilege(current_user, 'app.profiles', 'select') as can_select_profiles,
-      has_table_privilege(current_user, 'app.wallet_bindings', 'select') as can_select_wallet_bindings,
-      has_table_privilege(current_user, 'app.wallet_bindings', 'insert') as can_insert_wallet_bindings,
+      has_table_privilege(current_user, 'app.coach_private_bookings', 'select') as can_select_bookings,
+      has_table_privilege(current_user, 'app.coach_private_bookings', 'insert') as can_insert_bookings,
       has_function_privilege(
         current_user,
         'app.current_application_identity(uuid)',
@@ -125,6 +125,11 @@ try {
         'app.enroll_application_identity(uuid,text)',
         'execute'
       ) as can_enroll_identity,
+      has_function_privilege(
+        current_user,
+        'app.book_direct_private_session(uuid)',
+        'execute'
+      ) as can_book_private_session,
       has_schema_privilege('anon', 'app', 'usage') as anon_has_app_usage,
       has_schema_privilege('authenticated', 'app', 'usage') as authenticated_has_app_usage,
       has_schema_privilege('service_role', 'app', 'usage') as service_role_has_app_usage
@@ -184,12 +189,12 @@ try {
       passed: role.can_select_profiles === true,
     },
     {
-      name: "the role cannot select wallet bindings directly",
-      passed: role.can_select_wallet_bindings === false,
+      name: "the role may select actor-scoped private bookings",
+      passed: role.can_select_bookings === true,
     },
     {
-      name: "the role cannot insert wallet bindings directly",
-      passed: role.can_insert_wallet_bindings === false,
+      name: "the role cannot insert private bookings directly",
+      passed: role.can_insert_bookings === false,
     },
     {
       name: "the role may execute the bounded identity lookup",
@@ -198,6 +203,10 @@ try {
     {
       name: "the role may execute bounded identity enrollment",
       passed: role.can_enroll_identity === true,
+    },
+    {
+      name: "the role may execute bounded direct booking",
+      passed: role.can_book_private_session === true,
     },
     {
       name: "browser-facing database roles cannot use the app schema",

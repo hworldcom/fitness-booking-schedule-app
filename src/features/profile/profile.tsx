@@ -6,8 +6,16 @@ import { useActor } from "@/auth/client/actor-provider";
 import { profileInitials } from "@/auth/profile-presentation";
 import { signInHref } from "@/auth/return-to";
 import { Avatar, Empty, Pill } from "@/components/ui";
+import type { PrivateBookingProjection } from "@/domain/coach-bookings";
+import { ClientSessions } from "./client-sessions";
 
-export function Profile() {
+export function Profile({
+  bookings,
+  referenceTime,
+}: {
+  bookings: readonly PrivateBookingProjection[] | null;
+  referenceTime: string;
+}) {
   const { actor } = useActor();
 
   if (actor.status === "unavailable") {
@@ -84,11 +92,12 @@ export function Profile() {
         <BadgeCheck size={24} />
         <h2>Your profile is connected to this account.</h2>
         <p>
-          Your self-declared coach profile can now be created separately.
-          Passes, bookings, followed coaches and posts appear only after their
-          owning features store authoritative data.
+          Your booking history is loaded only from the scheduling database.
+          Activate coaching separately if you want to publish a profile and
+          recurring availability.
         </p>
       </section>
+      <ClientSessions bookings={bookings} referenceTime={referenceTime} />
       <div className="account-profile-empty">
         <Empty
           title="Coach private classes?"

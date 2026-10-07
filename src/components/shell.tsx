@@ -1,43 +1,40 @@
 "use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import {
-  CalendarDays,
-  House,
-  UserRound,
-  MapPin,
-  ArrowUpRight,
-  Info,
   ArrowRight,
+  ArrowUpRight,
+  CalendarDays,
   CircleHelp,
+  House,
+  Info,
   ListChecks,
-  Rss,
+  MapPin,
+  UserRound,
 } from "lucide-react";
-import { Avatar, Brand, Modal, Pill } from "./ui";
 import { AuthStatusLink } from "@/auth/client/auth-status-link";
 import { useActor } from "@/auth/client/actor-provider";
 import { profileInitials } from "@/auth/profile-presentation";
-import {
-  WalletConnectionPanel,
-  WalletStatusButton,
-} from "@/solana/client/wallet-connection";
+import { Avatar, Brand, Modal, Pill } from "./ui";
 
 const navigation = [
   { label: "Home", href: "/", Icon: House },
   { label: "Explore", href: "/explore", Icon: MapPin },
-  { label: "Events", href: "/events", Icon: CalendarDays },
-  { label: "Following", href: "/following", Icon: Rss },
+  { label: "Coach", href: "/coach", Icon: CalendarDays },
   { label: "How it works", href: "/how-it-works", Icon: ListChecks },
   { label: "Profile", href: "/profile", Icon: UserRound },
 ];
+
 export function Shell({ children }: { children: ReactNode }) {
   const path = usePathname();
   const { actor } = useActor();
-  const [modal, setModal] = useState<"wallet" | "about" | null>(null);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const currentProfile = actor.status === "authorized" ? actor.profile : null;
   const active = (href: string) =>
     href === "/" ? path === "/" : path.startsWith(href);
+
   return (
     <>
       <a className="skip-link" href="#main-content">
@@ -50,7 +47,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <div className="sidebar-caption">
           FIND YOUR COACH.
           <br />
-          BOOK OR FUND.
+          BOOK YOUR HOUR.
         </div>
         <nav aria-label="Main navigation">
           {navigation.map(({ label, href, Icon }) => (
@@ -74,13 +71,13 @@ export function Shell({ children }: { children: ReactNode }) {
           <div className="club-note">
             <span className="little-spark">✳</span>
             <strong>Meet the demo coaches.</strong>
-            <p>Browse disciplines and coach-confirmed training places.</p>
+            <p>Browse disciplines, places and published one-hour sessions.</p>
             <Link href="/explore">
-              Explore coaches <ArrowUpRight size={16} />
+              Explore schedules <ArrowUpRight size={16} />
             </Link>
           </div>
-          <button className="preview-link" onClick={() => setModal("about")}>
-            <Info size={15} />
+          <button className="preview-link" onClick={() => setAboutOpen(true)}>
+            <Info size={15} aria-hidden="true" />
             About this preview
           </button>
           {currentProfile && (
@@ -94,9 +91,9 @@ export function Shell({ children }: { children: ReactNode }) {
             </Link>
           )}
           <span className="sidebar-tagline">
-            Private passes. Group events.
+            Discover. Schedule.
             <br />
-            <span>Two clear ways to train.</span>
+            <span>Train with clarity.</span>
           </span>
         </div>
       </aside>
@@ -106,7 +103,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <Brand compact />
           </Link>
           <span className="location">
-            <MapPin size={16} />
+            <MapPin size={16} aria-hidden="true" />
             <span>Berlin, Germany</span>
           </span>
           <div className="header-right">
@@ -115,7 +112,6 @@ export function Shell({ children }: { children: ReactNode }) {
               <span>How it works</span>
             </Link>
             <AuthStatusLink />
-            <WalletStatusButton onOpen={() => setModal("wallet")} />
             {currentProfile && (
               <Link
                 href="/profile"
@@ -134,12 +130,9 @@ export function Shell({ children }: { children: ReactNode }) {
           <span>
             <i /> DEMO WORLD
           </span>
-          <p>
-            Coach discovery live · pass booking and group funding still in
-            progress.
-          </p>
-          <button onClick={() => setModal("about")}>
-            Fixtures · No real funds <Info size={13} />
+          <p>Coach discovery and direct scheduling preview.</p>
+          <button onClick={() => setAboutOpen(true)}>
+            Fictional profiles <Info size={13} aria-hidden="true" />
           </button>
         </div>
         <main id="main-content" className="page-content" tabIndex={-1}>
@@ -152,10 +145,8 @@ export function Shell({ children }: { children: ReactNode }) {
               hello@movx.club
             </a>
           </span>
-          <span className="footer-tagline">
-            Find a coach. Train with clarity.
-          </span>
-          <Pill>Solana Devnet target · Test EURC</Pill>
+          <span className="footer-tagline">Find a coach. Book your time.</span>
+          <Pill>Scheduling preview</Pill>
         </footer>
       </div>
       <nav className="mobile-nav" aria-label="Mobile navigation">
@@ -176,45 +167,28 @@ export function Shell({ children }: { children: ReactNode }) {
           </Link>
         ))}
       </nav>
-      {modal && (
+      {aboutOpen && (
         <Modal
-          title={
-            modal === "wallet"
-              ? "Your club. Your wallet."
-              : "A first look at MovX Club."
-          }
-          onClose={() => setModal(null)}
+          title="A first look at MovX Club."
+          onClose={() => setAboutOpen(false)}
         >
-          {modal === "wallet" ? (
-            <WalletConnectionPanel onSignIn={() => setModal(null)} />
-          ) : (
-            <>
-              <p className="dialog-copy">
-                MovX Club is becoming a two-feature coach marketplace: buy
-                coach-specific credits for private calendar booking, or fund one
-                seat in a threshold-based group event.
-              </p>
-              <div className="notice">
-                <strong>Everything here is demonstration data.</strong>
-                <p>
-                  The current public preview is transitional. Coaches, offers,
-                  events, locations and posts shown during the rebuild are
-                  fictional fixtures, not live partnerships or financial
-                  records.
-                </p>
-              </div>
-              <p className="small-copy">
-                Pass purchase, private booking and group funding are not live
-                yet. No real funds are used.
-              </p>
-              <button
-                className="button lime full"
-                onClick={() => setModal(null)}
-              >
-                Let’s explore <ArrowRight size={17} />
-              </button>
-            </>
-          )}
+          <p className="dialog-copy">
+            MovX Club is a focused scheduling preview: discover a coach, inspect
+            their real published availability and reserve one private hour.
+          </p>
+          <div className="notice">
+            <strong>Everything here is demonstration data.</strong>
+            <p>
+              Coaches and locations are fictional fixtures. Availability and
+              bookings come from the scheduling database, not placeholder cards.
+            </p>
+          </div>
+          <button
+            className="button lime full"
+            onClick={() => setAboutOpen(false)}
+          >
+            Let’s explore <ArrowRight size={17} aria-hidden="true" />
+          </button>
         </Modal>
       )}
     </>

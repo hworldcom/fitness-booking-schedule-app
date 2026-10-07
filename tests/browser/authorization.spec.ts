@@ -34,7 +34,7 @@ test("configured guests keep public routes and are redirected from private pages
   }
 });
 
-test("legacy membership and gym-wallet routes are unavailable", async ({
+test("removed marketplace and legacy routes are unavailable", async ({
   page,
 }) => {
   for (const path of [
@@ -44,6 +44,11 @@ test("legacy membership and gym-wallet routes are unavailable", async ({
     "/clubs/sign-in",
     "/search",
     "/users/max",
+    "/events",
+    "/following",
+    "/coach/events",
+    "/coach/posts",
+    "/devnet-bootstrap",
   ]) {
     const response = await page.request.get(path);
     expect(response.status(), path).toBe(404);
@@ -57,6 +62,9 @@ test("legacy membership and gym-wallet routes are unavailable", async ({
     "/api/membership-card/devnet/prepare",
     "/api/staff/check-ins/confirm",
     "/api/wallet/club",
+    "/api/wallet/personal",
+    "/api/solana/coach-pass/prepare",
+    "/api/solana/group-events/prepare",
   ]) {
     const response = await page.request.post(path, { data: {} });
     expect(response.status(), path).toBe(404);

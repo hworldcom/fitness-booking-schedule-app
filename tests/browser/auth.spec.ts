@@ -18,7 +18,7 @@ test("sign-in explains the email/account boundary without blocking public browsi
   await expect(page.getByText("Email code · No password")).toBeVisible();
   await expect(page.getByText("Three small steps")).toBeVisible();
   await expect(
-    page.getByText(/Connect or link Phantom later only/),
+    page.getByText(/Email is the scheduling authority/),
   ).toBeVisible();
   const emailInput = page.getByLabel("Email address");
   if ((await emailInput.count()) === 0) {
@@ -40,7 +40,7 @@ test("sign-in explains the email/account boundary without blocking public browsi
   await expect(page).toHaveURL(/\/$/);
   await expect(
     page.getByRole("heading", {
-      name: "Book a private session. Or help a group event happen.",
+      name: "Find the right coach. Book one clear hour.",
     }),
   ).toBeVisible();
   expect(identityRequests).toBe(0);

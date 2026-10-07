@@ -1,25 +1,14 @@
 import "server-only";
 
-import type {
-  VerifiedBookingCreditOperation,
-  VerifiedCoachCreditProjection,
-} from "@/domain/coach-bookings";
 import { withAuthorizedActor } from "@/server/authorization/service";
 import { currentActorProjection } from "@/server/db/authorization/repository";
 import {
+  bookDirectPrivateSessionRecord,
+  cancelDirectPrivateBookingRecord,
   CoachBookingConflictError,
-  currentClientCoachCreditRecords,
+  completeDirectPrivateBookingRecord,
   currentClientPrivateBookingRecords,
-  currentCoachClientCardRecords,
-  decideOwnedLateBookingCancellationRecord,
-  finalizeVerifiedBookingCreditOperationRecord,
-  markBookingCreditOperationSubmittedRecord,
-  prepareCreditBackedPrivateBookingRecord,
-  prepareOwnedPrivateBookingConsumptionRecord,
-  recordVerifiedCoachCreditProjectionRecord,
-  releaseOwnedPrivateBookingHoldRecord,
-  requestOwnedPrivateBookingCancellationRecord,
-  updateOwnedCoachCancellationPolicyRecord,
+  currentCoachPrivateBookingRecords,
 } from "@/server/db/coaches/booking-repository";
 
 type BookingMutationResult<T> =
@@ -52,90 +41,32 @@ async function mutateBooking<T>(
 export async function currentPrivateBookingWorkspace() {
   const result = await withAuthorizedActor(async (transaction, actor) => {
     const owner = await currentActorProjection(transaction, actor);
-    return Object.freeze({
-      bookings: await currentClientPrivateBookingRecords(transaction, actor),
-      clientCredits: await currentClientCoachCreditRecords(transaction, actor),
-      clientCards: owner.coachingActivated
-        ? await currentCoachClientCardRecords(transaction, actor)
-        : Object.freeze([]),
-    });
+    const [bookings, coachBookings] = await Promise.all([
+      currentClientPrivateBookingRecords(transaction, actor),
+      owner.coachingActivated
+        ? currentCoachPrivateBookingRecords(transaction, actor)
+        : Promise.resolve(Object.freeze([])),
+    ]);
+    return Object.freeze({ bookings, coachBookings });
   });
   if (result.status !== "authorized") return result;
   return Object.freeze({ status: "authorized" as const, ...result.value });
 }
 
-export function updateOwnedCoachCancellationPolicy(minutes: number) {
+export function bookDirectPrivateSession(slotId: string) {
   return mutateBooking((transaction) =>
-    updateOwnedCoachCancellationPolicyRecord(transaction, minutes),
+    bookDirectPrivateSessionRecord(transaction, slotId),
   );
 }
 
-export function recordVerifiedCoachCreditProjection(
-  evidence: VerifiedCoachCreditProjection,
-) {
+export function cancelDirectPrivateBooking(bookingId: string) {
   return mutateBooking((transaction) =>
-    recordVerifiedCoachCreditProjectionRecord(transaction, evidence),
+    cancelDirectPrivateBookingRecord(transaction, bookingId),
   );
 }
 
-export function prepareCreditBackedPrivateBooking(
-  input: Readonly<{
-    slotId: string;
-    creditProjectionId: string;
-  }>,
-) {
+export function completeDirectPrivateBooking(bookingId: string) {
   return mutateBooking((transaction) =>
-    prepareCreditBackedPrivateBookingRecord(transaction, input),
-  );
-}
-
-export function requestOwnedPrivateBookingCancellation(bookingId: string) {
-  return mutateBooking((transaction) =>
-    requestOwnedPrivateBookingCancellationRecord(transaction, bookingId),
-  );
-}
-
-export function decideOwnedLateBookingCancellation(
-  bookingId: string,
-  decision: "approved" | "denied",
-) {
-  return mutateBooking((transaction) =>
-    decideOwnedLateBookingCancellationRecord(transaction, bookingId, decision),
-  );
-}
-
-export function prepareOwnedPrivateBookingConsumption(bookingId: string) {
-  return mutateBooking((transaction) =>
-    prepareOwnedPrivateBookingConsumptionRecord(transaction, bookingId),
-  );
-}
-
-export function markBookingCreditOperationSubmitted(
-  operationId: string,
-  transactionSignature: string,
-) {
-  return mutateBooking((transaction) =>
-    markBookingCreditOperationSubmittedRecord(
-      transaction,
-      operationId,
-      transactionSignature,
-    ),
-  );
-}
-
-export function releaseOwnedPrivateBookingHold(
-  bookingId: string,
-  reason: "wallet-rejected" | "simulation-failed" | "reservation-absent",
-) {
-  return mutateBooking((transaction) =>
-    releaseOwnedPrivateBookingHoldRecord(transaction, bookingId, reason),
-  );
-}
-
-export function finalizeVerifiedBookingCreditOperation(
-  evidence: VerifiedBookingCreditOperation,
-) {
-  return mutateBooking((transaction) =>
-    finalizeVerifiedBookingCreditOperationRecord(transaction, evidence),
+    completeDirectPrivateBookingRecord(transaction, bookingId),
   );
 }

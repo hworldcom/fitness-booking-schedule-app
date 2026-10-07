@@ -4,8 +4,8 @@
 - Created: 2026-10-04
 - Last updated: 2026-10-04
 - Milestone: Marketplace M3 group-event catalogue
-- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: uses coach/profile/location identity from completed [DEV0096](DEV0096-persist-coach-profiles-and-discovery.md) and [DEV0110](DEV0110-activate-coaching-during-account-onboarding.md), retains a nullable compatibility field from cancelled [DEV0118](DEV0118-persist-training-requests-and-coach-proposals.md), and supplies contracts to [DEV0122](../../current/blockchain/DEV0122-integrate-devnet-group-event-funding.md) and [DEV0123](../../current/frontend/DEV0123-present-group-event-creation-and-funding.md)
+- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../archive/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
+- Related records: uses coach/profile/location identity from completed [DEV0096](DEV0096-persist-coach-profiles-and-discovery.md) and [DEV0110](DEV0110-activate-coaching-during-account-onboarding.md), retains a nullable compatibility field from cancelled [DEV0118](DEV0118-persist-training-requests-and-coach-proposals.md), and supplies contracts to [DEV0122](../../archive/blockchain/DEV0122-integrate-devnet-group-event-funding.md) and [DEV0123](../../archive/frontend/DEV0123-present-group-event-creation-and-funding.md)
 
 ## Objective and context
 

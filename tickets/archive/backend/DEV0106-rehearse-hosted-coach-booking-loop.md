@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Coach-first M7 hosted rehearsal
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: historical integration plan under cancelled [COR0009](../organisatory/COR0009-coach-first-training-package-mvp.md); replaced by [DEV0125 — Rehearse the hosted marketplace loops](../../current/backend/DEV0125-rehearse-hosted-marketplace-loops.md), which owns the new pass/booking path and group-funding proof without reopening this record
+- Related records: historical integration plan under cancelled [COR0009](../organisatory/COR0009-coach-first-training-package-mvp.md); replaced by [DEV0125 — Rehearse the hosted marketplace loops](../../archive/backend/DEV0125-rehearse-hosted-marketplace-loops.md), which owns the new pass/booking path and group-funding proof without reopening this record
 
 ## Objective and context
 

@@ -14,7 +14,7 @@ export function WaitlistRequest() {
       "",
       `Please add ${preparedEmail} to the MovX early-access waitlist.`,
       "",
-      "I understand this is a product preview using Solana Devnet and test funds.",
+      "I understand this is a scheduling preview using fictional coach profiles.",
     ].join("\n");
     return `mailto:hello@movx.club?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }, [preparedEmail]);

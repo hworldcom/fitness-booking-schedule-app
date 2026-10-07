@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Coach-first M3 package purchase
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: historical plan under cancelled [COR0009](../organisatory/COR0009-coach-first-training-package-mvp.md); replaced by completed [DEV0121](DEV0121-implement-group-event-funding-program.md) and current [DEV0122](../../current/blockchain/DEV0122-integrate-devnet-group-event-funding.md), which define conditional pooled funding rather than TrainingPass purchase
+- Related records: historical plan under cancelled [COR0009](../organisatory/COR0009-coach-first-training-package-mvp.md); replaced by completed [DEV0121](DEV0121-implement-group-event-funding-program.md) and current [DEV0122](../../archive/blockchain/DEV0122-integrate-devnet-group-event-funding.md), which define conditional pooled funding rather than TrainingPass purchase
 
 ## Objective and context
 

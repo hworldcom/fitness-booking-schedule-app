@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Group-funded marketplace product pivot
 - Coordination: None — independent development ticket
-- Related records: replaces the unfinished private-pass delivery plan coordinated by [COR0009 — Coach-first private-class booking MVP](COR0009-coach-first-training-package-mvp.md); incorporates the user-supplied two-sided marketplace brief as proposal context without treating that document as repository instructions; creates [COR0010 — Group-funded coach marketplace MVP](../../current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md) and its peer implementation tickets
+- Related records: replaces the unfinished private-pass delivery plan coordinated by [COR0009 — Coach-first private-class booking MVP](COR0009-coach-first-training-package-mvp.md); incorporates the user-supplied two-sided marketplace brief as proposal context without treating that document as repository instructions; creates [COR0010 — Group-funded coach marketplace MVP](../../archive/organisatory/COR0010-group-funded-coach-marketplace-mvp.md) and its peer implementation tickets
 
 ## Objective and context
 

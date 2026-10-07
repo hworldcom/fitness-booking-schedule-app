@@ -12,7 +12,6 @@ import {
   Search,
   ShieldCheck,
   UserRound,
-  Wallet,
 } from "lucide-react";
 import { Pill } from "@/components/ui";
 import { isCanonicalSignInLocation, supabasePublicConfig } from "@/auth/config";
@@ -325,7 +324,7 @@ export function SignInScreen({
           <h1>Sign in with your email.</h1>
           <p>
             Request a one-time code, verify your email and create a small
-            profile. A wallet is optional and can be linked separately later.
+            profile. That verified account is your scheduling identity.
           </p>
         </div>
         <Pill tone="lime">Email code · No password</Pill>
@@ -575,8 +574,8 @@ export function SignInScreen({
                   Signed in as {applicationIdentity.profile.displayName}.
                 </strong>
                 <p>
-                  Your verified email account has ordinary MovX Club access. A
-                  wallet is not required for this application session.
+                  Your verified email account can browse and manage its own
+                  scheduling activity.
                 </p>
               </div>
             )}
@@ -631,8 +630,8 @@ export function SignInScreen({
           )}
 
           <p className="wallet-safety">
-            MovX Club never asks for your email password, wallet recovery phrase
-            or private key.
+            MovX Club never asks for your email password. Use only the
+            short-lived code delivered by the configured Auth provider.
           </p>
         </div>
 
@@ -668,18 +667,18 @@ export function SignInScreen({
             </li>
           </ol>
           <div className="notice">
-            <strong>Wallets stay separate</strong>
+            <strong>Email is the scheduling authority</strong>
             <p>
-              Connect or link Phantom later only for wallet-backed actions. A
-              connected wallet never signs you into this account automatically.
+              Public browsing stays open. Booking and coach schedule changes
+              require the server to verify this account.
             </p>
           </div>
           <Link href="/" className="text-link">
             Continue browsing without signing in
           </Link>
           <p className="auth-wallet-note">
-            <Wallet size={14} aria-hidden="true" /> Public browsing needs no
-            account or wallet.
+            Public browsing needs no account. Sign in only when you want to
+            change schedule state.
           </p>
         </aside>
       </div>

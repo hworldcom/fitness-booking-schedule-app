@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Coach-first M4 private-class booking
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: historical plan under cancelled [COR0009](../organisatory/COR0009-coach-first-training-package-mvp.md); recurring availability from archived DEV0104/DEV0114 remains reusable discovery/planning infrastructure, while group-event work moved to completed [DEV0120](DEV0120-persist-group-event-catalogue-and-projections.md) and current [DEV0123](../../current/frontend/DEV0123-present-group-event-creation-and-funding.md)
+- Related records: historical plan under cancelled [COR0009](../organisatory/COR0009-coach-first-training-package-mvp.md); recurring availability from archived DEV0104/DEV0114 remains reusable discovery/planning infrastructure, while group-event work moved to completed [DEV0120](DEV0120-persist-group-event-catalogue-and-projections.md) and current [DEV0123](../../archive/frontend/DEV0123-present-group-event-creation-and-funding.md)
 
 ## Objective and context
 

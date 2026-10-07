@@ -916,6 +916,19 @@
   color: #7c4327;
 }
 
+.coach-marketplace-message p {
+  margin: 0;
+}
+
+.coach-marketplace-message a {
+  display: inline-flex;
+  margin-top: 6px;
+  color: inherit;
+  font-weight: 850;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .coach-operation-review {
   display: grid;
   gap: 12px;

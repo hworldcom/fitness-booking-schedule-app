@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Coach-first M5 completed-class consumption
 - Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: historical plan under cancelled [COR0009](../organisatory/COR0009-coach-first-training-package-mvp.md); superseded by deterministic group-event settlement/payout/refund in completed [DEV0121](DEV0121-implement-group-event-funding-program.md) and current [DEV0122](../../current/blockchain/DEV0122-integrate-devnet-group-event-funding.md), not by an attendance-redemption equivalent
+- Related records: historical plan under cancelled [COR0009](../organisatory/COR0009-coach-first-training-package-mvp.md); superseded by deterministic group-event settlement/payout/refund in completed [DEV0121](DEV0121-implement-group-event-funding-program.md) and current [DEV0122](../../archive/blockchain/DEV0122-integrate-devnet-group-event-funding.md), not by an attendance-redemption equivalent
 
 ## Objective and context
 

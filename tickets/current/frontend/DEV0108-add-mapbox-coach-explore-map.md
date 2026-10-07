@@ -4,7 +4,7 @@
 - Created: 2026-10-03
 - Last updated: 2026-10-07
 - Milestone: Coach-first M1 location discovery
-- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
+- Coordination: None — independent development ticket
 - Related records: transferred from cancelled [COR0009 — Coach-first private-class booking MVP](../../archive/organisatory/COR0009-coach-first-training-package-mvp.md) because coach/location discovery remains reusable; depends on provider-neutral coach-location persistence and optional gym affiliation from [DEV0096 — Persist coach profiles and discovery](../../archive/backend/DEV0096-persist-coach-profiles-and-discovery.md), backed by the simplified fictional gyms from [DEV0109 — Retire membership schema and preserve gyms](../../archive/backend/DEV0109-retire-membership-schema-and-preserve-gyms.md); consumes stable slot-location projections from [DEV0104 — Publish weekly coach availability](../../archive/backend/DEV0104-publish-weekly-coach-availability.md); contract adopted by [DEV0107 — Adopt the Mapbox coach-discovery contract](../../archive/organisatory/DEV0107-adopt-mapbox-coach-discovery-contract.md)
 
 ## Objective and context
@@ -94,10 +94,11 @@ Implementation started on 2026-10-04. The application work, fallback verificatio
 - 2026-10-04: Do not call Search Box for the persistable coach-location flow because official terms restrict all Search Box results to temporary use. Explicit user-submitted Geocoding v6 requests use `permanent=true` and `autocomplete=false`; returned candidates may be stored under an eligible Mapbox account, avoid per-keystroke requests and require explicit selection/confirmation.
 - 2026-10-04: Preserve a clearly labeled manual-coordinate fallback for missing/invalid provider configuration. This retains the existing provider-neutral coach-profile capability while Mapbox keys are pending and never fabricates a provider result.
 - 2026-10-04: Keep the ticket open after the configured local Explore map passed. Local evidence now proves tiles, coach pins, attribution and card-to-map selection, but it does not prove live permanent geocoding, marker adjustment, origin restrictions, quota/CSP/WebGL failure recovery or provider usage monitoring.
+- 2026-10-07: COR0011 adopted the scheduling-only branch. Mapbox discovery remains reusable but independent because the authoritative coach/time list must work without a map; cancelled COR0010 is historical context only.
 
 ### Contracts, configuration, and operations
 
-`NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` is now the public build-time configuration contract. Use distinct non-default, least-scope URL-restricted tokens for development, staging and production. The browser token requires public `styles:read` and `fonts:read` scopes; a `pk` token is intentionally browser-visible, but real values remain ignored deployment configuration and `sk` tokens are rejected. The staging deployment command now requires this binding in addition to its existing secrets.
+`NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` is now the public build-time configuration contract. Use distinct non-default, least-scope URL-restricted tokens for development, staging and production. The browser token requires public `styles:read` and `fonts:read` scopes; a `pk` token is intentionally browser-visible, but real values remain ignored deployment configuration and `sk` tokens are rejected. The guarded Vercel build validates the token shape when Mapbox is enabled.
 
 The application adds `mapbox-gl@3.32.0`. Independent provider searches call Geocoding v6 forward geocoding only on explicit submission with `permanent=true`, `autocomplete=false`, a five-result limit and Germany/Berlin-biased request parameters. Search responses remain in component state until explicit confirmation. Mapbox account billing or enterprise eligibility for permanent storage, provider quotas and alerts still require release evidence.
 

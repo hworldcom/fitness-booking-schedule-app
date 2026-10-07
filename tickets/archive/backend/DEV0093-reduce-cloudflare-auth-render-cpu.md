@@ -5,7 +5,7 @@
 - Last updated: 2026-10-07
 - Milestone: Staging runtime reliability
 - Coordination: None — independent development ticket
-- Related records: staging runtime baseline in [DEV0054 — Cloudflare Workers runtime foundation](DEV0054-cloudflare-workers-runtime-foundation.md), hosted release history in [DEV0056 — Staging release and domain rehearsal](DEV0056-staging-release-and-domain-rehearsal.md), current marketplace delivery in [COR0010 — Group-funded coach marketplace MVP](../../current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md), and replacement hosting readiness in [DEV0138 — Prepare Vercel deployment](DEV0138-prepare-vercel-deployment.md)
+- Related records: staging runtime baseline in [DEV0054 — Cloudflare Workers runtime foundation](DEV0054-cloudflare-workers-runtime-foundation.md), hosted release history in [DEV0056 — Staging release and domain rehearsal](DEV0056-staging-release-and-domain-rehearsal.md), current marketplace delivery in [COR0010 — Group-funded coach marketplace MVP](../../archive/organisatory/COR0010-group-funded-coach-marketplace-mvp.md), and replacement hosting readiness in [DEV0138 — Prepare Vercel deployment](DEV0138-prepare-vercel-deployment.md)
 
 ## Objective and context
 

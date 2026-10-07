@@ -55,23 +55,21 @@ export default async function Page() {
 
   if (!state.coachingActivated) return <CoachActivationGate />;
 
+  const coachBookings =
+    bookingState.status === "authorized" ? bookingState.coachBookings : null;
+
   return (
     <CoachAvailabilityPanel
       coach={state.coach}
       rules={state.rules}
       slots={state.slots}
+      bookings={coachBookings}
       clientCards={
-        state.coach?.visibility === "visible" ? (
-          <CoachClientCards
-            key="client-cards"
-            cards={
-              bookingState.status === "authorized"
-                ? bookingState.clientCards
-                : null
-            }
-            earlyCancellationMinutes={state.coach.earlyCancellationMinutes}
-          />
-        ) : null
+        <CoachClientCards
+          key="client-bookings"
+          bookings={coachBookings}
+          referenceTime={new Date().toISOString()}
+        />
       }
       ownerDisplayName={state.ownerDisplayName}
       mutateRuleAction={mutateCoachAvailabilityRuleAction}

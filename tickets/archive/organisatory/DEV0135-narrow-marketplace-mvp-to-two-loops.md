@@ -4,8 +4,8 @@
 - Created: 2026-10-05
 - Last updated: 2026-10-05
 - Milestone: Marketplace M0 contract consolidation
-- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: follows the completed product-contract revision in [DEV0126](DEV0126-adopt-coach-pass-and-group-funding-contract.md) and EURC migration in [DEV0134](../blockchain/DEV0134-adopt-eurc-for-marketplace-payments.md); cancels [DEV0118](../backend/DEV0118-persist-training-requests-and-coach-proposals.md) and [DEV0119](../frontend/DEV0119-present-training-requests-and-coach-proposals.md); narrows [DEV0124](../../current/frontend/DEV0124-present-coach-pass-and-group-funded-story.md) and [DEV0125](../../current/backend/DEV0125-rehearse-hosted-marketplace-loops.md)
+- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../archive/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
+- Related records: follows the completed product-contract revision in [DEV0126](DEV0126-adopt-coach-pass-and-group-funding-contract.md) and EURC migration in [DEV0134](../blockchain/DEV0134-adopt-eurc-for-marketplace-payments.md); cancels [DEV0118](../backend/DEV0118-persist-training-requests-and-coach-proposals.md) and [DEV0119](../frontend/DEV0119-present-training-requests-and-coach-proposals.md); narrows [DEV0124](../../archive/frontend/DEV0124-present-coach-pass-and-group-funded-story.md) and [DEV0125](../../archive/backend/DEV0125-rehearse-hosted-marketplace-loops.md)
 
 ## Objective and context
 

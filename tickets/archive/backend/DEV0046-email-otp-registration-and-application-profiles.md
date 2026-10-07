@@ -4,8 +4,8 @@
 - Created: 2026-09-21
 - Last updated: 2026-09-21
 - Milestone: Prioritized identity and onboarding
-- Coordination: [COR0003 — Account-first identity and wallet linking](../../current/organisatory/COR0003-account-first-identity-and-wallet-linking.md)
-- Related records: implements the [account model in the current actors and authority contract](../../../docs/mvp-spec.md#3-actors-and-authority); replaces the wallet-as-login model delivered by [DEV0038 — Phantom Supabase Web3 authentication](DEV0038-phantom-supabase-web3-authentication.md), the prepared-only enrollment delivered by [DEV0039 — Prepared identity and wallet bindings](DEV0039-prepared-identity-and-wallet-bindings.md), and the wallet-dependent actor resolution in [DEV0040 — Protected access and database context](DEV0040-protected-access-and-database-context.md); follows completed DEV0048 — Remove gym membership access; enables peer [DEV0047 — Personal wallet linking and replacement](../../current/backend/DEV0047-personal-wallet-linking-and-replacement.md)
+- Coordination: [COR0003 — Account-first identity and wallet linking](../../archive/organisatory/COR0003-account-first-identity-and-wallet-linking.md)
+- Related records: implements the [account model in the current actors and authority contract](../../../docs/mvp-spec.md#3-actors-and-authority); replaces the wallet-as-login model delivered by [DEV0038 — Phantom Supabase Web3 authentication](DEV0038-phantom-supabase-web3-authentication.md), the prepared-only enrollment delivered by [DEV0039 — Prepared identity and wallet bindings](DEV0039-prepared-identity-and-wallet-bindings.md), and the wallet-dependent actor resolution in [DEV0040 — Protected access and database context](DEV0040-protected-access-and-database-context.md); follows completed DEV0048 — Remove gym membership access; enables peer [DEV0047 — Personal wallet linking and replacement](../../archive/backend/DEV0047-personal-wallet-linking-and-replacement.md)
 
 ## Objective and context
 

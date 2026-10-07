@@ -4,8 +4,8 @@
 - Created: 2026-10-04
 - Last updated: 2026-10-04
 - Milestone: Marketplace M3 pass-backed booking
-- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: depends on completed [DEV0127](../blockchain/DEV0127-implement-coach-client-credit-ledger.md), completed [DEV0131](../blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md) and completed coach availability under [DEV0114](DEV0114-persist-recurring-coach-availability.md); supplies booking/client-card projections to [DEV0129](../../current/frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md) and hosted evidence to [DEV0125](../../current/backend/DEV0125-rehearse-hosted-marketplace-loops.md)
+- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../archive/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
+- Related records: depends on completed [DEV0127](../blockchain/DEV0127-implement-coach-client-credit-ledger.md), completed [DEV0131](../blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md) and completed coach availability under [DEV0114](DEV0114-persist-recurring-coach-availability.md); supplies booking/client-card projections to [DEV0129](../../archive/frontend/DEV0129-present-coach-passes-bookings-and-client-cards.md) and hosted evidence to [DEV0125](../../archive/backend/DEV0125-rehearse-hosted-marketplace-loops.md)
 
 ## Objective and context
 

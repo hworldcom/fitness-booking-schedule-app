@@ -5,7 +5,7 @@
 - Last updated: 2026-10-07
 - Milestone: M0 hosted integration environment
 - Coordination: [COR0004 — Hosted staging deployment](../organisatory/COR0004-hosted-staging-deployment.md)
-- Related records: [DEV0054 — Cloudflare Workers runtime foundation](DEV0054-cloudflare-workers-runtime-foundation.md), [DEV0055 — Hosted Supabase staging environment](../../current/backend/DEV0055-hosted-supabase-staging-environment.md), [DEV0046 — Email OTP registration and application profiles](DEV0046-email-otp-registration-and-application-profiles.md), [DEV0027 — Phantom wallet connection foundation](../blockchain/DEV0027-phantom-wallet-connection-foundation.md), [DEV0047 — Personal wallet linking and replacement](../../current/backend/DEV0047-personal-wallet-linking-and-replacement.md), and replacement hosting readiness in [DEV0138 — Prepare Vercel deployment](DEV0138-prepare-vercel-deployment.md)
+- Related records: [DEV0054 — Cloudflare Workers runtime foundation](DEV0054-cloudflare-workers-runtime-foundation.md), [DEV0055 — Hosted Supabase staging environment](../../current/backend/DEV0055-hosted-supabase-staging-environment.md), [DEV0046 — Email OTP registration and application profiles](DEV0046-email-otp-registration-and-application-profiles.md), [DEV0027 — Phantom wallet connection foundation](../blockchain/DEV0027-phantom-wallet-connection-foundation.md), [DEV0047 — Personal wallet linking and replacement](../../archive/backend/DEV0047-personal-wallet-linking-and-replacement.md), and replacement hosting readiness in [DEV0138 — Prepare Vercel deployment](DEV0138-prepare-vercel-deployment.md)
 
 ## Objective and context
 

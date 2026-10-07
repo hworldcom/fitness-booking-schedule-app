@@ -1,23 +1,9 @@
-import { address, createKeyPairSignerFromBytes } from "@solana/kit";
-
 const CORE_VARIABLES = [
   "DATABASE_URL",
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
   "NEXT_PUBLIC_SITE_URL",
 ];
-
-const SOLANA_VARIABLES = [
-  "SOLANA_CLUSTER",
-  "NEXT_PUBLIC_SOLANA_RPC_URL",
-  "SOLANA_RPC_URL",
-  "NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID",
-  "SOLANA_FEE_SPONSOR_ADDRESS",
-  "SOLANA_FEE_SPONSOR_KEYPAIR_BASE64",
-  "SOLANA_RECOVERY_AUTHORITY_ADDRESS",
-];
-
-const REVIEWED_PROGRAM_ADDRESS = "GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU";
 
 function fail(message) {
   throw new Error(`Vercel environment validation failed: ${message}`);
@@ -94,8 +80,7 @@ function validateCoreEnvironment() {
     0,
     -".supabase.co".length,
   );
-  const databaseUsername = decodeURIComponent(databaseUrl.username);
-  const usernameParts = databaseUsername.split(".");
+  const usernameParts = decodeURIComponent(databaseUrl.username).split(".");
   if (
     usernameParts.length !== 2 ||
     usernameParts[0] === "postgres" ||
@@ -128,7 +113,6 @@ function validateCoreEnvironment() {
   ) {
     fail("NEXT_PUBLIC_SITE_URL must be an exact root HTTPS origin.");
   }
-
   return "hosted-runtime";
 }
 
@@ -140,81 +124,7 @@ function validateMapboxEnvironment() {
   return Boolean(token);
 }
 
-function validateRpcUrl(name, browserVisible) {
-  const url = parsedUrl(name);
-  if (
-    url.protocol !== "https:" ||
-    !url.hostname ||
-    url.hash ||
-    (browserVisible && (url.username || url.password))
-  ) {
-    fail(`${name} must be a valid HTTPS endpoint.`);
-  }
-}
-
-async function validateSolanaEnvironment() {
-  if (
-    !validateCompleteGroup(SOLANA_VARIABLES, "Devnet transaction configuration")
-  ) {
-    return false;
-  }
-
-  if (value("SOLANA_CLUSTER") !== "devnet") {
-    fail("SOLANA_CLUSTER must be devnet for MVP transactions.");
-  }
-  validateRpcUrl("NEXT_PUBLIC_SOLANA_RPC_URL", true);
-  validateRpcUrl("SOLANA_RPC_URL", false);
-
-  const programAddress = value("NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID");
-  if (programAddress !== REVIEWED_PROGRAM_ADDRESS) {
-    fail(
-      "NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID must match the reviewed program identity.",
-    );
-  }
-
-  const sponsorAddressValue = value("SOLANA_FEE_SPONSOR_ADDRESS");
-  const recoveryAddressValue = value("SOLANA_RECOVERY_AUTHORITY_ADDRESS");
-  try {
-    address(sponsorAddressValue);
-    address(recoveryAddressValue);
-  } catch {
-    fail("Solana sponsor and recovery values must be valid addresses.");
-  }
-  if (sponsorAddressValue === recoveryAddressValue) {
-    fail(
-      "The Solana recovery authority must be separate from the fee sponsor.",
-    );
-  }
-
-  const encodedKeypair = value("SOLANA_FEE_SPONSOR_KEYPAIR_BASE64");
-  if (!/^(?:[A-Za-z0-9+/]{4}){21}[A-Za-z0-9+/]{2}==$/.test(encodedKeypair)) {
-    fail("SOLANA_FEE_SPONSOR_KEYPAIR_BASE64 must encode a 64-byte keypair.");
-  }
-  const keypairBytes = new Uint8Array(Buffer.from(encodedKeypair, "base64"));
-  try {
-    if (keypairBytes.byteLength !== 64) {
-      fail("SOLANA_FEE_SPONSOR_KEYPAIR_BASE64 must encode a 64-byte keypair.");
-    }
-    const signer = await createKeyPairSignerFromBytes(keypairBytes);
-    if (signer.address !== sponsorAddressValue) {
-      fail("SOLANA_FEE_SPONSOR_ADDRESS must match its configured keypair.");
-    }
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.startsWith("Vercel environment validation failed:")
-    ) {
-      throw error;
-    }
-    fail("SOLANA_FEE_SPONSOR_KEYPAIR_BASE64 must contain a valid keypair.");
-  } finally {
-    keypairBytes.fill(0);
-  }
-
-  return true;
-}
-
-async function main() {
+function main() {
   const vercelEnvironment = value("VERCEL_ENV") || "local";
   if (
     !["production", "preview", "development", "local"].includes(
@@ -223,21 +133,20 @@ async function main() {
   ) {
     fail("VERCEL_ENV must be production, preview or development when set.");
   }
-
   const runtimeMode = validateCoreEnvironment();
   const mapboxEnabled = validateMapboxEnvironment();
-  const solanaEnabled = await validateSolanaEnvironment();
-
   console.log(
-    `Validated ${vercelEnvironment} Vercel build in ${runtimeMode} mode (Mapbox ${mapboxEnabled ? "configured" : "disabled"}, Devnet transactions ${solanaEnabled ? "configured" : "disabled"}) without printing environment values.`,
+    `Validated ${vercelEnvironment} Vercel build in ${runtimeMode} mode (Mapbox ${mapboxEnabled ? "configured" : "disabled"}) without printing environment values.`,
   );
 }
 
-main().catch((error) => {
+try {
+  main();
+} catch (error) {
   console.error(
     error instanceof Error
       ? error.message
       : "Vercel environment validation failed.",
   );
   process.exitCode = 1;
-});
+}

@@ -5,7 +5,7 @@
 - Last updated: 2026-10-07
 - Milestone: Marketplace M7 hosted rehearsal prerequisite
 - Coordination: None — independent development ticket
-- Related records: [DEV0054 — Cloudflare Workers runtime foundation](DEV0054-cloudflare-workers-runtime-foundation.md), [DEV0056 — Staging release and domain rehearsal](DEV0056-staging-release-and-domain-rehearsal.md), [DEV0125 — Rehearse the hosted marketplace loops](../../current/backend/DEV0125-rehearse-hosted-marketplace-loops.md)
+- Related records: [DEV0054 — Cloudflare Workers runtime foundation](DEV0054-cloudflare-workers-runtime-foundation.md), [DEV0056 — Staging release and domain rehearsal](DEV0056-staging-release-and-domain-rehearsal.md), [DEV0125 — Rehearse the hosted marketplace loops](../../archive/backend/DEV0125-rehearse-hosted-marketplace-loops.md)
 
 ## Objective and context
 

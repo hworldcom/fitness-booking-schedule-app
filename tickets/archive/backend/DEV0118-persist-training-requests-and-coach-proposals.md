@@ -4,7 +4,7 @@
 - Created: 2026-10-04
 - Last updated: 2026-10-05
 - Milestone: Marketplace M2 two-sided demand
-- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
+- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../archive/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
 - Related records: uses completed [DEV0046](DEV0046-email-otp-registration-and-application-profiles.md), [DEV0096](DEV0096-persist-coach-profiles-and-discovery.md) and [DEV0110](DEV0110-activate-coaching-during-account-onboarding.md); cancelled peer [DEV0119](../frontend/DEV0119-present-training-requests-and-coach-proposals.md); completed [DEV0120](DEV0120-persist-group-event-catalogue-and-projections.md) retains an unused nullable proposal-origin compatibility field; cancellation is owned by [DEV0135](../organisatory/DEV0135-narrow-marketplace-mvp-to-two-loops.md)
 
 ## Objective and context

@@ -5,7 +5,7 @@
 - Last updated: 2026-10-04
 - Milestone: Project documentation maintenance
 - Coordination: None — independent development ticket
-- Related records: follows the legacy-record cleanup in [DEV0112 — Prune superseded product tickets](DEV0112-prune-superseded-product-tickets.md); reflects completed delivery from [DEV0100 — Add coach follows and chronological posts](../backend/DEV0100-coach-follows-and-chronological-posts.md) and [DEV0104 — Publish weekly coach availability](../backend/DEV0104-publish-weekly-coach-availability.md); preserves the incomplete validation status of [DEV0047 — Personal wallet linking and replacement](../../current/backend/DEV0047-personal-wallet-linking-and-replacement.md)
+- Related records: follows the legacy-record cleanup in [DEV0112 — Prune superseded product tickets](DEV0112-prune-superseded-product-tickets.md); reflects completed delivery from [DEV0100 — Add coach follows and chronological posts](../backend/DEV0100-coach-follows-and-chronological-posts.md) and [DEV0104 — Publish weekly coach availability](../backend/DEV0104-publish-weekly-coach-availability.md); preserves the incomplete validation status of [DEV0047 — Personal wallet linking and replacement](../../archive/backend/DEV0047-personal-wallet-linking-and-replacement.md)
 
 ## Objective and context
 

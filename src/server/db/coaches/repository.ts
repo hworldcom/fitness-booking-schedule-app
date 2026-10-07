@@ -7,7 +7,6 @@ import type {
   CoachProjection,
   CoachProfileInput,
 } from "@/domain/coaches";
-import { validateEarlyCancellationMinutes } from "@/domain/coach-bookings";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
 import { withDatabaseConnection } from "@/server/db/client";
@@ -30,7 +29,6 @@ type CoachProjectionRow = Readonly<{
   location_confirmed_at: string | Date;
   visibility: string;
   record_source: string;
-  early_cancellation_minutes: number;
   disciplines: string[];
 }>;
 
@@ -39,11 +37,6 @@ type GymProjectionRow = Readonly<{
   name: string;
   public_location_label: string;
   timezone: string;
-}>;
-
-type PublicCoachChainIdentityRow = Readonly<{
-  run_id: string;
-  profile_id: string;
 }>;
 
 export class CoachProfileConflictError extends Error {
@@ -82,8 +75,7 @@ function mapCoach(row: CoachProjectionRow): CoachProjection {
     !Number.isFinite(latitude) ||
     !Number.isFinite(longitude) ||
     row.disciplines.length < 1 ||
-    !row.disciplines.every(isDiscipline) ||
-    !validateEarlyCancellationMinutes(row.early_cancellation_minutes)
+    !row.disciplines.every(isDiscipline)
   ) {
     throw new CoachProfileConflictError();
   }
@@ -108,7 +100,6 @@ function mapCoach(row: CoachProjectionRow): CoachProjection {
     }),
     visibility: row.visibility,
     recordSource: row.record_source,
-    earlyCancellationMinutes: row.early_cancellation_minutes,
     disciplines: Object.freeze([...row.disciplines]),
   });
 }
@@ -132,7 +123,6 @@ function projectionSelect() {
     coach.location_confirmed_at,
     coach.visibility,
     coach.record_source,
-    coach.early_cancellation_minutes,
     array_agg(discipline.discipline order by discipline.sort_order)
       as disciplines
   `);
@@ -218,24 +208,6 @@ export async function publicCoachProfileRecord(slug: string) {
     `);
     if (rows.length > 1) throw new CoachProfileConflictError();
     return rows[0] ? mapCoach(rows[0]) : null;
-  });
-}
-
-export async function publicCoachChainIdentityRecord(profileId: string) {
-  return withDatabaseConnection(async ({ db }) => {
-    const rows = await db.execute<PublicCoachChainIdentityRow>(sql`
-      select coach.run_id, coach.profile_id
-      from app.coach_profiles as coach
-      where coach.profile_id = ${profileId}::uuid
-        and coach.visibility = 'visible'
-    `);
-    if (rows.length > 1) throw new CoachProfileConflictError();
-    return rows[0]
-      ? Object.freeze({
-          runId: rows[0].run_id,
-          profileId: rows[0].profile_id,
-        })
-      : null;
   });
 }
 

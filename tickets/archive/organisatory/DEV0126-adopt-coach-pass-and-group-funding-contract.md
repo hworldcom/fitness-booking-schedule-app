@@ -4,7 +4,7 @@
 - Created: 2026-10-04
 - Last updated: 2026-10-04
 - Milestone: Marketplace M0 product contract
-- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
+- Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../../archive/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
 - Related records: supersedes the group-funding-only product boundary recorded by [DEV0117](../../archive/organisatory/DEV0117-adopt-group-funded-coach-marketplace-mvp.md) without rewriting that history; restores a new implementation path from the partial historical [DEV0097](../../archive/blockchain/DEV0097-create-coach-package-offers.md)
 
 ## Objective and context
@@ -69,8 +69,8 @@ This ticket changes the product contract and delivery map only. It introduces no
 - `npx --no-install prettier --write` completed for the changed documentation and ticket files; `git diff --check` passed after the full implementation update.
 - Application/runtime tests are not applicable to this documentation-only ticket. Runtime proof belongs to DEV0127–DEV0130 and remains explicitly unfinished.
 
-| Criterion | Evidence                                                                 | Result |
-| --------- | ------------------------------------------------------------------------ | ------ |
+| Criterion | Evidence                                                                | Result |
+| --------- | ----------------------------------------------------------------------- | ------ |
 | AC1       | Specification introduction, decision register, flows and milestones     | Pass   |
 | AC2       | Specification state model and DEV0127–DEV0129 boundaries                | Pass   |
 | AC3       | COR0010 direct-work table and matching DEV coordination fields          | Pass   |

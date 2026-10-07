@@ -5,7 +5,7 @@
 - Last updated: 2026-10-07
 - Milestone: M0 hosted integration environment
 - Coordination: None — independent development ticket
-- Related records: [DEV0015 — Supabase database foundation](../../archive/backend/DEV0015-supabase-database-foundation.md), [DEV0040 — Protected access and database context](../../archive/backend/DEV0040-protected-access-and-database-context.md), [DEV0046 — Email OTP registration and application profiles](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md), [DEV0047 — Personal wallet linking and replacement](DEV0047-personal-wallet-linking-and-replacement.md), [DEV0138 — Prepare Vercel deployment](../../archive/backend/DEV0138-prepare-vercel-deployment.md), and historical coordination under [COR0004 — Hosted staging deployment](../../archive/organisatory/COR0004-hosted-staging-deployment.md)
+- Related records: [DEV0015 — Supabase database foundation](../../archive/backend/DEV0015-supabase-database-foundation.md), [DEV0040 — Protected access and database context](../../archive/backend/DEV0040-protected-access-and-database-context.md), [DEV0046 — Email OTP registration and application profiles](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md), cancelled [DEV0047 — Personal wallet linking and replacement](../../archive/backend/DEV0047-personal-wallet-linking-and-replacement.md), [DEV0138 — Prepare Vercel deployment](../../archive/backend/DEV0138-prepare-vercel-deployment.md), and historical coordination under [COR0004 — Hosted staging deployment](../../archive/organisatory/COR0004-hosted-staging-deployment.md)
 
 ## Objective and context
 

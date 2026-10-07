@@ -1,18 +1,18 @@
 # MovX Club
 
-**Find a coach. Buy a pass. Book the session that fits.**
+**Find a coach. Pick a time. Book your session.**
 
-MovX Club is a two-sided hackathon marketplace for martial-arts clients and coaches. The primary flow lets a client buy one or ten coach-specific credits with test EURC on Solana Devnet and reserve an open calendar session. A coach controls the early-cancellation cutoff and decides later cancellation requests. The secondary flow lets participants conditionally fund a group event; its program-controlled pool pays the coach only when the published minimum is reached and otherwise permits exact refunds. Profiles, locations, schedules, bookings, event descriptions, follows and posts remain in the application layer. Client-authored training requests and coach proposals are outside the focused MVP.
+MovX Club is a focused scheduling application for martial-arts clients and coaches. Guests discover fictional coaches and real published availability. Email-authenticated clients reserve one capacity-one private session directly. Coaches manage their public profile, location, recurring one-hour availability and booked schedule.
 
-The former multi-gym membership product is superseded. Relevant evidence remains in retained reusable foundation and cleanup records, additive migrations, the [reserved legacy-identifier register](tickets/README.md#pruned-legacy-product-identifiers) and Git history; 61 older product records were pruned under [DEV0112](tickets/archive/organisatory/DEV0112-prune-superseded-product-tickets.md). Membership runtime was removed under [DEV0101](tickets/archive/backend/DEV0101-retire-multigym-membership-runtime.md). The earlier private-pass work map was cancelled under [COR0009](tickets/archive/organisatory/COR0009-coach-first-training-package-mvp.md), but a new smaller pass design is now explicitly planned under current tickets rather than reopening that history. Current delivery is coordinated under [COR0010](tickets/current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md); do not infer that every target flow is already implemented.
+The `scheduling-only` branch intentionally excludes blockchain, wallets, passes, credits, token payments, group events and social/feed behavior. Historical records and migrations may describe those superseded features, but they do not define the current product or runtime.
 
-Start with the [MVP specification](docs/mvp-spec.md). It is the single current product contract, including authority boundaries, milestones, acceptance scenarios and the judge demo.
+Start with the [MVP specification](docs/mvp-spec.md), the single current product contract. The local scheduling-only branch delivery is recorded by completed [COR0011](tickets/archive/organisatory/COR0011-scheduling-only-product.md); hosted deployment and rehearsal remain separate operational work.
 
 ## Repository guide
 
 | Location                                             | Responsibility                                             |
 | ---------------------------------------------------- | ---------------------------------------------------------- |
-| [docs/mvp-spec.md](docs/mvp-spec.md)                 | Current marketplace behavior and delivery contract.        |
+| [docs/mvp-spec.md](docs/mvp-spec.md)                 | Current scheduling behavior and delivery contract.         |
 | [AGENTS.md](AGENTS.md)                               | Contributor workflow, ticket, validation and commit rules. |
 | [tickets/README.md](tickets/README.md)               | Current and archived development/coordination records.     |
 | [docs/archive/2026-09-18/](docs/archive/2026-09-18/) | Superseded product drafts retained for context only.       |
@@ -20,9 +20,16 @@ Start with the [MVP specification](docs/mvp-spec.md). It is the single current p
 
 ## Current foundation
 
-Delivered reusable foundations include the responsive Next.js application shell, local Supabase/PostgreSQL workflow, server-only database boundary, email-code accounts, protected application profiles, self-service coaching activation, Phantom discovery through Wallet Standard and guarded native Next.js/Vercel deployment tooling. The optional personal-wallet proof flow is implemented locally under [DEV0047](tickets/current/backend/DEV0047-personal-wallet-linking-and-replacement.md), but remains in progress pending its required real-Phantom and signed-in responsive-keyboard evidence.
+Delivered reusable foundations include:
 
-Persistent self-declared coach profiles, coach-selected public locations and list-based coach discovery are implemented under [DEV0096](tickets/archive/backend/DEV0096-persist-coach-profiles-and-discovery.md); the protected coach workspace and explicit-slot baseline are implemented under [DEV0104](tickets/archive/backend/DEV0104-publish-weekly-coach-availability.md); [DEV0114](tickets/archive/backend/DEV0114-persist-recurring-coach-availability.md) adds exact one-hour recurring rules plus durable seven-day occurrences; and [DEV0115](tickets/archive/frontend/DEV0115-add-coach-schedule-calendar.md) supplies the responsive coach working-week editor and dated public schedule. One-way follows, coach-only posts, public recent posts and the chronological Following feed are implemented under [DEV0100](tickets/archive/backend/DEV0100-coach-follows-and-chronological-posts.md). Mapbox operational validation remains open under DEV0108. [DEV0127](tickets/archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md) implements and adversarially tests the local pair-ledger purchase contract; [DEV0131](tickets/archive/blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md) adds the local deterministic booking-credit reserve, return and consume lifecycle; [DEV0132](tickets/archive/blockchain/DEV0132-make-coach-pass-operations-platform-funded.md) makes every local coach-pass fee and account-rent charge platform-funded without replacing user authority; and [DEV0128](tickets/archive/backend/DEV0128-persist-credit-backed-private-bookings.md) supplies capacity-one booking persistence, cancellation decisions and actor-scoped credit projections. [DEV0120](tickets/archive/backend/DEV0120-persist-group-event-catalogue-and-projections.md) supplies coach-owned event metadata and honest finalized pool/contribution projection storage, while [DEV0121](tickets/archive/blockchain/DEV0121-implement-group-event-funding-program.md) supplies the locally validated EventPool, Contribution, EURC vault, settlement, payout and pull-refund program contract. The client-card interface and real Devnet pass proof remain open under DEV0129 and DEV0130. DEV0122 now has a local group-funding prepare/simulate/sign/submit/recover adapter, but still requires deployment and public Devnet rehearsal; its interface remains under DEV0123. Retired gym/membership routes and the cancelled request/proposal workflow are not current product surfaces.
+- a responsive Next.js application shell and native Vercel build;
+- local/hosted Supabase PostgreSQL with a server-only database boundary;
+- email-code accounts, protected profiles and self-service coaching activation;
+- owner-scoped coach profiles with one public provider-neutral location;
+- list-first coach discovery with optional Mapbox enhancement;
+- recurring one-hour availability, deterministic dated occurrences and a responsive coach calendar.
+
+Direct scheduling-only booking and runtime cleanup are active under COR0011. The former membership, wallet, payment, group-event and social features are not current product surfaces.
 
 ## Run locally
 
@@ -41,7 +48,7 @@ Create an ignored `.env.local` from [`.env.example`](.env.example) and set the r
 DATABASE_URL=postgresql://repx_runtime_login:postgres@127.0.0.1:55322/postgres
 ```
 
-For the standard application:
+Run the standard application:
 
 ```sh
 npm run dev
@@ -50,11 +57,11 @@ npm run build
 npm run start
 ```
 
-Both standard modes use [localhost:3100](http://localhost:3100). Development mode compiles routes on demand; the production preview is better for performance review.
+Both modes use [localhost:3100](http://localhost:3100). Development compiles routes on demand; the production preview is better for performance review.
 
 ## Local email sign-in
 
-Public browsing does not require sign-in. To exercise email identity, stop the database-only profile and start the Auth-enabled local stack:
+Public browsing does not require sign-in. To exercise identity and booking, stop the database-only profile and start the Auth-enabled local stack:
 
 ```sh
 npm run db:stop
@@ -65,57 +72,29 @@ npm run db:runtime
 
 Copy the printed public `API_URL` and `PUBLISHABLE_KEY` (or legacy `ANON_KEY`) to `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `.env.local`. Keep `NEXT_PUBLIC_SITE_URL=http://localhost:3100`. Never expose the service-role/secret key.
 
-Open `/sign-in`, request a code and read it from local Mailpit at [127.0.0.1:55324](http://127.0.0.1:55324). The first verified login creates an application profile, then offers Find a coach or Offer coaching as starting paths. Offer coaching immediately records owner-scoped activation without administrator approval and opens coach-profile setup; it does not publish or verify the coach. Subsequent codes restore the same account. Optional personal-wallet linking is a separate signed-message proof and connecting Phantom alone does not authenticate or activate coaching.
+Open `/sign-in`, request a code and read it from local Mailpit at [127.0.0.1:55324](http://127.0.0.1:55324). The first verified login creates an application profile and offers Find a coach or Offer coaching. Offer coaching records owner-scoped activation and opens setup; it does not publish or verify the coach.
 
-To exercise owner flows as the five existing fictional coaches, provision their passwordless local accounts after `auth:start` and `db:reset`:
+To exercise owner flows as the five fictional coaches:
 
 ```sh
 npm run auth:provision:coaches
 ```
 
-Use `daniel.park@coaches.movx.test`, `sam.lee@coaches.movx.test`, `nora.klein@coaches.movx.test`, `idris.malik@coaches.movx.test` or `elif.demir@coaches.movx.test` on `/sign-in`; request each code normally and read it from Mailpit. These reserved `.test` addresses are fictional identifiers, not credentials. The command refuses non-loopback Auth/database targets, supplies or exposes no password, and converts only the matching seeded local profiles to owner-managed demo records. It is safe to rerun. `npm run db:reset` removes the disposable local accounts and is the supported rollback; this workflow does not create hosted accounts.
+Use `daniel.park@coaches.movx.test`, `sam.lee@coaches.movx.test`, `nora.klein@coaches.movx.test`, `idris.malik@coaches.movx.test` or `elif.demir@coaches.movx.test` on `/sign-in`. These reserved `.test` addresses are fictional identifiers, not credentials. The command refuses non-loopback targets and is safe to rerun. `npm run db:reset` removes disposable local accounts.
 
 ## Mapbox configuration
 
-Explore remains a usable server-backed coach list without Mapbox. To enable the synchronized map and coach location picker, set `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` in the ignored environment file before building. Next.js embeds this public value in the browser bundle at build time.
+Explore remains a usable server-backed coach list without Mapbox. To enable the synchronized map and coach location picker, set `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` in the ignored environment file before building.
 
-Create separate non-default public (`pk`) tokens for local, staging and production use. Grant only the public scopes required by the configured map style and Geocoding API (`styles:read` and `fonts:read` are required for the map), then restrict each token to its approved browser origin. Include `http://localhost:3100` explicitly for local development; use `https://staging.movx.club` for staging. Never place a secret (`sk`) token in `NEXT_PUBLIC_*`, source files, logs or tickets.
+Create separate non-default public (`pk`) tokens for local, preview and production use. Grant only required public scopes and restrict each token to approved browser origins. Never place a secret (`sk`) token in `NEXT_PUBLIC_*`, source, logs or tickets.
 
-Independent-place search uses an explicit Mapbox Geocoding v6 request with `permanent=true` and `autocomplete=false`; it does not use temporary Search Box results or request device location. Permanent storage requires an eligible Mapbox account with a valid payment method or enterprise agreement. Confirm that eligibility before persisting a searched location. Existing fictional gym coordinates and manual fallback coordinates do not call Mapbox geocoding.
-
-## Solana configuration
-
-Current and planned chain work is Devnet-only. The MovX platform pays every MVP transaction fee and rent-exempt account deposit, so clients, coaches and participants need test EURC for marketplace value but no test SOL. `.env.example` documents the public browser RPC, private server RPC and bounded platform-payer variable names. Credentialed RPC URLs and sponsor keypairs are server-only and must never use a `NEXT_PUBLIC_` prefix or enter committed configuration.
-
-Both payment loops use Circle's official Solana Devnet EURC mint. Users still authorize and supply the exact pass price or seat contribution; platform sponsorship supplies only SOL fees and account rent and grants no client, coach, participant, recovery or upgrade authority. A pass offer freezes one/ten credits, exact price, coach recipient, authority epoch, purchase window and optional client restriction. The first purchase creates one `CoachClientCredits` program-derived account (PDA) for that coach/client pair; later purchases reuse it. A separate EventPool PDA freezes each group event's price, capacity, deadline and recipient, with deterministic payout or pull-refund behavior. The removed multi-gym EURC runtime remains historical and is not reused as current product configuration. No mainnet transaction, production custody, attendance guarantee, dispute resolution or real-money claim is supported.
-
-The reviewed program identity is `GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU`, shared by `declare_id!`, the generated client and runtime configuration. Deployment and upgrade authority must use operator-controlled material that is separate from the platform payer and every user/recovery wallet. Before an explicitly approved Devnet deployment, build and confirm that the local program key resolves to that identity:
-
-```sh
-anchor build
-solana-keygen pubkey target/deploy/movx_coach_pass-keypair.json
-solana program show --url devnet GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU
-```
-
-For the approved initial deployment, use explicit operator key paths; do not rely on the default Solana CLI wallet:
-
-```sh
-solana program deploy \
-  --url devnet \
-  --keypair "$DEPLOYER_KEYPAIR_PATH" \
-  --fee-payer "$DEPLOYER_KEYPAIR_PATH" \
-  --program-id target/deploy/movx_coach_pass-keypair.json \
-  --upgrade-authority "$UPGRADE_AUTHORITY_KEYPAIR_PATH" \
-  target/deploy/movx_coach_pass.so
-```
-
-Afterward, verify the executable program ID and upgrade authority with `solana program show`, set `NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID` to the same reviewed address, and only then run read-only readiness checks. Set `SOLANA_RECOVERY_AUTHORITY_ADDRESS` to the public address of the separately controlled wallet that approves coach initialization and replacement; its private key remains in that wallet and never enters application configuration. Never reuse `SOLANA_FEE_SPONSOR_KEYPAIR_BASE64` for recovery, deployment or upgrades. Deployment, wallet signing and transaction submission are real chain mutations and require a reviewed summary plus explicit approval.
+Independent-place search uses Mapbox Geocoding v6 with `permanent=true` only after explicit submission and confirmation. Permanent result storage requires an eligible Mapbox account. Existing fictional gym coordinates and manual fallback coordinates do not call geocoding.
 
 ## Vercel deployment
 
-Vercel can run this repository through its native Next.js runtime. The checked-in [Vercel configuration](vercel.json) selects the Next.js preset and runs `npm run build:vercel`, which validates hosted settings without printing their values before invoking `next build`. Vercel uses the repository's `package-lock.json` and `engines.node` declaration; select Node.js 24.x in project settings and keep the project root at the repository root. Do not set a custom output directory.
+[vercel.json](vercel.json) selects native Next.js and runs `npm run build:vercel`, which validates hosted settings without printing values before `next build`. Select Node.js 24.x in Vercel, keep the project root at the repository root and do not set a custom output directory.
 
-A configuration-free deployment remains useful as the existing public preview: leave all four values below unset and database-backed identity and owner operations stay disabled. To enable the hosted runtime, set all four together for the same Vercel environment:
+A configuration-free deployment provides public preview pages. Hosted identity/scheduling requires all four values in the same environment:
 
 ```text
 DATABASE_URL
@@ -124,13 +103,11 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 NEXT_PUBLIC_SITE_URL
 ```
 
-Use the Supabase transaction-pooler connection on port `6543` with a dedicated application login that inherits `app_runtime`; do not use the database owner. The server connection boundary already limits Postgres.js to one connection, disables prepared statements and requires Transport Layer Security (TLS) outside local development. `NEXT_PUBLIC_SUPABASE_URL` must be the root HTTPS project URL, the publishable value must be a public publishable/legacy anon key, and `NEXT_PUBLIC_SITE_URL` must be the exact root HTTPS origin users visit.
+Use the Supabase transaction pooler on port `6543` with a dedicated application login inheriting `app_runtime`; do not use the database owner. The server connection uses one client per operation, disables prepared statements and requires Transport Layer Security outside local development.
 
-The site origin is also the same-origin security boundary for sign-in, account mutations and sponsored Devnet operations. Scope production variables to the stable production domain. A generated `*.vercel.app` preview URL must remain in configuration-free public preview mode unless that exact origin receives its own environment values and is allow-listed in Supabase Auth and every browser-token restriction. Do not point a preview deployment at production data merely to make protected actions appear available.
+`NEXT_PUBLIC_SITE_URL` is the same-origin boundary for sign-in and scheduling mutations. Generated preview URLs remain configuration-free unless that exact origin has matching Vercel values and Supabase Auth allow-list entries. Mapbox remains optional and uses a separately restricted public token.
 
-Mapbox remains optional. If enabled, add `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` as a separately restricted public `pk` token for that exact origin. Devnet transactions also remain optional while their integration tickets are open; enabling them requires the complete Solana group from [`.env.example`](.env.example). The build guard enforces Devnet, the reviewed program ID, valid HTTPS Remote Procedure Call (RPC) endpoints, a matching fee-sponsor keypair and a distinct recovery authority. Add private values only through Vercel's encrypted environment settings and never paste them into repository files or deployment logs.
-
-Choose the Vercel function region nearest the hosted Supabase database once its region is known; this is intentionally not hardcoded in the repository. Before importing or redeploying, reproduce the guarded public-preview build locally:
+Choose a Vercel function region near the hosted Supabase database. Before import or redeploy, reproduce the public-preview guard locally:
 
 ```sh
 env \
@@ -139,17 +116,10 @@ env \
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY= \
   NEXT_PUBLIC_SITE_URL= \
   NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN= \
-  SOLANA_CLUSTER= \
-  NEXT_PUBLIC_SOLANA_RPC_URL= \
-  SOLANA_RPC_URL= \
-  NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID= \
-  SOLANA_FEE_SPONSOR_ADDRESS= \
-  SOLANA_FEE_SPONSOR_KEYPAIR_BASE64= \
-  SOLANA_RECOVERY_AUTHORITY_ADDRESS= \
   npm run build:vercel
 ```
 
-This prepares and verifies the deployment artifact only. Project creation, domain assignment, hosted migrations, Auth redirect configuration and the real Devnet marketplace rehearsal remain separate operator actions.
+Project creation, domain assignment, hosted migrations and Auth redirect configuration remain explicit operator actions.
 
 ## Database operations
 
@@ -162,7 +132,7 @@ npm run test:db
 npm run db:lint
 ```
 
-The local stack uses port `55322`. `db:reset` recreates only the disposable local database from checked-in migrations/seeds; never run a linked reset against hosted data. Legacy multi-gym tables remain in additive migration history until a separate retention ticket explicitly reviews hosted data and rollback requirements.
+The local stack uses port `55322`. `db:reset` recreates only the disposable local database from checked-in migrations/seeds; never run a linked reset against hosted data. Historical tables remain in additive migration history until a separate retention ticket reviews data and rollback requirements.
 
 ## Checks
 
@@ -170,7 +140,6 @@ The local stack uses port `55322`. `db:reset` recreates only the disposable loca
 npm test
 npm run test:auth
 npm run test:coach-availability
-npm run test:wallet-auth
 npm run lint
 npm run typecheck
 npm run format:check
@@ -178,20 +147,19 @@ npm run build
 npm run test:e2e
 ```
 
-`test:auth`, `test:coach-availability` and `test:wallet-auth` require the configured Auth-enabled local stack and an already-running application on port 3100. The coach-availability rehearsal creates a disposable local account and coach profile, then publishes, edits and withdraws one slot while checking its public projection. Database checks require the isolated local database. Playwright starts its own production server on port 3101 and writes ignored evidence to `test-results/`.
+`test:auth` and `test:coach-availability` require the configured Auth-enabled local stack and a running application on port 3100. Database checks require isolated local PostgreSQL. Playwright starts a production server on port 3101 and writes ignored evidence to `test-results/`.
 
 ## Application structure
 
-- `src/app/`: thin App Router pages, route handlers and shared styles.
-- `src/features/`: capability-owned browser behavior and screens.
-- `src/domain/`: framework-independent validation and state rules, including future marketplace and event-funding rules.
+- `src/app/`: thin App Router pages, server actions and shared styles.
+- `src/features/`: capability-owned screens and browser behavior.
+- `src/domain/`: framework-independent coach, availability and booking rules.
 - `src/auth/` and `src/server/auth/`: browser/server Supabase identity boundaries.
-- `src/server/identity/` and `src/server/wallet/`: application profile and personal-wallet proof services.
-- `src/server/db/`: server-only PostgreSQL configuration, schema mappings and narrow repositories; booking and group-event persistence are complete under DEV0128 and DEV0120.
-- Mapbox remains a browser-side rendering/selection adapter behind a client-only lazy boundary; provider-neutral coach and slot location snapshots remain in PostgreSQL, and list discovery works without Mapbox.
-- `src/solana/`: shared chain contracts plus browser-safe Wallet Standard clients; the local coach-pass purchase contract is complete under DEV0127, local booking-credit transitions are complete under DEV0131, platform-funded fees/rent are complete under DEV0132, the local group-event funding contract is complete under DEV0121, and local recoverable Devnet adapters now exist under DEV0122/DEV0130 while real Devnet evidence remains open.
-- `supabase/`: sole additive SQL migration history, deterministic seeds and database tests.
-- `tests/`: unit, integration and browser validation.
+- `src/server/identity/` and `src/server/coaches/`: application profile and scheduling services.
+- `src/server/db/`: server-only PostgreSQL configuration, schema mappings and narrow actor-scoped repositories.
+- `src/mapbox/`: optional browser location adapter; the authoritative list works without it.
+- `supabase/`: additive SQL migration history, deterministic seeds and database tests.
+- `tests/`: unit, database and browser validation.
 - `public/`: local illustrative assets only; no real coach or venue affiliation is implied.
 
 Keep product requirements in the specification, workflow rules in `AGENTS.md`, and implementation evidence in development tickets.

@@ -1,88 +1,154 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  validateEarlyCancellationMinutes,
-  validateVerifiedBookingCreditOperation,
-  validateVerifiedCoachCreditProjection,
+  clientBookingTimeline,
+  confirmedBookingForSlot,
+  isCanonicalUuid,
+  isCoachBookingStatus,
+  isFutureConfirmedBooking,
+  type PrivateBookingProjection,
 } from "@/domain/coach-bookings";
 
-const PROGRAM = "GvZdpXGX6N25xfHipgzh3Td3NZBkt7e36AougHi4v1MU";
-const COACH = "7EcXv8cRWYEbaYjvcXn37Bq6STqS2QwRkX8EBXjKn5Ge";
-const CLIENT = "3idZ8hddpfAZ1JWW3gmH7YD6yokUuFDb1Txem2H6kPFe";
-const CREDITS = "HULis5PpFFL5ajU9k8WzPjtJ8wZKXg4HHbKVvSEhFCfR";
-const RESERVATION = "GEUMk7SoYEsAvTgbFxohHTPbDfdX1citFT6Xxr6E4ULr";
-const OFFER = "77HtrAoMVcZEafdTQxVqNee7VQ8fdRyMNeyHMHN3UXqU";
-const SIGNATURE = "2".repeat(88);
-
-test("coach cancellation policy accepts a bounded minute value", () => {
-  assert.equal(validateEarlyCancellationMinutes(0), true);
-  assert.equal(validateEarlyCancellationMinutes(1440), true);
-  assert.equal(validateEarlyCancellationMinutes(10080), true);
-  assert.equal(validateEarlyCancellationMinutes(-1), false);
-  assert.equal(validateEarlyCancellationMinutes(10081), false);
-  assert.equal(validateEarlyCancellationMinutes(1.5), false);
+test("booking identifiers require canonical UUIDs", () => {
+  assert.equal(isCanonicalUuid("11111111-1111-4111-8111-111111111111"), true);
+  assert.equal(isCanonicalUuid("11111111-1111-1111-1111-111111111111"), false);
+  assert.equal(isCanonicalUuid("not-a-booking-id"), false);
 });
 
-test("credit projection evidence must conserve purchased credits", () => {
-  const evidence = Object.freeze({
-    programAddress: PROGRAM,
-    coachProfileId: "11111111-1111-4111-8111-111111111111",
-    coachAuthorityAddress: COACH,
-    clientWalletAddress: CLIENT,
-    coachClientCreditsAddress: CREDITS,
-    availableCredits: BigInt(8),
-    reservedCredits: BigInt(2),
-    totalPurchased: BigInt(10),
-    purchaseCount: BigInt(1),
-    nextPurchaseNonce: BigInt(1),
-    lastOfferAddress: OFFER,
-    lastPurchaseAt: "2026-10-04T10:00:00.000Z",
-    transactionSignature: SIGNATURE,
-    observedSlot: BigInt(100),
-  });
-  assert.equal(validateVerifiedCoachCreditProjection(evidence), true);
-  assert.equal(
-    validateVerifiedCoachCreditProjection({
-      ...evidence,
-      availableCredits: BigInt(9),
-      reservedCredits: BigInt(2),
-    }),
-    false,
-  );
+test("the scheduling lifecycle exposes only current terminal states", () => {
+  for (const status of ["confirmed", "cancelled", "completed"]) {
+    assert.equal(isCoachBookingStatus(status), true);
+  }
+  for (const removedState of [
+    "pending",
+    "cancellation-requested",
+    "denied",
+    "expired",
+  ]) {
+    assert.equal(isCoachBookingStatus(removedState), false);
+  }
 });
 
-test("booking evidence binds the immutable booking and chain snapshot", () => {
-  const evidence = Object.freeze({
-    operationId: "22222222-2222-4222-8222-222222222222",
-    programAddress: PROGRAM,
-    coachAuthorityAddress: COACH,
-    clientWalletAddress: CLIENT,
-    coachClientCreditsAddress: CREDITS,
-    creditReservationAddress: RESERVATION,
-    bookingId: "33333333-3333-4333-8333-333333333333",
-    scheduledStartUnixSeconds: BigInt(1_800_000_000),
-    earlyReturnUntilUnixSeconds: BigInt(1_799_913_600),
-    reservationStatus: "reserved" as const,
-    availableCredits: BigInt(9),
-    reservedCredits: BigInt(1),
-    totalPurchased: BigInt(10),
-    transactionSignature: SIGNATURE,
-    observedSlot: BigInt(101),
-  });
-  assert.equal(validateVerifiedBookingCreditOperation(evidence), true);
-  assert.equal(
-    validateVerifiedBookingCreditOperation({
-      ...evidence,
-      earlyReturnUntilUnixSeconds:
-        evidence.scheduledStartUnixSeconds + BigInt(1),
+test("booking projections carry schedule state without financial references", () => {
+  const booking: PrivateBookingProjection = Object.freeze({
+    id: "11111111-1111-4111-8111-111111111111",
+    slotId: "22222222-2222-4222-8222-222222222222",
+    coachProfileId: "33333333-3333-4333-8333-333333333333",
+    coachDisplayName: "Schedule Coach",
+    coachSlug: "schedule-coach",
+    clientProfileId: "44444444-4444-4444-8444-444444444444",
+    clientDisplayName: "Schedule Client",
+    status: "confirmed",
+    scheduledStartAt: "2026-10-08T10:00:00.000Z",
+    scheduledEndAt: "2026-10-08T11:00:00.000Z",
+    coachTimezone: "Europe/Berlin",
+    location: Object.freeze({
+      kind: "gym",
+      gymName: "Northside Combat",
+      publicLabel: "Berlin",
     }),
-    false,
+    cancelledBy: null,
+    cancelledAt: null,
+    completedAt: null,
+    createdAt: "2026-10-07T10:00:00.000Z",
+  });
+
+  assert.deepEqual(Object.keys(booking).sort(), [
+    "cancelledAt",
+    "cancelledBy",
+    "clientDisplayName",
+    "clientProfileId",
+    "coachDisplayName",
+    "coachProfileId",
+    "coachSlug",
+    "coachTimezone",
+    "completedAt",
+    "createdAt",
+    "id",
+    "location",
+    "scheduledEndAt",
+    "scheduledStartAt",
+    "slotId",
+    "status",
+  ]);
+});
+
+test("client booking timeline prioritizes future confirmed sessions", () => {
+  const createBooking = (
+    id: string,
+    scheduledStartAt: string,
+    status: PrivateBookingProjection["status"],
+  ): PrivateBookingProjection =>
+    Object.freeze({
+      id,
+      slotId: "22222222-2222-4222-8222-222222222222",
+      coachProfileId: "33333333-3333-4333-8333-333333333333",
+      coachDisplayName: "Schedule Coach",
+      coachSlug: "schedule-coach",
+      clientProfileId: "44444444-4444-4444-8444-444444444444",
+      clientDisplayName: "Schedule Client",
+      status,
+      scheduledStartAt,
+      scheduledEndAt: new Date(
+        new Date(scheduledStartAt).getTime() + 60 * 60 * 1000,
+      ).toISOString(),
+      coachTimezone: "Europe/Berlin",
+      location: Object.freeze({
+        kind: "gym",
+        gymName: "Northside Combat",
+        publicLabel: "Berlin",
+      }),
+      cancelledBy: status === "cancelled" ? "client" : null,
+      cancelledAt: status === "cancelled" ? "2026-10-07T11:00:00.000Z" : null,
+      completedAt: status === "completed" ? "2026-10-07T09:00:00.000Z" : null,
+      createdAt: "2026-10-07T08:00:00.000Z",
+    });
+  const laterUpcoming = createBooking(
+    "50000000-0000-4000-8000-000000000001",
+    "2026-10-09T12:00:00.000Z",
+    "confirmed",
+  );
+  const nextUpcoming = createBooking(
+    "50000000-0000-4000-8000-000000000002",
+    "2026-10-08T12:00:00.000Z",
+    "confirmed",
+  );
+  const cancelledFuture = createBooking(
+    "50000000-0000-4000-8000-000000000003",
+    "2026-10-10T12:00:00.000Z",
+    "cancelled",
+  );
+  const completedPast = createBooking(
+    "50000000-0000-4000-8000-000000000004",
+    "2026-10-07T08:00:00.000Z",
+    "completed",
+  );
+  const referenceTime = "2026-10-08T09:00:00.000Z";
+
+  const timeline = clientBookingTimeline(
+    [completedPast, laterUpcoming, cancelledFuture, nextUpcoming],
+    referenceTime,
+  );
+
+  assert.deepEqual(
+    timeline.upcoming.map((booking) => booking.id),
+    [nextUpcoming.id, laterUpcoming.id],
+  );
+  assert.deepEqual(
+    timeline.history.map((booking) => booking.id),
+    [cancelledFuture.id, completedPast.id],
+  );
+  assert.equal(isFutureConfirmedBooking(nextUpcoming, referenceTime), true);
+  assert.equal(isFutureConfirmedBooking(cancelledFuture, referenceTime), false);
+  assert.equal(
+    confirmedBookingForSlot(
+      [cancelledFuture, laterUpcoming, nextUpcoming],
+      nextUpcoming.slotId,
+    )?.id,
+    laterUpcoming.id,
   );
   assert.equal(
-    validateVerifiedBookingCreditOperation({
-      ...evidence,
-      creditReservationAddress: "not-an-address",
-    }),
-    false,
+    confirmedBookingForSlot([cancelledFuture], cancelledFuture.slotId),
+    null,
   );
 });
