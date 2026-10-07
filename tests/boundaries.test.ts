@@ -176,7 +176,8 @@ test("application repositories own database connections per request", () => {
   );
   assert.doesNotMatch(client, /let connection\s*:/);
   assert.doesNotMatch(client, /fetch_types:\s*false/);
-  assert.match(client, /requestDatabaseRuntimeConfig/);
+  assert.match(client, /connection \?\? createDatabaseConnection\(\)/);
+  assert.doesNotMatch(client, /Cloudflare|Hyperdrive|MOVX_DATABASE/);
   assert.match(
     client,
     /finally\s*{[\s\S]*queryClient\.end\(\{ timeout: 1 \}\)/,

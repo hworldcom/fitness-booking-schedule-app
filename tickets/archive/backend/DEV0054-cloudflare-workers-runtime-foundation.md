@@ -4,7 +4,7 @@
 - Created: 2026-09-23
 - Last updated: 2026-09-23
 - Milestone: M0 hosted integration environment
-- Coordination: [COR0004 — Hosted staging deployment](../../current/organisatory/COR0004-hosted-staging-deployment.md)
+- Coordination: [COR0004 — Hosted staging deployment](../organisatory/COR0004-hosted-staging-deployment.md)
 - Related records: [DEV0025 — Next.js backend boundary](../../archive/backend/DEV0025-nextjs-backend-boundary.md), [DEV0046 — Email OTP registration and application profiles](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md), and DEV0053 — Distinct personal and club guide
 
 ## Objective and context

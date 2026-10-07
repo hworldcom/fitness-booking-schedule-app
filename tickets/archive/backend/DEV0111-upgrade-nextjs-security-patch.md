@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Project maintenance and staging security
 - Coordination: None — independent development ticket
-- Related records: staging runtime baseline in [DEV0054 — Cloudflare Workers runtime foundation](DEV0054-cloudflare-workers-runtime-foundation.md), hosted release work in [DEV0056 — Staging release and domain rehearsal](../../current/backend/DEV0056-staging-release-and-domain-rehearsal.md), and runtime follow-up [DEV0093 — Reduce Cloudflare authentication and render CPU](../../current/backend/DEV0093-reduce-cloudflare-auth-render-cpu.md)
+- Related records: staging runtime baseline in [DEV0054 — Cloudflare Workers runtime foundation](DEV0054-cloudflare-workers-runtime-foundation.md), hosted release work in [DEV0056 — Staging release and domain rehearsal](DEV0056-staging-release-and-domain-rehearsal.md), and runtime follow-up [DEV0093 — Reduce Cloudflare authentication and render CPU](DEV0093-reduce-cloudflare-auth-render-cpu.md)
 
 ## Objective and context
 

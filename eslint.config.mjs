@@ -7,10 +7,7 @@ export default defineConfig([
   ...nextTs,
   globalIgnores([
     ".next/**",
-    ".vinext/**",
-    ".wrangler/**",
     "clients/js/src/generated/**",
-    "dist/**",
     "out/**",
     "next-env.d.ts",
     "test-results/**",

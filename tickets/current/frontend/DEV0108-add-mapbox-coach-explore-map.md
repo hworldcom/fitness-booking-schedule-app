@@ -2,7 +2,7 @@
 
 - Status: In progress
 - Created: 2026-10-03
-- Last updated: 2026-10-04
+- Last updated: 2026-10-07
 - Milestone: Coach-first M1 location discovery
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
 - Related records: transferred from cancelled [COR0009 — Coach-first private-class booking MVP](../../archive/organisatory/COR0009-coach-first-training-package-mvp.md) because coach/location discovery remains reusable; depends on provider-neutral coach-location persistence and optional gym affiliation from [DEV0096 — Persist coach profiles and discovery](../../archive/backend/DEV0096-persist-coach-profiles-and-discovery.md), backed by the simplified fictional gyms from [DEV0109 — Retire membership schema and preserve gyms](../../archive/backend/DEV0109-retire-membership-schema-and-preserve-gyms.md); consumes stable slot-location projections from [DEV0104 — Publish weekly coach availability](../../archive/backend/DEV0104-publish-weekly-coach-availability.md); contract adopted by [DEV0107 — Adopt the Mapbox coach-discovery contract](../../archive/organisatory/DEV0107-adopt-mapbox-coach-discovery-contract.md)
@@ -44,7 +44,7 @@ Missing configuration, token rejection, quota exhaustion, network/CSP/WebGL fail
 2. Define pure browser-configuration and Geocoding v6 response contracts. Use explicit submit-driven `permanent=true`/`autocomplete=false` forward-geocoding requests instead of Search Box so no temporary provider result can enter persistence.
 3. Build the client-only lazy map boundary, synchronized cards/pins and filter projection while retaining the server-backed list, profile navigation and bounded missing/invalid/provider-failure states.
 4. Replace raw-coordinate-first independent setup with an accessible search/select/drag/confirm picker when configured, retain an explicit manual fallback, and narrow permanent provider validation to confirmed Mapbox input through DEV0096's existing owner mutation.
-5. Add deterministic unit/browser/static coverage and run lint, typecheck, formatting plus Next.js/Cloudflare builds. Keep the ticket `In progress` until a real restricted token proves the configured map/picker flow and staging usage monitoring.
+5. Add deterministic unit/browser/static coverage and run lint, typecheck, formatting plus standard Next.js and guarded Vercel builds. Keep the ticket `In progress` until a real restricted token proves the configured map/picker flow and staging usage monitoring.
 
 ## Acceptance criteria
 
@@ -58,7 +58,7 @@ Missing configuration, token rejection, quota exhaustion, network/CSP/WebGL fail
 
 ## Validation plan
 
-Use deterministic adapter tests for successful map state, invalid configuration and provider failures; service/authorization tests owned with DEV0096 for confirmed location mutation; browser tests at mobile/desktop widths for list-first rendering, filter synchronization, card/pin selection, keyboard navigation and graceful map failure; static scans for secret tokens, multiple map initialization and prohibited geolocation APIs. Run relevant unit, lint, typecheck, formatting, Next.js and Cloudflare builds. On staging, verify the URL-restricted token, attribution, selected-location persistence through the permanent flow and Mapbox usage dashboard/alerts without recording the token.
+Use deterministic adapter tests for successful map state, invalid configuration and provider failures; service/authorization tests owned with DEV0096 for confirmed location mutation; browser tests at mobile/desktop widths for list-first rendering, filter synchronization, card/pin selection, keyboard navigation and graceful map failure; static scans for secret tokens, multiple map initialization and prohibited geolocation APIs. Run relevant unit, lint, typecheck, formatting, standard Next.js and guarded Vercel builds. On staging, verify the URL-restricted token, attribution, selected-location persistence through the permanent flow and Mapbox usage dashboard/alerts without recording the token.
 
 ## Implementation record
 
@@ -82,7 +82,7 @@ Implementation started on 2026-10-04. The application work, fallback verificatio
 - `src/features/coaches/coach-location-picker.tsx` and `src/features/coaches/mapbox-location-picker-map.tsx`: provide independent-location search, selection, draggable pin, explicit confirmation and manual fallback.
 - `src/features/coaches/coach-discovery.tsx`, `src/features/coaches/coach-profile-editor.tsx`, `src/app/explore/page.tsx`, `src/app/profile/coach/page.tsx`, `src/app/profile/coach/actions.ts` and `src/domain/coaches.ts`: connect the new result/picker surfaces to existing discovery and owner-only persistence contracts and enforce confirmation/provider rules.
 - `src/app/layout.tsx` and `src/app/coach-discovery.css`: load Mapbox CSS once and define responsive accessible list/map/picker presentation.
-- `.env.example`, `README.md`, `scripts/deploy-staging-worker.mjs` and `wrangler.jsonc`: document and validate required environment/deployment configuration without committing a value.
+- `.env.example`, `README.md`, `scripts/validate-vercel-environment.mjs` and `vercel.json`: document and validate required environment/deployment configuration without committing a value. DEV0139 removed the earlier Cloudflare-only script/configuration after the hosting change.
 - `tests/mapbox.test.ts`, `tests/coaches.test.ts`, `tests/staging-deployment.test.ts` and `tests/browser/coach-discovery.spec.ts`: cover provider contracts, domain validation, deployment secret handling and tokenless desktop/mobile behavior.
 - No schema, migration or persisted data shape changed. DEV0096's provider-neutral location fields and owner mutation remain authoritative.
 
@@ -110,7 +110,7 @@ The existing provider-neutral database shape is unchanged. Newly confirmed perma
 - Passed `npm run typecheck` and `npm run lint`.
 - Passed `npm run build` for the Next.js production build with no public Mapbox token configured.
 - Passed `npm run build` again with an ignored `.env.local` containing a valid public-token shape. Next.js loaded the local environment and completed the production build without exposing the token value.
-- Passed `npm run build:vinext`. The build emitted the expected missing-Mapbox-configuration warning and a large minified-chunk warning; Mapbox remains isolated behind the dynamic client boundary.
+- Historical validation passed `npm run build:vinext` before DEV0139 retired that adapter path. Current completion validation uses the standard Next.js and guarded Vercel builds; Mapbox remains isolated behind the dynamic client boundary.
 - Passed `npm run format:check`, the targeted ticket/README Prettier check and `git diff --check`.
 - Passed `npx playwright test tests/browser/coach-discovery.spec.ts`: 10/10 desktop/mobile discovery tests after resetting the documented disposable local database to its canonical seed.
 - Passed the same focused browser suite again against the configured production build after making its map-state assertion valid for both configured and unconfigured developer environments: 10/10 desktop/mobile tests. The configured branch rendered five coach pins and visible attribution.
@@ -120,14 +120,14 @@ The existing provider-neutral database shape is unchanged. Newly confirmed perma
 - Visually inspected missing-token `/explore` and the authenticated manual picker at desktop and mobile widths. The coach list remained primary, the unavailable state was bounded and the picker/form remained usable.
 - Passed an additional configured-map browser rehearsal at desktop and mobile widths: five database-backed coach pins and five `Show on map` controls rendered, Mapbox attribution was visible, card-to-map selection set the selected control, no horizontal overflow occurred and no page errors were observed. The user separately confirmed that the local map worked.
 - The pre-commit scan detected that the public token had also been copied into tracked `.env.example`. The populated value was replaced with the documented placeholder before commit, `.env.local` remained ignored, and the staged patch was rescanned for realistic Mapbox token shapes. Rotate the exposed public token even though browser tokens are intentionally visible, then keep the replacement URL-restricted.
-- `npm audit --omit=dev --audit-level=high` reported seven existing high findings through the `vinext` -> `vite-plugin-commonjs` -> `braces` dependency path. No reported path involved Mapbox; the offered forced change would replace/downgrade the current vinext integration and was not applied under this ticket.
+- Historical `npm audit --omit=dev --audit-level=high` reported seven findings through the former vinext dependency path. DEV0139 later removed that direct adapter chain; this ticket still must record the audit result from its final dependency graph.
 - Not run: pin-to-card selection, live permanent-geocoding search, marker drag/confirmation, proof that the Mapbox account permits permanent result storage, rejected-token/quota/network/CSP/WebGL runtime states, configured-origin restriction checks, staging behavior and provider usage/alert review. These outstanding checks keep AC1-AC7 unchecked and the ticket `In progress`.
 
 ## Risks, limitations, and follow-ups
 
 Provider terms, pricing, browser rendering support and token misuse can change. The list-first architecture limits outages and lock-in, but replacing Mapbox still requires a later frontend provider ticket. Coach-selected locations can be misleading or unsafe without moderation; real-coach onboarding needs reporting and location-precision policy beyond the fictional MVP.
 
-The Explore map now has local live-provider evidence, but the configured location picker and operational controls do not. Before completion, verify the account may store permanent Geocoding results, prove approved-origin restrictions, exercise the remaining configured map/picker and failure interactions in staging, and inspect Mapbox usage/alerts. Reassess the existing vinext audit chain separately rather than forcing a breaking dependency replacement into this ticket.
+The Explore map now has local live-provider evidence, but the configured location picker and operational controls do not. Before completion, verify the account may store permanent Geocoding results, prove approved-origin restrictions, exercise the remaining configured map/picker and failure interactions in staging, and inspect Mapbox usage/alerts. Use the active Vercel deployment contract rather than restoring the retired adapter path.
 
 ## Completion and review references
 

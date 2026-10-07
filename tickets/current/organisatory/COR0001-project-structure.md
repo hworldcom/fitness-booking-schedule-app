@@ -2,11 +2,11 @@
 
 - Status: In progress
 - Created: 2026-09-20
-- Last updated: 2026-10-03
+- Last updated: 2026-10-07
 - Milestone: Cross-cutting application foundation
 - Converted from: Not applicable — created as a coordination record
 - Tracked development tickets: completed [DEV0030 — Frontend screen module boundaries](../../archive/frontend/DEV0030-frontend-screen-module-boundaries.md), completed [DEV0031 — Preview data and domain boundaries](../../archive/frontend/DEV0031-preview-data-and-domain-boundaries.md), completed [DEV0015 — Database foundation](../../archive/backend/DEV0015-supabase-database-foundation.md), completed [DEV0025 — Next.js backend boundary](../../archive/backend/DEV0025-nextjs-backend-boundary.md), and completed [DEV0027 — Phantom wallet connection foundation](../../archive/blockchain/DEV0027-phantom-wallet-connection-foundation.md); dedicated server-Solana verification and Anchor/program-client foundation tickets are still required
-- Related records: completed structural peers are listed below; current identity/wallet work is coordinated by [COR0003](COR0003-account-first-identity-and-wallet-linking.md), hosted delivery by [COR0004](COR0004-hosted-staging-deployment.md), and group-funded marketplace delivery by [COR0010](COR0010-group-funded-coach-marketplace-mvp.md)
+- Related records: completed structural peers are listed below; current identity/wallet work is coordinated by [COR0003](COR0003-account-first-identity-and-wallet-linking.md), completed Vercel readiness is recorded by [DEV0138](../../archive/backend/DEV0138-prepare-vercel-deployment.md), the retired Cloudflare delivery is preserved by [COR0004](../../archive/organisatory/COR0004-hosted-staging-deployment.md), and group-funded marketplace delivery is coordinated by [COR0010](COR0010-group-funded-coach-marketplace-mvp.md)
 
 ## Objective and context
 

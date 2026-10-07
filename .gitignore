@@ -15,7 +15,6 @@
 /.next/
 /out/
 /build/
-/dist/
 /.vercel/
 /storybook-static/
 
@@ -81,5 +80,3 @@ lerna-debug.log*
 *~
 .DS_Store
 Thumbs.db
-.vinext/
-.wrangler/

@@ -2,7 +2,7 @@
 
 - Status: In progress
 - Created: 2026-10-04
-- Last updated: 2026-10-05
+- Last updated: 2026-10-07
 - Milestone: Coach-pass and group-funded marketplace MVP
 - Converted from: Not applicable — created as a coordination record
 - Tracked development tickets: DEV0108, DEV0118–DEV0132, DEV0134–DEV0136
@@ -43,7 +43,7 @@ Every direct ticket links back to COR0010. Completed foundation tickets below ar
 ## Other relationships
 
 - [DEV0047](../backend/DEV0047-personal-wallet-linking-and-replacement.md) supplies personal-wallet proof and remains directly coordinated by COR0003.
-- [DEV0055](../backend/DEV0055-hosted-supabase-staging-environment.md), [DEV0056](../backend/DEV0056-staging-release-and-domain-rehearsal.md) and [COR0004](COR0004-hosted-staging-deployment.md) own the hosted platform, not the marketplace runtime.
+- [DEV0055](../backend/DEV0055-hosted-supabase-staging-environment.md) owns the hosted Supabase environment, and completed [DEV0138](../../archive/backend/DEV0138-prepare-vercel-deployment.md) owns Vercel readiness. Cancelled [DEV0056](../../archive/backend/DEV0056-staging-release-and-domain-rehearsal.md) and [COR0004](../../archive/organisatory/COR0004-hosted-staging-deployment.md) preserve the retired Cloudflare path as history; none of these records owns marketplace runtime behavior.
 - Completed [DEV0096](../../archive/backend/DEV0096-persist-coach-profiles-and-discovery.md), [DEV0104](../../archive/backend/DEV0104-publish-weekly-coach-availability.md), [DEV0100](../../archive/backend/DEV0100-coach-follows-and-chronological-posts.md), [DEV0114](../../archive/backend/DEV0114-persist-recurring-coach-availability.md), [DEV0115](../../archive/frontend/DEV0115-add-coach-schedule-calendar.md) and [DEV0116](../../archive/backend/DEV0116-provision-local-seeded-coach-accounts.md) supply coach identity/discovery, availability/calendar, social behavior and local seeded accounts.
 - Cancelled DEV0097 preserves committed `CoachAuthority`/`Offer` implementation history. Completed DEV0127 extends that source under the current contract; completed DEV0121 reviewed its generic authority patterns but does not own pass behavior.
 - Cancelled DEV0098, DEV0099, DEV0105 and DEV0106 remain historical plans. DEV0127–DEV0131 are new implementation records and do not silently relabel their unfinished evidence.
@@ -74,7 +74,8 @@ Complete COR0010 only when each direct ticket is Completed or explicitly Cancell
 - 2026-10-05: DEV0124 implemented and locally validated the pass-first, group-funding-second public story independently of DEV0121's program work. Home, How it works, shared navigation and early-access copy now keep unfinished transactions visibly in preview; DEV0124 remains open for the planned final terminology/state comparison with DEV0123.
 - 2026-10-05: DEV0130 started in parallel with DEV0124 after the shared program contract committed. Its local implementation now prepares and simulates all five pass operations, verifies strict RPC state, persists exact messages and ambiguous submissions, countersigns only the unchanged business-authorized transaction, recovers finalized pair/reservation evidence into DEV0128 projections and exposes bounded same-origin routes plus a browser signer adapter. Unit, database, build, schema-lint and compiled-SBF Surfpool validation pass. Deployment/configuration, DEV0129 interface wiring and real-wallet/Devnet Explorer evidence remain open and require explicit approval before any real chain mutation.
 - 2026-10-05: DEV0122 started after DEV0121 and the PDA-versus-wallet review. Its local adapter now prepares and simulates all five EventPool operations, persists actor-scoped recovery state, countersigns only exact business-authorized messages, verifies finalized pool/contribution accounts and reconciles DEV0120 projections with the CoachAuthority PDA separate from the immutable payout wallet. Unit, database, build, schema-lint and compiled-SBF Surfpool validation pass. Program deployment, DEV0123 interface wiring and public success/payout plus failure/refund Devnet evidence remain open and require explicit approval before any real chain mutation.
-- 2026-10-05: Because current Cloudflare issues make hosted testing unreliable, the user selected the local application and local database for the remaining DEV0122 and marketplace-development tests while retaining real Solana Devnet transactions and public evidence. This changes test sequencing rather than the M7 product contract: DEV0125 still owns a later hosted repetition once the Cloudflare dependency is usable, and local execution must not be presented as Worker-runtime evidence.
+- 2026-10-05: Because the former Cloudflare path made hosted testing unreliable, the user selected the local application and local database for the remaining DEV0122 and marketplace-development tests while retaining real Solana Devnet transactions and public evidence.
+- 2026-10-07: DEV0139 retired the Cloudflare runtime/deployment path in favor of the native Next.js/Vercel contract from DEV0138. This changes hosting implementation rather than the M7 outcome: DEV0125 still owns the later hosted repetition, and local execution must not be presented as hosted-runtime evidence.
 
 ## Validation results
 

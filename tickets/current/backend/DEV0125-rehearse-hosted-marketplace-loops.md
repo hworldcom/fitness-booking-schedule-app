@@ -2,10 +2,10 @@
 
 - Status: Draft
 - Created: 2026-10-04
-- Last updated: 2026-10-05
+- Last updated: 2026-10-07
 - Milestone: Marketplace M7 hosted rehearsal
 - Coordination: [COR0010 — Coach-pass and group-funded marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
-- Related records: integrates every retained COR0010 runtime peer after completion, including the completed EURC compatibility contract in [DEV0134](../../archive/blockchain/DEV0134-adopt-eurc-for-marketplace-payments.md) and two-loop scope consolidation in [DEV0135](../../archive/organisatory/DEV0135-narrow-marketplace-mvp-to-two-loops.md); depends on hosted staging infrastructure under [COR0004](../organisatory/COR0004-hosted-staging-deployment.md) without replacing its ownership
+- Related records: integrates every retained COR0010 runtime peer after completion, including the completed EURC compatibility contract in [DEV0134](../../archive/blockchain/DEV0134-adopt-eurc-for-marketplace-payments.md) and two-loop scope consolidation in [DEV0135](../../archive/organisatory/DEV0135-narrow-marketplace-mvp-to-two-loops.md); depends on Vercel readiness from [DEV0138](../../archive/backend/DEV0138-prepare-vercel-deployment.md) and the hosted Supabase environment in [DEV0055](DEV0055-hosted-supabase-staging-environment.md), while the retired Cloudflare path remains historical under [COR0004](../../archive/organisatory/COR0004-hosted-staging-deployment.md)
 
 ## Objective and context
 
@@ -43,7 +43,7 @@ Every owning runtime ticket for the two retained loops must be Completed before 
 
 ## Validation plan
 
-Run all peer-required tests against the integrated revision, guarded deployment checks, hosted desktop/mobile flows with prepared accounts/wallets, public RPC/Explorer verification, Worker logs and bounded provider/wallet rejection/recovery cases.
+Run all peer-required tests against the integrated revision, guarded Vercel deployment checks, hosted desktop/mobile flows with prepared accounts/wallets, public RPC/Explorer verification, function logs and bounded provider/wallet rejection/recovery cases.
 
 ## Implementation record
 
@@ -59,7 +59,7 @@ Planned: bounded demo setup/reseed/rehearsal scripts, hosted checks and this tic
 
 ### Decisions and deviations
 
-None yet.
+- 2026-10-07: DEV0139 retired the Cloudflare runtime/deployment path. The hosted rehearsal will use native Next.js on Vercel while retaining the same M7 marketplace, Supabase and Devnet evidence requirements.
 
 ### Contracts, configuration, and operations
 
@@ -71,7 +71,7 @@ Not run — dependencies incomplete.
 
 ## Risks, limitations, and follow-ups
 
-Devnet/RPC/Worker outages can block the rehearsal. Record environmental blockers honestly and never fabricate settlement or relax authorization to fit the demo.
+Devnet, RPC, Vercel or other hosted-provider outages can block the rehearsal. Record environmental blockers honestly and never fabricate settlement or relax authorization to fit the demo.
 
 ## Completion and review references
 

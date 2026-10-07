@@ -1,12 +1,12 @@
 # Coordination COR0004: Hosted staging deployment
 
-- Status: In progress
+- Status: Cancelled
 - Created: 2026-09-23
-- Last updated: 2026-10-03
+- Last updated: 2026-10-07
 - Milestone: M0 hosted integration environment
 - Converted from: Not applicable — created as a coordination record
-- Tracked development tickets: [DEV0054 — Cloudflare Workers runtime foundation](../../archive/backend/DEV0054-cloudflare-workers-runtime-foundation.md), [DEV0055 — Hosted Supabase staging environment](../backend/DEV0055-hosted-supabase-staging-environment.md), and [DEV0056 — Staging release and domain rehearsal](../backend/DEV0056-staging-release-and-domain-rehearsal.md)
-- Related records: [DEV0015 — Supabase database foundation](../../archive/backend/DEV0015-supabase-database-foundation.md), [DEV0046 — Email OTP registration and application profiles](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md), [DEV0047 — Personal wallet linking and replacement](../backend/DEV0047-personal-wallet-linking-and-replacement.md), and current marketplace release ownership in [COR0010](COR0010-group-funded-coach-marketplace-mvp.md)
+- Tracked development tickets: historical direct members are completed [DEV0054 — Cloudflare Workers runtime foundation](../backend/DEV0054-cloudflare-workers-runtime-foundation.md) and cancelled [DEV0056 — Staging release and domain rehearsal](../backend/DEV0056-staging-release-and-domain-rehearsal.md); [DEV0055 — Hosted Supabase staging environment](../../current/backend/DEV0055-hosted-supabase-staging-environment.md) was transferred to independent ownership when this Cloudflare coordination was cancelled
+- Related records: [DEV0015 — Supabase database foundation](../backend/DEV0015-supabase-database-foundation.md), [DEV0046 — Email OTP registration and application profiles](../backend/DEV0046-email-otp-registration-and-application-profiles.md), [DEV0047 — Personal wallet linking and replacement](../../current/backend/DEV0047-personal-wallet-linking-and-replacement.md), replacement hosting readiness in [DEV0138 — Prepare Vercel deployment](../backend/DEV0138-prepare-vercel-deployment.md), and current marketplace release ownership in [COR0010](../../current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
 
 ## Objective and boundaries
 
@@ -16,11 +16,11 @@ This coordination record does not implement runtime behavior. It separates repos
 
 ## Direct development work
 
-| Implementation part                  | Development ticket                                                                                                        | Owned deliverable                                                                                                       | Start condition or dependency                                                                                                             |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Cloudflare runtime compatibility     | [DEV0054 — Cloudflare Workers runtime foundation](../../archive/backend/DEV0054-cloudflare-workers-runtime-foundation.md) | Reviewed vinext/Workers dependencies, configuration, scripts and local compatibility validation without deploying       | Completed after the supported-host Worker smoke                                                                                           |
-| Hosted data and identity environment | [DEV0055 — Hosted Supabase staging environment](../backend/DEV0055-hosted-supabase-staging-environment.md)                | Dedicated staging project, reviewed schema/runtime role, Auth/SMTP/origin controls and secret-safe operating record     | May proceed in parallel with DEV0054; requires access to the selected Supabase project and mail service                                   |
-| Integrated staging release           | [DEV0056 — Staging release and domain rehearsal](../backend/DEV0056-staging-release-and-domain-rehearsal.md)              | Staging Worker, runtime/build variables, `staging.movx.club`, preserved Porkbun mail DNS and hosted smoke-test evidence | Starts after DEV0054 completes and DEV0055 passes its database/runtime/Auth/SMTP foundation; remaining DEV0055 browser evidence runs here |
+| Implementation part                  | Development ticket                                                                                                    | Owned deliverable                                                                                                       | Start condition or dependency                                                                        |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Cloudflare runtime compatibility     | [DEV0054 — Cloudflare Workers runtime foundation](../backend/DEV0054-cloudflare-workers-runtime-foundation.md)        | Reviewed vinext/Workers dependencies, configuration, scripts and local compatibility validation without deploying       | Completed historically; runtime later retired by DEV0139                                             |
+| Hosted data and identity environment | [DEV0055 — Hosted Supabase staging environment](../../current/backend/DEV0055-hosted-supabase-staging-environment.md) | Dedicated staging project, reviewed schema/runtime role, Auth/SMTP/origin controls and secret-safe operating record     | Transferred to independent ownership for the Vercel path on cancellation                             |
+| Integrated staging release           | [DEV0056 — Staging release and domain rehearsal](../backend/DEV0056-staging-release-and-domain-rehearsal.md)          | Staging Worker, runtime/build variables, `staging.movx.club`, preserved Porkbun mail DNS and hosted smoke-test evidence | Cancelled with partial historical deployment evidence; Vercel replacement belongs to DEV0138/DEV0125 |
 
 All required implementation parts have a direct development ticket. These tickets are peers; DEV0056 depends on the outputs of DEV0054 and DEV0055 rather than nesting under either ticket.
 
@@ -57,10 +57,11 @@ COR0004 completes only when all three direct tickets are Completed or explicitly
 - 2026-09-23: Cloudflare became authoritative for the imported `movx.club` zone with the Porkbun website and mail records preserved. DEV0056 added `staging.movx.club` as a Worker Custom Domain; DNS resolution, TLS verification and its unauthenticated Access redirect pass. Authorized exact-origin browser rehearsal remains.
 - 2026-09-23: The user completed the allowlisted Cloudflare Access flow and confirmed that MovX Club loads at `https://staging.movx.club`. Hosted Supabase account isolation and Phantom rehearsals remain.
 - 2026-09-24: The user selected public access for the stable staging site. Worker-level Access was narrowed to temporary previews, while DEV0055's bounded Supabase Auth email and request limits remain the low-volume abuse boundary. A fresh unauthenticated request to `https://staging.movx.club` returned the application directly with valid TLS.
+- 2026-10-07: The user selected Vercel as the immediate hosting target and requested removal of Cloudflare settings/deployment support. DEV0139 removes the repository path, DEV0056 is cancelled with its partial evidence preserved, and DEV0055 becomes independent for reuse by Vercel. This coordination record is cancelled rather than marked complete because its authenticated integration criteria did not finish.
 
 ## Validation results
 
-Pending. Validate link symmetry, direct-ticket statuses and the final cross-provider rehearsal after the three development tickets record their own evidence.
+Cancellation consistency and link validation are owned by DEV0139. The planned final cross-provider rehearsal did not complete under this coordination record.
 
 ## Risks, limitations, and follow-ups
 
@@ -71,8 +72,8 @@ Pending. Validate link symmetry, direct-ticket statuses and the final cross-prov
 
 ## Completion and review references
 
-- Completed: Not completed.
-- Direct development tickets: DEV0054 Completed; DEV0055 In progress; DEV0056 In progress with its Worker release available through the public `staging.movx.club` Custom Domain and temporary previews protected by Access.
+- Completed: Cancelled on 2026-10-07 after the user retired the Cloudflare deployment path; the coordination outcome did not complete.
+- Direct development tickets: DEV0054 Completed historically; DEV0056 Cancelled with partial release evidence; DEV0055 transferred to independent In progress ownership for the Vercel path.
 - Commit: Not applicable — coordination-record IDs are not used in commit subjects.
 - Review: No pull request or independent review exists.
-- Deployment or release: Not deployed.
+- Deployment or release: Historical external Worker/DNS state is recorded by DEV0056. DEV0139 does not perform external teardown or a replacement deployment.

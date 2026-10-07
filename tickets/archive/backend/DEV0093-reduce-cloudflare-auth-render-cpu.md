@@ -1,11 +1,11 @@
 # Ticket DEV0093: Reduce Cloudflare authentication and render CPU
 
-- Status: Draft
+- Status: Cancelled
 - Created: 2026-09-30
-- Last updated: 2026-10-03
+- Last updated: 2026-10-07
 - Milestone: Staging runtime reliability
 - Coordination: None — independent development ticket
-- Related records: staging runtime baseline in [DEV0054 — Cloudflare Workers runtime foundation](../../archive/backend/DEV0054-cloudflare-workers-runtime-foundation.md), hosted release work in [DEV0056 — Staging release and domain rehearsal](DEV0056-staging-release-and-domain-rehearsal.md), and current marketplace delivery in [COR0010 — Group-funded coach marketplace MVP](../organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
+- Related records: staging runtime baseline in [DEV0054 — Cloudflare Workers runtime foundation](DEV0054-cloudflare-workers-runtime-foundation.md), hosted release history in [DEV0056 — Staging release and domain rehearsal](DEV0056-staging-release-and-domain-rehearsal.md), current marketplace delivery in [COR0010 — Group-funded coach marketplace MVP](../../current/organisatory/COR0010-group-funded-coach-marketplace-mvp.md), and replacement hosting readiness in [DEV0138 — Prepare Vercel deployment](DEV0138-prepare-vercel-deployment.md)
 
 ## Objective and context
 
@@ -16,6 +16,8 @@ During a legacy staging rehearsal, Cloudflare returned Error 1102 (`Worker excee
 Read-only code review found repeated work rather than one isolated expensive computation. A server render can verify the same Supabase session and resolve the same application identity in the root layout, protected-page guard and multiple feature services. The My Membership page also loads membership state directly and again through its class-schedule service. After hydration, the session and actor providers immediately refetch state already supplied by server rendering. This makes the staging application sensitive to strict Worker CPU limits and increases database/Auth traffic even when requests happen to succeed.
 
 This ticket is an operational optimization, not a change to the product contract. The measurements above remain useful incident evidence, but DEV0101 removed the measured membership routes and club/membership hydration graph. Before implementation, this ticket must rebaseline the current coach-first authenticated shell and replace the membership-specific plan and acceptance criteria. It therefore returned to Draft on 2026-10-03.
+
+On 2026-10-07 this ticket was cancelled before implementation because the user retired the Cloudflare runtime/deployment path under DEV0139. The captured CPU trace remains a historical diagnostic; no Worker-specific optimization or post-change trace is required for the native Next.js/Vercel host. Any future provider-neutral authentication performance issue requires a new ticket based on measurements from the active runtime.
 
 ## Scope and non-goals
 
@@ -114,7 +116,7 @@ Even a correct optimization may not make authenticated Next.js server rendering 
 
 ## Completion and review references
 
-- Completed: Not completed — implementation and post-change validation have not started.
+- Completed: Cancelled on 2026-10-07 before implementation; the Cloudflare-specific runtime and validation target were retired.
 - Commit: This commit — `[DEV0093][DEV0094][DEV0095][DEV0101][DEV0103] Adopt coach-first pivot` (DEV0093 planning/rebaseline only; implementation remains Draft).
 - Review: Scope reviewed against the captured staging trace, current auth/membership call graph and ticket-splitting rules; no split is required before implementation.
-- Deployment or release: Not deployed; this record contains only planning and the pre-change diagnostic baseline.
+- Deployment or release: Not deployed; this record contains only planning and the pre-change historical Worker diagnostic baseline.

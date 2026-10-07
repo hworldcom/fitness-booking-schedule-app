@@ -1,17 +1,19 @@
 # Ticket DEV0056: Staging release and domain rehearsal
 
-- Status: In progress
+- Status: Cancelled
 - Created: 2026-09-23
-- Last updated: 2026-10-03
+- Last updated: 2026-10-07
 - Milestone: M0 hosted integration environment
 - Coordination: [COR0004 — Hosted staging deployment](../organisatory/COR0004-hosted-staging-deployment.md)
-- Related records: [DEV0054 — Cloudflare Workers runtime foundation](../../archive/backend/DEV0054-cloudflare-workers-runtime-foundation.md), [DEV0055 — Hosted Supabase staging environment](DEV0055-hosted-supabase-staging-environment.md), [DEV0046 — Email OTP registration and application profiles](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md), [DEV0027 — Phantom wallet connection foundation](../../archive/blockchain/DEV0027-phantom-wallet-connection-foundation.md), and [DEV0047 — Personal wallet linking and replacement](DEV0047-personal-wallet-linking-and-replacement.md)
+- Related records: [DEV0054 — Cloudflare Workers runtime foundation](DEV0054-cloudflare-workers-runtime-foundation.md), [DEV0055 — Hosted Supabase staging environment](../../current/backend/DEV0055-hosted-supabase-staging-environment.md), [DEV0046 — Email OTP registration and application profiles](DEV0046-email-otp-registration-and-application-profiles.md), [DEV0027 — Phantom wallet connection foundation](../blockchain/DEV0027-phantom-wallet-connection-foundation.md), [DEV0047 — Personal wallet linking and replacement](../../current/backend/DEV0047-personal-wallet-linking-and-replacement.md), and replacement hosting readiness in [DEV0138 — Prepare Vercel deployment](DEV0138-prepare-vercel-deployment.md)
 
 ## Objective and context
 
 Deploy the reviewed MovX Club Workers build against the dedicated staging Supabase project, attach the exact hostname `https://staging.movx.club`, and retain evidence that public browsing, email accounts, protected profiles and current wallet behavior operate correctly in the hosted environment.
 
 This is the integration/release peer under [COR0004](../organisatory/COR0004-hosted-staging-deployment.md). It begins after DEV0054 proves the runtime and DEV0055 proves the hosted database, restricted runtime login, Auth and SMTP foundation. DEV0055's remaining browser-visible secret review, access boundary and two-account isolation evidence are completed through this deployed integration rather than blocking it. A successful staging rehearsal does not mean production readiness or completion of later persistent-payment, reservation or blockchain tickets.
+
+On 2026-10-07 the user selected Vercel as the immediate hosting target and asked to remove the Cloudflare settings and deployment path. DEV0139 removes the repository tooling and cancels this unfinished release record. Completed Worker, Hyperdrive, DNS and public-route observations below remain historical evidence; unmet authenticated, wallet and integration criteria are not carried forward as completed. DEV0125 owns the replacement native Next.js/Vercel hosted rehearsal.
 
 ## Scope and non-goals
 
@@ -201,11 +203,11 @@ The local release guard, application checks and Cloudflare upload dry run pass. 
 - Nameserver mistakes can interrupt business email even when the website deploy succeeds.
 - Cloudflare Workers resource limits, Supabase free-tier availability and cross-region database latency may require measured follow-up work.
 - The `workers.dev` URL can be used for an initial infrastructure smoke test, but exact-origin Auth/wallet behavior is accepted only on `staging.movx.club`.
-- Next action: run the Supabase email-code sign-in, protected-profile isolation and Phantom browser rehearsals at `https://staging.movx.club`.
+- Cancellation handoff: do not resume this Worker release. Use DEV0138/DEV0125 for a future Vercel deployment and preserve external Cloudflare/DNS teardown as a separate reviewed operator action.
 
 ## Completion and review references
 
-- Completed: Not completed.
+- Completed: Cancelled on 2026-10-07 after the user retired the Cloudflare deployment path; partial historical evidence is preserved and unmet criteria remain unmet.
 - Commit: latest deployed application commit `a8a7cdd` (`[DEV0056] Route staging database through Hyperdrive`).
 - Review: No pull request or independent review exists.
-- Deployment or release: commit `a8a7cdd` is deployed as Worker version `a3872449-5831-49c7-af3f-dd2f9e8707e4` at the public `https://staging.movx.club` Custom Domain. Eight concurrent Explore requests returned the complete persistent catalogue without Worker errors; prior direct `200` checks for the root, redesigned guide and Coming Soon page remain applicable. Cloudflare Access protects temporary preview deployments only.
+- Deployment or release: Historical external state at cancellation: commit `a8a7cdd` was deployed as Worker version `a3872449-5831-49c7-af3f-dd2f9e8707e4` at the public `https://staging.movx.club` Custom Domain. DEV0139 does not delete that Worker or change DNS; external teardown remains an explicit operator action.

@@ -20,7 +20,7 @@ Start with the [MVP specification](docs/mvp-spec.md). It is the single current p
 
 ## Current foundation
 
-Delivered reusable foundations include the responsive Next.js application shell, local Supabase/PostgreSQL workflow, server-only database boundary, email-code accounts, protected application profiles, self-service coaching activation, Phantom discovery through Wallet Standard and Cloudflare staging tooling. The optional personal-wallet proof flow is implemented locally under [DEV0047](tickets/current/backend/DEV0047-personal-wallet-linking-and-replacement.md), but remains in progress pending its required real-Phantom and signed-in responsive-keyboard evidence.
+Delivered reusable foundations include the responsive Next.js application shell, local Supabase/PostgreSQL workflow, server-only database boundary, email-code accounts, protected application profiles, self-service coaching activation, Phantom discovery through Wallet Standard and guarded native Next.js/Vercel deployment tooling. The optional personal-wallet proof flow is implemented locally under [DEV0047](tickets/current/backend/DEV0047-personal-wallet-linking-and-replacement.md), but remains in progress pending its required real-Phantom and signed-in responsive-keyboard evidence.
 
 Persistent self-declared coach profiles, coach-selected public locations and list-based coach discovery are implemented under [DEV0096](tickets/archive/backend/DEV0096-persist-coach-profiles-and-discovery.md); the protected coach workspace and explicit-slot baseline are implemented under [DEV0104](tickets/archive/backend/DEV0104-publish-weekly-coach-availability.md); [DEV0114](tickets/archive/backend/DEV0114-persist-recurring-coach-availability.md) adds exact one-hour recurring rules plus durable seven-day occurrences; and [DEV0115](tickets/archive/frontend/DEV0115-add-coach-schedule-calendar.md) supplies the responsive coach working-week editor and dated public schedule. One-way follows, coach-only posts, public recent posts and the chronological Following feed are implemented under [DEV0100](tickets/archive/backend/DEV0100-coach-follows-and-chronological-posts.md). Mapbox operational validation remains open under DEV0108. [DEV0127](tickets/archive/blockchain/DEV0127-implement-coach-client-credit-ledger.md) implements and adversarially tests the local pair-ledger purchase contract; [DEV0131](tickets/archive/blockchain/DEV0131-implement-coach-credit-booking-lifecycle.md) adds the local deterministic booking-credit reserve, return and consume lifecycle; [DEV0132](tickets/archive/blockchain/DEV0132-make-coach-pass-operations-platform-funded.md) makes every local coach-pass fee and account-rent charge platform-funded without replacing user authority; and [DEV0128](tickets/archive/backend/DEV0128-persist-credit-backed-private-bookings.md) supplies capacity-one booking persistence, cancellation decisions and actor-scoped credit projections. [DEV0120](tickets/archive/backend/DEV0120-persist-group-event-catalogue-and-projections.md) supplies coach-owned event metadata and honest finalized pool/contribution projection storage, while [DEV0121](tickets/archive/blockchain/DEV0121-implement-group-event-funding-program.md) supplies the locally validated EventPool, Contribution, EURC vault, settlement, payout and pull-refund program contract. The client-card interface and real Devnet pass proof remain open under DEV0129 and DEV0130. DEV0122 now has a local group-funding prepare/simulate/sign/submit/recover adapter, but still requires deployment and public Devnet rehearsal; its interface remains under DEV0123. Retired gym/membership routes and the cancelled request/proposal workflow are not current product surfaces.
 
@@ -111,27 +111,45 @@ solana program deploy \
 
 Afterward, verify the executable program ID and upgrade authority with `solana program show`, set `NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID` to the same reviewed address, and only then run read-only readiness checks. Set `SOLANA_RECOVERY_AUTHORITY_ADDRESS` to the public address of the separately controlled wallet that approves coach initialization and replacement; its private key remains in that wallet and never enters application configuration. Never reuse `SOLANA_FEE_SPONSOR_KEYPAIR_BASE64` for recovery, deployment or upgrades. Deployment, wallet signing and transaction submission are real chain mutations and require a reviewed summary plus explicit approval.
 
-## Cloudflare staging
+## Vercel deployment
 
-The vinext toolchain targets the staging Worker `movx-club-staging` while standard Next.js commands remain available:
+Vercel can run this repository through its native Next.js runtime. The checked-in [Vercel configuration](vercel.json) selects the Next.js preset and runs `npm run build:vercel`, which validates hosted settings without printing their values before invoking `next build`. Vercel uses the repository's `package-lock.json` and `engines.node` declaration; select Node.js 24.x in project settings and keep the project root at the repository root. Do not set a custom output directory.
 
-```sh
-npm run dev:vinext
-npm run build:vinext
-npm run start:vinext
+A configuration-free deployment remains useful as the existing public preview: leave all four values below unset and database-backed identity and owner operations stay disabled. To enable the hosted runtime, set all four together for the same Vercel environment:
+
+```text
+DATABASE_URL
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+NEXT_PUBLIC_SITE_URL
 ```
 
-Vinext uses [localhost:3102](http://localhost:3102). Generated `dist/`, `.vinext/` and `.wrangler/` output stays untracked.
+Use the Supabase transaction-pooler connection on port `6543` with a dedicated application login that inherits `app_runtime`; do not use the database owner. The server connection boundary already limits Postgres.js to one connection, disables prepared statements and requires Transport Layer Security (TLS) outside local development. `NEXT_PUBLIC_SUPABASE_URL` must be the root HTTPS project URL, the publishable value must be a public publishable/legacy anon key, and `NEXT_PUBLIC_SITE_URL` must be the exact root HTTPS origin users visit.
 
-The guarded staging workflow reads approved values from ignored `.env.staging.local`, validates the staging project/origin, and refuses a real deployment from a dirty worktree:
+The site origin is also the same-origin security boundary for sign-in, account mutations and sponsored Devnet operations. Scope production variables to the stable production domain. A generated `*.vercel.app` preview URL must remain in configuration-free public preview mode unless that exact origin receives its own environment values and is allow-listed in Supabase Auth and every browser-token restriction. Do not point a preview deployment at production data merely to make protected actions appear available.
+
+Mapbox remains optional. If enabled, add `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` as a separately restricted public `pk` token for that exact origin. Devnet transactions also remain optional while their integration tickets are open; enabling them requires the complete Solana group from [`.env.example`](.env.example). The build guard enforces Devnet, the reviewed program ID, valid HTTPS Remote Procedure Call (RPC) endpoints, a matching fee-sponsor keypair and a distinct recovery authority. Add private values only through Vercel's encrypted environment settings and never paste them into repository files or deployment logs.
+
+Choose the Vercel function region nearest the hosted Supabase database once its region is known; this is intentionally not hardcoded in the repository. Before importing or redeploying, reproduce the guarded public-preview build locally:
 
 ```sh
-npm run deploy:staging:check
-npm run deploy:staging:dry-run
-npm run deploy:staging
+env \
+  DATABASE_URL= \
+  NEXT_PUBLIC_SUPABASE_URL= \
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY= \
+  NEXT_PUBLIC_SITE_URL= \
+  NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN= \
+  SOLANA_CLUSTER= \
+  NEXT_PUBLIC_SOLANA_RPC_URL= \
+  SOLANA_RPC_URL= \
+  NEXT_PUBLIC_SOLANA_COACH_PASS_PROGRAM_ID= \
+  SOLANA_FEE_SPONSOR_ADDRESS= \
+  SOLANA_FEE_SPONSOR_KEYPAIR_BASE64= \
+  SOLANA_RECOVERY_AUTHORITY_ADDRESS= \
+  npm run build:vercel
 ```
 
-Never commit database URLs, private RPC credentials, Supabase service-role keys, mail credentials or fee-sponsor keypairs.
+This prepares and verifies the deployment artifact only. Project creation, domain assignment, hosted migrations, Auth redirect configuration and the real Devnet marketplace rehearsal remain separate operator actions.
 
 ## Database operations
 
