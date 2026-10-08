@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { chromium } from "@playwright/test";
 
@@ -8,6 +9,9 @@ const mailboxUrl =
   process.env.AUTH_TEST_MAILPIT_URL ?? "http://127.0.0.1:55324";
 const evidenceDirectory = "test-results/coach-availability-rehearsal";
 const email = `dev0104-coach-${Date.now()}@example.com`;
+const coachReviewDatabaseUrl =
+  process.env.COACH_REVIEW_DATABASE_URL ??
+  "postgresql://postgres:postgres@127.0.0.1:55322/postgres";
 
 async function emailCodeFor(recipientEmail) {
   for (let attempt = 0; attempt < 30; attempt += 1) {
@@ -39,6 +43,12 @@ function futureWorkingDay() {
 
 async function signInAndEnroll(page) {
   await page.goto(`${siteUrl}/sign-in`, { waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => {
+    const button = document.querySelector(
+      'form.auth-form button[type="submit"]',
+    );
+    return button instanceof HTMLButtonElement && !button.disabled;
+  });
   await page.getByLabel("Email address").fill(email);
   await submitForm(page);
   await page.getByText("Check your email.").waitFor({ timeout: 60_000 });
@@ -53,11 +63,63 @@ async function signInAndEnroll(page) {
   await page
     .getByRole("heading", { name: "How would you like to use MovX?" })
     .waitFor({ timeout: 20_000 });
-  await page.getByRole("button", { name: "Offer coaching" }).click();
+  await page.getByRole("button", { name: "Become a coach" }).click();
   await page.waitForURL(/\/profile\/coach$/);
+  const response = await page.request.get(`${siteUrl}/api/auth/identity`);
+  assert.equal(response.status(), 200);
+  const identity = await response.json();
+  assert.equal(identity.status, "enrolled");
+  return identity;
 }
 
-async function createCoachProfile(page) {
+function reviewCoachApplication(profileId) {
+  const commonArguments = [
+    "scripts/review-coach-application.mjs",
+    "--profile-id",
+    profileId,
+    "--expected",
+    "pending",
+    "--decision",
+    "approved",
+    "--reason",
+    "Local rehearsal reviewed identity and completed application.",
+    "--reviewer",
+    "local-rehearsal",
+  ];
+  const environment = {
+    ...process.env,
+    COACH_REVIEW_DATABASE_URL: coachReviewDatabaseUrl,
+  };
+  const dryRun = spawnSync(process.execPath, commonArguments, {
+    cwd: process.cwd(),
+    encoding: "utf8",
+    env: environment,
+  });
+  assert.equal(dryRun.status, 0, dryRun.stderr);
+  assert.match(dryRun.stdout, /Dry run only\. No database state was changed\./);
+  assert.doesNotMatch(
+    `${dryRun.stdout}${dryRun.stderr}`,
+    /postgres(?:ql)?:\/\//,
+  );
+
+  const applied = spawnSync(
+    process.execPath,
+    [...commonArguments, "--apply", "--confirm", profileId],
+    {
+      cwd: process.cwd(),
+      encoding: "utf8",
+      env: environment,
+    },
+  );
+  assert.equal(applied.status, 0, applied.stderr);
+  assert.match(applied.stdout, /Coach application review applied:/);
+  assert.doesNotMatch(
+    `${applied.stdout}${applied.stderr}`,
+    /postgres(?:ql)?:\/\//,
+  );
+}
+
+async function createCoachProfile(page, profileId) {
   await page.goto(`${siteUrl}/profile/coach`, {
     waitUntil: "domcontentloaded",
   });
@@ -79,6 +141,10 @@ async function createCoachProfile(page) {
   assert.ok(firstGymValue);
   assert.ok(firstGymLabel);
   await gymSelect.selectOption(firstGymValue);
+  await page.getByRole("button", { name: "Save coach profile" }).click();
+  await page.getByText("Coach profile saved.").waitFor({ timeout: 20_000 });
+  reviewCoachApplication(profileId);
+  await page.reload({ waitUntil: "domcontentloaded" });
   await page.locator('input[name="visibility"][value="visible"]').check({
     force: true,
   });
@@ -218,8 +284,8 @@ try {
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
-  await signInAndEnroll(page);
-  const gymName = await createCoachProfile(page);
+  const identity = await signInAndEnroll(page);
+  const gymName = await createCoachProfile(page, identity.profile.id);
   await rehearseAvailability(page, gymName);
 
   assert.deepEqual(pageErrors, []);

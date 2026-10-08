@@ -22,7 +22,7 @@ import {
   withdrawOwnedCoachAvailabilityRecord,
 } from "@/server/db/coaches/availability-repository";
 import { upsertOwnedCoachProfileRecord } from "@/server/db/coaches/repository";
-import { activateOwnedCoachingRecord } from "@/server/db/coaches/activation-repository";
+import { submitOwnedCoachApplicationRecord } from "@/server/db/coaches/application-repository";
 import { enrollApplicationProfile } from "@/server/db/identity/repository";
 
 const adminConnectionString = process.env.DATABASE_TEST_URL;
@@ -96,6 +96,26 @@ async function removeFixtures() {
   `;
   await admin`
     delete from app.coach_profiles
+    where profile_id in (
+      select id from app.profiles
+      where auth_user_id in (
+        ${firstAuthUserId}::uuid,
+        ${secondAuthUserId}::uuid
+      )
+    )
+  `;
+  await admin`
+    delete from app.coach_application_review_events
+    where profile_id in (
+      select id from app.profiles
+      where auth_user_id in (
+        ${firstAuthUserId}::uuid,
+        ${secondAuthUserId}::uuid
+      )
+    )
+  `;
+  await admin`
+    delete from app.coach_applications
     where profile_id in (
       select id from app.profiles
       where auth_user_id in (
@@ -206,9 +226,43 @@ before(async () => {
   assert.ok(second);
   firstActor = actorFromRecord(firstAuthUserId, first);
   secondActor = actorFromRecord(secondAuthUserId, second);
-  await withActorDatabaseContext(firstActor, activateOwnedCoachingRecord);
-  await withActorDatabaseContext(secondActor, activateOwnedCoachingRecord);
-
+  await withActorDatabaseContext(firstActor, submitOwnedCoachApplicationRecord);
+  await withActorDatabaseContext(
+    secondActor,
+    submitOwnedCoachApplicationRecord,
+  );
+  await withActorDatabaseContext(firstActor, (transaction) =>
+    upsertOwnedCoachProfileRecord(transaction, {
+      ...firstProfile,
+      visibility: "hidden",
+    }),
+  );
+  await withActorDatabaseContext(secondActor, (transaction) =>
+    upsertOwnedCoachProfileRecord(transaction, {
+      ...secondProfile,
+      visibility: "hidden",
+    }),
+  );
+  await admin`
+    select app.review_coach_application(
+      ${firstActor.profileId}::uuid,
+      'pending',
+      'approved',
+      'Database test reviewed this complete coach profile.',
+      'database-test',
+      'movx-identity-application-v1'
+    )
+  `;
+  await admin`
+    select app.review_coach_application(
+      ${secondActor.profileId}::uuid,
+      'pending',
+      'approved',
+      'Database test reviewed this complete coach profile.',
+      'database-test',
+      'movx-identity-application-v1'
+    )
+  `;
   await withActorDatabaseContext(firstActor, (transaction) =>
     upsertOwnedCoachProfileRecord(transaction, firstProfile),
   );

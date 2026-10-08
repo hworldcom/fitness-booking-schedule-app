@@ -127,7 +127,7 @@ export function ClientSessions({
       <header className="client-sessions-heading">
         <div>
           <span className="eyebrow">MY SESSIONS</span>
-          <h2>Your private-session schedule</h2>
+          <h1>Your private-session schedule</h1>
           <p>
             Every session shown here comes from your actor-scoped scheduling
             record.

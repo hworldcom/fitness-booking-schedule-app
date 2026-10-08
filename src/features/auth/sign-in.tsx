@@ -24,7 +24,7 @@ import {
 import { normalizeDisplayName } from "@/auth/identity-contracts";
 import { useActor } from "@/auth/client/actor-provider";
 import { browserAuthClient } from "@/auth/client/browser-client";
-import { activateCoaching } from "@/auth/client/coaching-activation-client";
+import { submitCoachApplication } from "@/auth/client/coach-application-client";
 import {
   completeApplicationProfile,
   fetchCurrentIdentity,
@@ -43,14 +43,20 @@ type IdentityResult = Readonly<{
 }>;
 
 type ActiveAction =
-  "request-code" | "verify-code" | "profile" | "activate-coaching" | "sign-out";
+  | "request-code"
+  | "verify-code"
+  | "profile"
+  | "submit-coach-application"
+  | "sign-out";
 
 export function SignInScreen({
   returnTo,
   accessRequired,
+  intent,
 }: {
   returnTo: string | null;
   accessRequired: boolean;
+  intent: "client" | "coach" | null;
 }) {
   const router = useRouter();
   const { session, refreshSession } = useAuthSession();
@@ -252,9 +258,12 @@ export function SignInScreen({
         return;
       }
       setDisplayNameInput("");
-      setOnboardingChoiceVisible(true);
+      setOnboardingChoiceVisible(intent !== "client");
       actorRefreshKey.current = identityKey;
       await refreshActor();
+      if (intent === "client") {
+        router.replace(returnTo ?? "/explore");
+      }
       router.refresh();
     } finally {
       actionLock.current = false;
@@ -265,17 +274,19 @@ export function SignInScreen({
   async function chooseCoaching() {
     if (actionLock.current || !identityKey) return;
     actionLock.current = true;
-    setActiveAction("activate-coaching");
+    setActiveAction("submit-coach-application");
     setActionError(null);
     try {
-      const result = await activateCoaching();
-      if (result.status !== "activated") {
+      const result = await submitCoachApplication();
+      if (result.status !== "pending" && result.status !== "approved") {
         setActionError(
           result.status === "signed-out"
-            ? "Your sign-in expired. Sign in again before activating coaching."
+            ? "Your sign-in expired. Sign in again before applying to coach."
             : result.status === "forbidden"
-              ? "This account cannot activate coaching in the current workspace."
-              : "MovX could not activate coaching right now. Try again shortly.",
+              ? "This account cannot submit a coach application in the current workspace."
+              : result.status === "suspended"
+                ? "This coach application is suspended and requires platform review."
+                : "MovX could not submit the coach application right now. Try again shortly.",
         );
         return;
       }
@@ -321,10 +332,15 @@ export function SignInScreen({
       <div className="auth-heading">
         <div>
           <span className="eyebrow">MovX Club identity</span>
-          <h1>Sign in with your email.</h1>
+          <h1>
+            {intent === "coach"
+              ? "Apply to coach with your email."
+              : "Sign in with your email."}
+          </h1>
           <p>
-            Request a one-time code, verify your email and create a small
-            profile. That verified account is your scheduling identity.
+            {intent === "coach"
+              ? "Create one MovX account, submit a coach application and prepare a private profile for review."
+              : "Request a one-time code, verify your email and create a small profile. That verified account is your scheduling identity."}
           </p>
         </div>
         <Pill tone="lime">Email code · No password</Pill>
@@ -537,15 +553,22 @@ export function SignInScreen({
                     Welcome, {applicationIdentity.profile.displayName}.
                   </strong>
                   <p>
-                    Your account is ready. Choose a starting path; coaches can
-                    still book as clients.
+                    {intent === "coach"
+                      ? "Your client account is ready. Submit the separate coach application to prepare a private draft."
+                      : "Your account is ready. Choose a starting path; approved coaches can still book as clients."}
                   </p>
                 </div>
-                <h3>How would you like to use MovX?</h3>
+                <h3>
+                  {intent === "coach"
+                    ? "Submit your coach application"
+                    : "How would you like to use MovX?"}
+                </h3>
                 <div className="auth-onboarding-actions">
-                  <Link className="button secondary" href="/explore">
-                    <Search size={17} aria-hidden="true" /> Find a coach
-                  </Link>
+                  {intent !== "coach" && (
+                    <Link className="button secondary" href="/explore">
+                      <Search size={17} aria-hidden="true" /> Find a coach
+                    </Link>
+                  )}
                   <button
                     type="button"
                     className="button dark"
@@ -553,15 +576,15 @@ export function SignInScreen({
                     onClick={() => void chooseCoaching()}
                   >
                     <UserRound size={17} aria-hidden="true" />
-                    {activeAction === "activate-coaching"
-                      ? "Activating coaching…"
-                      : "Offer coaching"}
+                    {activeAction === "submit-coach-application"
+                      ? "Submitting application…"
+                      : "Become a coach"}
                   </button>
                 </div>
                 <p className="auth-onboarding-note">
-                  Coaching activates immediately without administrator approval.
-                  Your public profile remains hidden until you finish and
-                  publish it.
+                  Coach applications require MovX approval. You can prepare a
+                  private profile while the review is pending; only approval
+                  unlocks publication and availability.
                 </p>
               </div>
             )}

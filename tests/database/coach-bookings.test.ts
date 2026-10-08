@@ -8,8 +8,11 @@ import {
 } from "@/domain/coaches";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
 import { withActorDatabaseContext } from "@/server/db/authorization/repository";
-import { activateOwnedCoachingRecord } from "@/server/db/coaches/activation-repository";
-import { createOwnedCoachAvailabilityRecord } from "@/server/db/coaches/availability-repository";
+import { submitOwnedCoachApplicationRecord } from "@/server/db/coaches/application-repository";
+import {
+  CoachAvailabilityConflictError,
+  createOwnedCoachAvailabilityRecord,
+} from "@/server/db/coaches/availability-repository";
 import {
   bookDirectPrivateSessionRecord,
   cancelDirectPrivateBookingRecord,
@@ -139,6 +142,18 @@ async function removeFixtures() {
     )
   `;
   await admin`
+    delete from app.coach_application_review_events
+    where profile_id in (
+      select id from app.profiles where auth_user_id in ${admin(authIds)}
+    )
+  `;
+  await admin`
+    delete from app.coach_applications
+    where profile_id in (
+      select id from app.profiles where auth_user_id in ${admin(authIds)}
+    )
+  `;
+  await admin`
     delete from app.demo_run_participants
     where profile_id in (
       select id from app.profiles where auth_user_id in ${admin(authIds)}
@@ -175,7 +190,23 @@ before(async () => {
   coachActor = actorFromRecord(coachAuthUserId, coach);
   firstClientActor = actorFromRecord(firstClientAuthUserId, firstClient);
   secondClientActor = actorFromRecord(secondClientAuthUserId, secondClient);
-  await withActorDatabaseContext(coachActor, activateOwnedCoachingRecord);
+  await withActorDatabaseContext(coachActor, submitOwnedCoachApplicationRecord);
+  await withActorDatabaseContext(coachActor, (transaction) =>
+    upsertOwnedCoachProfileRecord(transaction, {
+      ...coachProfile,
+      visibility: "hidden",
+    }),
+  );
+  await admin`
+    select app.review_coach_application(
+      ${coachActor.profileId}::uuid,
+      'pending',
+      'approved',
+      'Database test reviewed this complete coach profile.',
+      'database-test',
+      'movx-identity-application-v1'
+    )
+  `;
   await withActorDatabaseContext(coachActor, (transaction) =>
     upsertOwnedCoachProfileRecord(transaction, coachProfile),
   );
@@ -374,4 +405,56 @@ test("only the owning coach completes an elapsed confirmed booking", async () =>
   const completed = coachBookings.find((booking) => booking.id === bookingId);
   assert.equal(completed?.status, "completed");
   assert.ok(completed?.completedAt);
+});
+
+test("suspension blocks new activity but preserves safe resolution of existing sessions", async () => {
+  const bookedSlotId = await createSlot(16);
+  const openSlotId = await createSlot(18);
+  const bookingId = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) => bookDirectPrivateSessionRecord(transaction, bookedSlotId),
+  );
+
+  const [suspended] = await admin<{ status: string }[]>`
+    select app.review_coach_application(
+      ${coachActor.profileId}::uuid,
+      'approved',
+      'suspended',
+      'Coach access paused during a platform review.',
+      'database-test',
+      'movx-identity-application-v1'
+    ) as status
+  `;
+  assert.equal(suspended?.status, "suspended");
+  const [profile] = await admin<{ visibility: string }[]>`
+    select visibility
+    from app.coach_profiles
+    where profile_id = ${coachActor.profileId}::uuid
+  `;
+  assert.equal(profile?.visibility, "hidden");
+
+  await assert.rejects(createSlot(20), CoachAvailabilityConflictError);
+  await assert.rejects(
+    withActorDatabaseContext(secondClientActor, (transaction) =>
+      bookDirectPrivateSessionRecord(transaction, openSlotId),
+    ),
+    CoachBookingConflictError,
+  );
+  const coachBookings = await withActorDatabaseContext(
+    coachActor,
+    (transaction) => currentCoachPrivateBookingRecords(transaction, coachActor),
+  );
+  assert.ok(coachBookings.some((booking) => booking.id === bookingId));
+  assert.equal(
+    await withActorDatabaseContext(coachActor, (transaction) =>
+      cancelDirectPrivateBookingRecord(transaction, bookingId),
+    ),
+    bookingId,
+  );
+  assert.deepEqual(
+    await withActorDatabaseContext(coachActor, (transaction) =>
+      currentClientPrivateBookingRecords(transaction, coachActor),
+    ),
+    [],
+  );
 });

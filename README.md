@@ -4,9 +4,9 @@
 
 MovX Club is a focused scheduling application for martial-arts clients and coaches. Guests discover fictional coaches and real published availability. Email-authenticated clients reserve one capacity-one private session directly. Coaches manage their public profile, location, recurring one-hour availability and booked schedule.
 
-The `scheduling-only` branch intentionally excludes blockchain, wallets, passes, credits, token payments, group events and social/feed behavior. Historical records and migrations may describe those superseded features, but they do not define the current product or runtime.
+This standalone scheduling repository intentionally excludes blockchain, wallets, passes, credits, token payments, group events and social/feed behavior. Historical records and migrations may describe those superseded features, but they do not define the current product or runtime. The separate [fitness-booking-social-app](https://github.com/hworldcom/fitness-booking-social-app) repository preserves the Solana hackathon product.
 
-Start with the [MVP specification](docs/mvp-spec.md), the single current product contract. The local scheduling-only branch delivery is recorded by completed [COR0011](tickets/archive/organisatory/COR0011-scheduling-only-product.md); hosted deployment and rehearsal remain separate operational work.
+Start with the [MVP specification](docs/mvp-spec.md), the single current product contract. The scheduling-product split is recorded by completed [COR0011](tickets/archive/organisatory/COR0011-scheduling-only-product.md); hosted deployment and rehearsal remain separate operational work.
 
 ## Repository guide
 
@@ -24,12 +24,13 @@ Delivered reusable foundations include:
 
 - a responsive Next.js application shell and native Vercel build;
 - local/hosted Supabase PostgreSQL with a server-only database boundary;
-- email-code accounts, protected profiles and self-service coaching activation;
+- email-code accounts, protected profiles and separate client/coach onboarding;
+- platform-reviewed coach applications with verified or demo trust labels;
 - owner-scoped coach profiles with one public provider-neutral location;
 - list-first coach discovery with optional Mapbox enhancement;
 - recurring one-hour availability, deterministic dated occurrences and a responsive coach calendar.
 
-Direct scheduling-only booking and runtime cleanup are active under COR0011. The former membership, wallet, payment, group-event and social features are not current product surfaces.
+Direct scheduling-only booking and runtime cleanup were delivered under COR0011. The former membership, wallet, payment, group-event and social features are not current product surfaces.
 
 ## Run locally
 
@@ -72,7 +73,7 @@ npm run db:runtime
 
 Copy the printed public `API_URL` and `PUBLISHABLE_KEY` (or legacy `ANON_KEY`) to `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `.env.local`. Keep `NEXT_PUBLIC_SITE_URL=http://localhost:3100`. Never expose the service-role/secret key.
 
-Open `/sign-in`, request a code and read it from local Mailpit at [127.0.0.1:55324](http://127.0.0.1:55324). The first verified login creates an application profile and offers Find a coach or Offer coaching. Offer coaching records owner-scoped activation and opens setup; it does not publish or verify the coach.
+Open `/sign-in`, request a code and read it from local Mailpit at [127.0.0.1:55324](http://127.0.0.1:55324). The first verified login creates one application profile. `Find a coach` continues as a client; `Become a coach` submits a coach application on the same account. Applicants may prepare a hidden coach profile, but only platform-approved coaches may publish or manage availability.
 
 To exercise owner flows as the five fictional coaches:
 
@@ -81,6 +82,40 @@ npm run auth:provision:coaches
 ```
 
 Use `daniel.park@coaches.movx.test`, `sam.lee@coaches.movx.test`, `nora.klein@coaches.movx.test`, `idris.malik@coaches.movx.test` or `elif.demir@coaches.movx.test` on `/sign-in`. These reserved `.test` addresses are fictional identifiers, not credentials. The command refuses non-loopback targets and is safe to rerun. `npm run db:reset` removes disposable local accounts.
+
+The fictional seed profiles display `Demo coach`; they are never promoted to `Verified coach` by provisioning. Real approval is an owner-operated process until the separate admin-panel ticket is delivered.
+
+## Coach application review
+
+Set `COACH_REVIEW_DATABASE_URL` only in an ignored operator environment or shell to a direct, owner-privileged PostgreSQL connection. Do not add it to Vercel or expose it through `NEXT_PUBLIC_*`; the ordinary `DATABASE_URL` runtime login is intentionally unable to review applications.
+
+Before approving under `movx-identity-application-v1`, the operator must confirm out of band that the applicant controls the email-backed account, the identity evidence matches the applicant and the completed hidden profile has a reasonable display name, bio, discipline and location. This review does not certify licensing, background checks, competence or safety. Do not store identity documents in this database.
+
+Run the command without `--apply` first. It prints a bounded target summary and makes no change:
+
+```sh
+npm run coach:review -- \
+  --profile-id 00000000-0000-4000-8000-000000000000 \
+  --expected pending \
+  --decision approved \
+  --reason "Identity and completed application reviewed" \
+  --reviewer "operator-reference"
+```
+
+After checking the exact profile and current status, repeat it with both `--apply` and the exact target confirmation:
+
+```sh
+npm run coach:review -- \
+  --profile-id 00000000-0000-4000-8000-000000000000 \
+  --expected pending \
+  --decision approved \
+  --reason "Identity and completed application reviewed" \
+  --reviewer "operator-reference" \
+  --apply \
+  --confirm 00000000-0000-4000-8000-000000000000
+```
+
+Use `pending → rejected` when the application cannot be approved and `approved → suspended` when existing coach authority must be removed. A rejected applicant may resubmit as a new revision. Exact retries of an applied decision are idempotent; stale or contradictory transitions fail closed. Review events are append-only, so corrections use a valid forward transition rather than deleting or editing evidence.
 
 ## Mapbox configuration
 
@@ -130,6 +165,7 @@ npm run db:runtime
 npm run db:test
 npm run test:db
 npm run db:lint
+npm run coach:review -- --help
 ```
 
 The local stack uses port `55322`. `db:reset` recreates only the disposable local database from checked-in migrations/seeds; never run a linked reset against hosted data. Historical tables remain in additive migration history until a separate retention ticket reviews data and rollback requirements.

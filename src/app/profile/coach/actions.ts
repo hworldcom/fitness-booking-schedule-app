@@ -51,10 +51,19 @@ export async function updateCoachProfileAction(
     });
   }
 
-  if (result.outcome === "activation-required") {
+  if (result.outcome === "application-required") {
     return Object.freeze({
       status: "unavailable",
-      message: "Activate coaching before creating a coach profile.",
+      message: "Submit a coach application before creating a coach profile.",
+      errors: Object.freeze([]),
+    });
+  }
+
+  if (result.outcome === "approval-required") {
+    return Object.freeze({
+      status: "unavailable",
+      message:
+        "This coach application is not approved for public visibility. The draft was not saved as public.",
       errors: Object.freeze([]),
     });
   }

@@ -2,36 +2,38 @@
 
 Last updated: 8 October 2026.
 
-MovX is a focused scheduling product for martial-arts coaching. Guests discover fictional coaches and their real published availability. Email-authenticated clients reserve one capacity-one private session directly. Coaches manage their public profile, location, recurring one-hour availability and booked schedule.
+MovX is a focused scheduling product for martial-arts coaching. Guests discover platform-approved coaches or clearly labelled fictional demo coaches and their real published availability. Email-authenticated clients reserve one capacity-one private session directly. Approved coaches manage their public profile, location, recurring one-hour availability and booked schedule.
 
-This branch intentionally has no blockchain, wallet, token, pass, credit, payment, group-funding, event-marketplace, follow, post or feed behavior. Completed and archived records for those features are historical evidence only and do not define current product behavior.
+This standalone project intentionally has no blockchain, wallet, token, pass, credit, payment, group-funding, event-marketplace, follow, post or feed behavior. Completed and archived records for those features are historical evidence only and do not define current product behavior. Solana hackathon development belongs to the separate `fitness-booking-social-app` repository.
 
 ## 1. Product status and document authority
 
-This document is the single current product contract for the scheduling-only branch. It defines target behavior and does not claim every target is already implemented.
+This document is the single current product contract for the standalone scheduling repository. It defines target behavior and does not claim every target is already implemented.
 
 The repository contains reusable Next.js, Supabase/PostgreSQL, email identity, coach profile/location, list-first discovery, recurring availability, responsive calendar and Vercel foundations. Direct scheduling-only booking and the removal of obsolete runtime were delivered under completed [COR0011](../tickets/archive/organisatory/COR0011-scheduling-only-product.md).
 
-Tickets record implementation scope and evidence; they do not override this specification. Archived tickets remain immutable history. [DEV0140](../tickets/archive/organisatory/DEV0140-adopt-scheduling-only-contract.md) records the decision to create this focused branch.
+Tickets record implementation scope and evidence; they do not override this specification. Archived tickets remain immutable history. [DEV0140](../tickets/archive/organisatory/DEV0140-adopt-scheduling-only-contract.md) records the decision to create this focused product split.
 
 ## 2. Confirmed target and decisions
 
-The following constraints are confirmed for this branch:
+The following constraints are confirmed for this scheduling project:
 
-| ID  | Confirmed decision                                                                                                                                                                              |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| C01 | MovX is a coach-discovery and private-session scheduling product, not a payment, financial, membership, social-network or event-funding product.                                                |
-| C02 | Guests can browse visible coaches, confirmed public locations and open dated availability without signing in.                                                                                   |
-| C03 | Email-backed MovX accounts are the only client and coach identity authority. No wallet connection or signature is required.                                                                     |
-| C04 | A client books one exact future one-hour occurrence directly; no pass, credit balance, token or payment is required.                                                                            |
-| C05 | One occurrence has capacity one. Database constraints and a single atomic mutation prevent two active bookings for the same occurrence.                                                         |
-| C06 | A client cannot book their own coach occurrence. Hidden coaches, withdrawn/elapsed slots and cross-dataset identifiers are unavailable.                                                         |
-| C07 | The client or owning coach may cancel a confirmed future booking. Cancellation reopens the occurrence while it is still future.                                                                 |
-| C08 | The owning coach may mark an elapsed confirmed booking completed. Completed and cancelled bookings are terminal.                                                                                |
-| C09 | Coaches activate coaching explicitly, publish one public profile/location and manage recurring one-hour availability without administrator approval. Activation is not credential verification. |
-| C10 | Mapbox is optional. The server-backed coach/time list remains usable when the map or token is unavailable.                                                                                      |
-| C11 | There are no group events, passes, credits, payments, wallets, follows, posts, feeds, messages, waitlists or external calendar synchronization in this MVP.                                     |
-| C12 | Native Next.js on Vercel with Supabase Auth/PostgreSQL is the hosted target. Secrets remain server-only environment values.                                                                     |
+| ID  | Confirmed decision                                                                                                                                                                        |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C01 | MovX is a coach-discovery and private-session scheduling product, not a payment, financial, membership, social-network or event-funding product.                                          |
+| C02 | Guests can browse visible coaches, confirmed public locations and open dated availability without signing in.                                                                             |
+| C03 | Email-backed MovX accounts are the only client and coach identity authority. No wallet connection or signature is required.                                                               |
+| C04 | A client books one exact future one-hour occurrence directly; no pass, credit balance, token or payment is required.                                                                      |
+| C05 | One occurrence has capacity one. Database constraints and a single atomic mutation prevent two active bookings for the same occurrence.                                                   |
+| C06 | A client cannot book their own coach occurrence. Hidden coaches, withdrawn/elapsed slots and cross-dataset identifiers are unavailable.                                                   |
+| C07 | The client or owning coach may cancel a confirmed future booking. Cancellation reopens the occurrence while it is still future.                                                           |
+| C08 | The owning coach may mark an elapsed confirmed booking completed. Completed and cancelled bookings are terminal.                                                                          |
+| C09 | Client and coach onboarding are visibly separate paths into one email-backed account model. Client capability is the default; coach authority requires a platform-approved application.   |
+| C10 | Mapbox is optional. The server-backed coach/time list remains usable when the map or token is unavailable.                                                                                |
+| C11 | There are no group events, passes, credits, payments, wallets, follows, posts, feeds, messages, waitlists or external calendar synchronization in this MVP.                               |
+| C12 | Native Next.js on Vercel with Supabase Auth/PostgreSQL is the hosted target. Secrets remain server-only environment values.                                                               |
+| C13 | A real approved coach displays a `Verified coach` badge meaning MovX reviewed the account holder's identity and coach application; it does not guarantee licensing, competence or safety. |
+| C14 | Authorized-account navigation links to the private `My sessions` schedule rather than coach tools; signed-out navigation omits it. Coach application/workspace entry appears conditionally on Profile after an application exists. |
 
 ### Proposed implementation defaults
 
@@ -50,11 +52,15 @@ A guest can browse the public story, coach list, coach profiles, confirmed locat
 
 ### Client
 
-A client has a verified email-backed MovX account and application profile. The client can book one future occurrence with another coach, view only their own bookings and cancel their own future confirmed booking.
+A client has a verified email-backed MovX account and application profile. The client can book one future occurrence with another coach, view only their own upcoming sessions and retained history in `My sessions`, and cancel their own future confirmed booking. An ordinary client has no coach-workspace item in global navigation or on Profile.
 
 ### Coach
 
-A coach is also a client. After explicit coaching activation, the owner can edit their coach profile/location, publish recurring availability, inspect bookings for their own schedule, cancel a future confirmed booking and mark an elapsed confirmed booking completed. A coach cannot see unrelated client bookings or private identity data.
+A coach is also a client. After platform approval, the owner can publish their coach profile/location, manage recurring availability, inspect bookings for their own schedule, cancel a future confirmed booking and mark an elapsed confirmed booking completed. A pending or rejected applicant may prepare a private draft but has no public coach or scheduling authority. A suspended coach accepts no new bookings while retaining bounded access needed to resolve existing sessions. A coach cannot see unrelated client bookings or private identity data.
+
+### Platform reviewer
+
+Until the internal admin panel exists, an authorized operator uses a guarded owner-only command to approve, reject or suspend an exact coach application. Every decision records the expected prior state, reviewer/source, bounded reason, verification-policy version and immutable audit event. Ordinary application/runtime roles cannot review applications or grant coach authority.
 
 ### MovX service
 
@@ -62,12 +68,14 @@ MovX verifies the Supabase session, establishes transaction-local actor context,
 
 ## 4. Primary user flows
 
-### 4.1 Register and activate coaching
+### 4.1 Register as a client or apply to coach
 
 1. A visitor requests a one-time email code and verifies it through Supabase Auth.
 2. MovX creates or restores the same minimal application profile.
-3. The user continues as a client or explicitly activates coaching.
-4. Coaching activation opens owner-only profile and availability setup; it does not automatically publish a profile.
+3. The visitor follows the `Find a coach` path and can use client behavior immediately, or follows `Become a coach` and submits a coach application.
+4. A pending applicant may prepare a hidden coach-profile draft but cannot publish availability or receive new bookings.
+5. A guarded platform review approves, rejects or suspends the application atomically with audit evidence.
+6. Approval unlocks coach publication and scheduling without removing client capability. It does not automatically make the profile visible.
 
 ### 4.2 Discover a coach and time
 
@@ -82,6 +90,7 @@ MovX verifies the Supabase session, establishes transaction-local actor context,
 2. One authorized database operation locks the occurrence, checks actor/run/coach/time/status boundaries, creates or recovers the client's booking and marks the occurrence booked.
 3. A concurrent different client loses the race and receives a conflict without a second booking.
 4. Reload shows the same confirmed booking from PostgreSQL.
+5. The client can return to `My sessions` for upcoming bookings and retained terminal history.
 
 ### 4.4 Cancel a booking
 
@@ -101,9 +110,13 @@ MovX verifies the Supabase session, establishes transaction-local actor context,
 
 One profile belongs to one verified Supabase Auth identity inside a dataset. It stores the bounded display identity used for authorization and presentation.
 
+### Coach application and review
+
+One current coach application belongs to one application profile. Absence means not applied; submitted applications move through `pending`, `approved`, `rejected` or `suspended`. Review events are append-only evidence of platform decisions. Historical self-service activation may remain stored for continuity but grants no current coach authority.
+
 ### Coach profile and public location
 
-One owner-scoped coach profile contains public name, slug, biography, disciplines, visibility, timezone and one confirmed provider-neutral location snapshot. A fictional gym association grants no account authority.
+One owner-scoped coach profile contains public name, slug, biography, disciplines, visibility, timezone and one confirmed provider-neutral location snapshot. Pending/rejected applicants may keep only a private draft; a user-created profile enters public discovery only while its application is approved and its owner selects visible. A fictional gym association grants no account authority.
 
 ### Recurring availability and dated occurrence
 
@@ -125,7 +138,7 @@ Minimum projection fields are booking ID, occurrence ID, coach/client IDs, sched
 - Browser code receives only public configuration and bounded projections.
 - Next.js server code verifies sessions and owns authorization/database calls.
 - Supabase Auth establishes email identity; editable profile fields do not establish authority.
-- PostgreSQL is authoritative for profiles, locations, availability, occurrences and bookings.
+- PostgreSQL is authoritative for profiles, coach applications/reviews, locations, availability, occurrences and bookings.
 - Mapbox renders/searches locations only; stored provider-neutral snapshots remain application authority.
 - Vercel runs the native Next.js application. Hosted secrets are encrypted server-only environment values.
 - Historical blockchain/social tables may remain in migration history but are not current runtime dependencies.
@@ -141,6 +154,8 @@ Cancellation locks the booking/occurrence together, records the authorized actor
 ## 8. Identity, data and demo integrity
 
 - Public fictional coaches and venues are demonstration data and are not real endorsements or verified professionals.
+- Fictional fixtures display `Demo coach`, never the real platform-verification badge. Existing self-activation or profile presence does not silently become approval.
+- `Verified coach` means MovX reviewed the account holder's identity and application under the recorded `movx-identity-application-v1` policy. It is not a licensing, background-check, competence or safety guarantee.
 - A `demo run` is an isolated demonstration dataset, not a fitness activity or login session.
 - Public pages never expose Auth identifiers, email addresses, database credentials or private client records.
 - Only the booking's client and coach may read its private projection; coach discovery exposes no client schedule.
@@ -149,9 +164,10 @@ Cancellation locks the booking/occurrence together, records the authorized actor
 
 ## 9. Scheduling behavior and permissions
 
-- Public coach discovery includes only visible profiles and confirmed locations.
-- Only the coach owner edits that coach profile, location or recurring availability.
+- Public coach discovery includes visible approved user profiles and explicitly labelled visible fictional fixtures, each with confirmed locations.
+- A pending or rejected applicant may edit only a private coach-profile draft. Only an approved coach owner publishes that profile or edits recurring availability.
 - A coach composes recurring availability as a local working-week draft and explicitly saves the complete selection; one authorized atomic operation replaces the active rule set and synchronizes dated occurrences once.
+- A suspended coach is removed from discovery and cannot publish availability or receive new bookings; existing booking history and bounded terminal actions remain available to the owning parties.
 - Only a verified signed-in client books, and never against their own coach profile.
 - Only the booking client or coach cancels a future confirmed booking.
 - Only the booking coach completes an elapsed confirmed booking.
@@ -162,6 +178,8 @@ Cancellation locks the booking/occurrence together, records the authorized actor
 
 - Actor context is derived from a verified session and set transaction-locally.
 - Direct table permissions remain least privilege; security-definer functions validate actor context and exact identifiers.
+- Coach approval/rejection/suspension is unavailable to ordinary runtime roles. Decisions are expected-state guarded and atomically append immutable review evidence.
+- Editable profile fields, Auth metadata, URL parameters and historical activation timestamps never establish approval or badge state.
 - Capacity-one enforcement exists in PostgreSQL, not only in browser button state.
 - Cross-run identifiers, hidden coaches, self-booking, elapsed/non-open occurrences and invalid lifecycle transitions fail closed.
 - Mutation errors return bounded messages without database/Auth internals.
@@ -174,8 +192,10 @@ Cancellation locks the booking/occurrence together, records the authorized actor
 The scheduling-only MVP is complete when:
 
 - guests can browse a truthful list of fictional coaches and future open times, with an optional synchronized map and usable list fallback;
-- one verified email account can use client behavior and explicitly activate coaching;
-- a coach can publish/edit a visible profile, confirmed location and recurring one-hour availability;
+- one verified email account can enter through the client or coach-application path while retaining the same underlying identity and client capability;
+- a pending applicant cannot self-approve, publish, manage availability or receive new bookings;
+- a guarded platform review can approve/reject/suspend an application with immutable evidence, and only current real approval produces the bounded verified badge;
+- an approved coach can publish/edit a visible profile, confirmed location and recurring one-hour availability;
 - a different signed-in client can reserve one open occurrence and reload the same confirmed booking;
 - concurrent clients cannot both reserve the same occurrence;
 - the booking client or coach can cancel a future confirmed booking and the occurrence becomes open again;
@@ -202,7 +222,12 @@ Payments, subscriptions, passes, wallets, group classes/events, waitlists, messa
 | Guest opens Explore             | Visible fictional coaches and confirmed locations load; map failure leaves the list usable.                                                           |
 | Guest opens coach profile       | Public profile and persisted open times load without private booking/client data.                                                                     |
 | Guest attempts booking          | Sign-in is required; no booking mutation occurs.                                                                                                      |
-| New user activates coaching     | Owner gains coach setup capability while retaining client behavior; no public visibility is inferred.                                                 |
+| New client completes onboarding | The account can browse and book without receiving coach capability.                                                                                   |
+| Client opens My sessions        | Only that account's upcoming bookings and retained history load; no coach-workspace entry is presented to an ordinary client.                         |
+| User applies to coach           | One pending application is created; a private draft is available but public coach/scheduling authority remains denied.                                |
+| Platform approves coach         | The exact pending application becomes approved with immutable review evidence; the owner retains client capability and may publish coaching.          |
+| Public approved coach is shown  | The profile displays `Verified coach` with the bounded MovX review explanation; fictional fixtures display `Demo coach` instead.                      |
+| Coach is suspended              | Discovery, new availability and new bookings are blocked while existing history and permitted terminal booking actions remain intact.                 |
 | Coach publishes availability    | Multiple draft selections persist together on explicit save; valid one-hour occurrences then appear publicly with stable timezone/location snapshots. |
 | Client books open time          | One confirmed booking is created and the occurrence becomes booked atomically.                                                                        |
 | Same client retries booking     | The existing active booking is returned; no duplicate row is created.                                                                                 |

@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   check,
   date,
   foreignKey,
@@ -57,6 +58,7 @@ export const coachProfiles = app.table(
     }).notNull(),
     visibility: text("visibility").default("hidden").notNull(),
     recordSource: text("record_source").notNull(),
+    isDemo: boolean("is_demo").default(false).notNull(),
     earlyCancellationMinutes: integer("early_cancellation_minutes")
       .default(1440)
       .notNull(),

@@ -26,7 +26,7 @@ test("configured guests keep public routes and are redirected from private pages
     expect(new URL(page.url()).pathname).toBe(path);
   }
 
-  for (const path of ["/profile"]) {
+  for (const path of ["/profile", "/sessions"]) {
     await page.goto(path);
     const destination = new URL(page.url());
     expect(destination.pathname).toBe("/sign-in");
@@ -60,6 +60,7 @@ test("removed marketplace and legacy routes are unavailable", async ({
     "/api/membership/check-ins",
     "/api/membership/reservations",
     "/api/membership-card/devnet/prepare",
+    "/api/auth/coaching",
     "/api/staff/check-ins/confirm",
     "/api/wallet/club",
     "/api/wallet/personal",

@@ -4,7 +4,7 @@ import postgres from "postgres";
 import type { CoachProfileInput } from "@/domain/coaches";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
 import { withActorDatabaseContext } from "@/server/db/authorization/repository";
-import { activateOwnedCoachingRecord } from "@/server/db/coaches/activation-repository";
+import { submitOwnedCoachApplicationRecord } from "@/server/db/coaches/application-repository";
 import {
   CoachProfileConflictError,
   currentOwnedCoachProfileRecord,
@@ -79,6 +79,26 @@ async function removeFixtures() {
     )
   `;
   await admin`
+    delete from app.coach_application_review_events
+    where profile_id in (
+      select id from app.profiles
+      where auth_user_id in (
+        ${firstAuthUserId}::uuid,
+        ${secondAuthUserId}::uuid
+      )
+    )
+  `;
+  await admin`
+    delete from app.coach_applications
+    where profile_id in (
+      select id from app.profiles
+      where auth_user_id in (
+        ${firstAuthUserId}::uuid,
+        ${secondAuthUserId}::uuid
+      )
+    )
+  `;
+  await admin`
     delete from app.demo_run_participants
     where profile_id in (
       select id from app.profiles
@@ -121,8 +141,27 @@ before(async () => {
   assert.ok(second);
   firstActor = actorFromRecord(firstAuthUserId, first);
   secondActor = actorFromRecord(secondAuthUserId, second);
-  await withActorDatabaseContext(firstActor, activateOwnedCoachingRecord);
-  await withActorDatabaseContext(secondActor, activateOwnedCoachingRecord);
+  await withActorDatabaseContext(firstActor, submitOwnedCoachApplicationRecord);
+  await withActorDatabaseContext(
+    secondActor,
+    submitOwnedCoachApplicationRecord,
+  );
+  await withActorDatabaseContext(firstActor, (transaction) =>
+    upsertOwnedCoachProfileRecord(transaction, {
+      ...gymProfile,
+      visibility: "hidden",
+    }),
+  );
+  await admin`
+    select app.review_coach_application(
+      ${firstActor.profileId}::uuid,
+      'pending',
+      'approved',
+      'Database test reviewed this complete coach profile.',
+      'database-test',
+      'movx-identity-application-v1'
+    )
+  `;
 });
 
 after(async () => {

@@ -653,6 +653,26 @@
   font-weight: 700;
 }
 
+.coach-application-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 16px 0;
+  border: 1px solid #cddbbd;
+  border-radius: 15px;
+  background: #eef6e4;
+  padding: 16px 18px;
+  color: #405436;
+}
+
+.coach-application-banner p {
+  margin-top: 4px;
+  color: #677462;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
 @media (max-width: 760px) {
   .coach-workspace-header {
     align-items: flex-start;
@@ -670,6 +690,11 @@
   .coach-availability-list-heading,
   .coach-client-cards-heading {
     align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .coach-application-banner {
+    align-items: stretch;
     flex-direction: column;
   }
 

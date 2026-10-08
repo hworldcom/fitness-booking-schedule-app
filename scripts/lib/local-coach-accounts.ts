@@ -158,6 +158,7 @@ export type SeededCoachDatabaseState = Readonly<{
   public_slug: string;
   coach_visibility: string;
   coach_record_source: string;
+  coach_is_demo: boolean;
   discipline_count: string | number;
 }>;
 
@@ -183,6 +184,7 @@ export function assertSeededCoachDatabaseState(
       row.run_catalogue_visibility !== "public" ||
       row.participant_status !== "active" ||
       row.coach_visibility !== "visible" ||
+      row.coach_is_demo !== true ||
       Number(row.discipline_count) < 1 ||
       row.coaching_activated_at === null
     ) {

@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
-import { ArrowRight, MapPinned, MapPinOff } from "lucide-react";
+import { ArrowRight, BadgeCheck, MapPinned, MapPinOff } from "lucide-react";
 import { profileInitials } from "@/auth/profile-presentation";
 import type { CoachProjection } from "@/domain/coaches";
 import type { MapboxBrowserConfiguration } from "@/mapbox/provider";
@@ -90,7 +90,14 @@ export function CoachExploreResults({
             >
               <div className="coach-card-topline">
                 <Avatar initials={profileInitials(coach.displayName)} />
-                <Pill tone="lime">Demo coach</Pill>
+                <Pill tone="lime">
+                  {coach.trustKind === "verified" && (
+                    <BadgeCheck size={13} aria-hidden="true" />
+                  )}
+                  {coach.trustKind === "verified"
+                    ? "Verified coach"
+                    : "Demo coach"}
+                </Pill>
               </div>
               <div>
                 <h2>{coach.displayName}</h2>

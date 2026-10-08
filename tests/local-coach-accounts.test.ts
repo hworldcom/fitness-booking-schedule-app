@@ -27,6 +27,7 @@ function databaseRows(state: "fixture" | "user") {
     public_slug: coach.slug,
     coach_visibility: "visible",
     coach_record_source: state,
+    coach_is_demo: true,
     discipline_count: "1",
   }));
 }

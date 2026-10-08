@@ -12,7 +12,11 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
-import type { CoachGymOption, CoachProjection } from "@/domain/coaches";
+import type {
+  CoachAccessProjection,
+  CoachGymOption,
+  CoachProjection,
+} from "@/domain/coaches";
 import { COACH_DISCIPLINES } from "@/domain/coaches";
 import type { MapboxBrowserConfiguration } from "@/mapbox/provider";
 import {
@@ -20,6 +24,7 @@ import {
   updateCoachProfileAction,
 } from "@/app/profile/coach/actions";
 import { CoachLocationPicker } from "./coach-location-picker";
+import { CoachApplicationBanner } from "./coach-application-gate";
 
 const INITIAL_COACH_PROFILE_ACTION_STATE: CoachProfileActionState =
   Object.freeze({ status: "idle", message: "", errors: Object.freeze([]) });
@@ -28,11 +33,13 @@ export function CoachProfileEditor({
   coach,
   gyms,
   ownerDisplayName,
+  coachAccess,
   mapboxConfiguration,
 }: {
   coach: CoachProjection | null;
   gyms: readonly CoachGymOption[];
   ownerDisplayName: string;
+  coachAccess: CoachAccessProjection;
   mapboxConfiguration: MapboxBrowserConfiguration;
 }) {
   const [state, formAction, pending] = useActionState(
@@ -43,6 +50,8 @@ export function CoachProfileEditor({
     coach?.location.kind ?? "gym",
   );
   const initialDisciplines = new Set(coach?.disciplines ?? []);
+  const publicationAllowed =
+    coachAccess.status === "approved" || coachAccess.status === "demo";
 
   return (
     <div className="coach-editor">
@@ -56,23 +65,30 @@ export function CoachProfileEditor({
       </nav>
       <header className="coach-editor-heading">
         <div>
-          <span className="eyebrow">SELF-DECLARED COACH PROFILE</span>
+          <span className="eyebrow">
+            {publicationAllowed
+              ? "APPROVED COACH PROFILE"
+              : "PRIVATE COACH APPLICATION DRAFT"}
+          </span>
           <h1>
             {coach
               ? "Edit your public coach profile."
               : "Become discoverable as a coach."}
           </h1>
           <p>
-            Choose what clients may see. This does not verify credentials and
-            does not give a gym control over your profile.
+            {publicationAllowed
+              ? "Choose what clients may see. MovX approval is separate from profile visibility and gives no gym control over your profile."
+              : "Prepare the profile MovX will review. It remains private until the application is approved."}
           </p>
         </div>
-        {coach?.visibility === "visible" && (
+        {publicationAllowed && coach?.visibility === "visible" && (
           <Link className="button secondary" href={`/coaches/${coach.slug}`}>
             <Eye size={16} aria-hidden="true" /> View public profile
           </Link>
         )}
       </header>
+
+      <CoachApplicationBanner access={coachAccess} />
 
       <form className="coach-editor-form" action={formAction}>
         <section className="coach-editor-panel">
@@ -227,34 +243,47 @@ export function CoachProfileEditor({
               <p>Hidden profiles remain available only to their owner.</p>
             </div>
           </div>
-          <div className="coach-visibility-options">
-            <label>
-              <input
-                type="radio"
-                name="visibility"
-                value="visible"
-                defaultChecked={coach?.visibility === "visible"}
-              />
-              <span>
-                <Eye size={18} aria-hidden="true" />
-                <strong>Visible</strong>
-                <small>Show the completed profile in public discovery.</small>
-              </span>
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="visibility"
-                value="hidden"
-                defaultChecked={!coach || coach.visibility === "hidden"}
-              />
-              <span>
-                <EyeOff size={18} aria-hidden="true" />
-                <strong>Hidden</strong>
-                <small>Save the profile without publishing it.</small>
-              </span>
-            </label>
-          </div>
+          {publicationAllowed ? (
+            <div className="coach-visibility-options">
+              <label>
+                <input
+                  type="radio"
+                  name="visibility"
+                  value="visible"
+                  defaultChecked={coach?.visibility === "visible"}
+                />
+                <span>
+                  <Eye size={18} aria-hidden="true" />
+                  <strong>Visible</strong>
+                  <small>Show the completed profile in public discovery.</small>
+                </span>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="visibility"
+                  value="hidden"
+                  defaultChecked={!coach || coach.visibility === "hidden"}
+                />
+                <span>
+                  <EyeOff size={18} aria-hidden="true" />
+                  <strong>Hidden</strong>
+                  <small>Save the profile without publishing it.</small>
+                </span>
+              </label>
+            </div>
+          ) : (
+            <div className="coach-editor-draft-visibility">
+              <EyeOff size={18} aria-hidden="true" />
+              <div>
+                <strong>Private while under review</strong>
+                <small>
+                  MovX will unlock public visibility only after approval.
+                </small>
+              </div>
+              <input type="hidden" name="visibility" value="hidden" />
+            </div>
+          )}
         </section>
 
         {state.status !== "idle" && (

@@ -112,7 +112,7 @@ export function CoachMarketplace(props: CoachMarketplaceProps) {
         >
           <p>{result.message}</p>
           {result.status === "saved" && (
-            <Link href="/profile#my-sessions">View my sessions</Link>
+            <Link href="/sessions#my-sessions">View my sessions</Link>
           )}
         </div>
       )}
@@ -136,7 +136,7 @@ export function CoachMarketplace(props: CoachMarketplaceProps) {
               <span className="eyebrow">YOUR BOOKINGS</span>
               <h3 id="your-bookings-title">Your schedule with this coach</h3>
             </div>
-            <Link className="text-link" href="/profile#my-sessions">
+            <Link className="text-link" href="/sessions#my-sessions">
               All sessions
             </Link>
           </div>

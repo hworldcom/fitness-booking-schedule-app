@@ -9,6 +9,16 @@ export const COACH_DISCIPLINES = Object.freeze([
 
 export type CoachDiscipline = (typeof COACH_DISCIPLINES)[number];
 export type CoachVisibility = "visible" | "hidden";
+export type CoachApplicationStatus =
+  "pending" | "approved" | "rejected" | "suspended";
+export type CoachAccessStatus = "not-applied" | CoachApplicationStatus | "demo";
+export type CoachTrustKind = "verified" | "demo";
+export type CoachAccessProjection = Readonly<{
+  status: CoachAccessStatus;
+  submittedAt: string | null;
+  decisionReason: string | null;
+  verificationPolicyVersion: string | null;
+}>;
 export type CoachLocationSource = "manual" | "permanent-geocoding";
 export const COACH_AVAILABILITY_DURATIONS = Object.freeze([
   30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180,
@@ -61,6 +71,7 @@ export type CoachProjection = Readonly<{
   }>;
   visibility: "visible" | "hidden";
   recordSource: "fixture" | "user";
+  trustKind: CoachTrustKind | null;
   disciplines: readonly CoachDiscipline[];
 }>;
 
@@ -156,7 +167,7 @@ export type CoachEditorState =
       coach: CoachProjection | null;
       gyms: readonly CoachGymOption[];
       ownerDisplayName: string;
-      coachingActivated: boolean;
+      coachAccess: CoachAccessProjection;
     }>
   | Readonly<{
       status: "preview" | "signed-out" | "forbidden" | "unavailable";
@@ -169,7 +180,7 @@ export type CoachAvailabilityWorkspaceState =
       rules: readonly OwnedCoachAvailabilityRule[];
       slots: readonly OwnedCoachAvailabilitySlot[];
       ownerDisplayName: string;
-      coachingActivated: boolean;
+      coachAccess: CoachAccessProjection;
     }>
   | Readonly<{
       status: "preview" | "signed-out" | "forbidden" | "unavailable";

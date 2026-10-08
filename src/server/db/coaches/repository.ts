@@ -29,6 +29,7 @@ type CoachProjectionRow = Readonly<{
   location_confirmed_at: string | Date;
   visibility: string;
   record_source: string;
+  trust_kind: string | null;
   disciplines: string[];
 }>;
 
@@ -72,6 +73,9 @@ function mapCoach(row: CoachProjectionRow): CoachProjection {
       row.location_source !== "permanent-geocoding") ||
     (row.visibility !== "visible" && row.visibility !== "hidden") ||
     (row.record_source !== "fixture" && row.record_source !== "user") ||
+    (row.trust_kind !== null &&
+      row.trust_kind !== "demo" &&
+      row.trust_kind !== "verified") ||
     !Number.isFinite(latitude) ||
     !Number.isFinite(longitude) ||
     row.disciplines.length < 1 ||
@@ -100,6 +104,7 @@ function mapCoach(row: CoachProjectionRow): CoachProjection {
     }),
     visibility: row.visibility,
     recordSource: row.record_source,
+    trustKind: row.trust_kind,
     disciplines: Object.freeze([...row.disciplines]),
   });
 }
@@ -123,6 +128,7 @@ function projectionSelect() {
     coach.location_confirmed_at,
     coach.visibility,
     coach.record_source,
+    app.coach_trust_kind(coach.profile_id, coach.is_demo) as trust_kind,
     array_agg(discipline.discipline order by discipline.sort_order)
       as disciplines
   `);

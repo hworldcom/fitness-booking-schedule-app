@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CoachProfileEditor } from "@/features/coaches/coach-profile-editor";
-import { CoachActivationGate } from "@/features/coaches/coach-activation-gate";
+import { CoachApplicationGate } from "@/features/coaches/coach-application-gate";
 import { signInHref } from "@/auth/return-to";
 import { resolveMapboxBrowserConfiguration } from "@/mapbox/provider";
 import { currentCoachEditor } from "@/server/coaches/service";
@@ -52,12 +52,18 @@ export default async function Page() {
       </section>
     );
   }
-  if (!state.coachingActivated) return <CoachActivationGate />;
+  if (
+    state.coachAccess.status === "not-applied" ||
+    state.coachAccess.status === "suspended"
+  ) {
+    return <CoachApplicationGate access={state.coachAccess} />;
+  }
   return (
     <CoachProfileEditor
       coach={state.coach}
       gyms={state.gyms}
       ownerDisplayName={state.ownerDisplayName}
+      coachAccess={state.coachAccess}
       mapboxConfiguration={resolveMapboxBrowserConfiguration(
         process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
       )}

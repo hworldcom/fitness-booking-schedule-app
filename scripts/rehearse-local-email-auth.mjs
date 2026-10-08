@@ -39,9 +39,24 @@ async function requestAndVerify(
   { testInvalidCode = false, replayedCode = null } = {},
 ) {
   await page.goto(`${siteUrl}/sign-in`, { waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => {
+    const button = document.querySelector(
+      'form.auth-form button[type="submit"]',
+    );
+    return button instanceof HTMLButtonElement && !button.disabled;
+  });
   await page.getByLabel("Email address").fill(email);
+  assert.equal(await page.getByLabel("Email address").inputValue(), email);
   await submitForm(page);
-  await page.getByText("Check your email.").waitFor({ timeout: 60_000 });
+  try {
+    await page.getByText("Check your email.").waitFor({ timeout: 60_000 });
+  } catch (error) {
+    const actionError = await page.locator(".wallet-error").textContent();
+    throw new Error(
+      `The sign-in code request did not advance: ${actionError ?? "no bounded UI error"}`,
+      { cause: error },
+    );
+  }
   const code = await emailCodeFor(email);
 
   if (testInvalidCode) {
@@ -80,16 +95,51 @@ async function completeProfile(page, displayName) {
   return actor;
 }
 
-async function verifyAccountProfile(page, displayName) {
+async function verifyAccountProfile(page, displayName, coachState = "none") {
   await page.goto(`${siteUrl}/profile`, { waitUntil: "domcontentloaded" });
   await page
     .getByRole("heading", { name: displayName, exact: true })
     .waitFor({ timeout: 20_000 });
   await page.getByText("Email-backed MovX profile").waitFor();
+  if (coachState === "pending") {
+    await page
+      .getByRole("heading", { name: "Coach application pending" })
+      .waitFor();
+    await page.getByRole("link", { name: "Open coach application" }).waitFor();
+  } else {
+    assert.equal(
+      await page
+        .getByRole("link", { name: "Open coach workspace", exact: true })
+        .count(),
+      0,
+    );
+    assert.equal(
+      await page
+        .getByRole("link", { name: "Open coach application", exact: true })
+        .count(),
+      0,
+    );
+  }
+  await page.goto(`${siteUrl}/sessions`, { waitUntil: "domcontentloaded" });
   await page
     .getByRole("heading", { name: "Your private-session schedule" })
     .waitFor();
   await page.getByText("No sessions booked yet.").waitFor();
+  await page
+    .getByRole("link", { name: "My sessions", exact: true })
+    .first()
+    .waitFor();
+  assert.equal(
+    await page
+      .getByRole("link", { name: "My sessions", exact: true })
+      .first()
+      .getAttribute("href"),
+    "/sessions",
+  );
+  assert.equal(
+    await page.getByRole("link", { name: "Coach", exact: true }).count(),
+    0,
+  );
   assert.equal(await page.getByText("Illustrative history").count(), 0);
 }
 
@@ -99,6 +149,10 @@ async function signOut(page) {
   await page.getByLabel("Email address").waitFor();
   assert.equal(await page.locator(".sidebar-profile").count(), 0);
   assert.equal(await page.locator(".header-avatar").count(), 0);
+  assert.equal(
+    await page.getByRole("link", { name: "My sessions", exact: true }).count(),
+    0,
+  );
   const response = await page.request.get(`${siteUrl}/api/auth/actor`);
   assert.equal(response.status(), 401);
   assert.deepEqual(await response.json(), { status: "signed-out" });
@@ -127,7 +181,7 @@ try {
   await firstPage.waitForURL(/\/explore$/);
   await firstPage.goto(`${siteUrl}/coach`, { waitUntil: "domcontentloaded" });
   await firstPage
-    .getByRole("heading", { name: "Activate coaching when you are ready." })
+    .getByRole("heading", { name: "Apply before publishing coaching." })
     .waitFor();
   await firstPage
     .getByRole("link", { name: "Your profile: Riley Morgan" })
@@ -158,19 +212,19 @@ try {
     path: `${evidenceDirectory}/account-path-mobile.png`,
     fullPage: true,
   });
-  await secondPage.getByRole("button", { name: "Offer coaching" }).focus();
+  await secondPage.getByRole("button", { name: "Become a coach" }).focus();
   assert.equal(
     await secondPage
-      .getByRole("button", { name: "Offer coaching" })
+      .getByRole("button", { name: "Become a coach" })
       .evaluate((element) => element === document.activeElement),
     true,
   );
-  await secondPage.getByRole("button", { name: "Offer coaching" }).click();
+  await secondPage.getByRole("button", { name: "Become a coach" }).click();
   await secondPage.waitForURL(/\/profile\/coach$/);
   await secondPage
     .getByRole("heading", { name: "Become discoverable as a coach." })
     .waitFor();
-  await verifyAccountProfile(secondPage, "Morgan Lee");
+  await verifyAccountProfile(secondPage, "Morgan Lee", "pending");
   assert.equal(
     await secondPage.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -188,7 +242,7 @@ try {
   assert.deepEqual(firstErrors, []);
   assert.deepEqual(secondErrors, []);
   console.log(
-    "Email OTP rehearsal passed for client and self-service coach onboarding, one returning account, invalid/replayed-code recovery, profile isolation, mobile keyboard/overflow and immediate sign-out cleanup.",
+    "Email OTP rehearsal passed for separate client and pending coach-application onboarding on one account, one returning account, invalid/replayed-code recovery, profile isolation, mobile keyboard/overflow and immediate sign-out cleanup.",
   );
 } finally {
   await browser.close();

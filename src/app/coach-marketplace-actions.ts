@@ -46,7 +46,7 @@ function resultFailure(
 }
 
 function refreshScheduling() {
-  revalidatePath("/profile");
+  revalidatePath("/sessions");
   revalidatePath("/coach");
   revalidatePath("/explore");
   revalidatePath("/coaches/[slug]", "page");

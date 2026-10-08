@@ -1,7 +1,6 @@
 import "server-only";
 
 import { withAuthorizedActor } from "@/server/authorization/service";
-import { currentActorProjection } from "@/server/db/authorization/repository";
 import {
   bookDirectPrivateSessionRecord,
   cancelDirectPrivateBookingRecord,
@@ -40,12 +39,9 @@ async function mutateBooking<T>(
 
 export async function currentPrivateBookingWorkspace() {
   const result = await withAuthorizedActor(async (transaction, actor) => {
-    const owner = await currentActorProjection(transaction, actor);
     const [bookings, coachBookings] = await Promise.all([
       currentClientPrivateBookingRecords(transaction, actor),
-      owner.coachingActivated
-        ? currentCoachPrivateBookingRecords(transaction, actor)
-        : Promise.resolve(Object.freeze([])),
+      currentCoachPrivateBookingRecords(transaction, actor),
     ]);
     return Object.freeze({ bookings, coachBookings });
   });

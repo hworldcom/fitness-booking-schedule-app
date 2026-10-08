@@ -31,6 +31,7 @@ const COACH: CoachProjection = Object.freeze({
   }),
   visibility: "visible",
   recordSource: "user",
+  trustKind: "verified",
   disciplines: Object.freeze(["Boxing"] as const),
 });
 

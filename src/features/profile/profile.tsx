@@ -6,17 +6,15 @@ import { useActor } from "@/auth/client/actor-provider";
 import { profileInitials } from "@/auth/profile-presentation";
 import { signInHref } from "@/auth/return-to";
 import { Avatar, Empty, Pill } from "@/components/ui";
-import type { PrivateBookingProjection } from "@/domain/coach-bookings";
-import { ClientSessions } from "./client-sessions";
+import type { CoachAccessProjection } from "@/domain/coaches";
 
 export function Profile({
-  bookings,
-  referenceTime,
+  coachAccess,
 }: {
-  bookings: readonly PrivateBookingProjection[] | null;
-  referenceTime: string;
+  coachAccess: CoachAccessProjection | null;
 }) {
   const { actor } = useActor();
+  const coachEntry = coachAccountEntry(coachAccess?.status ?? "not-applied");
 
   if (actor.status === "unavailable") {
     return <ProfileAccessUnavailable />;
@@ -92,21 +90,78 @@ export function Profile({
         <BadgeCheck size={24} />
         <h2>Your profile is connected to this account.</h2>
         <p>
-          Your booking history is loaded only from the scheduling database.
-          Activate coaching separately if you want to publish a profile and
-          recurring availability.
+          Your upcoming sessions and retained booking history have their own
+          private schedule. Coach tools appear here only after this account has
+          entered the separate coach-application path.
         </p>
+        <Link className="text-link" href="/sessions">
+          Open My sessions
+        </Link>
       </section>
-      <ClientSessions bookings={bookings} referenceTime={referenceTime} />
-      <div className="account-profile-empty">
-        <Empty
-          title="Coach private classes?"
-          description="Open the coach workspace to set up your public profile and publish exact availability for the next seven days."
-          href="/coach"
-          action="Open coach workspace"
-        />
-      </div>
+      {coachEntry && <CoachAccountEntry entry={coachEntry} />}
     </>
+  );
+}
+
+type CoachAccountEntryContent = Readonly<{
+  title: string;
+  description: string;
+  href: "/coach" | "/profile/coach";
+  action: string;
+}>;
+
+export function coachAccountEntry(
+  status: CoachAccessProjection["status"],
+): CoachAccountEntryContent | null {
+  switch (status) {
+    case "approved":
+    case "demo":
+      return Object.freeze({
+        title: "Coach workspace",
+        description:
+          "Manage your approved coach profile, client sessions and published availability.",
+        href: "/coach",
+        action: "Open coach workspace",
+      });
+    case "suspended":
+      return Object.freeze({
+        title: "Coach access suspended",
+        description:
+          "Review your coach status and retain access to permitted existing-session actions.",
+        href: "/coach",
+        action: "Review coach access",
+      });
+    case "rejected":
+      return Object.freeze({
+        title: "Coach application needs changes",
+        description:
+          "Update your private coach profile and resubmit it for MovX review.",
+        href: "/profile/coach",
+        action: "Update coach application",
+      });
+    case "pending":
+      return Object.freeze({
+        title: "Coach application pending",
+        description:
+          "Your private coach profile remains editable while MovX reviews the application.",
+        href: "/profile/coach",
+        action: "Open coach application",
+      });
+    case "not-applied":
+      return null;
+  }
+}
+
+function CoachAccountEntry({ entry }: { entry: CoachAccountEntryContent }) {
+  return (
+    <div className="account-profile-empty">
+      <Empty
+        title={entry.title}
+        description={entry.description}
+        href={entry.href}
+        action={entry.action}
+      />
+    </div>
   );
 }
 

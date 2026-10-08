@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { signInHref } from "@/auth/return-to";
 import { saveCoachAvailabilityRulesAction } from "./actions";
 import { CoachAvailabilityPanel } from "@/features/coaches/coach-availability-panel";
-import { CoachActivationGate } from "@/features/coaches/coach-activation-gate";
+import { CoachApplicationGate } from "@/features/coaches/coach-application-gate";
 import { CoachClientCards } from "@/features/coaches/coach-client-cards";
 import { currentPrivateBookingWorkspace } from "@/server/coaches/booking-service";
 import { currentCoachAvailabilityWorkspace } from "@/server/coaches/service";
@@ -53,10 +53,27 @@ export default async function Page() {
     );
   }
 
-  if (!state.coachingActivated) return <CoachActivationGate />;
-
   const coachBookings =
     bookingState.status === "authorized" ? bookingState.coachBookings : null;
+
+  if (
+    state.coachAccess.status !== "approved" &&
+    state.coachAccess.status !== "demo"
+  ) {
+    return (
+      <CoachApplicationGate
+        access={state.coachAccess}
+        existingBookings={
+          state.coachAccess.status === "suspended" ? (
+            <CoachClientCards
+              bookings={coachBookings}
+              referenceTime={new Date().toISOString()}
+            />
+          ) : undefined
+        }
+      />
+    );
+  }
 
   return (
     <CoachAvailabilityPanel

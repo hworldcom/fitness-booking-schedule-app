@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   ArrowLeft,
+  BadgeCheck,
   MapPin,
   Search,
   ShieldCheck,
@@ -29,7 +30,7 @@ export function CoachDirectory({
     <div className="coach-discovery">
       <header className="coach-directory-hero">
         <div>
-          <span className="eyebrow">FICTIONAL DEMO COACHES · BERLIN</span>
+          <span className="eyebrow">APPROVED + DEMO COACHES · BERLIN</span>
           <h1>
             Find a coach and a time that fits
             <span className="lime-text">.</span>
@@ -140,8 +141,22 @@ export function CoachProfileView({
         <div className="public-coach-identity">
           <Avatar initials={profileInitials(coach.displayName)} />
           <div>
-            <span className="eyebrow">SELF-DECLARED · DEMO COACH</span>
+            <span className="eyebrow">
+              {coach.trustKind === "verified"
+                ? "MOVX-REVIEWED COACH"
+                : "FICTIONAL DEMO COACH"}
+            </span>
             <h1>{coach.displayName}</h1>
+            <p className="coach-trust-label">
+              {coach.trustKind === "verified" ? (
+                <>
+                  <BadgeCheck size={16} aria-hidden="true" /> Verified coach —
+                  MovX reviewed this coach&apos;s identity and application.
+                </>
+              ) : (
+                "Demo coach — this fictional profile is not a verified professional."
+              )}
+            </p>
             <div className="coach-discipline-list">
               {coach.disciplines.map((discipline) => (
                 <span key={discipline}>{discipline}</span>
@@ -166,9 +181,9 @@ export function CoachProfileView({
           <div className="coach-location-note">
             <ShieldCheck size={20} aria-hidden="true" />
             <p>
-              This fictional profile uses a public discovery point selected by
-              the coach—not live tracking, current presence or a gym
-              endorsement.
+              {coach.trustKind === "verified"
+                ? "MovX verification covers identity and application review only. It does not guarantee licensing, competence, safety or presence at this place."
+                : "This fictional profile uses a public discovery point—not live tracking, current presence or a gym endorsement."}
             </p>
           </div>
         </section>

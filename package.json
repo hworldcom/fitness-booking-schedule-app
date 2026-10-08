@@ -21,6 +21,7 @@
     "auth:start": "supabase start --exclude realtime,storage-api,imgproxy,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
     "auth:status": "supabase status -o env | grep -E '^(API_URL|PUBLISHABLE_KEY|ANON_KEY)='",
     "auth:provision:coaches": "tsx scripts/provision-local-coach-accounts.ts",
+    "coach:review": "node --env-file-if-exists=.env.staging.local scripts/review-coach-application.mjs",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset --local",
     "db:runtime": "node scripts/prepare-local-runtime-database.mjs",

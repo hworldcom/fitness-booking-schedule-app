@@ -66,6 +66,7 @@ async function readCoachStates(
       coach.public_slug,
       coach.visibility as coach_visibility,
       coach.record_source as coach_record_source,
+      coach.is_demo as coach_is_demo,
       (
         select count(*)
         from app.coach_profile_disciplines as discipline

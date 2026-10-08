@@ -6,7 +6,7 @@ import { useState, type ReactNode } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
-  CalendarDays,
+  CalendarCheck2,
   CircleHelp,
   House,
   Info,
@@ -16,22 +16,40 @@ import {
 } from "lucide-react";
 import { AuthStatusLink } from "@/auth/client/auth-status-link";
 import { useActor } from "@/auth/client/actor-provider";
+import type { ActorSnapshot } from "@/auth/actor-contracts";
 import { profileInitials } from "@/auth/profile-presentation";
 import { Avatar, Brand, Modal, Pill } from "./ui";
 
 const navigation = [
-  { label: "Home", href: "/", Icon: House },
-  { label: "Explore", href: "/explore", Icon: MapPin },
-  { label: "Coach", href: "/coach", Icon: CalendarDays },
-  { label: "How it works", href: "/how-it-works", Icon: ListChecks },
-  { label: "Profile", href: "/profile", Icon: UserRound },
+  { label: "Home", href: "/", Icon: House, accountOnly: false },
+  { label: "Explore", href: "/explore", Icon: MapPin, accountOnly: false },
+  {
+    label: "My sessions",
+    href: "/sessions",
+    Icon: CalendarCheck2,
+    accountOnly: true,
+  },
+  {
+    label: "How it works",
+    href: "/how-it-works",
+    Icon: ListChecks,
+    accountOnly: false,
+  },
+  { label: "Profile", href: "/profile", Icon: UserRound, accountOnly: false },
 ];
+
+export function navigationForActor(status: ActorSnapshot["status"]) {
+  return navigation.filter(
+    ({ accountOnly }) => !accountOnly || status === "authorized",
+  );
+}
 
 export function Shell({ children }: { children: ReactNode }) {
   const path = usePathname();
   const { actor } = useActor();
   const [aboutOpen, setAboutOpen] = useState(false);
   const currentProfile = actor.status === "authorized" ? actor.profile : null;
+  const visibleNavigation = navigationForActor(actor.status);
   const active = (href: string) =>
     href === "/" ? path === "/" : path.startsWith(href);
 
@@ -50,7 +68,7 @@ export function Shell({ children }: { children: ReactNode }) {
           BOOK YOUR HOUR.
         </div>
         <nav aria-label="Main navigation">
-          {navigation.map(({ label, href, Icon }) => (
+          {visibleNavigation.map(({ label, href, Icon }) => (
             <Link
               href={href}
               key={href}
@@ -150,7 +168,7 @@ export function Shell({ children }: { children: ReactNode }) {
         </footer>
       </div>
       <nav className="mobile-nav" aria-label="Mobile navigation">
-        {navigation.map(({ label, href, Icon }) => (
+        {visibleNavigation.map(({ label, href, Icon }) => (
           <Link
             key={href}
             href={href}

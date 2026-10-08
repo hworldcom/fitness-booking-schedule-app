@@ -188,6 +188,7 @@ insert into app.coach_profiles (
   location_confirmed_at,
   visibility,
   record_source,
+  is_demo,
   created_at,
   updated_at
 )
@@ -210,6 +211,7 @@ values
     '2026-10-03T00:00:00Z',
     'visible',
     'fixture',
+    true,
     '2026-10-03T00:00:00Z',
     '2026-10-03T00:00:00Z'
   ),
@@ -231,6 +233,7 @@ values
     '2026-10-03T00:00:00Z',
     'visible',
     'fixture',
+    true,
     '2026-10-03T00:00:00Z',
     '2026-10-03T00:00:00Z'
   ),
@@ -252,6 +255,7 @@ values
     '2026-10-03T00:00:00Z',
     'visible',
     'fixture',
+    true,
     '2026-10-03T00:00:00Z',
     '2026-10-03T00:00:00Z'
   ),
@@ -273,6 +277,7 @@ values
     '2026-10-03T00:00:00Z',
     'visible',
     'fixture',
+    true,
     '2026-10-03T00:00:00Z',
     '2026-10-03T00:00:00Z'
   ),
@@ -294,6 +299,7 @@ values
     '2026-10-03T00:00:00Z',
     'visible',
     'fixture',
+    true,
     '2026-10-03T00:00:00Z',
     '2026-10-03T00:00:00Z'
   )
@@ -312,6 +318,7 @@ set public_slug = excluded.public_slug,
     location_provider = excluded.location_provider,
     location_confirmed_at = excluded.location_confirmed_at,
     visibility = excluded.visibility,
+    is_demo = excluded.is_demo,
     updated_at = excluded.updated_at
 where coach_profiles.record_source = 'fixture'
   and (

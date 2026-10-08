@@ -170,11 +170,11 @@ export function CoachStoryHome() {
               <UsersRound size={23} />
             </span>
             <span className="eyebrow">FOR COACHES</span>
-            <h3>Publish availability and manage booked time.</h3>
+            <h3>Apply, get approved and manage booked time.</h3>
             <ul>
               <li>
-                <Check size={15} aria-hidden="true" /> Set a visible profile and
-                training place
+                <Check size={15} aria-hidden="true" /> Prepare a private coach
+                application and profile
               </li>
               <li>
                 <Check size={15} aria-hidden="true" /> Publish recurring
@@ -185,6 +185,12 @@ export function CoachStoryHome() {
                 elapsed sessions
               </li>
             </ul>
+            <Link
+              className="text-link"
+              href="/sign-in?intent=coach&returnTo=%2Fprofile%2Fcoach"
+            >
+              Become a coach <ArrowRight size={15} aria-hidden="true" />
+            </Link>
           </article>
         </div>
       </section>
@@ -192,9 +198,17 @@ export function CoachStoryHome() {
       <section className="coach-final-cta">
         <span className="eyebrow">READY TO EXPLORE?</span>
         <h2>Start with a coach and an open hour.</h2>
-        <Link className="button lime" href="/explore">
-          Browse schedules <ArrowRight size={17} aria-hidden="true" />
-        </Link>
+        <div className="coach-story-actions">
+          <Link className="button lime" href="/explore">
+            Browse schedules <ArrowRight size={17} aria-hidden="true" />
+          </Link>
+          <Link
+            className="button coach-button-ghost"
+            href="/sign-in?intent=coach&returnTo=%2Fprofile%2Fcoach"
+          >
+            Apply to coach
+          </Link>
+        </div>
       </section>
     </div>
   );
@@ -208,9 +222,9 @@ export function HowItWorksStory() {
           <span className="eyebrow">HOW MOVX SCHEDULING WORKS</span>
           <h1>Published time in. Confirmed booking out.</h1>
           <p>
-            Coaches own their profiles and recurring schedules. Clients reserve
-            only open future occurrences, and the database prevents double
-            booking.
+            Approved coaches own their profiles and recurring schedules. Clients
+            reserve only open future occurrences, and the database prevents
+            double booking.
           </p>
         </div>
         <StoryStepGrid />

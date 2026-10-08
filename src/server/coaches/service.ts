@@ -32,7 +32,20 @@ import {
   publicCoachProfileRecord,
   upsertOwnedCoachProfileRecord,
 } from "@/server/db/coaches/repository";
-import { activateOwnedCoachingRecord } from "@/server/db/coaches/activation-repository";
+import { submitOwnedCoachApplicationRecord } from "@/server/db/coaches/application-repository";
+
+function canPrepareCoachProfile(status: string) {
+  return (
+    status === "pending" ||
+    status === "approved" ||
+    status === "rejected" ||
+    status === "demo"
+  );
+}
+
+function canOperateCoachSchedule(status: string) {
+  return status === "approved" || status === "demo";
+}
 
 export async function publicCoachDirectory(
   filters: CoachDirectoryFilters,
@@ -67,32 +80,47 @@ export async function publicCoachProfile(
 export async function currentCoachEditor(): Promise<CoachEditorState> {
   const result = await withAuthorizedActor(async (transaction, actor) => {
     const owner = await currentActorProjection(transaction, actor);
-    if (!owner.coachingActivated) {
-      return Object.freeze({
-        coach: null,
-        gyms: Object.freeze([]),
-        ownerDisplayName: owner.displayName,
-        coachingActivated: false,
-      });
-    }
-    const coach = await currentOwnedCoachProfileRecord(transaction, actor);
-    const gyms = await activeCoachGymOptions(transaction, actor);
+    const mayPrepare = canPrepareCoachProfile(owner.coachAccess.status);
+    const coach = mayPrepare
+      ? await currentOwnedCoachProfileRecord(transaction, actor)
+      : null;
+    const gyms = mayPrepare
+      ? await activeCoachGymOptions(transaction, actor)
+      : Object.freeze([]);
     return Object.freeze({
       coach,
       gyms,
       ownerDisplayName: owner.displayName,
-      coachingActivated: true,
+      coachAccess: owner.coachAccess,
     });
   });
   if (result.status !== "authorized") return result;
   return Object.freeze({ status: "authorized", ...result.value });
 }
 
+export async function currentCoachAccess() {
+  const result = await withAuthorizedActor(async (transaction, actor) => {
+    const owner = await currentActorProjection(transaction, actor);
+    return owner.coachAccess;
+  });
+  if (result.status !== "authorized") return result;
+  return Object.freeze({
+    status: "authorized" as const,
+    coachAccess: result.value,
+  });
+}
+
 export async function saveOwnedCoachProfile(input: CoachProfileInput) {
   const result = await withAuthorizedActor(async (transaction, actor) => {
     const owner = await currentActorProjection(transaction, actor);
-    if (!owner.coachingActivated) {
-      return Object.freeze({ outcome: "activation-required" as const });
+    if (!canPrepareCoachProfile(owner.coachAccess.status)) {
+      return Object.freeze({ outcome: "application-required" as const });
+    }
+    if (
+      input.visibility === "visible" &&
+      !canOperateCoachSchedule(owner.coachAccess.status)
+    ) {
+      return Object.freeze({ outcome: "approval-required" as const });
     }
     return Object.freeze({
       outcome: "saved" as const,
@@ -103,41 +131,34 @@ export async function saveOwnedCoachProfile(input: CoachProfileInput) {
   return Object.freeze({ status: "authorized" as const, ...result.value });
 }
 
-export async function activateCurrentCoaching() {
+export async function submitCurrentCoachApplication() {
   const result = await withAuthorizedActor((transaction) =>
-    activateOwnedCoachingRecord(transaction),
+    submitOwnedCoachApplicationRecord(transaction),
   );
   if (result.status !== "authorized") return result;
-  return Object.freeze({ status: "activated" as const });
+  return Object.freeze({ status: result.value });
 }
 
 export async function currentCoachAvailabilityWorkspace(): Promise<CoachAvailabilityWorkspaceState> {
   const result = await withAuthorizedActor(async (transaction, actor) => {
     const owner = await currentActorProjection(transaction, actor);
-    if (!owner.coachingActivated) {
-      return Object.freeze({
-        coach: null,
-        rules: Object.freeze([]),
-        slots: Object.freeze([]),
-        ownerDisplayName: owner.displayName,
-        coachingActivated: false,
-      });
-    }
-    const coach = await currentOwnedCoachProfileRecord(transaction, actor);
-    const slots = await currentOwnedCoachAvailabilityRecords(
-      transaction,
-      actor,
-    );
-    const rules = await currentOwnedCoachAvailabilityRuleRecords(
-      transaction,
-      actor,
-    );
+    const coach =
+      owner.coachAccess.status === "not-applied"
+        ? null
+        : await currentOwnedCoachProfileRecord(transaction, actor);
+    const mayOperate = canOperateCoachSchedule(owner.coachAccess.status);
+    const slots = mayOperate
+      ? await currentOwnedCoachAvailabilityRecords(transaction, actor)
+      : Object.freeze([]);
+    const rules = mayOperate
+      ? await currentOwnedCoachAvailabilityRuleRecords(transaction, actor)
+      : Object.freeze([]);
     return Object.freeze({
       coach,
       rules,
       slots,
       ownerDisplayName: owner.displayName,
-      coachingActivated: true,
+      coachAccess: owner.coachAccess,
     });
   });
   if (result.status !== "authorized") return result;
@@ -158,6 +179,10 @@ async function mutateCoachAvailability(
   mutation: Parameters<typeof withAuthorizedActor<string>>[0],
 ): Promise<CoachAvailabilityMutation> {
   const result = await withAuthorizedActor(async (transaction, actor) => {
+    const owner = await currentActorProjection(transaction, actor);
+    if (!canOperateCoachSchedule(owner.coachAccess.status)) {
+      return Object.freeze({ outcome: "conflict" as const });
+    }
     const coach = await currentOwnedCoachProfileRecord(transaction, actor);
     if (!coach || coach.visibility !== "visible") {
       return Object.freeze({ outcome: "conflict" as const });
@@ -216,6 +241,10 @@ export async function replaceOwnedCoachAvailabilityRules(
   expectedRules: readonly CoachAvailabilityRuleInput[],
 ): Promise<CoachAvailabilityMutation> {
   const result = await withAuthorizedActor(async (transaction, actor) => {
+    const owner = await currentActorProjection(transaction, actor);
+    if (!canOperateCoachSchedule(owner.coachAccess.status)) {
+      return Object.freeze({ outcome: "conflict" as const });
+    }
     const coach = await currentOwnedCoachProfileRecord(transaction, actor);
     if (!coach || coach.visibility !== "visible") {
       return Object.freeze({ outcome: "conflict" as const });
