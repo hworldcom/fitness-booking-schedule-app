@@ -57,18 +57,30 @@ test("local Supabase status parsing keeps required values internal", () => {
 API_URL="http://127.0.0.1:55321"
 DB_URL="postgresql://postgres:postgres@127.0.0.1:55322/postgres"
 SERVICE_ROLE_KEY=local-secret
+PUBLISHABLE_KEY=public-value
 ANON_KEY=public-value
 `),
     {
       apiUrl: "http://127.0.0.1:55321",
       databaseUrl: "postgresql://postgres:postgres@127.0.0.1:55322/postgres",
+      publishableKey: "public-value",
       serviceRoleKey: "local-secret",
     },
   );
   assert.throws(
     () => parseLocalSupabaseStatus('API_URL="http://127.0.0.1:55321"'),
-    /missing API_URL, DB_URL or SERVICE_ROLE_KEY/,
+    /missing API_URL, DB_URL, a publishable key or SERVICE_ROLE_KEY/,
   );
+});
+
+test("local status accepts the legacy anon key as the public application key", () => {
+  const status = parseLocalSupabaseStatus(`
+API_URL=http://127.0.0.1:55321
+DB_URL=postgresql://postgres:postgres@127.0.0.1:55322/postgres
+SERVICE_ROLE_KEY=local-secret
+ANON_KEY=legacy-public-value
+`);
+  assert.equal(status.publishableKey, "legacy-public-value");
 });
 
 test("provisioning accepts only explicit loopback Auth and database URLs", () => {

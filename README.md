@@ -34,44 +34,47 @@ Direct scheduling-only booking and runtime cleanup were delivered under COR0011.
 
 ## Run locally
 
-Use Node.js 24.21.0 LTS and npm 11. The supported Node range is enforced by `package.json` and `.nvmrc`.
+Prerequisites are Node.js 24.21.0 LTS, npm 11 and a running Docker engine. The supported Node range is recorded in `package.json` and `.nvmrc`.
 
 ```sh
+nvm use
 npm ci
-npm run db:start
-npm run db:reset
-npm run db:runtime
+npm run dev:local
 ```
 
-Create an ignored `.env.local` from [`.env.example`](.env.example) and set the restricted local database connection:
+`npm run dev:local` is the complete local-development command. It:
 
-```text
-DATABASE_URL=postgresql://repx_runtime_login:postgres@127.0.0.1:55322/postgres
-```
+- starts or reuses the repository's Supabase PostgreSQL, Auth and Mailpit services;
+- applies pending local migrations without resetting existing local data;
+- prepares the restricted application database login;
+- derives and injects the loopback database/Auth configuration without writing it to a file;
+- starts Next.js at [localhost:3100](http://localhost:3100).
 
-Run the standard application:
+Captured local sign-in emails appear in [Mailpit at 127.0.0.1:55324](http://127.0.0.1:55324). Press `Ctrl-C` to stop Next.js. The reusable Supabase containers stay running; stop them explicitly with `npm run db:stop`.
+
+No `.env.local` is required for the core local application. Create an ignored one from [`.env.example`](.env.example) only for optional settings such as the Mapbox public token. The local command overrides database/Auth/site values with the repository's loopback configuration, so it cannot accidentally start against hosted services.
+
+For a configuration-free production-mode public preview:
 
 ```sh
-npm run dev
-# or
 npm run build
 npm run start
 ```
 
-Both modes use [localhost:3100](http://localhost:3100). Development compiles routes on demand; the production preview is better for performance review.
+Both modes use [localhost:3100](http://localhost:3100). Development compiles routes on demand; the production preview is better for performance review. A separately started production preview needs the documented `.env.local` values to enable Auth/database behavior because the one-command development values are intentionally not persisted. `npm run db:reset` remains a separate, intentionally destructive command for recreating disposable local data.
 
 ## Local email sign-in
 
-Public browsing does not require sign-in. To exercise identity and booking, stop the database-only profile and start the Auth-enabled local stack:
+Public browsing does not require sign-in. `npm run dev:local` already starts the Auth-enabled stack required for identity and booking. The individual component commands remain available for troubleshooting or custom workflows:
 
 ```sh
-npm run db:stop
 npm run auth:start
 npm run auth:status
 npm run db:runtime
+npm run dev
 ```
 
-Copy the printed public `API_URL` and `PUBLISHABLE_KEY` (or legacy `ANON_KEY`) to `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `.env.local`. Keep `NEXT_PUBLIC_SITE_URL=http://localhost:3100`. Never expose the service-role/secret key.
+The one-command workflow reads the local public `API_URL` and `PUBLISHABLE_KEY` (or legacy `ANON_KEY`) internally and does not print or persist private CLI status values. For a manual workflow, copy only those public values to their matching `NEXT_PUBLIC_*` names in `.env.local`, keep `NEXT_PUBLIC_SITE_URL=http://localhost:3100`, and never expose the service-role/secret key.
 
 Open `/sign-in`, request a code and read it from local Mailpit at [127.0.0.1:55324](http://127.0.0.1:55324). The first verified login creates one application profile. `Find a coach` continues as a client; `Become a coach` submits a coach application on the same account. Applicants may prepare a hidden coach profile, but only platform-approved coaches may publish or manage availability.
 

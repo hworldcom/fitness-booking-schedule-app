@@ -53,6 +53,7 @@ export const SEEDED_COACH_ACCOUNTS = Object.freeze([
 export type LocalSupabaseStatus = Readonly<{
   apiUrl: string;
   databaseUrl: string;
+  publishableKey: string;
   serviceRoleKey: string;
 }>;
 
@@ -75,13 +76,20 @@ export function parseLocalSupabaseStatus(output: string): LocalSupabaseStatus {
 
   const apiUrl = values.get("API_URL");
   const databaseUrl = values.get("DB_URL");
+  const publishableKey =
+    values.get("PUBLISHABLE_KEY") ?? values.get("ANON_KEY");
   const serviceRoleKey = values.get("SERVICE_ROLE_KEY");
-  if (!apiUrl || !databaseUrl || !serviceRoleKey) {
+  if (!apiUrl || !databaseUrl || !publishableKey || !serviceRoleKey) {
     throw new Error(
-      "The local Supabase status is missing API_URL, DB_URL or SERVICE_ROLE_KEY.",
+      "The local Supabase status is missing API_URL, DB_URL, a publishable key or SERVICE_ROLE_KEY.",
     );
   }
-  return Object.freeze({ apiUrl, databaseUrl, serviceRoleKey });
+  return Object.freeze({
+    apiUrl,
+    databaseUrl,
+    publishableKey,
+    serviceRoleKey,
+  });
 }
 
 function isLoopbackHostname(hostname: string) {
@@ -111,7 +119,7 @@ export function assertLoopbackSupabaseTargets(
     !isLoopbackHostname(database.hostname)
   ) {
     throw new Error(
-      "Seeded coach accounts may be provisioned only against loopback Supabase Auth and PostgreSQL endpoints.",
+      "Local Supabase operations are allowed only against loopback Auth and PostgreSQL endpoints.",
     );
   }
 }
