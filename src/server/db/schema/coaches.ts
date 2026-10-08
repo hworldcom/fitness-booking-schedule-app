@@ -59,6 +59,12 @@ export const coachProfiles = app.table(
     visibility: text("visibility").default("hidden").notNull(),
     recordSource: text("record_source").notNull(),
     isDemo: boolean("is_demo").default(false).notNull(),
+    portraitSource: text("portrait_source"),
+    portraitPath: text("portrait_path"),
+    portraitUpdatedAt: timestamp("portrait_updated_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
     earlyCancellationMinutes: integer("early_cancellation_minutes")
       .default(1440)
       .notNull(),

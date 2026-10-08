@@ -15,6 +15,7 @@ export type PrivateBookingProjection = Readonly<{
   coachSlug: string;
   clientProfileId: string;
   clientDisplayName: string;
+  clientAvatarUrl: string | null;
   status: CoachBookingStatus;
   scheduledStartAt: string;
   scheduledEndAt: string;

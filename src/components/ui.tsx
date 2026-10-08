@@ -1,7 +1,8 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- private avatars require cookie-forwarding that the image optimizer does not provide */
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   ArrowUpRight,
   X,
@@ -28,17 +29,35 @@ export function Avatar({
   initials,
   color = "lime",
   small = false,
+  imageUrl = null,
+  alt = "",
 }: {
   initials: string;
   color?: string;
   small?: boolean;
+  imageUrl?: string | null;
+  alt?: string;
 }) {
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
+  const visibleImageUrl = imageUrl === failedImageUrl ? null : imageUrl;
   return (
     <span
       className={`avatar ${color} ${small ? "small" : ""}`}
-      aria-hidden="true"
+      aria-hidden={!alt ? true : undefined}
+      role={!visibleImageUrl && alt ? "img" : undefined}
+      aria-label={!visibleImageUrl && alt ? alt : undefined}
     >
-      {initials}
+      {visibleImageUrl ? (
+        <img
+          src={visibleImageUrl}
+          alt={alt}
+          width={small ? 32 : 90}
+          height={small ? 32 : 90}
+          onError={() => setFailedImageUrl(visibleImageUrl)}
+        />
+      ) : (
+        initials
+      )}
     </span>
   );
 }

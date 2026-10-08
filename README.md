@@ -44,9 +44,10 @@ npm run dev:local
 
 `npm run dev:local` is the complete local-development command. It:
 
-- starts or reuses the repository's Supabase PostgreSQL, Auth and Mailpit services;
+- starts or reuses the repository's Supabase PostgreSQL, Auth, Storage and Mailpit services;
 - applies pending local migrations without resetting existing local data;
 - prepares the restricted application database login;
+- idempotently provisions the ordinary local test account `hoang@users.movx.test` without changing its saved avatar;
 - derives and injects the loopback database/Auth configuration without writing it to a file;
 - starts Next.js at [localhost:3100](http://localhost:3100).
 
@@ -77,6 +78,8 @@ npm run dev
 The one-command workflow reads the local public `API_URL` and `PUBLISHABLE_KEY` (or legacy `ANON_KEY`) internally and does not print or persist private CLI status values. For a manual workflow, copy only those public values to their matching `NEXT_PUBLIC_*` names in `.env.local`, keep `NEXT_PUBLIC_SITE_URL=http://localhost:3100`, and never expose the service-role/secret key.
 
 Open `/sign-in`, request a code and read it from local Mailpit at [127.0.0.1:55324](http://127.0.0.1:55324). The first verified login creates one application profile. `Find a coach` continues as a client; `Become a coach` submits a coach application on the same account. Applicants may prepare a hidden coach profile, but only platform-approved coaches may publish or manage availability.
+
+For ordinary-client testing, sign in with `hoang@users.movx.test`. `npm run dev:local` creates this exact local-only account automatically and preserves its profile and private avatar on later starts. It has no password and no coach authority: request a one-time code on `/sign-in`, then open the message in Mailpit. You can also repair/provision it explicitly with `npm run auth:provision:test-user`. A deliberate `npm run db:reset` recreates the identity on the next start but cannot restore a deleted uploaded image.
 
 To exercise owner flows as the five fictional coaches:
 
@@ -179,6 +182,7 @@ The local stack uses port `55322`. `db:reset` recreates only the disposable loca
 npm test
 npm run test:auth
 npm run test:coach-availability
+npm run test:profile-images
 npm run lint
 npm run typecheck
 npm run format:check

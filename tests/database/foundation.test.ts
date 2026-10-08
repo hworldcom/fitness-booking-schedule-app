@@ -1,6 +1,6 @@
 import test, { after } from "node:test";
 import assert from "node:assert/strict";
-import { asc, eq } from "drizzle-orm";
+import { asc, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { gyms, profiles } from "@/server/db/schema";
@@ -29,13 +29,31 @@ after(async () => {
 });
 
 test("Drizzle mappings read the deterministic foundation fixtures", async () => {
+  const fixtureProfileIds = Array.from(
+    { length: 11 },
+    (_, index) =>
+      `10000000-0000-4000-8000-${String(index + 2).padStart(12, "0")}`,
+  );
   const seededProfiles = await db
-    .select({ slug: profiles.slug, authUserId: profiles.authUserId })
+    .select({
+      id: profiles.id,
+      slug: profiles.slug,
+      authUserId: profiles.authUserId,
+      recordSource: profiles.recordSource,
+    })
     .from(profiles)
-    .where(eq(profiles.recordSource, "fixture"))
+    .where(inArray(profiles.id, fixtureProfileIds))
     .orderBy(asc(profiles.slug));
   assert.equal(seededProfiles.length, 11);
-  assert.ok(seededProfiles.every((profile) => profile.authUserId === null));
+  assert.ok(
+    seededProfiles.every(
+      (profile) =>
+        (profile.recordSource === "fixture" && profile.authUserId === null) ||
+        (profile.recordSource === "user" &&
+          profile.authUserId ===
+            `90000000-0000-4000-8000-${profile.id.slice(-12)}`),
+    ),
+  );
 
   const seededGyms = await db
     .select({

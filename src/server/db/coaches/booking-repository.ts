@@ -7,6 +7,7 @@ import {
   type BookingCancellationActor,
   type PrivateBookingProjection,
 } from "@/domain/coach-bookings";
+import { privateBookingClientAvatarUrl } from "@/profile-images/contracts";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
 
@@ -18,6 +19,7 @@ type BookingRow = Readonly<{
   coach_slug: string;
   client_profile_id: string;
   client_display_name: string;
+  client_avatar_updated_at: string | Date | null;
   status: string;
   scheduled_start_at: string | Date;
   scheduled_end_at: string | Date;
@@ -88,6 +90,10 @@ function mapBooking(row: BookingRow): PrivateBookingProjection {
     coachSlug: row.coach_slug,
     clientProfileId: row.client_profile_id,
     clientDisplayName: row.client_display_name,
+    clientAvatarUrl: privateBookingClientAvatarUrl(
+      row.id,
+      isoTimestamp(row.client_avatar_updated_at),
+    ),
     status: row.status,
     scheduledStartAt,
     scheduledEndAt,
@@ -150,6 +156,7 @@ async function bookingRecords(
       booking.coach_slug,
       booking.client_profile_id,
       booking.client_display_name,
+      client_avatar.avatar_updated_at as client_avatar_updated_at,
       booking.status,
       booking.scheduled_start_at,
       booking.scheduled_end_at,
@@ -162,6 +169,9 @@ async function bookingRecords(
       booking.completed_at,
       booking.created_at
     from app.current_direct_private_bookings() as booking
+    left join app.current_confirmed_booking_client_avatar_references(null::uuid)
+      as client_avatar
+      on client_avatar.booking_id = booking.id
     where ${whereClause}
     order by booking.scheduled_start_at desc, booking.id
   `);

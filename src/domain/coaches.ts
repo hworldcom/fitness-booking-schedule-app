@@ -72,6 +72,7 @@ export type CoachProjection = Readonly<{
   visibility: "visible" | "hidden";
   recordSource: "fixture" | "user";
   trustKind: CoachTrustKind | null;
+  portraitUrl: string | null;
   disciplines: readonly CoachDiscipline[];
 }>;
 

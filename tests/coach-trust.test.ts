@@ -5,7 +5,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import type { CoachProjection } from "@/domain/coaches";
 import { CoachProfileView } from "@/features/coaches/coach-discovery";
 
-function coach(trustKind: CoachProjection["trustKind"]): CoachProjection {
+function coach(
+  trustKind: CoachProjection["trustKind"],
+  portraitUrl: string | null = null,
+): CoachProjection {
   return Object.freeze({
     profileId: "10000000-0000-4000-8000-000000000001",
     slug: "reviewed-coach",
@@ -27,6 +30,7 @@ function coach(trustKind: CoachProjection["trustKind"]): CoachProjection {
     visibility: "visible",
     recordSource: trustKind === "demo" ? "fixture" : "user",
     trustKind,
+    portraitUrl,
     disciplines: Object.freeze(["Boxing"] as const),
   });
 }
@@ -60,4 +64,23 @@ test("fictional fixtures render a demo label instead of verification", () => {
   assert.match(markup, /Demo coach/);
   assert.match(markup, /fictional profile is not a verified professional/);
   assert.doesNotMatch(markup, /Verified coach/);
+});
+
+test("a coach portrait renders when present and initials remain the fallback", () => {
+  const withPortrait = renderToStaticMarkup(
+    createElement(CoachProfileView, {
+      state: {
+        status: "ready",
+        coach: coach("demo", "/images/coaches/daniel-park.webp"),
+        slots: Object.freeze([]),
+      },
+      marketplace: createElement("div", null, "Schedule"),
+    }),
+  );
+  assert.match(withPortrait, /src="\/images\/coaches\/daniel-park.webp"/);
+  assert.match(withPortrait, /Daniel Park|Reviewed Coach/);
+
+  const fallback = renderCoach("demo");
+  assert.doesNotMatch(fallback, /<img/);
+  assert.match(fallback, />RC<\/span>/);
 });

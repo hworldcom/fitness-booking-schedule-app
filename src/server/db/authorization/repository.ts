@@ -5,6 +5,10 @@ import type {
   CoachAccessProjection,
   CoachApplicationStatus,
 } from "@/domain/coaches";
+import {
+  isOwnedProfileImageStoragePath,
+  type CoachPortraitReference,
+} from "@/profile-images/contracts";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
 import { withDatabaseConnection, type DatabaseConnection } from "../client";
 import {
@@ -22,6 +26,9 @@ export type ActorDatabaseTransaction = Parameters<
 export type ActorProjection = Readonly<{
   profileSlug: string;
   displayName: string;
+  avatarStoragePath: string | null;
+  avatarUpdatedAt: string | null;
+  coachPortrait: CoachPortraitReference | null;
   coachAccess: CoachAccessProjection;
   runSlug: string;
   runName: string;
@@ -92,6 +99,12 @@ export async function currentActorProjection(
     .select({
       profileSlug: profiles.slug,
       displayName: profiles.displayName,
+      avatarStoragePath: profiles.avatarStoragePath,
+      avatarUpdatedAt: profiles.avatarUpdatedAt,
+      coachPublicSlug: coachProfiles.publicSlug,
+      coachPortraitSource: coachProfiles.portraitSource,
+      coachPortraitPath: coachProfiles.portraitPath,
+      coachPortraitUpdatedAt: coachProfiles.portraitUpdatedAt,
       coachIsDemo: coachProfiles.isDemo,
       coachApplicationStatus: coachApplications.status,
       coachApplicationSubmittedAt: coachApplications.submittedAt,
@@ -145,9 +158,38 @@ export async function currentActorProjection(
           verificationPolicyVersion: row.coachApplicationPolicy,
         },
   );
+  const hasCoachPortrait =
+    row.coachPortraitSource !== null ||
+    row.coachPortraitPath !== null ||
+    row.coachPortraitUpdatedAt !== null;
+  let coachPortrait: CoachPortraitReference | null = null;
+  if (hasCoachPortrait) {
+    if (
+      (row.coachPortraitSource !== "fixture" &&
+        row.coachPortraitSource !== "storage") ||
+      row.coachPortraitPath === null ||
+      row.coachPortraitUpdatedAt === null ||
+      row.coachPublicSlug === null ||
+      (row.coachPortraitSource === "fixture" &&
+        row.coachPortraitPath !==
+          `/images/coaches/${row.coachPublicSlug}.webp`) ||
+      (row.coachPortraitSource === "storage" &&
+        !isOwnedProfileImageStoragePath(row.coachPortraitPath, actor.profileId))
+    ) {
+      throw new ActorContextRejectedError();
+    }
+    coachPortrait = Object.freeze({
+      source: row.coachPortraitSource,
+      path: row.coachPortraitPath,
+      updatedAt: isoTimestamp(row.coachPortraitUpdatedAt)!,
+    });
+  }
   return Object.freeze({
     profileSlug: row.profileSlug,
     displayName: row.displayName,
+    avatarStoragePath: row.avatarStoragePath,
+    avatarUpdatedAt: isoTimestamp(row.avatarUpdatedAt),
+    coachPortrait,
     coachAccess,
     runSlug: row.runSlug,
     runName: row.runName,

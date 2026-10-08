@@ -92,6 +92,7 @@ async function completeProfile(page, displayName) {
   assert.equal(actor.status, "authorized");
   assert.equal(actor.profile.displayName, displayName);
   assert.equal(actor.role, "member");
+  assert.equal(actor.coachAccessStatus, "not-applied");
   return actor;
 }
 
@@ -140,6 +141,12 @@ async function verifyAccountProfile(page, displayName, coachState = "none") {
     await page.getByRole("link", { name: "Coach", exact: true }).count(),
     0,
   );
+  assert.equal(
+    await page
+      .getByRole("link", { name: "Coach workspace", exact: true })
+      .count(),
+    0,
+  );
   assert.equal(await page.getByText("Illustrative history").count(), 0);
 }
 
@@ -151,6 +158,12 @@ async function signOut(page) {
   assert.equal(await page.locator(".header-avatar").count(), 0);
   assert.equal(
     await page.getByRole("link", { name: "My sessions", exact: true }).count(),
+    0,
+  );
+  assert.equal(
+    await page
+      .getByRole("link", { name: "Coach workspace", exact: true })
+      .count(),
     0,
   );
   const response = await page.request.get(`${siteUrl}/api/auth/actor`);

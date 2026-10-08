@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, type ReactNode } from "react";
-import { BadgeCheck, Clock3, Search, Send, ShieldAlert } from "lucide-react";
+import {
+  BadgeCheck,
+  CalendarDays,
+  Clock3,
+  Search,
+  Send,
+  ShieldAlert,
+} from "lucide-react";
 import { submitCoachApplication } from "@/auth/client/coach-application-client";
 import type { CoachAccessProjection } from "@/domain/coaches";
 
@@ -105,7 +112,7 @@ export function CoachApplicationGate({
         <p>
           {isSuspended
             ? (access.decisionReason ??
-              "Your coach profile is hidden and cannot accept new bookings. Existing sessions remain available below.")
+              "Your coach profile is hidden and cannot accept new bookings. Existing sessions remain available in Bookings.")
             : isPending
               ? "You can prepare a private coach-profile draft while you wait. Publishing and availability unlock only after approval."
               : isRejected
@@ -119,6 +126,11 @@ export function CoachApplicationGate({
           {(isPending || isRejected) && (
             <Link className="button secondary" href="/profile/coach">
               Edit private coach draft
+            </Link>
+          )}
+          {isSuspended && !existingBookings && (
+            <Link className="button secondary" href="/coach?view=bookings">
+              <CalendarDays size={17} aria-hidden="true" /> View bookings
             </Link>
           )}
           <Link className="button secondary" href="/explore">

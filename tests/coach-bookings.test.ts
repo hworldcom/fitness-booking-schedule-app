@@ -38,6 +38,8 @@ test("booking projections carry schedule state without financial references", ()
     coachSlug: "schedule-coach",
     clientProfileId: "44444444-4444-4444-8444-444444444444",
     clientDisplayName: "Schedule Client",
+    clientAvatarUrl:
+      "/api/coach/bookings/11111111-1111-4111-8111-111111111111/client-avatar?v=version",
     status: "confirmed",
     scheduledStartAt: "2026-10-08T10:00:00.000Z",
     scheduledEndAt: "2026-10-08T11:00:00.000Z",
@@ -56,6 +58,7 @@ test("booking projections carry schedule state without financial references", ()
   assert.deepEqual(Object.keys(booking).sort(), [
     "cancelledAt",
     "cancelledBy",
+    "clientAvatarUrl",
     "clientDisplayName",
     "clientProfileId",
     "coachDisplayName",
@@ -87,6 +90,7 @@ test("client booking timeline prioritizes future confirmed sessions", () => {
       coachSlug: "schedule-coach",
       clientProfileId: "44444444-4444-4444-8444-444444444444",
       clientDisplayName: "Schedule Client",
+      clientAvatarUrl: null,
       status,
       scheduledStartAt,
       scheduledEndAt: new Date(

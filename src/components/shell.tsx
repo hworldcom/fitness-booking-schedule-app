@@ -18,30 +18,78 @@ import { AuthStatusLink } from "@/auth/client/auth-status-link";
 import { useActor } from "@/auth/client/actor-provider";
 import type { ActorSnapshot } from "@/auth/actor-contracts";
 import { profileInitials } from "@/auth/profile-presentation";
+import { accountProfileImagePresentation } from "@/profile-images/presentation";
 import { Avatar, Brand, Modal, Pill } from "./ui";
 
-const navigation = [
-  { label: "Home", href: "/", Icon: House, accountOnly: false },
-  { label: "Explore", href: "/explore", Icon: MapPin, accountOnly: false },
-  {
-    label: "My sessions",
-    href: "/sessions",
-    Icon: CalendarCheck2,
-    accountOnly: true,
-  },
-  {
-    label: "How it works",
-    href: "/how-it-works",
-    Icon: ListChecks,
-    accountOnly: false,
-  },
-  { label: "Profile", href: "/profile", Icon: UserRound, accountOnly: false },
+const publicNavigationBeforeAccount = [
+  { label: "Home", href: "/", Icon: House },
+  { label: "Explore", href: "/explore", Icon: MapPin },
 ];
 
-export function navigationForActor(status: ActorSnapshot["status"]) {
-  return navigation.filter(
-    ({ accountOnly }) => !accountOnly || status === "authorized",
+const howItWorksNavigation = {
+  label: "How it works",
+  href: "/how-it-works",
+  Icon: ListChecks,
+};
+
+const accountProfileNavigation = {
+  label: "Profile",
+  href: "/profile",
+  Icon: UserRound,
+};
+
+const coachProfileNavigation = {
+  label: "Profile",
+  href: "/profile/coach",
+  Icon: UserRound,
+};
+
+const clientNavigation = {
+  label: "My sessions",
+  href: "/sessions",
+  Icon: CalendarCheck2,
+};
+
+const coachNavigation = {
+  label: "Coach workspace",
+  href: "/coach",
+  Icon: CalendarCheck2,
+};
+
+function hasCoachWorkspaceNavigation(actor: ActorSnapshot) {
+  return (
+    actor.status === "authorized" &&
+    (actor.coachAccessStatus === "approved" ||
+      actor.coachAccessStatus === "demo" ||
+      actor.coachAccessStatus === "suspended")
   );
+}
+
+export function navigationForActor(actor: ActorSnapshot) {
+  const accountNavigation =
+    actor.status !== "authorized"
+      ? []
+      : hasCoachWorkspaceNavigation(actor)
+        ? [clientNavigation, coachNavigation]
+        : [clientNavigation];
+  const profileNavigation =
+    actor.status === "authorized" &&
+    (actor.coachAccessStatus === "approved" ||
+      actor.coachAccessStatus === "demo")
+      ? coachProfileNavigation
+      : accountProfileNavigation;
+  return [
+    ...publicNavigationBeforeAccount,
+    ...accountNavigation,
+    howItWorksNavigation,
+    profileNavigation,
+  ];
+}
+
+export function isNavigationHrefActive(path: string, href: string) {
+  return href === "/"
+    ? path === href
+    : path === href || path.startsWith(`${href}/`);
 }
 
 export function Shell({ children }: { children: ReactNode }) {
@@ -49,9 +97,14 @@ export function Shell({ children }: { children: ReactNode }) {
   const { actor } = useActor();
   const [aboutOpen, setAboutOpen] = useState(false);
   const currentProfile = actor.status === "authorized" ? actor.profile : null;
-  const visibleNavigation = navigationForActor(actor.status);
-  const active = (href: string) =>
-    href === "/" ? path === "/" : path.startsWith(href);
+  const currentProfileImage = currentProfile
+    ? accountProfileImagePresentation(
+        currentProfile.avatarUrl,
+        currentProfile.coachPortraitUrl,
+      )
+    : null;
+  const visibleNavigation = navigationForActor(actor);
+  const active = (href: string) => isNavigationHrefActive(path, href);
 
   return (
     <>
@@ -100,7 +153,10 @@ export function Shell({ children }: { children: ReactNode }) {
           </button>
           {currentProfile && (
             <Link href="/profile" className="sidebar-profile">
-              <Avatar initials={profileInitials(currentProfile.displayName)} />
+              <Avatar
+                initials={profileInitials(currentProfile.displayName)}
+                imageUrl={currentProfileImage?.imageUrl}
+              />
               <span>
                 <strong>{currentProfile.displayName}</strong>
                 <small>Your account profile</small>
@@ -138,6 +194,7 @@ export function Shell({ children }: { children: ReactNode }) {
               >
                 <Avatar
                   initials={profileInitials(currentProfile.displayName)}
+                  imageUrl={currentProfileImage?.imageUrl}
                   small
                 />
               </Link>

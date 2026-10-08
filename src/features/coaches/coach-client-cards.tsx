@@ -14,6 +14,8 @@ import {
   completePrivateBookingAction,
   type CoachMarketplaceActionResult,
 } from "@/app/coach-marketplace-actions";
+import { profileInitials } from "@/auth/profile-presentation";
+import { Avatar } from "@/components/ui";
 import type { PrivateBookingProjection } from "@/domain/coach-bookings";
 
 function bookingTime(booking: PrivateBookingProjection) {
@@ -68,13 +70,12 @@ export function CoachClientCards({
         <div>
           <span className="eyebrow">BOOKED SCHEDULE</span>
           <h2>Private sessions</h2>
-          <p>
-            See who booked each session before editing the rest of your coach
-            schedule.
-          </p>
+          <p>Review who booked each session and manage its current status.</p>
         </div>
         <span className="coach-slot-count">
-          {bookings === null ? "Unavailable" : `${bookings.length} bookings`}
+          {bookings === null
+            ? "Unavailable"
+            : `${bookings.length} booking${bookings.length === 1 ? "" : "s"}`}
         </span>
       </div>
 
@@ -106,7 +107,13 @@ export function CoachClientCards({
             return (
               <article className="coach-client-card" key={booking.id}>
                 <header>
-                  <UserRound size={20} aria-hidden="true" />
+                  <Avatar
+                    initials={profileInitials(booking.clientDisplayName)}
+                    color="blue"
+                    small
+                    imageUrl={booking.clientAvatarUrl}
+                    alt={`${booking.clientDisplayName}'s profile picture`}
+                  />
                   <div>
                     <h3>{booking.clientDisplayName}</h3>
                     <span>{booking.location.publicLabel}</span>

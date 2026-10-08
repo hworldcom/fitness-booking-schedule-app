@@ -7,6 +7,12 @@ import type {
   CoachProjection,
   CoachProfileInput,
 } from "@/domain/coaches";
+import { supabasePublicConfig } from "@/auth/config";
+import {
+  isOwnedProfileImageStoragePath,
+  publicCoachPortraitUrl,
+  type CoachPortraitReference,
+} from "@/profile-images/contracts";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
 import { withDatabaseConnection } from "@/server/db/client";
@@ -30,6 +36,9 @@ type CoachProjectionRow = Readonly<{
   visibility: string;
   record_source: string;
   trust_kind: string | null;
+  portrait_source: string | null;
+  portrait_path: string | null;
+  portrait_updated_at: string | Date | null;
   disciplines: string[];
 }>;
 
@@ -84,6 +93,35 @@ function mapCoach(row: CoachProjectionRow): CoachProjection {
     throw new CoachProfileConflictError();
   }
 
+  let portrait: CoachPortraitReference | null = null;
+  if (
+    row.portrait_source !== null ||
+    row.portrait_path !== null ||
+    row.portrait_updated_at !== null
+  ) {
+    if (
+      (row.portrait_source !== "fixture" &&
+        row.portrait_source !== "storage") ||
+      row.portrait_path === null ||
+      row.portrait_updated_at === null ||
+      (row.portrait_source === "fixture" &&
+        row.portrait_path !== `/images/coaches/${row.public_slug}.webp`) ||
+      (row.portrait_source === "storage" &&
+        !isOwnedProfileImageStoragePath(row.portrait_path, row.profile_id))
+    ) {
+      throw new CoachProfileConflictError();
+    }
+    portrait = Object.freeze({
+      source: row.portrait_source,
+      path: row.portrait_path,
+      updatedAt: isoTimestamp(row.portrait_updated_at),
+    });
+  }
+  const storageUrl = supabasePublicConfig()?.url ?? null;
+  if (portrait?.source === "storage" && !storageUrl) {
+    throw new CoachProfileConflictError();
+  }
+
   return Object.freeze({
     profileId: row.profile_id,
     slug: row.public_slug,
@@ -105,6 +143,7 @@ function mapCoach(row: CoachProjectionRow): CoachProjection {
     visibility: row.visibility,
     recordSource: row.record_source,
     trustKind: row.trust_kind,
+    portraitUrl: publicCoachPortraitUrl(portrait, storageUrl),
     disciplines: Object.freeze([...row.disciplines]),
   });
 }
@@ -129,6 +168,9 @@ function projectionSelect() {
     coach.visibility,
     coach.record_source,
     app.coach_trust_kind(coach.profile_id, coach.is_demo) as trust_kind,
+    coach.portrait_source,
+    coach.portrait_path,
+    coach.portrait_updated_at,
     array_agg(discipline.discipline order by discipline.sort_order)
       as disciplines
   `);

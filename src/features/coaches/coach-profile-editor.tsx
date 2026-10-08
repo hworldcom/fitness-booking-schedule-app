@@ -2,16 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useState } from "react";
-import {
-  CalendarClock,
-  Check,
-  Eye,
-  EyeOff,
-  MapPin,
-  Save,
-  ShieldCheck,
-  UserRound,
-} from "lucide-react";
+import { Check, Eye, EyeOff, MapPin, Save, ShieldCheck } from "lucide-react";
 import type {
   CoachAccessProjection,
   CoachGymOption,
@@ -25,6 +16,9 @@ import {
 } from "@/app/profile/coach/actions";
 import { CoachLocationPicker } from "./coach-location-picker";
 import { CoachApplicationBanner } from "./coach-application-gate";
+import { ProfileImageUploader } from "@/features/profile/profile-image-uploader";
+import { profileInitials } from "@/auth/profile-presentation";
+import { CoachWorkspaceNavigation } from "./coach-workspace-navigation";
 
 const INITIAL_COACH_PROFILE_ACTION_STATE: CoachProfileActionState =
   Object.freeze({ status: "idle", message: "", errors: Object.freeze([]) });
@@ -55,14 +49,7 @@ export function CoachProfileEditor({
 
   return (
     <div className="coach-editor">
-      <nav className="coach-workspace-nav" aria-label="Coach workspace">
-        <Link href="/coach">
-          <CalendarClock size={17} aria-hidden="true" /> Availability
-        </Link>
-        <Link href="/profile/coach" aria-current="page" className="active">
-          <UserRound size={17} aria-hidden="true" /> Profile
-        </Link>
-      </nav>
+      <CoachWorkspaceNavigation active="profile" />
       <header className="coach-editor-heading">
         <div>
           <span className="eyebrow">
@@ -89,6 +76,16 @@ export function CoachProfileEditor({
       </header>
 
       <CoachApplicationBanner access={coachAccess} />
+
+      {publicationAllowed && coach && (
+        <ProfileImageUploader
+          endpoint="/api/coach/portrait"
+          currentImageUrl={coach.portraitUrl}
+          displayName={coach.displayName}
+          initials={profileInitials(coach.displayName)}
+          kind="coach"
+        />
+      )}
 
       <form className="coach-editor-form" action={formAction}>
         <section className="coach-editor-panel">

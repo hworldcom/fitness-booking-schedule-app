@@ -89,7 +89,11 @@ export function CoachExploreResults({
               onFocusCapture={() => setSelectedCoachId(coach.profileId)}
             >
               <div className="coach-card-topline">
-                <Avatar initials={profileInitials(coach.displayName)} />
+                <Avatar
+                  initials={profileInitials(coach.displayName)}
+                  imageUrl={coach.portraitUrl}
+                  alt=""
+                />
                 <Pill tone="lime">
                   {coach.trustKind === "verified" && (
                     <BadgeCheck size={13} aria-hidden="true" />

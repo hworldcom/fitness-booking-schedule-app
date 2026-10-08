@@ -8,7 +8,12 @@ import {
   isActorRole,
   type ActorSnapshot,
 } from "@/auth/actor-contracts";
+import { supabasePublicConfig } from "@/auth/config";
 import type { AuthSessionSnapshot } from "@/auth/contracts";
+import {
+  privateAccountAvatarUrl,
+  publicCoachPortraitUrl,
+} from "@/profile-images/contracts";
 import { verifiedAuthSession } from "@/server/auth/session";
 import {
   ActorContextRejectedError,
@@ -85,18 +90,25 @@ async function actorSnapshotForSession(
     currentActorProjection(transaction, actor),
   );
   if (result.status !== "authorized") return result;
+  const storageUrl = supabasePublicConfig()?.url ?? null;
 
   return Object.freeze({
     status: "authorized",
     profile: Object.freeze({
       slug: result.value.profileSlug,
       displayName: result.value.displayName,
+      avatarUrl: privateAccountAvatarUrl(result.value.avatarUpdatedAt),
+      coachPortraitUrl: publicCoachPortraitUrl(
+        result.value.coachPortrait,
+        storageUrl,
+      ),
     }),
     demoRun: Object.freeze({
       slug: result.value.runSlug,
       name: result.value.runName,
     }),
     role: result.value.role,
+    coachAccessStatus: result.value.coachAccess.status,
   });
 }
 

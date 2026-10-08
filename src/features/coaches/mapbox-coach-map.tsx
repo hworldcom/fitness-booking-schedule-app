@@ -2,8 +2,25 @@
 
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
+import { profileInitials } from "@/auth/profile-presentation";
 import type { CoachProjection } from "@/domain/coaches";
 import { MAPBOX_STYLE } from "@/mapbox/provider";
+
+type CoachMapMarkerEntry = Readonly<{
+  marker: mapboxgl.Marker;
+  element: HTMLButtonElement;
+  image: HTMLImageElement | null;
+  handleClick: () => void;
+  handleImageError: (() => void) | null;
+}>;
+
+function removeMarkerEntry(entry: CoachMapMarkerEntry) {
+  entry.element.removeEventListener("click", entry.handleClick);
+  if (entry.image && entry.handleImageError) {
+    entry.image.removeEventListener("error", entry.handleImageError);
+  }
+  entry.marker.remove();
+}
 
 export function MapboxCoachMap({
   accessToken,
@@ -20,16 +37,7 @@ export function MapboxCoachMap({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef(
-    new Map<
-      string,
-      Readonly<{
-        marker: mapboxgl.Marker;
-        element: HTMLButtonElement;
-        handleClick: () => void;
-      }>
-    >(),
-  );
+  const markersRef = useRef(new Map<string, CoachMapMarkerEntry>());
   const onSelectRef = useRef(onSelectCoach);
   const onUnavailableRef = useRef(onUnavailable);
   const [ready, setReady] = useState(false);
@@ -69,8 +77,7 @@ export function MapboxCoachMap({
         active = false;
         map.off("error", handleError);
         for (const entry of markers.values()) {
-          entry.element.removeEventListener("click", entry.handleClick);
-          entry.marker.remove();
+          removeMarkerEntry(entry);
         }
         markers.clear();
         map.remove();
@@ -85,8 +92,7 @@ export function MapboxCoachMap({
     const map = mapRef.current;
     if (!map || !ready) return;
     for (const entry of markersRef.current.values()) {
-      entry.element.removeEventListener("click", entry.handleClick);
-      entry.marker.remove();
+      removeMarkerEntry(entry);
     }
     markersRef.current.clear();
 
@@ -100,12 +106,30 @@ export function MapboxCoachMap({
         `Select ${coach.displayName} at ${coach.location.label}`,
       );
       element.setAttribute("aria-pressed", "false");
-      element.textContent = coach.displayName
-        .split(/\s+/)
-        .map((part) => part[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase();
+      const initials = document.createElement("span");
+      initials.className = "coach-map-marker-initials";
+      initials.textContent = profileInitials(coach.displayName);
+      element.append(initials);
+
+      let image: HTMLImageElement | null = null;
+      let handleImageError: (() => void) | null = null;
+      if (coach.portraitUrl) {
+        image = document.createElement("img");
+        image.className = "coach-map-marker-image";
+        image.src = coach.portraitUrl;
+        image.alt = "";
+        image.width = 38;
+        image.height = 38;
+        image.decoding = "async";
+        image.draggable = false;
+        handleImageError = () => {
+          element.classList.remove("has-portrait");
+          image?.remove();
+        };
+        image.addEventListener("error", handleImageError);
+        element.classList.add("has-portrait");
+        element.prepend(image);
+      }
       const handleClick = () => onSelectRef.current(coach.profileId);
       element.addEventListener("click", handleClick);
       const coordinates: [number, number] = [
@@ -115,9 +139,18 @@ export function MapboxCoachMap({
       const marker = new mapboxgl.Marker({ element, anchor: "bottom" })
         .setLngLat(coordinates)
         .addTo(map);
+      // Mapbox assigns `role="img"` while constructing a custom marker. Restore
+      // the native button semantics because this marker selects a coach.
+      element.setAttribute("role", "button");
       markersRef.current.set(
         coach.profileId,
-        Object.freeze({ marker, element, handleClick }),
+        Object.freeze({
+          marker,
+          element,
+          image,
+          handleClick,
+          handleImageError,
+        }),
       );
       bounds.extend(coordinates);
     }

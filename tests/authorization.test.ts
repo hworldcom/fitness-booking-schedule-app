@@ -43,24 +43,107 @@ test("actor responses accept only the bounded public shape", () => {
   assert.equal(
     isActorSnapshot({
       status: "authorized",
-      profile: { slug: "anna-klein", displayName: "Anna Klein" },
+      profile: {
+        slug: "anna-klein",
+        displayName: "Anna Klein",
+        avatarUrl: null,
+        coachPortraitUrl: null,
+      },
       demoRun: {
         slug: "local-foundation-2030",
         name: "Local foundation run",
       },
       role: "member",
+      coachAccessStatus: "not-applied",
     }),
     true,
   );
   assert.equal(
     isActorSnapshot({
       status: "authorized",
-      profile: { slug: "anna-klein", displayName: "Anna Klein" },
+      profile: {
+        slug: "daniel-park",
+        displayName: "Daniel Park",
+        avatarUrl: null,
+        coachPortraitUrl: "/images/coaches/daniel-park.webp",
+      },
       demoRun: {
         slug: "local-foundation-2030",
         name: "Local foundation run",
       },
       role: "member",
+      coachAccessStatus: "demo",
+    }),
+    true,
+  );
+  assert.equal(
+    isActorSnapshot({
+      status: "authorized",
+      profile: {
+        slug: "daniel-park",
+        displayName: "Daniel Park",
+        avatarUrl: null,
+        coachPortraitUrl: "/images/coaches/../private.webp",
+      },
+      demoRun: {
+        slug: "local-foundation-2030",
+        name: "Local foundation run",
+      },
+      role: "member",
+      coachAccessStatus: "demo",
+    }),
+    false,
+  );
+  assert.equal(
+    isActorSnapshot({
+      status: "authorized",
+      profile: {
+        slug: "anna-klein",
+        displayName: "Anna Klein",
+        avatarUrl: null,
+        coachPortraitUrl: null,
+      },
+      demoRun: {
+        slug: "local-foundation-2030",
+        name: "Local foundation run",
+      },
+      role: "member",
+    }),
+    false,
+  );
+  assert.equal(
+    isActorSnapshot({
+      status: "authorized",
+      profile: {
+        slug: "anna-klein",
+        displayName: "Anna Klein",
+        avatarUrl: null,
+        coachPortraitUrl: null,
+      },
+      demoRun: {
+        slug: "local-foundation-2030",
+        name: "Local foundation run",
+      },
+      role: "member",
+      coachAccessStatus: "invented",
+    }),
+    false,
+  );
+  assert.equal(
+    isActorSnapshot({
+      status: "authorized",
+      profile: {
+        slug: "anna-klein",
+        displayName: "Anna Klein",
+        avatarUrl: null,
+        coachPortraitUrl: null,
+      },
+      demoRun: {
+        slug: "local-foundation-2030",
+        name: "Local foundation run",
+      },
+      role: "member",
+      coachAccessStatus: "not-applied",
       email: "private@example.com",
     }),
     false,
@@ -99,12 +182,18 @@ test("private actor state is bound to the exact verified session generation", ()
   };
   const actor: ActorSnapshot = {
     status: "authorized",
-    profile: { slug: "anna-klein", displayName: "Anna Klein" },
+    profile: {
+      slug: "anna-klein",
+      displayName: "Anna Klein",
+      avatarUrl: null,
+      coachPortraitUrl: null,
+    },
     demoRun: {
       slug: "local-foundation-2030",
       name: "Local foundation run",
     },
     role: "member",
+    coachAccessStatus: "not-applied",
   };
   const actorState = { sessionKey: actorSessionKey(session), actor };
 

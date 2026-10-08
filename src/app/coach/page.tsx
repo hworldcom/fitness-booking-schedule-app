@@ -6,15 +6,21 @@ import { saveCoachAvailabilityRulesAction } from "./actions";
 import { CoachAvailabilityPanel } from "@/features/coaches/coach-availability-panel";
 import { CoachApplicationGate } from "@/features/coaches/coach-application-gate";
 import { CoachClientCards } from "@/features/coaches/coach-client-cards";
+import { resolveCoachWorkspaceView } from "@/features/coaches/coach-workspace-view";
 import { currentPrivateBookingWorkspace } from "@/server/coaches/booking-service";
 import { currentCoachAvailabilityWorkspace } from "@/server/coaches/service";
 
 export const metadata: Metadata = { title: "Coach workspace" };
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string | string[] | undefined }>;
+}) {
+  const view = resolveCoachWorkspaceView((await searchParams).view);
   const [state, bookingState] = await Promise.all([
     currentCoachAvailabilityWorkspace(),
-    currentPrivateBookingWorkspace(),
+    view === "bookings" ? currentPrivateBookingWorkspace() : null,
   ]);
   if (state.status !== "authorized") {
     if (state.status === "signed-out") redirect(signInHref("/coach"));
@@ -54,7 +60,7 @@ export default async function Page() {
   }
 
   const coachBookings =
-    bookingState.status === "authorized" ? bookingState.coachBookings : null;
+    bookingState?.status === "authorized" ? bookingState.coachBookings : null;
 
   if (
     state.coachAccess.status !== "approved" &&
@@ -64,7 +70,7 @@ export default async function Page() {
       <CoachApplicationGate
         access={state.coachAccess}
         existingBookings={
-          state.coachAccess.status === "suspended" ? (
+          state.coachAccess.status === "suspended" && view === "bookings" ? (
             <CoachClientCards
               bookings={coachBookings}
               referenceTime={new Date().toISOString()}
@@ -80,13 +86,15 @@ export default async function Page() {
       coach={state.coach}
       rules={state.rules}
       slots={state.slots}
-      bookings={coachBookings}
-      clientCards={
-        <CoachClientCards
-          key="client-bookings"
-          bookings={coachBookings}
-          referenceTime={new Date().toISOString()}
-        />
+      view={view}
+      bookingContent={
+        view === "bookings" ? (
+          <CoachClientCards
+            key="client-bookings"
+            bookings={coachBookings}
+            referenceTime={new Date().toISOString()}
+          />
+        ) : undefined
       }
       ownerDisplayName={state.ownerDisplayName}
       saveRuleSetAction={saveCoachAvailabilityRulesAction}

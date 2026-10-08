@@ -28,7 +28,8 @@ select ok(
   not exists (
     select 1
     from app.coach_profiles as coach
-    where coach.record_source <> 'fixture'
+    where not coach.is_demo
+      or coach.record_source not in ('fixture', 'user')
       or coach.visibility <> 'visible'
       or coach.service_mode <> 'private-training'
       or coach.location_confirmed_at is null

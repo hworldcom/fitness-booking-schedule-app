@@ -167,9 +167,15 @@ select ok(
 );
 
 select is(
-  (select count(*)::integer from app.profiles where record_source = 'fixture'),
+  (
+    select count(*)::integer
+    from app.profiles
+    where id between
+      '10000000-0000-4000-8000-000000000002'::uuid
+      and '10000000-0000-4000-8000-000000000012'::uuid
+  ),
   11,
-  'eleven fictional fixture profiles remain available'
+  'eleven fictional seeded profiles remain available'
 );
 
 select is(
@@ -217,16 +223,28 @@ select ok(
   not exists (
     select 1
     from app.profiles
-    where record_source = 'fixture' and auth_user_id is not null
+    where id between
+        '10000000-0000-4000-8000-000000000002'::uuid
+        and '10000000-0000-4000-8000-000000000012'::uuid
+      and not (
+        (record_source = 'fixture' and auth_user_id is null)
+        or (
+          record_source = 'user'
+          and auth_user_id::text = pg_catalog.concat(
+            '90000000-0000-4000-8000-',
+            pg_catalog.right(id::text, 12)
+          )
+        )
+      )
   ),
-  'fixture profiles remain unclaimed'
+  'seeded profiles are either untouched or claimed by their reserved demo accounts'
 );
 
 select is(
   (
     with expected(table_name, column_count) as (
       values
-        ('profiles', 12),
+        ('profiles', 14),
         ('demo_runs', 11),
         ('demo_run_participants', 8),
         ('gyms', 19)

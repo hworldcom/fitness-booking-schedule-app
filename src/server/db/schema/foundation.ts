@@ -41,6 +41,11 @@ export const profiles = app.table(
     initials: text("initials").notNull(),
     bio: text("bio").default("").notNull(),
     avatarColor: text("avatar_color").notNull(),
+    avatarStoragePath: text("avatar_storage_path"),
+    avatarUpdatedAt: timestamp("avatar_updated_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
     recordSource: text("record_source").notNull(),
     claimedAt: timestamp("claimed_at", {
       withTimezone: true,

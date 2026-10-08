@@ -153,9 +153,39 @@ async function createCoachProfile(page, profileId) {
   return firstGymLabel.split(" — ")[0];
 }
 
+async function assertCoachPrimaryNavigation(page) {
+  const workspaceLink = page.getByRole("link", {
+    name: "Coach workspace",
+    exact: true,
+  });
+  await workspaceLink.first().waitFor();
+  assert.equal(await workspaceLink.first().getAttribute("href"), "/coach");
+  await workspaceLink.first().focus();
+  assert.equal(
+    await workspaceLink
+      .first()
+      .evaluate((element) => element === document.activeElement),
+    true,
+  );
+  const sessionsLink = page.getByRole("link", {
+    name: "My sessions",
+    exact: true,
+  });
+  await sessionsLink.first().waitFor();
+  assert.equal(await sessionsLink.first().getAttribute("href"), "/sessions");
+  await sessionsLink.first().focus();
+  assert.equal(
+    await sessionsLink
+      .first()
+      .evaluate((element) => element === document.activeElement),
+    true,
+  );
+}
+
 async function rehearseAvailability(page, gymName) {
   await page.goto(`${siteUrl}/coach`, { waitUntil: "domcontentloaded" });
   await page.getByRole("heading", { name: "Set your working week." }).waitFor();
+  await assertCoachPrimaryNavigation(page);
   let scheduleMutationRequests = 0;
   const countScheduleMutation = (request) => {
     if (
@@ -210,6 +240,7 @@ async function rehearseAvailability(page, gymName) {
 
   await page.goto(`${siteUrl}/coach`, { waitUntil: "domcontentloaded" });
   await page.setViewportSize({ width: 393, height: 852 });
+  await assertCoachPrimaryNavigation(page);
   const removeFirstCell = page.getByRole("button", {
     name: `Remove ${workingDay.weekday} ${workingDay.firstHour}–11:00`,
   });

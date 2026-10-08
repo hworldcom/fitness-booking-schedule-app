@@ -394,12 +394,16 @@
   color: #4d623f;
 }
 
+.coach-client-card > header > .avatar {
+  flex: 0 0 auto;
+}
+
 .coach-client-card h3 {
   color: #2d3e2a;
   font-size: 15px;
 }
 
-.coach-client-card header span,
+.coach-client-card header > div > span,
 .coach-client-ledger-link {
   display: block;
   margin-top: 3px;
@@ -555,32 +559,6 @@
   font-style: normal;
   font-weight: 750;
   white-space: nowrap;
-}
-
-.coach-occurrence-list .coach-occurrence-client {
-  display: flex;
-  align-items: center;
-  justify-self: end;
-  gap: 8px;
-  color: #4d633f;
-  text-align: right;
-}
-
-.coach-occurrence-client span,
-.coach-occurrence-client strong,
-.coach-occurrence-client small {
-  display: block;
-}
-
-.coach-occurrence-client small {
-  margin: 0 0 2px;
-  font-size: 8px;
-  font-weight: 750;
-  text-transform: uppercase;
-}
-
-.coach-occurrence-client strong {
-  font-size: 10px;
 }
 
 .coach-slot-status {

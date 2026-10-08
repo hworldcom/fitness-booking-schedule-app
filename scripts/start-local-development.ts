@@ -103,6 +103,11 @@ async function main() {
     npmCommand,
     ["run", "--silent", "db:runtime"],
   );
+  runStep("Provisioning the persistent local ordinary test user.", npmCommand, [
+    "run",
+    "--silent",
+    "auth:provision:test-user",
+  ]);
 
   const localEnvironment = localDevelopmentEnvironment(readLocalStatus());
   const applicationEnvironment: NodeJS.ProcessEnv = {

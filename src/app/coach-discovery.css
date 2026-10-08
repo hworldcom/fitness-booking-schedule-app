@@ -351,10 +351,13 @@
 }
 
 .coach-map-marker {
+  position: relative;
   display: grid;
+  overflow: hidden;
   width: 38px;
   height: 38px;
   place-items: center;
+  padding: 0;
   border: 3px solid white;
   border-radius: 50%;
   background: var(--coach-forest);
@@ -365,6 +368,18 @@
   transition:
     scale 160ms ease,
     background 160ms ease;
+}
+
+.coach-map-marker-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.coach-map-marker.has-portrait .coach-map-marker-initials {
+  visibility: hidden;
 }
 
 .coach-map-marker.selected {

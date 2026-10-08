@@ -23,6 +23,10 @@ import {
 } from "@/server/db/coaches/booking-repository";
 import { upsertOwnedCoachProfileRecord } from "@/server/db/coaches/repository";
 import { enrollApplicationProfile } from "@/server/db/identity/repository";
+import {
+  confirmedBookingClientAvatarReference,
+  setCurrentAccountAvatarReference,
+} from "@/server/db/profile-images/repository";
 
 const adminConnectionString = process.env.DATABASE_TEST_URL;
 if (!adminConnectionString) {
@@ -40,6 +44,7 @@ const coachAuthUserId = "98000000-0000-4000-8000-000000000001";
 const firstClientAuthUserId = "98000000-0000-4000-8000-000000000002";
 const secondClientAuthUserId = "98000000-0000-4000-8000-000000000003";
 const fixtureGymId = "40000000-0000-4000-8000-000000000001";
+const firstClientAvatarObjectId = "98000000-0000-4000-8000-000000000011";
 
 const admin = postgres(adminConnectionString, {
   max: 1,
@@ -210,6 +215,13 @@ before(async () => {
   await withActorDatabaseContext(coachActor, (transaction) =>
     upsertOwnedCoachProfileRecord(transaction, coachProfile),
   );
+  await withActorDatabaseContext(firstClientActor, (transaction) =>
+    setCurrentAccountAvatarReference(
+      transaction,
+      `${firstClientActor.profileId}/${firstClientAvatarObjectId}.webp`,
+      null,
+    ),
+  );
 });
 
 after(async () => {
@@ -243,11 +255,112 @@ test("direct booking is idempotent for one client and capacity one", async () =>
   assert.ok(booking);
   assert.equal(booking.status, "confirmed");
   assert.equal(booking.cancelledBy, null);
+  assert.equal(booking.clientAvatarUrl, null);
   assert.equal("creditProjectionId" in booking, false);
+  const coachBookings = await withActorDatabaseContext(
+    coachActor,
+    (transaction) => currentCoachPrivateBookingRecords(transaction, coachActor),
+  );
+  const coachBooking = coachBookings.find(
+    (candidate) => candidate.id === bookingId,
+  );
+  assert.match(
+    coachBooking?.clientAvatarUrl ?? "",
+    new RegExp(`^/api/coach/bookings/${bookingId}/client-avatar[?]v=`),
+  );
+  const avatarReference = await withActorDatabaseContext(
+    coachActor,
+    (transaction) =>
+      confirmedBookingClientAvatarReference(transaction, bookingId),
+  );
+  assert.equal(
+    avatarReference?.path,
+    `${firstClientActor.profileId}/${firstClientAvatarObjectId}.webp`,
+  );
+  assert.ok(avatarReference?.updatedAt);
+  assert.equal(
+    await withActorDatabaseContext(firstClientActor, (transaction) =>
+      confirmedBookingClientAvatarReference(transaction, bookingId),
+    ),
+    null,
+  );
+  assert.equal(
+    await withActorDatabaseContext(secondClientActor, (transaction) =>
+      confirmedBookingClientAvatarReference(transaction, bookingId),
+    ),
+    null,
+  );
   const [slot] = await admin<{ status: string }[]>`
     select status from app.coach_availability_slots where id = ${slotId}::uuid
   `;
   assert.equal(slot?.status, "booked");
+
+  const accountPath = `${firstClientActor.profileId}/${firstClientAvatarObjectId}.webp`;
+  async function storageVisibility() {
+    let coachCount = -1;
+    let unrelatedCount = -1;
+    await assert.rejects(
+      admin.begin(async (transaction) => {
+        await transaction`set local role authenticated`;
+        await transaction`
+          select set_config(
+            'request.jwt.claim.sub',
+            ${firstClientAuthUserId},
+            true
+          )
+        `;
+        await transaction`
+          insert into storage.objects (bucket_id, name)
+          values ('account-avatars', ${accountPath})
+        `;
+        await transaction`
+          select set_config('request.jwt.claim.sub', ${coachAuthUserId}, true)
+        `;
+        const [coachResult] = await transaction<{ count: number }[]>`
+          select count(*)::integer as count
+          from storage.objects
+          where bucket_id = 'account-avatars'
+            and name = ${accountPath}
+        `;
+        coachCount = coachResult?.count ?? 0;
+        await transaction`
+          select set_config(
+            'request.jwt.claim.sub',
+            ${secondClientAuthUserId},
+            true
+          )
+        `;
+        const [unrelatedResult] = await transaction<{ count: number }[]>`
+          select count(*)::integer as count
+          from storage.objects
+          where bucket_id = 'account-avatars'
+            and name = ${accountPath}
+        `;
+        unrelatedCount = unrelatedResult?.count ?? 0;
+        throw new Error("roll back booking avatar policy fixture");
+      }),
+      /roll back booking avatar policy fixture/,
+    );
+    return { coachCount, unrelatedCount };
+  }
+
+  assert.deepEqual(await storageVisibility(), {
+    coachCount: 1,
+    unrelatedCount: 0,
+  });
+  await withActorDatabaseContext(firstClientActor, (transaction) =>
+    cancelDirectPrivateBookingRecord(transaction, bookingId),
+  );
+  assert.deepEqual(await storageVisibility(), {
+    coachCount: 0,
+    unrelatedCount: 0,
+  });
+  assert.equal(
+    await withActorDatabaseContext(coachActor, (transaction) =>
+      confirmedBookingClientAvatarReference(transaction, bookingId),
+    ),
+    null,
+  );
 });
 
 test("invalid actors and hidden coaches cannot create bookings", async () => {

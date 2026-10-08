@@ -353,6 +353,18 @@ where coach_profiles.record_source = 'fixture'
     excluded.visibility
   );
 
+update app.coach_profiles
+set portrait_source = 'fixture',
+    portrait_path = '/images/coaches/daniel-park.webp',
+    portrait_updated_at = '2026-10-08T00:00:00Z'
+where run_id = '20000000-0000-4000-8000-000000000001'
+  and profile_id = '10000000-0000-4000-8000-000000000002'
+  and public_slug = 'daniel-park'
+  and is_demo
+  and portrait_source is null
+  and portrait_path is null
+  and portrait_updated_at is null;
+
 insert into app.group_events (
   id,
   run_id,

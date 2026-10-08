@@ -17,10 +17,12 @@
     "test:db": "DATABASE_TEST_URL=postgresql://postgres:postgres@127.0.0.1:55322/postgres tsx --conditions=react-server --test --test-concurrency=1 tests/database/*.test.ts",
     "test:auth": "node scripts/rehearse-local-email-auth.mjs",
     "test:coach-availability": "node scripts/rehearse-local-coach-availability.mjs",
+    "test:profile-images": "node scripts/rehearse-local-profile-images.mjs",
     "test:e2e": "playwright test",
     "db:start": "supabase start --exclude gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
-    "auth:start": "supabase start --exclude realtime,storage-api,imgproxy,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
+    "auth:start": "supabase start --exclude realtime,imgproxy,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
     "auth:status": "supabase status -o env | grep -E '^(API_URL|PUBLISHABLE_KEY|ANON_KEY)='",
+    "auth:provision:test-user": "tsx scripts/provision-local-test-user.ts",
     "auth:provision:coaches": "tsx scripts/provision-local-coach-accounts.ts",
     "coach:review": "node --env-file-if-exists=.env.staging.local scripts/review-coach-application.mjs",
     "db:stop": "supabase stop",
@@ -44,7 +46,8 @@
     "postgres": "3.4.9",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "server-only": "0.0.1"
+    "server-only": "0.0.1",
+    "sharp": "0.35.5"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
@@ -55,7 +58,7 @@
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.8",
     "prettier": "3.9.8",
-    "supabase": "2.117.0",
+    "supabase": "2.120.0",
     "tailwindcss": "4.3.3",
     "tsx": "4.23.13",
     "typescript": "6.0.3"

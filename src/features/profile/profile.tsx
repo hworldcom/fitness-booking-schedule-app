@@ -7,6 +7,8 @@ import { profileInitials } from "@/auth/profile-presentation";
 import { signInHref } from "@/auth/return-to";
 import { Avatar, Empty, Pill } from "@/components/ui";
 import type { CoachAccessProjection } from "@/domain/coaches";
+import { accountProfileImagePresentation } from "@/profile-images/presentation";
+import { ProfileImageUploader } from "./profile-image-uploader";
 
 export function Profile({
   coachAccess,
@@ -61,6 +63,11 @@ export function Profile({
     );
   }
 
+  const profileImage = accountProfileImagePresentation(
+    actor.profile.avatarUrl,
+    actor.profile.coachPortraitUrl,
+  );
+
   return (
     <>
       <div className="page-heading">
@@ -76,7 +83,17 @@ export function Profile({
         <span className="cover-spark">✳</span>
       </section>
       <div className="profile-heading">
-        <Avatar initials={profileInitials(actor.profile.displayName)} />
+        <Avatar
+          initials={profileInitials(actor.profile.displayName)}
+          imageUrl={profileImage.imageUrl}
+          alt={
+            profileImage.source === "account"
+              ? `${actor.profile.displayName} account avatar`
+              : profileImage.source === "coach"
+                ? `${actor.profile.displayName} public coach portrait`
+                : ""
+          }
+        />
         <div>
           <h2>{actor.profile.displayName}</h2>
           <p>
@@ -86,6 +103,14 @@ export function Profile({
           <Pill>Account profile</Pill>
         </div>
       </div>
+      <ProfileImageUploader
+        endpoint="/api/profile/avatar"
+        currentImageUrl={actor.profile.avatarUrl}
+        fallbackImageUrl={actor.profile.coachPortraitUrl}
+        displayName={actor.profile.displayName}
+        initials={profileInitials(actor.profile.displayName)}
+        kind="account"
+      />
       <section className="profile-public-note account-profile-note">
         <BadgeCheck size={24} />
         <h2>Your profile is connected to this account.</h2>

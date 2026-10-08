@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState, useTransition, type FormEvent, type ReactNode } from "react";
 import {
-  CalendarDays,
   CalendarClock,
   Check,
   Clock3,
@@ -11,13 +10,8 @@ import {
   MapPin,
   Save,
   Settings2,
-  UserRound,
 } from "lucide-react";
 import type { CoachAvailabilityActionState } from "@/app/coach/actions";
-import {
-  confirmedBookingForSlot,
-  type PrivateBookingProjection,
-} from "@/domain/coach-bookings";
 import {
   coachAvailabilityRuleKey,
   type CoachAvailabilityIsoWeekday,
@@ -25,6 +19,8 @@ import {
   type OwnedCoachAvailabilityRule,
   type OwnedCoachAvailabilitySlot,
 } from "@/domain/coaches";
+import type { CoachWorkspaceView } from "@/features/coaches/coach-workspace-view";
+import { CoachWorkspaceNavigation } from "@/features/coaches/coach-workspace-navigation";
 
 const INITIAL_COACH_AVAILABILITY_ACTION_STATE: CoachAvailabilityActionState =
   Object.freeze({ status: "idle", message: "", errors: Object.freeze([]) });
@@ -358,10 +354,8 @@ function WorkingWeekEditor({
 
 function UpcomingOccurrences({
   slots,
-  bookings,
 }: {
   slots: readonly OwnedCoachAvailabilitySlot[];
-  bookings: readonly PrivateBookingProjection[] | null;
 }) {
   return (
     <section className="coach-availability-list">
@@ -389,54 +383,35 @@ function UpcomingOccurrences({
         </div>
       ) : (
         <ul className="coach-occurrence-list">
-          {slots.map((slot) => {
-            const booking = bookings
-              ? confirmedBookingForSlot(bookings, slot.id)
-              : null;
-            return (
-              <li key={slot.id}>
-                <div>
-                  <span className={`coach-slot-status ${slot.status}`}>
-                    {slot.status}
-                  </span>
-                  <strong>{slotDateTime(slot)}</strong>
-                  <small>
-                    Until {slotEndTime(slot)} · {slot.coachTimezone}
-                  </small>
-                </div>
-                <div>
-                  <MapPin size={16} aria-hidden="true" />
-                  <span>
-                    <strong>
-                      {slot.location.gymName ?? "Independent training place"}
-                    </strong>
-                    <small>{slot.location.label}</small>
-                  </span>
-                </div>
-                {slot.status === "booked" ? (
-                  booking ? (
-                    <div className="coach-occurrence-client">
-                      <UserRound size={16} aria-hidden="true" />
-                      <span>
-                        <small>Booked by</small>
-                        <strong>{booking.clientDisplayName}</strong>
-                      </span>
-                    </div>
-                  ) : (
-                    <em>
-                      {bookings === null
-                        ? "Client unavailable"
-                        : "Booking unavailable"}
-                    </em>
-                  )
-                ) : (
-                  <em>
-                    {slot.recurrenceRuleId ? "Working week" : "Earlier one-off"}
-                  </em>
-                )}
-              </li>
-            );
-          })}
+          {slots.map((slot) => (
+            <li key={slot.id}>
+              <div>
+                <span className={`coach-slot-status ${slot.status}`}>
+                  {slot.status}
+                </span>
+                <strong>{slotDateTime(slot)}</strong>
+                <small>
+                  Until {slotEndTime(slot)} · {slot.coachTimezone}
+                </small>
+              </div>
+              <div>
+                <MapPin size={16} aria-hidden="true" />
+                <span>
+                  <strong>
+                    {slot.location.gymName ?? "Independent training place"}
+                  </strong>
+                  <small>{slot.location.label}</small>
+                </span>
+              </div>
+              <em>
+                {slot.status === "booked"
+                  ? "Reserved hour"
+                  : slot.recurrenceRuleId
+                    ? "Working week"
+                    : "Earlier one-off"}
+              </em>
+            </li>
+          ))}
         </ul>
       )}
     </section>
@@ -447,31 +422,35 @@ export function CoachAvailabilityPanel({
   coach,
   rules,
   slots,
-  bookings,
-  clientCards,
+  view,
+  bookingContent,
   ownerDisplayName,
   saveRuleSetAction,
 }: {
   coach: CoachProjection | null;
   rules: readonly OwnedCoachAvailabilityRule[];
   slots: readonly OwnedCoachAvailabilitySlot[];
-  bookings: readonly PrivateBookingProjection[] | null;
-  clientCards?: ReactNode;
+  view: CoachWorkspaceView;
+  bookingContent?: ReactNode;
   ownerDisplayName: string;
   saveRuleSetAction: CoachAvailabilityRuleSetAction;
 }) {
   return (
     <div className="coach-workspace">
+      <CoachWorkspaceNavigation active={view} />
       <header className="coach-workspace-header">
         <div>
           <span className="eyebrow">COACH WORKSPACE</span>
           <h1>
-            Set your working week<span className="lime-text">.</span>
+            {view === "bookings"
+              ? "Review your bookings"
+              : "Set your working week"}
+            <span className="lime-text">.</span>
           </h1>
           <p>
-            Welcome, {ownerDisplayName}. Choose the one-hour times you normally
-            teach once, and MovX keeps the next seven days ready for clients.
-            Nothing here tracks your live location.
+            {view === "bookings"
+              ? `Welcome, ${ownerDisplayName}. See who booked each private session and manage the actions available for its current status.`
+              : `Welcome, ${ownerDisplayName}. Choose the one-hour times you normally teach once, and MovX keeps the next seven days ready for clients. Nothing here tracks your live location.`}
           </p>
         </div>
         {coach?.visibility === "visible" && (
@@ -481,23 +460,9 @@ export function CoachAvailabilityPanel({
         )}
       </header>
 
-      <nav className="coach-workspace-nav" aria-label="Coach workspace">
-        <Link href="/coach" aria-current="page" className="active">
-          <CalendarClock size={17} aria-hidden="true" /> Schedule
-        </Link>
-        <Link href="/profile/coach">
-          <UserRound size={17} aria-hidden="true" /> Profile
-        </Link>
-        {coach && (
-          <Link href="#client-bookings">
-            <CalendarDays size={17} aria-hidden="true" /> Bookings
-          </Link>
-        )}
-      </nav>
-
-      {coach && clientCards}
-
-      {!coach ? (
+      {view === "bookings" && coach ? (
+        bookingContent
+      ) : !coach ? (
         <section className="coach-workspace-gate">
           <Settings2 size={27} aria-hidden="true" />
           <span className="eyebrow">PROFILE REQUIRED</span>
@@ -530,7 +495,7 @@ export function CoachAvailabilityPanel({
             rules={rules}
             saveRuleSetAction={saveRuleSetAction}
           />
-          <UpcomingOccurrences slots={slots} bookings={bookings} />
+          <UpcomingOccurrences slots={slots} />
         </>
       )}
     </div>

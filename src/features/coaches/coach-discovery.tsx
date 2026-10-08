@@ -139,7 +139,13 @@ export function CoachProfileView({
       </Link>
       <header className="public-coach-header">
         <div className="public-coach-identity">
-          <Avatar initials={profileInitials(coach.displayName)} />
+          <Avatar
+            initials={profileInitials(coach.displayName)}
+            imageUrl={coach.portraitUrl}
+            alt={
+              coach.portraitUrl ? `${coach.displayName}'s coach portrait` : ""
+            }
+          />
           <div>
             <span className="eyebrow">
               {coach.trustKind === "verified"
