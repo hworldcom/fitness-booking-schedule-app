@@ -90,6 +90,16 @@ async function createCoachProfile(page) {
 async function rehearseAvailability(page, gymName) {
   await page.goto(`${siteUrl}/coach`, { waitUntil: "domcontentloaded" });
   await page.getByRole("heading", { name: "Set your working week." }).waitFor();
+  let scheduleMutationRequests = 0;
+  const countScheduleMutation = (request) => {
+    if (
+      request.method() === "POST" &&
+      new URL(request.url()).pathname === "/coach"
+    ) {
+      scheduleMutationRequests += 1;
+    }
+  };
+  page.on("request", countScheduleMutation);
   const workingDay = futureWorkingDay();
   const firstCell = page.getByRole("button", {
     name: `Add ${workingDay.weekday} ${workingDay.firstHour}–11:00`,
@@ -98,9 +108,18 @@ async function rehearseAvailability(page, gymName) {
     name: `Add ${workingDay.weekday} ${workingDay.secondHour}–12:00`,
   });
   await firstCell.click();
-  await page.getByText("1 selected hour").waitFor({ timeout: 20_000 });
+  await page.getByText("1 selected hour · Unsaved").waitFor();
   await secondCell.click();
-  await page.getByText("2 selected hours").waitFor({ timeout: 20_000 });
+  await page.getByText("2 selected hours · Unsaved").waitFor();
+  await page
+    .getByText("Your changes are only on this screen until you save.")
+    .waitFor();
+  assert.equal(scheduleMutationRequests, 0);
+  await page.getByRole("button", { name: "Save schedule" }).click();
+  await page.getByText("Schedule saved.", { exact: false }).waitFor({
+    timeout: 20_000,
+  });
+  assert.equal(scheduleMutationRequests, 1);
   await page.getByText("2 upcoming times").waitFor({ timeout: 20_000 });
   await expectText(page, gymName);
   await page.screenshot({
@@ -115,9 +134,7 @@ async function rehearseAvailability(page, gymName) {
   await page.goto(`${siteUrl}${publicProfileHref}`, {
     waitUntil: "domcontentloaded",
   });
-  await page
-    .getByRole("heading", { name: "2 open times this week." })
-    .waitFor();
+  await page.getByRole("heading", { name: "2 open hours." }).waitFor();
   await page.getByText(workingDay.weekday, { exact: false }).first().waitFor();
   await page.getByText(gymName, { exact: true }).last().waitFor();
   await page.screenshot({
@@ -159,13 +176,19 @@ async function rehearseAvailability(page, gymName) {
   });
 
   await removeFirstCell.click();
-  await page.getByText("1 selected hour").waitFor({ timeout: 20_000 });
+  await page.getByText("1 selected hour · Unsaved").waitFor();
   await page
     .getByRole("button", {
       name: `Remove ${workingDay.weekday} ${workingDay.secondHour}–12:00`,
     })
     .click();
-  await page.getByText("0 selected hours").waitFor({ timeout: 20_000 });
+  await page.getByText("0 selected hours · Unsaved").waitFor();
+  assert.equal(scheduleMutationRequests, 1);
+  await page.getByRole("button", { name: "Save schedule" }).click();
+  await page.getByText("Schedule saved.", { exact: false }).waitFor({
+    timeout: 20_000,
+  });
+  assert.equal(scheduleMutationRequests, 2);
   await page
     .getByRole("heading", {
       name: "No dated times in the next seven days.",
@@ -178,6 +201,7 @@ async function rehearseAvailability(page, gymName) {
   await page
     .getByRole("heading", { name: "No open times right now." })
     .waitFor();
+  page.off("request", countScheduleMutation);
 }
 
 async function expectText(page, text) {
@@ -200,7 +224,7 @@ try {
 
   assert.deepEqual(pageErrors, []);
   console.log(
-    "Coach availability rehearsal passed for authenticated profile setup, adjacent working-week toggles, public dated projection, removal, keyboard focus and responsive layout.",
+    "Coach availability rehearsal passed for local multi-selection with zero per-cell requests, one request per save, public dated projection, removal, keyboard focus and responsive layout.",
   );
 } finally {
   await browser.close();

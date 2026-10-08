@@ -1,6 +1,6 @@
 # MovX Club — Scheduling-only MVP specification
 
-Last updated: 7 October 2026.
+Last updated: 8 October 2026.
 
 MovX is a focused scheduling product for martial-arts coaching. Guests discover fictional coaches and their real published availability. Email-authenticated clients reserve one capacity-one private session directly. Coaches manage their public profile, location, recurring one-hour availability and booked schedule.
 
@@ -151,6 +151,7 @@ Cancellation locks the booking/occurrence together, records the authorized actor
 
 - Public coach discovery includes only visible profiles and confirmed locations.
 - Only the coach owner edits that coach profile, location or recurring availability.
+- A coach composes recurring availability as a local working-week draft and explicitly saves the complete selection; one authorized atomic operation replaces the active rule set and synchronizes dated occurrences once.
 - Only a verified signed-in client books, and never against their own coach profile.
 - Only the booking client or coach cancels a future confirmed booking.
 - Only the booking coach completes an elapsed confirmed booking.
@@ -196,22 +197,22 @@ Payments, subscriptions, passes, wallets, group classes/events, waitlists, messa
 
 ## 13. Acceptance matrix
 
-| Scenario                        | Expected result                                                                                       |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Guest opens Explore             | Visible fictional coaches and confirmed locations load; map failure leaves the list usable.           |
-| Guest opens coach profile       | Public profile and persisted open times load without private booking/client data.                     |
-| Guest attempts booking          | Sign-in is required; no booking mutation occurs.                                                      |
-| New user activates coaching     | Owner gains coach setup capability while retaining client behavior; no public visibility is inferred. |
-| Coach publishes availability    | Valid non-overlapping one-hour occurrences appear publicly with stable timezone/location snapshots.   |
-| Client books open time          | One confirmed booking is created and the occurrence becomes booked atomically.                        |
-| Same client retries booking     | The existing active booking is returned; no duplicate row is created.                                 |
-| Different client races          | Exactly one client succeeds; the other receives a conflict.                                           |
-| Coach books own time            | Request fails without mutation.                                                                       |
-| Client cancels future booking   | Booking becomes cancelled, cancellation identity/time are recorded and the occurrence reopens.        |
-| Coach cancels future booking    | Same terminal/reopen behavior applies only to that coach's booking.                                   |
-| Coach completes elapsed booking | Booking becomes completed once; client/unrelated coach cannot complete it.                            |
-| Database/Auth unavailable       | UI shows bounded unavailable/signed-out state and fabricates no booking or time.                      |
-| Removed URL is requested        | Wallet, Solana, event and social/feed routes are unavailable and cannot mutate state.                 |
+| Scenario                        | Expected result                                                                                                                                       |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Guest opens Explore             | Visible fictional coaches and confirmed locations load; map failure leaves the list usable.                                                           |
+| Guest opens coach profile       | Public profile and persisted open times load without private booking/client data.                                                                     |
+| Guest attempts booking          | Sign-in is required; no booking mutation occurs.                                                                                                      |
+| New user activates coaching     | Owner gains coach setup capability while retaining client behavior; no public visibility is inferred.                                                 |
+| Coach publishes availability    | Multiple draft selections persist together on explicit save; valid one-hour occurrences then appear publicly with stable timezone/location snapshots. |
+| Client books open time          | One confirmed booking is created and the occurrence becomes booked atomically.                                                                        |
+| Same client retries booking     | The existing active booking is returned; no duplicate row is created.                                                                                 |
+| Different client races          | Exactly one client succeeds; the other receives a conflict.                                                                                           |
+| Coach books own time            | Request fails without mutation.                                                                                                                       |
+| Client cancels future booking   | Booking becomes cancelled, cancellation identity/time are recorded and the occurrence reopens.                                                        |
+| Coach cancels future booking    | Same terminal/reopen behavior applies only to that coach's booking.                                                                                   |
+| Coach completes elapsed booking | Booking becomes completed once; client/unrelated coach cannot complete it.                                                                            |
+| Database/Auth unavailable       | UI shows bounded unavailable/signed-out state and fabricates no booking or time.                                                                      |
+| Removed URL is requested        | Wallet, Solana, event and social/feed routes are unavailable and cannot mutate state.                                                                 |
 
 ## 14. Demo
 

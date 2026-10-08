@@ -1,14 +1,15 @@
 import "server-only";
 
 import { sql } from "drizzle-orm";
-import type {
-  CoachAvailabilityInput,
-  CoachAvailabilityIsoWeekday,
-  CoachAvailabilityRuleInput,
-  CoachAvailabilityStatus,
-  OwnedCoachAvailabilitySlot,
-  OwnedCoachAvailabilityRule,
-  PublicCoachAvailabilitySlot,
+import {
+  coachAvailabilityRuleKey,
+  type CoachAvailabilityInput,
+  type CoachAvailabilityIsoWeekday,
+  type CoachAvailabilityRuleInput,
+  type CoachAvailabilityStatus,
+  type OwnedCoachAvailabilitySlot,
+  type OwnedCoachAvailabilityRule,
+  type PublicCoachAvailabilitySlot,
 } from "@/domain/coaches";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
@@ -310,6 +311,41 @@ export async function removeOwnedCoachAvailabilityRuleRecord(
       ) as rule_id
     `),
   );
+}
+
+export async function replaceOwnedCoachAvailabilityRuleRecords(
+  transaction: ActorDatabaseTransaction,
+  rules: readonly CoachAvailabilityRuleInput[],
+  expectedRules: readonly CoachAvailabilityRuleInput[],
+) {
+  const requestedRuleKeys = JSON.stringify(rules.map(coachAvailabilityRuleKey));
+  const expectedRuleKeys = JSON.stringify(
+    expectedRules.map(coachAvailabilityRuleKey),
+  );
+  try {
+    const rows = await transaction.execute<{ rule_count: number }>(sql`
+      select app.replace_owned_coach_availability_rules(
+        ${requestedRuleKeys}::jsonb,
+        ${expectedRuleKeys}::jsonb
+      ) as rule_count
+    `);
+    const ruleCount = Number(rows[0]?.rule_count);
+    if (
+      rows.length !== 1 ||
+      !Number.isInteger(ruleCount) ||
+      ruleCount < -1 ||
+      ruleCount > 161
+    ) {
+      throw new CoachAvailabilityConflictError();
+    }
+    return ruleCount;
+  } catch (error) {
+    if (error instanceof CoachAvailabilityConflictError) throw error;
+    if (isPostgresAvailabilityError(error)) {
+      throw new CoachAvailabilityConflictError(undefined, { cause: error });
+    }
+    throw error;
+  }
 }
 
 async function availabilityMutation(

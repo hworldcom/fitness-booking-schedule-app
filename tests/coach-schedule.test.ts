@@ -109,7 +109,7 @@ test("coach working week renders one keyboard-operable one-hour control per cell
       slots: [],
       bookings: [],
       ownerDisplayName: "Schedule Coach",
-      mutateRuleAction: idleAction,
+      saveRuleSetAction: idleAction,
     }),
   );
 
@@ -122,8 +122,12 @@ test("coach working week renders one keyboard-operable one-hour control per cell
   assert.match(html, /Remove Monday 10:00–11:00/);
   assert.match(html, /Add Sunday 22:00–23:00/);
   assert.match(html, /aria-pressed="true"/);
+  assert.match(html, /Save schedule/);
+  assert.match(html, /Your displayed working week is saved/);
   assert.equal((html.match(/<form/g) ?? []).length, 1);
-  assert.equal((html.match(/<button/g) ?? []).length, 23 * 7);
+  assert.equal((html.match(/<button/g) ?? []).length, 23 * 7 + 1);
+  assert.equal((html.match(/type="button"/g) ?? []).length, 23 * 7);
+  assert.match(html, /type="submit"[^>]*disabled/);
   assert.doesNotMatch(html, /datetime-local/);
   assert.doesNotMatch(html, /Publish slot/);
 });
@@ -141,7 +145,7 @@ test("coach workspace surfaces the private booking and client beside its occurre
         "Private sessions for Booking Client",
       ),
       ownerDisplayName: "Schedule Coach",
-      mutateRuleAction: idleAction,
+      saveRuleSetAction: idleAction,
     }),
   );
 
@@ -160,7 +164,7 @@ test("hidden coach profile keeps the recurring editor unavailable", () => {
       slots: [],
       bookings: [],
       ownerDisplayName: "Schedule Coach",
-      mutateRuleAction: idleAction,
+      saveRuleSetAction: idleAction,
     }),
   );
 

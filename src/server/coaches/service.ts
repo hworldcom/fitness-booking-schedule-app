@@ -21,6 +21,7 @@ import {
   currentOwnedCoachAvailabilityRuleRecords,
   publicCoachAvailabilityRecords,
   removeOwnedCoachAvailabilityRuleRecord,
+  replaceOwnedCoachAvailabilityRuleRecords,
   updateOwnedCoachAvailabilityRecord,
   withdrawOwnedCoachAvailabilityRecord,
 } from "@/server/db/coaches/availability-repository";
@@ -208,4 +209,27 @@ export function removeOwnedCoachAvailabilityRule(ruleId: string) {
   return mutateCoachAvailability((transaction) =>
     removeOwnedCoachAvailabilityRuleRecord(transaction, ruleId),
   );
+}
+
+export async function replaceOwnedCoachAvailabilityRules(
+  rules: readonly CoachAvailabilityRuleInput[],
+  expectedRules: readonly CoachAvailabilityRuleInput[],
+): Promise<CoachAvailabilityMutation> {
+  const result = await withAuthorizedActor(async (transaction, actor) => {
+    const coach = await currentOwnedCoachProfileRecord(transaction, actor);
+    if (!coach || coach.visibility !== "visible") {
+      return Object.freeze({ outcome: "conflict" as const });
+    }
+    const ruleCount = await replaceOwnedCoachAvailabilityRuleRecords(
+      transaction,
+      rules,
+      expectedRules,
+    );
+    return Object.freeze({
+      outcome: ruleCount === -1 ? ("conflict" as const) : ("saved" as const),
+      slug: coach.slug,
+    });
+  });
+  if (result.status !== "authorized") return result;
+  return Object.freeze({ status: "authorized", ...result.value });
 }

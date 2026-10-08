@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signInHref } from "@/auth/return-to";
-import { mutateCoachAvailabilityRuleAction } from "./actions";
+import { saveCoachAvailabilityRulesAction } from "./actions";
 import { CoachAvailabilityPanel } from "@/features/coaches/coach-availability-panel";
 import { CoachActivationGate } from "@/features/coaches/coach-activation-gate";
 import { CoachClientCards } from "@/features/coaches/coach-client-cards";
@@ -72,7 +72,7 @@ export default async function Page() {
         />
       }
       ownerDisplayName={state.ownerDisplayName}
-      mutateRuleAction={mutateCoachAvailabilityRuleAction}
+      saveRuleSetAction={saveCoachAvailabilityRulesAction}
     />
   );
 }

@@ -46,6 +46,7 @@ With the application running on port `3100`, `npm run test:auth` rehearses accou
 - Supabase Auth establishes email identity.
 - Transaction-local actor context binds an Auth user to one application profile and demo run.
 - Coaches own their public profile, confirmed location and recurring availability.
+- `app.replace_owned_coach_availability_rules(jsonb, jsonb)` atomically replaces one coach's complete working week after checking the editor's persisted baseline, then synchronizes dated occurrences once.
 - `app.book_direct_private_session(uuid)` atomically creates or recovers one confirmed booking and marks its occurrence booked.
 - `app.cancel_direct_private_booking(uuid)` allows the booking client or coach to cancel a future confirmed booking and reopen its occurrence.
 - `app.complete_direct_private_booking(uuid)` allows only the owning coach to complete an elapsed confirmed booking.

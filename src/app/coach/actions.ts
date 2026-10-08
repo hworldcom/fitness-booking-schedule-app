@@ -2,15 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import {
-  isCoachAvailabilityRuleId,
   isCoachAvailabilitySlotId,
   validateCoachAvailabilityInput,
-  validateCoachAvailabilityRuleInput,
+  validateCoachAvailabilityRuleSetInput,
 } from "@/domain/coaches";
 import {
-  createOwnedCoachAvailabilityRule,
   createOwnedCoachAvailability,
-  removeOwnedCoachAvailabilityRule,
+  replaceOwnedCoachAvailabilityRules,
   updateOwnedCoachAvailability,
   withdrawOwnedCoachAvailability,
 } from "@/server/coaches/service";
@@ -108,49 +106,31 @@ export async function mutateCoachAvailabilityAction(
   });
 }
 
-export async function mutateCoachAvailabilityRuleAction(
+export async function saveCoachAvailabilityRulesAction(
   _previousState: CoachAvailabilityActionState,
   formData: FormData,
 ): Promise<CoachAvailabilityActionState> {
-  const scheduleCell = formData.get("scheduleCell");
-  const scheduleCellParts =
-    typeof scheduleCell === "string" && scheduleCell.length <= 100
-      ? scheduleCell.split("|")
-      : [];
-  const [intent, isoWeekday, localStartTime, ruleId = ""] =
-    scheduleCellParts.length === 4 ? scheduleCellParts : [];
-  if (intent !== "create-rule" && intent !== "remove-rule") {
+  const selectedRules = validateCoachAvailabilityRuleSetInput(
+    formData.get("selectedRules"),
+  );
+  const expectedRules = validateCoachAvailabilityRuleSetInput(
+    formData.get("expectedRules"),
+  );
+  if (!selectedRules.valid || !expectedRules.valid) {
     return Object.freeze({
       status: "invalid",
-      message: "Choose a valid working-week action.",
-      errors: Object.freeze([]),
+      message: "Review the working-week selection.",
+      errors: Object.freeze([
+        ...(selectedRules.valid ? [] : selectedRules.errors),
+        ...(expectedRules.valid ? [] : expectedRules.errors),
+      ]),
     });
   }
 
-  let result;
-  if (intent === "remove-rule") {
-    if (!isCoachAvailabilityRuleId(ruleId)) {
-      return Object.freeze({
-        status: "invalid",
-        message: "That working-week slot is invalid.",
-        errors: Object.freeze([]),
-      });
-    }
-    result = await removeOwnedCoachAvailabilityRule(ruleId);
-  } else {
-    const validation = validateCoachAvailabilityRuleInput({
-      isoWeekday,
-      localStartTime,
-    });
-    if (!validation.valid) {
-      return Object.freeze({
-        status: "invalid",
-        message: "Review the working-week slot.",
-        errors: validation.errors,
-      });
-    }
-    result = await createOwnedCoachAvailabilityRule(validation.value);
-  }
+  const result = await replaceOwnedCoachAvailabilityRules(
+    selectedRules.value.rules,
+    expectedRules.value.rules,
+  );
 
   if (result.status !== "authorized") {
     return Object.freeze({
@@ -163,7 +143,7 @@ export async function mutateCoachAvailabilityRuleAction(
     return Object.freeze({
       status: "conflict",
       message:
-        "That weekly time conflicts with existing availability or changed in another session. Refresh and try again.",
+        "Your working week changed elsewhere or conflicts with existing availability. Refresh before trying again; your draft was not partially saved.",
       errors: Object.freeze([]),
     });
   }
@@ -173,9 +153,7 @@ export async function mutateCoachAvailabilityRuleAction(
   return Object.freeze({
     status: "saved",
     message:
-      intent === "create-rule"
-        ? "Added to your working week."
-        : "Removed from your working week. Future open times were updated; held or booked classes were preserved.",
+      "Schedule saved. Future open times were updated; held or booked classes were preserved.",
     errors: Object.freeze([]),
   });
 }

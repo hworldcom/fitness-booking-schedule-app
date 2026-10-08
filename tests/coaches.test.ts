@@ -7,6 +7,7 @@ import {
   normalizeCoachDirectoryFilters,
   validateCoachAvailabilityInput,
   validateCoachAvailabilityRuleInput,
+  validateCoachAvailabilityRuleSetInput,
   validateCoachProfileInput,
 } from "@/domain/coaches";
 
@@ -177,6 +178,43 @@ test("weekly coach availability accepts exact non-cross-midnight hours", () => {
     { isoWeekday: 1, localStartTime: "24:00" },
   ]) {
     assert.equal(validateCoachAvailabilityRuleInput(input).valid, false);
+  }
+});
+
+test("complete working-week payloads are bounded, unique and canonical", () => {
+  assert.deepEqual(
+    validateCoachAvailabilityRuleSetInput(
+      JSON.stringify(["7|22:00", "1|09:00", "1|08:00"]),
+    ),
+    {
+      valid: true,
+      value: {
+        keys: ["1|08:00", "1|09:00", "7|22:00"],
+        rules: [
+          { isoWeekday: 1, localStartTime: "08:00" },
+          { isoWeekday: 1, localStartTime: "09:00" },
+          { isoWeekday: 7, localStartTime: "22:00" },
+        ],
+      },
+    },
+  );
+
+  for (const payload of [
+    "not-json",
+    JSON.stringify({ rule: "1|09:00" }),
+    JSON.stringify(["1|09:00", "1|09:00"]),
+    JSON.stringify(["0|09:00"]),
+    JSON.stringify(["1|09:30"]),
+    JSON.stringify(["1|23:00"]),
+    JSON.stringify(
+      Array.from(
+        { length: 162 },
+        (_, index) =>
+          `${(index % 7) + 1}|${String(index % 23).padStart(2, "0")}:00`,
+      ),
+    ),
+  ]) {
+    assert.equal(validateCoachAvailabilityRuleSetInput(payload).valid, false);
   }
 });
 

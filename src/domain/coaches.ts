@@ -107,6 +107,16 @@ export type CoachAvailabilityRuleInputResult =
   | Readonly<{ valid: true; value: CoachAvailabilityRuleInput }>
   | Readonly<{ valid: false; errors: readonly string[] }>;
 
+export type CoachAvailabilityRuleSetInputResult =
+  | Readonly<{
+      valid: true;
+      value: Readonly<{
+        keys: readonly string[];
+        rules: readonly CoachAvailabilityRuleInput[];
+      }>;
+    }>
+  | Readonly<{ valid: false; errors: readonly string[] }>;
+
 export type CoachAvailabilityInput = Readonly<{
   localStart: string;
   durationMinutes: CoachAvailabilityDuration;
@@ -423,6 +433,87 @@ export function validateCoachAvailabilityRuleInput(input: {
     value: Object.freeze({
       isoWeekday: isoWeekday as CoachAvailabilityIsoWeekday,
       localStartTime,
+    }),
+  });
+}
+
+const MAX_COACH_AVAILABILITY_RULES = 7 * 23;
+const MAX_COACH_AVAILABILITY_RULE_SET_PAYLOAD_LENGTH = 4096;
+
+export function coachAvailabilityRuleKey(
+  rule: Pick<CoachAvailabilityRuleInput, "isoWeekday" | "localStartTime">,
+) {
+  return `${rule.isoWeekday}|${rule.localStartTime}`;
+}
+
+export function validateCoachAvailabilityRuleSetInput(
+  input: unknown,
+): CoachAvailabilityRuleSetInputResult {
+  if (
+    typeof input !== "string" ||
+    input.length > MAX_COACH_AVAILABILITY_RULE_SET_PAYLOAD_LENGTH
+  ) {
+    return Object.freeze({
+      valid: false,
+      errors: Object.freeze(["The working-week selection is invalid."]),
+    });
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(input);
+  } catch {
+    parsed = null;
+  }
+  if (!Array.isArray(parsed) || parsed.length > MAX_COACH_AVAILABILITY_RULES) {
+    return Object.freeze({
+      valid: false,
+      errors: Object.freeze(["The working-week selection is invalid."]),
+    });
+  }
+
+  const rules: CoachAvailabilityRuleInput[] = [];
+  const keys = new Set<string>();
+  for (const entry of parsed) {
+    const match =
+      typeof entry === "string"
+        ? /^([1-7])\|((?:[01]\d|2[0-2]):00)$/.exec(entry)
+        : null;
+    if (!match) {
+      return Object.freeze({
+        valid: false,
+        errors: Object.freeze(["The working-week selection is invalid."]),
+      });
+    }
+    const validation = validateCoachAvailabilityRuleInput({
+      isoWeekday: match[1],
+      localStartTime: match[2],
+    });
+    if (!validation.valid) return validation;
+    const key = coachAvailabilityRuleKey(validation.value);
+    if (keys.has(key)) {
+      return Object.freeze({
+        valid: false,
+        errors: Object.freeze([
+          "The working-week selection contains a duplicate hour.",
+        ]),
+      });
+    }
+    keys.add(key);
+    rules.push(validation.value);
+  }
+
+  rules.sort(
+    (left, right) =>
+      left.isoWeekday - right.isoWeekday ||
+      left.localStartTime.localeCompare(right.localStartTime),
+  );
+  const sortedKeys = rules.map(coachAvailabilityRuleKey);
+  return Object.freeze({
+    valid: true,
+    value: Object.freeze({
+      keys: Object.freeze(sortedKeys),
+      rules: Object.freeze(rules),
     }),
   });
 }

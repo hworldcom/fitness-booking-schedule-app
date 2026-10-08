@@ -4,6 +4,7 @@ import postgres from "postgres";
 import {
   localDateTimeValue,
   type CoachAvailabilityInput,
+  type CoachAvailabilityRuleInput,
   type CoachProfileInput,
 } from "@/domain/coaches";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
@@ -16,6 +17,7 @@ import {
   currentOwnedCoachAvailabilityRuleRecords,
   publicCoachAvailabilityRecords,
   removeOwnedCoachAvailabilityRuleRecord,
+  replaceOwnedCoachAvailabilityRuleRecords,
   updateOwnedCoachAvailabilityRecord,
   withdrawOwnedCoachAvailabilityRecord,
 } from "@/server/db/coaches/availability-repository";
@@ -686,6 +688,144 @@ test("weekly rules materialize once, preserve snapshots and remove only open occ
   );
   await withActorDatabaseContext(secondActor, (transaction) =>
     upsertOwnedCoachProfileRecord(transaction, secondProfile),
+  );
+});
+
+test("complete working-week saves are atomic and reject stale baselines", async () => {
+  const mondayMorning = recurringRuleInput(2, "09:00");
+  const mondayLateMorning = recurringRuleInput(2, "10:00");
+  const mondayMidday = recurringRuleInput(2, "11:00");
+  const firstDraft: readonly CoachAvailabilityRuleInput[] = Object.freeze([
+    mondayMorning,
+    mondayLateMorning,
+  ]);
+
+  assert.equal(
+    await withActorDatabaseContext(secondActor, (transaction) =>
+      replaceOwnedCoachAvailabilityRuleRecords(transaction, firstDraft, []),
+    ),
+    2,
+  );
+  const originalRules = await withActorDatabaseContext(
+    secondActor,
+    (transaction) =>
+      currentOwnedCoachAvailabilityRuleRecords(transaction, secondActor),
+  );
+  assert.deepEqual(
+    originalRules.map((rule) => rule.localStartTime),
+    ["09:00", "10:00"],
+  );
+  const originalSlots = await withActorDatabaseContext(
+    secondActor,
+    (transaction) =>
+      currentOwnedCoachAvailabilityRecords(transaction, secondActor),
+  );
+  const morningSlot = originalSlots.find(
+    (slot) =>
+      slot.recurrenceRuleId ===
+      originalRules.find((rule) => rule.localStartTime === "09:00")?.id,
+  );
+  const lateMorningSlot = originalSlots.find(
+    (slot) =>
+      slot.recurrenceRuleId ===
+      originalRules.find((rule) => rule.localStartTime === "10:00")?.id,
+  );
+  assert.ok(morningSlot);
+  assert.ok(lateMorningSlot);
+
+  assert.equal(
+    await withActorDatabaseContext(secondActor, (transaction) =>
+      replaceOwnedCoachAvailabilityRuleRecords(
+        transaction,
+        firstDraft,
+        firstDraft,
+      ),
+    ),
+    2,
+  );
+  assert.deepEqual(
+    (
+      await withActorDatabaseContext(secondActor, (transaction) =>
+        currentOwnedCoachAvailabilityRuleRecords(transaction, secondActor),
+      )
+    ).map((rule) => rule.id),
+    originalRules.map((rule) => rule.id),
+  );
+
+  await admin.begin(async (transaction) => {
+    await transaction`
+      select set_config('app.coach_booking_management', 'on', true)
+    `;
+    await transaction`
+      update app.coach_availability_slots
+      set status = 'booked'
+      where id = ${morningSlot.id}::uuid
+    `;
+  });
+
+  const replacementDraft: readonly CoachAvailabilityRuleInput[] = Object.freeze(
+    [mondayMidday],
+  );
+  assert.equal(
+    await withActorDatabaseContext(secondActor, (transaction) =>
+      replaceOwnedCoachAvailabilityRuleRecords(
+        transaction,
+        replacementDraft,
+        firstDraft,
+      ),
+    ),
+    1,
+  );
+  assert.deepEqual(
+    (
+      await withActorDatabaseContext(secondActor, (transaction) =>
+        currentOwnedCoachAvailabilityRuleRecords(transaction, secondActor),
+      )
+    ).map((rule) => rule.localStartTime),
+    ["11:00"],
+  );
+  const replacedSlotStates = await admin<{ id: string; status: string }[]>`
+    select id::text, status
+    from app.coach_availability_slots
+    where id in (${morningSlot.id}::uuid, ${lateMorningSlot.id}::uuid)
+    order by id
+  `;
+  assert.equal(
+    replacedSlotStates.find((slot) => slot.id === morningSlot.id)?.status,
+    "booked",
+  );
+  assert.equal(
+    replacedSlotStates.find((slot) => slot.id === lateMorningSlot.id)?.status,
+    "withdrawn",
+  );
+
+  assert.equal(
+    await withActorDatabaseContext(secondActor, (transaction) =>
+      replaceOwnedCoachAvailabilityRuleRecords(
+        transaction,
+        [mondayLateMorning],
+        firstDraft,
+      ),
+    ),
+    -1,
+  );
+  assert.deepEqual(
+    (
+      await withActorDatabaseContext(secondActor, (transaction) =>
+        currentOwnedCoachAvailabilityRuleRecords(transaction, secondActor),
+      )
+    ).map((rule) => rule.localStartTime),
+    ["11:00"],
+  );
+  assert.equal(
+    await withActorDatabaseContext(secondActor, (transaction) =>
+      replaceOwnedCoachAvailabilityRuleRecords(
+        transaction,
+        [],
+        replacementDraft,
+      ),
+    ),
+    0,
   );
 });
 

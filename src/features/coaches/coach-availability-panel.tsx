@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState, type ReactNode } from "react";
+import { useState, useTransition, type FormEvent, type ReactNode } from "react";
 import {
   CalendarDays,
   CalendarClock,
@@ -9,6 +9,7 @@ import {
   Clock3,
   Eye,
   MapPin,
+  Save,
   Settings2,
   UserRound,
 } from "lucide-react";
@@ -17,17 +18,18 @@ import {
   confirmedBookingForSlot,
   type PrivateBookingProjection,
 } from "@/domain/coach-bookings";
-import type {
-  CoachAvailabilityIsoWeekday,
-  CoachProjection,
-  OwnedCoachAvailabilityRule,
-  OwnedCoachAvailabilitySlot,
+import {
+  coachAvailabilityRuleKey,
+  type CoachAvailabilityIsoWeekday,
+  type CoachProjection,
+  type OwnedCoachAvailabilityRule,
+  type OwnedCoachAvailabilitySlot,
 } from "@/domain/coaches";
 
 const INITIAL_COACH_AVAILABILITY_ACTION_STATE: CoachAvailabilityActionState =
   Object.freeze({ status: "idle", message: "", errors: Object.freeze([]) });
 
-type CoachAvailabilityRuleAction = (
+type CoachAvailabilityRuleSetAction = (
   previousState: CoachAvailabilityActionState,
   formData: FormData,
 ) => Promise<CoachAvailabilityActionState>;
@@ -53,11 +55,15 @@ function endTime(localStartTime: string) {
   return `${String(Number(localStartTime.slice(0, 2)) + 1).padStart(2, "0")}:00`;
 }
 
-function ruleKey(
+function scheduleRuleKey(
   isoWeekday: CoachAvailabilityIsoWeekday,
   localStartTime: string,
 ) {
-  return `${isoWeekday}:${localStartTime}`;
+  return coachAvailabilityRuleKey({ isoWeekday, localStartTime });
+}
+
+function serializeRuleKeys(ruleKeys: ReadonlySet<string>) {
+  return JSON.stringify(Array.from(ruleKeys).sort());
 }
 
 function slotDateTime(slot: OwnedCoachAvailabilitySlot) {
@@ -100,37 +106,35 @@ function ActionResult({ state }: { state: CoachAvailabilityActionState }) {
 }
 
 function ScheduleCell({
-  isoWeekday,
   weekday,
   localStartTime,
-  rule,
+  selected,
   pending,
+  onToggle,
   gridColumn,
   gridRow,
 }: {
-  isoWeekday: CoachAvailabilityIsoWeekday;
   weekday: string;
   localStartTime: string;
-  rule: OwnedCoachAvailabilityRule | undefined;
+  selected: boolean;
   pending: boolean;
+  onToggle: () => void;
   gridColumn: number;
   gridRow: number;
 }) {
-  const selected = Boolean(rule);
   const interval = `${localStartTime}–${endTime(localStartTime)}`;
   const action = selected ? "Remove" : "Add";
 
   return (
     <button
-      type="submit"
-      name="scheduleCell"
-      value={`${selected ? "remove-rule" : "create-rule"}|${isoWeekday}|${localStartTime}|${rule?.id ?? ""}`}
+      type="button"
       className={`coach-week-cell${selected ? " selected" : ""}`}
       style={{ gridColumn, gridRow }}
       aria-pressed={selected}
       aria-label={`${action} ${weekday} ${interval}`}
       title={`${action} ${weekday} ${interval}`}
       disabled={pending}
+      onClick={onToggle}
     >
       {selected && <Check size={14} strokeWidth={3} aria-hidden="true" />}
       <span aria-hidden="true">{selected ? "Available" : "Add"}</span>
@@ -141,22 +145,65 @@ function ScheduleCell({
 function WorkingWeekEditor({
   coach,
   rules,
-  mutateRuleAction,
+  saveRuleSetAction,
 }: {
   coach: CoachProjection;
   rules: readonly OwnedCoachAvailabilityRule[];
-  mutateRuleAction: CoachAvailabilityRuleAction;
+  saveRuleSetAction: CoachAvailabilityRuleSetAction;
 }) {
-  const [state, formAction, pending] = useActionState(
-    mutateRuleAction,
-    INITIAL_COACH_AVAILABILITY_ACTION_STATE,
+  const initialRuleKeys = rules.map(coachAvailabilityRuleKey);
+  const [savedRuleKeys, setSavedRuleKeys] = useState(
+    () => new Set(initialRuleKeys),
   );
-  const rulesByCell = new Map(
-    rules.map((rule) => [ruleKey(rule.isoWeekday, rule.localStartTime), rule]),
+  const [draftRuleKeys, setDraftRuleKeys] = useState(
+    () => new Set(initialRuleKeys),
   );
+  const [state, setState] = useState(INITIAL_COACH_AVAILABILITY_ACTION_STATE);
+  const [pending, startTransition] = useTransition();
   const [mobileDay, setMobileDay] = useState<CoachAvailabilityIsoWeekday>(
     rules[0]?.isoWeekday ?? 1,
   );
+  const expectedRules = serializeRuleKeys(savedRuleKeys);
+  const selectedRules = serializeRuleKeys(draftRuleKeys);
+  const dirty = expectedRules !== selectedRules;
+
+  function toggleRule(ruleKey: string) {
+    setDraftRuleKeys((current) => {
+      const next = new Set(current);
+      if (next.has(ruleKey)) next.delete(ruleKey);
+      else next.add(ruleKey);
+      return next;
+    });
+    if (state.status === "saved") {
+      setState(INITIAL_COACH_AVAILABILITY_ACTION_STATE);
+    }
+  }
+
+  function saveSchedule(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!dirty || pending) return;
+    const formData = new FormData(event.currentTarget);
+    const savedDraft = new Set(draftRuleKeys);
+    setState(INITIAL_COACH_AVAILABILITY_ACTION_STATE);
+    startTransition(async () => {
+      try {
+        const nextState = await saveRuleSetAction(
+          INITIAL_COACH_AVAILABILITY_ACTION_STATE,
+          formData,
+        );
+        setState(nextState);
+        if (nextState.status === "saved") {
+          setSavedRuleKeys(savedDraft);
+        }
+      } catch {
+        setState({
+          status: "unavailable",
+          message: "MovX could not save that working week. Nothing changed.",
+          errors: Object.freeze([]),
+        });
+      }
+    });
+  }
 
   return (
     <section className="coach-working-week" aria-busy={pending}>
@@ -171,7 +218,9 @@ function WorkingWeekEditor({
           </p>
         </div>
         <span className="coach-slot-count">
-          {rules.length} selected hour{rules.length === 1 ? "" : "s"}
+          {draftRuleKeys.size} selected hour
+          {draftRuleKeys.size === 1 ? "" : "s"}
+          {dirty ? " · Unsaved" : ""}
         </span>
       </div>
 
@@ -194,8 +243,25 @@ function WorkingWeekEditor({
         </span>
       </div>
 
-      <form action={formAction}>
+      <form onSubmit={saveSchedule}>
         <ActionResult state={state} />
+        <input type="hidden" name="selectedRules" value={selectedRules} />
+        <input type="hidden" name="expectedRules" value={expectedRules} />
+        <div className="coach-week-save-bar">
+          <p role="status" aria-live="polite">
+            {dirty
+              ? "Your changes are only on this screen until you save."
+              : "Your displayed working week is saved."}
+          </p>
+          <button
+            type="submit"
+            className="button dark"
+            disabled={!dirty || pending}
+          >
+            <Save size={16} aria-hidden="true" />
+            {pending ? "Saving schedule…" : "Save schedule"}
+          </button>
+        </div>
         <label className="coach-week-mobile-picker">
           <span>Day</span>
           <select
@@ -207,8 +273,8 @@ function WorkingWeekEditor({
             }
           >
             {WEEKDAYS.map((day) => {
-              const selectedCount = rules.filter(
-                (rule) => rule.isoWeekday === day.isoWeekday,
+              const selectedCount = Array.from(draftRuleKeys).filter((key) =>
+                key.startsWith(`${day.isoWeekday}|`),
               ).length;
               return (
                 <option key={day.isoWeekday} value={day.isoWeekday}>
@@ -238,8 +304,8 @@ function WorkingWeekEditor({
             </div>
           ))}
           {WEEKDAYS.map((day, dayIndex) => {
-            const selectedCount = rules.filter(
-              (rule) => rule.isoWeekday === day.isoWeekday,
+            const selectedCount = Array.from(draftRuleKeys).filter((key) =>
+              key.startsWith(`${day.isoWeekday}|`),
             ).length;
             return (
               <section
@@ -264,13 +330,17 @@ function WorkingWeekEditor({
                         {`${localStartTime}–${endTime(localStartTime)}`}
                       </span>
                       <ScheduleCell
-                        isoWeekday={day.isoWeekday}
                         weekday={day.long}
                         localStartTime={localStartTime}
-                        rule={rulesByCell.get(
-                          ruleKey(day.isoWeekday, localStartTime),
+                        selected={draftRuleKeys.has(
+                          scheduleRuleKey(day.isoWeekday, localStartTime),
                         )}
                         pending={pending}
+                        onToggle={() =>
+                          toggleRule(
+                            scheduleRuleKey(day.isoWeekday, localStartTime),
+                          )
+                        }
                         gridColumn={dayIndex + 2}
                         gridRow={hourIndex + 2}
                       />
@@ -380,7 +450,7 @@ export function CoachAvailabilityPanel({
   bookings,
   clientCards,
   ownerDisplayName,
-  mutateRuleAction,
+  saveRuleSetAction,
 }: {
   coach: CoachProjection | null;
   rules: readonly OwnedCoachAvailabilityRule[];
@@ -388,7 +458,7 @@ export function CoachAvailabilityPanel({
   bookings: readonly PrivateBookingProjection[] | null;
   clientCards?: ReactNode;
   ownerDisplayName: string;
-  mutateRuleAction: CoachAvailabilityRuleAction;
+  saveRuleSetAction: CoachAvailabilityRuleSetAction;
 }) {
   return (
     <div className="coach-workspace">
@@ -458,7 +528,7 @@ export function CoachAvailabilityPanel({
           <WorkingWeekEditor
             coach={coach}
             rules={rules}
-            mutateRuleAction={mutateRuleAction}
+            saveRuleSetAction={saveRuleSetAction}
           />
           <UpcomingOccurrences slots={slots} bookings={bookings} />
         </>
