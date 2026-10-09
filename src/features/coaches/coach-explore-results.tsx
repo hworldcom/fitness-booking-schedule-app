@@ -2,47 +2,54 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { ArrowRight, BadgeCheck, MapPinned, MapPinOff } from "lucide-react";
 import { profileInitials } from "@/auth/profile-presentation";
 import type { CoachProjection } from "@/domain/coaches";
-import type { MapboxBrowserConfiguration } from "@/mapbox/provider";
 import { Avatar, Pill } from "@/components/ui";
 
-const LazyMapboxCoachMap = dynamic(
-  () => import("./mapbox-coach-map").then((module) => module.MapboxCoachMap),
+const LazyLocationResultsMap = dynamic(
+  () =>
+    import("@/location/components/location-results-map").then(
+      (module) => module.LocationResultsMap,
+    ),
   {
     ssr: false,
     loading: () => (
       <div className="coach-map-state" role="status">
         <MapPinned size={24} aria-hidden="true" />
         <strong>Loading the coach map…</strong>
-        <span>The coach list remains available while Mapbox starts.</span>
+        <span>
+          The coach list remains available while the public map starts.
+        </span>
       </div>
     ),
   },
 );
 
-function unavailableCopy(status: "missing" | "invalid" | "provider" | "ready") {
-  if (status === "missing") {
-    return "Mapbox is not configured yet. Add the restricted public token to enable the map.";
-  }
-  if (status === "invalid") {
-    return "The configured Mapbox value is not a valid public token.";
-  }
-  return "Mapbox could not load in this browser. The same coach results remain available in the list.";
-}
-
 export function CoachExploreResults({
   coaches,
-  mapboxConfiguration,
 }: {
   coaches: readonly CoachProjection[];
-  mapboxConfiguration: MapboxBrowserConfiguration;
 }) {
   const [selectedCoachId, setSelectedCoachId] = useState<string | null>(null);
   const [providerUnavailable, setProviderUnavailable] = useState(false);
   const cardRefs = useRef(new Map<string, HTMLElement>());
+  const mapPoints = useMemo(
+    () =>
+      coaches.map((coach) =>
+        Object.freeze({
+          id: coach.profileId,
+          name: coach.displayName,
+          label: coach.location.label,
+          latitude: coach.location.latitude,
+          longitude: coach.location.longitude,
+          initials: profileInitials(coach.displayName),
+          imageUrl: coach.portraitUrl,
+        }),
+      ),
+    [coaches],
+  );
 
   const selectFromMap = useCallback((profileId: string) => {
     setSelectedCoachId(profileId);
@@ -55,12 +62,7 @@ export function CoachExploreResults({
     [],
   );
 
-  const mapStatus =
-    mapboxConfiguration.status === "ready"
-      ? providerUnavailable
-        ? "provider"
-        : "ready"
-      : mapboxConfiguration.status;
+  const mapStatus = providerUnavailable ? "provider" : "ready";
 
   return (
     <section
@@ -155,12 +157,11 @@ export function CoachExploreResults({
               proof of availability.
             </p>
           </div>
-          {mapStatus === "ready" && mapboxConfiguration.status === "ready" ? (
-            <LazyMapboxCoachMap
-              accessToken={mapboxConfiguration.accessToken}
-              coaches={coaches}
-              selectedCoachId={selectedCoachId}
-              onSelectCoach={selectFromMap}
+          {mapStatus === "ready" ? (
+            <LazyLocationResultsMap
+              points={mapPoints}
+              selectedPointId={selectedCoachId}
+              onSelectPoint={selectFromMap}
               onUnavailable={markProviderUnavailable}
             />
           ) : (
@@ -171,7 +172,10 @@ export function CoachExploreResults({
             >
               <MapPinOff size={25} aria-hidden="true" />
               <strong>Map unavailable</strong>
-              <span>{unavailableCopy(mapStatus)}</span>
+              <span>
+                The public map could not load in this browser. The same coach
+                results remain available in the list.
+              </span>
               <small>Use the accessible coach list to continue.</small>
             </div>
           )}

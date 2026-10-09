@@ -17,6 +17,7 @@
 /build/
 /.vercel/
 /storybook-static/
+/public/vendor/maplibre-gl-worker.mjs
 
 # Tests and coverage
 /coverage/

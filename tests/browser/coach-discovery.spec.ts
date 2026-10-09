@@ -26,7 +26,7 @@ test("guest browses and filters the persistent coach directory", async ({
   const unavailableState = page.getByText("Map unavailable", { exact: true });
   await expect(mapCanvas.or(unavailableState)).toBeVisible({ timeout: 30_000 });
   if (await mapCanvas.isVisible()) {
-    const markers = page.locator("button.coach-map-marker");
+    const markers = page.locator("button.location-map-marker");
     await expect(markers).toHaveCount(5);
     const danielMarker = page.getByRole("button", {
       name: /Select Daniel Park at/,
@@ -44,12 +44,12 @@ test("guest browses and filters the persistent coach directory", async ({
       image.dispatchEvent(new Event("error"));
     });
     await expect(danielMarker.locator("img")).toHaveCount(0);
-    await expect(danielMarker.locator(".coach-map-marker-initials")).toHaveText(
-      "DP",
-    );
-    await expect(page.locator(".mapboxgl-ctrl-attrib")).toBeVisible();
+    await expect(
+      danielMarker.locator(".location-map-marker-initials"),
+    ).toHaveText("DP");
+    await expect(page.locator(".maplibregl-ctrl-attrib")).toBeVisible();
   } else {
-    await expect(page.getByText(/Mapbox is not configured yet/)).toBeVisible();
+    await expect(page.getByText(/public map could not load/)).toBeVisible();
   }
 
   const discipline = page.getByLabel("Discipline");

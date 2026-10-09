@@ -19,7 +19,7 @@ const validEnvironment: NodeJS.ProcessEnv = {
   NEXT_PUBLIC_SUPABASE_URL: "https://projectref.supabase.co",
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test-only",
   NEXT_PUBLIC_SITE_URL: "https://movx-preview.example",
-  NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN: "pk.test-header.test-signature",
+  NEXT_PUBLIC_GEOAPIFY_API_KEY: "geoapify_test_key_1234567890",
 };
 
 function run(environment: NodeJS.ProcessEnv) {
@@ -37,7 +37,7 @@ test("Vercel validation accepts configuration-free public preview mode", () => {
     encoding: "utf8",
   });
   assert.match(output, /preview Vercel build in public-preview mode/);
-  assert.match(output, /Mapbox disabled/);
+  assert.match(output, /OpenFreeMap enabled; Geoapify search disabled/);
 });
 
 test("Vercel validation accepts complete scheduling configuration without leaking values", () => {
@@ -47,10 +47,10 @@ test("Vercel validation accepts complete scheduling configuration without leakin
     encoding: "utf8",
   });
   assert.match(output, /preview Vercel build in hosted-runtime mode/);
-  assert.match(output, /Mapbox configured/);
+  assert.match(output, /OpenFreeMap enabled; Geoapify search configured/);
   assert.doesNotMatch(
     output,
-    /test-only|projectref|movx-preview|pk\.test-header/,
+    /test-only|projectref|movx-preview|geoapify_test_key/,
   );
 });
 
@@ -86,20 +86,20 @@ test("Vercel validation rejects loopback and non-pooler databases", () => {
   assert.match(directResult.stderr, /transaction pooler on port 6543/);
 });
 
-test("Vercel validation rejects insecure hosted origins and secret Mapbox tokens", () => {
+test("Vercel validation rejects insecure origins and malformed Geoapify keys", () => {
   const insecureResult = run({
     ...validEnvironment,
     NEXT_PUBLIC_SITE_URL: "http://movx-preview.example",
   });
-  const mapboxResult = run({
+  const geoapifyResult = run({
     ...validEnvironment,
-    NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN: "sk.do-not-print.secret",
+    NEXT_PUBLIC_GEOAPIFY_API_KEY: "do-not-print!",
   });
   assert.notEqual(insecureResult.status, 0);
   assert.match(insecureResult.stderr, /exact root HTTPS origin/);
-  assert.notEqual(mapboxResult.status, 0);
-  assert.match(mapboxResult.stderr, /public Mapbox pk token/);
-  assert.doesNotMatch(mapboxResult.stderr, /sk\.do-not-print/);
+  assert.notEqual(geoapifyResult.status, 0);
+  assert.match(geoapifyResult.stderr, /valid public Geoapify API key/);
+  assert.doesNotMatch(geoapifyResult.stderr, /do-not-print/);
 });
 
 test("Vercel configuration selects the guarded native Next.js build", () => {

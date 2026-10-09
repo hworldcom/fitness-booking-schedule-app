@@ -9,7 +9,7 @@ import type {
   CoachProjection,
 } from "@/domain/coaches";
 import { COACH_DISCIPLINES } from "@/domain/coaches";
-import type { MapboxBrowserConfiguration } from "@/mapbox/provider";
+import type { LocationSearchConfiguration } from "@/location";
 import {
   type CoachProfileActionState,
   updateCoachProfileAction,
@@ -28,13 +28,13 @@ export function CoachProfileEditor({
   gyms,
   ownerDisplayName,
   coachAccess,
-  mapboxConfiguration,
+  locationSearchConfiguration,
 }: {
   coach: CoachProjection | null;
   gyms: readonly CoachGymOption[];
   ownerDisplayName: string;
   coachAccess: CoachAccessProjection;
-  mapboxConfiguration: MapboxBrowserConfiguration;
+  locationSearchConfiguration: LocationSearchConfiguration;
 }) {
   const [state, formAction, pending] = useActionState(
     updateCoachProfileAction,
@@ -202,7 +202,7 @@ export function CoachProfileEditor({
                 initialLocation={
                   coach?.location.kind === "independent" ? coach.location : null
                 }
-                mapboxConfiguration={mapboxConfiguration}
+                searchConfiguration={locationSearchConfiguration}
               />
             </>
           )}
@@ -318,10 +318,10 @@ export function CoachProfileEditor({
         </div>
       </form>
 
-      <div className="coach-mapbox-followup">
+      <div className="coach-location-followup">
         <MapPin size={19} aria-hidden="true" />
         <p>
-          Mapbox assists selection only. MovX stores the provider-neutral
+          Place search assists selection only. MovX stores the provider-neutral
           location you explicitly confirm, never device or live location.
         </p>
       </div>

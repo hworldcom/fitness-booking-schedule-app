@@ -1,17 +1,16 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import mapboxgl from "mapbox-gl";
-import { MAPBOX_STYLE } from "@/mapbox/provider";
+import * as maplibregl from "maplibre-gl";
+import { MAPLIBRE_WORKER_URL } from "../providers/maplibre";
+import { OPENFREEMAP_STYLE_URL } from "../providers/openfreemap";
 
-export function MapboxLocationPickerMap({
-  accessToken,
+export function LocationPickerMap({
   latitude,
   longitude,
   onMove,
   onUnavailable,
 }: {
-  accessToken: string;
   latitude: number;
   longitude: number;
   onMove: (
@@ -20,8 +19,8 @@ export function MapboxLocationPickerMap({
   onUnavailable: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const markerRef = useRef<mapboxgl.Marker | null>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const markerRef = useRef<maplibregl.Marker | null>(null);
   const initialPositionRef = useRef(Object.freeze({ latitude, longitude }));
   const onMoveRef = useRef(onMove);
   const onUnavailableRef = useRef(onUnavailable);
@@ -38,22 +37,22 @@ export function MapboxLocationPickerMap({
     let active = true;
     const initialPosition = initialPositionRef.current;
     try {
-      const map = new mapboxgl.Map({
-        accessToken,
+      maplibregl.setWorkerUrl(MAPLIBRE_WORKER_URL);
+      const map = new maplibregl.Map({
         container: containerRef.current,
-        style: MAPBOX_STYLE,
+        style: OPENFREEMAP_STYLE_URL,
         center: [initialPosition.longitude, initialPosition.latitude],
         zoom: 14,
-        attributionControl: true,
+        attributionControl: { compact: false },
         cooperativeGestures: true,
       });
-      const marker = new mapboxgl.Marker({ draggable: true })
+      const marker = new maplibregl.Marker({ draggable: true })
         .setLngLat([initialPosition.longitude, initialPosition.latitude])
         .addTo(map);
       mapRef.current = map;
       markerRef.current = marker;
       map.addControl(
-        new mapboxgl.NavigationControl({ showCompass: false }),
+        new maplibregl.NavigationControl({ showCompass: false }),
         "top-right",
       );
       map
@@ -83,7 +82,7 @@ export function MapboxLocationPickerMap({
     } catch {
       onUnavailableRef.current();
     }
-  }, [accessToken]);
+  }, []);
 
   useEffect(() => {
     markerRef.current?.setLngLat([longitude, latitude]);

@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   CheckCircle2,
+  Dumbbell,
   LocateFixed,
   MapPin,
   MapPinOff,
@@ -11,17 +12,20 @@ import {
 } from "lucide-react";
 import type { CoachProjection } from "@/domain/coaches";
 import {
-  MAPBOX_PROVIDER,
-  MapboxSearchError,
-  searchPermanentMapboxLocations,
-  type MapboxBrowserConfiguration,
-  type MapboxGeocodingCandidate,
-} from "@/mapbox/provider";
+  LocationSearchError,
+  isPersistedLocationProvider,
+  locationProviderLabel,
+  searchLocations,
+  type LocationCandidate,
+  type LocationSearchConfiguration,
+  type PersistedLocationProvider,
+} from "@/location";
+import { LocationSearchAttribution } from "@/location/components/location-search-attribution";
 
-const LazyMapboxLocationPickerMap = dynamic(
+const LazyLocationPickerMap = dynamic(
   () =>
-    import("./mapbox-location-picker-map").then(
-      (module) => module.MapboxLocationPickerMap,
+    import("@/location/components/location-picker-map").then(
+      (module) => module.LocationPickerMap,
     ),
   {
     ssr: false,
@@ -38,59 +42,60 @@ type LocationDraft = Readonly<{
   latitude: number;
   longitude: number;
   source: "manual" | "permanent-geocoding";
-  provider: typeof MAPBOX_PROVIDER | null;
+  provider: PersistedLocationProvider | null;
 }>;
 
 function initialDraft(
   location: CoachProjection["location"] | null,
 ): LocationDraft | null {
   if (!location) return null;
+  const provider = isPersistedLocationProvider(location.provider)
+    ? location.provider
+    : null;
+  const providerResult =
+    location.source === "permanent-geocoding" && provider !== null;
   return Object.freeze({
     label: location.label,
     latitude: location.latitude,
     longitude: location.longitude,
-    source:
-      location.source === "permanent-geocoding"
-        ? "permanent-geocoding"
-        : "manual",
-    provider:
-      location.source === "permanent-geocoding" ? MAPBOX_PROVIDER : null,
+    source: providerResult ? "permanent-geocoding" : "manual",
+    provider: providerResult ? provider : null,
   });
 }
 
 function searchFailureMessage(error: unknown) {
-  if (!(error instanceof MapboxSearchError)) {
+  if (!(error instanceof LocationSearchError)) {
     return "Location search could not be completed. Try again.";
   }
   if (error.reason === "configuration") {
-    return "The public Mapbox token was rejected or is not allowed for this origin.";
+    return "The public place-search key was rejected or is not allowed for this origin.";
   }
   if (error.reason === "quota") {
-    return "Mapbox search has reached its current request limit. Try again later or use manual coordinates.";
+    return "Place search has reached its current request limit. Try again later or use manual coordinates.";
   }
-  return "Mapbox location search is temporarily unavailable. Try again or use manual coordinates.";
+  return "Place search is temporarily unavailable. Try again or use manual coordinates.";
 }
 
 export function CoachLocationPicker({
   initialLocation,
-  mapboxConfiguration,
+  searchConfiguration,
 }: {
   initialLocation: CoachProjection["location"] | null;
-  mapboxConfiguration: MapboxBrowserConfiguration;
+  searchConfiguration: LocationSearchConfiguration;
 }) {
   const existing = initialDraft(initialLocation);
-  const startsWithMapbox =
-    mapboxConfiguration.status === "ready" &&
+  const startsWithSearch =
+    searchConfiguration.status === "ready" &&
     (!existing || existing.source === "permanent-geocoding");
-  const [entryMode, setEntryMode] = useState<"mapbox" | "manual">(
-    startsWithMapbox ? "mapbox" : "manual",
+  const [entryMode, setEntryMode] = useState<"search" | "manual">(
+    startsWithSearch ? "search" : "manual",
   );
   const [draft, setDraft] = useState<LocationDraft | null>(existing);
   const [confirmed, setConfirmed] = useState(Boolean(existing));
   const [query, setQuery] = useState(existing?.label ?? "");
-  const [candidates, setCandidates] = useState<
-    readonly MapboxGeocodingCandidate[]
-  >(Object.freeze([]));
+  const [candidates, setCandidates] = useState<readonly LocationCandidate[]>(
+    Object.freeze([]),
+  );
   const [searchStatus, setSearchStatus] = useState<
     "idle" | "searching" | "empty" | "error"
   >("idle");
@@ -119,9 +124,9 @@ export function CoachLocationPicker({
     );
   };
 
-  const chooseMapbox = () => {
-    if (mapboxConfiguration.status !== "ready") return;
-    setEntryMode("mapbox");
+  const chooseSearch = () => {
+    if (searchConfiguration.status !== "ready") return;
+    setEntryMode("search");
     setConfirmed(false);
     setDraft((current) =>
       current?.source === "permanent-geocoding" ? current : null,
@@ -129,7 +134,7 @@ export function CoachLocationPicker({
   };
 
   const runSearch = useCallback(async () => {
-    if (mapboxConfiguration.status !== "ready") return;
+    if (searchConfiguration.status !== "ready") return;
     if (query.trim().length < 3) {
       setSearchStatus("error");
       setSearchMessage("Enter at least three characters before searching.");
@@ -141,9 +146,9 @@ export function CoachLocationPicker({
     setSearchStatus("searching");
     setSearchMessage("");
     try {
-      const nextCandidates = await searchPermanentMapboxLocations(
+      const nextCandidates = await searchLocations(
         query,
-        mapboxConfiguration.accessToken,
+        searchConfiguration.apiKey,
         request.signal,
       );
       if (request.signal.aborted) return;
@@ -151,7 +156,7 @@ export function CoachLocationPicker({
       setSearchStatus(nextCandidates.length === 0 ? "empty" : "idle");
       setSearchMessage(
         nextCandidates.length === 0
-          ? "No storage-permitted location matched that search. Refine the query or use manual coordinates."
+          ? "No gym or public place matched that search. Refine the query or use manual coordinates."
           : "",
       );
     } catch (error) {
@@ -160,16 +165,16 @@ export function CoachLocationPicker({
       setSearchStatus("error");
       setSearchMessage(searchFailureMessage(error));
     }
-  }, [mapboxConfiguration, query]);
+  }, [query, searchConfiguration]);
 
-  const chooseCandidate = (candidate: MapboxGeocodingCandidate) => {
+  const chooseCandidate = (candidate: LocationCandidate) => {
     setDraft(
       Object.freeze({
         label: candidate.label,
         latitude: candidate.latitude,
         longitude: candidate.longitude,
         source: "permanent-geocoding",
-        provider: MAPBOX_PROVIDER,
+        provider: candidate.provider,
       }),
     );
     setConfirmed(false);
@@ -210,7 +215,7 @@ export function CoachLocationPicker({
 
   return (
     <div className="coach-independent-location">
-      {mapboxConfiguration.status === "ready" ? (
+      {searchConfiguration.status === "ready" ? (
         <div
           className="coach-location-entry-mode"
           role="group"
@@ -218,11 +223,11 @@ export function CoachLocationPicker({
         >
           <button
             type="button"
-            className={entryMode === "mapbox" ? "active" : ""}
-            aria-pressed={entryMode === "mapbox"}
-            onClick={chooseMapbox}
+            className={entryMode === "search" ? "active" : ""}
+            aria-pressed={entryMode === "search"}
+            onClick={chooseSearch}
           >
-            <Search size={15} aria-hidden="true" /> Mapbox search
+            <Search size={15} aria-hidden="true" /> Gym and place search
           </button>
           <button
             type="button"
@@ -237,20 +242,20 @@ export function CoachLocationPicker({
         <div
           className="coach-location-provider-note"
           role="status"
-          data-mapbox-configuration={mapboxConfiguration.status}
+          data-location-search-configuration={searchConfiguration.status}
         >
           <MapPinOff size={18} aria-hidden="true" />
           <span>
-            Mapbox search is not configured. Manual coordinates remain available
-            and are stored without a provider claim.
+            Gym and place search is not configured. Manual coordinates remain
+            available and are stored without a provider claim.
           </span>
         </div>
       )}
 
-      {entryMode === "mapbox" && mapboxConfiguration.status === "ready" ? (
+      {entryMode === "search" && searchConfiguration.status === "ready" ? (
         <div className="coach-location-search">
           <label className="coach-field coach-field-wide">
-            <span>Search for a public address or area</span>
+            <span>Search for a gym, dojo, sports club or public place</span>
             <div className="coach-location-search-row">
               <input
                 value={query}
@@ -261,7 +266,7 @@ export function CoachLocationPicker({
                   void runSearch();
                 }}
                 maxLength={160}
-                placeholder="For example: Tempelhofer Damm 104, Berlin"
+                placeholder="For example: Groundline MMA or Tempelhofer Damm 104"
                 autoComplete="street-address"
               />
               <button
@@ -275,8 +280,11 @@ export function CoachLocationPicker({
               </button>
             </div>
             <small>
-              Search runs only when requested and asks Mapbox Geocoding v6 for
-              permanent, non-autocomplete results eligible for storage.
+              Search runs only when requested and checks both named fitness
+              facilities and general places around Berlin.
+            </small>
+            <small>
+              <LocationSearchAttribution />
             </small>
           </label>
 
@@ -306,10 +314,18 @@ export function CoachLocationPicker({
                   }
                   onClick={() => chooseCandidate(candidate)}
                 >
-                  <MapPin size={16} aria-hidden="true" />
+                  {candidate.kind === "gym" ? (
+                    <Dumbbell size={16} aria-hidden="true" />
+                  ) : (
+                    <MapPin size={16} aria-hidden="true" />
+                  )}
                   <span>
                     <strong>{candidate.label}</strong>
                     <small>
+                      {candidate.kind === "gym"
+                        ? "Gym or sports facility"
+                        : "Address or public place"}
+                      {" · "}
                       {candidate.latitude.toFixed(6)},{" "}
                       {candidate.longitude.toFixed(6)}
                     </small>
@@ -319,19 +335,18 @@ export function CoachLocationPicker({
             </div>
           )}
 
-          {draft?.source === "permanent-geocoding" && (
+          {draft?.source === "permanent-geocoding" && draft.provider && (
             <div className="coach-location-confirmation">
               <div className="coach-location-confirmation-copy">
                 <span>Selected public location</span>
                 <strong>{draft.label}</strong>
                 <small>
                   {draft.latitude.toFixed(6)}, {draft.longitude.toFixed(6)} ·
-                  permanent Mapbox geocoding
+                  stored {locationProviderLabel(draft.provider)} result
                 </small>
               </div>
               {!mapUnavailable ? (
-                <LazyMapboxLocationPickerMap
-                  accessToken={mapboxConfiguration.accessToken}
+                <LazyLocationPickerMap
                   latitude={draft.latitude}
                   longitude={draft.longitude}
                   onMove={({ latitude, longitude }) => {
@@ -346,7 +361,7 @@ export function CoachLocationPicker({
                   role="status"
                 >
                   The interactive pin could not load. You may keep the selected
-                  permanent result or switch to manual coordinates.
+                  result or switch to manual coordinates.
                 </div>
               )}
               <p>
@@ -413,7 +428,7 @@ export function CoachLocationPicker({
         name="locationSource"
         value={
           draft?.source ??
-          (entryMode === "mapbox" ? "permanent-geocoding" : "manual")
+          (entryMode === "search" ? "permanent-geocoding" : "manual")
         }
       />
       <input

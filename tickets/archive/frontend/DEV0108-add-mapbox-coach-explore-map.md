@@ -1,11 +1,11 @@
 # Ticket DEV0108: Add the Mapbox coach Explore map
 
-- Status: In progress
+- Status: Cancelled
 - Created: 2026-10-03
-- Last updated: 2026-10-08
+- Last updated: 2026-10-09
 - Milestone: Coach-first M1 location discovery
 - Coordination: None — independent development ticket
-- Related records: transferred from cancelled [COR0009 — Coach-first private-class booking MVP](../../archive/organisatory/COR0009-coach-first-training-package-mvp.md) because coach/location discovery remains reusable; depends on provider-neutral coach-location persistence and optional gym affiliation from [DEV0096 — Persist coach profiles and discovery](../../archive/backend/DEV0096-persist-coach-profiles-and-discovery.md), backed by the simplified fictional gyms from [DEV0109 — Retire membership schema and preserve gyms](../../archive/backend/DEV0109-retire-membership-schema-and-preserve-gyms.md); consumes stable slot-location projections from [DEV0104 — Publish weekly coach availability](../../archive/backend/DEV0104-publish-weekly-coach-availability.md); contract adopted by [DEV0107 — Adopt the Mapbox coach-discovery contract](../../archive/organisatory/DEV0107-adopt-mapbox-coach-discovery-contract.md); consumes optional public coach portraits delivered by [DEV0156 — Upload and present profile images](../../archive/frontend/DEV0156-upload-and-present-profile-images.md) and the shared fallback behavior completed by [DEV0168 — Detect profile images in account icons](../../archive/frontend/DEV0168-detect-profile-images-in-account-icons.md)
+- Related records: replaced on 2026-10-09 by [DEV0174 — Decouple location services](DEV0174-decouple-location-services.md); transferred from cancelled [COR0009 — Coach-first private-class booking MVP](../../archive/organisatory/COR0009-coach-first-training-package-mvp.md) because coach/location discovery remains reusable; depends on provider-neutral coach-location persistence and optional gym affiliation from [DEV0096 — Persist coach profiles and discovery](../../archive/backend/DEV0096-persist-coach-profiles-and-discovery.md), backed by the simplified fictional gyms from [DEV0109 — Retire membership schema and preserve gyms](../../archive/backend/DEV0109-retire-membership-schema-and-preserve-gyms.md); consumes stable slot-location projections from [DEV0104 — Publish weekly coach availability](../../archive/backend/DEV0104-publish-weekly-coach-availability.md); contract adopted by [DEV0107 — Adopt the Mapbox coach-discovery contract](../../archive/organisatory/DEV0107-adopt-mapbox-coach-discovery-contract.md); consumes optional public coach portraits delivered by [DEV0156 — Upload and present profile images](../../archive/frontend/DEV0156-upload-and-present-profile-images.md) and the shared fallback behavior completed by [DEV0168 — Detect profile images in account icons](../../archive/frontend/DEV0168-detect-profile-images-in-account-icons.md)
 
 ## Objective and context
 
@@ -138,9 +138,13 @@ Provider terms, pricing, browser rendering support and token misuse can change. 
 
 The Explore map now has local live-provider evidence, but the configured location picker and operational controls do not. Before completion, verify the account may store permanent Geocoding results, prove approved-origin restrictions, exercise the remaining configured map/picker and failure interactions in staging, and inspect Mapbox usage/alerts. Use the active Vercel deployment contract rather than restoring the retired adapter path.
 
+## Cancellation
+
+Cancelled on 2026-10-09 after the default public Mapbox token reached its account usage limit and the remaining permanent-geocoding/billing requirements no longer fit the selected deployment path. The already-committed implementation and evidence above remain historical. DEV0174 replaced the runtime with a provider-neutral MapLibre/OpenFreeMap renderer and optional Geoapify search, retained legacy `mapbox` stored snapshots and completed the replacement validation; no unfinished DEV0108 acceptance criterion is claimed as completed here.
+
 ## Completion and review references
 
-- Completed: Not completed.
+- Completed: Cancelled on 2026-10-09; replaced by DEV0174.
 - Commit: Planning commit — `[DEV0107][DEV0108] Adopt Mapbox coach discovery`; runtime implementation — this commit, `[DEV0108] Add Mapbox coach discovery`.
 - Review: Local self-review against the ticket; no independent review.
 - Deployment or release: None.

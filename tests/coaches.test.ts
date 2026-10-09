@@ -76,7 +76,7 @@ test("coach profile validation separates gym and independent locations", () => {
   }
 });
 
-test("permanent coach locations accept only explicitly confirmed Mapbox results", () => {
+test("permanent coach locations accept current and legacy confirmed providers", () => {
   const input = {
     displayName: "Coach Morgan",
     bio: "Private wrestling sessions centered on position, balance and repeatable technical progress.",
@@ -88,10 +88,14 @@ test("permanent coach locations accept only explicitly confirmed Mapbox results"
     latitude: "52.473086",
     longitude: "13.403665",
     locationSource: "permanent-geocoding",
-    locationProvider: "mapbox",
+    locationProvider: "geoapify",
     locationConfirmation: "confirmed",
   };
   assert.equal(validateCoachProfileInput(input).valid, true);
+  assert.equal(
+    validateCoachProfileInput({ ...input, locationProvider: "mapbox" }).valid,
+    true,
+  );
   assert.equal(
     validateCoachProfileInput({ ...input, locationProvider: "search-box" })
       .valid,

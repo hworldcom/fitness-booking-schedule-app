@@ -116,12 +116,20 @@ function validateCoreEnvironment() {
   return "hosted-runtime";
 }
 
-function validateMapboxEnvironment() {
-  const token = value("NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN");
-  if (token && !/^pk\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)) {
-    fail("NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN must be a public Mapbox pk token.");
+function validateGeoapifyEnvironment() {
+  const apiKey = value("NEXT_PUBLIC_GEOAPIFY_API_KEY");
+  if (
+    apiKey &&
+    (apiKey.length < 20 ||
+      apiKey.length > 200 ||
+      !/^[A-Za-z0-9_-]+$/.test(apiKey) ||
+      /^(?:your|replace|placeholder)/i.test(apiKey))
+  ) {
+    fail(
+      "NEXT_PUBLIC_GEOAPIFY_API_KEY must be a valid public Geoapify API key.",
+    );
   }
-  return Boolean(token);
+  return Boolean(apiKey);
 }
 
 function main() {
@@ -134,9 +142,9 @@ function main() {
     fail("VERCEL_ENV must be production, preview or development when set.");
   }
   const runtimeMode = validateCoreEnvironment();
-  const mapboxEnabled = validateMapboxEnvironment();
+  const geoapifyEnabled = validateGeoapifyEnvironment();
   console.log(
-    `Validated ${vercelEnvironment} Vercel build in ${runtimeMode} mode (Mapbox ${mapboxEnabled ? "configured" : "disabled"}) without printing environment values.`,
+    `Validated ${vercelEnvironment} Vercel build in ${runtimeMode} mode (OpenFreeMap enabled; Geoapify search ${geoapifyEnabled ? "configured" : "disabled"}) without printing environment values.`,
   );
 }
 

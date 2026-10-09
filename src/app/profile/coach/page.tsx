@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { CoachProfileEditor } from "@/features/coaches/coach-profile-editor";
 import { CoachApplicationGate } from "@/features/coaches/coach-application-gate";
 import { signInHref } from "@/auth/return-to";
-import { resolveMapboxBrowserConfiguration } from "@/mapbox/provider";
+import { resolveLocationSearchConfiguration } from "@/location";
 import { currentCoachEditor } from "@/server/coaches/service";
 
 export const metadata: Metadata = { title: "Your coach profile" };
@@ -64,8 +64,8 @@ export default async function Page() {
       gyms={state.gyms}
       ownerDisplayName={state.ownerDisplayName}
       coachAccess={state.coachAccess}
-      mapboxConfiguration={resolveMapboxBrowserConfiguration(
-        process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN,
+      locationSearchConfiguration={resolveLocationSearchConfiguration(
+        process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY,
       )}
     />
   );

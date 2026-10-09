@@ -16,16 +16,9 @@ import {
   type CoachDirectoryState,
   type PublicCoachProfileState,
 } from "@/domain/coaches";
-import type { MapboxBrowserConfiguration } from "@/mapbox/provider";
 import { CoachExploreResults } from "./coach-explore-results";
 
-export function CoachDirectory({
-  state,
-  mapboxConfiguration,
-}: {
-  state: CoachDirectoryState;
-  mapboxConfiguration: MapboxBrowserConfiguration;
-}) {
+export function CoachDirectory({ state }: { state: CoachDirectoryState }) {
   return (
     <div className="coach-discovery">
       <header className="coach-directory-hero">
@@ -73,10 +66,7 @@ export function CoachDirectory({
           </Link>
         </section>
       ) : (
-        <CoachExploreResults
-          coaches={state.coaches}
-          mapboxConfiguration={mapboxConfiguration}
-        />
+        <CoachExploreResults coaches={state.coaches} />
       )}
     </div>
   );

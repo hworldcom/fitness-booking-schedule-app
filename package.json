@@ -6,9 +6,14 @@
     "node": ">=24.21.0 <25"
   },
   "scripts": {
+    "prepare:map": "node scripts/prepare-maplibre-worker.mjs",
+    "predev:local": "npm run prepare:map",
     "dev:local": "tsx scripts/start-local-development.ts",
+    "predev": "npm run prepare:map",
     "dev": "next dev --hostname localhost --port 3100",
+    "prebuild": "npm run prepare:map",
     "build": "next build",
+    "prebuild:vercel": "npm run prepare:map",
     "build:vercel": "node scripts/validate-vercel-environment.mjs && next build",
     "start": "next start --hostname localhost --port 3100",
     "lint": "eslint .",
@@ -41,7 +46,7 @@
     "@supabase/supabase-js": "2.116.0",
     "drizzle-orm": "0.45.2",
     "lucide-react": "1.47.0",
-    "mapbox-gl": "3.32.0",
+    "maplibre-gl": "6.13.0",
     "next": "16.3.8",
     "postgres": "3.4.9",
     "react": "19.3.0",

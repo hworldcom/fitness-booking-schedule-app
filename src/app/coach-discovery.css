@@ -350,7 +350,7 @@
   line-height: 1.6;
 }
 
-.coach-map-marker {
+.location-map-marker {
   position: relative;
   display: grid;
   overflow: hidden;
@@ -370,7 +370,7 @@
     background 160ms ease;
 }
 
-.coach-map-marker-image {
+.location-map-marker-image {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -378,16 +378,16 @@
   object-fit: cover;
 }
 
-.coach-map-marker.has-portrait .coach-map-marker-initials {
+.location-map-marker.has-portrait .location-map-marker-initials {
   visibility: hidden;
 }
 
-.coach-map-marker.selected {
+.location-map-marker.selected {
   background: #789f48;
   scale: 1.18;
 }
 
-.coach-map-marker:focus-visible {
+.location-map-marker:focus-visible {
   outline: 4px solid rgb(200 239 142 / 80%);
   outline-offset: 3px;
 }
@@ -1499,7 +1499,7 @@
   text-underline-offset: 3px;
 }
 
-.coach-mapbox-followup {
+.coach-location-followup {
   display: flex;
   align-items: flex-start;
   gap: 10px;

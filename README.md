@@ -27,7 +27,7 @@ Delivered reusable foundations include:
 - email-code accounts, protected profiles and separate client/coach onboarding;
 - platform-reviewed coach applications with verified or demo trust labels;
 - owner-scoped coach profiles with one public provider-neutral location;
-- list-first coach discovery with optional Mapbox enhancement;
+- list-first coach discovery with an OpenFreeMap-backed interactive map;
 - recurring one-hour availability, deterministic dated occurrences and a responsive coach calendar.
 
 Direct scheduling-only booking and runtime cleanup were delivered under COR0011. The former membership, wallet, payment, group-event and social features are not current product surfaces.
@@ -53,7 +53,7 @@ npm run dev:local
 
 Captured local sign-in emails appear in [Mailpit at 127.0.0.1:55324](http://127.0.0.1:55324). Press `Ctrl-C` to stop Next.js. The reusable Supabase containers stay running; stop them explicitly with `npm run db:stop`.
 
-No `.env.local` is required for the core local application. Create an ignored one from [`.env.example`](.env.example) only for optional settings such as the Mapbox public token. The local command overrides database/Auth/site values with the repository's loopback configuration, so it cannot accidentally start against hosted services.
+No `.env.local` is required for the core local application or the OpenFreeMap-backed Explore map. Create an ignored one from [`.env.example`](.env.example) only for optional settings such as the Geoapify public search key. The local command overrides database/Auth/site values with the repository's loopback configuration, so it cannot accidentally start against hosted services.
 
 For a configuration-free production-mode public preview:
 
@@ -123,13 +123,13 @@ npm run coach:review -- \
 
 Use `pending → rejected` when the application cannot be approved and `approved → suspended` when existing coach authority must be removed. A rejected applicant may resubmit as a new revision. Exact retries of an applied decision are idempotent; stale or contradictory transitions fail closed. Review events are append-only, so corrections use a valid forward transition rather than deleting or editing evidence.
 
-## Mapbox configuration
+## Map and location-search configuration
 
-Explore remains a usable server-backed coach list without Mapbox. To enable the synchronized map and coach location picker, set `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` in the ignored environment file before building.
+Explore uses MapLibre GL JS with OpenFreeMap's public style and requires no map API key. The server-backed coach list remains authoritative and usable if map tiles, WebGL or the provider are unavailable.
 
-Create separate non-default public (`pk`) tokens for local, preview and production use. Grant only required public scopes and restrict each token to approved browser origins. Never place a secret (`sk`) token in `NEXT_PUBLIC_*`, source, logs or tickets.
+To enable coach-facing gym, dojo, sports-club and public-place search, set `NEXT_PUBLIC_GEOAPIFY_API_KEY` in the ignored environment file before building. Create separate browser keys for local, preview and production use and restrict each key to the approved origins in Geoapify. Public browser keys are intentionally visible; never commit a populated value or record it in logs or tickets.
 
-Independent-place search uses Mapbox Geocoding v6 with `permanent=true` only after explicit submission and confirmation. Permanent result storage requires an eligible Mapbox account. Existing fictional gym coordinates and manual fallback coordinates do not call geocoding.
+One explicit search checks Geoapify's Geocoding and Places APIs for bounded Berlin-biased address/place matches and named fitness facilities. MovX stores only the result the coach explicitly selects and confirms; Geoapify permits storage with required attribution. Search consumes the account's daily credits, while map browsing uses OpenFreeMap independently. Existing fictional gym coordinates and manual fallback coordinates call neither search API.
 
 ## Vercel deployment
 
@@ -146,7 +146,7 @@ NEXT_PUBLIC_SITE_URL
 
 Use the Supabase transaction pooler on port `6543` with a dedicated application login inheriting `app_runtime`; do not use the database owner. The server connection uses one client per operation, disables prepared statements and requires Transport Layer Security outside local development.
 
-`NEXT_PUBLIC_SITE_URL` is the same-origin boundary for sign-in and scheduling mutations. Generated preview URLs remain configuration-free unless that exact origin has matching Vercel values and Supabase Auth allow-list entries. Mapbox remains optional and uses a separately restricted public token.
+`NEXT_PUBLIC_SITE_URL` is the same-origin boundary for sign-in and scheduling mutations. Generated preview URLs remain configuration-free unless that exact origin has matching Vercel values and Supabase Auth allow-list entries. OpenFreeMap needs no environment value; Geoapify search remains optional and uses a separately origin-restricted public key.
 
 Choose a Vercel function region near the hosted Supabase database. Before import or redeploy, reproduce the public-preview guard locally:
 
@@ -156,7 +156,7 @@ env \
   NEXT_PUBLIC_SUPABASE_URL= \
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY= \
   NEXT_PUBLIC_SITE_URL= \
-  NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN= \
+  NEXT_PUBLIC_GEOAPIFY_API_KEY= \
   npm run build:vercel
 ```
 
@@ -200,7 +200,7 @@ npm run test:e2e
 - `src/auth/` and `src/server/auth/`: browser/server Supabase identity boundaries.
 - `src/server/identity/` and `src/server/coaches/`: application profile and scheduling services.
 - `src/server/db/`: server-only PostgreSQL configuration, schema mappings and narrow actor-scoped repositories.
-- `src/mapbox/`: optional browser location adapter; the authoritative list works without it.
+- `src/location/`: provider-neutral map/search contracts, isolated MapLibre/OpenFreeMap/Geoapify adapters and generic browser map components; the authoritative list works without them.
 - `supabase/`: additive SQL migration history, deterministic seeds and database tests.
 - `tests/`: unit, database and browser validation.
 - `public/`: local illustrative assets only; no real coach or venue affiliation is implied.

@@ -1,20 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import mapboxgl from "mapbox-gl";
-import { profileInitials } from "@/auth/profile-presentation";
-import type { CoachProjection } from "@/domain/coaches";
-import { MAPBOX_STYLE } from "@/mapbox/provider";
+import * as maplibregl from "maplibre-gl";
+import type { LocationMapPoint } from "../contracts";
+import { MAPLIBRE_WORKER_URL } from "../providers/maplibre";
+import { OPENFREEMAP_STYLE_URL } from "../providers/openfreemap";
 
-type CoachMapMarkerEntry = Readonly<{
-  marker: mapboxgl.Marker;
+type MarkerEntry = Readonly<{
+  marker: maplibregl.Marker;
   element: HTMLButtonElement;
   image: HTMLImageElement | null;
   handleClick: () => void;
   handleImageError: (() => void) | null;
 }>;
 
-function removeMarkerEntry(entry: CoachMapMarkerEntry) {
+function removeMarkerEntry(entry: MarkerEntry) {
   entry.element.removeEventListener("click", entry.handleClick);
   if (entry.image && entry.handleImageError) {
     entry.image.removeEventListener("error", entry.handleImageError);
@@ -22,29 +22,27 @@ function removeMarkerEntry(entry: CoachMapMarkerEntry) {
   entry.marker.remove();
 }
 
-export function MapboxCoachMap({
-  accessToken,
-  coaches,
-  selectedCoachId,
-  onSelectCoach,
+export function LocationResultsMap({
+  points,
+  selectedPointId,
+  onSelectPoint,
   onUnavailable,
 }: {
-  accessToken: string;
-  coaches: readonly CoachProjection[];
-  selectedCoachId: string | null;
-  onSelectCoach: (profileId: string) => void;
+  points: readonly LocationMapPoint[];
+  selectedPointId: string | null;
+  onSelectPoint: (pointId: string) => void;
   onUnavailable: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef(new Map<string, CoachMapMarkerEntry>());
-  const onSelectRef = useRef(onSelectCoach);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const markersRef = useRef(new Map<string, MarkerEntry>());
+  const onSelectRef = useRef(onSelectPoint);
   const onUnavailableRef = useRef(onUnavailable);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    onSelectRef.current = onSelectCoach;
-  }, [onSelectCoach]);
+    onSelectRef.current = onSelectPoint;
+  }, [onSelectPoint]);
   useEffect(() => {
     onUnavailableRef.current = onUnavailable;
   }, [onUnavailable]);
@@ -54,18 +52,18 @@ export function MapboxCoachMap({
     let active = true;
     const markers = markersRef.current;
     try {
-      const map = new mapboxgl.Map({
-        accessToken,
+      maplibregl.setWorkerUrl(MAPLIBRE_WORKER_URL);
+      const map = new maplibregl.Map({
         container: containerRef.current,
-        style: MAPBOX_STYLE,
+        style: OPENFREEMAP_STYLE_URL,
         center: [13.405, 52.52],
         zoom: 10.5,
-        attributionControl: true,
+        attributionControl: { compact: false },
         cooperativeGestures: true,
       });
       mapRef.current = map;
       map.addControl(
-        new mapboxgl.NavigationControl({ showCompass: false }),
+        new maplibregl.NavigationControl({ showCompass: false }),
         "top-right",
       );
       map.getCanvas().setAttribute("aria-label", "Matching coach locations");
@@ -76,9 +74,7 @@ export function MapboxCoachMap({
       return () => {
         active = false;
         map.off("error", handleError);
-        for (const entry of markers.values()) {
-          removeMarkerEntry(entry);
-        }
+        for (const entry of markers.values()) removeMarkerEntry(entry);
         markers.clear();
         map.remove();
         mapRef.current = null;
@@ -86,37 +82,35 @@ export function MapboxCoachMap({
     } catch {
       onUnavailableRef.current();
     }
-  }, [accessToken]);
+  }, []);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    for (const entry of markersRef.current.values()) {
-      removeMarkerEntry(entry);
-    }
+    for (const entry of markersRef.current.values()) removeMarkerEntry(entry);
     markersRef.current.clear();
 
-    const bounds = new mapboxgl.LngLatBounds();
-    for (const coach of coaches) {
+    const bounds = new maplibregl.LngLatBounds();
+    for (const point of points) {
       const element = document.createElement("button");
       element.type = "button";
-      element.className = "coach-map-marker";
+      element.className = "location-map-marker";
       element.setAttribute(
         "aria-label",
-        `Select ${coach.displayName} at ${coach.location.label}`,
+        `Select ${point.name} at ${point.label}`,
       );
       element.setAttribute("aria-pressed", "false");
       const initials = document.createElement("span");
-      initials.className = "coach-map-marker-initials";
-      initials.textContent = profileInitials(coach.displayName);
+      initials.className = "location-map-marker-initials";
+      initials.textContent = point.initials;
       element.append(initials);
 
       let image: HTMLImageElement | null = null;
       let handleImageError: (() => void) | null = null;
-      if (coach.portraitUrl) {
+      if (point.imageUrl) {
         image = document.createElement("img");
-        image.className = "coach-map-marker-image";
-        image.src = coach.portraitUrl;
+        image.className = "location-map-marker-image";
+        image.src = point.imageUrl;
         image.alt = "";
         image.width = 38;
         image.height = 38;
@@ -130,20 +124,15 @@ export function MapboxCoachMap({
         element.classList.add("has-portrait");
         element.prepend(image);
       }
-      const handleClick = () => onSelectRef.current(coach.profileId);
+      const handleClick = () => onSelectRef.current(point.id);
       element.addEventListener("click", handleClick);
-      const coordinates: [number, number] = [
-        coach.location.longitude,
-        coach.location.latitude,
-      ];
-      const marker = new mapboxgl.Marker({ element, anchor: "bottom" })
+      const coordinates: [number, number] = [point.longitude, point.latitude];
+      const marker = new maplibregl.Marker({ element, anchor: "bottom" })
         .setLngLat(coordinates)
         .addTo(map);
-      // Mapbox assigns `role="img"` while constructing a custom marker. Restore
-      // the native button semantics because this marker selects a coach.
       element.setAttribute("role", "button");
       markersRef.current.set(
-        coach.profileId,
+        point.id,
         Object.freeze({
           marker,
           element,
@@ -155,37 +144,35 @@ export function MapboxCoachMap({
       bounds.extend(coordinates);
     }
 
-    if (coaches.length === 1) {
+    if (points.length === 1) {
       map.jumpTo({
-        center: [coaches[0]!.location.longitude, coaches[0]!.location.latitude],
+        center: [points[0]!.longitude, points[0]!.latitude],
         zoom: 13,
       });
     } else if (!bounds.isEmpty()) {
       map.fitBounds(bounds, { padding: 54, maxZoom: 13, duration: 0 });
     }
-  }, [coaches, ready]);
+  }, [points, ready]);
 
   useEffect(() => {
-    for (const [profileId, entry] of markersRef.current) {
-      const selected = profileId === selectedCoachId;
+    for (const [pointId, entry] of markersRef.current) {
+      const selected = pointId === selectedPointId;
       entry.element.classList.toggle("selected", selected);
       entry.element.setAttribute("aria-pressed", String(selected));
     }
-    if (!selectedCoachId) return;
-    const coach = coaches.find(
-      ({ profileId }) => profileId === selectedCoachId,
-    );
+    if (!selectedPointId) return;
+    const point = points.find(({ id }) => id === selectedPointId);
     const map = mapRef.current;
-    if (!coach || !map) return;
+    if (!point || !map) return;
     const reducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
     map.easeTo({
-      center: [coach.location.longitude, coach.location.latitude],
+      center: [point.longitude, point.latitude],
       zoom: Math.max(map.getZoom(), 12.5),
       duration: reducedMotion ? 0 : 450,
     });
-  }, [coaches, selectedCoachId]);
+  }, [points, selectedPointId]);
 
   return <div className="coach-map-canvas" ref={containerRef} />;
 }

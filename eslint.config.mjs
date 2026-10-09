@@ -10,6 +10,7 @@ export default defineConfig([
     "clients/js/src/generated/**",
     "out/**",
     "next-env.d.ts",
+    "public/vendor/**",
     "test-results/**",
   ]),
   {

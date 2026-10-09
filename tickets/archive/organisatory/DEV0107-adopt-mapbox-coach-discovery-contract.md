@@ -5,7 +5,7 @@
 - Last updated: 2026-10-03
 - Milestone: Coach-first location-discovery correction
 - Coordination: [COR0009 — Coach-first private-class booking MVP](COR0009-coach-first-training-package-mvp.md)
-- Related records: refines coach discovery in [DEV0096](../backend/DEV0096-persist-coach-profiles-and-discovery.md), weekly slot location in [DEV0104](../backend/DEV0104-publish-weekly-coach-availability.md), historical booking presentation in cancelled [DEV0105](../backend/DEV0105-book-private-classes-with-pass-credits.md), and creates [DEV0108 — Add the Mapbox coach Explore map](../../current/frontend/DEV0108-add-mapbox-coach-explore-map.md)
+- Related records: refines coach discovery in [DEV0096](../backend/DEV0096-persist-coach-profiles-and-discovery.md), weekly slot location in [DEV0104](../backend/DEV0104-publish-weekly-coach-availability.md), historical booking presentation in cancelled [DEV0105](../backend/DEV0105-book-private-classes-with-pass-credits.md), and creates [DEV0108 — Add the Mapbox coach Explore map](../frontend/DEV0108-add-mapbox-coach-explore-map.md)
 
 ## Objective and context
 
@@ -74,7 +74,7 @@ Completed the Mapbox location-discovery contract and work-map correction without
 - `README.md` names coach-selected locations and the planned list/Mapbox Explore view without claiming delivery.
 - DEV0095 and DEV0096 separate truthful public navigation from provider-neutral coach/location persistence.
 - DEV0104 and DEV0105 preserve location through slot snapshots and booking presentation; DEV0106 owns hosted provider/fallback evidence.
-- `tickets/current/frontend/DEV0108-add-mapbox-coach-explore-map.md` owns Mapbox GL JS, the picker, Explore list/map UI, provider rules and operational validation.
+- `tickets/archive/frontend/DEV0108-add-mapbox-coach-explore-map.md` owns the historical Mapbox GL JS, picker, Explore list/map UI, provider rules and operational validation record.
 - COR0009 and `tickets/README.md` record the new work boundary, dependency order and next identifiers.
 
 ### Decisions and deviations

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "@fontsource-variable/manrope";
 import "@fontsource-variable/bricolage-grotesque";
-import "mapbox-gl/dist/mapbox-gl.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
 import "./club-theme.css";
 import "./coming-soon.css";
