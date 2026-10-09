@@ -2,10 +2,10 @@
 
 - Status: Ready
 - Created: 2026-10-08
-- Last updated: 2026-10-08
+- Last updated: 2026-10-09
 - Milestone: Native iOS application contract
 - Coordination: [COR0013 — Native iOS application](COR0013-native-ios-application.md)
-- Related records: supplies [DEV0160 — Expose the mobile scheduling API](../backend/DEV0160-expose-mobile-scheduling-api.md), [DEV0161 — Establish the Expo iOS foundation](../frontend/DEV0161-establish-expo-ios-foundation.md) and the remaining COR0013 peers; extends the scheduling-only contract adopted by [DEV0140](../../archive/organisatory/DEV0140-adopt-scheduling-only-contract.md)
+- Related records: supplies [DEV0160 — Expose the mobile scheduling API](../backend/DEV0160-expose-mobile-scheduling-api.md), [DEV0161 — Establish the Expo iOS foundation](../frontend/DEV0161-establish-expo-ios-foundation.md) and the remaining COR0013 peers; extends the scheduling-only contract adopted by [DEV0140](../../archive/organisatory/DEV0140-adopt-scheduling-only-contract.md); consumes the shared multi-location target coordinated by [COR0014 — Multi-location coach scheduling](COR0014-multi-location-coach-scheduling.md)
 
 ## Objective and context
 
@@ -27,6 +27,7 @@ This ticket must also decide which capabilities belong in the first TestFlight/A
 - The contract distinguishes required first-release features from deferred native enhancements such as push notifications, external calendar integration, offline mutation queues or a native Mapbox map.
 - Account deletion defines what is deleted, anonymized or retained and how in-flight/future bookings are handled. The specification must label any unresolved legal retention requirement rather than invent one.
 - The contract does not claim TestFlight, App Store approval, Apple credentials or hosted mobile APIs already exist.
+- Native planning consumes the same multi-location coach model as the web product: all active locations on a public profile, one primary training-base marker when a map exists and actual location snapshots on availability/bookings. It must not restore a singleton-location contract.
 
 ## Assumptions, decisions, and dependencies
 
@@ -35,7 +36,7 @@ This ticket must also decide which capabilities belong in the first TestFlight/A
 - Proposed default requiring explicit adoption in the specification: ship client scheduling first, then complete the coach schedule/profile before the coordinated native initiative closes.
 - Proposed default requiring explicit adoption: iPhone-first layouts, with exact minimum iOS and iPad support chosen from the pinned Expo/React Native toolchain during DEV0161.
 - Unresolved before DEV0165: retained booking/audit data versus deletion/anonymization behavior, including future confirmed bookings and coach-review evidence.
-- Existing scheduling decisions C01-C15, including no payment, messaging, notification delivery or external-calendar behavior, remain authoritative unless this ticket changes them explicitly.
+- Existing scheduling decisions C01-C18, including multi-location scheduling and no payment, messaging, notification delivery or external-calendar behavior, remain authoritative unless this ticket changes them explicitly.
 
 ## Implementation plan
 

@@ -2,7 +2,7 @@
 
 Last updated: 9 October 2026.
 
-MovX is a focused scheduling product for martial-arts coaching. Guests discover platform-approved coaches or clearly labelled fictional demo coaches and their real published availability. Email-authenticated clients reserve one capacity-one private session directly. Approved coaches manage their public profile, location, recurring one-hour availability and booked schedule.
+MovX is a focused scheduling product for martial-arts coaching. Guests discover platform-approved coaches or clearly labelled fictional demo coaches and their real published availability. Email-authenticated clients reserve one capacity-one private session directly. Approved coaches manage their public profile, training locations, location-aware recurring one-hour availability and booked schedule.
 
 This standalone project intentionally has no blockchain, wallet, token, pass, credit, payment, group-funding, event-marketplace, follow, post or feed behavior. Completed and archived records for those features are historical evidence only and do not define current product behavior. Solana hackathon development belongs to the separate `fitness-booking-social-app` repository.
 
@@ -35,6 +35,9 @@ The following constraints are confirmed for this scheduling project:
 | C13 | A real approved coach displays a `Verified coach` badge meaning MovX reviewed the account holder's identity and coach application; it does not guarantee licensing, competence or safety.                                                                                                                                                                                                                                                                                                                             |
 | C14 | Primary account navigation is capability-aware: every authorized account sees `My sessions`, and approved, demo and suspended coaches additionally see `Coach workspace`. For approved/demo coaches the main `Profile` item defaults to coach Profile, while the account-avatar controls retain personal account Profile access. Signed-out navigation shows neither private destination.                                                                                                                             |
 | C15 | Profile pictures are optional. An account avatar is private account presentation; a coach portrait is a separate explicitly public coach-profile asset. Signed-in account surfaces, including both navigation icons and Profile, prefer the private avatar and otherwise use the owner's public coach portrait as a display-only fallback. A client's `My sessions` cards show the booked coach's current public portrait and link the complete identity to the public coach profile. Missing images retain initials. |
+| C16 | A coach may maintain multiple confirmed training locations and chooses exactly one active location as primary before the profile can be visible. The primary location is the coach's public training base; it grants no gym authority and never represents live tracking.                                                                                                                                                                                                                                             |
+| C17 | Explore has no date selector in this delivery and pins every approved/demo visible coach once at the coach-selected primary location regardless of today's availability. The marker stays at that primary location; today's open times, when shown, identify their actual venues separately, and a coach with no open time today remains discoverable with an explicit state.                                                                                                                                         |
+| C18 | Every recurring availability hour belongs to exactly one active location owned by that coach. The coach assigns multiple calendar cells locally and explicitly saves the complete location-aware draft once. The first delivery uses one coach scheduling timezone; dated occurrences and bookings retain immutable snapshots of their actual assigned locations.                                                                                                                                                     |
 
 ### Proposed implementation defaults
 
@@ -44,6 +47,9 @@ The following are implementation defaults rather than additional user decisions:
 - Repeating the same booking request from the same client for the same active occurrence returns the existing booking rather than creating a duplicate.
 - A coach or client cancellation records who cancelled and when; P0 does not require a reason field or notification delivery.
 - Historical migrations may retain unused wallet/payment/event tables for safe forward compatibility. Current code does not read or expose them.
+- Referenced training locations are deactivated rather than destructively deleted; changing the primary location is one atomic replacement.
+- A location selected from optional provider search becomes bounded coach-owned profile data. It does not silently create a global gym or point-of-interest catalogue record.
+- The location-aware calendar uses stable text cues in addition to color so every assigned venue remains understandable without color perception.
 
 ## 3. Actors and authority
 
@@ -57,7 +63,7 @@ A client has a verified email-backed MovX account and application profile. The c
 
 ### Coach
 
-A coach retains client capability, so approved and fictional demo coaches keep `My sessions` and additionally receive `Coach workspace` in desktop and mobile navigation. Their main `Profile` item opens coach Profile by default, while the bottom-left and upper-right account controls continue to open the personal account Profile. Coach Profile, Schedule and Bookings share one Profile-first sub-navigation at a stable top position, followed by the green view-specific hero and then that view's content; Schedule contains recurring availability and dated capacity status, while Bookings alone contains the detailed booked schedule, client identity/avatar and booking actions. After platform approval, the owner can publish their coach profile/location, optionally manage a separate public coach portrait, manage recurring availability, inspect bookings for their own schedule, cancel a future confirmed booking and mark an elapsed confirmed booking completed. A pending or rejected applicant may prepare a private draft but has no public coach or scheduling authority. A suspended coach receives the same two private destinations, with bounded Bookings access needed to resolve existing sessions, but accepts no new bookings or public-media changes. A coach cannot see unrelated client bookings or private identity data.
+A coach retains client capability, so approved and fictional demo coaches keep `My sessions` and additionally receive `Coach workspace` in desktop and mobile navigation. Their main `Profile` item opens coach Profile by default, while the bottom-left and upper-right account controls continue to open the personal account Profile. Coach Profile, Schedule and Bookings share one Profile-first sub-navigation at a stable top position, followed by the green view-specific hero and then that view's content; Schedule contains location-aware recurring availability and dated capacity status, while Bookings alone contains the detailed booked schedule, client identity/avatar and booking actions. After platform approval, the owner can publish their coach profile, manage multiple confirmed training locations, select one active primary location, optionally manage a separate public coach portrait, assign recurring availability to actual locations, inspect bookings for their own schedule, cancel a future confirmed booking and mark an elapsed confirmed booking completed. A pending or rejected applicant may prepare a private draft but has no public coach or scheduling authority. A suspended coach receives the same two private destinations, with bounded Bookings access needed to resolve existing sessions, but accepts no new bookings or public-media changes. A coach cannot see unrelated client bookings or private identity data.
 
 ### Platform reviewer
 
@@ -82,9 +88,10 @@ MovX verifies the Supabase session, establishes transaction-local actor context,
 ### 4.2 Discover a coach and time
 
 1. A guest opens Explore and receives a server-backed list of visible coaches.
-2. Search and filters narrow the list. OpenFreeMap-backed pins mirror the same confirmed locations without an application map key; map failure leaves the list usable.
-3. A coach profile shows bounded public details, an optional public portrait, one confirmed location and future open dated one-hour occurrences. Missing portraits use initials rather than a fabricated image.
-4. No placeholder time is shown when persistent availability is unavailable.
+2. Search and filters narrow the list. OpenFreeMap-backed discovery shows each visible coach once at that coach's confirmed active primary location without an application map key; map failure leaves the complete list usable.
+3. The primary marker describes the coach's public training base, not live presence or today's venue. Explore has no date selector and keeps the coach visible when there is no open time today; any today summary labels the actual occurrence locations or reports `No availability today`.
+4. A coach profile shows bounded public details, an optional public portrait, every confirmed active training location with the primary one labelled, and future open dated one-hour occurrences grouped or labelled by actual location. Missing portraits use initials rather than a fabricated image.
+5. No placeholder time is shown when persistent availability is unavailable.
 
 ### 4.3 Book a private session
 
@@ -106,6 +113,14 @@ MovX verifies the Supabase session, establishes transaction-local actor context,
 2. Completion is terminal and idempotent. Clients and unrelated coaches cannot complete it.
 3. P0 does not claim independent attendance proof or resolve service disputes.
 
+### 4.6 Manage locations and publish availability
+
+1. An approved coach adds or confirms one or more provider-neutral training locations and selects exactly one active location as primary before publishing the profile.
+2. The coach chooses an active location in Schedule, assigns one or more weekly cells to it locally and may switch locations to continue composing the complete working-week draft.
+3. One explicit authorized save validates ownership, active-location state, the expected baseline and per-coach time overlap before replacing the complete recurring rule set and synchronizing dated occurrences once.
+4. Every dated occurrence copies the actual assigned location snapshot. Changing the primary location never moves an existing occurrence or booking.
+5. Deactivating a location stops new availability there and withdraws eligible future open occurrences while preserving booked and terminal history.
+
 ## 5. Scheduling state model
 
 ### Application profile
@@ -116,9 +131,11 @@ One profile belongs to one verified Supabase Auth identity inside a dataset. It 
 
 One current coach application belongs to one application profile. Absence means not applied; submitted applications move through `pending`, `approved`, `rejected` or `suspended`. Review events are append-only evidence of platform decisions. Historical self-service activation may remain stored for continuity but grants no current coach authority.
 
-### Coach profile and public location
+### Coach profile and training locations
 
-One owner-scoped coach profile contains public name, slug, biography, disciplines, visibility, timezone, an optional public portrait reference and one confirmed provider-neutral location snapshot. Pending/rejected applicants may keep only a private draft; a user-created profile enters public discovery only while its application is approved and its owner selects visible. A fictional gym association grants no account authority.
+One owner-scoped coach profile contains public name, slug, biography, disciplines, visibility, one scheduling timezone and an optional public portrait reference. It owns one or more confirmed provider-neutral training-location records; each record has stable identity, kind, public label, coordinates, provenance and active/inactive lifecycle, and may optionally reference a reviewed gym. Exactly one active location is primary while the profile is visible. That primary record supplies the coach's single Explore marker and public training-base label, but it does not establish live presence, choose an occurrence venue or grant gym/account authority.
+
+Pending/rejected applicants may keep only a private draft; a user-created profile enters public discovery only while its application is approved, its owner selects visible and one confirmed active primary location exists. Provider-search selection stores only the bounded coach-owned location the coach explicitly confirms and does not populate a global point-of-interest catalogue. Referenced locations are deactivated rather than destructively deleted so scheduling history remains resolvable.
 
 ### Profile images
 
@@ -128,7 +145,7 @@ JPEG, PNG and WebP source selections are accepted for the first release. The bro
 
 ### Recurring availability and dated occurrence
 
-A recurring weekly rule creates deterministic dated one-hour occurrences in the coach timezone. An occurrence is `open`, `booked` or `withdrawn`, carries its immutable time/location snapshot and belongs to exactly one coach. Overlapping rules/occurrences are rejected.
+A recurring weekly rule belongs to exactly one active training location owned by the same coach and creates deterministic dated one-hour occurrences in the coach's single scheduling timezone. One weekday/time cell belongs to at most one location. An occurrence is `open`, `booked` or `withdrawn`, carries the immutable snapshot of the rule's actual location and belongs to exactly one coach. Overlapping rules/occurrences are rejected across all of the coach's locations. Changing which location is primary does not change a rule or occurrence.
 
 ### Private booking
 
@@ -139,7 +156,7 @@ Confirmed -> Cancelled
 Confirmed -> Completed
 ```
 
-Minimum projection fields are booking ID, occurrence ID, coach/client IDs, scheduled start/end, location snapshot, status, creation/update timestamps, cancellation actor/time and completion time. It contains no wallet, pass, credit, token, price, transaction signature or chain reference.
+Minimum projection fields are booking ID, occurrence ID, coach/client IDs, scheduled start/end, actual occurrence-location snapshot, status, creation/update timestamps, cancellation actor/time and completion time. It contains no wallet, pass, credit, token, price, transaction signature or chain reference.
 
 ## 6. Application and infrastructure boundaries
 
@@ -148,7 +165,7 @@ Minimum projection fields are booking ID, occurrence ID, coach/client IDs, sched
 - Supabase Auth establishes email identity; editable profile fields do not establish authority.
 - PostgreSQL is authoritative for profiles, coach applications/reviews, locations, availability, occurrences and bookings.
 - Supabase Storage owns normalized image objects. Private account-avatar access and public coach-portrait delivery remain separate; PostgreSQL stores only their bounded references.
-- The location module isolates MapLibre/OpenFreeMap rendering and optional Geoapify gym/place search; stored provider-neutral snapshots remain application authority, and legacy provider snapshots remain readable without calling their former provider.
+- The location module isolates MapLibre/OpenFreeMap rendering and optional Geoapify gym/place search; stored provider-neutral coach-location and occurrence snapshots remain application authority, and legacy provider snapshots remain readable without calling their former provider. The module does not decide primary status, schedule assignment or coach authority.
 - Vercel runs the native Next.js application. Hosted secrets are encrypted server-only environment values.
 - Historical blockchain/social tables may remain in migration history but are not current runtime dependencies.
 
@@ -176,10 +193,13 @@ Cancellation locks the booking/occurrence together, records the authorized actor
 
 ## 9. Scheduling behavior and permissions
 
-- Public coach discovery includes visible approved user profiles and explicitly labelled visible fictional fixtures, each with confirmed locations.
-- A pending or rejected applicant may edit only a private coach-profile draft. Only an approved coach owner publishes that profile or edits recurring availability.
+- Public coach discovery includes visible approved user profiles and explicitly labelled visible fictional fixtures, each with exactly one confirmed active primary marker and all active locations available on its public profile.
+- Explore keeps every otherwise visible coach on the map at the primary location regardless of today's availability. It has no date selector in this delivery; today's actual session venues or `No availability today` are presentation details and never move or remove the primary marker.
+- A pending or rejected applicant may edit only a private coach-profile draft. Only an approved coach owner publishes that profile, manages public training locations or edits recurring availability.
 - A verified account owner may replace/remove only their private account avatar. Only an approved coach owner may replace/remove their separately public coach portrait; image ownership never substitutes for coach approval.
-- A coach composes recurring availability as a local working-week draft and explicitly saves the complete selection; one authorized atomic operation replaces the active rule set and synchronizes dated occurrences once.
+- A visible coach has exactly one confirmed active primary location. Replacing primary is atomic, and the current primary cannot be deactivated without a valid replacement.
+- A coach composes recurring availability as a local location-aware working-week draft: the selected active location is assigned to empty cells, every selected cell exposes its location through text as well as any color cue, and one explicit authorized save replaces the complete rule set and synchronizes dated occurrences once.
+- Deactivating a location removes its active recurring rules and withdraws eligible future open occurrences without moving or deleting booked/terminal snapshots.
 - A suspended coach is removed from discovery and cannot publish availability or receive new bookings; existing booking history and bounded terminal actions remain available to the owning parties.
 - Only a verified signed-in client books, and never against their own coach profile.
 - Only the booking client or coach cancels a future confirmed booking.
@@ -194,7 +214,8 @@ Cancellation locks the booking/occurrence together, records the authorized actor
 - Coach approval/rejection/suspension is unavailable to ordinary runtime roles. Decisions are expected-state guarded and atomically append immutable review evidence.
 - Editable profile fields, Auth metadata, URL parameters and historical activation timestamps never establish approval or badge state.
 - Capacity-one enforcement exists in PostgreSQL, not only in browser button state.
-- Cross-run identifiers, hidden coaches, self-booking, elapsed/non-open occurrences and invalid lifecycle transitions fail closed.
+- Cross-run/cross-coach location identifiers, hidden coaches, self-booking, elapsed/non-open occurrences and invalid lifecycle transitions fail closed.
+- PostgreSQL enforces one active primary location for a visible coach and prevents overlapping active occurrences across all of that coach's locations; browser colors, selectors and marker state are not authority.
 - Mutation errors return bounded messages without database/Auth internals.
 - Browser inputs are normalized and bounded; server/domain validation is authoritative.
 - Uploaded images reject unsupported types and oversized/malformed data, are decoded and re-encoded server-side with metadata removed, and use immutable owner-scoped object paths. Browser-reported names, types and dimensions are not trusted.
@@ -205,16 +226,18 @@ Cancellation locks the booking/occurrence together, records the authorized actor
 
 The scheduling-only MVP is complete when:
 
-- guests can browse a truthful list of fictional coaches and future open times, with an optional synchronized map and usable list fallback;
+- guests can browse a truthful list of fictional coaches and future open times, with every visible coach pinned once at the confirmed primary training location, truthful today/no-availability presentation and a usable list fallback when the map fails;
 - one verified email account can enter through the client or coach-application path while retaining the same underlying identity and client capability;
 - a pending applicant cannot self-approve, publish, manage availability or receive new bookings;
 - a guarded platform review can approve/reject/suspend an application with immutable evidence, and only current real approval produces the bounded verified badge;
-- an approved coach can publish/edit a visible profile, confirmed location and recurring one-hour availability;
+- an approved coach can publish/edit a visible profile with multiple confirmed training locations, exactly one active primary location and recurring one-hour availability assigned to actual locations;
+- a coach can compose multiple location assignments locally and save the complete working week once, while cross-location overlap or stale/inactive location input fails without partial replacement;
 - every authorized account receives `My sessions` in primary navigation while approved, demo and suspended coaches additionally receive `Coach workspace`; approved/demo coach Profile defaults to coach Profile while account-avatar controls retain personal Profile access;
 - an account may optionally upload/remove a private normalized avatar, and an approved coach may separately upload/remove a public normalized portrait; all missing/failed image states retain initials;
 - a client's `My sessions` cards show the booked coach's current public portrait or initials and link the complete identity to the public coach profile;
 - an owning coach can recognize the client on a confirmed booking by that client's current private avatar or stable initials without receiving public or terminal-history access to the image;
 - a different signed-in client can reserve one open occurrence and reload the same confirmed booking;
+- primary-location or training-location changes cannot move the actual location snapshot of an existing occurrence or booking;
 - concurrent clients cannot both reserve the same occurrence;
 - the booking client or coach can cancel a future confirmed booking and the occurrence becomes open again;
 - the owning coach can complete an elapsed confirmed booking;
@@ -228,7 +251,7 @@ The scheduling-only MVP is complete when:
 1. **M0 — Scheduling contract:** adopt this specification and reconcile obsolete marketplace work.
 2. **M1 — Direct booking core:** persist authorized capacity-one booking, cancellation and completion without chain state.
 3. **M2 — Runtime retirement:** remove blockchain, wallet, payment/event and social runtime/tooling/dependencies.
-4. **M3 — Scheduling interface:** present discovery, direct booking, client history and coach schedule management responsively.
+4. **M3 — Scheduling interface:** present primary-location discovery, direct booking, client history, multiple coach locations and location-aware schedule management responsively.
 5. **M4 — Hosted rehearsal:** deploy to Vercel with hosted Supabase and repeat the core scheduling flow with two accounts.
 
 Payments, subscriptions, passes, wallets, group classes/events, waitlists, messaging, reviews, attendance disputes, external calendar synchronization and notification delivery require separately reviewed future contracts.
@@ -237,8 +260,8 @@ Payments, subscriptions, passes, wallets, group classes/events, waitlists, messa
 
 | Scenario                        | Expected result                                                                                                                                                                                                                                                                             |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Guest opens Explore             | Visible fictional coaches and confirmed locations load; map failure leaves the list usable.                                                                                                                                                                                                 |
-| Guest opens coach profile       | Public profile and persisted open times load without private booking/client data.                                                                                                                                                                                                           |
+| Guest opens Explore             | Every visible approved/demo coach loads once at the confirmed primary training location whether or not today has an open time; today/no-availability presentation names actual venues, there is no date selector and map failure leaves the complete list usable.                           |
+| Guest opens coach profile       | All active training locations, the labelled primary location and persisted open times with their actual venues load without private booking/client data.                                                                                                                                    |
 | Guest attempts booking          | Sign-in is required; no booking mutation occurs.                                                                                                                                                                                                                                            |
 | New client completes onboarding | The account can browse and book without receiving coach capability.                                                                                                                                                                                                                         |
 | Client opens My sessions        | Only that account's upcoming bookings and retained history load; each coach identity shows its current public portrait or initials and links to the public profile; ordinary, pending and rejected accounts receive this primary-navigation destination.                                    |
@@ -249,10 +272,13 @@ Payments, subscriptions, passes, wallets, group classes/events, waitlists, messa
 | Coach opens primary navigation  | Approved/demo coaches see Profile → Schedule → Bookings consistently inside coach views; main Profile opens coach Profile, while account-avatar controls retain personal Profile. Suspended coaches retain My sessions, Coach workspace and personal Profile without coach-profile editing. |
 | Client manages account avatar   | A valid image becomes private account presentation after canonical normalization; replacement/removal is owner-only and missing/failure keeps initials.                                                                                                                                     |
 | Coach manages public portrait   | An approved coach explicitly uploads/removes public coach media without exposing the private account avatar or changing coach authority.                                                                                                                                                    |
+| Coach manages locations         | An approved coach can maintain multiple confirmed training locations and atomically choose exactly one active primary; a pending/rejected draft stays private, and a suspended/unrelated account cannot publish changes.                                                                    |
+| Coach changes primary location  | The Explore marker moves to the new primary training base, while recurring assignments, dated occurrences and bookings keep their actual locations.                                                                                                                                         |
+| Coach deactivates a location    | The primary requires a valid replacement; active rules and eligible future open occurrences at the deactivated location stop, while booked/terminal snapshots remain intact.                                                                                                                |
 | Guest views coach without photo | The public card/profile renders stable initials; only Daniel Park has the first generated fictional fixture portrait.                                                                                                                                                                       |
 | Coach views booked client       | Bookings shows a confirmed booking's client name and current private avatar or initials only to its owning coach; Schedule shows only occupied-slot status, while terminal, unrelated and public requests get no image bytes.                                                               |
-| Coach publishes availability    | Multiple draft selections persist together on explicit save; valid one-hour occurrences then appear publicly with stable timezone/location snapshots.                                                                                                                                       |
-| Client books open time          | One confirmed booking is created and the occurrence becomes booked atomically.                                                                                                                                                                                                              |
+| Coach publishes availability    | Multiple location-assigned draft selections persist together on explicit save; each cell has one owned active location, cross-location overlap fails atomically and valid one-hour occurrences appear with actual immutable location snapshots.                                             |
+| Client books open time          | One confirmed booking is created and the occurrence becomes booked atomically with the occurrence's actual venue rather than the coach's primary-location fallback.                                                                                                                         |
 | Same client retries booking     | The existing active booking is returned; no duplicate row is created.                                                                                                                                                                                                                       |
 | Different client races          | Exactly one client succeeds; the other receives a conflict.                                                                                                                                                                                                                                 |
 | Coach books own time            | Request fails without mutation.                                                                                                                                                                                                                                                             |
@@ -264,10 +290,10 @@ Payments, subscriptions, passes, wallets, group classes/events, waitlists, messa
 
 ## 14. Demo
 
-1. A guest opens Explore, filters the list and opens a fictional coach with real published availability.
+1. A guest opens Explore, sees each visible coach once at the labelled primary training location and opens a fictional coach whose today status names the actual availability venue or explicitly reports none.
 2. The guest signs in by email, selects an open time and receives one confirmed booking without wallet or payment prompts.
 3. A second client attempts the same occurrence and receives a conflict.
 4. The first client cancels; the time reopens and remains available after reload.
-5. A coach edits recurring availability, views a prepared elapsed booking and marks it completed.
+5. A coach maintains two training locations, chooses one primary map base, assigns recurring hours to actual venues in one saved draft, views a prepared elapsed booking and marks it completed without moving its stored location.
 
 The demonstration proves scheduling authority and concurrency only. It makes no claim about payment, attendance, professional credentials or dispute resolution.

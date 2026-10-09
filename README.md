@@ -2,7 +2,7 @@
 
 **Find a coach. Pick a time. Book your session.**
 
-MovX Club is a focused scheduling application for martial-arts clients and coaches. Guests discover fictional coaches and real published availability. Email-authenticated clients reserve one capacity-one private session directly. Coaches manage their public profile, location, recurring one-hour availability and booked schedule.
+MovX Club is a focused scheduling application for martial-arts clients and coaches. Guests discover fictional coaches and real published availability. Email-authenticated clients reserve one capacity-one private session directly. Coaches manage their public profile, training locations, location-aware recurring one-hour availability and booked schedule.
 
 This standalone scheduling repository intentionally excludes blockchain, wallets, passes, credits, token payments, group events and social/feed behavior. Historical records and migrations may describe those superseded features, but they do not define the current product or runtime. The separate [fitness-booking-social-app](https://github.com/hworldcom/fitness-booking-social-app) repository preserves the Solana hackathon product.
 
@@ -26,11 +26,13 @@ Delivered reusable foundations include:
 - local/hosted Supabase PostgreSQL with a server-only database boundary;
 - email-code accounts, protected profiles and separate client/coach onboarding;
 - platform-reviewed coach applications with verified or demo trust labels;
-- owner-scoped coach profiles with one public provider-neutral location;
+- owner-scoped coach profiles with one currently implemented public provider-neutral location;
 - list-first coach discovery with an OpenFreeMap-backed interactive map;
 - recurring one-hour availability, deterministic dated occurrences and a responsive coach calendar.
 
 Direct scheduling-only booking and runtime cleanup were delivered under COR0011. The former membership, wallet, payment, group-event and social features are not current product surfaces.
+
+The target contract now permits multiple coach training locations, one coach-selected primary Explore marker and actual-location availability assignments. Runtime delivery remains open under [COR0014](tickets/current/organisatory/COR0014-multi-location-coach-scheduling.md); the current application still exposes the singleton foundation described above.
 
 ## Run locally
 

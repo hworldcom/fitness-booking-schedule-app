@@ -2,10 +2,10 @@
 
 - Status: Draft
 - Created: 2026-10-08
-- Last updated: 2026-10-08
+- Last updated: 2026-10-09
 - Milestone: Native iOS backend boundary
 - Coordination: [COR0013 — Native iOS application](../organisatory/COR0013-native-ios-application.md)
-- Related records: depends on [DEV0159 — Adopt the native iOS contract](../organisatory/DEV0159-adopt-native-ios-contract.md); supplies [DEV0162 — Deliver native client scheduling](../frontend/DEV0162-deliver-native-client-scheduling.md), [DEV0163 — Deliver the native coach schedule](../frontend/DEV0163-deliver-native-coach-schedule.md) and [DEV0164 — Deliver the native coach profile](../frontend/DEV0164-deliver-native-coach-profile.md); hosted validation depends on [DEV0055 — Hosted Supabase staging environment](DEV0055-hosted-supabase-staging-environment.md)
+- Related records: depends on [DEV0159 — Adopt the native iOS contract](../organisatory/DEV0159-adopt-native-ios-contract.md); consumes shared location projections from [DEV0176 — Persist coach training locations](DEV0176-persist-coach-training-locations.md) and [DEV0177 — Bind availability to training locations](DEV0177-bind-availability-to-training-locations.md); supplies [DEV0162 — Deliver native client scheduling](../frontend/DEV0162-deliver-native-client-scheduling.md), [DEV0163 — Deliver the native coach schedule](../frontend/DEV0163-deliver-native-coach-schedule.md) and [DEV0164 — Deliver the native coach profile](../frontend/DEV0164-deliver-native-coach-profile.md); hosted validation depends on [DEV0055 — Hosted Supabase staging environment](DEV0055-hosted-supabase-staging-environment.md)
 
 ## Objective and context
 
@@ -15,12 +15,12 @@ The mobile API is an adapter over existing services, not a second implementation
 
 ## Scope and non-goals
 
-- In scope: shared request/response schemas and API versioning; bearer-token session verification; public coach/profile/open-time reads; current actor/application reads; client booking, retry, session-history and cancellation endpoints; the authenticated transport/service primitives needed by the coach tickets; cache, error and rate/size bounds; tests and API documentation.
+- In scope: shared request/response schemas and API versioning; bearer-token session verification; public coach/profile/open-time reads including active training locations, the primary training base and actual occurrence venues; current actor/application reads; client booking, retry, session-history and cancellation endpoints; the authenticated transport/service primitives needed by the coach tickets; cache, error and rate/size bounds; tests and API documentation.
 - Out of scope: native screens, direct device access to server database credentials, duplicating domain rules in route handlers, coach schedule/profile endpoints owned by DEV0163/DEV0164, account deletion owned by DEV0165, push notifications, offline mutation queues, GraphQL, or replacing the website's Server Actions.
 
 ## Expected behavior and edge cases
 
-- Public discovery endpoints reveal only the same approved/demo coach, location and open-time projection available on the website.
+- Public discovery endpoints reveal only the same approved/demo coach, active-location, primary training-base and actual open-time venue projections available on the website. Primary location and occurrence location remain distinct fields.
 - Authenticated endpoints accept a valid Supabase access token, verify it against the configured project and derive application identity transaction-locally; caller-supplied profile or actor IDs never establish authority.
 - Missing, expired, malformed or wrong-project tokens return bounded `401`/`403` results without database/Auth internals.
 - Repeating the same booking for the same client/occurrence returns the existing booking; a competing client receives a stable conflict and no partial state.
@@ -35,12 +35,13 @@ The mobile API is an adapter over existing services, not a second implementation
 - Use the existing Supabase publishable project configuration on the device; database credentials and service-role keys remain server-only.
 - Bearer tokens avoid cookie cross-site request forgery assumptions, but token verification, response caching, request-size bounds and log redaction remain mandatory.
 - Reuse framework-independent domain validation and server services. Extract shared serializable contracts only when they remain free of `server-only`, Next.js and React Native runtime imports.
+- Do not invent mobile-only singleton location fields. Implementation starts only after the applicable COR0014 service contracts are stable enough to version.
 
 ## Implementation plan
 
 1. Inspect installed Next.js 16.3.8 route-handler documentation and the installed Supabase SDK's server token-verification APIs.
 2. Define versioned, exact-key JSON contracts and a transport-neutral verified-session/actor adapter.
-3. Add public discovery/detail/open-time reads and authenticated actor/application/session reads.
+3. Add public discovery/detail/open-time reads with primary versus actual-location semantics and authenticated actor/application/session reads.
 4. Add book and cancel mutations over the existing booking service with stable status/error mapping and no-store/private caching.
 5. Add contract, authorization, retry, conflict, cross-account, malformed-input and unavailable-service tests.
 6. Document the base URL/public configuration required by the native app without recording credentials.

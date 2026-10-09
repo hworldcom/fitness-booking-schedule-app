@@ -2,10 +2,10 @@
 
 - Status: Draft
 - Created: 2026-10-08
-- Last updated: 2026-10-08
+- Last updated: 2026-10-09
 - Milestone: Native iOS client scheduling
 - Coordination: [COR0013 — Native iOS application](../organisatory/COR0013-native-ios-application.md)
-- Related records: depends on [DEV0160 — Expose the mobile scheduling API](../backend/DEV0160-expose-mobile-scheduling-api.md) and [DEV0161 — Establish the Expo iOS foundation](DEV0161-establish-expo-ios-foundation.md); preserves booking behavior from [DEV0141](../../archive/backend/DEV0141-persist-direct-private-bookings.md) and client history from [DEV0144](../../archive/frontend/DEV0144-show-client-booking-history.md)
+- Related records: depends on [DEV0160 — Expose the mobile scheduling API](../backend/DEV0160-expose-mobile-scheduling-api.md) and [DEV0161 — Establish the Expo iOS foundation](DEV0161-establish-expo-ios-foundation.md); consumes the shared multi-location contract from [COR0014 — Multi-location coach scheduling](../organisatory/COR0014-multi-location-coach-scheduling.md); preserves booking behavior from [DEV0141](../../archive/backend/DEV0141-persist-direct-private-bookings.md) and client history from [DEV0144](../../archive/frontend/DEV0144-show-client-booking-history.md)
 
 ## Objective and context
 
@@ -13,7 +13,7 @@ Deliver the client-facing native scheduling journey in an app-specific design: g
 
 ## Scope and non-goals
 
-- In scope: native Explore list/search/filter; coach detail, trust label, confirmed location and future open times; booking confirmation and conflict/retry feedback; signed-in My sessions with upcoming/history states and cancellation; Profile presentation and existing private-avatar display/upload if required by DEV0159; pull-to-refresh, loading/empty/offline/error states; deep-linkable internal routes; responsive/accessibility/device tests.
+- In scope: native Explore list/search/filter; coach detail, trust label, active training locations, labelled primary training base and future open times with actual venues; booking confirmation and conflict/retry feedback; signed-in My sessions with upcoming/history states and cancellation; Profile presentation and existing private-avatar display/upload if required by DEV0159; pull-to-refresh, loading/empty/offline/error states; deep-linkable internal routes; responsive/accessibility/device tests.
 - Out of scope: coach schedule/profile management, staff review, payments, passes, messaging, reviews, push notification delivery, external calendars, background booking, offline mutation queues, or mandatory native Mapbox integration.
 
 ## Expected behavior and edge cases
@@ -25,18 +25,19 @@ Deliver the client-facing native scheduling journey in an app-specific design: g
 - Client cancellation is available only for an owned future confirmed booking and reopens the occurrence when the server succeeds.
 - Empty, offline, expired-session and backend-unavailable states are distinguishable. Optimistic UI never fabricates a successful booking.
 - Native presentation uses platform navigation, lists, sheets and accessible controls while retaining MovX brand identity.
+- A native map, if later included in this ticket's approved scope, uses the primary training base for the coach marker regardless of today's availability and labels actual open-time venues separately. Without a map, the list still preserves the same distinction.
 
 ## Assumptions, decisions, and dependencies
 
 - DEV0160 owns public/client API authority; DEV0161 owns authentication, navigation and HTTP primitives.
 - The first useful iOS slice is client scheduling. Coach tickets may complete later without changing this ticket's acceptance criteria.
-- List-first discovery is required. A native map remains optional unless DEV0159 makes it part of the first release.
+- List-first discovery is required. A native map remains optional unless DEV0159 makes it part of the first release; no native surface may infer an occurrence venue from the primary location.
 - Reuse canonical timestamps and timezone/location snapshots from the server; the device must not reinterpret availability as a different occurrence.
 - Profile-image upload is included only if DEV0159 marks current profile-media editing as first-release parity; displaying the bounded existing avatar remains expected.
 
 ## Implementation plan
 
-1. Define native information architecture and components for Explore, coach detail, booking confirmation, Sessions and Profile.
+1. Define native information architecture and components for Explore, active/primary coach locations, actual-venue open times, booking confirmation, Sessions and Profile.
 2. Connect public discovery/open-time reads and authenticated booking/session/cancellation requests.
 3. Preserve return-to-booking intent through native authentication and handle session expiry safely.
 4. Add refresh, conflict, empty, offline and unavailable behavior without optimistic authority.
