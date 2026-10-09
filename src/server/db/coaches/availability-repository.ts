@@ -2,7 +2,7 @@ import "server-only";
 
 import { sql } from "drizzle-orm";
 import {
-  coachAvailabilityRuleKey,
+  isCoachTrainingLocationId,
   type CoachAvailabilityInput,
   type CoachAvailabilityIsoWeekday,
   type CoachAvailabilityRuleInput,
@@ -18,6 +18,8 @@ import { withDatabaseConnection } from "@/server/db/client";
 type AvailabilityRow = Readonly<{
   id: string;
   recurrence_rule_id: string | null;
+  coach_training_location_id: string | null;
+  training_location_name: string | null;
   recurrence_local_date: string | null;
   starts_at: string | Date;
   ends_at: string | Date;
@@ -36,6 +38,8 @@ type AvailabilityRow = Readonly<{
 
 type AvailabilityRuleRow = Readonly<{
   id: string;
+  coach_training_location_id: string;
+  location_updated_at: string;
   iso_weekday: number;
   local_start_time: string;
   coach_timezone: string;
@@ -64,6 +68,8 @@ function availabilitySelect() {
   return sql.raw(`
     slot.id,
     slot.recurrence_rule_id,
+    slot.coach_training_location_id,
+    slot.training_location_name,
     slot.recurrence_local_date,
     slot.starts_at,
     slot.ends_at,
@@ -89,6 +95,8 @@ function mapAvailabilityBase(row: AvailabilityRow) {
   const longitude = Number(row.longitude);
   const locationKind = row.location_kind;
   const locationSource = row.location_source;
+  const locationName =
+    row.training_location_name ?? row.gym_name ?? row.public_location_label;
 
   if (
     !isAvailabilityStatus(row.status) ||
@@ -99,6 +107,10 @@ function mapAvailabilityBase(row: AvailabilityRow) {
     (locationKind === "gym" && (!row.selected_gym_id || !row.gym_name)) ||
     (locationKind === "independent" &&
       (row.selected_gym_id !== null || row.gym_name !== null)) ||
+    (row.coach_training_location_id !== null &&
+      !isCoachTrainingLocationId(row.coach_training_location_id)) ||
+    locationName.length < 2 ||
+    locationName.length > 240 ||
     !Number.isFinite(startsAt.getTime()) ||
     !Number.isFinite(endsAt.getTime()) ||
     endsAt <= startsAt ||
@@ -116,6 +128,8 @@ function mapAvailabilityBase(row: AvailabilityRow) {
     coachTimezone: row.coach_timezone,
     status: row.status,
     location: Object.freeze({
+      trainingLocationId: row.coach_training_location_id,
+      name: locationName,
       kind: locationKind,
       selectedGymId: row.selected_gym_id,
       gymName: row.gym_name,
@@ -158,12 +172,16 @@ function mapAvailabilityRule(
   const localStartTime = row.local_start_time.slice(0, 5);
   if (
     !isIsoWeekday(row.iso_weekday) ||
+    !isCoachTrainingLocationId(row.coach_training_location_id) ||
+    typeof row.location_updated_at !== "string" ||
     !/^(?:[01]\d|2[0-2]):00$/.test(localStartTime)
   ) {
     throw new CoachAvailabilityConflictError();
   }
   return Object.freeze({
     id: row.id,
+    locationId: row.coach_training_location_id,
+    locationUpdatedAt: row.location_updated_at,
     isoWeekday: row.iso_weekday,
     localStartTime,
     coachTimezone: row.coach_timezone,
@@ -232,10 +250,16 @@ export async function currentOwnedCoachAvailabilityRuleRecords(
   const rows = await transaction.execute<AvailabilityRuleRow>(sql`
     select
       rule.id,
+      rule.coach_training_location_id,
+      pg_catalog.to_jsonb(location.updated_at) #>> '{}' as location_updated_at,
       rule.iso_weekday,
       rule.local_start_time::text,
       rule.coach_timezone
     from app.coach_availability_rules as rule
+    join app.coach_training_locations as location
+      on location.run_id = rule.run_id
+      and location.profile_id = rule.profile_id
+      and location.id = rule.coach_training_location_id
     where rule.run_id = ${actor.runId}::uuid
       and rule.profile_id = ${actor.profileId}::uuid
       and rule.status = 'active'
@@ -252,6 +276,8 @@ function isPostgresAvailabilityError(error: unknown) {
       "code" in current &&
       (current.code === "23P01" ||
         current.code === "40P01" ||
+        current.code === "22P02" ||
+        current.code === "22007" ||
         current.code === "23505" ||
         current.code === "23514" ||
         current.code === "23503" ||
@@ -293,6 +319,8 @@ export async function createOwnedCoachAvailabilityRuleRecord(
   return availabilityRuleMutation(() =>
     transaction.execute<{ rule_id: string }>(sql`
       select app.create_owned_coach_availability_rule(
+        ${input.locationId}::uuid,
+        ${input.locationUpdatedAt}::timestamptz,
         ${input.isoWeekday}::smallint,
         ${input.localStartTime}::time without time zone
       ) as rule_id
@@ -318,15 +346,13 @@ export async function replaceOwnedCoachAvailabilityRuleRecords(
   rules: readonly CoachAvailabilityRuleInput[],
   expectedRules: readonly CoachAvailabilityRuleInput[],
 ) {
-  const requestedRuleKeys = JSON.stringify(rules.map(coachAvailabilityRuleKey));
-  const expectedRuleKeys = JSON.stringify(
-    expectedRules.map(coachAvailabilityRuleKey),
-  );
+  const requestedRuleSet = JSON.stringify(rules);
+  const expectedRuleSet = JSON.stringify(expectedRules);
   try {
     const rows = await transaction.execute<{ rule_count: number }>(sql`
       select app.replace_owned_coach_availability_rules(
-        ${requestedRuleKeys}::jsonb,
-        ${expectedRuleKeys}::jsonb
+        ${requestedRuleSet}::jsonb,
+        ${expectedRuleSet}::jsonb
       ) as rule_count
     `);
     const ruleCount = Number(rows[0]?.rule_count);

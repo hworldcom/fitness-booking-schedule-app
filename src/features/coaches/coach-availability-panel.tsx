@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import type { CoachAvailabilityActionState } from "@/app/coach/actions";
 import {
-  coachAvailabilityRuleKey,
+  coachAvailabilityCellKey,
+  type CoachAvailabilityRuleInput,
   type CoachAvailabilityIsoWeekday,
   type CoachProjection,
   type OwnedCoachAvailabilityRule,
@@ -55,11 +56,20 @@ function scheduleRuleKey(
   isoWeekday: CoachAvailabilityIsoWeekday,
   localStartTime: string,
 ) {
-  return coachAvailabilityRuleKey({ isoWeekday, localStartTime });
+  return coachAvailabilityCellKey({ isoWeekday, localStartTime });
 }
 
-function serializeRuleKeys(ruleKeys: ReadonlySet<string>) {
-  return JSON.stringify(Array.from(ruleKeys).sort());
+function serializeRuleAssignments(
+  assignments: ReadonlyMap<string, CoachAvailabilityRuleInput>,
+) {
+  return JSON.stringify(
+    Array.from(assignments.values()).toSorted(
+      (left, right) =>
+        left.isoWeekday - right.isoWeekday ||
+        left.localStartTime.localeCompare(right.localStartTime) ||
+        left.locationId.localeCompare(right.locationId),
+    ),
+  );
 }
 
 function slotDateTime(slot: OwnedCoachAvailabilitySlot) {
@@ -147,27 +157,56 @@ function WorkingWeekEditor({
   rules: readonly OwnedCoachAvailabilityRule[];
   saveRuleSetAction: CoachAvailabilityRuleSetAction;
 }) {
-  const initialRuleKeys = rules.map(coachAvailabilityRuleKey);
-  const [savedRuleKeys, setSavedRuleKeys] = useState(
-    () => new Set(initialRuleKeys),
+  const primaryLocation = coach.locations.find(
+    (location) => location.id === coach.primaryLocationId,
   );
-  const [draftRuleKeys, setDraftRuleKeys] = useState(
-    () => new Set(initialRuleKeys),
-  );
+  if (!primaryLocation) {
+    throw new Error("The coach primary training location is unavailable.");
+  }
+  const currentPrimaryLocation = primaryLocation;
+  const initialAssignments = () =>
+    new Map(
+      rules.map((rule) => [
+        coachAvailabilityCellKey(rule),
+        Object.freeze({
+          locationId: rule.locationId,
+          locationUpdatedAt: rule.locationUpdatedAt,
+          isoWeekday: rule.isoWeekday,
+          localStartTime: rule.localStartTime,
+        }),
+      ]),
+    );
+  const [savedAssignments, setSavedAssignments] = useState(initialAssignments);
+  const [draftAssignments, setDraftAssignments] = useState(initialAssignments);
   const [state, setState] = useState(INITIAL_COACH_AVAILABILITY_ACTION_STATE);
   const [pending, startTransition] = useTransition();
   const [mobileDay, setMobileDay] = useState<CoachAvailabilityIsoWeekday>(
     rules[0]?.isoWeekday ?? 1,
   );
-  const expectedRules = serializeRuleKeys(savedRuleKeys);
-  const selectedRules = serializeRuleKeys(draftRuleKeys);
+  const expectedRules = serializeRuleAssignments(savedAssignments);
+  const selectedRules = serializeRuleAssignments(draftAssignments);
   const dirty = expectedRules !== selectedRules;
 
-  function toggleRule(ruleKey: string) {
-    setDraftRuleKeys((current) => {
-      const next = new Set(current);
-      if (next.has(ruleKey)) next.delete(ruleKey);
-      else next.add(ruleKey);
+  function toggleRule(
+    isoWeekday: CoachAvailabilityIsoWeekday,
+    localStartTime: string,
+  ) {
+    const cellKey = scheduleRuleKey(isoWeekday, localStartTime);
+    setDraftAssignments((current) => {
+      const next = new Map(current);
+      if (next.has(cellKey)) {
+        next.delete(cellKey);
+      } else {
+        next.set(
+          cellKey,
+          Object.freeze({
+            locationId: currentPrimaryLocation.id,
+            locationUpdatedAt: currentPrimaryLocation.updatedAt,
+            isoWeekday,
+            localStartTime,
+          }),
+        );
+      }
       return next;
     });
     if (state.status === "saved") {
@@ -179,7 +218,7 @@ function WorkingWeekEditor({
     event.preventDefault();
     if (!dirty || pending) return;
     const formData = new FormData(event.currentTarget);
-    const savedDraft = new Set(draftRuleKeys);
+    const savedDraft = new Map(draftAssignments);
     setState(INITIAL_COACH_AVAILABILITY_ACTION_STATE);
     startTransition(async () => {
       try {
@@ -189,7 +228,7 @@ function WorkingWeekEditor({
         );
         setState(nextState);
         if (nextState.status === "saved") {
-          setSavedRuleKeys(savedDraft);
+          setSavedAssignments(savedDraft);
         }
       } catch {
         setState({
@@ -214,8 +253,8 @@ function WorkingWeekEditor({
           </p>
         </div>
         <span className="coach-slot-count">
-          {draftRuleKeys.size} selected hour
-          {draftRuleKeys.size === 1 ? "" : "s"}
+          {draftAssignments.size} selected hour
+          {draftAssignments.size === 1 ? "" : "s"}
           {dirty ? " · Unsaved" : ""}
         </span>
       </div>
@@ -231,7 +270,7 @@ function WorkingWeekEditor({
         </span>
         <MapPin size={18} aria-hidden="true" />
         <span>
-          <strong>{coach.gymName ?? "Independent training place"}</strong>
+          <strong>{currentPrimaryLocation.publicName}</strong>
           <small>
             New dated times copy {coach.location.label}; later profile edits do
             not move existing classes.
@@ -269,8 +308,8 @@ function WorkingWeekEditor({
             }
           >
             {WEEKDAYS.map((day) => {
-              const selectedCount = Array.from(draftRuleKeys).filter((key) =>
-                key.startsWith(`${day.isoWeekday}|`),
+              const selectedCount = Array.from(draftAssignments.keys()).filter(
+                (key) => key.startsWith(`${day.isoWeekday}|`),
               ).length;
               return (
                 <option key={day.isoWeekday} value={day.isoWeekday}>
@@ -300,8 +339,8 @@ function WorkingWeekEditor({
             </div>
           ))}
           {WEEKDAYS.map((day, dayIndex) => {
-            const selectedCount = Array.from(draftRuleKeys).filter((key) =>
-              key.startsWith(`${day.isoWeekday}|`),
+            const selectedCount = Array.from(draftAssignments.keys()).filter(
+              (key) => key.startsWith(`${day.isoWeekday}|`),
             ).length;
             return (
               <section
@@ -328,14 +367,12 @@ function WorkingWeekEditor({
                       <ScheduleCell
                         weekday={day.long}
                         localStartTime={localStartTime}
-                        selected={draftRuleKeys.has(
+                        selected={draftAssignments.has(
                           scheduleRuleKey(day.isoWeekday, localStartTime),
                         )}
                         pending={pending}
                         onToggle={() =>
-                          toggleRule(
-                            scheduleRuleKey(day.isoWeekday, localStartTime),
-                          )
+                          toggleRule(day.isoWeekday, localStartTime)
                         }
                         gridColumn={dayIndex + 2}
                         gridRow={hourIndex + 2}
@@ -397,9 +434,7 @@ function UpcomingOccurrences({
               <div>
                 <MapPin size={16} aria-hidden="true" />
                 <span>
-                  <strong>
-                    {slot.location.gymName ?? "Independent training place"}
-                  </strong>
+                  <strong>{slot.location.name}</strong>
                   <small>{slot.location.label}</small>
                 </span>
               </div>

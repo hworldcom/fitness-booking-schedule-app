@@ -79,7 +79,7 @@ select ok(
 select ok(
   has_function_privilege(
     'app_runtime',
-    'app.create_owned_coach_availability_rule(smallint,time without time zone)',
+    'app.create_owned_coach_availability_rule(uuid,timestamp with time zone,smallint,time without time zone)',
     'execute'
   )
   and has_function_privilege(
@@ -117,7 +117,7 @@ select ok(
 select ok(
   not has_function_privilege(
     'anon',
-    'app.create_owned_coach_availability_rule(smallint,time without time zone)',
+    'app.create_owned_coach_availability_rule(uuid,timestamp with time zone,smallint,time without time zone)',
     'execute'
   )
   and not has_function_privilege(
@@ -141,12 +141,14 @@ select is(
       and indexname in (
         'coach_availability_rules_active_time_key',
         'coach_availability_rules_owner_lookup_idx',
+        'coach_availability_rules_location_lookup_idx',
         'coach_availability_slots_rule_occurrence_key',
-        'coach_availability_slots_rule_status_idx'
+        'coach_availability_slots_rule_status_idx',
+        'coach_availability_slots_training_location_idx'
       )
   ),
-  4,
-  'rule uniqueness, owner reads and occurrence lookups are indexed'
+  6,
+  'rule uniqueness plus owner, location and occurrence lookups are indexed'
 );
 
 select is(
@@ -161,8 +163,8 @@ select is(
       and table_record.relname = 'coach_availability_rules'
       and constraint_record.contype = 'c'
   ),
-  5,
-  'weekday, hour, timezone, lifecycle and removed-state checks exist'
+  6,
+  'weekday, hour, timezone, lifecycle, removal and active-location checks exist'
 );
 
 select is(

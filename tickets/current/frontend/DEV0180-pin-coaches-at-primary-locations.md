@@ -2,10 +2,10 @@
 
 - Status: Draft
 - Created: 2026-10-09
-- Last updated: 2026-10-09
+- Last updated: 2026-10-10
 - Milestone: Scheduling-only multi-location follow-up
 - Coordination: [COR0014 — Multi-location coach scheduling](../organisatory/COR0014-multi-location-coach-scheduling.md)
-- Related records: depends on completed [DEV0175 — Adopt the multi-location coach scheduling contract](../../archive/organisatory/DEV0175-adopt-multi-location-coach-scheduling-contract.md), [DEV0176 — Persist coach training locations](../../archive/backend/DEV0176-persist-coach-training-locations.md) and [DEV0177 — Bind availability to training locations](../backend/DEV0177-bind-availability-to-training-locations.md); consumes profile presentation from [DEV0178 — Manage coach training locations](DEV0178-manage-coach-training-locations.md) and map infrastructure from [DEV0174 — Decouple location services](../../archive/frontend/DEV0174-decouple-location-services.md)
+- Related records: depends on completed [DEV0175 — Adopt the multi-location coach scheduling contract](../../archive/organisatory/DEV0175-adopt-multi-location-coach-scheduling-contract.md), [DEV0176 — Persist coach training locations](../../archive/backend/DEV0176-persist-coach-training-locations.md) and [DEV0177 — Bind availability to training locations](../../archive/backend/DEV0177-bind-availability-to-training-locations.md); consumes profile presentation from [DEV0178 — Manage coach training locations](DEV0178-manage-coach-training-locations.md) and map infrastructure from [DEV0174 — Decouple location services](../../archive/frontend/DEV0174-decouple-location-services.md)
 
 ## Objective and context
 

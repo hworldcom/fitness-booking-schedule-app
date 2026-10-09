@@ -21,7 +21,14 @@ import {
   updateOwnedCoachAvailabilityRecord,
   withdrawOwnedCoachAvailabilityRecord,
 } from "@/server/db/coaches/availability-repository";
-import { upsertOwnedCoachProfileRecord } from "@/server/db/coaches/repository";
+import {
+  createOwnedCoachTrainingLocationRecord,
+  currentOwnedCoachProfileRecord,
+  deactivateOwnedCoachTrainingLocationRecord,
+  setOwnedCoachPrimaryLocationRecord,
+  updateOwnedCoachTrainingLocationRecord,
+  upsertOwnedCoachProfileRecord,
+} from "@/server/db/coaches/repository";
 import { submitOwnedCoachApplicationRecord } from "@/server/db/coaches/application-repository";
 import { enrollApplicationProfile } from "@/server/db/identity/repository";
 
@@ -49,6 +56,8 @@ const admin = postgres(adminConnectionString, {
 
 let firstActor: AuthorizedActor;
 let secondActor: AuthorizedActor;
+let secondPrimaryLocationId: string;
+let secondPrimaryLocationUpdatedAt: string;
 
 function actorFromRecord(
   authUserId: string,
@@ -201,6 +210,8 @@ function recurringRuleInput(daysFromNow: number, localStartTime: string) {
   const [year, month, day] = localDate.split("-").map(Number);
   const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
   return Object.freeze({
+    locationId: secondPrimaryLocationId,
+    locationUpdatedAt: secondPrimaryLocationUpdatedAt,
     isoWeekday: (weekday === 0 ? 7 : weekday) as 1 | 2 | 3 | 4 | 5 | 6 | 7,
     localStartTime,
   });
@@ -269,6 +280,21 @@ before(async () => {
   await withActorDatabaseContext(secondActor, (transaction) =>
     upsertOwnedCoachProfileRecord(transaction, secondProfile),
   );
+  const [secondPrimaryLocation] = await admin<
+    { id: string; updated_at: string }[]
+  >`
+    select
+      id::text,
+      pg_catalog.to_jsonb(updated_at) #>> '{}' as updated_at
+    from app.coach_training_locations
+    where run_id = ${secondActor.runId}::uuid
+      and profile_id = ${secondActor.profileId}::uuid
+      and status = 'active'
+      and is_primary
+  `;
+  assert.ok(secondPrimaryLocation);
+  secondPrimaryLocationId = secondPrimaryLocation.id;
+  secondPrimaryLocationUpdatedAt = secondPrimaryLocation.updated_at;
 });
 
 after(async () => {
@@ -551,7 +577,7 @@ test("weekly rules materialize once, preserve snapshots and remove only open occ
       createOwnedCoachAvailabilityRuleRecord(transaction, openRuleInput),
   );
 
-  let rules = await withActorDatabaseContext(secondActor, (transaction) =>
+  const rules = await withActorDatabaseContext(secondActor, (transaction) =>
     currentOwnedCoachAvailabilityRuleRecords(transaction, secondActor),
   );
   assert.deepEqual(
@@ -600,35 +626,6 @@ test("weekly rules materialize once, preserve snapshots and remove only open occ
   `;
   assert.equal(occurrenceCounts.length, 3);
   assert.ok(occurrenceCounts.every((row) => row.occurrence_count === 1));
-
-  const movedProfile: CoachProfileInput = Object.freeze({
-    ...secondProfile,
-    timezone: "UTC",
-    independentLocation: Object.freeze({
-      label: "Mauerpark — west entrance",
-      latitude: 52.543308,
-      longitude: 13.402481,
-      source: "manual",
-      provider: null,
-    }),
-  });
-  await withActorDatabaseContext(secondActor, (transaction) =>
-    upsertOwnedCoachProfileRecord(transaction, movedProfile),
-  );
-  rules = await withActorDatabaseContext(secondActor, (transaction) =>
-    currentOwnedCoachAvailabilityRuleRecords(transaction, secondActor),
-  );
-  assert.ok(rules.every((rule) => rule.coachTimezone === "Europe/Berlin"));
-  const stable = await withActorDatabaseContext(secondActor, (transaction) =>
-    currentOwnedCoachAvailabilityRecords(transaction, secondActor),
-  );
-  assert.ok(
-    stable
-      .filter((slot) => slot.recurrenceRuleId !== null)
-      .every(
-        (slot) => slot.location.label === "Tempelhofer Feld — north entrance",
-      ),
-  );
 
   await assert.rejects(
     withActorDatabaseContext(firstActor, (transaction) =>
@@ -740,9 +737,95 @@ test("weekly rules materialize once, preserve snapshots and remove only open occ
     ),
     [],
   );
+});
+
+test("timezone changes regenerate open occurrences without rewriting their snapshots", async () => {
+  const input = recurringRuleInput(4, "15:00");
+  const ruleId = await withActorDatabaseContext(secondActor, (transaction) =>
+    createOwnedCoachAvailabilityRuleRecord(transaction, input),
+  );
+  const beforeChange = await withActorDatabaseContext(
+    secondActor,
+    (transaction) =>
+      currentOwnedCoachAvailabilityRecords(transaction, secondActor),
+  );
+  const originalOccurrence = beforeChange.find(
+    (slot) => slot.recurrenceRuleId === ruleId,
+  );
+  assert.ok(originalOccurrence);
+
+  const movedProfile: CoachProfileInput = Object.freeze({
+    ...secondProfile,
+    timezone: "UTC",
+    independentLocation: Object.freeze({
+      label: "Mauerpark — west entrance",
+      latitude: 52.543308,
+      longitude: 13.402481,
+      source: "manual",
+      provider: null,
+    }),
+  });
+  await withActorDatabaseContext(secondActor, (transaction) =>
+    upsertOwnedCoachProfileRecord(transaction, movedProfile),
+  );
+
+  const [historicalOccurrence] = await admin<
+    {
+      status: string;
+      coach_timezone: string;
+      public_location_label: string;
+    }[]
+  >`
+    select status, coach_timezone, public_location_label
+    from app.coach_availability_slots
+    where id = ${originalOccurrence.id}::uuid
+  `;
+  assert.deepEqual(historicalOccurrence, {
+    status: "withdrawn",
+    coach_timezone: "Europe/Berlin",
+    public_location_label: "Tempelhofer Feld — north entrance",
+  });
+
+  const rules = await withActorDatabaseContext(secondActor, (transaction) =>
+    currentOwnedCoachAvailabilityRuleRecords(transaction, secondActor),
+  );
+  assert.equal(rules.length, 1);
+  assert.equal(rules[0]?.coachTimezone, "UTC");
+  const afterChange = await withActorDatabaseContext(
+    secondActor,
+    (transaction) =>
+      currentOwnedCoachAvailabilityRecords(transaction, secondActor),
+  );
+  const replacementOccurrence = afterChange.find(
+    (slot) => slot.recurrenceRuleId === rules[0]?.id,
+  );
+  assert.ok(replacementOccurrence);
+  assert.notEqual(replacementOccurrence.id, originalOccurrence.id);
+  assert.notEqual(replacementOccurrence.recurrenceRuleId, ruleId);
+  assert.equal(replacementOccurrence.coachTimezone, "UTC");
+  assert.equal(
+    replacementOccurrence.location.label,
+    "Mauerpark — west entrance",
+  );
+
+  await withActorDatabaseContext(secondActor, (transaction) =>
+    removeOwnedCoachAvailabilityRuleRecord(transaction, rules[0]!.id),
+  );
   await withActorDatabaseContext(secondActor, (transaction) =>
     upsertOwnedCoachProfileRecord(transaction, secondProfile),
   );
+  const [restoredPrimary] = await withActorDatabaseContext(
+    secondActor,
+    async (transaction) => {
+      const coach = await currentOwnedCoachProfileRecord(
+        transaction,
+        secondActor,
+      );
+      return coach?.locations.filter((location) => location.isPrimary) ?? [];
+    },
+  );
+  assert.ok(restoredPrimary);
+  secondPrimaryLocationUpdatedAt = restoredPrimary.updatedAt;
 });
 
 test("complete working-week saves are atomic and reject stale baselines", async () => {
@@ -888,6 +971,8 @@ test("recurring rules reject invalid hours and omit ambiguous local times", asyn
     await assert.rejects(
       withActorDatabaseContext(secondActor, (transaction) =>
         createOwnedCoachAvailabilityRuleRecord(transaction, {
+          locationId: secondPrimaryLocationId,
+          locationUpdatedAt: secondPrimaryLocationUpdatedAt,
           isoWeekday: 1,
           localStartTime,
         }),
@@ -951,4 +1036,450 @@ test("a recurring occurrence cannot overlap retained explicit inventory", async 
   await withActorDatabaseContext(secondActor, (transaction) =>
     withdrawOwnedCoachAvailabilityRecord(transaction, explicitSlotId),
   );
+});
+
+test("location-aware rules preserve assignments, snapshots and deactivation history", async () => {
+  const initialCoach = await withActorDatabaseContext(
+    secondActor,
+    (transaction) => currentOwnedCoachProfileRecord(transaction, secondActor),
+  );
+  assert.ok(initialCoach);
+  const initialPrimary = initialCoach.locations.find(
+    (location) => location.id === initialCoach.primaryLocationId,
+  );
+  assert.ok(initialPrimary);
+
+  const secondaryId = await withActorDatabaseContext(
+    secondActor,
+    (transaction) =>
+      createOwnedCoachTrainingLocationRecord(transaction, {
+        kind: "independent",
+        publicName: "Riverside strength deck",
+        label: "Maybachufer 1, 12047 Berlin, Germany",
+        latitude: 52.49345,
+        longitude: 13.42842,
+        source: "manual",
+        provider: null,
+      }),
+  );
+  let coach = await withActorDatabaseContext(secondActor, (transaction) =>
+    currentOwnedCoachProfileRecord(transaction, secondActor),
+  );
+  assert.ok(coach);
+  let primary = coach.locations.find(
+    (location) => location.id === initialPrimary.id,
+  );
+  let secondary = coach.locations.find(
+    (location) => location.id === secondaryId,
+  );
+  assert.ok(primary);
+  assert.ok(secondary);
+  const primaryId = primary.id;
+  const primaryPublicName = primary.publicName;
+  const secondaryLocationId = secondary.id;
+  const initialSecondaryUpdatedAt = secondary.updatedAt;
+
+  const primaryCell = recurringRuleInput(2, "16:00");
+  const secondaryCell: CoachAvailabilityRuleInput = Object.freeze({
+    locationId: secondaryLocationId,
+    locationUpdatedAt: secondary.updatedAt,
+    isoWeekday: recurringRuleInput(3, "17:00").isoWeekday,
+    localStartTime: "17:00",
+  });
+  assert.equal(
+    await withActorDatabaseContext(secondActor, (transaction) =>
+      replaceOwnedCoachAvailabilityRuleRecords(
+        transaction,
+        [primaryCell, secondaryCell],
+        [],
+      ),
+    ),
+    2,
+  );
+
+  let rules = await withActorDatabaseContext(secondActor, (transaction) =>
+    currentOwnedCoachAvailabilityRuleRecords(transaction, secondActor),
+  );
+  assert.deepEqual(
+    rules.map((rule) => [rule.locationId, rule.localStartTime]),
+    [
+      [primaryId, "16:00"],
+      [secondaryLocationId, "17:00"],
+    ],
+  );
+  const ruleInputs = rules.map(
+    ({ locationId, locationUpdatedAt, isoWeekday, localStartTime }) =>
+      Object.freeze({
+        locationId,
+        locationUpdatedAt,
+        isoWeekday,
+        localStartTime,
+      }),
+  );
+  const occurrences = await withActorDatabaseContext(
+    secondActor,
+    (transaction) =>
+      currentOwnedCoachAvailabilityRecords(transaction, secondActor),
+  );
+  const primaryRule = rules.find((rule) => rule.locationId === primaryId);
+  const secondaryRule = rules.find(
+    (rule) => rule.locationId === secondaryLocationId,
+  );
+  assert.ok(primaryRule);
+  assert.ok(secondaryRule);
+  const primaryOccurrence = occurrences.find(
+    (slot) => slot.recurrenceRuleId === primaryRule.id,
+  );
+  const secondaryOccurrence = occurrences.find(
+    (slot) => slot.recurrenceRuleId === secondaryRule.id,
+  );
+  assert.ok(primaryOccurrence);
+  assert.ok(secondaryOccurrence);
+  assert.equal(primaryOccurrence.location.trainingLocationId, primaryId);
+  assert.equal(primaryOccurrence.location.name, primaryPublicName);
+  assert.equal(
+    secondaryOccurrence.location.trainingLocationId,
+    secondaryLocationId,
+  );
+  assert.equal(secondaryOccurrence.location.name, secondary.publicName);
+  assert.equal(
+    secondaryOccurrence.location.label,
+    "Maybachufer 1, 12047 Berlin, Germany",
+  );
+
+  const firstCoach = await withActorDatabaseContext(firstActor, (transaction) =>
+    currentOwnedCoachProfileRecord(transaction, firstActor),
+  );
+  assert.ok(firstCoach);
+  const crossOwnerLocation = firstCoach.locations.find(
+    (location) => location.id === firstCoach.primaryLocationId,
+  );
+  assert.ok(crossOwnerLocation);
+  const unauthorizedDraft = [
+    ...ruleInputs,
+    Object.freeze({
+      locationId: crossOwnerLocation.id,
+      locationUpdatedAt: crossOwnerLocation.updatedAt,
+      isoWeekday: recurringRuleInput(4, "18:00").isoWeekday,
+      localStartTime: "18:00",
+    }),
+  ];
+  assert.equal(
+    await withActorDatabaseContext(secondActor, (transaction) =>
+      replaceOwnedCoachAvailabilityRuleRecords(
+        transaction,
+        unauthorizedDraft,
+        ruleInputs,
+      ),
+    ),
+    -1,
+  );
+  assert.equal(
+    await withActorDatabaseContext(secondActor, (transaction) =>
+      replaceOwnedCoachAvailabilityRuleRecords(
+        transaction,
+        [
+          primaryCell,
+          Object.freeze({
+            ...primaryCell,
+            locationId: secondaryLocationId,
+            locationUpdatedAt: initialSecondaryUpdatedAt,
+          }),
+        ],
+        ruleInputs,
+      ),
+    ),
+    -1,
+  );
+
+  const staleSecondaryUpdatedAt = secondary.updatedAt;
+  const secondaryUpdatedAt = secondary.updatedAt;
+  await withActorDatabaseContext(secondActor, (transaction) =>
+    updateOwnedCoachTrainingLocationRecord(
+      transaction,
+      secondaryLocationId,
+      secondaryUpdatedAt,
+      {
+        kind: "independent",
+        publicName: "Updated riverside deck",
+        label: "Maybachufer 2, 12047 Berlin, Germany",
+        latitude: 52.49355,
+        longitude: 13.42852,
+        source: "manual",
+        provider: null,
+      },
+    ),
+  );
+  const [unchangedSecondarySnapshot] = await admin<
+    {
+      training_location_name: string;
+      public_location_label: string;
+      latitude: string;
+      longitude: string;
+    }[]
+  >`
+    select
+      training_location_name,
+      public_location_label,
+      latitude,
+      longitude
+    from app.coach_availability_slots
+    where id = ${secondaryOccurrence.id}::uuid
+  `;
+  assert.deepEqual(unchangedSecondarySnapshot, {
+    training_location_name: "Riverside strength deck",
+    public_location_label: "Maybachufer 1, 12047 Berlin, Germany",
+    latitude: "52.493450",
+    longitude: "13.428420",
+  });
+
+  rules = await withActorDatabaseContext(secondActor, (transaction) =>
+    currentOwnedCoachAvailabilityRuleRecords(transaction, secondActor),
+  );
+  const currentRuleInputs = rules.map(
+    ({ locationId, locationUpdatedAt, isoWeekday, localStartTime }) =>
+      Object.freeze({
+        locationId,
+        locationUpdatedAt,
+        isoWeekday,
+        localStartTime,
+      }),
+  );
+  const staleRequested = currentRuleInputs.map((rule) =>
+    rule.locationId === secondaryLocationId
+      ? Object.freeze({
+          ...rule,
+          locationUpdatedAt: staleSecondaryUpdatedAt,
+        })
+      : rule,
+  );
+  assert.equal(
+    await withActorDatabaseContext(secondActor, (transaction) =>
+      replaceOwnedCoachAvailabilityRuleRecords(
+        transaction,
+        staleRequested,
+        currentRuleInputs,
+      ),
+    ),
+    -1,
+  );
+
+  coach = await withActorDatabaseContext(secondActor, (transaction) =>
+    currentOwnedCoachProfileRecord(transaction, secondActor),
+  );
+  assert.ok(coach);
+  primary = coach.locations.find((location) => location.id === primaryId);
+  secondary = coach.locations.find(
+    (location) => location.id === secondaryLocationId,
+  );
+  assert.ok(primary);
+  assert.ok(secondary);
+  const currentPrimaryUpdatedAt = primary.updatedAt;
+  const currentSecondaryUpdatedAt = secondary.updatedAt;
+  await withActorDatabaseContext(secondActor, (transaction) =>
+    setOwnedCoachPrimaryLocationRecord(
+      transaction,
+      secondaryLocationId,
+      currentSecondaryUpdatedAt,
+      primaryId,
+      currentPrimaryUpdatedAt,
+    ),
+  );
+  rules = await withActorDatabaseContext(secondActor, (transaction) =>
+    currentOwnedCoachAvailabilityRuleRecords(transaction, secondActor),
+  );
+  assert.deepEqual(
+    new Set(rules.map((rule) => rule.locationId)),
+    new Set([primaryId, secondaryLocationId]),
+  );
+
+  await admin.begin(async (transaction) => {
+    await transaction`
+      select pg_catalog.set_config('app.coach_booking_management', 'on', true)
+    `;
+    await transaction`
+      update app.coach_availability_slots
+      set status = 'booked'
+      where id = ${primaryOccurrence.id}::uuid
+    `;
+  });
+  coach = await withActorDatabaseContext(secondActor, (transaction) =>
+    currentOwnedCoachProfileRecord(transaction, secondActor),
+  );
+  assert.ok(coach);
+  primary = coach.locations.find((location) => location.id === primaryId);
+  secondary = coach.locations.find(
+    (location) => location.id === secondaryLocationId,
+  );
+  assert.ok(primary);
+  assert.ok(secondary);
+  assert.equal(coach.primaryLocationId, secondaryLocationId);
+  await withActorDatabaseContext(secondActor, (transaction) =>
+    deactivateOwnedCoachTrainingLocationRecord(
+      transaction,
+      primaryId,
+      primary.updatedAt,
+    ),
+  );
+
+  rules = await withActorDatabaseContext(secondActor, (transaction) =>
+    currentOwnedCoachAvailabilityRuleRecords(transaction, secondActor),
+  );
+  assert.equal(rules.length, 1);
+  assert.equal(rules[0]?.locationId, secondaryLocationId);
+  const [preservedBooked, preservedSecondary] = await admin<
+    {
+      id: string;
+      status: string;
+      coach_training_location_id: string;
+      training_location_name: string;
+    }[]
+  >`
+    select
+      id::text,
+      status,
+      coach_training_location_id::text,
+      training_location_name
+    from app.coach_availability_slots
+    where id in (
+      ${primaryOccurrence.id}::uuid,
+      ${secondaryOccurrence.id}::uuid
+    )
+    order by id = ${primaryOccurrence.id}::uuid desc
+  `;
+  assert.deepEqual(preservedBooked, {
+    id: primaryOccurrence.id,
+    status: "booked",
+    coach_training_location_id: primaryId,
+    training_location_name: primaryOccurrence.location.name,
+  });
+  assert.deepEqual(preservedSecondary, {
+    id: secondaryOccurrence.id,
+    status: "open",
+    coach_training_location_id: secondaryLocationId,
+    training_location_name: "Riverside strength deck",
+  });
+
+  const remainingRules = rules.map(
+    ({ locationId, locationUpdatedAt, isoWeekday, localStartTime }) =>
+      Object.freeze({
+        locationId,
+        locationUpdatedAt,
+        isoWeekday,
+        localStartTime,
+      }),
+  );
+  assert.equal(
+    await withActorDatabaseContext(secondActor, (transaction) =>
+      replaceOwnedCoachAvailabilityRuleRecords(
+        transaction,
+        [
+          ...remainingRules,
+          Object.freeze({
+            locationId: primaryId,
+            locationUpdatedAt: primary.updatedAt,
+            isoWeekday: recurringRuleInput(5, "19:00").isoWeekday,
+            localStartTime: "19:00",
+          }),
+        ],
+        remainingRules,
+      ),
+    ),
+    -1,
+  );
+  assert.equal(
+    await withActorDatabaseContext(secondActor, (transaction) =>
+      replaceOwnedCoachAvailabilityRuleRecords(transaction, [], remainingRules),
+    ),
+    0,
+  );
+
+  const raceLocationId = await withActorDatabaseContext(
+    secondActor,
+    (transaction) =>
+      createOwnedCoachTrainingLocationRecord(transaction, {
+        kind: "independent",
+        publicName: "Concurrent save venue",
+        label: "Görlitzer Park, 10997 Berlin, Germany",
+        latitude: 52.49654,
+        longitude: 13.43779,
+        source: "manual",
+        provider: null,
+      }),
+  );
+  coach = await withActorDatabaseContext(secondActor, (transaction) =>
+    currentOwnedCoachProfileRecord(transaction, secondActor),
+  );
+  assert.ok(coach);
+  const raceLocation = coach.locations.find(
+    (location) => location.id === raceLocationId,
+  );
+  assert.ok(raceLocation);
+  const raceLocationUpdatedAt = raceLocation.updatedAt;
+  const raceRule: CoachAvailabilityRuleInput = Object.freeze({
+    locationId: raceLocationId,
+    locationUpdatedAt: raceLocationUpdatedAt,
+    isoWeekday: recurringRuleInput(6, "20:00").isoWeekday,
+    localStartTime: "20:00",
+  });
+  const [saveOutcome, updateOutcome] = await Promise.all([
+    withActorDatabaseContext(secondActor, (transaction) =>
+      replaceOwnedCoachAvailabilityRuleRecords(transaction, [raceRule], []),
+    ),
+    withActorDatabaseContext(secondActor, (transaction) =>
+      updateOwnedCoachTrainingLocationRecord(
+        transaction,
+        raceLocationId,
+        raceLocationUpdatedAt,
+        {
+          kind: "independent",
+          publicName: "Concurrent save venue updated",
+          label: "Görlitzer Park north gate, 10997 Berlin, Germany",
+          latitude: 52.49664,
+          longitude: 13.43789,
+          source: "manual",
+          provider: null,
+        },
+      ),
+    ),
+  ]);
+  assert.ok(saveOutcome === -1 || saveOutcome === 1);
+  assert.match(updateOutcome, /^\d{4}-\d{2}-\d{2}/);
+  const raceRules = await withActorDatabaseContext(secondActor, (transaction) =>
+    currentOwnedCoachAvailabilityRuleRecords(transaction, secondActor),
+  );
+  assert.equal(raceRules.length, saveOutcome === 1 ? 1 : 0);
+  if (saveOutcome === 1) {
+    assert.equal(raceRules[0]?.locationId, raceLocationId);
+    assert.equal(raceRules[0]?.locationUpdatedAt, updateOutcome);
+    const raceOccurrences = await withActorDatabaseContext(
+      secondActor,
+      (transaction) =>
+        currentOwnedCoachAvailabilityRecords(transaction, secondActor),
+    );
+    const raceOccurrence = raceOccurrences.find(
+      (slot) => slot.recurrenceRuleId === raceRules[0]?.id,
+    );
+    assert.ok(raceOccurrence);
+    assert.equal(raceOccurrence.location.name, "Concurrent save venue");
+    const expectedRaceRules = raceRules.map(
+      ({ locationId, locationUpdatedAt, isoWeekday, localStartTime }) =>
+        Object.freeze({
+          locationId,
+          locationUpdatedAt,
+          isoWeekday,
+          localStartTime,
+        }),
+    );
+    assert.equal(
+      await withActorDatabaseContext(secondActor, (transaction) =>
+        replaceOwnedCoachAvailabilityRuleRecords(
+          transaction,
+          [],
+          expectedRaceRules,
+        ),
+      ),
+      0,
+    );
+  }
 });

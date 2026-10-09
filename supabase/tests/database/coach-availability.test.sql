@@ -147,8 +147,8 @@ select is(
       and table_record.relname = 'coach_availability_slots'
       and constraint_record.contype = 'c'
   ),
-  15,
-  'slot time, lifecycle and location checks exist'
+  16,
+  'slot time, lifecycle, location and location-name checks exist'
 );
 
 select is(

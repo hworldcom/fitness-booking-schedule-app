@@ -204,8 +204,7 @@ export function CoachMarketplace(props: CoachMarketplaceProps) {
                 <span>
                   <strong>{slotDay(slot)}</strong>
                   <small>
-                    {slotTime(slot)} ·{" "}
-                    {slot.location.gymName ?? "Independent place"}
+                    {slotTime(slot)} · {slot.location.name}
                   </small>
                 </span>
                 {props.actor.status === "authorized" ? (

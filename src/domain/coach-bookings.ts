@@ -2,6 +2,8 @@ export type CoachBookingStatus = "confirmed" | "cancelled" | "completed";
 export type BookingCancellationActor = "client" | "coach";
 
 export type BookingLocationSnapshot = Readonly<{
+  trainingLocationId: string | null;
+  name: string;
   kind: "gym" | "independent";
   gymName: string | null;
   publicLabel: string;

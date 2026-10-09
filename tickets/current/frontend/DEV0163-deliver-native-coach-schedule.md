@@ -2,10 +2,10 @@
 
 - Status: Draft
 - Created: 2026-10-08
-- Last updated: 2026-10-09
+- Last updated: 2026-10-10
 - Milestone: Native iOS coach scheduling
 - Coordination: [COR0013 — Native iOS application](../organisatory/COR0013-native-ios-application.md)
-- Related records: depends on [DEV0160 — Expose the mobile scheduling API](../backend/DEV0160-expose-mobile-scheduling-api.md), [DEV0161 — Establish the Expo iOS foundation](DEV0161-establish-expo-ios-foundation.md) and the shared backend contract from [DEV0177 — Bind availability to training locations](../backend/DEV0177-bind-availability-to-training-locations.md); preserves recurring availability from [DEV0114](../../archive/backend/DEV0114-persist-recurring-coach-availability.md), schedule presentation from [DEV0115](../../archive/frontend/DEV0115-add-coach-schedule-calendar.md) and atomic weekly save from [DEV0146](../../archive/frontend/DEV0146-save-weekly-schedule-in-one-action.md)
+- Related records: depends on [DEV0160 — Expose the mobile scheduling API](../backend/DEV0160-expose-mobile-scheduling-api.md), [DEV0161 — Establish the Expo iOS foundation](DEV0161-establish-expo-ios-foundation.md) and the completed shared backend contract from [DEV0177 — Bind availability to training locations](../../archive/backend/DEV0177-bind-availability-to-training-locations.md); preserves recurring availability from [DEV0114](../../archive/backend/DEV0114-persist-recurring-coach-availability.md), schedule presentation from [DEV0115](../../archive/frontend/DEV0115-add-coach-schedule-calendar.md) and atomic weekly save from [DEV0146](../../archive/frontend/DEV0146-save-weekly-schedule-in-one-action.md)
 
 ## Objective and context
 

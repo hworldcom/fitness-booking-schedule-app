@@ -123,6 +123,8 @@ export type CoachProjection = Readonly<{
 }>;
 
 export type CoachAvailabilityLocationSnapshot = Readonly<{
+  trainingLocationId: string | null;
+  name: string;
   kind: "gym" | "independent";
   selectedGymId: string | null;
   gymName: string | null;
@@ -151,12 +153,16 @@ export type OwnedCoachAvailabilitySlot = PublicCoachAvailabilitySlot &
 
 export type OwnedCoachAvailabilityRule = Readonly<{
   id: string;
+  locationId: string;
+  locationUpdatedAt: string;
   isoWeekday: CoachAvailabilityIsoWeekday;
   localStartTime: string;
   coachTimezone: string;
 }>;
 
 export type CoachAvailabilityRuleInput = Readonly<{
+  locationId: string;
+  locationUpdatedAt: string;
   isoWeekday: CoachAvailabilityIsoWeekday;
   localStartTime: string;
 }>;
@@ -569,13 +575,28 @@ export function validateCoachAvailabilityInput(input: {
 }
 
 export function validateCoachAvailabilityRuleInput(input: {
+  locationId?: unknown;
+  locationUpdatedAt?: unknown;
   isoWeekday?: unknown;
   localStartTime?: unknown;
 }): CoachAvailabilityRuleInputResult {
   const errors: string[] = [];
+  const locationId = normalizeSingleLine(input.locationId);
+  const locationUpdatedAt =
+    typeof input.locationUpdatedAt === "string" ? input.locationUpdatedAt : "";
   const isoWeekday = Number(input.isoWeekday);
   const localStartTime = normalizeSingleLine(input.localStartTime);
 
+  if (!isUuid(locationId)) {
+    errors.push("Choose a valid training location.");
+  }
+  if (
+    locationUpdatedAt.length < 20 ||
+    locationUpdatedAt.length > 40 ||
+    /[\u0000-\u001f\u007f]/u.test(locationUpdatedAt)
+  ) {
+    errors.push("Refresh the training locations before saving the schedule.");
+  }
   if (!Number.isInteger(isoWeekday) || isoWeekday < 1 || isoWeekday > 7) {
     errors.push("Choose a weekday from Monday through Sunday.");
   }
@@ -592,6 +613,8 @@ export function validateCoachAvailabilityRuleInput(input: {
   return Object.freeze({
     valid: true,
     value: Object.freeze({
+      locationId,
+      locationUpdatedAt,
       isoWeekday: isoWeekday as CoachAvailabilityIsoWeekday,
       localStartTime,
     }),
@@ -599,12 +622,21 @@ export function validateCoachAvailabilityRuleInput(input: {
 }
 
 const MAX_COACH_AVAILABILITY_RULES = 7 * 23;
-const MAX_COACH_AVAILABILITY_RULE_SET_PAYLOAD_LENGTH = 4096;
+const MAX_COACH_AVAILABILITY_RULE_SET_PAYLOAD_BYTES = 32 * 1024;
 
-export function coachAvailabilityRuleKey(
+export function coachAvailabilityCellKey(
   rule: Pick<CoachAvailabilityRuleInput, "isoWeekday" | "localStartTime">,
 ) {
   return `${rule.isoWeekday}|${rule.localStartTime}`;
+}
+
+export function coachAvailabilityRuleKey(
+  rule: Pick<
+    CoachAvailabilityRuleInput,
+    "locationId" | "isoWeekday" | "localStartTime"
+  >,
+) {
+  return `${rule.locationId}|${coachAvailabilityCellKey(rule)}`;
 }
 
 export function validateCoachAvailabilityRuleSetInput(
@@ -612,7 +644,8 @@ export function validateCoachAvailabilityRuleSetInput(
 ): CoachAvailabilityRuleSetInputResult {
   if (
     typeof input !== "string" ||
-    input.length > MAX_COACH_AVAILABILITY_RULE_SET_PAYLOAD_LENGTH
+    new TextEncoder().encode(input).byteLength >
+      MAX_COACH_AVAILABILITY_RULE_SET_PAYLOAD_BYTES
   ) {
     return Object.freeze({
       valid: false,
@@ -634,25 +667,29 @@ export function validateCoachAvailabilityRuleSetInput(
   }
 
   const rules: CoachAvailabilityRuleInput[] = [];
-  const keys = new Set<string>();
+  const cellKeys = new Set<string>();
   for (const entry of parsed) {
-    const match =
-      typeof entry === "string"
-        ? /^([1-7])\|((?:[01]\d|2[0-2]):00)$/.exec(entry)
-        : null;
-    if (!match) {
+    if (
+      typeof entry !== "object" ||
+      entry === null ||
+      Object.keys(entry).toSorted().join("|") !==
+        "isoWeekday|localStartTime|locationId|locationUpdatedAt"
+    ) {
       return Object.freeze({
         valid: false,
         errors: Object.freeze(["The working-week selection is invalid."]),
       });
     }
+    const record = entry as Record<string, unknown>;
     const validation = validateCoachAvailabilityRuleInput({
-      isoWeekday: match[1],
-      localStartTime: match[2],
+      locationId: record.locationId,
+      locationUpdatedAt: record.locationUpdatedAt,
+      isoWeekday: record.isoWeekday,
+      localStartTime: record.localStartTime,
     });
     if (!validation.valid) return validation;
-    const key = coachAvailabilityRuleKey(validation.value);
-    if (keys.has(key)) {
+    const cellKey = coachAvailabilityCellKey(validation.value);
+    if (cellKeys.has(cellKey)) {
       return Object.freeze({
         valid: false,
         errors: Object.freeze([
@@ -660,14 +697,15 @@ export function validateCoachAvailabilityRuleSetInput(
         ]),
       });
     }
-    keys.add(key);
+    cellKeys.add(cellKey);
     rules.push(validation.value);
   }
 
   rules.sort(
     (left, right) =>
       left.isoWeekday - right.isoWeekday ||
-      left.localStartTime.localeCompare(right.localStartTime),
+      left.localStartTime.localeCompare(right.localStartTime) ||
+      left.locationId.localeCompare(right.locationId),
   );
   const sortedKeys = rules.map(coachAvailabilityRuleKey);
   return Object.freeze({

@@ -360,6 +360,7 @@ export const coachAvailabilityRules = app.table(
     id: uuid("id").defaultRandom().primaryKey(),
     runId: uuid("run_id").notNull(),
     profileId: uuid("profile_id").notNull(),
+    coachTrainingLocationId: uuid("coach_training_location_id"),
     isoWeekday: smallint("iso_weekday").notNull(),
     localStartTime: time("local_start_time").notNull(),
     coachTimezone: text("coach_timezone").notNull(),
@@ -375,6 +376,15 @@ export const coachAvailabilityRules = app.table(
       name: "coach_availability_rules_coach_fkey",
       columns: [table.runId, table.profileId],
       foreignColumns: [coachProfiles.runId, coachProfiles.profileId],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "coach_availability_rules_location_fkey",
+      columns: [table.runId, table.profileId, table.coachTrainingLocationId],
+      foreignColumns: [
+        coachTrainingLocations.runId,
+        coachTrainingLocations.profileId,
+        coachTrainingLocations.id,
+      ],
     }).onDelete("restrict"),
     unique("coach_availability_rules_run_profile_id_key").on(
       table.runId,
@@ -401,12 +411,25 @@ export const coachAvailabilityRules = app.table(
       "coach_availability_rules_removed_state_check",
       sql`(${table.status} = 'removed') = (${table.removedAt} is not null)`,
     ),
+    check(
+      "coach_availability_rules_active_location_check",
+      sql`${table.status} <> 'active' or ${table.coachTrainingLocationId} is not null`,
+    ),
     uniqueIndex("coach_availability_rules_active_time_key")
       .on(table.runId, table.profileId, table.isoWeekday, table.localStartTime)
       .where(sql`${table.status} = 'active'`),
     index("coach_availability_rules_owner_lookup_idx").on(
       table.runId,
       table.profileId,
+      table.status,
+      table.isoWeekday,
+      table.localStartTime,
+      table.id,
+    ),
+    index("coach_availability_rules_location_lookup_idx").on(
+      table.runId,
+      table.profileId,
+      table.coachTrainingLocationId,
       table.status,
       table.isoWeekday,
       table.localStartTime,
@@ -422,6 +445,8 @@ export const coachAvailabilitySlots = app.table(
     runId: uuid("run_id").notNull(),
     profileId: uuid("profile_id").notNull(),
     recurrenceRuleId: uuid("recurrence_rule_id"),
+    coachTrainingLocationId: uuid("coach_training_location_id"),
+    trainingLocationName: text("training_location_name"),
     recurrenceLocalDate: date("recurrence_local_date", {
       mode: "string",
     }),
@@ -472,6 +497,15 @@ export const coachAvailabilitySlots = app.table(
         coachAvailabilityRules.id,
       ],
     }).onDelete("restrict"),
+    foreignKey({
+      name: "coach_availability_slots_training_location_fkey",
+      columns: [table.runId, table.profileId, table.coachTrainingLocationId],
+      foreignColumns: [
+        coachTrainingLocations.runId,
+        coachTrainingLocations.profileId,
+        coachTrainingLocations.id,
+      ],
+    }).onDelete("restrict"),
     check(
       "coach_availability_slots_recurrence_pair_check",
       sql`(${table.recurrenceRuleId} is null) = (${table.recurrenceLocalDate} is null)`,
@@ -479,6 +513,10 @@ export const coachAvailabilitySlots = app.table(
     check(
       "coach_availability_slots_recurring_duration_check",
       sql`${table.recurrenceRuleId} is null or ${table.endsAt} - ${table.startsAt} = interval '1 hour'`,
+    ),
+    check(
+      "coach_availability_slots_training_location_name_check",
+      sql`${table.trainingLocationName} is null or char_length(${table.trainingLocationName}) between 2 and 240`,
     ),
     check(
       "coach_availability_slots_time_order_check",
@@ -549,6 +587,16 @@ export const coachAvailabilitySlots = app.table(
     index("coach_availability_slots_rule_status_idx")
       .on(table.recurrenceRuleId, table.status, table.startsAt, table.id)
       .where(sql`${table.recurrenceRuleId} is not null`),
+    index("coach_availability_slots_training_location_idx")
+      .on(
+        table.runId,
+        table.profileId,
+        table.coachTrainingLocationId,
+        table.status,
+        table.startsAt,
+        table.id,
+      )
+      .where(sql`${table.coachTrainingLocationId} is not null`),
   ],
 );
 

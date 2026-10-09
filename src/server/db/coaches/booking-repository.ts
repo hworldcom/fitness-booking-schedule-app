@@ -33,6 +33,8 @@ type BookingRow = Readonly<{
   scheduled_start_at: string | Date;
   scheduled_end_at: string | Date;
   coach_timezone: string;
+  coach_training_location_id: string | null;
+  training_location_name: string;
   location_kind: string;
   gym_name: string | null;
   public_location_label: string;
@@ -110,7 +112,11 @@ function coachPortraitUrl(row: BookingRow) {
 function mapBooking(row: BookingRow): PrivateBookingProjection {
   if (
     !isCoachBookingStatus(row.status) ||
-    (row.location_kind !== "gym" && row.location_kind !== "independent")
+    (row.location_kind !== "gym" && row.location_kind !== "independent") ||
+    (row.coach_training_location_id !== null &&
+      !isCanonicalUuid(row.coach_training_location_id)) ||
+    row.training_location_name.length < 2 ||
+    row.training_location_name.length > 240
   ) {
     throw new CoachBookingConflictError();
   }
@@ -148,6 +154,8 @@ function mapBooking(row: BookingRow): PrivateBookingProjection {
     scheduledEndAt,
     coachTimezone: row.coach_timezone,
     location: Object.freeze({
+      trainingLocationId: row.coach_training_location_id,
+      name: row.training_location_name,
       kind: row.location_kind,
       gymName: row.gym_name,
       publicLabel: row.public_location_label,
@@ -213,6 +221,8 @@ async function bookingRecords(
       booking.scheduled_start_at,
       booking.scheduled_end_at,
       booking.coach_timezone,
+      booking.coach_training_location_id,
+      booking.training_location_name,
       booking.location_kind,
       booking.gym_name,
       booking.public_location_label,

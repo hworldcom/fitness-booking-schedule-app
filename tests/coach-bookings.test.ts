@@ -49,6 +49,8 @@ test("booking projections carry schedule state without financial references", ()
     scheduledEndAt: "2026-10-08T11:00:00.000Z",
     coachTimezone: "Europe/Berlin",
     location: Object.freeze({
+      trainingLocationId: "55555555-5555-4555-8555-555555555555",
+      name: "Northside Combat",
       kind: "gym",
       gymName: "Northside Combat",
       publicLabel: "Berlin",
@@ -104,6 +106,8 @@ test("client booking timeline prioritizes future confirmed sessions", () => {
       ).toISOString(),
       coachTimezone: "Europe/Berlin",
       location: Object.freeze({
+        trainingLocationId: "55555555-5555-4555-8555-555555555555",
+        name: "Northside Combat",
         kind: "gym",
         gymName: "Northside Combat",
         publicLabel: "Berlin",

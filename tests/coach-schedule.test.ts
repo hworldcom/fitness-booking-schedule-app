@@ -45,6 +45,28 @@ const COACH: CoachProjection = Object.freeze({
       recordSource: "user" as const,
       updatedAt: "2026-10-04T09:00:00.000Z",
     }),
+    Object.freeze({
+      id: "60000000-0000-4000-8000-000000000002",
+      publicName: "Riverside strength deck",
+      timezone: "Europe/Berlin",
+      selectedGymId: null,
+      gymName: null,
+      location: Object.freeze({
+        kind: "independent" as const,
+        label: "Maybachufer 1, 12047 Berlin, Germany",
+        latitude: 52.49345,
+        longitude: 13.42842,
+        source: "manual" as const,
+        provider: null,
+        confirmedAt: "2026-10-05T09:00:00.000Z",
+      }),
+      status: "active" as const,
+      isPrimary: false,
+      sortOrder: 2,
+      deactivatedAt: null,
+      recordSource: "user" as const,
+      updatedAt: "2026-10-05T09:00:00.000Z",
+    }),
   ]),
   selectedGymId: null,
   gymName: null,
@@ -67,12 +89,16 @@ const COACH: CoachProjection = Object.freeze({
 const RULES: readonly OwnedCoachAvailabilityRule[] = Object.freeze([
   Object.freeze({
     id: "70000000-0000-4000-8000-000000000001",
+    locationId: COACH.primaryLocationId,
+    locationUpdatedAt: COACH.locations[0].updatedAt,
     isoWeekday: 1,
     localStartTime: "09:00",
     coachTimezone: "Europe/Berlin",
   }),
   Object.freeze({
     id: "70000000-0000-4000-8000-000000000002",
+    locationId: COACH.locations[1].id,
+    locationUpdatedAt: COACH.locations[1].updatedAt,
     isoWeekday: 1,
     localStartTime: "10:00",
     coachTimezone: "Europe/Berlin",
@@ -92,6 +118,8 @@ const BOOKED_SLOT: OwnedCoachAvailabilitySlot = Object.freeze({
   endsAt: "2026-10-09T09:00:00.000Z",
   coachTimezone: "Europe/Berlin",
   location: Object.freeze({
+    trainingLocationId: COACH.primaryLocationId,
+    name: "Tempelhofer Feld",
     kind: "independent",
     selectedGymId: null,
     gymName: null,
@@ -167,6 +195,11 @@ test("coach working week renders one keyboard-operable one-hour control per cell
   assert.match(html, /aria-pressed="true"/);
   assert.match(html, /Save schedule/);
   assert.match(html, /Your displayed working week is saved/);
+  assert.match(
+    html,
+    /locationId&quot;:&quot;60000000-0000-4000-8000-000000000002/,
+  );
+  assert.match(html, /locationUpdatedAt&quot;:&quot;2026-10-05T09:00:00.000Z/);
   assert.equal((html.match(/<form/g) ?? []).length, 1);
   assert.equal((html.match(/<button/g) ?? []).length, 23 * 7 + 1);
   assert.equal((html.match(/type="button"/g) ?? []).length, 23 * 7);

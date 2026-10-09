@@ -2,10 +2,10 @@
 
 - Status: In progress
 - Created: 2026-10-09
-- Last updated: 2026-10-09
+- Last updated: 2026-10-10
 - Milestone: Scheduling-only multi-location follow-up
 - Converted from: Not applicable — created as a coordination record
-- Tracked development tickets: completed [DEV0175 — Adopt the multi-location coach scheduling contract](../../archive/organisatory/DEV0175-adopt-multi-location-coach-scheduling-contract.md) and [DEV0176 — Persist coach training locations](../../archive/backend/DEV0176-persist-coach-training-locations.md), [DEV0177 — Bind availability to training locations](../backend/DEV0177-bind-availability-to-training-locations.md), [DEV0178 — Manage coach training locations](../frontend/DEV0178-manage-coach-training-locations.md), [DEV0179 — Edit a location-aware working week](../frontend/DEV0179-edit-location-aware-working-week.md), [DEV0180 — Pin coaches at primary locations](../frontend/DEV0180-pin-coaches-at-primary-locations.md)
+- Tracked development tickets: completed [DEV0175 — Adopt the multi-location coach scheduling contract](../../archive/organisatory/DEV0175-adopt-multi-location-coach-scheduling-contract.md), [DEV0176 — Persist coach training locations](../../archive/backend/DEV0176-persist-coach-training-locations.md) and [DEV0177 — Bind availability to training locations](../../archive/backend/DEV0177-bind-availability-to-training-locations.md); current [DEV0178 — Manage coach training locations](../frontend/DEV0178-manage-coach-training-locations.md), [DEV0179 — Edit a location-aware working week](../frontend/DEV0179-edit-location-aware-working-week.md) and [DEV0180 — Pin coaches at primary locations](../frontend/DEV0180-pin-coaches-at-primary-locations.md)
 - Related records: location-provider baseline [DEV0174 — Decouple location services](../../archive/frontend/DEV0174-decouple-location-services.md); atomic weekly-save baseline [DEV0146 — Save weekly schedule in one action](../../archive/frontend/DEV0146-save-weekly-schedule-in-one-action.md); scheduling-only contract [DEV0140 — Adopt the scheduling-only contract](../../archive/organisatory/DEV0140-adopt-scheduling-only-contract.md); downstream native consumers [COR0013 — Native iOS application](COR0013-native-ios-application.md)
 
 ## Objective and boundaries
@@ -22,7 +22,7 @@ This record owns sequencing, boundaries and final integration evidence only. It 
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | Product contract            | [DEV0175 — Adopt the multi-location coach scheduling contract](../../archive/organisatory/DEV0175-adopt-multi-location-coach-scheduling-contract.md) | Update the specification and affected downstream planning with confirmed multi-location, primary-marker and location-bound availability behavior.              | Completed 2026-10-09.                                                              |
 | Location persistence        | [DEV0176 — Persist coach training locations](../../archive/backend/DEV0176-persist-coach-training-locations.md)                                      | Add owner-scoped training-location storage, lifecycle mutations, primary invariants, singleton backfill and multi-location service projections.                | Completed 2026-10-09 after DEV0175.                                                |
-| Location-bound availability | [DEV0177 — Bind availability to training locations](../backend/DEV0177-bind-availability-to-training-locations.md)                                   | Bind recurring rules to owned active locations, generate immutable actual-location occurrences and preserve booking/history/concurrency invariants.            | After DEV0175 and DEV0176; supplies stable schedule contracts to DEV0179/DEV0180.  |
+| Location-bound availability | [DEV0177 — Bind availability to training locations](../../archive/backend/DEV0177-bind-availability-to-training-locations.md)                        | Bind recurring rules to owned active locations, generate immutable actual-location occurrences and preserve booking/history/concurrency invariants.            | Completed 2026-10-10 after DEV0175 and DEV0176.                                   |
 | Profile location interface  | [DEV0178 — Manage coach training locations](../frontend/DEV0178-manage-coach-training-locations.md)                                                  | Add coach and public profile interfaces for adding, editing, ordering, selecting a primary location and safely deactivating locations.                         | After DEV0176 exposes stable mutations/projections; may proceed alongside DEV0177. |
 | Location-aware calendar     | [DEV0179 — Edit a location-aware working week](../frontend/DEV0179-edit-location-aware-working-week.md)                                              | Let coaches use a selected-location paint control, inspect assigned cells and save one complete location-aware draft without per-cell mutations.               | After DEV0177; integrates DEV0178's active locations.                              |
 | Primary-location discovery  | [DEV0180 — Pin coaches at primary locations](../frontend/DEV0180-pin-coaches-at-primary-locations.md)                                                | Keep every visible coach on Explore at one primary marker regardless of today's availability while presenting truthful today status and actual session venues. | After DEV0176 and DEV0177; may proceed alongside DEV0179.                          |
@@ -52,6 +52,9 @@ All required implementation parts have direct development tickets. The tickets a
 - 2026-10-09: Created the flat DEV0175-DEV0180 work map. DEV0175 was the first Ready implementation record; dependency-bound peers remained Draft.
 - 2026-10-09: DEV0175 completed and was archived after adopting decisions C16-C18, reconciling the full scheduling contract and aligning downstream native planning. Runtime remains unchanged; DEV0176 is the next delivery step when authorized.
 - 2026-10-09: DEV0176 completed and was archived after adding/backfilling owner-scoped locations, primary and timezone invariants, authorized lifecycle mutations and public/owner projections. DEV0177 and DEV0178 may now start under their recorded dependency boundaries.
+- 2026-10-09: Reviewed DEV0177 against the delivered location and recurring-availability contracts and moved it to Ready. The review fixed the save boundary as versioned structured JSON with a 161-cell/32 KiB limit, required a shared coach lock for location/schedule races and added a narrow compatibility adapter so the current calendar remains usable until DEV0179.
+- 2026-10-10: DEV0177 implementation started against the completed DEV0176 location contract.
+- 2026-10-10: DEV0177 completed and was archived after binding versioned owned locations to rules, snapshots and booking projections; serializing location-edit/save races; preserving booked history during metadata, primary, timezone and deactivation changes; and keeping the current grid compatible until DEV0179.
 
 ## Validation results
 
@@ -59,6 +62,7 @@ All required implementation parts have direct development tickets. The tickets a
 - DEV0175 integration validation completed on 2026-10-09: formatting and 16 affected-document links passed; eight explicit contract assertions covered decisions C16-C18, primary-versus-actual location, one timezone, deactivation/history and acceptance behavior; the lifecycle check confirmed archived DEV0175 and this In-progress handoff. Runtime tests remain owned by DEV0176-DEV0180.
 - Application, database and browser tests were not run for the planning records or DEV0175 documentation contract because neither changes runtime behavior. DEV0176-DEV0180 own later implementation and validation evidence.
 - DEV0176 integration validation completed on 2026-10-09: upgrade and fresh migrations passed with five exact backfill matches; 172 pgTAP assertions, 35 database integration tests, database lint, application lint/type checks, 91 unit/server tests and the production build passed. DEV0177-DEV0180 still own location-bound availability and browser-interface evidence.
+- DEV0177 integration validation completed on 2026-10-10: fresh and upgrade migrations, 184 pgTAP assertions, 37 database integration tests, database lint, 91 unit/server tests, application lint/type/format checks, compatibility rendering and the production build passed. DEV0178-DEV0180 still own the management, selector and primary-discovery interfaces plus responsive browser evidence.
 - Coordination completion requires reciprocal membership/link checks plus the integrated database, service, browser, responsive and build evidence owned by the direct tickets.
 
 ## Risks, limitations, and follow-ups
@@ -71,7 +75,7 @@ All required implementation parts have direct development tickets. The tickets a
 ## Completion and review references
 
 - Completed: Not completed.
-- Direct development tickets: DEV0175-DEV0176 Completed; DEV0177-DEV0180 remain Draft.
+- Direct development tickets: DEV0175-DEV0177 Completed; DEV0178-DEV0180 remain Draft.
 - Commit: Not applicable — coordination-record IDs are not used in commit subjects.
 - Review: No integration review created.
 - Deployment or release: Not deployed or released.

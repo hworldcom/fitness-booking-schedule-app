@@ -208,14 +208,23 @@ test("coach availability accepts only explicit 15-minute bounded slots", () => {
 });
 
 test("weekly coach availability accepts exact non-cross-midnight hours", () => {
+  const locationId = "60000000-0000-4000-8000-000000000001";
+  const locationUpdatedAt = "2026-10-10T10:00:00.123456+00:00";
   assert.deepEqual(
     validateCoachAvailabilityRuleInput({
+      locationId,
+      locationUpdatedAt,
       isoWeekday: "1",
       localStartTime: "18:00",
     }),
     {
       valid: true,
-      value: { isoWeekday: 1, localStartTime: "18:00" },
+      value: {
+        locationId,
+        locationUpdatedAt,
+        isoWeekday: 1,
+        localStartTime: "18:00",
+      },
     },
   );
 
@@ -227,45 +236,69 @@ test("weekly coach availability accepts exact non-cross-midnight hours", () => {
     { isoWeekday: 1, localStartTime: "23:00" },
     { isoWeekday: 1, localStartTime: "24:00" },
   ]) {
-    assert.equal(validateCoachAvailabilityRuleInput(input).valid, false);
+    assert.equal(
+      validateCoachAvailabilityRuleInput({
+        locationId,
+        locationUpdatedAt,
+        ...input,
+      }).valid,
+      false,
+    );
   }
 });
 
 test("complete working-week payloads are bounded, unique and canonical", () => {
+  const locationId = "60000000-0000-4000-8000-000000000001";
+  const otherLocationId = "60000000-0000-4000-8000-000000000002";
+  const locationUpdatedAt = "2026-10-10T10:00:00.123456+00:00";
+  const rule = (
+    isoWeekday: number,
+    localStartTime: string,
+    selectedLocationId = locationId,
+  ) => ({
+    locationId: selectedLocationId,
+    locationUpdatedAt,
+    isoWeekday,
+    localStartTime,
+  });
   assert.deepEqual(
     validateCoachAvailabilityRuleSetInput(
-      JSON.stringify(["7|22:00", "1|09:00", "1|08:00"]),
+      JSON.stringify([rule(7, "22:00"), rule(1, "09:00"), rule(1, "08:00")]),
     ),
     {
       valid: true,
       value: {
-        keys: ["1|08:00", "1|09:00", "7|22:00"],
-        rules: [
-          { isoWeekday: 1, localStartTime: "08:00" },
-          { isoWeekday: 1, localStartTime: "09:00" },
-          { isoWeekday: 7, localStartTime: "22:00" },
+        keys: [
+          `${locationId}|1|08:00`,
+          `${locationId}|1|09:00`,
+          `${locationId}|7|22:00`,
         ],
+        rules: [rule(1, "08:00"), rule(1, "09:00"), rule(7, "22:00")],
       },
     },
   );
 
   for (const payload of [
     "not-json",
-    JSON.stringify({ rule: "1|09:00" }),
-    JSON.stringify(["1|09:00", "1|09:00"]),
-    JSON.stringify(["0|09:00"]),
-    JSON.stringify(["1|09:30"]),
-    JSON.stringify(["1|23:00"]),
+    JSON.stringify({ rule: rule(1, "09:00") }),
+    JSON.stringify([rule(1, "09:00"), rule(1, "09:00", otherLocationId)]),
+    JSON.stringify([rule(0, "09:00")]),
+    JSON.stringify([rule(1, "09:30")]),
+    JSON.stringify([rule(1, "23:00")]),
     JSON.stringify(
-      Array.from(
-        { length: 162 },
-        (_, index) =>
-          `${(index % 7) + 1}|${String(index % 23).padStart(2, "0")}:00`,
+      Array.from({ length: 162 }, (_, index) =>
+        rule((index % 7) + 1, `${String(index % 23).padStart(2, "0")}:00`),
       ),
     ),
   ]) {
     assert.equal(validateCoachAvailabilityRuleSetInput(payload).valid, false);
   }
+  assert.equal(
+    validateCoachAvailabilityRuleSetInput(
+      `${JSON.stringify([rule(1, "09:00")])}${" ".repeat(33 * 1024)}`,
+    ).valid,
+    false,
+  );
 });
 
 test("coach slot values are rendered in the reviewed profile timezone", () => {

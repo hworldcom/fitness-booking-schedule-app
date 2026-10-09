@@ -5,7 +5,7 @@
 - Last updated: 2026-10-09
 - Milestone: Scheduling-only multi-location follow-up
 - Coordination: [COR0014 — Multi-location coach scheduling](../../current/organisatory/COR0014-multi-location-coach-scheduling.md)
-- Related records: depends on completed [DEV0175 — Adopt the multi-location coach scheduling contract](../organisatory/DEV0175-adopt-multi-location-coach-scheduling-contract.md); supplies [DEV0177 — Bind availability to training locations](../../current/backend/DEV0177-bind-availability-to-training-locations.md), [DEV0178 — Manage coach training locations](../../current/frontend/DEV0178-manage-coach-training-locations.md) and [DEV0180 — Pin coaches at primary locations](../../current/frontend/DEV0180-pin-coaches-at-primary-locations.md); preserves the provider-neutral baseline from [DEV0174](../frontend/DEV0174-decouple-location-services.md)
+- Related records: depends on completed [DEV0175 — Adopt the multi-location coach scheduling contract](../organisatory/DEV0175-adopt-multi-location-coach-scheduling-contract.md); supplies completed [DEV0177 — Bind availability to training locations](DEV0177-bind-availability-to-training-locations.md), current [DEV0178 — Manage coach training locations](../../current/frontend/DEV0178-manage-coach-training-locations.md) and [DEV0180 — Pin coaches at primary locations](../../current/frontend/DEV0180-pin-coaches-at-primary-locations.md); preserves the provider-neutral baseline from [DEV0174](../frontend/DEV0174-decouple-location-services.md)
 
 ## Objective and context
 

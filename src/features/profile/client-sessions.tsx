@@ -101,7 +101,7 @@ export function ClientSessions({
         <p>
           <MapPin size={16} aria-hidden="true" />
           <span>
-            {booking.location.gymName ?? "Independent training place"}
+            {booking.location.name}
             <small>{booking.location.publicLabel}</small>
           </span>
         </p>
