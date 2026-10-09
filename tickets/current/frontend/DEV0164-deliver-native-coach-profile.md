@@ -5,7 +5,7 @@
 - Last updated: 2026-10-09
 - Milestone: Native iOS coach onboarding and profile
 - Coordination: [COR0013 — Native iOS application](../organisatory/COR0013-native-ios-application.md)
-- Related records: depends on [DEV0160 — Expose the mobile scheduling API](../backend/DEV0160-expose-mobile-scheduling-api.md), [DEV0161 — Establish the Expo iOS foundation](DEV0161-establish-expo-ios-foundation.md) and the shared backend contract from [DEV0176 — Persist coach training locations](../backend/DEV0176-persist-coach-training-locations.md); preserves the application/approval boundary from [DEV0147](../../archive/backend/DEV0147-separate-client-onboarding-and-verified-coach-access.md)
+- Related records: depends on [DEV0160 — Expose the mobile scheduling API](../backend/DEV0160-expose-mobile-scheduling-api.md), [DEV0161 — Establish the Expo iOS foundation](DEV0161-establish-expo-ios-foundation.md) and the shared backend contract from completed [DEV0176 — Persist coach training locations](../../archive/backend/DEV0176-persist-coach-training-locations.md); preserves the application/approval boundary from [DEV0147](../../archive/backend/DEV0147-separate-client-onboarding-and-verified-coach-access.md)
 
 ## Objective and context
 

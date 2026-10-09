@@ -5,7 +5,7 @@
 - Last updated: 2026-10-09
 - Milestone: Scheduling-only multi-location follow-up
 - Coordination: [COR0014 — Multi-location coach scheduling](../organisatory/COR0014-multi-location-coach-scheduling.md)
-- Related records: depends on completed [DEV0175 — Adopt the multi-location coach scheduling contract](../../archive/organisatory/DEV0175-adopt-multi-location-coach-scheduling-contract.md) and [DEV0176 — Persist coach training locations](DEV0176-persist-coach-training-locations.md); supplies [DEV0179 — Edit a location-aware working week](../frontend/DEV0179-edit-location-aware-working-week.md) and [DEV0180 — Pin coaches at primary locations](../frontend/DEV0180-pin-coaches-at-primary-locations.md); extends recurring availability from [DEV0114](../../archive/backend/DEV0114-persist-recurring-coach-availability.md) and atomic replacement from [DEV0146](../../archive/frontend/DEV0146-save-weekly-schedule-in-one-action.md)
+- Related records: depends on completed [DEV0175 — Adopt the multi-location coach scheduling contract](../../archive/organisatory/DEV0175-adopt-multi-location-coach-scheduling-contract.md) and [DEV0176 — Persist coach training locations](../../archive/backend/DEV0176-persist-coach-training-locations.md); supplies [DEV0179 — Edit a location-aware working week](../frontend/DEV0179-edit-location-aware-working-week.md) and [DEV0180 — Pin coaches at primary locations](../frontend/DEV0180-pin-coaches-at-primary-locations.md); extends recurring availability from [DEV0114](../../archive/backend/DEV0114-persist-recurring-coach-availability.md) and atomic replacement from [DEV0146](../../archive/frontend/DEV0146-save-weekly-schedule-in-one-action.md)
 
 ## Objective and context
 

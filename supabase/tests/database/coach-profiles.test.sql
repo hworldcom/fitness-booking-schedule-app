@@ -361,7 +361,7 @@ select is(
       'pg_class'
     )
   ),
-  'Self-declared coach discovery profiles with one confirmed public training location; selected gyms are labels/coordinates only and grant no authority.',
+  'Self-declared coach discovery profiles with a synchronized legacy primary-location snapshot; app.coach_training_locations is the location source of truth.',
   'coach authority boundary is documented on the table'
 );
 

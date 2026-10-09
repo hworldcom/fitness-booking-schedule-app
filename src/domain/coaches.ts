@@ -22,6 +22,7 @@ export type CoachAccessProjection = Readonly<{
   verificationPolicyVersion: string | null;
 }>;
 export type CoachLocationSource = "manual" | "permanent-geocoding";
+export type CoachTrainingLocationStatus = "active" | "inactive";
 export const COACH_AVAILABILITY_DURATIONS = Object.freeze([
   30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180,
 ] as const);
@@ -53,6 +54,44 @@ export type CoachProfileInput = Readonly<{
   }> | null;
 }>;
 
+export type CoachTrainingLocationInput =
+  | Readonly<{
+      kind: "gym";
+      selectedGymId: string;
+    }>
+  | Readonly<{
+      kind: "independent";
+      publicName: string;
+      label: string;
+      latitude: number;
+      longitude: number;
+      source: CoachLocationSource;
+      provider: string | null;
+    }>;
+
+export type CoachTrainingLocation = Readonly<{
+  id: string;
+  publicName: string;
+  timezone: string;
+  selectedGymId: string | null;
+  gymName: string | null;
+  location: Readonly<{
+    kind: "gym" | "independent";
+    label: string;
+    latitude: number;
+    longitude: number;
+    source: "fixture" | "manual" | "permanent-geocoding";
+    provider: string | null;
+    confirmedAt: string;
+  }>;
+  status: CoachTrainingLocationStatus;
+  isPrimary: boolean;
+  sortOrder: number;
+  deactivatedAt: string | null;
+  recordSource: "fixture" | "user";
+  updatedAt: string;
+}>;
+
 export type CoachProjection = Readonly<{
   profileId: string;
   slug: string;
@@ -60,8 +99,13 @@ export type CoachProjection = Readonly<{
   bio: string;
   serviceMode: "private-training";
   timezone: string;
+  primaryLocationId: string;
+  locations: readonly CoachTrainingLocation[];
+  /** Compatibility alias for the active primary location during COR0014. */
   selectedGymId: string | null;
+  /** Compatibility alias for the active primary location during COR0014. */
   gymName: string | null;
+  /** Compatibility alias for the active primary location during COR0014. */
   location: Readonly<{
     kind: "gym" | "independent";
     label: string;
@@ -191,6 +235,10 @@ export type CoachAvailabilityWorkspaceState =
 
 export type CoachProfileInputResult =
   | Readonly<{ valid: true; value: CoachProfileInput }>
+  | Readonly<{ valid: false; errors: readonly string[] }>;
+
+export type CoachTrainingLocationInputResult =
+  | Readonly<{ valid: true; value: CoachTrainingLocationInput }>
   | Readonly<{ valid: false; errors: readonly string[] }>;
 
 function firstValue(value: string | string[] | undefined) {
@@ -392,6 +440,100 @@ export function validateCoachProfileInput(input: {
   });
 }
 
+export function validateCoachTrainingLocationInput(input: {
+  kind?: unknown;
+  selectedGymId?: unknown;
+  publicName?: unknown;
+  locationLabel?: unknown;
+  latitude?: unknown;
+  longitude?: unknown;
+  locationSource?: unknown;
+  locationProvider?: unknown;
+  locationConfirmation?: unknown;
+}): CoachTrainingLocationInputResult {
+  const errors: string[] = [];
+
+  if (input.kind === "gym") {
+    const selectedGymId = normalizeSingleLine(input.selectedGymId);
+    if (!isUuid(selectedGymId)) {
+      errors.push("Choose a valid reviewed gym.");
+    }
+    if (errors.length > 0) {
+      return Object.freeze({ valid: false, errors: Object.freeze(errors) });
+    }
+    return Object.freeze({
+      valid: true,
+      value: Object.freeze({ kind: "gym", selectedGymId }),
+    });
+  }
+
+  if (input.kind !== "independent") {
+    return Object.freeze({
+      valid: false,
+      errors: Object.freeze(["Choose a training-location type."]),
+    });
+  }
+
+  const publicName = normalizeSingleLine(input.publicName);
+  const label = normalizeSingleLine(input.locationLabel);
+  const latitude = finiteCoordinate(input.latitude);
+  const longitude = finiteCoordinate(input.longitude);
+  const source = input.locationSource;
+  const provider = normalizeSingleLine(input.locationProvider) || null;
+
+  if (publicName.length < 2 || publicName.length > 240) {
+    errors.push("Location name must be between 2 and 240 characters.");
+  }
+  if (label.length < 2 || label.length > 240) {
+    errors.push("Public location label must be between 2 and 240 characters.");
+  }
+  if (latitude === null || latitude < -90 || latitude > 90) {
+    errors.push("Latitude must be between -90 and 90.");
+  }
+  if (longitude === null || longitude < -180 || longitude > 180) {
+    errors.push("Longitude must be between -180 and 180.");
+  }
+  if (source !== "manual" && source !== "permanent-geocoding") {
+    errors.push("The public location source is invalid.");
+  }
+  if (source === "manual" && provider !== null) {
+    errors.push("Manual locations cannot claim a geocoding provider.");
+  }
+  if (
+    source === "permanent-geocoding" &&
+    !isPersistedLocationProvider(provider)
+  ) {
+    errors.push(
+      "Permanent geocoding requires a confirmed supported provider result.",
+    );
+  }
+  if (input.locationConfirmation !== "confirmed") {
+    errors.push("Confirm the public location before saving it.");
+  }
+
+  if (
+    errors.length > 0 ||
+    latitude === null ||
+    longitude === null ||
+    (source !== "manual" && source !== "permanent-geocoding")
+  ) {
+    return Object.freeze({ valid: false, errors: Object.freeze(errors) });
+  }
+
+  return Object.freeze({
+    valid: true,
+    value: Object.freeze({
+      kind: "independent",
+      publicName,
+      label,
+      latitude,
+      longitude,
+      source,
+      provider,
+    }),
+  });
+}
+
 export function validateCoachAvailabilityInput(input: {
   localStart?: unknown;
   durationMinutes?: unknown;
@@ -542,6 +684,10 @@ export function isCoachAvailabilitySlotId(value: string) {
 }
 
 export function isCoachAvailabilityRuleId(value: string) {
+  return isUuid(value);
+}
+
+export function isCoachTrainingLocationId(value: string) {
   return isUuid(value);
 }
 

@@ -16,6 +16,32 @@ function coach(
     bio: "Private boxing coaching with deliberate practice and clear feedback for every developing athlete.",
     serviceMode: "private-training",
     timezone: "Europe/Berlin",
+    primaryLocationId: "60000000-0000-4000-8000-000000000001",
+    locations: Object.freeze([
+      Object.freeze({
+        id: "60000000-0000-4000-8000-000000000001",
+        publicName: "Tempelhofer Feld",
+        timezone: "Europe/Berlin",
+        selectedGymId: null,
+        gymName: null,
+        location: Object.freeze({
+          kind: "independent" as const,
+          label: "Tempelhofer Feld — main entrance",
+          latitude: 52.473086,
+          longitude: 13.403665,
+          source: "manual" as const,
+          provider: null,
+          confirmedAt: "2026-10-08T09:00:00.000Z",
+        }),
+        status: "active" as const,
+        isPrimary: true,
+        sortOrder: 1,
+        deactivatedAt: null,
+        recordSource: (trustKind === "demo" ? "fixture" : "user") as
+          "fixture" | "user",
+        updatedAt: "2026-10-08T09:00:00.000Z",
+      }),
+    ]),
     selectedGymId: null,
     gymName: null,
     location: Object.freeze({

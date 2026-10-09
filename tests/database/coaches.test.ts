@@ -7,9 +7,14 @@ import { withActorDatabaseContext } from "@/server/db/authorization/repository";
 import { submitOwnedCoachApplicationRecord } from "@/server/db/coaches/application-repository";
 import {
   CoachProfileConflictError,
+  CoachTrainingLocationConflictError,
+  createOwnedCoachTrainingLocationRecord,
   currentOwnedCoachProfileRecord,
+  deactivateOwnedCoachTrainingLocationRecord,
   publicCoachDirectoryRecords,
   publicCoachProfileRecord,
+  setOwnedCoachPrimaryLocationRecord,
+  updateOwnedCoachTrainingLocationRecord,
   upsertOwnedCoachProfileRecord,
 } from "@/server/db/coaches/repository";
 import { enrollApplicationProfile } from "@/server/db/identity/repository";
@@ -275,4 +280,194 @@ test("inactive or unknown gyms fail closed without partial profile changes", asy
   );
   assert.equal(unchanged?.visibility, "visible");
   assert.equal(unchanged?.selectedGymId, fixtureGymId);
+});
+
+test("owners manage multiple locations with atomic primary and soft-deactivation semantics", async () => {
+  const createdId = await withActorDatabaseContext(firstActor, (transaction) =>
+    createOwnedCoachTrainingLocationRecord(transaction, {
+      kind: "independent",
+      publicName: "Outdoor boxing spot",
+      label: "Tempelhofer Feld — north entrance",
+      latitude: 52.473086,
+      longitude: 13.403665,
+      source: "manual",
+      provider: null,
+    }),
+  );
+
+  const afterCreate = await withActorDatabaseContext(
+    firstActor,
+    (transaction) => currentOwnedCoachProfileRecord(transaction, firstActor),
+  );
+  assert.ok(afterCreate);
+  assert.equal(afterCreate.locations.length, 2);
+  const originalPrimary = afterCreate.locations.find(
+    (location) => location.id === afterCreate.primaryLocationId,
+  );
+  const created = afterCreate.locations.find(
+    (location) => location.id === createdId,
+  );
+  assert.ok(originalPrimary);
+  assert.ok(created);
+  assert.equal(created.isPrimary, false);
+
+  await assert.rejects(
+    withActorDatabaseContext(secondActor, (transaction) =>
+      updateOwnedCoachTrainingLocationRecord(
+        transaction,
+        created.id,
+        created.updatedAt,
+        {
+          kind: "independent",
+          publicName: "Cross-owner edit",
+          label: "This must never be saved",
+          latitude: 52.5,
+          longitude: 13.4,
+          source: "manual",
+          provider: null,
+        },
+      ),
+    ),
+    CoachTrainingLocationConflictError,
+  );
+
+  await assert.rejects(
+    withActorDatabaseContext(firstActor, (transaction) =>
+      updateOwnedCoachTrainingLocationRecord(
+        transaction,
+        created.id,
+        "2020-01-01T00:00:00.000Z",
+        {
+          kind: "independent",
+          publicName: "Stale edit",
+          label: "This must never be saved",
+          latitude: 52.5,
+          longitude: 13.4,
+          source: "manual",
+          provider: null,
+        },
+      ),
+    ),
+    CoachTrainingLocationConflictError,
+  );
+
+  await assert.rejects(
+    withActorDatabaseContext(firstActor, (transaction) =>
+      updateOwnedCoachTrainingLocationRecord(
+        transaction,
+        created.id,
+        "not-a-timestamp",
+        {
+          kind: "independent",
+          publicName: "Invalid-token edit",
+          label: "This must never be saved",
+          latitude: 52.5,
+          longitude: 13.4,
+          source: "manual",
+          provider: null,
+        },
+      ),
+    ),
+    CoachTrainingLocationConflictError,
+  );
+
+  await withActorDatabaseContext(firstActor, (transaction) =>
+    setOwnedCoachPrimaryLocationRecord(
+      transaction,
+      created.id,
+      created.updatedAt,
+      originalPrimary.id,
+      originalPrimary.updatedAt,
+    ),
+  );
+
+  const afterPrimaryChange = await withActorDatabaseContext(
+    firstActor,
+    (transaction) => currentOwnedCoachProfileRecord(transaction, firstActor),
+  );
+  assert.ok(afterPrimaryChange);
+  assert.equal(afterPrimaryChange.primaryLocationId, created.id);
+  assert.equal(afterPrimaryChange.selectedGymId, null);
+  assert.equal(afterPrimaryChange.location.label, created.location.label);
+
+  await withActorDatabaseContext(firstActor, (transaction) =>
+    upsertOwnedCoachProfileRecord(transaction, {
+      ...gymProfile,
+      timezone: "Europe/Paris",
+      selectedGymId: null,
+      independentLocation: {
+        label: created.location.label,
+        latitude: created.location.latitude,
+        longitude: created.location.longitude,
+        source: "manual",
+        provider: null,
+      },
+    }),
+  );
+
+  const afterLegacyProfileSave = await withActorDatabaseContext(
+    firstActor,
+    (transaction) => currentOwnedCoachProfileRecord(transaction, firstActor),
+  );
+  assert.ok(afterLegacyProfileSave);
+  assert.equal(
+    afterLegacyProfileSave.locations.find(
+      (location) => location.id === created.id,
+    )?.publicName,
+    "Outdoor boxing spot",
+  );
+  assert.ok(
+    afterLegacyProfileSave.locations.every(
+      (location) => location.timezone === "Europe/Paris",
+    ),
+  );
+
+  const currentPrimary = afterLegacyProfileSave.locations.find(
+    (location) => location.id === created.id,
+  );
+  const formerPrimary = afterLegacyProfileSave.locations.find(
+    (location) => location.id === originalPrimary.id,
+  );
+  assert.ok(currentPrimary);
+  assert.ok(formerPrimary);
+
+  await assert.rejects(
+    withActorDatabaseContext(firstActor, (transaction) =>
+      deactivateOwnedCoachTrainingLocationRecord(
+        transaction,
+        currentPrimary.id,
+        currentPrimary.updatedAt,
+        null,
+      ),
+    ),
+    CoachTrainingLocationConflictError,
+  );
+
+  await withActorDatabaseContext(firstActor, (transaction) =>
+    deactivateOwnedCoachTrainingLocationRecord(
+      transaction,
+      currentPrimary.id,
+      currentPrimary.updatedAt,
+      {
+        id: formerPrimary.id,
+        expectedUpdatedAt: formerPrimary.updatedAt,
+      },
+    ),
+  );
+
+  const ownerProjection = await withActorDatabaseContext(
+    firstActor,
+    (transaction) => currentOwnedCoachProfileRecord(transaction, firstActor),
+  );
+  assert.equal(ownerProjection?.locations.length, 2);
+  assert.equal(
+    ownerProjection?.locations.find(
+      (location) => location.id === currentPrimary.id,
+    )?.status,
+    "inactive",
+  );
+
+  const publicProjection = await publicCoachProfileRecord(afterCreate.slug);
+  assert.equal(publicProjection?.locations.length, 1);
+  assert.equal(publicProjection?.primaryLocationId, formerPrimary.id);
 });

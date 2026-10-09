@@ -9,6 +9,7 @@ import {
   validateCoachAvailabilityRuleInput,
   validateCoachAvailabilityRuleSetInput,
   validateCoachProfileInput,
+  validateCoachTrainingLocationInput,
 } from "@/domain/coaches";
 
 test("coach directory filters accept only bounded supported values", () => {
@@ -126,6 +127,51 @@ test("coach profile validation rejects fabricated or malformed discovery data", 
     assert.match(result.errors.join(" "), /supported disciplines/);
     assert.match(result.errors.join(" "), /Latitude/);
   }
+});
+
+test("training locations validate reviewed gyms and confirmed provider-neutral snapshots", () => {
+  assert.deepEqual(
+    validateCoachTrainingLocationInput({
+      kind: "gym",
+      selectedGymId: "40000000-0000-4000-8000-000000000001",
+    }),
+    {
+      valid: true,
+      value: {
+        kind: "gym",
+        selectedGymId: "40000000-0000-4000-8000-000000000001",
+      },
+    },
+  );
+
+  const independent = validateCoachTrainingLocationInput({
+    kind: "independent",
+    publicName: "  Outdoor   boxing spot ",
+    locationLabel: "Tempelhofer Feld — north entrance",
+    latitude: "52.473086",
+    longitude: "13.403665",
+    locationSource: "permanent-geocoding",
+    locationProvider: "geoapify",
+    locationConfirmation: "confirmed",
+  });
+  assert.equal(independent.valid, true);
+  if (independent.valid && independent.value.kind === "independent") {
+    assert.equal(independent.value.publicName, "Outdoor boxing spot");
+    assert.equal(independent.value.latitude, 52.473086);
+  }
+
+  assert.equal(
+    validateCoachTrainingLocationInput({
+      kind: "independent",
+      publicName: "Unconfirmed place",
+      locationLabel: "Somewhere",
+      latitude: 52.5,
+      longitude: 13.4,
+      locationSource: "manual",
+      locationProvider: "geoapify",
+    }).valid,
+    false,
+  );
 });
 
 test("public coach slugs are constrained", () => {

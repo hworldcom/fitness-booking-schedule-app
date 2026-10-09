@@ -8,9 +8,10 @@ import type {
   CoachDirectoryFilters,
   CoachEditorState,
   CoachProfileInput,
+  CoachTrainingLocationInput,
   PublicCoachProfileState,
 } from "@/domain/coaches";
-import { isCoachPublicSlug } from "@/domain/coaches";
+import { isCoachPublicSlug, isCoachTrainingLocationId } from "@/domain/coaches";
 import { withAuthorizedActor } from "@/server/authorization/service";
 import { currentActorProjection } from "@/server/db/authorization/repository";
 import {
@@ -27,9 +28,14 @@ import {
 } from "@/server/db/coaches/availability-repository";
 import {
   activeCoachGymOptions,
+  CoachTrainingLocationConflictError,
+  createOwnedCoachTrainingLocationRecord,
   currentOwnedCoachProfileRecord,
+  deactivateOwnedCoachTrainingLocationRecord,
   publicCoachDirectoryRecords,
   publicCoachProfileRecord,
+  setOwnedCoachPrimaryLocationRecord,
+  updateOwnedCoachTrainingLocationRecord,
   upsertOwnedCoachProfileRecord,
 } from "@/server/db/coaches/repository";
 import { submitOwnedCoachApplicationRecord } from "@/server/db/coaches/application-repository";
@@ -129,6 +135,112 @@ export async function saveOwnedCoachProfile(input: CoachProfileInput) {
   });
   if (result.status !== "authorized") return result;
   return Object.freeze({ status: "authorized" as const, ...result.value });
+}
+
+type CoachTrainingLocationMutation =
+  | Readonly<{
+      status: "authorized";
+      outcome: "saved" | "conflict";
+      value?: string;
+    }>
+  | Readonly<{
+      status: "preview" | "signed-out" | "forbidden" | "unavailable";
+    }>;
+
+async function mutateCoachTrainingLocation(
+  mutation: Parameters<typeof withAuthorizedActor<string>>[0],
+): Promise<CoachTrainingLocationMutation> {
+  const result = await withAuthorizedActor(async (transaction, actor) => {
+    const owner = await currentActorProjection(transaction, actor);
+    if (!canPrepareCoachProfile(owner.coachAccess.status)) {
+      return Object.freeze({ outcome: "conflict" as const });
+    }
+    const coach = await currentOwnedCoachProfileRecord(transaction, actor);
+    if (!coach) return Object.freeze({ outcome: "conflict" as const });
+    try {
+      return Object.freeze({
+        outcome: "saved" as const,
+        value: await mutation(transaction, actor),
+      });
+    } catch (error) {
+      if (error instanceof CoachTrainingLocationConflictError) {
+        return Object.freeze({ outcome: "conflict" as const });
+      }
+      throw error;
+    }
+  });
+  if (result.status !== "authorized") return result;
+  return Object.freeze({ status: "authorized" as const, ...result.value });
+}
+
+export function createOwnedCoachTrainingLocation(
+  input: CoachTrainingLocationInput,
+) {
+  return mutateCoachTrainingLocation((transaction) =>
+    createOwnedCoachTrainingLocationRecord(transaction, input),
+  );
+}
+
+export function updateOwnedCoachTrainingLocation(
+  locationId: string,
+  expectedUpdatedAt: string,
+  input: CoachTrainingLocationInput,
+) {
+  return mutateCoachTrainingLocation((transaction) => {
+    if (!isCoachTrainingLocationId(locationId)) {
+      throw new CoachTrainingLocationConflictError();
+    }
+    return updateOwnedCoachTrainingLocationRecord(
+      transaction,
+      locationId,
+      expectedUpdatedAt,
+      input,
+    );
+  });
+}
+
+export function setOwnedCoachPrimaryLocation(
+  locationId: string,
+  expectedLocationUpdatedAt: string,
+  expectedPrimaryLocationId: string,
+  expectedPrimaryUpdatedAt: string,
+) {
+  return mutateCoachTrainingLocation((transaction) => {
+    if (
+      !isCoachTrainingLocationId(locationId) ||
+      !isCoachTrainingLocationId(expectedPrimaryLocationId)
+    ) {
+      throw new CoachTrainingLocationConflictError();
+    }
+    return setOwnedCoachPrimaryLocationRecord(
+      transaction,
+      locationId,
+      expectedLocationUpdatedAt,
+      expectedPrimaryLocationId,
+      expectedPrimaryUpdatedAt,
+    );
+  });
+}
+
+export function deactivateOwnedCoachTrainingLocation(
+  locationId: string,
+  expectedLocationUpdatedAt: string,
+  replacement: Readonly<{ id: string; expectedUpdatedAt: string }> | null,
+) {
+  return mutateCoachTrainingLocation((transaction) => {
+    if (
+      !isCoachTrainingLocationId(locationId) ||
+      (replacement !== null && !isCoachTrainingLocationId(replacement.id))
+    ) {
+      throw new CoachTrainingLocationConflictError();
+    }
+    return deactivateOwnedCoachTrainingLocationRecord(
+      transaction,
+      locationId,
+      expectedLocationUpdatedAt,
+      replacement,
+    );
+  });
 }
 
 export async function submitCurrentCoachApplication() {

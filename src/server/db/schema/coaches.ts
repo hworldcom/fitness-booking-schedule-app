@@ -170,6 +170,145 @@ export const coachProfiles = app.table(
   ],
 );
 
+export const coachTrainingLocations = app.table(
+  "coach_training_locations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    runId: uuid("run_id").notNull(),
+    profileId: uuid("profile_id").notNull(),
+    publicName: text("public_name").notNull(),
+    timezone: text("timezone").notNull(),
+    selectedGymId: uuid("selected_gym_id"),
+    locationKind: text("location_kind").notNull(),
+    publicLocationLabel: text("public_location_label").notNull(),
+    latitude: numeric("latitude", {
+      precision: 9,
+      scale: 6,
+      mode: "string",
+    }).notNull(),
+    longitude: numeric("longitude", {
+      precision: 9,
+      scale: 6,
+      mode: "string",
+    }).notNull(),
+    locationSource: text("location_source").notNull(),
+    locationProvider: text("location_provider"),
+    locationConfirmedAt: timestamp("location_confirmed_at", {
+      withTimezone: true,
+      mode: "string",
+    }).notNull(),
+    status: text("status").default("active").notNull(),
+    isPrimary: boolean("is_primary").default(false).notNull(),
+    sortOrder: smallint("sort_order").notNull(),
+    deactivatedAt: timestamp("deactivated_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    recordSource: text("record_source").notNull(),
+    ...auditColumns,
+  },
+  (table) => [
+    foreignKey({
+      name: "coach_training_locations_owner_fkey",
+      columns: [table.runId, table.profileId],
+      foreignColumns: [coachProfiles.runId, coachProfiles.profileId],
+    }).onDelete("cascade"),
+    foreignKey({
+      name: "coach_training_locations_gym_fkey",
+      columns: [table.runId, table.selectedGymId],
+      foreignColumns: [gyms.runId, gyms.id],
+    }).onDelete("restrict"),
+    unique("coach_training_locations_owner_id_key").on(
+      table.runId,
+      table.profileId,
+      table.id,
+    ),
+    unique("coach_training_locations_owner_order_key").on(
+      table.runId,
+      table.profileId,
+      table.sortOrder,
+    ),
+    check(
+      "coach_training_locations_name_length_check",
+      sql`char_length(${table.publicName}) between 2 and 240`,
+    ),
+    check(
+      "coach_training_locations_timezone_format_check",
+      sql`${table.timezone} = 'UTC' or ${table.timezone} ~ '^[A-Za-z_]+(?:/[A-Za-z0-9_+.-]+)+$'`,
+    ),
+    check(
+      "coach_training_locations_kind_check",
+      sql`${table.locationKind} in ('gym', 'independent')`,
+    ),
+    check(
+      "coach_training_locations_gym_kind_check",
+      sql`(${table.locationKind} = 'gym' and ${table.selectedGymId} is not null) or (${table.locationKind} = 'independent' and ${table.selectedGymId} is null)`,
+    ),
+    check(
+      "coach_training_locations_label_length_check",
+      sql`char_length(${table.publicLocationLabel}) between 2 and 240`,
+    ),
+    check(
+      "coach_training_locations_latitude_check",
+      sql`${table.latitude} between -90 and 90`,
+    ),
+    check(
+      "coach_training_locations_longitude_check",
+      sql`${table.longitude} between -180 and 180`,
+    ),
+    check(
+      "coach_training_locations_source_check",
+      sql`${table.locationSource} in ('fixture', 'manual', 'permanent-geocoding')`,
+    ),
+    check(
+      "coach_training_locations_provider_check",
+      sql`${table.locationProvider} is null or (char_length(${table.locationProvider}) between 2 and 40 and ${table.locationProvider} ~ '^[a-z0-9-]+$')`,
+    ),
+    check(
+      "coach_training_locations_provenance_check",
+      sql`(${table.locationSource} in ('fixture', 'manual') and ${table.locationProvider} is null) or (${table.locationSource} = 'permanent-geocoding' and ${table.locationProvider} is not null)`,
+    ),
+    check(
+      "coach_training_locations_status_check",
+      sql`${table.status} in ('active', 'inactive')`,
+    ),
+    check(
+      "coach_training_locations_primary_state_check",
+      sql`not ${table.isPrimary} or ${table.status} = 'active'`,
+    ),
+    check(
+      "coach_training_locations_deactivation_check",
+      sql`(${table.status} = 'inactive') = (${table.deactivatedAt} is not null)`,
+    ),
+    check(
+      "coach_training_locations_sort_order_check",
+      sql`${table.sortOrder} between 1 and 32767`,
+    ),
+    check(
+      "coach_training_locations_record_source_check",
+      sql`${table.recordSource} in ('fixture', 'user')`,
+    ),
+    uniqueIndex("coach_training_locations_active_primary_key")
+      .on(table.runId, table.profileId)
+      .where(sql`${table.status} = 'active' and ${table.isPrimary}`),
+    uniqueIndex("coach_training_locations_active_gym_key")
+      .on(table.runId, table.profileId, table.selectedGymId)
+      .where(
+        sql`${table.status} = 'active' and ${table.selectedGymId} is not null`,
+      ),
+    index("coach_training_locations_owner_lookup_idx").on(
+      table.runId,
+      table.profileId,
+      table.status,
+      table.sortOrder,
+      table.id,
+    ),
+    index("coach_training_locations_public_lookup_idx")
+      .on(table.runId, table.status, table.isPrimary, table.profileId)
+      .where(sql`${table.status} = 'active'`),
+  ],
+);
+
 export const coachProfileDisciplines = app.table(
   "coach_profile_disciplines",
   {
@@ -414,6 +553,8 @@ export const coachAvailabilitySlots = app.table(
 );
 
 export type CoachProfileRow = typeof coachProfiles.$inferSelect;
+export type CoachTrainingLocationRow =
+  typeof coachTrainingLocations.$inferSelect;
 export type CoachProfileDisciplineRow =
   typeof coachProfileDisciplines.$inferSelect;
 export type CoachAvailabilitySlotRow =
