@@ -26,6 +26,7 @@ import { enrollApplicationProfile } from "@/server/db/identity/repository";
 import {
   confirmedBookingClientAvatarReference,
   setCurrentAccountAvatarReference,
+  setCurrentCoachPortraitReference,
 } from "@/server/db/profile-images/repository";
 
 const adminConnectionString = process.env.DATABASE_TEST_URL;
@@ -45,6 +46,11 @@ const firstClientAuthUserId = "98000000-0000-4000-8000-000000000002";
 const secondClientAuthUserId = "98000000-0000-4000-8000-000000000003";
 const fixtureGymId = "40000000-0000-4000-8000-000000000001";
 const firstClientAvatarObjectId = "98000000-0000-4000-8000-000000000011";
+const coachPortraitObjectId = "98000000-0000-4000-8000-000000000012";
+
+process.env.NEXT_PUBLIC_SUPABASE_URL ??= "http://127.0.0.1:55321";
+process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??= "database-test-key";
+process.env.NEXT_PUBLIC_SITE_URL ??= "http://localhost:3100";
 
 const admin = postgres(adminConnectionString, {
   max: 1,
@@ -215,6 +221,14 @@ before(async () => {
   await withActorDatabaseContext(coachActor, (transaction) =>
     upsertOwnedCoachProfileRecord(transaction, coachProfile),
   );
+  await withActorDatabaseContext(coachActor, (transaction) =>
+    setCurrentCoachPortraitReference(
+      transaction,
+      `${coachActor.profileId}/${coachPortraitObjectId}.webp`,
+      null,
+      null,
+    ),
+  );
   await withActorDatabaseContext(firstClientActor, (transaction) =>
     setCurrentAccountAvatarReference(
       transaction,
@@ -256,6 +270,12 @@ test("direct booking is idempotent for one client and capacity one", async () =>
   assert.equal(booking.status, "confirmed");
   assert.equal(booking.cancelledBy, null);
   assert.equal(booking.clientAvatarUrl, null);
+  assert.match(
+    booking.coachPortraitUrl ?? "",
+    new RegExp(
+      `/storage/v1/object/public/coach-portraits/${coachActor.profileId}/${coachPortraitObjectId}[.]webp[?]v=`,
+    ),
+  );
   assert.equal("creditProjectionId" in booking, false);
   const coachBookings = await withActorDatabaseContext(
     coachActor,

@@ -7,7 +7,13 @@ import {
   type BookingCancellationActor,
   type PrivateBookingProjection,
 } from "@/domain/coach-bookings";
-import { privateBookingClientAvatarUrl } from "@/profile-images/contracts";
+import { supabasePublicConfig } from "@/auth/config";
+import {
+  isOwnedProfileImageStoragePath,
+  privateBookingClientAvatarUrl,
+  publicCoachPortraitUrl,
+  type CoachPortraitReference,
+} from "@/profile-images/contracts";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
 
@@ -17,6 +23,9 @@ type BookingRow = Readonly<{
   coach_profile_id: string;
   coach_display_name: string;
   coach_slug: string;
+  coach_portrait_source: string | null;
+  coach_portrait_path: string | null;
+  coach_portrait_updated_at: string | Date | null;
   client_profile_id: string;
   client_display_name: string;
   client_avatar_updated_at: string | Date | null;
@@ -59,6 +68,45 @@ function cancellationActor(row: BookingRow): BookingCancellationActor | null {
   throw new CoachBookingConflictError();
 }
 
+function coachPortraitUrl(row: BookingRow) {
+  if (
+    row.coach_portrait_source === null &&
+    row.coach_portrait_path === null &&
+    row.coach_portrait_updated_at === null
+  ) {
+    return null;
+  }
+
+  const updatedAt = isoTimestamp(row.coach_portrait_updated_at);
+  if (
+    (row.coach_portrait_source !== "fixture" &&
+      row.coach_portrait_source !== "storage") ||
+    row.coach_portrait_path === null ||
+    updatedAt === null ||
+    (row.coach_portrait_source === "fixture" &&
+      row.coach_portrait_path !== `/images/coaches/${row.coach_slug}.webp`) ||
+    (row.coach_portrait_source === "storage" &&
+      !isOwnedProfileImageStoragePath(
+        row.coach_portrait_path,
+        row.coach_profile_id,
+      ))
+  ) {
+    throw new CoachBookingConflictError();
+  }
+
+  const reference: CoachPortraitReference = Object.freeze({
+    source: row.coach_portrait_source,
+    path: row.coach_portrait_path,
+    updatedAt,
+  });
+  const portraitUrl = publicCoachPortraitUrl(
+    reference,
+    supabasePublicConfig()?.url ?? null,
+  );
+  if (!portraitUrl) throw new CoachBookingConflictError();
+  return portraitUrl;
+}
+
 function mapBooking(row: BookingRow): PrivateBookingProjection {
   if (
     !isCoachBookingStatus(row.status) ||
@@ -88,6 +136,7 @@ function mapBooking(row: BookingRow): PrivateBookingProjection {
     coachProfileId: row.coach_profile_id,
     coachDisplayName: row.coach_display_name,
     coachSlug: row.coach_slug,
+    coachPortraitUrl: coachPortraitUrl(row),
     clientProfileId: row.client_profile_id,
     clientDisplayName: row.client_display_name,
     clientAvatarUrl: privateBookingClientAvatarUrl(
@@ -154,6 +203,9 @@ async function bookingRecords(
       booking.coach_profile_id,
       booking.coach_display_name,
       booking.coach_slug,
+      coach.portrait_source as coach_portrait_source,
+      coach.portrait_path as coach_portrait_path,
+      coach.portrait_updated_at as coach_portrait_updated_at,
       booking.client_profile_id,
       booking.client_display_name,
       client_avatar.avatar_updated_at as client_avatar_updated_at,
@@ -169,6 +221,9 @@ async function bookingRecords(
       booking.completed_at,
       booking.created_at
     from app.current_direct_private_bookings() as booking
+    left join app.coach_profiles as coach
+      on coach.run_id = booking.run_id
+      and coach.profile_id = booking.coach_profile_id
     left join app.current_confirmed_booking_client_avatar_references(null::uuid)
       as client_avatar
       on client_avatar.booking_id = booking.id

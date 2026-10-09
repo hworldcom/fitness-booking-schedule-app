@@ -2371,20 +2371,36 @@ h1 {
   gap: 12px;
 }
 
-.client-session-card h4 {
-  margin-top: 5px;
-  font-size: 17px;
-}
-
-.client-session-card h4 a {
+.client-session-coach-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  border-radius: 8px;
   color: inherit;
   text-decoration: none;
 }
 
-.client-session-card h4 a:hover,
-.client-session-card h4 a:focus-visible {
+.client-session-coach-link > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.client-session-coach-link strong {
+  color: #263b24;
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.client-session-coach-link:hover strong {
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.client-session-coach-link:focus-visible {
+  outline: 2px solid #3d5c31;
+  outline-offset: 4px;
 }
 
 .client-session-card p {

@@ -19,6 +19,7 @@ import {
   isFutureConfirmedBooking,
   type PrivateBookingProjection,
 } from "@/domain/coach-bookings";
+import { ClientSessionCoachIdentity } from "./client-session-coach-identity";
 
 function bookingTime(booking: PrivateBookingProjection) {
   const day = new Intl.DateTimeFormat("en-GB", {
@@ -84,14 +85,11 @@ export function ClientSessions({
     return (
       <article className="client-session-card" key={booking.id}>
         <header>
-          <div>
-            <span className="eyebrow">PRIVATE SESSION</span>
-            <h4>
-              <Link href={`/coaches/${booking.coachSlug}`}>
-                {booking.coachDisplayName}
-              </Link>
-            </h4>
-          </div>
+          <ClientSessionCoachIdentity
+            displayName={booking.coachDisplayName}
+            slug={booking.coachSlug}
+            portraitUrl={booking.coachPortraitUrl}
+          />
           <span className={`coach-booking-status ${booking.status}`}>
             {statusLabel(booking)}
           </span>

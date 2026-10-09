@@ -13,6 +13,7 @@ export type PrivateBookingProjection = Readonly<{
   coachProfileId: string;
   coachDisplayName: string;
   coachSlug: string;
+  coachPortraitUrl: string | null;
   clientProfileId: string;
   clientDisplayName: string;
   clientAvatarUrl: string | null;

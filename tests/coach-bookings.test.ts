@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import {
   clientBookingTimeline,
   confirmedBookingForSlot,
@@ -8,6 +10,7 @@ import {
   isFutureConfirmedBooking,
   type PrivateBookingProjection,
 } from "@/domain/coach-bookings";
+import { ClientSessionCoachIdentity } from "@/features/profile/client-session-coach-identity";
 
 test("booking identifiers require canonical UUIDs", () => {
   assert.equal(isCanonicalUuid("11111111-1111-4111-8111-111111111111"), true);
@@ -36,6 +39,7 @@ test("booking projections carry schedule state without financial references", ()
     coachProfileId: "33333333-3333-4333-8333-333333333333",
     coachDisplayName: "Schedule Coach",
     coachSlug: "schedule-coach",
+    coachPortraitUrl: "/images/coaches/schedule-coach.webp",
     clientProfileId: "44444444-4444-4444-8444-444444444444",
     clientDisplayName: "Schedule Client",
     clientAvatarUrl:
@@ -62,6 +66,7 @@ test("booking projections carry schedule state without financial references", ()
     "clientDisplayName",
     "clientProfileId",
     "coachDisplayName",
+    "coachPortraitUrl",
     "coachProfileId",
     "coachSlug",
     "coachTimezone",
@@ -88,6 +93,7 @@ test("client booking timeline prioritizes future confirmed sessions", () => {
       coachProfileId: "33333333-3333-4333-8333-333333333333",
       coachDisplayName: "Schedule Coach",
       coachSlug: "schedule-coach",
+      coachPortraitUrl: null,
       clientProfileId: "44444444-4444-4444-8444-444444444444",
       clientDisplayName: "Schedule Client",
       clientAvatarUrl: null,
@@ -155,4 +161,29 @@ test("client booking timeline prioritizes future confirmed sessions", () => {
     confirmedBookingForSlot([cancelledFuture], cancelledFuture.slotId),
     null,
   );
+});
+
+test("client session coach identity links its portrait and name to the public profile", () => {
+  const withPortrait = renderToStaticMarkup(
+    createElement(ClientSessionCoachIdentity, {
+      displayName: "Daniel Park",
+      slug: "daniel-park",
+      portraitUrl: "/images/coaches/daniel-park.webp",
+    }),
+  );
+  assert.match(withPortrait, /href="\/coaches\/daniel-park"/);
+  assert.match(withPortrait, /View Daniel Park&#x27;s coach profile/);
+  assert.match(withPortrait, /src="\/images\/coaches\/daniel-park.webp"/);
+  assert.match(withPortrait, />Daniel Park<\/strong>/);
+
+  const fallback = renderToStaticMarkup(
+    createElement(ClientSessionCoachIdentity, {
+      displayName: "Sam Lee",
+      slug: "sam-lee",
+      portraitUrl: null,
+    }),
+  );
+  assert.match(fallback, /href="\/coaches\/sam-lee"/);
+  assert.doesNotMatch(fallback, /<img/);
+  assert.match(fallback, />SL<\/span>/);
 });
