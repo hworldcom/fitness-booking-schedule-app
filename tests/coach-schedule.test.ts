@@ -188,10 +188,17 @@ test("coach working week renders one keyboard-operable one-hour control per cell
   assert.match(html, /Your working week/);
   assert.match(html, /Europe\/Berlin/);
   assert.match(html, /Tempelhofer Feld/);
+  assert.match(html, /Assignment location/);
+  assert.match(html, /Location legend/);
+  assert.match(html, /Tempelhofer Feld — Primary/);
+  assert.match(html, /Riverside strength deck/);
   assert.match(html, /2 selected hours/);
-  assert.match(html, /Remove Monday 09:00–10:00/);
-  assert.match(html, /Remove Monday 10:00–11:00/);
-  assert.match(html, /Add Sunday 22:00–23:00/);
+  assert.match(html, /Remove Tempelhofer Feld from Monday 09:00–10:00/);
+  assert.match(
+    html,
+    /Review Monday 10:00–11:00, assigned to Riverside strength deck; selected location is Tempelhofer Feld/,
+  );
+  assert.match(html, /Assign Tempelhofer Feld to Sunday 22:00–23:00/);
   assert.match(html, /aria-pressed="true"/);
   assert.match(html, /Save schedule/);
   assert.match(html, /Your displayed working week is saved/);

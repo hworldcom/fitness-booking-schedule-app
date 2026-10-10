@@ -1,7 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition, type FormEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type CSSProperties,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import {
   CalendarClock,
   Check,
@@ -17,9 +25,17 @@ import {
   type CoachAvailabilityRuleInput,
   type CoachAvailabilityIsoWeekday,
   type CoachProjection,
+  type CoachTrainingLocation,
   type OwnedCoachAvailabilityRule,
   type OwnedCoachAvailabilitySlot,
 } from "@/domain/coaches";
+import {
+  coachScheduleAssignment,
+  createCoachScheduleDraft,
+  resolveCoachScheduleCell,
+  serializeCoachScheduleDraft,
+  toggleCoachScheduleCell,
+} from "@/features/coaches/coach-schedule-draft";
 import type { CoachWorkspaceView } from "@/features/coaches/coach-workspace-view";
 import { CoachWorkspaceNavigation } from "@/features/coaches/coach-workspace-navigation";
 
@@ -48,6 +64,36 @@ const WORKING_WEEK_HOURS = Object.freeze(
   ),
 );
 
+const LOCATION_PALETTE = Object.freeze([
+  Object.freeze({ background: "#dff1c4", border: "#789b54", ink: "#29451f" }),
+  Object.freeze({ background: "#e7ddf6", border: "#9a82bd", ink: "#49345f" }),
+  Object.freeze({ background: "#f9ded2", border: "#c47b62", ink: "#693928" }),
+  Object.freeze({ background: "#d8edf0", border: "#6e9da6", ink: "#244d55" }),
+  Object.freeze({ background: "#f4e7b9", border: "#b39a4d", ink: "#5b4819" }),
+  Object.freeze({ background: "#dfe7fa", border: "#7f96c6", ink: "#30436b" }),
+]);
+
+type CoachLocationStyle = CSSProperties &
+  Readonly<{
+    "--coach-location-background": string;
+    "--coach-location-border": string;
+    "--coach-location-ink": string;
+  }>;
+
+function locationStyle(locationId: string): CoachLocationStyle {
+  const paletteIndex = Array.from(locationId).reduce(
+    (total, character) =>
+      (total + (character.codePointAt(0) ?? 0)) % LOCATION_PALETTE.length,
+    0,
+  );
+  const palette = LOCATION_PALETTE[paletteIndex];
+  return {
+    "--coach-location-background": palette.background,
+    "--coach-location-border": palette.border,
+    "--coach-location-ink": palette.ink,
+  };
+}
+
 function endTime(localStartTime: string) {
   return `${String(Number(localStartTime.slice(0, 2)) + 1).padStart(2, "0")}:00`;
 }
@@ -57,19 +103,6 @@ function scheduleRuleKey(
   localStartTime: string,
 ) {
   return coachAvailabilityCellKey({ isoWeekday, localStartTime });
-}
-
-function serializeRuleAssignments(
-  assignments: ReadonlyMap<string, CoachAvailabilityRuleInput>,
-) {
-  return JSON.stringify(
-    Array.from(assignments.values()).toSorted(
-      (left, right) =>
-        left.isoWeekday - right.isoWeekday ||
-        left.localStartTime.localeCompare(right.localStartTime) ||
-        left.locationId.localeCompare(right.locationId),
-    ),
-  );
 }
 
 function slotDateTime(slot: OwnedCoachAvailabilitySlot) {
@@ -114,7 +147,9 @@ function ActionResult({ state }: { state: CoachAvailabilityActionState }) {
 function ScheduleCell({
   weekday,
   localStartTime,
-  selected,
+  assignment,
+  assignmentLocation,
+  selectedLocation,
   pending,
   onToggle,
   gridColumn,
@@ -122,28 +157,51 @@ function ScheduleCell({
 }: {
   weekday: string;
   localStartTime: string;
-  selected: boolean;
+  assignment: CoachAvailabilityRuleInput | null;
+  assignmentLocation: CoachTrainingLocation | null;
+  selectedLocation: CoachTrainingLocation;
   pending: boolean;
   onToggle: () => void;
   gridColumn: number;
   gridRow: number;
 }) {
   const interval = `${localStartTime}–${endTime(localStartTime)}`;
-  const action = selected ? "Remove" : "Add";
+  const selected = assignment !== null;
+  const assignmentName =
+    assignmentLocation?.publicName ?? "Unavailable location";
+  const sameLocation = assignment?.locationId === selectedLocation.id;
+  const action = !assignment
+    ? `Assign ${selectedLocation.publicName} to`
+    : sameLocation
+      ? `Remove ${assignmentName} from`
+      : `Review ${weekday} ${interval}, assigned to ${assignmentName}; selected location is ${selectedLocation.publicName}`;
+  const label =
+    assignment && !sameLocation ? action : `${action} ${weekday} ${interval}`;
 
   return (
     <button
       type="button"
-      className={`coach-week-cell${selected ? " selected" : ""}`}
-      style={{ gridColumn, gridRow }}
+      className={`coach-week-cell${selected ? " selected" : ""}${assignment && !sameLocation ? " assigned-elsewhere" : ""}`}
+      style={
+        assignment
+          ? {
+              ...locationStyle(assignment.locationId),
+              gridColumn,
+              gridRow,
+            }
+          : { gridColumn, gridRow }
+      }
+      data-training-location-id={assignment?.locationId}
       aria-pressed={selected}
-      aria-label={`${action} ${weekday} ${interval}`}
-      title={`${action} ${weekday} ${interval}`}
+      aria-label={label}
+      title={label}
       disabled={pending}
       onClick={onToggle}
     >
       {selected && <Check size={14} strokeWidth={3} aria-hidden="true" />}
-      <span aria-hidden="true">{selected ? "Available" : "Add"}</span>
+      <span className="coach-week-cell-location">
+        {selected ? assignmentName : "Add"}
+      </span>
     </button>
   );
 }
@@ -157,66 +215,102 @@ function WorkingWeekEditor({
   rules: readonly OwnedCoachAvailabilityRule[];
   saveRuleSetAction: CoachAvailabilityRuleSetAction;
 }) {
-  const primaryLocation = coach.locations.find(
-    (location) => location.id === coach.primaryLocationId,
+  const activeLocations = [...coach.locations]
+    .filter((location) => location.status === "active")
+    .sort(
+      (left, right) =>
+        Number(right.isPrimary) - Number(left.isPrimary) ||
+        left.sortOrder - right.sortOrder,
+    );
+  const primaryLocation = activeLocations.find(
+    (location) => location.id === coach.primaryLocationId && location.isPrimary,
   );
   if (!primaryLocation) {
     throw new Error("The coach primary training location is unavailable.");
   }
-  const currentPrimaryLocation = primaryLocation;
-  const initialAssignments = () =>
-    new Map(
-      rules.map((rule) => [
-        coachAvailabilityCellKey(rule),
-        Object.freeze({
-          locationId: rule.locationId,
-          locationUpdatedAt: rule.locationUpdatedAt,
-          isoWeekday: rule.isoWeekday,
-          localStartTime: rule.localStartTime,
-        }),
-      ]),
-    );
+  const locationById = new Map(
+    activeLocations.map((location) => [location.id, location]),
+  );
+  const initialAssignments = () => createCoachScheduleDraft(rules);
   const [savedAssignments, setSavedAssignments] = useState(initialAssignments);
   const [draftAssignments, setDraftAssignments] = useState(initialAssignments);
+  const [selectedLocationId, setSelectedLocationId] = useState(
+    primaryLocation.id,
+  );
+  const [pendingDecision, setPendingDecision] =
+    useState<CoachAvailabilityRuleInput | null>(null);
   const [state, setState] = useState(INITIAL_COACH_AVAILABILITY_ACTION_STATE);
   const [pending, startTransition] = useTransition();
+  const moveDecisionRef = useRef<HTMLButtonElement>(null);
   const [mobileDay, setMobileDay] = useState<CoachAvailabilityIsoWeekday>(
     rules[0]?.isoWeekday ?? 1,
   );
-  const expectedRules = serializeRuleAssignments(savedAssignments);
-  const selectedRules = serializeRuleAssignments(draftAssignments);
+  const selectedLocation =
+    locationById.get(selectedLocationId) ?? primaryLocation;
+  const expectedRules = serializeCoachScheduleDraft(savedAssignments);
+  const selectedRules = serializeCoachScheduleDraft(draftAssignments);
   const dirty = expectedRules !== selectedRules;
+  const pendingKey = pendingDecision
+    ? coachAvailabilityCellKey(pendingDecision)
+    : null;
+  const pendingExisting = pendingKey
+    ? (draftAssignments.get(pendingKey) ?? null)
+    : null;
+  const pendingExistingLocation = pendingExisting
+    ? (locationById.get(pendingExisting.locationId) ?? null)
+    : null;
+  const pendingWeekday = pendingDecision
+    ? WEEKDAYS.find(
+        (weekday) => weekday.isoWeekday === pendingDecision.isoWeekday,
+      )
+    : null;
 
-  function toggleRule(
-    isoWeekday: CoachAvailabilityIsoWeekday,
-    localStartTime: string,
-  ) {
-    const cellKey = scheduleRuleKey(isoWeekday, localStartTime);
-    setDraftAssignments((current) => {
-      const next = new Map(current);
-      if (next.has(cellKey)) {
-        next.delete(cellKey);
-      } else {
-        next.set(
-          cellKey,
-          Object.freeze({
-            locationId: currentPrimaryLocation.id,
-            locationUpdatedAt: currentPrimaryLocation.updatedAt,
-            isoWeekday,
-            localStartTime,
-          }),
-        );
-      }
-      return next;
-    });
+  useEffect(() => {
+    if (pendingDecision) moveDecisionRef.current?.focus();
+  }, [pendingDecision]);
+
+  function clearSavedFeedback() {
     if (state.status === "saved") {
       setState(INITIAL_COACH_AVAILABILITY_ACTION_STATE);
     }
   }
 
+  function toggleRule(
+    isoWeekday: CoachAvailabilityIsoWeekday,
+    localStartTime: string,
+  ) {
+    const requested = coachScheduleAssignment(
+      selectedLocation,
+      isoWeekday,
+      localStartTime,
+    );
+    const update = toggleCoachScheduleCell(draftAssignments, requested);
+    if (update.outcome === "decision-required") {
+      setPendingDecision(requested);
+      return;
+    }
+    setPendingDecision(null);
+    setDraftAssignments(update.assignments);
+    clearSavedFeedback();
+  }
+
+  function resolveDecision(resolution: "keep" | "move" | "remove") {
+    if (!pendingDecision) return;
+    const next = resolveCoachScheduleCell(
+      draftAssignments,
+      pendingDecision,
+      resolution,
+    );
+    if (resolution !== "keep") {
+      setDraftAssignments(next);
+      clearSavedFeedback();
+    }
+    setPendingDecision(null);
+  }
+
   function saveSchedule(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!dirty || pending) return;
+    if (!dirty || pending || pendingDecision) return;
     const formData = new FormData(event.currentTarget);
     const savedDraft = new Map(draftAssignments);
     setState(INITIAL_COACH_AVAILABILITY_ACTION_STATE);
@@ -270,10 +364,11 @@ function WorkingWeekEditor({
         </span>
         <MapPin size={18} aria-hidden="true" />
         <span>
-          <strong>{currentPrimaryLocation.publicName}</strong>
+          <strong>{selectedLocation.publicName}</strong>
           <small>
-            New dated times copy {coach.location.label}; later profile edits do
-            not move existing classes.
+            Every cell keeps its assigned venue. New assignments use the
+            location tool below; later profile edits do not move existing
+            classes.
           </small>
         </span>
       </div>
@@ -282,6 +377,94 @@ function WorkingWeekEditor({
         <ActionResult state={state} />
         <input type="hidden" name="selectedRules" value={selectedRules} />
         <input type="hidden" name="expectedRules" value={expectedRules} />
+        <div className="coach-week-location-tools">
+          <label className="coach-week-location-selector">
+            <span>
+              <MapPin size={17} aria-hidden="true" /> Assignment location
+            </span>
+            <select
+              value={selectedLocation.id}
+              onChange={(event) => {
+                setSelectedLocationId(event.target.value);
+                setPendingDecision(null);
+              }}
+              disabled={pending}
+            >
+              {activeLocations.map((location) => (
+                <option key={location.id} value={location.id}>
+                  {location.publicName}
+                  {location.isPrimary ? " — Primary" : ""}
+                </option>
+              ))}
+            </select>
+            <small>
+              Empty hours use this location. Changing the tool does not alter
+              hours already assigned elsewhere.
+            </small>
+          </label>
+          <div className="coach-week-location-legend">
+            <strong>Location legend</strong>
+            <ul>
+              {activeLocations.map((location) => (
+                <li key={location.id} style={locationStyle(location.id)}>
+                  <span aria-hidden="true" />
+                  <span>
+                    <strong>{location.publicName}</strong>
+                    <small>
+                      {location.isPrimary ? "Primary · " : ""}
+                      {location.location.label}
+                    </small>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        {pendingDecision && pendingExisting && (
+          <section
+            className="coach-week-cell-decision"
+            aria-labelledby="coach-week-cell-decision-title"
+            aria-live="polite"
+          >
+            <div>
+              <span className="eyebrow">ASSIGNED SOMEWHERE ELSE</span>
+              <strong id="coach-week-cell-decision-title">
+                {pendingWeekday?.long} {pendingDecision.localStartTime}–
+                {endTime(pendingDecision.localStartTime)} is assigned to{" "}
+                {pendingExistingLocation?.publicName ??
+                  "an unavailable location"}
+                .
+              </strong>
+              <small>
+                Choose explicitly. Nothing is saved until you use Save schedule.
+              </small>
+            </div>
+            <div className="coach-week-cell-decision-actions">
+              <button
+                ref={moveDecisionRef}
+                type="button"
+                className="button dark"
+                onClick={() => resolveDecision("move")}
+              >
+                Move to {selectedLocation.publicName}
+              </button>
+              <button
+                type="button"
+                className="button secondary"
+                onClick={() => resolveDecision("keep")}
+              >
+                Keep {pendingExistingLocation?.publicName ?? "assignment"}
+              </button>
+              <button
+                type="button"
+                className="button secondary"
+                onClick={() => resolveDecision("remove")}
+              >
+                Remove hour
+              </button>
+            </div>
+          </section>
+        )}
         <div className="coach-week-save-bar">
           <p role="status" aria-live="polite">
             {dirty
@@ -291,7 +474,7 @@ function WorkingWeekEditor({
           <button
             type="submit"
             className="button dark"
-            disabled={!dirty || pending}
+            disabled={!dirty || pending || pendingDecision !== null}
           >
             <Save size={16} aria-hidden="true" />
             {pending ? "Saving schedule…" : "Save schedule"}
@@ -359,26 +542,37 @@ function WorkingWeekEditor({
                   </small>
                 </h3>
                 <div className="coach-week-day-slots">
-                  {WORKING_WEEK_HOURS.map((localStartTime, hourIndex) => (
-                    <div className="coach-mobile-hour" key={localStartTime}>
-                      <span className="coach-mobile-time">
-                        {`${localStartTime}–${endTime(localStartTime)}`}
-                      </span>
-                      <ScheduleCell
-                        weekday={day.long}
-                        localStartTime={localStartTime}
-                        selected={draftAssignments.has(
-                          scheduleRuleKey(day.isoWeekday, localStartTime),
-                        )}
-                        pending={pending}
-                        onToggle={() =>
-                          toggleRule(day.isoWeekday, localStartTime)
-                        }
-                        gridColumn={dayIndex + 2}
-                        gridRow={hourIndex + 2}
-                      />
-                    </div>
-                  ))}
+                  {WORKING_WEEK_HOURS.map((localStartTime, hourIndex) => {
+                    const assignment =
+                      draftAssignments.get(
+                        scheduleRuleKey(day.isoWeekday, localStartTime),
+                      ) ?? null;
+                    return (
+                      <div className="coach-mobile-hour" key={localStartTime}>
+                        <span className="coach-mobile-time">
+                          {`${localStartTime}–${endTime(localStartTime)}`}
+                        </span>
+                        <ScheduleCell
+                          weekday={day.long}
+                          localStartTime={localStartTime}
+                          assignment={assignment}
+                          assignmentLocation={
+                            assignment
+                              ? (locationById.get(assignment.locationId) ??
+                                null)
+                              : null
+                          }
+                          selectedLocation={selectedLocation}
+                          pending={pending}
+                          onToggle={() =>
+                            toggleRule(day.isoWeekday, localStartTime)
+                          }
+                          gridColumn={dayIndex + 2}
+                          gridRow={hourIndex + 2}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             );
@@ -402,7 +596,8 @@ function UpcomingOccurrences({
           <h2>Dated class times</h2>
           <p>
             These are the concrete capacity-one times clients can see. Your
-            working week creates them automatically.
+            working week creates them automatically, and every row names the
+            actual saved venue for that occurrence.
           </p>
         </div>
         <span className="coach-slot-count">

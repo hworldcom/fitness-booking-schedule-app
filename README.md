@@ -193,7 +193,7 @@ npm run build
 npm run test:e2e
 ```
 
-`test:auth`, `test:coach-availability` and `test:coach-locations` require the configured Auth-enabled local stack and a running application on port 3100. The location rehearsal also requires the provisioned Daniel Park coach account; it exercises add/edit/conflict/primary/public/deactivation flows, captures responsive evidence and removes only its unreferenced `DEV0178 …` local locations afterward. Database checks require isolated local PostgreSQL. Playwright starts a production server on port 3101 and writes ignored evidence to `test-results/`.
+`test:auth`, `test:coach-availability` and `test:coach-locations` require the configured Auth-enabled local stack and a running application on port 3100. The availability rehearsal creates an approved local coach with two reviewed gyms; verifies local assignment, explicit keep/move/remove, one request per save, inactive-location conflict recovery, actual occurrence venues and responsive keyboard use; then removes only its exact `dev0104-coach-*` local accounts. The location rehearsal requires the provisioned Daniel Park coach account; it exercises add/edit/conflict/primary/public/deactivation flows, captures responsive evidence and removes only its unreferenced `DEV0178 …` local locations afterward. Database checks require isolated local PostgreSQL. Playwright starts a production server on port 3101 and writes ignored evidence to `test-results/`.
 
 ## Application structure
 

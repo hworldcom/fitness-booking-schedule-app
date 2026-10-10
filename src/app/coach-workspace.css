@@ -164,6 +164,160 @@
   margin: 6px 0 0 17px;
 }
 
+.coach-week-location-tools {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.72fr) minmax(0, 1.28fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.coach-week-location-selector,
+.coach-week-location-legend {
+  min-width: 0;
+  border: 1px solid #dce4d7;
+  border-radius: 13px;
+  background: #f8faf5;
+  padding: 14px;
+}
+
+.coach-week-location-selector {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.coach-week-location-selector > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #405638;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.coach-week-location-selector select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #cfdac9;
+  border-radius: 9px;
+  background: white;
+  padding: 9px 11px;
+  color: #263c24;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.coach-week-location-selector small {
+  color: #717d6f;
+  font-size: 8px;
+  line-height: 1.55;
+}
+
+.coach-week-location-legend > strong {
+  display: block;
+  color: #405638;
+  font-size: 10px;
+}
+
+.coach-week-location-legend ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin: 9px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coach-week-location-legend li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 7px;
+  min-width: 0;
+  border: 1px solid var(--coach-location-border);
+  border-radius: 9px;
+  background: var(--coach-location-background);
+  padding: 8px;
+  color: var(--coach-location-ink);
+}
+
+.coach-week-location-legend li > span:first-child {
+  width: 9px;
+  height: 9px;
+  margin-top: 2px;
+  border: 2px solid var(--coach-location-border);
+  border-radius: 50%;
+  background: white;
+}
+
+.coach-week-location-legend li strong,
+.coach-week-location-legend li small {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.coach-week-location-legend li strong {
+  font-size: 8px;
+}
+
+.coach-week-location-legend li small {
+  margin-top: 2px;
+  font-size: 7px;
+  line-height: 1.45;
+  opacity: 0.78;
+}
+
+.coach-week-cell-decision {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+  border: 1px solid #cbbbe1;
+  border-radius: 13px;
+  background: #f3edf9;
+  padding: 14px;
+  color: #49385f;
+}
+
+.coach-week-cell-decision > div:first-child,
+.coach-week-cell-decision strong,
+.coach-week-cell-decision small {
+  display: block;
+  min-width: 0;
+}
+
+.coach-week-cell-decision .eyebrow {
+  color: #755b93;
+  font-size: 7px;
+}
+
+.coach-week-cell-decision strong {
+  margin-top: 4px;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.coach-week-cell-decision small {
+  margin-top: 3px;
+  color: #746783;
+  font-size: 8px;
+}
+
+.coach-week-cell-decision-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.coach-week-cell-decision-actions .button {
+  min-height: 36px;
+  padding: 8px 11px;
+  font-size: 8px;
+}
+
 .coach-week-mobile-picker {
   display: none;
 }
@@ -278,9 +432,21 @@
 }
 
 .coach-week-cell.selected {
-  border-color: #86a85d;
-  background: var(--coach-forest);
-  color: var(--coach-lime);
+  border-color: var(--coach-location-border);
+  background: var(--coach-location-background);
+  color: var(--coach-location-ink);
+}
+
+.coach-week-cell.selected.assigned-elsewhere {
+  box-shadow: inset 0 0 0 1px var(--coach-location-border);
+}
+
+.coach-week-cell-location {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .coach-week-cell:focus-visible {
@@ -684,6 +850,25 @@
     grid-template-columns: auto minmax(0, 1fr);
   }
 
+  .coach-week-location-tools,
+  .coach-week-cell-decision {
+    grid-template-columns: 1fr;
+  }
+
+  .coach-week-location-legend ul {
+    grid-template-columns: 1fr;
+  }
+
+  .coach-week-cell-decision-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .coach-week-cell-decision-actions .button {
+    justify-content: center;
+    width: 100%;
+  }
+
   .coach-week-mobile-picker {
     display: grid;
     gap: 7px;
@@ -753,7 +938,7 @@
 
   .coach-mobile-hour {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(98px, 0.55fr);
+    grid-template-columns: minmax(88px, 0.55fr) minmax(0, 1fr);
     align-items: center;
     gap: 10px;
     border-radius: 8px;
@@ -774,6 +959,10 @@
     grid-column: auto !important;
     grid-row: auto !important;
     margin: 0;
+  }
+
+  .coach-week-cell-location {
+    font-size: 8px;
   }
 
   .coach-week-save-bar {
