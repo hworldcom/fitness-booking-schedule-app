@@ -36,6 +36,7 @@ import {
   serializeCoachScheduleDraft,
   toggleCoachScheduleCell,
 } from "@/features/coaches/coach-schedule-draft";
+import { assignCoachLocationPaletteIndexes } from "@/features/coaches/coach-location-palette";
 import type { CoachWorkspaceView } from "@/features/coaches/coach-workspace-view";
 import { CoachWorkspaceNavigation } from "@/features/coaches/coach-workspace-navigation";
 
@@ -80,12 +81,7 @@ type CoachLocationStyle = CSSProperties &
     "--coach-location-ink": string;
   }>;
 
-function locationStyle(locationId: string): CoachLocationStyle {
-  const paletteIndex = Array.from(locationId).reduce(
-    (total, character) =>
-      (total + (character.codePointAt(0) ?? 0)) % LOCATION_PALETTE.length,
-    0,
-  );
+function locationStyle(paletteIndex: number): CoachLocationStyle {
   const palette = LOCATION_PALETTE[paletteIndex];
   return {
     "--coach-location-background": palette.background,
@@ -149,6 +145,7 @@ function ScheduleCell({
   localStartTime,
   assignment,
   assignmentLocation,
+  paletteIndex,
   selectedLocation,
   pending,
   onToggle,
@@ -159,6 +156,7 @@ function ScheduleCell({
   localStartTime: string;
   assignment: CoachAvailabilityRuleInput | null;
   assignmentLocation: CoachTrainingLocation | null;
+  paletteIndex: number;
   selectedLocation: CoachTrainingLocation;
   pending: boolean;
   onToggle: () => void;
@@ -185,13 +183,14 @@ function ScheduleCell({
       style={
         assignment
           ? {
-              ...locationStyle(assignment.locationId),
+              ...locationStyle(paletteIndex),
               gridColumn,
               gridRow,
             }
           : { gridColumn, gridRow }
       }
       data-training-location-id={assignment?.locationId}
+      data-location-palette={assignment ? paletteIndex : undefined}
       aria-pressed={selected}
       aria-label={label}
       title={label}
@@ -230,6 +229,13 @@ function WorkingWeekEditor({
   }
   const locationById = new Map(
     activeLocations.map((location) => [location.id, location]),
+  );
+  const locationPaletteIndexes = assignCoachLocationPaletteIndexes(
+    [
+      ...activeLocations.map((location) => location.id),
+      ...rules.map((rule) => rule.locationId),
+    ],
+    LOCATION_PALETTE.length,
   );
   const initialAssignments = () => createCoachScheduleDraft(rules);
   const [savedAssignments, setSavedAssignments] = useState(initialAssignments);
@@ -406,7 +412,16 @@ function WorkingWeekEditor({
             <strong>Location legend</strong>
             <ul>
               {activeLocations.map((location) => (
-                <li key={location.id} style={locationStyle(location.id)}>
+                <li
+                  key={location.id}
+                  style={locationStyle(
+                    locationPaletteIndexes.get(location.id) ?? 0,
+                  )}
+                  data-training-location-id={location.id}
+                  data-location-palette={
+                    locationPaletteIndexes.get(location.id) ?? 0
+                  }
+                >
                   <span aria-hidden="true" />
                   <span>
                     <strong>{location.publicName}</strong>
@@ -561,6 +576,13 @@ function WorkingWeekEditor({
                               ? (locationById.get(assignment.locationId) ??
                                 null)
                               : null
+                          }
+                          paletteIndex={
+                            assignment
+                              ? (locationPaletteIndexes.get(
+                                  assignment.locationId,
+                                ) ?? 0)
+                              : 0
                           }
                           selectedLocation={selectedLocation}
                           pending={pending}

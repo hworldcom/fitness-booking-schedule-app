@@ -5,7 +5,7 @@
 - Last updated: 2026-10-10
 - Milestone: Scheduling-only multi-location follow-up
 - Converted from: Not applicable — created as a coordination record
-- Tracked development tickets: completed [DEV0175 — Adopt the multi-location coach scheduling contract](../../archive/organisatory/DEV0175-adopt-multi-location-coach-scheduling-contract.md), [DEV0176 — Persist coach training locations](../../archive/backend/DEV0176-persist-coach-training-locations.md), [DEV0177 — Bind availability to training locations](../../archive/backend/DEV0177-bind-availability-to-training-locations.md), [DEV0178 — Manage coach training locations](../../archive/frontend/DEV0178-manage-coach-training-locations.md) and [DEV0179 — Edit a location-aware working week](../../archive/frontend/DEV0179-edit-location-aware-working-week.md); current [DEV0180 — Pin coaches at primary locations](../frontend/DEV0180-pin-coaches-at-primary-locations.md)
+- Tracked development tickets: completed [DEV0175 — Adopt the multi-location coach scheduling contract](../../archive/organisatory/DEV0175-adopt-multi-location-coach-scheduling-contract.md), [DEV0176 — Persist coach training locations](../../archive/backend/DEV0176-persist-coach-training-locations.md), [DEV0177 — Bind availability to training locations](../../archive/backend/DEV0177-bind-availability-to-training-locations.md), [DEV0178 — Manage coach training locations](../../archive/frontend/DEV0178-manage-coach-training-locations.md), [DEV0179 — Edit a location-aware working week](../../archive/frontend/DEV0179-edit-location-aware-working-week.md) and [DEV0181 — Distinguish schedule location colors](../../archive/frontend/DEV0181-distinguish-schedule-location-colors.md); current [DEV0180 — Pin coaches at primary locations](../frontend/DEV0180-pin-coaches-at-primary-locations.md)
 - Related records: location-provider baseline [DEV0174 — Decouple location services](../../archive/frontend/DEV0174-decouple-location-services.md); atomic weekly-save baseline [DEV0146 — Save weekly schedule in one action](../../archive/frontend/DEV0146-save-weekly-schedule-in-one-action.md); scheduling-only contract [DEV0140 — Adopt the scheduling-only contract](../../archive/organisatory/DEV0140-adopt-scheduling-only-contract.md); downstream native consumers [COR0013 — Native iOS application](COR0013-native-ios-application.md)
 
 ## Objective and boundaries
@@ -26,6 +26,7 @@ This record owns sequencing, boundaries and final integration evidence only. It 
 | Profile location interface  | [DEV0178 — Manage coach training locations](../../archive/frontend/DEV0178-manage-coach-training-locations.md)                                       | Add coach and public profile interfaces for adding, editing, ordering, selecting a primary location and safely deactivating locations.                         | Completed 2026-10-10 after DEV0176 and DEV0177.           |
 | Location-aware calendar     | [DEV0179 — Edit a location-aware working week](../../archive/frontend/DEV0179-edit-location-aware-working-week.md)                                   | Let coaches use a selected-location paint control, inspect assigned cells and save one complete location-aware draft without per-cell mutations.               | Completed 2026-10-10 after DEV0177 and DEV0178.           |
 | Primary-location discovery  | [DEV0180 — Pin coaches at primary locations](../frontend/DEV0180-pin-coaches-at-primary-locations.md)                                                | Keep every visible coach on Explore at one primary marker regardless of today's availability while presenting truthful today status and actual session venues. | After DEV0176 and DEV0177; may proceed alongside DEV0179. |
+| Calendar color clarity      | [DEV0181 — Distinguish schedule location colors](../../archive/frontend/DEV0181-distinguish-schedule-location-colors.md)                             | Resolve palette collisions across active locations so the legend and assigned cells visibly distinguish gyms whenever unused colors remain.                    | Completed 2026-10-10 after DEV0179.                       |
 
 All required implementation parts have direct development tickets. The tickets are flat peers under this coordination record; their dependency order does not create a child-ticket hierarchy.
 
@@ -43,7 +44,8 @@ All required implementation parts have direct development tickets. The tickets a
 3. Complete DEV0177 against that foundation. Its occurrence synchronization and atomic rule replacement must pass before location-aware calendar or today-status interfaces rely on them.
 4. DEV0178 and DEV0179 completed after DEV0176/DEV0177. Coaches can now manage active locations and assign complete local calendar drafts to them through one explicit save.
 5. DEV0180 may proceed after DEV0176/DEV0177 and can integrate independently of DEV0179's interface polish.
-6. Complete this coordination only when all six direct tickets are Completed or explicitly cancelled/replaced, links and statuses agree, existing coaches retain a primary marker, location assignments survive reload, overlapping cross-location time is rejected, bookings retain actual venue snapshots, map/list fallbacks remain usable and the integrated responsive browser/database suites pass.
+6. DEV0181 follows DEV0179 and may complete independently of DEV0180 because it changes only the existing calendar's presentation mapping.
+7. Complete this coordination only when all seven direct tickets are Completed or explicitly cancelled/replaced, links and statuses agree, existing coaches retain a primary marker, location assignments survive reload, overlapping cross-location time is rejected, bookings retain actual venue snapshots, map/list fallbacks remain usable and the integrated responsive browser/database suites pass.
 
 ## Progress and integration record
 
@@ -59,6 +61,8 @@ All required implementation parts have direct development tickets. The tickets a
 - 2026-10-10: DEV0178 completed and was archived after adding explicit provider-neutral add/edit controls, primary replacement, deactivation feedback, recoverable stale conflicts and active-only public profile presentation. Its authenticated desktop/mobile rehearsal and full configured browser suite passed; DEV0179 is now dependency-ready.
 - 2026-10-10: Reviewed DEV0179 against the delivered versioned rule-set action and active-location projection and started implementation. The adopted interface uses the primary location as the initial assignment tool, deterministic text-plus-color cues and an explicit keep/move/remove decision for a cell assigned to another location; no new persistence contract is expected.
 - 2026-10-10: DEV0179 completed and was archived after adding active-location selection, text-plus-color cells, explicit keep/move/remove and a guarded one-save interaction. Its authenticated two-location rehearsal covered real concurrent deactivation and cleanup, while the full unit, database, build and configured desktop/mobile browser suites passed. DEV0180 is the final direct implementation ticket.
+- 2026-10-10: Added and started DEV0181 after the user requested multiple legend colors. The follow-up resolves collisions in DEV0179's finite palette and keeps text as the authoritative cue; DEV0180 remains independently pending.
+- 2026-10-10: DEV0181 completed and was archived after guaranteeing distinct colors for the first six ordered active locations, sharing the mapping between legend and cells and passing focused responsive browser evidence. DEV0180 remains the only unfinished direct ticket.
 
 ## Validation results
 
@@ -69,6 +73,7 @@ All required implementation parts have direct development tickets. The tickets a
 - DEV0177 integration validation completed on 2026-10-10: fresh and upgrade migrations, 184 pgTAP assertions, 37 database integration tests, database lint, 91 unit/server tests, application lint/type/format checks, compatibility rendering and the production build passed. DEV0178-DEV0180 still own the management, selector and primary-discovery interfaces plus responsive browser evidence.
 - DEV0178 integration validation completed on 2026-10-10: authenticated add/edit/stale-conflict/primary/deactivation rehearsal, responsive visual review, 95 unit/server tests, 37 database integration tests, 184 pgTAP assertions, database/application lint, type/format checks, the production build and all 28 configured desktop/mobile browser tests passed. DEV0179/DEV0180 still own the location-aware calendar and primary Explore marker.
 - DEV0179 integration validation completed on 2026-10-10: authenticated two-location assign/keep/move/remove/save/deactivation-conflict rehearsal, responsive visual review, 100 unit/server tests, 37 database integration tests, 184 pgTAP assertions, database/application lint, type/format checks, the configured production build and all 28 desktop/mobile browser tests passed. DEV0180 still owns the primary Explore marker and today-status presentation.
+- DEV0181 integration validation completed on 2026-10-10: 103 unit/server tests, the authenticated distinct-color desktop/mobile rehearsal, visual evidence review, application lint/type/format/diff checks and the configured production build passed. Database and full public-browser suites were not rerun because the follow-up changes only existing workspace presentation; DEV0180 remains pending.
 - Coordination completion requires reciprocal membership/link checks plus the integrated database, service, browser, responsive and build evidence owned by the direct tickets.
 
 ## Risks, limitations, and follow-ups
@@ -81,7 +86,7 @@ All required implementation parts have direct development tickets. The tickets a
 ## Completion and review references
 
 - Completed: Not completed.
-- Direct development tickets: DEV0175-DEV0179 Completed; DEV0180 remains Draft.
+- Direct development tickets: DEV0175-DEV0179 and DEV0181 Completed; DEV0180 remains Draft.
 - Commit: Not applicable — coordination-record IDs are not used in commit subjects.
 - Review: No integration review created.
 - Deployment or release: Not deployed or released.

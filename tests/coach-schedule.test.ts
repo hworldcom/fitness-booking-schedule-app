@@ -192,6 +192,27 @@ test("coach working week renders one keyboard-operable one-hour control per cell
   assert.match(html, /Location legend/);
   assert.match(html, /Tempelhofer Feld — Primary/);
   assert.match(html, /Riverside strength deck/);
+  const paletteIndex = (tagName: "li" | "button", locationId: string) => {
+    const tag = html.match(
+      new RegExp(
+        `<${tagName}[^>]*data-training-location-id="${locationId}"[^>]*>`,
+      ),
+    )?.[0];
+    assert.ok(tag, `${tagName} for ${locationId} should be rendered`);
+    const value = tag.match(/data-location-palette="(\d+)"/)?.[1];
+    assert.ok(value, `${tagName} for ${locationId} should expose its palette`);
+    return value;
+  };
+  const primaryLocationId = "60000000-0000-4000-8000-000000000001";
+  const secondaryLocationId = "60000000-0000-4000-8000-000000000002";
+  const primaryLegendPalette = paletteIndex("li", primaryLocationId);
+  const secondaryLegendPalette = paletteIndex("li", secondaryLocationId);
+  assert.notEqual(primaryLegendPalette, secondaryLegendPalette);
+  assert.equal(paletteIndex("button", primaryLocationId), primaryLegendPalette);
+  assert.equal(
+    paletteIndex("button", secondaryLocationId),
+    secondaryLegendPalette,
+  );
   assert.match(html, /2 selected hours/);
   assert.match(html, /Remove Tempelhofer Feld from Monday 09:00–10:00/);
   assert.match(

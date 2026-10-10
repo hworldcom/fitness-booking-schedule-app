@@ -247,7 +247,8 @@
   margin-top: 2px;
   border: 2px solid var(--coach-location-border);
   border-radius: 50%;
-  background: white;
+  background: var(--coach-location-border);
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 72%);
 }
 
 .coach-week-location-legend li strong,

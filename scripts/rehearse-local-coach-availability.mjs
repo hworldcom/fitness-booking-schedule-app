@@ -314,6 +314,58 @@ async function assertCoachPrimaryNavigation(page) {
   );
 }
 
+async function locationColor(element) {
+  return element.evaluate((node) =>
+    getComputedStyle(node)
+      .getPropertyValue("--coach-location-background")
+      .trim(),
+  );
+}
+
+async function assertDistinctLocationColors(
+  page,
+  primaryGymName,
+  secondaryGymName,
+) {
+  const legend = page.locator(".coach-week-location-legend li");
+  const primaryLegend = legend.filter({ hasText: primaryGymName }).first();
+  const secondaryLegend = legend.filter({ hasText: secondaryGymName }).first();
+  const primaryLocationId = await primaryLegend.getAttribute(
+    "data-training-location-id",
+  );
+  const secondaryLocationId = await secondaryLegend.getAttribute(
+    "data-training-location-id",
+  );
+  assert.ok(primaryLocationId);
+  assert.ok(secondaryLocationId);
+
+  const primaryColor = await locationColor(primaryLegend);
+  const secondaryColor = await locationColor(secondaryLegend);
+  assert.match(primaryColor, /^#[0-9a-f]{6}$/i);
+  assert.match(secondaryColor, /^#[0-9a-f]{6}$/i);
+  assert.notEqual(primaryColor, secondaryColor);
+
+  const primaryCell = page
+    .locator(
+      `button.coach-week-cell[data-training-location-id="${primaryLocationId}"]`,
+    )
+    .first();
+  const secondaryCell = page
+    .locator(
+      `button.coach-week-cell[data-training-location-id="${secondaryLocationId}"]`,
+    )
+    .first();
+  assert.equal(await locationColor(primaryCell), primaryColor);
+  assert.equal(await locationColor(secondaryCell), secondaryColor);
+  assert.notEqual(
+    await primaryLegend
+      .locator(":scope > span")
+      .first()
+      .evaluate((node) => getComputedStyle(node).backgroundColor),
+    "rgb(255, 255, 255)",
+  );
+}
+
 async function rehearseAvailability(
   page,
   context,
@@ -371,6 +423,17 @@ async function rehearseAvailability(
   });
   await secondCell.click();
   await page.getByText("2 selected hours · Unsaved").waitFor();
+  await assertDistinctLocationColors(page, primaryGymName, secondaryGymName);
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page
+    .locator(".coach-week-mobile-picker select")
+    .selectOption({ label: `${workingDay.weekday} · 2 selected` });
+  await assertDistinctLocationColors(page, primaryGymName, secondaryGymName);
+  await page.screenshot({
+    path: `${evidenceDirectory}/coach-availability-multiple-colors-mobile.png`,
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 1440, height: 1040 });
   await page
     .getByRole("button", {
       name: `Review ${workingDay.weekday} ${workingDay.firstHour}–11:00, assigned to ${primaryGymName}; selected location is ${secondaryGymName}`,
@@ -532,7 +595,7 @@ try {
 
   assert.deepEqual(pageErrors, []);
   console.log(
-    "Coach availability rehearsal passed for two-location local assignment, explicit keep/move/remove, zero per-cell requests, one request per save, inactive-location conflict recovery, actual-venue projection, keyboard focus and responsive layout.",
+    "Coach availability rehearsal passed for distinct two-location legend/cell colors, local assignment, explicit keep/move/remove, zero per-cell requests, one request per save, inactive-location conflict recovery, actual-venue projection, keyboard focus and responsive layout.",
   );
 } finally {
   await browser.close();
