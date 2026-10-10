@@ -5,7 +5,7 @@
 - Last updated: 2026-10-09
 - Milestone: Native iOS application contract
 - Coordination: [COR0013 — Native iOS application](COR0013-native-ios-application.md)
-- Related records: supplies [DEV0160 — Expose the mobile scheduling API](../backend/DEV0160-expose-mobile-scheduling-api.md), [DEV0161 — Establish the Expo iOS foundation](../frontend/DEV0161-establish-expo-ios-foundation.md) and the remaining COR0013 peers; extends the scheduling-only contract adopted by [DEV0140](../../archive/organisatory/DEV0140-adopt-scheduling-only-contract.md); consumes the shared multi-location target coordinated by [COR0014 — Multi-location coach scheduling](COR0014-multi-location-coach-scheduling.md)
+- Related records: supplies [DEV0160 — Expose the mobile scheduling API](../backend/DEV0160-expose-mobile-scheduling-api.md), [DEV0161 — Establish the Expo iOS foundation](../frontend/DEV0161-establish-expo-ios-foundation.md) and the remaining COR0013 peers; extends the scheduling-only contract adopted by [DEV0140](../../archive/organisatory/DEV0140-adopt-scheduling-only-contract.md); consumes the shared multi-location target coordinated by completed [COR0014 — Multi-location coach scheduling](../../archive/organisatory/COR0014-multi-location-coach-scheduling.md)
 
 ## Objective and context
 

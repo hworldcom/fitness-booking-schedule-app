@@ -4,7 +4,7 @@
 - Created: 2026-10-10
 - Last updated: 2026-10-10
 - Milestone: Scheduling-only multi-location follow-up
-- Coordination: [COR0014 — Multi-location coach scheduling](../../current/organisatory/COR0014-multi-location-coach-scheduling.md)
+- Coordination: [COR0014 — Multi-location coach scheduling](../organisatory/COR0014-multi-location-coach-scheduling.md)
 - Related records: follows completed [DEV0179 — Edit a location-aware working week](DEV0179-edit-location-aware-working-week.md)
 
 ## Objective and context

@@ -33,6 +33,7 @@ export type LocationMapPoint = Readonly<{
   id: string;
   name: string;
   label: string;
+  ariaLabel: string;
   latitude: number;
   longitude: number;
   initials: string;

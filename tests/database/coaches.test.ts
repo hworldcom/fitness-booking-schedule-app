@@ -243,7 +243,12 @@ test("public discovery filters visible database records without fixture fallback
     serviceMode: "private-training",
   });
   assert.equal(ownerSearch.length, 1);
-  assert.equal(ownerSearch[0]?.displayName, "Coach Owner");
+  assert.equal(ownerSearch[0]?.coach.displayName, "Coach Owner");
+  assert.equal(
+    ownerSearch[0]?.primaryLocation.id,
+    ownerSearch[0]?.coach.primaryLocationId,
+  );
+  assert.deepEqual(ownerSearch[0]?.todaySlots, []);
 
   const hiddenSearch = await publicCoachDirectoryRecords({
     query: "Other Owner",

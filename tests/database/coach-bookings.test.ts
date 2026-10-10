@@ -21,7 +21,10 @@ import {
   currentClientPrivateBookingRecords,
   currentCoachPrivateBookingRecords,
 } from "@/server/db/coaches/booking-repository";
-import { upsertOwnedCoachProfileRecord } from "@/server/db/coaches/repository";
+import {
+  publicCoachDirectoryRecords,
+  upsertOwnedCoachProfileRecord,
+} from "@/server/db/coaches/repository";
 import { enrollApplicationProfile } from "@/server/db/identity/repository";
 import {
   confirmedBookingClientAvatarReference,
@@ -102,6 +105,18 @@ async function createSlot(hoursFromNow: number) {
       availabilityInput(hoursFromNow),
     ),
   );
+}
+
+async function bookingCoachDirectoryEntry() {
+  const directory = await publicCoachDirectoryRecords({
+    query: coachProfile.displayName,
+    discipline: null,
+    location: "",
+    serviceMode: null,
+  });
+  assert.equal(directory.length, 1);
+  assert.equal(directory[0]?.coach.profileId, coachActor.profileId);
+  return directory[0]!;
 }
 
 async function removeFixtures() {
@@ -245,6 +260,7 @@ after(async () => {
 
 test("direct booking is idempotent for one client and capacity one", async () => {
   const slotId = await createSlot(2);
+  const beforeBookingDirectory = await bookingCoachDirectoryEntry();
   const bookingId = await withActorDatabaseContext(
     firstClientActor,
     (transaction) => bookDirectPrivateSessionRecord(transaction, slotId),
@@ -314,6 +330,11 @@ test("direct booking is idempotent for one client and capacity one", async () =>
     select status from app.coach_availability_slots where id = ${slotId}::uuid
   `;
   assert.equal(slot?.status, "booked");
+  const bookedDirectory = await bookingCoachDirectoryEntry();
+  assert.equal(
+    bookedDirectory.todaySlots.some((candidate) => candidate.id === slotId),
+    false,
+  );
 
   const accountPath = `${firstClientActor.profileId}/${firstClientAvatarObjectId}.webp`;
   async function storageVisibility() {
@@ -370,6 +391,17 @@ test("direct booking is idempotent for one client and capacity one", async () =>
   });
   await withActorDatabaseContext(firstClientActor, (transaction) =>
     cancelDirectPrivateBookingRecord(transaction, bookingId),
+  );
+  const cancelledDirectory = await bookingCoachDirectoryEntry();
+  assert.equal(
+    cancelledDirectory.todaySlots.some((candidate) => candidate.id === slotId),
+    beforeBookingDirectory.todaySlots.some(
+      (candidate) => candidate.id === slotId,
+    ),
+  );
+  assert.equal(
+    cancelledDirectory.primaryLocation.id,
+    beforeBookingDirectory.primaryLocation.id,
   );
   assert.deepEqual(await storageVisibility(), {
     coachCount: 0,

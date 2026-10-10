@@ -56,7 +56,7 @@ export function CoachDirectory({ state }: { state: CoachDirectoryState }) {
             Try again
           </Link>
         </section>
-      ) : state.coaches.length === 0 ? (
+      ) : state.entries.length === 0 ? (
         <section className="coach-directory-state">
           <Search size={29} aria-hidden="true" />
           <h2>No coaches match these filters.</h2>
@@ -66,7 +66,7 @@ export function CoachDirectory({ state }: { state: CoachDirectoryState }) {
           </Link>
         </section>
       ) : (
-        <CoachExploreResults coaches={state.coaches} />
+        <CoachExploreResults entries={state.entries} />
       )}
     </div>
   );

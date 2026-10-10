@@ -32,7 +32,7 @@ Delivered reusable foundations include:
 
 Direct scheduling-only booking and runtime cleanup were delivered under COR0011. The former membership, wallet, payment, group-event and social features are not current product surfaces.
 
-The target contract permits multiple coach training locations, one coach-selected primary Explore marker and actual-location availability assignments. Profile location management is now delivered; the location-aware calendar and primary-marker follow-ups remain open under [COR0014](tickets/current/organisatory/COR0014-multi-location-coach-scheduling.md).
+The delivered contract permits multiple coach training locations, one coach-selected primary Explore marker and actual-location availability assignments. Profile location management, the location-aware calendar and primary-marker discovery are integrated under completed [COR0014](tickets/archive/organisatory/COR0014-multi-location-coach-scheduling.md).
 
 ## Run locally
 

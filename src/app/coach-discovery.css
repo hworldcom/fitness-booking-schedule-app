@@ -244,6 +244,102 @@
   line-height: 1.5;
 }
 
+.coach-location-line .coach-location-kicker {
+  margin: 0 0 5px;
+  color: #5c7449;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.coach-today-availability {
+  display: grid;
+  gap: 10px;
+  border: 1px solid #e0e7da;
+  border-radius: 13px;
+  background: #fbfcf8;
+  padding: 12px 13px;
+}
+
+.coach-today-availability header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 7px;
+  color: #526846;
+}
+
+.coach-today-availability header span {
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.coach-today-availability header strong {
+  color: #34482d;
+  font-size: 9px;
+  text-align: right;
+}
+
+.coach-today-availability ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coach-today-availability li {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: start;
+  gap: 7px;
+  border-top: 1px solid #e7ebe3;
+  padding-top: 8px;
+  color: #65715f;
+}
+
+.coach-today-availability time {
+  color: #31462a;
+  font-size: 9px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.coach-today-availability li span,
+.coach-today-availability li strong,
+.coach-today-availability li small {
+  display: block;
+  min-width: 0;
+}
+
+.coach-today-availability li strong {
+  overflow: hidden;
+  color: #44573b;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coach-today-availability li small {
+  overflow: hidden;
+  margin-top: 3px;
+  color: #7a8377;
+  font-size: 8px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coach-today-more {
+  margin: 0;
+  color: #627357;
+  font-size: 8px;
+  font-weight: 750;
+}
+
 .coach-card-link,
 .coach-back-link {
   display: inline-flex;
@@ -317,6 +413,80 @@
   color: #737d71;
   font-size: 9px;
   line-height: 1.55;
+}
+
+.coach-map-detail {
+  display: grid;
+  gap: 13px;
+  border-top: 1px solid #e4e9df;
+  background: #f8faf5;
+  padding: 16px 18px;
+}
+
+.coach-map-detail > header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.coach-map-detail > header .avatar {
+  width: 40px;
+  height: 40px;
+}
+
+.coach-map-detail h3 {
+  margin-top: 3px;
+  color: #2f422a;
+  font-size: 16px;
+  letter-spacing: -0.3px;
+}
+
+.coach-map-primary {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #526946;
+}
+
+.coach-map-primary span,
+.coach-map-primary small,
+.coach-map-primary strong,
+.coach-map-primary em {
+  display: block;
+  min-width: 0;
+}
+
+.coach-map-primary small {
+  color: #6d7e64;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 850;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.coach-map-primary strong {
+  margin-top: 4px;
+  color: #34482d;
+  font-size: 10px;
+}
+
+.coach-map-primary em {
+  margin-top: 3px;
+  color: #747e72;
+  font-size: 8px;
+  font-style: normal;
+  line-height: 1.45;
+}
+
+.coach-map-detail > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+  color: #3d5733;
+  font-size: 9px;
+  font-weight: 850;
 }
 
 .coach-map-canvas,

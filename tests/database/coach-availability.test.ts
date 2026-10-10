@@ -25,6 +25,7 @@ import {
   createOwnedCoachTrainingLocationRecord,
   currentOwnedCoachProfileRecord,
   deactivateOwnedCoachTrainingLocationRecord,
+  publicCoachDirectoryRecords,
   setOwnedCoachPrimaryLocationRecord,
   updateOwnedCoachTrainingLocationRecord,
   upsertOwnedCoachProfileRecord,
@@ -320,6 +321,40 @@ test("owner publishes a public slot with a stable location snapshot", async () =
   assert.equal(visible.length, 1);
   assert.equal(visible[0]?.id, slotId);
   assert.equal("status" in (visible[0] ?? {}), false);
+
+  const beforeDirectoryRead = new Date();
+  const directory = await publicCoachDirectoryRecords({
+    query: "Availability Owner",
+    discipline: null,
+    location: "",
+    serviceMode: null,
+  });
+  const afterDirectoryRead = new Date();
+  assert.equal(directory.length, 1);
+  assert.equal(
+    directory[0]?.primaryLocation.id,
+    directory[0]?.coach.primaryLocationId,
+  );
+  const slot = visible[0];
+  assert.ok(slot);
+  const startLocalDate = localDateTimeValue(
+    slot.startsAt,
+    slot.coachTimezone,
+  ).slice(0, 10);
+  const beforeLocalDate = localDateTimeValue(
+    beforeDirectoryRead,
+    slot.coachTimezone,
+  ).slice(0, 10);
+  const afterLocalDate = localDateTimeValue(
+    afterDirectoryRead,
+    slot.coachTimezone,
+  ).slice(0, 10);
+  if (beforeLocalDate === afterLocalDate) {
+    assert.equal(
+      directory[0]?.todaySlots.some((candidate) => candidate.id === slot.id),
+      startLocalDate === beforeLocalDate,
+    );
+  }
 
   const [originalGym] = await admin<
     {

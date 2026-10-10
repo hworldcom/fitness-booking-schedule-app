@@ -18,6 +18,15 @@ test("guest browses and filters the persistent coach directory", async ({
   await expect(
     page.getByRole("heading", { name: "Daniel Park" }),
   ).toBeVisible();
+  const danielCard = page.locator(".coach-card").filter({
+    has: page.getByRole("heading", { name: "Daniel Park" }),
+  });
+  await expect(
+    danielCard.getByText("Primary training location", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    danielCard.getByText("No availability today", { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText(/Fictional coaches and places/)).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Map of matching coaches" }),
@@ -29,7 +38,7 @@ test("guest browses and filters the persistent coach directory", async ({
     const markers = page.locator("button.location-map-marker");
     await expect(markers).toHaveCount(5);
     const danielMarker = page.getByRole("button", {
-      name: /Select Daniel Park at/,
+      name: /Select Daniel Park at primary training location/,
     });
     await expect(danielMarker.locator("img")).toHaveAttribute(
       "src",
@@ -38,8 +47,33 @@ test("guest browses and filters the persistent coach directory", async ({
     await expect(
       page.getByRole("button", { name: /Select Sam Lee at/ }).locator("img"),
     ).toHaveCount(0);
+    const noraMarker = page.getByRole("button", {
+      name: /Select Nora Klein at primary training location/,
+    });
+    const idrisMarker = page.getByRole("button", {
+      name: /Select Idris Malik at primary training location/,
+    });
+    await expect(noraMarker).toHaveAttribute("data-coincident-count", "2");
+    await expect(idrisMarker).toHaveAttribute("data-coincident-count", "2");
+    expect(await noraMarker.getAttribute("data-marker-offset")).not.toBe(
+      await idrisMarker.getAttribute("data-marker-offset"),
+    );
     await danielMarker.click();
     await expect(danielMarker).toHaveAttribute("aria-pressed", "true");
+    const danielMapDetail = page.getByRole("region", {
+      name: "Daniel Park map details",
+    });
+    await expect(danielMapDetail).toBeVisible();
+    await expect(
+      danielMapDetail.getByText("Primary training location", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      danielMapDetail.getByText("No availability today", { exact: true }),
+    ).toBeVisible();
+    await page.screenshot({
+      path: testInfo.outputPath("coach-map-selected.png"),
+      fullPage: true,
+    });
     await danielMarker.locator("img").evaluate((image) => {
       image.dispatchEvent(new Event("error"));
     });

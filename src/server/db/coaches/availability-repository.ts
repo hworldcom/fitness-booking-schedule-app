@@ -15,7 +15,7 @@ import type { AuthorizedActor } from "@/server/authorization/contracts";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
 import { withDatabaseConnection } from "@/server/db/client";
 
-type AvailabilityRow = Readonly<{
+export type AvailabilityRow = Readonly<{
   id: string;
   recurrence_rule_id: string | null;
   coach_training_location_id: string | null;
@@ -64,7 +64,7 @@ function isAvailabilityStatus(value: string): value is CoachAvailabilityStatus {
   );
 }
 
-function availabilitySelect() {
+export function availabilitySelect() {
   return sql.raw(`
     slot.id,
     slot.recurrence_rule_id,
@@ -188,7 +188,7 @@ function mapAvailabilityRule(
   });
 }
 
-function mapPublicAvailability(
+export function mapPublicAvailability(
   row: AvailabilityRow,
 ): PublicCoachAvailabilitySlot {
   const slot = mapAvailabilityBase(row);

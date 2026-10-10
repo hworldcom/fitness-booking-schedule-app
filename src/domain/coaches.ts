@@ -144,6 +144,14 @@ export type PublicCoachAvailabilitySlot = Readonly<{
   location: CoachAvailabilityLocationSnapshot;
 }>;
 
+export const MAX_COACH_DIRECTORY_TODAY_SLOTS = 64;
+
+export type CoachDirectoryEntry = Readonly<{
+  coach: CoachProjection;
+  primaryLocation: CoachTrainingLocation;
+  todaySlots: readonly PublicCoachAvailabilitySlot[];
+}>;
+
 export type OwnedCoachAvailabilitySlot = PublicCoachAvailabilitySlot &
   Readonly<{
     status: CoachAvailabilityStatus;
@@ -201,10 +209,23 @@ export type CoachGymOption = Readonly<{
 export type CoachDirectoryState =
   | Readonly<{
       status: "ready";
-      coaches: readonly CoachProjection[];
+      entries: readonly CoachDirectoryEntry[];
       filters: CoachDirectoryFilters;
     }>
   | Readonly<{ status: "unavailable"; filters: CoachDirectoryFilters }>;
+
+export function resolveCoachPrimaryLocation(
+  coach: CoachProjection,
+): CoachTrainingLocation | null {
+  const matches = coach.locations.filter(
+    (location) =>
+      location.id === coach.primaryLocationId &&
+      location.status === "active" &&
+      location.isPrimary &&
+      location.timezone === coach.timezone,
+  );
+  return matches.length === 1 ? matches[0]! : null;
+}
 
 export type PublicCoachProfileState =
   | Readonly<{

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as maplibregl from "maplibre-gl";
 import type { LocationMapPoint } from "../contracts";
+import { layoutLocationMapMarkers } from "../marker-layout";
 import { MAPLIBRE_WORKER_URL } from "../providers/maplibre";
 import { OPENFREEMAP_STYLE_URL } from "../providers/openfreemap";
 
@@ -91,15 +92,30 @@ export function LocationResultsMap({
     markersRef.current.clear();
 
     const bounds = new maplibregl.LngLatBounds();
+    const markerLayouts = new Map(
+      layoutLocationMapMarkers(points).map((layout) => [
+        layout.pointId,
+        layout,
+      ]),
+    );
     for (const point of points) {
+      const layout = markerLayouts.get(point.id);
+      if (!layout) {
+        onUnavailableRef.current();
+        return;
+      }
       const element = document.createElement("button");
       element.type = "button";
       element.className = "location-map-marker";
       element.setAttribute(
         "aria-label",
-        `Select ${point.name} at ${point.label}`,
+        layout.coincidentCount === 1
+          ? point.ariaLabel
+          : `${point.ariaLabel}. Coach ${layout.coincidentIndex} of ${layout.coincidentCount} at these coordinates.`,
       );
       element.setAttribute("aria-pressed", "false");
+      element.dataset.coincidentCount = String(layout.coincidentCount);
+      element.dataset.markerOffset = layout.offset.join(",");
       const initials = document.createElement("span");
       initials.className = "location-map-marker-initials";
       initials.textContent = point.initials;
@@ -127,7 +143,11 @@ export function LocationResultsMap({
       const handleClick = () => onSelectRef.current(point.id);
       element.addEventListener("click", handleClick);
       const coordinates: [number, number] = [point.longitude, point.latitude];
-      const marker = new maplibregl.Marker({ element, anchor: "bottom" })
+      const marker = new maplibregl.Marker({
+        element,
+        anchor: "bottom",
+        offset: [layout.offset[0], layout.offset[1]],
+      })
         .setLngLat(coordinates)
         .addTo(map);
       element.setAttribute("role", "button");

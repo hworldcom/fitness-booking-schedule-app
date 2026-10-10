@@ -2,12 +2,17 @@ import "server-only";
 
 import { sql } from "drizzle-orm";
 import type {
+  CoachDirectoryEntry,
   CoachDirectoryFilters,
   CoachDiscipline,
   CoachProjection,
   CoachProfileInput,
   CoachTrainingLocation,
   CoachTrainingLocationInput,
+} from "@/domain/coaches";
+import {
+  MAX_COACH_DIRECTORY_TODAY_SLOTS,
+  resolveCoachPrimaryLocation,
 } from "@/domain/coaches";
 import { supabasePublicConfig } from "@/auth/config";
 import {
@@ -18,6 +23,11 @@ import {
 import type { AuthorizedActor } from "@/server/authorization/contracts";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
 import { withDatabaseConnection } from "@/server/db/client";
+import {
+  availabilitySelect,
+  mapPublicAvailability,
+  type AvailabilityRow,
+} from "./availability-repository";
 
 type CoachProjectionRow = Readonly<{
   profile_id: string;
@@ -51,6 +61,12 @@ type GymProjectionRow = Readonly<{
   public_location_label: string;
   timezone: string;
 }>;
+
+type DirectoryAvailabilityRow = AvailabilityRow &
+  Readonly<{
+    profile_id: string;
+    occurrence_rank: string | number;
+  }>;
 
 export class CoachProfileConflictError extends Error {
   constructor(message = "The coach profile conflicts with current state.") {
@@ -358,7 +374,105 @@ export async function publicCoachDirectoryRecords(
         gym.name
       order by coach.display_name, coach.profile_id
     `);
-    return Object.freeze(rows.map(mapCoach));
+    const coaches = rows.map(mapCoach);
+    if (coaches.length === 0) {
+      return Object.freeze([]) as readonly CoachDirectoryEntry[];
+    }
+    if (
+      new Set(coaches.map((coach) => coach.profileId)).size !==
+        coaches.length ||
+      coaches.some((coach) => coach.trustKind === null)
+    ) {
+      throw new CoachProfileConflictError();
+    }
+
+    const matchedProfiles = sql.join(
+      coaches.map((coach) => sql`(${coach.profileId}::uuid)`),
+      sql`, `,
+    );
+    const availabilityRows = await db.execute<DirectoryAvailabilityRow>(sql`
+      with matched (profile_id) as (
+        values ${matchedProfiles}
+      ),
+      synchronized as materialized (
+        select
+          matched.profile_id,
+          app.synchronize_public_coach_availability(matched.profile_id)
+            as synchronized_count
+        from matched
+      ),
+      ranked as (
+        select
+          slot.*,
+          pg_catalog.row_number() over (
+            partition by slot.profile_id
+            order by slot.starts_at, slot.id
+          ) as occurrence_rank
+        from synchronized
+        join app.coach_profiles as coach
+          on coach.profile_id = synchronized.profile_id
+        join app.coach_availability_slots as slot
+          on slot.run_id = coach.run_id
+          and slot.profile_id = coach.profile_id
+        where synchronized.synchronized_count >= 0
+          and slot.status = 'open'
+          and slot.starts_at > pg_catalog.statement_timestamp()
+          and (
+            slot.starts_at at time zone coach.timezone
+          )::date = (
+            pg_catalog.statement_timestamp() at time zone coach.timezone
+          )::date
+      )
+      select
+        slot.profile_id,
+        slot.occurrence_rank,
+        ${availabilitySelect()}
+      from ranked as slot
+      where slot.occurrence_rank
+        <= ${MAX_COACH_DIRECTORY_TODAY_SLOTS + 1}
+      order by slot.profile_id, slot.starts_at, slot.id
+    `);
+
+    const coachesById = new Map(
+      coaches.map((coach) => [coach.profileId, coach] as const),
+    );
+    const todaySlotsByCoach = new Map<
+      string,
+      ReturnType<typeof mapPublicAvailability>[]
+    >();
+    for (const row of availabilityRows) {
+      const coach = coachesById.get(row.profile_id);
+      const occurrenceRank = Number(row.occurrence_rank);
+      if (
+        !coach ||
+        !Number.isInteger(occurrenceRank) ||
+        occurrenceRank < 1 ||
+        occurrenceRank > MAX_COACH_DIRECTORY_TODAY_SLOTS + 1
+      ) {
+        throw new CoachProfileConflictError();
+      }
+      const slots = todaySlotsByCoach.get(coach.profileId) ?? [];
+      slots.push(mapPublicAvailability(row));
+      todaySlotsByCoach.set(coach.profileId, slots);
+    }
+
+    return Object.freeze(
+      coaches.map((coach) => {
+        const primaryLocation = resolveCoachPrimaryLocation(coach);
+        const todaySlots = todaySlotsByCoach.get(coach.profileId) ?? [];
+        if (
+          !primaryLocation ||
+          todaySlots.length > MAX_COACH_DIRECTORY_TODAY_SLOTS
+        ) {
+          throw new CoachProfileConflictError();
+        }
+        return Object.freeze({
+          coach,
+          primaryLocation,
+          todaySlots: Object.freeze(todaySlots),
+        });
+      }),
+    );
   });
 }
 

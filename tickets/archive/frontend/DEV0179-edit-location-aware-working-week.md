@@ -4,7 +4,7 @@
 - Created: 2026-10-09
 - Last updated: 2026-10-10
 - Milestone: Scheduling-only multi-location follow-up
-- Coordination: [COR0014 — Multi-location coach scheduling](../../current/organisatory/COR0014-multi-location-coach-scheduling.md)
+- Coordination: [COR0014 — Multi-location coach scheduling](../organisatory/COR0014-multi-location-coach-scheduling.md)
 - Related records: depends on completed [DEV0177 — Bind availability to training locations](../backend/DEV0177-bind-availability-to-training-locations.md) and [DEV0178 — Manage coach training locations](DEV0178-manage-coach-training-locations.md); extends [DEV0146 — Save weekly schedule in one action](DEV0146-save-weekly-schedule-in-one-action.md) and preserves [DEV0170 — Separate coach Schedule and Bookings tabs](DEV0170-separate-coach-schedule-and-bookings-tabs.md)
 
 ## Objective and context

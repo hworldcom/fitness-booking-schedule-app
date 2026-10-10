@@ -5,7 +5,7 @@
 - Last updated: 2026-10-09
 - Milestone: Native iOS client scheduling
 - Coordination: [COR0013 — Native iOS application](../organisatory/COR0013-native-ios-application.md)
-- Related records: depends on [DEV0160 — Expose the mobile scheduling API](../backend/DEV0160-expose-mobile-scheduling-api.md) and [DEV0161 — Establish the Expo iOS foundation](DEV0161-establish-expo-ios-foundation.md); consumes the shared multi-location contract from [COR0014 — Multi-location coach scheduling](../organisatory/COR0014-multi-location-coach-scheduling.md); preserves booking behavior from [DEV0141](../../archive/backend/DEV0141-persist-direct-private-bookings.md) and client history from [DEV0144](../../archive/frontend/DEV0144-show-client-booking-history.md)
+- Related records: depends on [DEV0160 — Expose the mobile scheduling API](../backend/DEV0160-expose-mobile-scheduling-api.md) and [DEV0161 — Establish the Expo iOS foundation](DEV0161-establish-expo-ios-foundation.md); consumes the shared multi-location contract from completed [COR0014 — Multi-location coach scheduling](../../archive/organisatory/COR0014-multi-location-coach-scheduling.md); preserves booking behavior from [DEV0141](../../archive/backend/DEV0141-persist-direct-private-bookings.md) and client history from [DEV0144](../../archive/frontend/DEV0144-show-client-booking-history.md)
 
 ## Objective and context
 

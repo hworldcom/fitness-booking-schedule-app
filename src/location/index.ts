@@ -17,3 +17,7 @@ export {
   resolveLocationSearchConfiguration,
   searchLocations,
 } from "./providers/geoapify";
+export {
+  layoutLocationMapMarkers,
+  type LocationMarkerLayout,
+} from "./marker-layout";

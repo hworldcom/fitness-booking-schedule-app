@@ -59,7 +59,7 @@ export async function publicCoachDirectory(
   try {
     return Object.freeze({
       status: "ready",
-      coaches: await publicCoachDirectoryRecords(filters),
+      entries: await publicCoachDirectoryRecords(filters),
       filters,
     });
   } catch {
