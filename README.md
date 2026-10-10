@@ -26,13 +26,13 @@ Delivered reusable foundations include:
 - local/hosted Supabase PostgreSQL with a server-only database boundary;
 - email-code accounts, protected profiles and separate client/coach onboarding;
 - platform-reviewed coach applications with verified or demo trust labels;
-- owner-scoped coach profiles with one currently implemented public provider-neutral location;
+- owner-scoped coach profiles with multiple provider-neutral training locations, one active primary base and safe deactivation;
 - list-first coach discovery with an OpenFreeMap-backed interactive map;
-- recurring one-hour availability, deterministic dated occurrences and a responsive coach calendar.
+- location-bound recurring one-hour availability, deterministic dated occurrences and a responsive compatibility calendar pending its location selector.
 
 Direct scheduling-only booking and runtime cleanup were delivered under COR0011. The former membership, wallet, payment, group-event and social features are not current product surfaces.
 
-The target contract now permits multiple coach training locations, one coach-selected primary Explore marker and actual-location availability assignments. Runtime delivery remains open under [COR0014](tickets/current/organisatory/COR0014-multi-location-coach-scheduling.md); the current application still exposes the singleton foundation described above.
+The target contract permits multiple coach training locations, one coach-selected primary Explore marker and actual-location availability assignments. Profile location management is now delivered; the location-aware calendar and primary-marker follow-ups remain open under [COR0014](tickets/current/organisatory/COR0014-multi-location-coach-scheduling.md).
 
 ## Run locally
 
@@ -184,6 +184,7 @@ The local stack uses port `55322`. `db:reset` recreates only the disposable loca
 npm test
 npm run test:auth
 npm run test:coach-availability
+npm run test:coach-locations
 npm run test:profile-images
 npm run lint
 npm run typecheck
@@ -192,7 +193,7 @@ npm run build
 npm run test:e2e
 ```
 
-`test:auth` and `test:coach-availability` require the configured Auth-enabled local stack and a running application on port 3100. Database checks require isolated local PostgreSQL. Playwright starts a production server on port 3101 and writes ignored evidence to `test-results/`.
+`test:auth`, `test:coach-availability` and `test:coach-locations` require the configured Auth-enabled local stack and a running application on port 3100. The location rehearsal also requires the provisioned Daniel Park coach account; it exercises add/edit/conflict/primary/public/deactivation flows, captures responsive evidence and removes only its unreferenced `DEV0178 …` local locations afterward. Database checks require isolated local PostgreSQL. Playwright starts a production server on port 3101 and writes ignored evidence to `test-results/`.
 
 ## Application structure
 

@@ -142,6 +142,7 @@ type CoachTrainingLocationMutation =
       status: "authorized";
       outcome: "saved" | "conflict";
       value?: string;
+      slug?: string;
     }>
   | Readonly<{
       status: "preview" | "signed-out" | "forbidden" | "unavailable";
@@ -150,27 +151,36 @@ type CoachTrainingLocationMutation =
 async function mutateCoachTrainingLocation(
   mutation: Parameters<typeof withAuthorizedActor<string>>[0],
 ): Promise<CoachTrainingLocationMutation> {
-  const result = await withAuthorizedActor(async (transaction, actor) => {
-    const owner = await currentActorProjection(transaction, actor);
-    if (!canPrepareCoachProfile(owner.coachAccess.status)) {
-      return Object.freeze({ outcome: "conflict" as const });
-    }
-    const coach = await currentOwnedCoachProfileRecord(transaction, actor);
-    if (!coach) return Object.freeze({ outcome: "conflict" as const });
-    try {
+  try {
+    const result = await withAuthorizedActor(
+      async (transaction, actor) => {
+        const owner = await currentActorProjection(transaction, actor);
+        if (!canPrepareCoachProfile(owner.coachAccess.status)) {
+          return Object.freeze({ outcome: "conflict" as const });
+        }
+        const coach = await currentOwnedCoachProfileRecord(transaction, actor);
+        if (!coach) return Object.freeze({ outcome: "conflict" as const });
+        return Object.freeze({
+          outcome: "saved" as const,
+          value: await mutation(transaction, actor),
+          slug: coach.slug,
+        });
+      },
+      {
+        rethrow: (error) => error instanceof CoachTrainingLocationConflictError,
+      },
+    );
+    if (result.status !== "authorized") return result;
+    return Object.freeze({ status: "authorized" as const, ...result.value });
+  } catch (error) {
+    if (error instanceof CoachTrainingLocationConflictError) {
       return Object.freeze({
-        outcome: "saved" as const,
-        value: await mutation(transaction, actor),
+        status: "authorized" as const,
+        outcome: "conflict" as const,
       });
-    } catch (error) {
-      if (error instanceof CoachTrainingLocationConflictError) {
-        return Object.freeze({ outcome: "conflict" as const });
-      }
-      throw error;
     }
-  });
-  if (result.status !== "authorized") return result;
-  return Object.freeze({ status: "authorized" as const, ...result.value });
+    throw error;
+  }
 }
 
 export function createOwnedCoachTrainingLocation(

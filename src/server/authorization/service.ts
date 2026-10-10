@@ -30,18 +30,23 @@ export type AuthorizedResult<T> =
   | Readonly<{ status: "authorized"; actor: AuthorizedActor; value: T }>
   | Readonly<{ status: "signed-out" | "forbidden" | "unavailable" }>;
 
+type AuthorizedWorkOptions = Readonly<{
+  rethrow?: (error: unknown) => boolean;
+}>;
+
 export async function withAuthorizedActor<T>(
   work: (
     transaction: ActorDatabaseTransaction,
     actor: AuthorizedActor,
   ) => Promise<T>,
+  options?: AuthorizedWorkOptions,
 ): Promise<AuthorizedResult<T>> {
   const mode = applicationAccessMode();
   if (mode === "preview") return PREVIEW_ACTOR;
   if (mode === "unavailable") return UNAVAILABLE_ACTOR;
 
   const session = await verifiedAuthSession();
-  return withAuthorizedSession(session, work);
+  return withAuthorizedSession(session, work, options);
 }
 
 export async function withAuthorizedSession<T>(
@@ -50,6 +55,7 @@ export async function withAuthorizedSession<T>(
     transaction: ActorDatabaseTransaction,
     actor: AuthorizedActor,
   ) => Promise<T>,
+  options?: AuthorizedWorkOptions,
 ): Promise<AuthorizedResult<T>> {
   if (session.status === "signed-out") return SIGNED_OUT_ACTOR;
   if (session.status !== "signed-in") return UNAVAILABLE_ACTOR;
@@ -73,6 +79,7 @@ export async function withAuthorizedSession<T>(
     );
     return Object.freeze({ status: "authorized", actor, value });
   } catch (error) {
+    if (options?.rethrow?.(error)) throw error;
     return error instanceof ActorContextRejectedError
       ? FORBIDDEN_ACTOR
       : UNAVAILABLE_ACTOR;

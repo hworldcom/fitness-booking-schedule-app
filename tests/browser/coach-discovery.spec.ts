@@ -85,8 +85,16 @@ test("guest opens a coach profile without fabricated availability", async ({
   ).toBeVisible();
   await expect(page.getByText("Muay Thai", { exact: true })).toBeVisible();
   await expect(
-    page.getByText("Northside Combat", { exact: true }),
+    page
+      .locator(".public-coach-place")
+      .getByText("Northside Combat", { exact: true }),
   ).toBeVisible();
+  await expect(
+    page
+      .getByRole("region", { name: "Training locations" })
+      .getByText("Northside Combat", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("Primary base", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("heading", {
       name: "No open times right now.",

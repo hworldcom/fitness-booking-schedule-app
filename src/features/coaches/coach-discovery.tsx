@@ -122,6 +122,12 @@ export function CoachProfileView({
   marketplace: ReactNode;
 }) {
   const { coach } = state;
+  const activeLocations = coach.locations.filter(
+    (location) => location.status === "active",
+  );
+  const primaryLocation = activeLocations.find(
+    (location) => location.isPrimary,
+  );
   return (
     <article className="public-coach-profile">
       <Link className="coach-back-link" href="/explore">
@@ -163,8 +169,12 @@ export function CoachProfileView({
         <div className="public-coach-place">
           <MapPin size={23} aria-hidden="true" />
           <div>
-            <small>COACH-CONFIRMED PUBLIC PLACE</small>
-            <strong>{coach.gymName ?? "Independent training place"}</strong>
+            <small>PRIMARY TRAINING BASE · NOT LIVE</small>
+            <strong>
+              {primaryLocation?.publicName ??
+                coach.gymName ??
+                "Independent training place"}
+            </strong>
             <span>{coach.location.label}</span>
           </div>
         </div>
@@ -182,6 +192,34 @@ export function CoachProfileView({
                 : "This fictional profile uses a public discovery point—not live tracking, current presence or a gym endorsement."}
             </p>
           </div>
+          <section
+            className="public-coach-locations"
+            aria-labelledby="public-coach-locations-title"
+          >
+            <div className="coach-section-heading">
+              <div>
+                <span className="eyebrow">CONFIRMED PLACES</span>
+                <h3 id="public-coach-locations-title">Training locations</h3>
+              </div>
+              <MapPin size={21} aria-hidden="true" />
+            </div>
+            <p>
+              These are training options, not the coach&apos;s current position.
+              Each available session names its actual venue.
+            </p>
+            <ul>
+              {activeLocations.map((location) => (
+                <li key={location.id}>
+                  <MapPin size={17} aria-hidden="true" />
+                  <span>
+                    <strong>{location.publicName}</strong>
+                    <small>{location.location.label}</small>
+                  </span>
+                  {location.isPrimary && <em>Primary base</em>}
+                </li>
+              ))}
+            </ul>
+          </section>
         </section>
         {marketplace}
       </div>

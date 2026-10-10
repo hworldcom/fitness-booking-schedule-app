@@ -19,6 +19,7 @@ import { CoachApplicationBanner } from "./coach-application-gate";
 import { ProfileImageUploader } from "@/features/profile/profile-image-uploader";
 import { profileInitials } from "@/auth/profile-presentation";
 import { CoachWorkspaceNavigation } from "./coach-workspace-navigation";
+import { CoachTrainingLocationManager } from "./coach-training-location-manager";
 
 const INITIAL_COACH_PROFILE_ACTION_STATE: CoachProfileActionState =
   Object.freeze({ status: "idle", message: "", errors: Object.freeze([]) });
@@ -58,9 +59,11 @@ export function CoachProfileEditor({
               : "PRIVATE COACH APPLICATION DRAFT"}
           </span>
           <h1>
-            {coach
+            {coach && publicationAllowed
               ? "Edit your public coach profile."
-              : "Become discoverable as a coach."}
+              : coach
+                ? "Edit your private coach profile draft."
+                : "Become discoverable as a coach."}
           </h1>
           <p>
             {publicationAllowed
@@ -148,71 +151,137 @@ export function CoachProfileEditor({
           <div className="coach-editor-section-title">
             <span>02</span>
             <div>
-              <h2>Your public training place</h2>
-              <p>One coach-confirmed discovery point, never live location.</p>
+              <h2>
+                {coach ? "Scheduling settings" : "Your first training place"}
+              </h2>
+              <p>
+                {coach
+                  ? "One timezone applies to every location and recurring hour. Manage places separately after saving profile details."
+                  : "Create the first confirmed primary location for your coach profile. You can add more after this initial save."}
+              </p>
             </div>
           </div>
-          <div
-            className="coach-location-mode"
-            role="group"
-            aria-label="Location type"
-          >
-            <button
-              type="button"
-              className={locationMode === "gym" ? "active" : ""}
-              aria-pressed={locationMode === "gym"}
-              onClick={() => setLocationMode("gym")}
-            >
-              Fictional gym
-            </button>
-            <button
-              type="button"
-              className={locationMode === "independent" ? "active" : ""}
-              aria-pressed={locationMode === "independent"}
-              onClick={() => setLocationMode("independent")}
-            >
-              Independent place
-            </button>
-          </div>
-
-          {locationMode === "gym" ? (
-            <label className="coach-field">
-              <span>Select a fictional gym</span>
-              <select
-                name="selectedGymId"
-                defaultValue={coach?.selectedGymId ?? ""}
-                required
-              >
-                <option value="">Choose a gym</option>
-                {gyms.map((gym) => (
-                  <option key={gym.id} value={gym.id}>
-                    {gym.name} — {gym.locationLabel}
-                  </option>
-                ))}
-              </select>
-              <small>
-                MovX copies its reviewed public label and coordinates. The gym
-                receives no account or authority.
-              </small>
-            </label>
-          ) : (
+          {!coach && (
             <>
-              <input type="hidden" name="selectedGymId" value="" />
-              <CoachLocationPicker
-                initialLocation={
-                  coach?.location.kind === "independent" ? coach.location : null
-                }
-                searchConfiguration={locationSearchConfiguration}
-              />
+              <div
+                className="coach-location-mode"
+                role="group"
+                aria-label="Location type"
+              >
+                <button
+                  type="button"
+                  className={locationMode === "gym" ? "active" : ""}
+                  aria-pressed={locationMode === "gym"}
+                  onClick={() => setLocationMode("gym")}
+                >
+                  Reviewed gym
+                </button>
+                <button
+                  type="button"
+                  className={locationMode === "independent" ? "active" : ""}
+                  aria-pressed={locationMode === "independent"}
+                  onClick={() => setLocationMode("independent")}
+                >
+                  Independent place
+                </button>
+              </div>
+
+              {locationMode === "gym" ? (
+                <label className="coach-field coach-field-wide">
+                  <span>Select a reviewed gym</span>
+                  <select name="selectedGymId" defaultValue="" required>
+                    <option value="">Choose a gym</option>
+                    {gyms.map((gym) => (
+                      <option key={gym.id} value={gym.id}>
+                        {gym.name} — {gym.locationLabel}
+                      </option>
+                    ))}
+                  </select>
+                  <small>
+                    MovX copies its reviewed public label and coordinates. The
+                    gym receives no account or authority.
+                  </small>
+                </label>
+              ) : (
+                <>
+                  <input type="hidden" name="selectedGymId" value="" />
+                  <CoachLocationPicker
+                    initialLocation={null}
+                    searchConfiguration={locationSearchConfiguration}
+                  />
+                </>
+              )}
+              {locationMode === "gym" && (
+                <>
+                  <input type="hidden" name="locationLabel" value="" />
+                  <input type="hidden" name="latitude" value="" />
+                  <input type="hidden" name="longitude" value="" />
+                  <input type="hidden" name="locationSource" value="manual" />
+                  <input type="hidden" name="locationProvider" value="" />
+                  <input
+                    type="hidden"
+                    name="locationConfirmation"
+                    value="confirmed"
+                  />
+                </>
+              )}
             </>
           )}
-          {locationMode === "gym" && (
+          {coach && (
             <>
-              <input type="hidden" name="locationLabel" value="" />
-              <input type="hidden" name="latitude" value="" />
-              <input type="hidden" name="longitude" value="" />
-              <input type="hidden" name="locationSource" value="manual" />
-              <input type="hidden" name="locationProvider" value="" />
+              <input
+                type="hidden"
+                name="selectedGymId"
+                value={coach.selectedGymId ?? ""}
+              />
+              <input
+                type="hidden"
+                name="locationLabel"
+                value={
+                  coach.location.kind === "independent"
+                    ? coach.location.label
+                    : ""
+                }
+              />
+              <input
+                type="hidden"
+                name="latitude"
+                value={
+                  coach.location.kind === "independent"
+                    ? coach.location.latitude
+                    : ""
+                }
+              />
+              <input
+                type="hidden"
+                name="longitude"
+                value={
+                  coach.location.kind === "independent"
+                    ? coach.location.longitude
+                    : ""
+                }
+              />
+              <input
+                type="hidden"
+                name="locationSource"
+                value={
+                  coach.location.kind === "independent"
+                    ? coach.location.source === "permanent-geocoding"
+                      ? "permanent-geocoding"
+                      : "manual"
+                    : "manual"
+                }
+              />
+              <input
+                type="hidden"
+                name="locationProvider"
+                value={
+                  coach.location.kind === "independent" &&
+                  coach.location.source === "permanent-geocoding"
+                    ? (coach.location.provider ?? "")
+                    : ""
+                }
+              />
               <input
                 type="hidden"
                 name="locationConfirmation"
@@ -307,8 +376,9 @@ export function CoachProfileEditor({
           <div>
             <ShieldCheck size={20} aria-hidden="true" />
             <span>
-              Saving confirms this place for public discovery. It does not
-              publish availability.
+              {coach
+                ? "Profile details save separately from the explicit location controls below."
+                : "Saving confirms this first place. It does not publish availability."}
             </span>
           </div>
           <button className="button dark" type="submit" disabled={pending}>
@@ -317,6 +387,15 @@ export function CoachProfileEditor({
           </button>
         </div>
       </form>
+
+      {coach && (
+        <CoachTrainingLocationManager
+          coach={coach}
+          gyms={gyms}
+          searchConfiguration={locationSearchConfiguration}
+          publicationAllowed={publicationAllowed}
+        />
+      )}
 
       <div className="coach-location-followup">
         <MapPin size={19} aria-hidden="true" />

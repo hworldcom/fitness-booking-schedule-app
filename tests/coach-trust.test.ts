@@ -62,11 +62,15 @@ function coach(
 }
 
 function renderCoach(trustKind: CoachProjection["trustKind"]) {
+  return renderCoachProjection(coach(trustKind));
+}
+
+function renderCoachProjection(projection: CoachProjection) {
   return renderToStaticMarkup(
     createElement(CoachProfileView, {
       state: {
         status: "ready",
-        coach: coach(trustKind),
+        coach: projection,
         slots: Object.freeze([]),
       },
       marketplace: createElement("div", null, "Schedule"),
@@ -109,4 +113,47 @@ test("a coach portrait renders when present and initials remain the fallback", (
   const fallback = renderCoach("demo");
   assert.doesNotMatch(fallback, /<img/);
   assert.match(fallback, />RC<\/span>/);
+});
+
+test("public profiles list every active location, label the primary base and omit inactive history", () => {
+  const primary = coach("verified");
+  const primaryLocation = primary.locations[0];
+  const secondary = Object.freeze({
+    ...primaryLocation,
+    id: "60000000-0000-4000-8000-000000000002",
+    publicName: "Kreuzberg mat space",
+    location: Object.freeze({
+      ...primaryLocation.location,
+      label: "Kreuzberg community hall — studio two",
+    }),
+    isPrimary: false,
+    sortOrder: 2,
+  });
+  const inactive = Object.freeze({
+    ...primaryLocation,
+    id: "60000000-0000-4000-8000-000000000003",
+    publicName: "Retired training room",
+    location: Object.freeze({
+      ...primaryLocation.location,
+      label: "Old venue that must remain private",
+    }),
+    status: "inactive" as const,
+    isPrimary: false,
+    sortOrder: 3,
+    deactivatedAt: "2026-10-10T09:00:00.000Z",
+  });
+  const html = renderCoachProjection(
+    Object.freeze({
+      ...primary,
+      locations: Object.freeze([primaryLocation, secondary, inactive]),
+    }),
+  );
+
+  assert.match(html, /Training locations/);
+  assert.match(html, /Tempelhofer Feld/);
+  assert.match(html, /Kreuzberg mat space/);
+  assert.match(html, /Primary base/);
+  assert.match(html, /not the coach&#x27;s current position/);
+  assert.doesNotMatch(html, /Retired training room/);
+  assert.doesNotMatch(html, /Old venue that must remain private/);
 });
