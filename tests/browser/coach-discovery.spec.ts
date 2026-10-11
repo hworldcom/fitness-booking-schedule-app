@@ -90,7 +90,7 @@ test("guest browses and filters the persistent coach directory", async ({
   await discipline.focus();
   await expect(discipline).toBeFocused();
   await discipline.selectOption("Muay Thai");
-  await page.getByRole("button", { name: "Apply filters" }).click();
+  await page.getByRole("button", { name: "Search coaches" }).click();
 
   await expect(page).toHaveURL(/discipline=Muay(\+|%20)Thai/);
   await expect(page.getByText("1 coach", { exact: true })).toBeVisible();

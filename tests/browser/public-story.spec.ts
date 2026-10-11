@@ -174,3 +174,94 @@ test("private routes retain the workspace chrome", async ({ page }) => {
     await expect(page.locator(".mobile-nav")).toBeHidden();
   }
 });
+
+test("home search and discipline links share the canonical Explore contract", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const search = page.getByRole("form", { name: "Search coaches" });
+  await expect(search).toBeVisible();
+  await search.getByLabel("Search coach or focus").fill(" patient  footwork ");
+  await search.getByLabel("Discipline").selectOption("Muay Thai");
+  await search.getByLabel("Location").fill(" Kreuzberg ");
+  await search.getByLabel("Location").press("Enter");
+
+  await expect(page).toHaveURL(
+    /\/explore\?q=patient\+footwork&discipline=Muay\+Thai&location=Kreuzberg$/,
+  );
+  await expect(search.getByLabel("Search coach or focus")).toHaveValue(
+    "patient footwork",
+  );
+  await expect(search.getByLabel("Discipline")).toHaveValue("Muay Thai");
+  await expect(search.getByLabel("Location")).toHaveValue("Kreuzberg");
+  await expect(
+    page
+      .getByRole("navigation", { name: "Browse coaches by discipline" })
+      .getByRole("link", { name: "Muay Thai", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
+
+  await page
+    .getByRole("navigation", { name: "Browse coaches by discipline" })
+    .getByRole("link", { name: "Boxing", exact: true })
+    .click();
+  await expect(page).toHaveURL(
+    /q=patient\+footwork&discipline=Boxing&location=Kreuzberg$/,
+  );
+  await page.reload();
+  await expect(search.getByLabel("Discipline")).toHaveValue("Boxing");
+  await page.goBack();
+  await expect(search.getByLabel("Discipline")).toHaveValue("Muay Thai");
+  await page.goForward();
+  await expect(search.getByLabel("Discipline")).toHaveValue("Boxing");
+
+  await page.getByRole("link", { name: "Clear search" }).click();
+  await expect(page).toHaveURL(/\/explore$/);
+  await expect(search.getByLabel("Search coach or focus")).toHaveValue("");
+  await expect(search.getByLabel("Discipline")).toHaveValue("");
+  await expect(search.getByLabel("Location")).toHaveValue("");
+  await expect(page.getByLabel("When", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("Price", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("Rating", { exact: true })).toHaveCount(0);
+
+  await page.goto(
+    "/explore?q=patient%20footwork&q=ignored&discipline=Yoga&location=%20Kreuzberg%20&when=tomorrow",
+  );
+  await expect(page).toHaveURL(
+    /\/explore\?q=patient\+footwork&location=Kreuzberg$/,
+  );
+  await expect(search.getByLabel("Discipline")).toHaveValue("");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+});
+
+test("marketplace search submits without JavaScript", async ({
+  browser,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  const context = await browser.newContext({
+    javaScriptEnabled: false,
+    viewport: { width: 1440, height: 1040 },
+  });
+  const page = await context.newPage();
+  try {
+    await page.goto("/");
+    const search = page.getByRole("form", { name: "Search coaches" });
+    await search.getByLabel("Search coach or focus").fill("boxing basics");
+    await search.getByLabel("Discipline").selectOption("Boxing");
+    await search
+      .getByRole("button", { name: "Search coaches" })
+      .click({ force: true });
+    await expect(page).toHaveURL(
+      /\/explore\?q=boxing\+basics&discipline=Boxing$/,
+    );
+    await expect(search.getByLabel("Search coach or focus")).toHaveValue(
+      "boxing basics",
+    );
+    await expect(search.getByLabel("Discipline")).toHaveValue("Boxing");
+  } finally {
+    await context.close();
+  }
+});

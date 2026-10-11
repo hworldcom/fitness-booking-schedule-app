@@ -83,6 +83,72 @@
   box-shadow: 0 12px 35px rgb(30 50 38 / 5%);
 }
 
+.marketplace-search {
+  margin: 22px 0 36px;
+}
+
+.marketplace-search .coach-filters {
+  margin: 0;
+}
+
+.marketplace-discipline-navigation {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 0 4px;
+}
+
+.marketplace-discipline-navigation > span {
+  flex: 0 0 auto;
+  color: #697468;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.marketplace-discipline-chips {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.marketplace-discipline-chip {
+  border: 1px solid #dce3d8;
+  border-radius: 999px;
+  background: #fff;
+  padding: 7px 10px;
+  color: #50604e;
+  font-size: 9px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.marketplace-discipline-chip:hover {
+  border-color: #9db77a;
+  color: var(--coach-forest);
+}
+
+.marketplace-discipline-chip.active {
+  border-color: var(--coach-forest);
+  background: var(--coach-forest);
+  color: var(--coach-lime);
+}
+
+.marketplace-clear-search {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  color: #51624d;
+  font-size: 10px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
 .coach-filters label,
 .coach-field {
   display: grid;
@@ -2390,6 +2456,11 @@
     align-self: stretch;
   }
 
+  .marketplace-discipline-navigation {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
   .coach-explore-layout {
     grid-template-columns: 1fr;
   }
@@ -2458,6 +2529,26 @@
   .coach-filters .button,
   .coach-editor-submit .button {
     width: 100%;
+  }
+
+  .marketplace-discipline-navigation {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .marketplace-discipline-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin: 0 -3px;
+    padding: 3px 3px 7px;
+    scrollbar-width: thin;
+  }
+
+  .marketplace-clear-search {
+    align-self: flex-start;
+    margin-left: 0;
+    padding: 6px 0;
   }
 
   .coach-card {

@@ -11,13 +11,12 @@ import type { ReactNode } from "react";
 import { profileInitials } from "@/auth/profile-presentation";
 import { Avatar } from "@/components/ui";
 import {
-  COACH_DISCIPLINES,
-  type CoachDirectoryFilters,
   type CoachDirectoryState,
   type PublicCoachProfileState,
 } from "@/domain/coaches";
 import { CoachExploreResults } from "./coach-explore-results";
 import { CoachProfileLocations } from "./coach-profile-locations";
+import { PublicMarketplaceSearch } from "./public-marketplace-search";
 
 export function CoachDirectory({ state }: { state: CoachDirectoryState }) {
   return (
@@ -46,7 +45,7 @@ export function CoachDirectory({ state }: { state: CoachDirectoryState }) {
         </div>
       </header>
 
-      <CoachFilters filters={state.filters} />
+      <PublicMarketplaceSearch filters={state.filters} />
 
       {state.status === "unavailable" ? (
         <section className="coach-directory-state" role="alert">
@@ -70,48 +69,6 @@ export function CoachDirectory({ state }: { state: CoachDirectoryState }) {
         <CoachExploreResults entries={state.entries} />
       )}
     </div>
-  );
-}
-
-function CoachFilters({ filters }: { filters: CoachDirectoryFilters }) {
-  return (
-    <form className="coach-filters" action="/explore" method="get">
-      <label>
-        <span>Search coach or focus</span>
-        <input
-          type="search"
-          name="q"
-          defaultValue={filters.query}
-          placeholder="Try fundamentals or footwork"
-          maxLength={80}
-        />
-      </label>
-      <label>
-        <span>Discipline</span>
-        <select name="discipline" defaultValue={filters.discipline ?? ""}>
-          <option value="">All disciplines</option>
-          {COACH_DISCIPLINES.map((discipline) => (
-            <option key={discipline} value={discipline}>
-              {discipline}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        <span>Location</span>
-        <input
-          type="search"
-          name="location"
-          defaultValue={filters.location}
-          placeholder="Gym or public place"
-          maxLength={120}
-        />
-      </label>
-      <input type="hidden" name="service" value="private-training" />
-      <button className="button dark" type="submit">
-        <Search size={16} aria-hidden="true" /> Apply filters
-      </button>
-    </form>
   );
 }
 

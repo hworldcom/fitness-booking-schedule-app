@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { normalizeCoachDirectoryFilters } from "@/domain/coaches";
 import { CoachDirectory } from "@/features/coaches/coach-discovery";
+import {
+  coachDirectoryHref,
+  isCanonicalCoachDirectorySearch,
+} from "@/features/coaches/marketplace-search-contract";
 import { publicCoachDirectory } from "@/server/coaches/service";
 
 export const metadata: Metadata = {
@@ -14,6 +19,10 @@ export default async function Page({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const filters = normalizeCoachDirectoryFilters(await searchParams);
+  const rawSearchParams = await searchParams;
+  const filters = normalizeCoachDirectoryFilters(rawSearchParams);
+  if (!isCanonicalCoachDirectorySearch(rawSearchParams, filters)) {
+    redirect(coachDirectoryHref(filters));
+  }
   return <CoachDirectory state={await publicCoachDirectory(filters)} />;
 }

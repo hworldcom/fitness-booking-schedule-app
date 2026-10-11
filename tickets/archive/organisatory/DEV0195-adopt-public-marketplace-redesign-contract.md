@@ -5,7 +5,7 @@
 - Last updated: 2026-10-12
 - Milestone: Scheduling interface public-marketplace follow-up
 - Coordination: [COR0017 — Public marketplace redesign](../../current/organisatory/COR0017-public-marketplace-redesign.md)
-- Related records: implementation peers [DEV0196 — Introduce the public marketplace shell](../../current/frontend/DEV0196-introduce-public-marketplace-shell.md), [DEV0197 — Share public marketplace search](../../current/frontend/DEV0197-share-public-marketplace-search.md), [DEV0198 — Build the search-first marketplace home](../../current/frontend/DEV0198-build-search-first-marketplace-home.md), [DEV0199 — Redesign desktop coach Explore](../../current/frontend/DEV0199-redesign-desktop-coach-explore.md), [DEV0200 — Add mobile Explore map/list state](../../current/frontend/DEV0200-add-mobile-explore-map-list-state.md) and [DEV0201 — Polish public marketplace accessibility](../../current/frontend/DEV0201-polish-public-marketplace-accessibility.md)
+- Related records: implementation peers [DEV0196 — Introduce the public marketplace shell](../frontend/DEV0196-introduce-public-marketplace-shell.md), [DEV0197 — Share public marketplace search](../frontend/DEV0197-share-public-marketplace-search.md), [DEV0198 — Build the search-first marketplace home](../../current/frontend/DEV0198-build-search-first-marketplace-home.md), [DEV0199 — Redesign desktop coach Explore](../../current/frontend/DEV0199-redesign-desktop-coach-explore.md), [DEV0200 — Add mobile Explore map/list state](../../current/frontend/DEV0200-add-mobile-explore-map-list-state.md) and [DEV0201 — Polish public marketplace accessibility](../../current/frontend/DEV0201-polish-public-marketplace-accessibility.md)
 
 ## Objective and context
 
@@ -77,12 +77,12 @@ Implementation, validation and archival completed on 2026-10-12.
 
 ### Affected files
 
-| File or component                                                                                                                                                    | Change and purpose                                                                                                        |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| [MVP specification](../../../docs/mvp-spec.md)                                                                                                                       | Owns the adopted C26-C28 decisions, discovery flow, permissions, definition of done, M3 wording and acceptance scenarios. |
-| [COR0017](../../current/organisatory/COR0017-public-marketplace-redesign.md)                                                                                         | Records the resolved decisions, active coordination status and delivery readiness.                                        |
-| [DEV0196](../../current/frontend/DEV0196-introduce-public-marketplace-shell.md)–[DEV0201](../../current/frontend/DEV0201-polish-public-marketplace-accessibility.md) | Align dependencies and assumptions with the adopted contract; DEV0196 and DEV0197 become ready to start.                  |
-| [Ticket index](../../README.md)                                                                                                                                      | Reflects active coordination, completed contract work and runtime-ticket readiness.                                       |
+| File or component                                                                                                                                         | Change and purpose                                                                                                        |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| [MVP specification](../../../docs/mvp-spec.md)                                                                                                            | Owns the adopted C26-C28 decisions, discovery flow, permissions, definition of done, M3 wording and acceptance scenarios. |
+| [COR0017](../../current/organisatory/COR0017-public-marketplace-redesign.md)                                                                              | Records the resolved decisions, active coordination status and delivery readiness.                                        |
+| [DEV0196](../frontend/DEV0196-introduce-public-marketplace-shell.md)–[DEV0201](../../current/frontend/DEV0201-polish-public-marketplace-accessibility.md) | Align dependencies and assumptions with the adopted contract; DEV0196 and DEV0197 become ready to start.                  |
+| [Ticket index](../../README.md)                                                                                                                           | Reflects active coordination, completed contract work and runtime-ticket readiness.                                       |
 
 ### Decisions and deviations
 

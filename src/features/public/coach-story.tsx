@@ -11,6 +11,10 @@ import {
   UserRoundSearch,
   UsersRound,
 } from "lucide-react";
+import { normalizeCoachDirectoryFilters } from "@/domain/coaches";
+import { PublicMarketplaceSearch } from "@/features/coaches/public-marketplace-search";
+
+const emptyMarketplaceSearch = normalizeCoachDirectoryFilters({});
 
 const schedulingSteps = [
   {
@@ -127,6 +131,23 @@ export function CoachStoryHome() {
             unavailable states stay explicit.
           </p>
         </div>
+      </section>
+
+      <section
+        className="coach-home-marketplace-search"
+        aria-labelledby="home-marketplace-search-title"
+      >
+        <div className="coach-home-search-heading">
+          <span className="eyebrow">DISCOVER COACHES</span>
+          <h2 id="home-marketplace-search-title">
+            Search by coach, focus or place.
+          </h2>
+          <p>
+            Start with the filters MovX can verify today. Search opens the full
+            coach directory.
+          </p>
+        </div>
+        <PublicMarketplaceSearch filters={emptyMarketplaceSearch} />
       </section>
 
       <section className="coach-story-section" aria-labelledby="loop-title">
