@@ -15,6 +15,7 @@ import type { ActorDatabaseTransaction } from "@/server/db/authorization/reposit
 
 const DEFAULT_PAGE_SIZE = 25;
 const MAX_PAGE_SIZE = 50;
+const MAX_SLOT_SELECTION_SIZE = 200;
 
 type BookingRequestRow = Readonly<{
   id: string;
@@ -80,6 +81,18 @@ function normalizedCursor(cursor: CoachBookingRequestPageCursor | null) {
     throw new CoachBookingRequestConflictError();
   }
   return Object.freeze({ createdAt, id: cursor.id });
+}
+
+function normalizedSlotIds(slotIds: readonly string[]) {
+  if (
+    slotIds.length < 1 ||
+    slotIds.length > MAX_SLOT_SELECTION_SIZE ||
+    slotIds.some((slotId) => !isCanonicalUuid(slotId)) ||
+    new Set(slotIds).size !== slotIds.length
+  ) {
+    throw new CoachBookingRequestConflictError();
+  }
+  return slotIds;
 }
 
 function commonRequestProjection(row: BookingRequestRow) {
@@ -376,6 +389,84 @@ export async function currentClientCoachBookingRequestRecords(
       )
     `);
     return requestPage(rows.map(mapClientRequest), pageSize);
+  });
+}
+
+export async function currentClientCoachBookingRequestRecord(
+  transaction: ActorDatabaseTransaction,
+  requestId: string,
+) {
+  if (!isCanonicalUuid(requestId)) {
+    throw new CoachBookingRequestConflictError();
+  }
+  return requestOperation(async () => {
+    const rows = await transaction.execute<BookingRequestRow>(sql`
+      select
+        id,
+        slot_id,
+        coach_profile_id,
+        coach_display_name,
+        coach_slug,
+        client_profile_id,
+        client_display_name,
+        status,
+        scheduled_start_at,
+        scheduled_end_at,
+        coach_timezone,
+        coach_training_location_id,
+        training_location_name,
+        location_kind,
+        gym_name,
+        public_location_label,
+        decision_deadline_at,
+        decided_at,
+        accepted_booking_id,
+        created_at,
+        updated_at
+      from app.current_client_coach_booking_request(${requestId}::uuid)
+    `);
+    if (rows.length > 1) throw new CoachBookingRequestConflictError();
+    return rows[0] ? mapClientRequest(rows[0]) : null;
+  });
+}
+
+export async function currentClientPendingCoachBookingRequestRecords(
+  transaction: ActorDatabaseTransaction,
+  slotIds: readonly string[],
+) {
+  const selection = normalizedSlotIds(slotIds);
+  return requestOperation(async () => {
+    const rows = await transaction.execute<BookingRequestRow>(sql`
+      select
+        id,
+        slot_id,
+        coach_profile_id,
+        coach_display_name,
+        coach_slug,
+        client_profile_id,
+        client_display_name,
+        status,
+        scheduled_start_at,
+        scheduled_end_at,
+        coach_timezone,
+        coach_training_location_id,
+        training_location_name,
+        location_kind,
+        gym_name,
+        public_location_label,
+        decision_deadline_at,
+        decided_at,
+        accepted_booking_id,
+        created_at,
+        updated_at
+      from app.current_client_pending_coach_booking_requests(
+        array[${sql.join(
+          selection.map((slotId) => sql`${slotId}::uuid`),
+          sql`, `,
+        )}]::uuid[]
+      )
+    `);
+    return Object.freeze(rows.map(mapClientRequest));
   });
 }
 

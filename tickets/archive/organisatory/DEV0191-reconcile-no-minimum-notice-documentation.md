@@ -5,7 +5,7 @@
 - Last updated: 2026-10-11
 - Milestone: Booking-policy documentation consistency
 - Coordination: None — independent development ticket
-- Related records: completed implementation [DEV0187 — Enforce booking-request eligibility](../backend/DEV0187-enforce-booking-request-eligibility.md), current coordination [COR0016 — Coach-confirmed booking requests](../../current/organisatory/COR0016-coach-confirmed-booking-requests.md), superseded historical contract [DEV0186 — Adopt booking-request and notice policies](DEV0186-adopt-booking-request-and-notice-policies.md)
+- Related records: completed implementation [DEV0187 — Enforce booking-request eligibility](../backend/DEV0187-enforce-booking-request-eligibility.md), then-current coordination [COR0016 — Coach-confirmed booking requests](COR0016-coach-confirmed-booking-requests.md), superseded historical contract [DEV0186 — Adopt booking-request and notice policies](DEV0186-adopt-booking-request-and-notice-policies.md)
 
 ## Objective and context
 

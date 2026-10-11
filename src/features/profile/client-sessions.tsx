@@ -150,10 +150,10 @@ export function ClientSessions({
         <div className="client-sessions-state" role="status">
           <CalendarCheck2 size={24} aria-hidden="true" />
           <div>
-            <strong>No sessions booked yet.</strong>
+            <strong>No confirmed sessions yet.</strong>
             <p>
-              Choose an open hour on a coach profile. Your confirmed booking
-              will appear here.
+              Send a request from a coach profile. An accepted request will
+              appear here as a confirmed booking.
             </p>
             <Link className="text-link" href="/explore">
               Find a coach

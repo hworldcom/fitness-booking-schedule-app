@@ -3,9 +3,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signInHref } from "@/auth/return-to";
 import { ProtectedAccessUnavailable } from "@/features/auth/protected-access";
+import { ClientBookingRequests } from "@/features/profile/client-booking-requests";
 import { ClientSessions } from "@/features/profile/client-sessions";
 import { protectedPageAccess } from "@/server/authorization/page-access";
-import { currentPrivateBookingWorkspace } from "@/server/coaches/booking-service";
+import { currentClientSessionWorkspace } from "@/server/coaches/booking-request-service";
 
 export const metadata: Metadata = { title: "My sessions" };
 
@@ -35,7 +36,7 @@ export default async function Page() {
     );
   }
 
-  const bookingState = await currentPrivateBookingWorkspace();
+  const bookingState = await currentClientSessionWorkspace({ pageSize: 20 });
   if (bookingState.status === "signed-out") {
     redirect(signInHref("/sessions"));
   }
@@ -47,9 +48,12 @@ export default async function Page() {
   }
 
   return (
-    <ClientSessions
-      bookings={bookingState.bookings}
-      referenceTime={new Date().toISOString()}
-    />
+    <div className="client-session-workspace">
+      <ClientBookingRequests initialPage={bookingState.requests} />
+      <ClientSessions
+        bookings={bookingState.bookings}
+        referenceTime={new Date().toISOString()}
+      />
+    </div>
   );
 }

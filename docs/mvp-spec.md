@@ -10,7 +10,7 @@ This standalone project intentionally has no blockchain, wallet, token, pass, cr
 
 This document is the single current product contract for the standalone scheduling repository. It defines target behavior and does not claim every target is already implemented.
 
-The repository contains reusable Next.js, Supabase/PostgreSQL, email identity, coach profile/location, list-first discovery, recurring availability, responsive calendar and Vercel foundations. Direct scheduling-only booking and the removal of obsolete runtime were delivered under completed [COR0011](../tickets/archive/organisatory/COR0011-scheduling-only-product.md). Direct confirmation remains the current runtime baseline until [COR0016](../tickets/current/organisatory/COR0016-coach-confirmed-booking-requests.md) delivers the approval-only request target defined here.
+The repository contains reusable Next.js, Supabase/PostgreSQL, email identity, coach profile/location, list-first discovery, recurring availability, responsive calendar and Vercel foundations. Direct scheduling-only booking and the removal of obsolete runtime were delivered under completed [COR0011](../tickets/archive/organisatory/COR0011-scheduling-only-product.md). The approval-only request target defined here, including separate coach/client interfaces and atomic conversion of one accepted request into the confirmed booking, is delivered under completed [COR0016](../tickets/archive/organisatory/COR0016-coach-confirmed-booking-requests.md).
 
 Tickets record implementation scope and evidence; they do not override this specification. Archived tickets remain immutable history. [DEV0140](../tickets/archive/organisatory/DEV0140-adopt-scheduling-only-contract.md) records the decision to create this focused product split.
 

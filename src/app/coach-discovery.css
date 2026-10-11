@@ -1119,6 +1119,28 @@
   grid-column: 1 / -1;
 }
 
+.coach-slot-request-actions {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 7px;
+}
+
+.coach-slot-request-actions .coach-booking-status {
+  justify-self: start;
+}
+
+.coach-request-saved-detail {
+  display: grid;
+  gap: 3px;
+  margin-top: 7px;
+}
+
+.coach-request-saved-detail strong,
+.coach-request-saved-detail span,
+.coach-request-saved-detail small {
+  display: block;
+}
+
 .coach-client-bookings li > div {
   display: flex;
   align-items: center;
@@ -1145,7 +1167,11 @@
 }
 
 .coach-booking-status.cancelled,
-.coach-booking-status.expired {
+.coach-booking-status.expired,
+.coach-booking-status.withdrawn,
+.coach-booking-status.declined,
+.coach-booking-status.not-selected,
+.coach-booking-status.occurrence-closed {
   background: #eee;
   color: #666;
 }

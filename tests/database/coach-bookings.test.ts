@@ -29,7 +29,9 @@ import {
   closeCoachBookingRequestOccurrenceRecord,
   CoachBookingRequestConflictError,
   createCoachBookingRequestRecord,
+  currentClientCoachBookingRequestRecord,
   currentClientCoachBookingRequestRecords,
+  currentClientPendingCoachBookingRequestRecords,
   currentOwnedCoachBookingRequestRecords,
   declineCoachBookingRequestRecord,
   withdrawCoachBookingRequestRecord,
@@ -546,6 +548,105 @@ test("late requests use the occurrence start as their decision deadline", async 
   );
   assert.ok(projection);
   assert.equal(projection.decisionDeadlineAt, projection.scheduledStartAt);
+});
+
+test("exact and displayed-slot client projections remain actor-owned", async () => {
+  const firstSlotId = await createSlot(31);
+  const secondSlotId = await createSlot(33);
+  const [firstRequest, secondRequest] = await Promise.all([
+    withActorDatabaseContext(firstClientActor, (transaction) =>
+      createCoachBookingRequestRecord(transaction, firstSlotId),
+    ),
+    withActorDatabaseContext(firstClientActor, (transaction) =>
+      createCoachBookingRequestRecord(transaction, secondSlotId),
+    ),
+    withActorDatabaseContext(secondClientActor, (transaction) =>
+      createCoachBookingRequestRecord(transaction, firstSlotId),
+    ),
+  ]);
+
+  const selected = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) =>
+      currentClientPendingCoachBookingRequestRecords(transaction, [
+        firstSlotId,
+        secondSlotId,
+      ]),
+  );
+  assert.deepEqual(
+    new Set(selected.map((request) => request.id)),
+    new Set([firstRequest.requestId, secondRequest.requestId]),
+  );
+  assert.ok(
+    selected.every(
+      (request) =>
+        !("clientProfileId" in request) && !("clientDisplayName" in request),
+    ),
+  );
+
+  const exact = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) =>
+      currentClientCoachBookingRequestRecord(
+        transaction,
+        firstRequest.requestId,
+      ),
+  );
+  assert.equal(exact?.id, firstRequest.requestId);
+  assert.equal(
+    await withActorDatabaseContext(secondClientActor, (transaction) =>
+      currentClientCoachBookingRequestRecord(
+        transaction,
+        firstRequest.requestId,
+      ),
+    ),
+    null,
+  );
+
+  await admin`
+    update app.coach_booking_requests
+    set
+      created_at = statement_timestamp() - interval '13 hours',
+      decision_deadline_at = statement_timestamp() - interval '1 minute'
+    where id = ${firstRequest.requestId}::uuid
+  `;
+  const expired = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) =>
+      currentClientCoachBookingRequestRecord(
+        transaction,
+        firstRequest.requestId,
+      ),
+  );
+  assert.equal(expired?.status, "expired");
+  const remaining = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) =>
+      currentClientPendingCoachBookingRequestRecords(transaction, [
+        firstSlotId,
+        secondSlotId,
+      ]),
+  );
+  assert.deepEqual(
+    remaining.map((request) => request.id),
+    [secondRequest.requestId],
+  );
+
+  await assert.rejects(
+    withActorDatabaseContext(firstClientActor, (transaction) =>
+      currentClientPendingCoachBookingRequestRecords(transaction, []),
+    ),
+    CoachBookingRequestConflictError,
+  );
+  await assert.rejects(
+    withActorDatabaseContext(firstClientActor, (transaction) =>
+      currentClientPendingCoachBookingRequestRecords(transaction, [
+        firstSlotId,
+        firstSlotId,
+      ]),
+    ),
+    CoachBookingRequestConflictError,
+  );
 });
 
 test("withdrawal and decline permit a new eligible attempt", async () => {

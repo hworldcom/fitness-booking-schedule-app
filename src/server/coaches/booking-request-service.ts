@@ -7,11 +7,14 @@ import {
   closeCoachBookingRequestOccurrenceRecord,
   CoachBookingRequestConflictError,
   createCoachBookingRequestRecord,
+  currentClientCoachBookingRequestRecord,
   currentClientCoachBookingRequestRecords,
+  currentClientPendingCoachBookingRequestRecords,
   currentOwnedCoachBookingRequestRecords,
   declineCoachBookingRequestRecord,
   withdrawCoachBookingRequestRecord,
 } from "@/server/db/coaches/booking-request-repository";
+import { currentClientPrivateBookingRecords } from "@/server/db/coaches/booking-repository";
 
 export type BookingRequestMutationResult<T> =
   | Readonly<{ status: "authorized"; outcome: "saved"; value: T }>
@@ -76,10 +79,72 @@ export async function currentOwnedCoachBookingRequestPage(
   });
 }
 
-export function createCoachBookingRequest(slotId: string) {
-  return mutateRequest((transaction) =>
-    createCoachBookingRequestRecord(transaction, slotId),
+export async function currentClientCoachBookingRequestPage(
+  options?: RequestPageOptions,
+) {
+  const result = await withAuthorizedActor((transaction) =>
+    currentClientCoachBookingRequestRecords(transaction, options),
   );
+  if (result.status !== "authorized") return result;
+  return Object.freeze({
+    status: "authorized" as const,
+    page: result.value,
+  });
+}
+
+export async function currentClientCoachMarketplaceWorkspace(
+  slotIds: readonly string[],
+) {
+  const result = await withAuthorizedActor(async (transaction, actor) => {
+    const bookings = await currentClientPrivateBookingRecords(
+      transaction,
+      actor,
+    );
+    const pendingRequests =
+      slotIds.length === 0
+        ? Object.freeze([])
+        : await currentClientPendingCoachBookingRequestRecords(
+            transaction,
+            slotIds,
+          );
+    return Object.freeze({
+      actorProfileId: actor.profileId,
+      bookings,
+      pendingRequests,
+    });
+  });
+  if (result.status !== "authorized") return result;
+  return Object.freeze({ status: "authorized" as const, ...result.value });
+}
+
+export async function currentClientSessionWorkspace(
+  options?: RequestPageOptions,
+) {
+  const result = await withAuthorizedActor(async (transaction, actor) => {
+    const bookings = await currentClientPrivateBookingRecords(
+      transaction,
+      actor,
+    );
+    const requests = await currentClientCoachBookingRequestRecords(
+      transaction,
+      options,
+    );
+    return Object.freeze({ bookings, requests });
+  });
+  if (result.status !== "authorized") return result;
+  return Object.freeze({ status: "authorized" as const, ...result.value });
+}
+
+export function createCoachBookingRequest(slotId: string) {
+  return mutateRequest(async (transaction) => {
+    const mutation = await createCoachBookingRequestRecord(transaction, slotId);
+    const request = await currentClientCoachBookingRequestRecord(
+      transaction,
+      mutation.requestId,
+    );
+    if (!request) throw new CoachBookingRequestConflictError();
+    return Object.freeze({ ...mutation, request });
+  });
 }
 
 export function withdrawCoachBookingRequest(requestId: string) {

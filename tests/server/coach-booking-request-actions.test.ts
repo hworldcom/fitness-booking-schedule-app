@@ -4,6 +4,7 @@ import {
   acceptPrivateSessionRequestAction,
   closePrivateSessionOccurrenceAction,
   declinePrivateSessionRequestAction,
+  loadClientCoachBookingRequestPageAction,
   loadOwnedCoachBookingRequestPageAction,
   requestPrivateSessionAction,
   withdrawPrivateSessionRequestAction,
@@ -24,12 +25,19 @@ test("booking-request actions reject malformed public identifiers", async () => 
 });
 
 test("coach request pagination rejects forged cursors before reading private data", async () => {
-  const result = await loadOwnedCoachBookingRequestPageAction({
+  const forgedCursor = {
     createdAt: "not-a-time",
     id: "not-a-request",
-  } as never);
+  } as never;
+  const [result, clientResult] = await Promise.all([
+    loadOwnedCoachBookingRequestPageAction(forgedCursor),
+    loadClientCoachBookingRequestPageAction(forgedCursor),
+  ]);
 
   assert.equal(result.status, "invalid");
   assert.match(result.message, /invalid/i);
   assert.equal("page" in result, false);
+  assert.equal(clientResult.status, "invalid");
+  assert.match(clientResult.message, /invalid/i);
+  assert.equal("page" in clientResult, false);
 });

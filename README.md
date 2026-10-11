@@ -30,7 +30,7 @@ Delivered reusable foundations include:
 - list-first coach discovery with an OpenFreeMap-backed interactive map;
 - location-bound recurring one-hour availability, deterministic dated occurrences and a responsive compatibility calendar pending its location selector.
 
-Direct scheduling-only booking and runtime cleanup were delivered under COR0011. Coach-confirmed request eligibility and the private multi-candidate persistence lifecycle are now delivered under current [COR0016](tickets/current/organisatory/COR0016-coach-confirmed-booking-requests.md); coach and client request interfaces remain the next slices. The former membership, wallet, payment, group-event and social features are not current product surfaces.
+Direct scheduling-only booking and runtime cleanup were delivered under COR0011. The approval-only request lifecycle, separate coach/client interfaces and atomic conversion of one accepted request into the confirmed booking are delivered under completed [COR0016](tickets/archive/organisatory/COR0016-coach-confirmed-booking-requests.md). The former membership, wallet, payment, group-event and social features are not current product surfaces.
 
 The delivered contract permits multiple coach training locations, one coach-selected primary Explore marker and actual-location availability assignments. Profile location management, the location-aware calendar and primary-marker discovery are integrated under completed [COR0014](tickets/archive/organisatory/COR0014-multi-location-coach-scheduling.md).
 
@@ -186,6 +186,7 @@ npm run test:auth
 npm run test:coach-availability
 npm run test:coach-locations
 npm run test:coach-requests
+npm run test:client-requests
 npm run test:profile-images
 npm run lint
 npm run typecheck
@@ -194,7 +195,7 @@ npm run build
 npm run test:e2e
 ```
 
-`test:auth`, `test:coach-availability`, `test:coach-locations` and `test:coach-requests` require the configured Auth-enabled local stack and a running application on port 3100. The availability rehearsal creates an approved local coach with two reviewed gyms; verifies local assignment, explicit keep/move/remove, one request per save, inactive-location conflict recovery, actual occurrence venues and responsive keyboard use; then removes only its exact `dev0104-coach-*` local accounts. The location rehearsal requires the provisioned Daniel Park coach account; it exercises add/edit/conflict/primary/public/deactivation flows, captures responsive evidence and removes only its unreferenced `DEV0178 …` local locations afterward. The request rehearsal also uses the provisioned Daniel account, creates isolated `dev0189-client-*` local identities and authorized requests, validates pagination, decisions, closure, history, keyboard and responsive behavior, then removes those identities and their exact scheduling records. Database checks require isolated local PostgreSQL. Playwright starts a production server on port 3101 and writes ignored evidence to `test-results/`.
+`test:auth`, `test:coach-availability`, `test:coach-locations`, `test:coach-requests` and `test:client-requests` require the configured Auth-enabled local stack and a running application on port 3100. The availability rehearsal creates an approved local coach with two reviewed gyms; verifies local assignment, explicit keep/move/remove, one request per save, inactive-location conflict recovery, actual occurrence venues and responsive keyboard use; then removes only its exact `dev0104-coach-*` local accounts. The location rehearsal requires the provisioned Daniel Park coach account; it exercises add/edit/conflict/primary/public/deactivation flows, captures responsive evidence and removes only its unreferenced `DEV0178 …` local locations afterward. The coach-request rehearsal also uses the provisioned Daniel account, creates isolated `dev0189-client-*` local identities and authorized requests, validates pagination, decisions, closure, history, keyboard and responsive behavior, then removes those identities and their exact scheduling records. The client-request rehearsal uses the provisioned Hoang and Daniel accounts plus one isolated competitor; it validates request persistence, withdrawal and retry, coach decline and retry, acceptance, closure, expiry, candidate privacy, confirmed-session continuity, keyboard use and responsive layout, then removes only its three fixed occurrences, related records and isolated competitor. Database checks require isolated local PostgreSQL. Playwright starts a production server on port 3101 and writes ignored evidence to `test-results/`.
 
 ## Application structure
 

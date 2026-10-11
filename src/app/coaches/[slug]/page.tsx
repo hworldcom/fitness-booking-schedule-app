@@ -5,7 +5,7 @@ import {
   CoachProfileView,
 } from "@/features/coaches/coach-discovery";
 import { CoachMarketplace } from "@/features/coaches/coach-marketplace";
-import { currentPrivateBookingWorkspace } from "@/server/coaches/booking-service";
+import { currentClientCoachMarketplaceWorkspace } from "@/server/coaches/booking-request-service";
 import { publicCoachProfile } from "@/server/coaches/service";
 
 export const metadata: Metadata = {
@@ -25,13 +25,19 @@ export default async function Page({
     if (state.status === "not-found") notFound();
     return <CoachProfileUnavailable />;
   }
-  const bookingState = await currentPrivateBookingWorkspace();
+  const bookingState = await currentClientCoachMarketplaceWorkspace(
+    state.slots.map((slot) => slot.id),
+  );
   const actor =
     bookingState.status === "authorized"
       ? {
           status: "authorized" as const,
+          actorProfileId: bookingState.actorProfileId,
           bookings: bookingState.bookings.filter(
             (booking) => booking.coachProfileId === state.coach.profileId,
+          ),
+          pendingRequests: bookingState.pendingRequests.filter(
+            (request) => request.coachProfileId === state.coach.profileId,
           ),
         }
       : bookingState;
@@ -40,6 +46,7 @@ export default async function Page({
       state={state}
       marketplace={
         <CoachMarketplace
+          coachProfileId={state.coach.profileId}
           coachDisplayName={state.coach.displayName}
           coachSlug={state.coach.slug}
           slots={state.slots}

@@ -4,7 +4,7 @@
 - Created: 2026-10-10
 - Last updated: 2026-10-11
 - Milestone: Scheduling-only booking-policy follow-up
-- Coordination: [COR0016 — Coach-confirmed booking requests](../../current/organisatory/COR0016-coach-confirmed-booking-requests.md)
+- Coordination: [COR0016 — Coach-confirmed booking requests](../organisatory/COR0016-coach-confirmed-booking-requests.md)
 - Related records: completed contract dependency [DEV0186 — Adopt booking-request and notice policies](../organisatory/DEV0186-adopt-booking-request-and-notice-policies.md), completed request consumer [DEV0188 — Persist multi-candidate booking requests](DEV0188-persist-multi-candidate-booking-requests.md), availability baseline [DEV0177 — Bind availability to training locations](DEV0177-bind-availability-to-training-locations.md)
 
 ## Objective and context

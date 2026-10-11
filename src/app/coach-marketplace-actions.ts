@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
 import {
   isCoachBookingRequestPageCursor,
+  type ClientCoachBookingRequestProjection,
   type CoachBookingRequestPage,
   type CoachBookingRequestPageCursor,
   type CoachBookingRequestStatus,
@@ -13,6 +14,7 @@ import {
   acceptCoachBookingRequest,
   closeCoachBookingRequestOccurrence,
   createCoachBookingRequest,
+  currentClientCoachBookingRequestPage,
   declineCoachBookingRequest,
   currentOwnedCoachBookingRequestPage,
   withdrawCoachBookingRequest,
@@ -34,12 +36,23 @@ export type CoachMarketplaceActionResult = Readonly<{
   bookingId?: string;
   requestId?: string;
   requestStatus?: CoachBookingRequestStatus;
+  request?: ClientCoachBookingRequestProjection;
 }>;
 
 export type CoachBookingRequestPageActionResult =
   | Readonly<{
       status: "loaded";
       page: CoachBookingRequestPage<OwnedCoachBookingRequestProjection>;
+    }>
+  | Readonly<{
+      status: "invalid" | "signed-out" | "forbidden" | "unavailable";
+      message: string;
+    }>;
+
+export type ClientBookingRequestPageActionResult =
+  | Readonly<{
+      status: "loaded";
+      page: CoachBookingRequestPage<ClientCoachBookingRequestProjection>;
     }>
   | Readonly<{
       status: "invalid" | "signed-out" | "forbidden" | "unavailable";
@@ -112,6 +125,40 @@ export async function loadOwnedCoachBookingRequestPageAction(
   });
 }
 
+export async function loadClientCoachBookingRequestPageAction(
+  cursor: CoachBookingRequestPageCursor | null,
+): Promise<ClientBookingRequestPageActionResult> {
+  if (cursor !== null && !isCoachBookingRequestPageCursor(cursor)) {
+    return Object.freeze({
+      status: "invalid",
+      message: "That request page is invalid. Refresh to start again.",
+    });
+  }
+  const result = await currentClientCoachBookingRequestPage({
+    pageSize: 20,
+    cursor,
+  });
+  if (result.status === "authorized") {
+    return Object.freeze({ status: "loaded", page: result.page });
+  }
+  if (result.status === "preview" || result.status === "signed-out") {
+    return Object.freeze({
+      status: "signed-out",
+      message: "Sign in before loading your booking requests.",
+    });
+  }
+  if (result.status === "forbidden") {
+    return Object.freeze({
+      status: "forbidden",
+      message: "This account is not authorized to view those requests.",
+    });
+  }
+  return Object.freeze({
+    status: "unavailable",
+    message: "The next request page could not be verified. Refresh to retry.",
+  });
+}
+
 export async function requestPrivateSessionAction(
   slotId: string,
 ): Promise<CoachMarketplaceActionResult> {
@@ -128,17 +175,11 @@ export async function requestPrivateSessionAction(
   refreshScheduling();
   return Object.freeze({
     status: "saved",
-    message:
-      "Request saved. This session is awaiting coach confirmation and is not booked yet.",
+    message: "Request saved.",
     requestId: result.value.requestId,
     requestStatus: result.value.status,
+    request: result.value.request,
   });
-}
-
-export async function bookPrivateSessionAction(
-  slotId: string,
-): Promise<CoachMarketplaceActionResult> {
-  return requestPrivateSessionAction(slotId);
 }
 
 export async function withdrawPrivateSessionRequestAction(
