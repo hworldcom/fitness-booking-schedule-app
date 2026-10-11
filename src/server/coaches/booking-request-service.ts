@@ -63,6 +63,19 @@ export async function currentBookingRequestWorkspace(
   return Object.freeze({ status: "authorized" as const, ...result.value });
 }
 
+export async function currentOwnedCoachBookingRequestPage(
+  options?: RequestPageOptions,
+) {
+  const result = await withAuthorizedActor((transaction) =>
+    currentOwnedCoachBookingRequestRecords(transaction, options),
+  );
+  if (result.status !== "authorized") return result;
+  return Object.freeze({
+    status: "authorized" as const,
+    page: result.value,
+  });
+}
+
 export function createCoachBookingRequest(slotId: string) {
   return mutateRequest((transaction) =>
     createCoachBookingRequestRecord(transaction, slotId),

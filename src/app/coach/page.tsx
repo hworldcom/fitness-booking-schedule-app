@@ -6,7 +6,9 @@ import { saveCoachAvailabilityRulesAction } from "./actions";
 import { CoachAvailabilityPanel } from "@/features/coaches/coach-availability-panel";
 import { CoachApplicationGate } from "@/features/coaches/coach-application-gate";
 import { CoachClientCards } from "@/features/coaches/coach-client-cards";
+import { CoachBookingRequestQueue } from "@/features/coaches/coach-booking-request-queue";
 import { resolveCoachWorkspaceView } from "@/features/coaches/coach-workspace-view";
+import { currentOwnedCoachBookingRequestPage } from "@/server/coaches/booking-request-service";
 import { currentPrivateBookingWorkspace } from "@/server/coaches/booking-service";
 import { currentCoachAvailabilityWorkspace } from "@/server/coaches/service";
 
@@ -18,9 +20,12 @@ export default async function Page({
   searchParams: Promise<{ view?: string | string[] | undefined }>;
 }) {
   const view = resolveCoachWorkspaceView((await searchParams).view);
-  const [state, bookingState] = await Promise.all([
+  const [state, bookingState, requestState] = await Promise.all([
     currentCoachAvailabilityWorkspace(),
     view === "bookings" ? currentPrivateBookingWorkspace() : null,
+    view === "bookings"
+      ? currentOwnedCoachBookingRequestPage({ pageSize: 20 })
+      : null,
   ]);
   if (state.status !== "authorized") {
     if (state.status === "signed-out") redirect(signInHref("/coach"));
@@ -61,6 +66,17 @@ export default async function Page({
 
   const coachBookings =
     bookingState?.status === "authorized" ? bookingState.coachBookings : null;
+  const coachRequestPage =
+    requestState?.status === "authorized" ? requestState.page : null;
+  const bookingContent = (
+    <>
+      <CoachBookingRequestQueue initialPage={coachRequestPage} />
+      <CoachClientCards
+        bookings={coachBookings}
+        referenceTime={new Date().toISOString()}
+      />
+    </>
+  );
 
   if (
     state.coachAccess.status !== "approved" &&
@@ -70,12 +86,9 @@ export default async function Page({
       <CoachApplicationGate
         access={state.coachAccess}
         existingBookings={
-          state.coachAccess.status === "suspended" && view === "bookings" ? (
-            <CoachClientCards
-              bookings={coachBookings}
-              referenceTime={new Date().toISOString()}
-            />
-          ) : undefined
+          state.coachAccess.status === "suspended" && view === "bookings"
+            ? bookingContent
+            : undefined
         }
       />
     );
@@ -87,15 +100,7 @@ export default async function Page({
       rules={state.rules}
       slots={state.slots}
       view={view}
-      bookingContent={
-        view === "bookings" ? (
-          <CoachClientCards
-            key="client-bookings"
-            bookings={coachBookings}
-            referenceTime={new Date().toISOString()}
-          />
-        ) : undefined
-      }
+      bookingContent={view === "bookings" ? bookingContent : undefined}
       ownerDisplayName={state.ownerDisplayName}
       saveRuleSetAction={saveCoachAvailabilityRulesAction}
     />

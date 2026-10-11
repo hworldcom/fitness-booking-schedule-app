@@ -2,12 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
-import type { CoachBookingRequestStatus } from "@/domain/coach-booking-requests";
+import {
+  isCoachBookingRequestPageCursor,
+  type CoachBookingRequestPage,
+  type CoachBookingRequestPageCursor,
+  type CoachBookingRequestStatus,
+  type OwnedCoachBookingRequestProjection,
+} from "@/domain/coach-booking-requests";
 import {
   acceptCoachBookingRequest,
   closeCoachBookingRequestOccurrence,
   createCoachBookingRequest,
   declineCoachBookingRequest,
+  currentOwnedCoachBookingRequestPage,
   withdrawCoachBookingRequest,
 } from "@/server/coaches/booking-request-service";
 import {
@@ -28,6 +35,16 @@ export type CoachMarketplaceActionResult = Readonly<{
   requestId?: string;
   requestStatus?: CoachBookingRequestStatus;
 }>;
+
+export type CoachBookingRequestPageActionResult =
+  | Readonly<{
+      status: "loaded";
+      page: CoachBookingRequestPage<OwnedCoachBookingRequestProjection>;
+    }>
+  | Readonly<{
+      status: "invalid" | "signed-out" | "forbidden" | "unavailable";
+      message: string;
+    }>;
 
 function invalid(message: string): CoachMarketplaceActionResult {
   return Object.freeze({ status: "invalid", message });
@@ -59,6 +76,40 @@ function refreshScheduling() {
   revalidatePath("/coach");
   revalidatePath("/explore");
   revalidatePath("/coaches/[slug]", "page");
+}
+
+export async function loadOwnedCoachBookingRequestPageAction(
+  cursor: CoachBookingRequestPageCursor | null,
+): Promise<CoachBookingRequestPageActionResult> {
+  if (cursor !== null && !isCoachBookingRequestPageCursor(cursor)) {
+    return Object.freeze({
+      status: "invalid",
+      message: "That request page is invalid. Refresh to start again.",
+    });
+  }
+  const result = await currentOwnedCoachBookingRequestPage({
+    pageSize: 20,
+    cursor,
+  });
+  if (result.status === "authorized") {
+    return Object.freeze({ status: "loaded", page: result.page });
+  }
+  if (result.status === "preview" || result.status === "signed-out") {
+    return Object.freeze({
+      status: "signed-out",
+      message: "Sign in before loading private booking requests.",
+    });
+  }
+  if (result.status === "forbidden") {
+    return Object.freeze({
+      status: "forbidden",
+      message: "This account is not authorized to view those requests.",
+    });
+  }
+  return Object.freeze({
+    status: "unavailable",
+    message: "The next request page could not be verified. Refresh to retry.",
+  });
 }
 
 export async function requestPrivateSessionAction(

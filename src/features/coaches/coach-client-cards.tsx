@@ -19,14 +19,20 @@ import { Avatar } from "@/components/ui";
 import type { PrivateBookingProjection } from "@/domain/coach-bookings";
 
 function bookingTime(booking: PrivateBookingProjection) {
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone: booking.coachTimezone,
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(booking.scheduledStartAt));
+  const values = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: booking.coachTimezone,
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(new Date(booking.scheduledStartAt))
+      .map((part) => [part.type, part.value]),
+  );
+  return `${values.weekday} ${values.day} ${values.month}, ${values.hour}:${values.minute}`;
 }
 
 export function CoachClientCards({

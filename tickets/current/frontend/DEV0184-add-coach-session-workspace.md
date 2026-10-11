@@ -5,7 +5,7 @@
 - Last updated: 2026-10-10
 - Milestone: Scheduling-only session collaboration follow-up
 - Coordination: [COR0015 — Session notes and training plans](../organisatory/COR0015-session-notes-and-training-plans.md)
-- Related records: contract dependency [DEV0182 — Adopt the session-notes contract](../organisatory/DEV0182-adopt-session-notes-contract.md), backend dependency [DEV0183 — Persist authorized session notes](../backend/DEV0183-persist-authorized-session-notes.md), request-interface dependency [DEV0189 — Add the coach booking-request queue](DEV0189-add-coach-booking-request-queue.md), client peer [DEV0185 — Add client session collaboration](DEV0185-add-client-session-collaboration.md), coach-bookings baseline [DEV0170 — Separate coach Schedule and Bookings tabs](../../archive/frontend/DEV0170-separate-coach-schedule-and-bookings-tabs.md)
+- Related records: contract dependency [DEV0182 — Adopt the session-notes contract](../organisatory/DEV0182-adopt-session-notes-contract.md), backend dependency [DEV0183 — Persist authorized session notes](../backend/DEV0183-persist-authorized-session-notes.md), completed request-interface dependency [DEV0189 — Add the coach booking-request queue](../../archive/frontend/DEV0189-add-coach-booking-request-queue.md), client peer [DEV0185 — Add client session collaboration](DEV0185-add-client-session-collaboration.md), coach-bookings baseline [DEV0170 — Separate coach Schedule and Bookings tabs](../../archive/frontend/DEV0170-separate-coach-schedule-and-bookings-tabs.md)
 
 ## Objective and context
 
@@ -37,7 +37,7 @@ Extend each coach-owned pending request and booking detail with a usable collabo
 
 ## Assumptions, decisions, and dependencies
 
-- DEV0182, DEV0183 and DEV0189 must complete before this ticket becomes Ready.
+- DEV0182 and DEV0183 must complete before this ticket becomes Ready; DEV0189 is complete.
 - Reuse the existing Bookings tab and booking-card component rather than add a fourth coach-workspace tab.
 - A disclosure panel is preferred for scanning many bookings, but the final component may use a detail region if keyboard behavior and mobile layout are clearer; record the choice before implementation.
 - Plain-text textareas preserve line breaks. Content is rendered as text, not interpreted Markdown/HTML.
@@ -95,7 +95,7 @@ Pending validation.
 - Date and environment: Not run.
 - Exact commands and outcomes: Not run.
 - Manual steps and observed outcomes: Not run.
-- Failed, blocked, or not-run checks: All checks await DEV0183, DEV0189 and implementation.
+- Failed, blocked, or not-run checks: All checks await DEV0183 and implementation; DEV0189 is complete.
 
 | Criterion | Evidence | Result  |
 | --------- | -------- | ------- |

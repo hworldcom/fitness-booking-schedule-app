@@ -1,4 +1,5 @@
 import type { BookingLocationSnapshot } from "./coach-bookings";
+import { isCanonicalUuid } from "./coach-bookings";
 
 export const COACH_BOOKING_REQUEST_STATUSES = [
   "pending",
@@ -68,4 +69,17 @@ export function isPendingCoachBookingRequest(
     ClientCoachBookingRequestProjection | OwnedCoachBookingRequestProjection,
 ) {
   return request.status === "pending";
+}
+
+export function isCoachBookingRequestPageCursor(
+  value: unknown,
+): value is CoachBookingRequestPageCursor {
+  if (typeof value !== "object" || value === null) return false;
+  const cursor = value as Partial<CoachBookingRequestPageCursor>;
+  return (
+    typeof cursor.createdAt === "string" &&
+    Number.isFinite(new Date(cursor.createdAt).getTime()) &&
+    typeof cursor.id === "string" &&
+    isCanonicalUuid(cursor.id)
+  );
 }
