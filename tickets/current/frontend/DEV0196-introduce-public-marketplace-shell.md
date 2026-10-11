@@ -1,11 +1,11 @@
 # Ticket DEV0196: Introduce the public marketplace shell
 
-- Status: Draft
+- Status: Ready
 - Created: 2026-10-12
 - Last updated: 2026-10-12
 - Milestone: Scheduling interface public-marketplace follow-up
 - Coordination: [COR0017 — Public marketplace redesign](../organisatory/COR0017-public-marketplace-redesign.md)
-- Related records: contract dependency [DEV0195 — Adopt the public marketplace redesign contract](../organisatory/DEV0195-adopt-public-marketplace-redesign-contract.md); navigation baselines [DEV0153 — Separate client and coach navigation](../../archive/frontend/DEV0153-separate-client-and-coach-navigation.md), [DEV0168 — Detect profile images in account icons](../../archive/frontend/DEV0168-detect-profile-images-in-account-icons.md) and [DEV0171 — Unify coach Profile navigation](../../archive/frontend/DEV0171-unify-coach-profile-navigation.md)
+- Related records: completed contract dependency [DEV0195 — Adopt the public marketplace redesign contract](../../archive/organisatory/DEV0195-adopt-public-marketplace-redesign-contract.md); navigation baselines [DEV0153 — Separate client and coach navigation](../../archive/frontend/DEV0153-separate-client-and-coach-navigation.md), [DEV0168 — Detect profile images in account icons](../../archive/frontend/DEV0168-detect-profile-images-in-account-icons.md) and [DEV0171 — Unify coach Profile navigation](../../archive/frontend/DEV0171-unify-coach-profile-navigation.md)
 
 ## Objective and context
 
@@ -27,12 +27,12 @@ Replace the fixed left sidebar and mobile bottom bar on public marketplace route
 - Guests see an uncluttered public header and never see private destinations.
 - Authorized clients and coaches on public pages can reach their existing account/private destinations without exposing unauthorized links.
 - Private routes retain `My sessions`, `Coach workspace`, coach Profile defaults and personal Profile access exactly as defined today.
-- Public mobile navigation uses the DEV0195 decision and does not render simultaneous competing header and bottom menus.
+- Public mobile navigation uses one compact top header and no bottom bar. Private signed-in mobile routes retain one persistent capability-aware bottom bar that remains visible while page content scrolls.
 - Long names, image failures, narrow widths and Auth-unavailable states do not overflow or hide the sign-in/account affordance.
 
 ## Assumptions, decisions, and dependencies
 
-- DEV0195 must settle the mobile public-navigation choice and public route set before implementation.
+- DEV0195 adopted the public route set, compact top header, no public mobile bottom bar and persistent private signed-in mobile bottom navigation.
 - Prefer explicit `PublicShell`/`WorkspaceShell` composition or a well-tested route-mode function; do not duplicate actor authorization logic.
 - Public-shell presentation may differ, but server-derived actor capability remains the only source of private navigation.
 

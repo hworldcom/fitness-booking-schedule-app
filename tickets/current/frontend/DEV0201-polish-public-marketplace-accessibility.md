@@ -32,6 +32,7 @@ Perform the final cross-surface accessibility, responsive and failure-state pass
 
 ## Assumptions, decisions, and dependencies
 
+- DEV0195 supplies the adopted public/private navigation, search-first data and responsive Explore acceptance contract.
 - DEV0196-DEV0200 must each meet their own acceptance criteria before this ticket starts.
 - Existing MovX tokens, Bricolage Grotesque display type and Manrope body type remain the visual foundation.
 - Automated accessibility checks assist but do not replace manual keyboard, responsive and screen-reader-oriented semantic review.

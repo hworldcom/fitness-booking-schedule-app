@@ -5,7 +5,7 @@
 - Last updated: 2026-10-12
 - Milestone: Scheduling interface public-marketplace follow-up
 - Coordination: [COR0017 — Public marketplace redesign](../organisatory/COR0017-public-marketplace-redesign.md)
-- Related records: contract dependency [DEV0195 — Adopt the public marketplace redesign contract](../organisatory/DEV0195-adopt-public-marketplace-redesign-contract.md), search dependency [DEV0197 — Share public marketplace search](DEV0197-share-public-marketplace-search.md), card dependency [DEV0198 — Build the search-first marketplace home](DEV0198-build-search-first-marketplace-home.md), mobile consumer [DEV0200 — Add mobile Explore map/list state](DEV0200-add-mobile-explore-map-list-state.md), map baselines [DEV0174 — Decouple location services](../../archive/frontend/DEV0174-decouple-location-services.md) and [DEV0194 — Stabilize selected map markers](../../archive/frontend/DEV0194-stabilize-selected-map-markers.md)
+- Related records: completed contract dependency [DEV0195 — Adopt the public marketplace redesign contract](../../archive/organisatory/DEV0195-adopt-public-marketplace-redesign-contract.md), search dependency [DEV0197 — Share public marketplace search](DEV0197-share-public-marketplace-search.md), card dependency [DEV0198 — Build the search-first marketplace home](DEV0198-build-search-first-marketplace-home.md), mobile consumer [DEV0200 — Add mobile Explore map/list state](DEV0200-add-mobile-explore-map-list-state.md), map baselines [DEV0174 — Decouple location services](../../archive/frontend/DEV0174-decouple-location-services.md) and [DEV0194 — Stabilize selected map markers](../../archive/frontend/DEV0194-stabilize-selected-map-markers.md)
 
 ## Objective and context
 
@@ -33,6 +33,7 @@ Make desktop `/explore` a denser comparison surface with compact image-forward c
 
 ## Assumptions, decisions, and dependencies
 
+- DEV0195 adopted the complete filtered list beside the provider-neutral primary-location map as the desktop Explore contract.
 - DEV0197 and the reusable card boundary from DEV0198 must complete first.
 - Existing `LocationResultsMap` remains the only map renderer; this ticket changes composition, not its provider contract.
 - Sticky positioning must account for the public header height established by DEV0196 and stop within the results section/footer.

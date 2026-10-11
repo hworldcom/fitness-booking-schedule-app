@@ -5,7 +5,7 @@
 - Last updated: 2026-10-12
 - Milestone: Scheduling interface public-marketplace follow-up
 - Coordination: [COR0017 — Public marketplace redesign](../organisatory/COR0017-public-marketplace-redesign.md)
-- Related records: contract dependency [DEV0195 — Adopt the public marketplace redesign contract](../organisatory/DEV0195-adopt-public-marketplace-redesign-contract.md), Explore dependency [DEV0199 — Redesign desktop coach Explore](DEV0199-redesign-desktop-coach-explore.md), shell dependency [DEV0196 — Introduce the public marketplace shell](DEV0196-introduce-public-marketplace-shell.md) and final integration [DEV0201 — Polish public marketplace accessibility](DEV0201-polish-public-marketplace-accessibility.md)
+- Related records: completed contract dependency [DEV0195 — Adopt the public marketplace redesign contract](../../archive/organisatory/DEV0195-adopt-public-marketplace-redesign-contract.md), Explore dependency [DEV0199 — Redesign desktop coach Explore](DEV0199-redesign-desktop-coach-explore.md), shell dependency [DEV0196 — Introduce the public marketplace shell](DEV0196-introduce-public-marketplace-shell.md) and final integration [DEV0201 — Polish public marketplace accessibility](DEV0201-polish-public-marketplace-accessibility.md)
 
 ## Objective and context
 
@@ -32,7 +32,7 @@ Give mobile Explore an explicit list/map switch instead of squeezing both panels
 
 ## Assumptions, decisions, and dependencies
 
-- DEV0195 must adopt URL-backed mobile view state; DEV0196 and DEV0199 must complete before implementation.
+- DEV0195 adopted list-default canonical `view=list|map` mobile state with filter/history preservation and list recovery; DEV0196 and DEV0199 must complete before implementation.
 - Selected coach identity may remain client component state. Only `view` becomes a public URL contract in this slice.
 - List content remains mounted or recoverable so switching view never triggers a new search or loses filter results.
 

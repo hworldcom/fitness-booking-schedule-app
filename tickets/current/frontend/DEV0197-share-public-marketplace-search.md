@@ -1,11 +1,11 @@
 # Ticket DEV0197: Share public marketplace search
 
-- Status: Draft
+- Status: Ready
 - Created: 2026-10-12
 - Last updated: 2026-10-12
 - Milestone: Scheduling interface public-marketplace follow-up
 - Coordination: [COR0017 — Public marketplace redesign](../organisatory/COR0017-public-marketplace-redesign.md)
-- Related records: contract dependency [DEV0195 — Adopt the public marketplace redesign contract](../organisatory/DEV0195-adopt-public-marketplace-redesign-contract.md); homepage consumer [DEV0198 — Build the search-first marketplace home](DEV0198-build-search-first-marketplace-home.md); Explore consumer [DEV0199 — Redesign desktop coach Explore](DEV0199-redesign-desktop-coach-explore.md)
+- Related records: completed contract dependency [DEV0195 — Adopt the public marketplace redesign contract](../../archive/organisatory/DEV0195-adopt-public-marketplace-redesign-contract.md); homepage consumer [DEV0198 — Build the search-first marketplace home](DEV0198-build-search-first-marketplace-home.md); Explore consumer [DEV0199 — Redesign desktop coach Explore](DEV0199-redesign-desktop-coach-explore.md)
 
 ## Objective and context
 
@@ -32,7 +32,7 @@ Extract one reusable, accessible public search surface for the filters the appli
 
 ## Assumptions, decisions, and dependencies
 
-- DEV0195 must confirm that the first delivery exposes only `q`, `discipline` and `location`.
+- DEV0195 adopted `q`, discipline and location as the complete first-delivery search contract.
 - Existing server normalization and directory service remain authoritative; UI components must not reimplement matching logic.
 - `service=private-training` may be retained for compatibility only if it has current bounded meaning; otherwise the implementation record must explain its removal.
 

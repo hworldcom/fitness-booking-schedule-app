@@ -5,7 +5,7 @@
 - Last updated: 2026-10-12
 - Milestone: Scheduling interface public-marketplace follow-up
 - Coordination: [COR0017 — Public marketplace redesign](../organisatory/COR0017-public-marketplace-redesign.md)
-- Related records: contract dependency [DEV0195 — Adopt the public marketplace redesign contract](../organisatory/DEV0195-adopt-public-marketplace-redesign-contract.md), shell dependency [DEV0196 — Introduce the public marketplace shell](DEV0196-introduce-public-marketplace-shell.md), search dependency [DEV0197 — Share public marketplace search](DEV0197-share-public-marketplace-search.md), public-story baseline [DEV0095 — Present the coach-first public story](../../archive/frontend/DEV0095-present-coach-first-public-story.md) and Explore consumer [DEV0199 — Redesign desktop coach Explore](DEV0199-redesign-desktop-coach-explore.md)
+- Related records: completed contract dependency [DEV0195 — Adopt the public marketplace redesign contract](../../archive/organisatory/DEV0195-adopt-public-marketplace-redesign-contract.md), shell dependency [DEV0196 — Introduce the public marketplace shell](DEV0196-introduce-public-marketplace-shell.md), search dependency [DEV0197 — Share public marketplace search](DEV0197-share-public-marketplace-search.md), public-story baseline [DEV0095 — Present the coach-first public story](../../archive/frontend/DEV0095-present-coach-first-public-story.md) and Explore consumer [DEV0199 — Redesign desktop coach Explore](DEV0199-redesign-desktop-coach-explore.md)
 
 ## Objective and context
 
@@ -33,7 +33,7 @@ Recompose `/` from an explanation-first landing page into a search-first marketp
 
 ## Assumptions, decisions, and dependencies
 
-- DEV0195 must adopt real server-backed previews; DEV0196 and DEV0197 must be complete before this ticket starts.
+- DEV0195 adopted real server-backed alphabetical previews; DEV0196 and DEV0197 must be complete before this ticket starts.
 - The first preview can show a bounded slice of the existing alphabetical directory; it must not imply proximity or recommendation ranking.
 - A reusable compact coach-preview card created here may be consumed by DEV0199, but page-specific layout and long-form homepage sections remain owned here.
 
