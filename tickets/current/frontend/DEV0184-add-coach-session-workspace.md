@@ -5,7 +5,7 @@
 - Last updated: 2026-10-10
 - Milestone: Scheduling-only session collaboration follow-up
 - Coordination: [COR0015 — Session notes and training plans](../organisatory/COR0015-session-notes-and-training-plans.md)
-- Related records: contract dependency [DEV0182 — Adopt the session-notes contract](../organisatory/DEV0182-adopt-session-notes-contract.md), backend dependency [DEV0183 — Persist authorized session notes](../backend/DEV0183-persist-authorized-session-notes.md), request-interface dependency [DEV0189 — Add coach booking-request controls](DEV0189-add-coach-booking-request-controls.md), client peer [DEV0185 — Add client session collaboration](DEV0185-add-client-session-collaboration.md), coach-bookings baseline [DEV0170 — Separate coach Schedule and Bookings tabs](../../archive/frontend/DEV0170-separate-coach-schedule-and-bookings-tabs.md)
+- Related records: contract dependency [DEV0182 — Adopt the session-notes contract](../organisatory/DEV0182-adopt-session-notes-contract.md), backend dependency [DEV0183 — Persist authorized session notes](../backend/DEV0183-persist-authorized-session-notes.md), request-interface dependency [DEV0189 — Add the coach booking-request queue](DEV0189-add-coach-booking-request-queue.md), client peer [DEV0185 — Add client session collaboration](DEV0185-add-client-session-collaboration.md), coach-bookings baseline [DEV0170 — Separate coach Schedule and Bookings tabs](../../archive/frontend/DEV0170-separate-coach-schedule-and-bookings-tabs.md)
 
 ## Objective and context
 
