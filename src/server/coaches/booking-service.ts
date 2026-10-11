@@ -2,8 +2,8 @@ import "server-only";
 
 import { withAuthorizedActor } from "@/server/authorization/service";
 import {
-  bookDirectPrivateSessionRecord,
   cancelDirectPrivateBookingRecord,
+  coachBookingRequestEligibilityRecord,
   CoachBookingConflictError,
   completeDirectPrivateBookingRecord,
   currentClientPrivateBookingRecords,
@@ -49,10 +49,18 @@ export async function currentPrivateBookingWorkspace() {
   return Object.freeze({ status: "authorized" as const, ...result.value });
 }
 
-export function bookDirectPrivateSession(slotId: string) {
-  return mutateBooking((transaction) =>
-    bookDirectPrivateSessionRecord(transaction, slotId),
+export async function privateSessionRequestEligibility(slotId: string) {
+  const result = await mutateBooking((transaction) =>
+    coachBookingRequestEligibilityRecord(transaction, slotId),
   );
+  if (result.status !== "authorized" || result.outcome === "conflict") {
+    return result;
+  }
+  return Object.freeze({
+    status: "authorized" as const,
+    outcome: "checked" as const,
+    value: result.value,
+  });
 }
 
 export function cancelDirectPrivateBooking(bookingId: string) {

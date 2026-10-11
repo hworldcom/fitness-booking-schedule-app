@@ -11,7 +11,7 @@ import { WaitlistRequest } from "./waitlist-request";
 const previewSteps = [
   "Discover coaches and confirmed public training places",
   "Compare real published one-hour availability",
-  "Book one capacity-one private session by email",
+  "Request one capacity-one private session by email",
   "Manage client and coach schedules from the same database",
 ];
 

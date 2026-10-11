@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import test, { after, before } from "node:test";
+import { sql } from "drizzle-orm";
 import postgres from "postgres";
 import {
   localDateTimeValue,
@@ -12,10 +14,11 @@ import { submitOwnedCoachApplicationRecord } from "@/server/db/coaches/applicati
 import {
   CoachAvailabilityConflictError,
   createOwnedCoachAvailabilityRecord,
+  publicCoachAvailabilityRecords,
 } from "@/server/db/coaches/availability-repository";
 import {
-  bookDirectPrivateSessionRecord,
   cancelDirectPrivateBookingRecord,
+  coachBookingRequestEligibilityRecord,
   CoachBookingConflictError,
   completeDirectPrivateBookingRecord,
   currentClientPrivateBookingRecords,
@@ -104,6 +107,71 @@ async function createSlot(hoursFromNow: number) {
       transaction,
       availabilityInput(hoursFromNow),
     ),
+  );
+}
+
+async function createConfirmedBooking(
+  slotId: string,
+  client: AuthorizedActor = firstClientActor,
+) {
+  const bookingId = randomUUID();
+  await admin.begin(async (transaction) => {
+    await transaction`
+      select
+        set_config('app.coach_availability_management', 'on', true),
+        set_config('app.coach_booking_management', 'on', true)
+    `;
+    const [slot] = await transaction<{ starts_at: Date; ends_at: Date }[]>`
+      select starts_at, ends_at
+      from app.coach_availability_slots
+      where id = ${slotId}::uuid
+        and run_id = ${coachActor.runId}::uuid
+      for update
+    `;
+    assert.ok(slot);
+    await transaction`
+      insert into app.coach_private_bookings (
+        id,
+        run_id,
+        slot_id,
+        coach_profile_id,
+        client_profile_id,
+        credit_projection_id,
+        status,
+        scheduled_start_at,
+        scheduled_end_at,
+        early_return_until,
+        hold_expires_at
+      ) values (
+        ${bookingId}::uuid,
+        ${coachActor.runId}::uuid,
+        ${slotId}::uuid,
+        ${coachActor.profileId}::uuid,
+        ${client.profileId}::uuid,
+        null,
+        'confirmed',
+        ${slot.starts_at},
+        ${slot.ends_at},
+        ${slot.starts_at},
+        ${slot.starts_at}
+      )
+    `;
+    await transaction`
+      update app.coach_availability_slots
+      set status = 'booked'
+      where id = ${slotId}::uuid
+        and run_id = ${coachActor.runId}::uuid
+        and status = 'open'
+    `;
+  });
+  return bookingId;
+}
+
+function attemptDisabledDirectBooking(actor: AuthorizedActor, slotId: string) {
+  return withActorDatabaseContext(actor, (transaction) =>
+    transaction.execute(sql`
+      select app.book_direct_private_session(${slotId}::uuid)
+    `),
   );
 }
 
@@ -258,24 +326,93 @@ after(async () => {
   await admin.end();
 });
 
-test("direct booking is idempotent for one client and capacity one", async () => {
+test("PostgreSQL keeps open occurrences requestable until their start", async () => {
+  const [result] = await admin<
+    {
+      future: string;
+      exact_start: string;
+      booked: string;
+      withdrawn: string;
+      held: string;
+      beyond_horizon: string;
+    }[]
+  >`
+    select
+      app.coach_booking_request_eligibility(
+        'open',
+        statement_timestamp() + interval '1 microsecond',
+        statement_timestamp() + interval '1 hour 1 microsecond'
+      ) as future,
+      app.coach_booking_request_eligibility(
+        'open',
+        statement_timestamp(),
+        statement_timestamp() + interval '1 hour'
+      ) as exact_start,
+      app.coach_booking_request_eligibility(
+        'booked',
+        statement_timestamp() + interval '48 hours',
+        statement_timestamp() + interval '49 hours'
+      ) as booked,
+      app.coach_booking_request_eligibility(
+        'withdrawn',
+        statement_timestamp() + interval '48 hours',
+        statement_timestamp() + interval '49 hours'
+      ) as withdrawn,
+      app.coach_booking_request_eligibility(
+        'held',
+        statement_timestamp() + interval '48 hours',
+        statement_timestamp() + interval '49 hours'
+      ) as held,
+      app.coach_booking_request_eligibility(
+        'open',
+        statement_timestamp() + interval '7 days',
+        statement_timestamp() + interval '7 days 1 hour'
+      ) as beyond_horizon
+  `;
+  assert.deepEqual(result, {
+    future: "requestable",
+    exact_start: "unavailable",
+    booked: "booked",
+    withdrawn: "withdrawn",
+    held: "unavailable",
+    beyond_horizon: "unavailable",
+  });
+});
+
+test("actor-safe eligibility and public projections use database time", async () => {
+  const requestableSlotId = await createSlot(25);
+  const lateRequestSlotId = await createSlot(1);
+  const requestable = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) =>
+      coachBookingRequestEligibilityRecord(transaction, requestableSlotId),
+  );
+  const lateRequest = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) =>
+      coachBookingRequestEligibilityRecord(transaction, lateRequestSlotId),
+  );
+  assert.equal(requestable.eligibility, "requestable");
+  assert.equal(lateRequest.eligibility, "requestable");
+  assert.ok(Number.isFinite(new Date(requestable.databaseTime).getTime()));
+  const publicSlots = await publicCoachAvailabilityRecords(
+    coachActor.profileId,
+  );
+  const publicRequestable = publicSlots.find(
+    (slot) => slot.id === requestableSlotId,
+  );
+  assert.equal(publicRequestable?.requestEligibility, "requestable");
+  assert.equal(
+    publicSlots.find((slot) => slot.id === lateRequestSlotId)
+      ?.requestEligibility,
+    "requestable",
+  );
+});
+
+test("confirmed-booking history and avatar privacy remain intact", async () => {
   const slotId = await createSlot(2);
   const beforeBookingDirectory = await bookingCoachDirectoryEntry();
-  const bookingId = await withActorDatabaseContext(
-    firstClientActor,
-    (transaction) => bookDirectPrivateSessionRecord(transaction, slotId),
-  );
-  const repeatedId = await withActorDatabaseContext(
-    firstClientActor,
-    (transaction) => bookDirectPrivateSessionRecord(transaction, slotId),
-  );
-  assert.equal(repeatedId, bookingId);
-  await assert.rejects(
-    withActorDatabaseContext(secondClientActor, (transaction) =>
-      bookDirectPrivateSessionRecord(transaction, slotId),
-    ),
-    CoachBookingConflictError,
-  );
+  const bookingId = await createConfirmedBooking(slotId);
   const bookings = await withActorDatabaseContext(
     firstClientActor,
     (transaction) =>
@@ -415,13 +552,15 @@ test("direct booking is idempotent for one client and capacity one", async () =>
   );
 });
 
-test("invalid actors and hidden coaches cannot create bookings", async () => {
+test("self, hidden, missing and malformed occurrences fail closed", async () => {
   const selfSlotId = await createSlot(4);
-  await assert.rejects(
-    withActorDatabaseContext(coachActor, (transaction) =>
-      bookDirectPrivateSessionRecord(transaction, selfSlotId),
-    ),
-    CoachBookingConflictError,
+  assert.equal(
+    (
+      await withActorDatabaseContext(coachActor, (transaction) =>
+        coachBookingRequestEligibilityRecord(transaction, selfSlotId),
+      )
+    ).eligibility,
+    "unavailable",
   );
   const hiddenSlotId = await createSlot(6);
   await admin`
@@ -429,11 +568,13 @@ test("invalid actors and hidden coaches cannot create bookings", async () => {
     where run_id = ${coachActor.runId}::uuid and profile_id = ${coachActor.profileId}::uuid
   `;
   try {
-    await assert.rejects(
-      withActorDatabaseContext(firstClientActor, (transaction) =>
-        bookDirectPrivateSessionRecord(transaction, hiddenSlotId),
-      ),
-      CoachBookingConflictError,
+    assert.equal(
+      (
+        await withActorDatabaseContext(firstClientActor, (transaction) =>
+          coachBookingRequestEligibilityRecord(transaction, hiddenSlotId),
+        )
+      ).eligibility,
+      "unavailable",
     );
   } finally {
     await admin`
@@ -441,36 +582,50 @@ test("invalid actors and hidden coaches cannot create bookings", async () => {
       where run_id = ${coachActor.runId}::uuid and profile_id = ${coachActor.profileId}::uuid
     `;
   }
+  assert.equal(
+    (
+      await withActorDatabaseContext(firstClientActor, (transaction) =>
+        coachBookingRequestEligibilityRecord(transaction, randomUUID()),
+      )
+    ).eligibility,
+    "unavailable",
+  );
+  await assert.rejects(
+    withActorDatabaseContext(firstClientActor, (transaction) =>
+      coachBookingRequestEligibilityRecord(transaction, "not-a-slot"),
+    ),
+    CoachBookingConflictError,
+  );
 });
 
-test("concurrent clients produce exactly one confirmed booking", async () => {
-  const slotId = await createSlot(8);
+test("stale direct-booking calls cannot bypass coach confirmation", async () => {
+  const slotId = await createSlot(26);
   const attempts = await Promise.allSettled([
-    withActorDatabaseContext(firstClientActor, (transaction) =>
-      bookDirectPrivateSessionRecord(transaction, slotId),
-    ),
-    withActorDatabaseContext(secondClientActor, (transaction) =>
-      bookDirectPrivateSessionRecord(transaction, slotId),
-    ),
+    attemptDisabledDirectBooking(firstClientActor, slotId),
+    attemptDisabledDirectBooking(secondClientActor, slotId),
   ]);
   assert.equal(
     attempts.filter((attempt) => attempt.status === "fulfilled").length,
-    1,
+    0,
   );
   assert.equal(
     attempts.filter((attempt) => attempt.status === "rejected").length,
-    1,
+    2,
   );
-  const rejected = attempts.find((attempt) => attempt.status === "rejected");
-  assert.ok(rejected && rejected.reason instanceof CoachBookingConflictError);
+  for (const attempt of attempts) {
+    assert.equal(attempt.status, "rejected");
+  }
+  const [bookingCount] = await admin<{ count: number }[]>`
+    select count(*)::integer as count
+    from app.coach_private_bookings
+    where slot_id = ${slotId}::uuid
+  `;
+  assert.equal(bookingCount?.count, 0);
 });
 
 test("client and coach cancellation are authorized, terminal and reopen the slot", async () => {
   const clientSlotId = await createSlot(10);
-  const clientBookingId = await withActorDatabaseContext(
-    firstClientActor,
-    (transaction) => bookDirectPrivateSessionRecord(transaction, clientSlotId),
-  );
+  const clientBookingId = await createConfirmedBooking(clientSlotId);
   await assert.rejects(
     withActorDatabaseContext(secondClientActor, (transaction) =>
       cancelDirectPrivateBookingRecord(transaction, clientBookingId),
@@ -505,10 +660,7 @@ test("client and coach cancellation are authorized, terminal and reopen the slot
   assert.equal(reopened?.status, "open");
 
   const coachSlotId = await createSlot(12);
-  const coachBookingId = await withActorDatabaseContext(
-    firstClientActor,
-    (transaction) => bookDirectPrivateSessionRecord(transaction, coachSlotId),
-  );
+  const coachBookingId = await createConfirmedBooking(coachSlotId);
   await withActorDatabaseContext(coachActor, (transaction) =>
     cancelDirectPrivateBookingRecord(transaction, coachBookingId),
   );
@@ -525,10 +677,7 @@ test("client and coach cancellation are authorized, terminal and reopen the slot
 
 test("only the owning coach completes an elapsed confirmed booking", async () => {
   const slotId = await createSlot(14);
-  const bookingId = await withActorDatabaseContext(
-    firstClientActor,
-    (transaction) => bookDirectPrivateSessionRecord(transaction, slotId),
-  );
+  const bookingId = await createConfirmedBooking(slotId);
   await assert.rejects(
     withActorDatabaseContext(firstClientActor, (transaction) =>
       completeDirectPrivateBookingRecord(transaction, bookingId),
@@ -575,10 +724,7 @@ test("only the owning coach completes an elapsed confirmed booking", async () =>
 test("suspension blocks new activity but preserves safe resolution of existing sessions", async () => {
   const bookedSlotId = await createSlot(16);
   const openSlotId = await createSlot(18);
-  const bookingId = await withActorDatabaseContext(
-    firstClientActor,
-    (transaction) => bookDirectPrivateSessionRecord(transaction, bookedSlotId),
-  );
+  const bookingId = await createConfirmedBooking(bookedSlotId);
 
   const [suspended] = await admin<{ status: string }[]>`
     select app.review_coach_application(
@@ -599,11 +745,13 @@ test("suspension blocks new activity but preserves safe resolution of existing s
   assert.equal(profile?.visibility, "hidden");
 
   await assert.rejects(createSlot(20), CoachAvailabilityConflictError);
-  await assert.rejects(
-    withActorDatabaseContext(secondClientActor, (transaction) =>
-      bookDirectPrivateSessionRecord(transaction, openSlotId),
-    ),
-    CoachBookingConflictError,
+  assert.equal(
+    (
+      await withActorDatabaseContext(secondClientActor, (transaction) =>
+        coachBookingRequestEligibilityRecord(transaction, openSlotId),
+      )
+    ).eligibility,
+    "unavailable",
   );
   const coachBookings = await withActorDatabaseContext(
     coachActor,

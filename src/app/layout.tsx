@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: "%s | MovX Club",
   },
   description:
-    "Discover martial-arts coaches, compare real published availability and book private sessions directly.",
+    "Discover martial-arts coaches, compare real published availability and request coach-confirmed private sessions.",
   robots: { index: false, follow: false },
 };
 export default async function RootLayout({

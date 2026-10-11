@@ -1,11 +1,11 @@
 # Ticket DEV0188: Persist multi-candidate booking requests
 
-- Status: Draft
+- Status: Ready
 - Created: 2026-10-10
 - Last updated: 2026-10-11
 - Milestone: Scheduling-only booking-policy follow-up
 - Coordination: [COR0016 — Coach-confirmed booking requests](../organisatory/COR0016-coach-confirmed-booking-requests.md)
-- Related records: completed contract dependency [DEV0186 — Adopt booking-request and notice policies](../../archive/organisatory/DEV0186-adopt-booking-request-and-notice-policies.md), eligibility dependency [DEV0187 — Enforce booking-request eligibility](DEV0187-enforce-booking-request-eligibility.md), conversation consumer [DEV0183 — Persist authorized session notes](DEV0183-persist-authorized-session-notes.md), direct-booking baseline [DEV0141 — Persist direct private bookings](../../archive/backend/DEV0141-persist-direct-private-bookings.md)
+- Related records: completed contract dependency [DEV0186 — Adopt booking-request and notice policies](../../archive/organisatory/DEV0186-adopt-booking-request-and-notice-policies.md), completed eligibility dependency [DEV0187 — Enforce booking-request eligibility](../../archive/backend/DEV0187-enforce-booking-request-eligibility.md), conversation consumer [DEV0183 — Persist authorized session notes](DEV0183-persist-authorized-session-notes.md), direct-booking baseline [DEV0141 — Persist direct private bookings](../../archive/backend/DEV0141-persist-direct-private-bookings.md)
 
 ## Objective and context
 
@@ -27,8 +27,8 @@ Persist independent client requests for every eligible occurrence and let the ow
 
 ## Expected behavior and edge cases
 
-- A request is created only for an open occurrence whose start is at least 24 hours away. Its decision deadline is exactly 12 hours after the database submission instant.
-- Repeating the same client/occurrence request returns the active request. After a terminal unsuccessful attempt, including an explicit coach decline, the client may create a new request before the occurrence cutoff.
+- A request is created only for an open occurrence whose start remains in the future. There is no fixed minimum notice. Its decision deadline is the earlier of 12 hours after the database submission instant or the occurrence start.
+- Repeating the same client/occurrence request returns the active request. After a terminal unsuccessful attempt, including an explicit coach decline, the client may create a new request while the occurrence remains open and future.
 - Pending requests leave the occurrence requestable. There is no instant-booking path and no pending candidate cap.
 - Coach acceptance locks the occurrence and relevant active requests. Concurrent accepts produce exactly one confirmed booking and one accepted request.
 - Decline closes one request while leaving the occurrence and other requests open. Withdrawal is client-only. Deadline reconciliation expires pending requests without creating a booking.
@@ -38,7 +38,7 @@ Persist independent client requests for every eligible occurrence and let the ow
 
 ## Assumptions, decisions, and dependencies
 
-- DEV0186 and DEV0187 must complete before this ticket becomes Ready.
+- DEV0186 and DEV0187 completed on 2026-10-11; this ticket is Ready to implement the approved request lifecycle over the delivered eligibility boundary.
 - Use a dedicated request relation rather than overloading the capacity-one booking row; an accepted request links to the created booking.
 - Expiry may be reconciled transactionally on public/participant reads and mutations for the first release; a background scheduler is not required unless validation proves bounded reconciliation insufficient.
 - Request projections contain stable coach/client display identity, scheduled time/location snapshot, own status, created/decision timestamps and deadline. Client projections contain no other request IDs/counts/statuses. Coach list projections use bounded pagination even though the product imposes no candidate cap.
@@ -55,7 +55,7 @@ Persist independent client requests for every eligible occurrence and let the ow
 ## Acceptance criteria
 
 - [ ] AC1: Multiple clients can hold independent pending requests for one open occurrence without changing its capacity state.
-- [ ] AC2: Same-active-request retries are idempotent; a later eligible attempt after any terminal unsuccessful outcome succeeds; notice/deadline and actor checks fail closed.
+- [ ] AC2: Same-active-request retries are idempotent; a later eligible attempt after any terminal unsuccessful outcome succeeds; future-start/deadline and actor checks fail closed.
 - [ ] AC3: Accepting one request atomically creates one confirmed booking and closes every other pending request as not selected.
 - [ ] AC4: Decline, withdrawal, expiry and coach occurrence closure are authorized terminal transitions that never consume capacity; closure also prevents new requests.
 - [ ] AC5: Client projections contain only that client's request while coach projections contain only the coach's requests; unrelated/cross-run actors receive nothing.
@@ -85,6 +85,7 @@ Pending implementation.
 ### Decisions and deviations
 
 - 2026-10-11: Removed instant-mode/policy branches and the five-candidate cap. Added repeat attempts after coach decline and atomic coach closure of an unavailable occurrence.
+- 2026-10-11: Removed the 24-hour minimum notice. To preserve the 12-hour coach window without allowing a request to outlive its session, the deadline is `least(created_at + 12 hours, scheduled_start_at)`.
 
 ### Contracts, configuration, and operations
 
@@ -97,7 +98,7 @@ Pending validation.
 - Date and environment: Not run.
 - Exact commands and outcomes: Not run.
 - Manual steps and observed outcomes: Not run.
-- Failed, blocked, or not-run checks: All checks await DEV0186/DEV0187 and implementation.
+- Failed, blocked, or not-run checks: Implementation checks have not run; both prerequisite tickets are complete.
 
 | Criterion | Evidence | Result  |
 | --------- | -------- | ------- |

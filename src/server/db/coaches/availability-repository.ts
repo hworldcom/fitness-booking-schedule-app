@@ -2,6 +2,7 @@ import "server-only";
 
 import { sql } from "drizzle-orm";
 import {
+  isCoachBookingRequestEligibility,
   isCoachTrainingLocationId,
   type CoachAvailabilityInput,
   type CoachAvailabilityIsoWeekday,
@@ -35,6 +36,11 @@ export type AvailabilityRow = Readonly<{
   location_provider: string | null;
   location_confirmed_at: string | Date;
 }>;
+
+export type PublicAvailabilityRow = AvailabilityRow &
+  Readonly<{
+    request_eligibility: string;
+  }>;
 
 type AvailabilityRuleRow = Readonly<{
   id: string;
@@ -85,6 +91,17 @@ export function availabilitySelect() {
     slot.location_provider,
     slot.location_confirmed_at
   `);
+}
+
+export function publicAvailabilitySelect() {
+  return sql`
+    ${availabilitySelect()},
+    app.coach_booking_request_eligibility(
+      slot.status,
+      slot.starts_at,
+      slot.ends_at
+    ) as request_eligibility
+  `;
 }
 
 function mapAvailabilityBase(row: AvailabilityRow) {
@@ -189,15 +206,19 @@ function mapAvailabilityRule(
 }
 
 export function mapPublicAvailability(
-  row: AvailabilityRow,
+  row: PublicAvailabilityRow,
 ): PublicCoachAvailabilitySlot {
   const slot = mapAvailabilityBase(row);
+  if (!isCoachBookingRequestEligibility(row.request_eligibility)) {
+    throw new CoachAvailabilityConflictError();
+  }
   return Object.freeze({
     id: slot.id,
     startsAt: slot.startsAt,
     endsAt: slot.endsAt,
     coachTimezone: slot.coachTimezone,
     location: slot.location,
+    requestEligibility: row.request_eligibility,
   });
 }
 
@@ -208,11 +229,10 @@ export async function publicCoachAvailabilityRecords(profileId: string) {
         ${profileId}::uuid
       )
     `);
-    const rows = await db.execute<AvailabilityRow>(sql`
-      select ${availabilitySelect()}
+    const rows = await db.execute<PublicAvailabilityRow>(sql`
+      select ${publicAvailabilitySelect()}
       from app.coach_availability_slots as slot
       where slot.profile_id = ${profileId}::uuid
-        and slot.status = 'open'
         and slot.starts_at > pg_catalog.statement_timestamp()
         and slot.ends_at
           <= pg_catalog.statement_timestamp() + interval '7 days'

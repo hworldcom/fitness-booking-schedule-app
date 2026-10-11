@@ -131,11 +131,11 @@ test("guest opens a coach profile without fabricated availability", async ({
   await expect(page.getByText("Primary base", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("heading", {
-      name: "No open times right now.",
+      name: "No scheduled times right now.",
     }),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Sign in to book" }),
+    page.getByRole("link", { name: "Sign in for session requests" }),
   ).toHaveAttribute("href", /\/sign-in\?returnTo=/);
   await expect(page.getByText(/not live tracking/)).toBeVisible();
   await expect(

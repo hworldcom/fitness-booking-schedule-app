@@ -5,7 +5,7 @@
 - Last updated: 2026-10-11
 - Milestone: Scheduling-only booking-policy follow-up
 - Coordination: [COR0016 — Coach-confirmed booking requests](../organisatory/COR0016-coach-confirmed-booking-requests.md)
-- Related records: eligibility dependency [DEV0187 — Enforce booking-request eligibility](../backend/DEV0187-enforce-booking-request-eligibility.md), request dependency [DEV0188 — Persist multi-candidate booking requests](../backend/DEV0188-persist-multi-candidate-booking-requests.md), conversation interface [DEV0185 — Add client session collaboration](DEV0185-add-client-session-collaboration.md), client-history baseline [DEV0144 — Show client booking history](../../archive/frontend/DEV0144-show-client-booking-history.md)
+- Related records: completed eligibility dependency [DEV0187 — Enforce booking-request eligibility](../../archive/backend/DEV0187-enforce-booking-request-eligibility.md), request dependency [DEV0188 — Persist multi-candidate booking requests](../backend/DEV0188-persist-multi-candidate-booking-requests.md), conversation interface [DEV0185 — Add client session collaboration](DEV0185-add-client-session-collaboration.md), client-history baseline [DEV0144 — Show client booking history](../../archive/frontend/DEV0144-show-client-booking-history.md)
 
 ## Objective and context
 
@@ -15,11 +15,11 @@ Replace immediate booking with a saved coach-approval request for every eligible
 
 - In scope:
   - Present `Request session` for every eligible occurrence; expose no instant-booking action.
-  - Present notice/cutoff ineligibility without relying on the browser for authority.
+  - Present server-derived elapsed/unavailable state without relying on the browser for authority.
   - Add a My sessions Requests group with pending, accepted/confirmed, declined, not-selected, withdrawn and expired outcomes.
   - Use the approved `Request saved` / `Awaiting coach confirmation` / `This session is not confirmed yet` / decision-deadline language.
   - Let the requesting client withdraw a pending request and recover from stale/unavailable results.
-  - Allow a new request after withdrawal, expiry, explicit coach decline or non-selection when the occurrence remains open and before its cutoff.
+  - Allow a new request after withdrawal, expiry, explicit coach decline or non-selection when the occurrence remains open and future.
   - Ensure no candidate count, identity, status or competition-oriented copy reaches the client.
 - Out of scope:
   - Shared request conversation UI owned by DEV0185.
@@ -31,7 +31,7 @@ Replace immediate booking with a saved coach-approval request for every eligible
 - An eligible occurrence creates one persisted pending request and never shows confirmed-booking language until accepted.
 - The same signed-in client reopening that occurrence sees `Requested` and can open or withdraw the existing request rather than create a duplicate.
 - The saved confirmation names the exact time/location, says the session is not confirmed and shows the decision deadline. It does not mention other requests.
-- Notice-ineligible occurrences remain truthful with a disabled action and specific timing explanation where the public projection supplies one.
+- Elapsed or otherwise unavailable occurrences remain truthful with a disabled action and a specific explanation where the public projection supplies one.
 - Accepted requests move into the confirmed Upcoming schedule; terminal unsuccessful requests remain bounded history and consume no session capacity.
 - An occurrence closed by the coach is shown as unavailable/not confirmed. It does not imply rejection of the client personally and cannot receive another request.
 - A new request after a terminal unsuccessful attempt creates a distinct attempt rather than rewriting history, provided the occurrence remains eligible.
@@ -48,14 +48,14 @@ Replace immediate booking with a saved coach-approval request for every eligible
 ## Implementation plan
 
 1. Review delivered public/request contracts and relevant bundled Next.js documentation.
-2. Replace coach-profile booking actions with approval requests and add notice/cutoff presentation.
+2. Replace coach-profile booking actions with approval requests and add authoritative unavailable-state presentation.
 3. Add request success, existing-request and withdrawal states.
 4. Add the My sessions Requests group and status-to-confirmed transition presentation.
 5. Add privacy, accessibility, responsive and two-account browser validation.
 
 ## Acceptance criteria
 
-- [ ] AC1: Every eligible occurrence exposes an accurate Request action, no instant Book action remains, and notice-ineligible actions explain their cutoff.
+- [ ] AC1: Every future eligible occurrence exposes an accurate Request action with no fixed minimum-notice interval, no instant Book action remains, and unavailable actions are truthful.
 - [ ] AC2: Request creation persists across reload and uses the approved pending copy without confirmed/reserved or other-candidate language.
 - [ ] AC3: Clients can see and withdraw only their own pending requests, can retry any terminal unsuccessful attempt while still eligible, and see all outcomes truthfully without assigned capacity.
 - [ ] AC4: Accepted requests become one confirmed upcoming booking, while stale/racing/unavailable results never show false success.
@@ -63,7 +63,7 @@ Replace immediate booking with a saved coach-approval request for every eligible
 
 ## Validation plan
 
-- Add focused component/unit tests for action mode, cutoff copy, request statuses, withdrawal and result handling.
+- Add focused component/unit tests for action mode, future/unavailable copy, request statuses, withdrawal and result handling.
 - Add Playwright coverage at desktop/mobile widths for request/reload, withdrawal and retry, decline and retry, coach closure, acceptance transition and terminal outcomes.
 - Inspect client network/action responses and DOM for prohibited candidate data and language.
 - Run configured test, lint, type-check, format and production-build commands.
@@ -85,6 +85,7 @@ Pending implementation.
 ### Decisions and deviations
 
 - 2026-10-11: Removed the instant-booking branch, added repeat requests after terminal unsuccessful attempts and adopted Berlin deadline presentation from server-provided instants.
+- 2026-10-11: Removed minimum-notice and cutoff presentation; the client may request any future open occurrence and sees the server-provided deadline, which may be shorter than 12 hours when training starts sooner.
 
 ### Contracts, configuration, and operations
 

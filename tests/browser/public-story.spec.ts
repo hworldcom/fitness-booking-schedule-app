@@ -4,10 +4,12 @@ test("home presents the focused scheduling loop", async ({
   page,
 }, testInfo) => {
   await page.goto("/");
-  await expect(page).toHaveTitle(/Discover coaches and book private sessions/);
+  await expect(page).toHaveTitle(
+    /Discover coaches and request private sessions/,
+  );
   await expect(
     page.getByRole("heading", {
-      name: "Find the right coach. Book one clear hour.",
+      name: "Find the right coach. Request one clear hour.",
     }),
   ).toBeVisible();
   await expect(
@@ -18,13 +20,21 @@ test("home presents the focused scheduling loop", async ({
   await expect(
     page.getByText("See real open hours", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByText("Book directly", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Request coach confirmation", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      "Sign in by email and request any published hour before training starts.",
+      { exact: true },
+    ),
+  ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "See how scheduling works" }),
   ).toHaveAttribute("href", "/how-it-works");
   const copy = await page.locator("main").innerText();
   expect(copy).not.toMatch(
-    /Solana|wallet|EURC|credits|group funding|pass purchase/i,
+    /Solana|wallet|EURC|credits|group funding|pass purchase|24 hours/i,
   );
   expect(
     await page.evaluate(
@@ -44,7 +54,7 @@ test("how it works explains authoritative scheduling transitions", async ({
   await expect(page).toHaveTitle(/How it works/);
   await expect(
     page.getByRole("heading", {
-      name: "Published time in. Confirmed booking out.",
+      name: "Published time in. Coach-confirmed session out.",
     }),
   ).toBeVisible();
   await expect(
@@ -71,7 +81,7 @@ test("public navigation exposes scheduling routes only", async ({
 }, testInfo) => {
   await page.goto("/");
   await expect(page.locator(".demo-strip")).toContainText(
-    "Coach discovery and direct scheduling preview.",
+    "Coach discovery and coach-confirmed scheduling preview.",
   );
   for (const name of ["Explore", "How it works", "Profile"]) {
     await expect(

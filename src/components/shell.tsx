@@ -205,7 +205,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <span>
             <i /> DEMO WORLD
           </span>
-          <p>Coach discovery and direct scheduling preview.</p>
+          <p>Coach discovery and coach-confirmed scheduling preview.</p>
           <button onClick={() => setAboutOpen(true)}>
             Fictional profiles <Info size={13} aria-hidden="true" />
           </button>

@@ -29,6 +29,8 @@ export const COACH_AVAILABILITY_DURATIONS = Object.freeze([
 export type CoachAvailabilityDuration =
   (typeof COACH_AVAILABILITY_DURATIONS)[number];
 export type CoachAvailabilityStatus = "open" | "held" | "booked" | "withdrawn";
+export type CoachBookingRequestEligibility =
+  "requestable" | "booked" | "withdrawn" | "unavailable";
 export type CoachAvailabilityIsoWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 export type CoachDirectoryFilters = Readonly<{
@@ -136,12 +138,23 @@ export type CoachAvailabilityLocationSnapshot = Readonly<{
   confirmedAt: string;
 }>;
 
-export type PublicCoachAvailabilitySlot = Readonly<{
+export type CoachAvailabilitySlotProjection = Readonly<{
   id: string;
   startsAt: string;
   endsAt: string;
   coachTimezone: string;
   location: CoachAvailabilityLocationSnapshot;
+}>;
+
+export type PublicCoachAvailabilitySlot = CoachAvailabilitySlotProjection &
+  Readonly<{
+    requestEligibility: CoachBookingRequestEligibility;
+  }>;
+
+export type CoachBookingRequestEligibilityProjection = Readonly<{
+  slotId: string;
+  eligibility: CoachBookingRequestEligibility;
+  databaseTime: string;
 }>;
 
 export const MAX_COACH_DIRECTORY_TODAY_SLOTS = 64;
@@ -152,7 +165,7 @@ export type CoachDirectoryEntry = Readonly<{
   todaySlots: readonly PublicCoachAvailabilitySlot[];
 }>;
 
-export type OwnedCoachAvailabilitySlot = PublicCoachAvailabilitySlot &
+export type OwnedCoachAvailabilitySlot = CoachAvailabilitySlotProjection &
   Readonly<{
     status: CoachAvailabilityStatus;
     recurrenceRuleId: string | null;
@@ -188,6 +201,17 @@ export type CoachAvailabilityRuleSetInputResult =
       }>;
     }>
   | Readonly<{ valid: false; errors: readonly string[] }>;
+
+export function isCoachBookingRequestEligibility(
+  value: unknown,
+): value is CoachBookingRequestEligibility {
+  return (
+    value === "requestable" ||
+    value === "booked" ||
+    value === "withdrawn" ||
+    value === "unavailable"
+  );
+}
 
 export type CoachAvailabilityInput = Readonly<{
   localStart: string;

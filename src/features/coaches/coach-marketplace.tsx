@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
-  bookPrivateSessionAction,
   cancelPrivateBookingAction,
   type CoachMarketplaceActionResult,
 } from "@/app/coach-marketplace-actions";
@@ -48,6 +47,19 @@ function slotTime(slot: PublicCoachAvailabilitySlot) {
     minute: "2-digit",
   });
   return `${formatter.format(new Date(slot.startsAt))}–${formatter.format(new Date(slot.endsAt))}`;
+}
+
+function requestState(slot: PublicCoachAvailabilitySlot) {
+  switch (slot.requestEligibility) {
+    case "requestable":
+      return "Available to request";
+    case "booked":
+      return "Already booked";
+    case "withdrawn":
+      return "Withdrawn by coach";
+    case "unavailable":
+      return "Unavailable";
+  }
 }
 
 function bookingTime(booking: PrivateBookingProjection) {
@@ -101,8 +113,8 @@ export function CoachMarketplace(props: CoachMarketplaceProps) {
         </div>
       </header>
       <p>
-        Book directly with {props.coachDisplayName} from their published
-        scheduling availability.
+        Sessions with {props.coachDisplayName} require coach confirmation.
+        Requests stay open until training starts.
       </p>
       {result && (
         <div
@@ -122,7 +134,7 @@ export function CoachMarketplace(props: CoachMarketplaceProps) {
             className="button dark"
             href={`/sign-in?returnTo=${encodeURIComponent(`/coaches/${props.coachSlug}`)}`}
           >
-            Sign in to book
+            Sign in for session requests
           </Link>
         )}
 
@@ -185,16 +197,16 @@ export function CoachMarketplace(props: CoachMarketplaceProps) {
             <span className="eyebrow">NEXT 7 DAYS</span>
             <h3 id="open-slots-title">
               {props.slots.length === 0
-                ? "No open times right now."
-                : `${props.slots.length} open hour${props.slots.length === 1 ? "" : "s"}.`}
+                ? "No scheduled times right now."
+                : `${props.slots.length} scheduled hour${props.slots.length === 1 ? "" : "s"}.`}
             </h3>
           </div>
           <Clock3 size={23} aria-hidden="true" />
         </div>
         {props.slots.length === 0 ? (
           <p>
-            Only database-backed open times appear. No placeholder inventory is
-            shown.
+            Only database-backed scheduled times appear. No placeholder
+            inventory is shown.
           </p>
         ) : (
           <ol className="coach-bookable-slot-list">
@@ -206,29 +218,29 @@ export function CoachMarketplace(props: CoachMarketplaceProps) {
                   <small>
                     {slotTime(slot)} · {slot.location.name}
                   </small>
+                  <small>{requestState(slot)}</small>
                 </span>
-                {props.actor.status === "authorized" ? (
-                  <button
-                    type="button"
-                    className="button secondary"
-                    disabled={busyKey !== null}
-                    onClick={() =>
-                      void runAction(`slot:${slot.id}`, () =>
-                        bookPrivateSessionAction(slot.id),
-                      )
-                    }
-                  >
-                    {busyKey === `slot:${slot.id}`
-                      ? "Booking…"
-                      : "Book this hour"}
-                  </button>
-                ) : (
+                {slot.requestEligibility === "requestable" &&
+                props.actor.status !== "authorized" ? (
                   <Link
                     className="button secondary"
                     href={`/sign-in?returnTo=${encodeURIComponent(`/coaches/${props.coachSlug}`)}`}
                   >
-                    Sign in to book
+                    Sign in to request
                   </Link>
+                ) : slot.requestEligibility === "requestable" ? (
+                  <button
+                    type="button"
+                    className="button secondary"
+                    disabled
+                    title="Request submission is added in the next booking-request step."
+                  >
+                    Coach request coming soon
+                  </button>
+                ) : (
+                  <span className="coach-booking-status">
+                    {requestState(slot)}
+                  </span>
                 )}
               </li>
             ))}

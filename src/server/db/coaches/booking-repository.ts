@@ -7,6 +7,10 @@ import {
   type BookingCancellationActor,
   type PrivateBookingProjection,
 } from "@/domain/coach-bookings";
+import {
+  isCoachBookingRequestEligibility,
+  type CoachBookingRequestEligibilityProjection,
+} from "@/domain/coaches";
 import { supabasePublicConfig } from "@/auth/config";
 import {
   isOwnedProfileImageStoragePath,
@@ -42,6 +46,12 @@ type BookingRow = Readonly<{
   cancelled_at: string | Date | null;
   completed_at: string | Date | null;
   created_at: string | Date;
+}>;
+
+type BookingRequestEligibilityRow = Readonly<{
+  slot_id: string;
+  eligibility: string;
+  database_time: string | Date;
 }>;
 
 export class CoachBookingConflictError extends Error {
@@ -179,7 +189,8 @@ function isPostgresBookingError(error: unknown) {
         (current.code === "P0001" &&
           "message" in current &&
           typeof current.message === "string" &&
-          current.message.includes("direct coach booking")))
+          (current.message.includes("direct coach booking") ||
+            current.message.includes("coach booking request eligibility"))))
     ) {
       return true;
     }
@@ -243,20 +254,35 @@ async function bookingRecords(
   return Object.freeze(rows.map(mapBooking));
 }
 
-export async function bookDirectPrivateSessionRecord(
+export async function coachBookingRequestEligibilityRecord(
   transaction: ActorDatabaseTransaction,
   slotId: string,
-) {
+): Promise<CoachBookingRequestEligibilityProjection> {
   if (!isCanonicalUuid(slotId)) throw new CoachBookingConflictError();
   return bookingMutation(async () => {
-    const rows = await transaction.execute<{ booking_id: string }>(sql`
-      select app.book_direct_private_session(${slotId}::uuid) as booking_id
+    const rows = await transaction.execute<BookingRequestEligibilityRow>(sql`
+      select
+        slot_id,
+        eligibility,
+        database_time
+      from app.current_coach_booking_request_eligibility(${slotId}::uuid)
     `);
-    const bookingId = rows[0]?.booking_id;
-    if (rows.length !== 1 || !bookingId || !isCanonicalUuid(bookingId)) {
+    const row = rows[0];
+    if (
+      rows.length !== 1 ||
+      !row ||
+      row.slot_id !== slotId ||
+      !isCoachBookingRequestEligibility(row.eligibility)
+    ) {
       throw new CoachBookingConflictError();
     }
-    return bookingId;
+    const databaseTime = isoTimestamp(row.database_time);
+    if (!databaseTime) throw new CoachBookingConflictError();
+    return Object.freeze({
+      slotId: row.slot_id,
+      eligibility: row.eligibility,
+      databaseTime,
+    });
   });
 }
 

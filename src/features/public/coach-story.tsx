@@ -29,9 +29,9 @@ const schedulingSteps = [
   },
   {
     number: "03",
-    title: "Book directly",
+    title: "Request coach confirmation",
     description:
-      "Sign in by email and reserve one capacity-one hour directly from the published schedule.",
+      "Sign in by email and request any published hour before training starts.",
     Icon: CalendarCheck2,
   },
   {
@@ -67,14 +67,16 @@ export function CoachStoryHome() {
     <div className="coach-story">
       <section className="coach-hero" aria-labelledby="coach-hero-title">
         <div className="coach-hero-copy">
-          <span className="eyebrow">COACH DISCOVERY · DIRECT SCHEDULING</span>
+          <span className="eyebrow">
+            COACH DISCOVERY · COACH-CONFIRMED SCHEDULING
+          </span>
           <h1 id="coach-hero-title">
-            Find the right coach. Book one clear hour.
+            Find the right coach. Request one clear hour.
           </h1>
           <p>
             Explore martial-arts coaches, compare their confirmed training
             places and choose from real published availability. Email sign-in is
-            all you need to reserve a private session.
+            all you need to request a private session.
           </p>
           <div className="coach-story-actions">
             <Link className="button lime" href="/explore">
@@ -116,8 +118,8 @@ export function CoachStoryHome() {
               <CalendarCheck2 size={21} />
             </span>
             <span>
-              <small>BOOK</small>
-              <strong>Capacity one · confirmed immediately</strong>
+              <small>REQUEST</small>
+              <strong>Pending first · confirmed by the coach</strong>
             </span>
           </div>
           <p>
@@ -156,8 +158,8 @@ export function CoachStoryHome() {
                 and open times
               </li>
               <li>
-                <Check size={15} aria-hidden="true" /> Book one exact future
-                hour
+                <Check size={15} aria-hidden="true" /> Request one exact future
+                hour before training starts
               </li>
               <li>
                 <Check size={15} aria-hidden="true" /> Cancel your future
@@ -170,7 +172,7 @@ export function CoachStoryHome() {
               <UsersRound size={23} />
             </span>
             <span className="eyebrow">FOR COACHES</span>
-            <h3>Apply, get approved and manage booked time.</h3>
+            <h3>Apply, get approved and confirm requested time.</h3>
             <ul>
               <li>
                 <Check size={15} aria-hidden="true" /> Prepare a private coach
@@ -220,11 +222,11 @@ export function HowItWorksStory() {
       <section className="coach-story-section coach-how-hero">
         <div className="coach-section-heading">
           <span className="eyebrow">HOW MOVX SCHEDULING WORKS</span>
-          <h1>Published time in. Confirmed booking out.</h1>
+          <h1>Published time in. Coach-confirmed session out.</h1>
           <p>
             Approved coaches own their profiles and recurring schedules. Clients
-            reserve only open future occurrences, and the database prevents
-            double booking.
+            request eligible future occurrences, and the coach chooses whether
+            to confirm one client.
           </p>
         </div>
         <StoryStepGrid />
@@ -234,9 +236,10 @@ export function HowItWorksStory() {
           <span className="eyebrow">TRUTHFUL SCHEDULE STATE</span>
           <h2>One occurrence has one active booking.</h2>
           <p>
-            Booking is atomic: the session becomes confirmed while its time
-            becomes booked. Cancellation reopens a future occurrence. Completion
-            is available only to the owning coach after the session begins.
+            Coach acceptance is atomic: one session becomes confirmed while its
+            time becomes booked. Cancellation reopens a future occurrence.
+            Completion is available only to the owning coach after the session
+            begins.
           </p>
         </div>
         <div className="coach-pass-options" aria-label="Booking lifecycle">
@@ -258,7 +261,7 @@ export function HowItWorksStory() {
       </section>
       <section className="coach-final-cta">
         <span className="eyebrow">TRY THE PREVIEW</span>
-        <h2>Browse without signing in. Book with email.</h2>
+        <h2>Browse without signing in. Request with email.</h2>
         <Link className="button lime" href="/explore">
           Explore coaches <ArrowRight size={17} aria-hidden="true" />
         </Link>

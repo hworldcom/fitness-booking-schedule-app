@@ -5,7 +5,7 @@
 - Last updated: 2026-10-11
 - Milestone: Scheduling-only booking-policy follow-up
 - Coordination: [COR0016 — Coach-confirmed booking requests](../organisatory/COR0016-coach-confirmed-booking-requests.md)
-- Related records: eligibility dependency [DEV0187 — Enforce booking-request eligibility](../backend/DEV0187-enforce-booking-request-eligibility.md), request dependency [DEV0188 — Persist multi-candidate booking requests](../backend/DEV0188-persist-multi-candidate-booking-requests.md), conversation interface [DEV0184 — Add the coach session workspace](DEV0184-add-coach-session-workspace.md)
+- Related records: completed eligibility dependency [DEV0187 — Enforce booking-request eligibility](../../archive/backend/DEV0187-enforce-booking-request-eligibility.md), request dependency [DEV0188 — Persist multi-candidate booking requests](../backend/DEV0188-persist-multi-candidate-booking-requests.md), conversation interface [DEV0184 — Add the coach session workspace](DEV0184-add-coach-session-workspace.md)
 
 ## Objective and context
 

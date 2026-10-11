@@ -141,6 +141,7 @@ test("today presentation names the occurrence venue separately from primary", ()
         startsAt: "2026-10-10T08:00:00.000Z",
         endsAt: "2026-10-10T09:00:00.000Z",
         coachTimezone: "UTC",
+        requestEligibility: "requestable" as const,
         location: Object.freeze({
           trainingLocationId: "60000000-0000-4000-8000-000000000002",
           name: "Secondary gym",

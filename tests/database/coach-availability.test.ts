@@ -321,6 +321,7 @@ test("owner publishes a public slot with a stable location snapshot", async () =
   assert.equal(visible.length, 1);
   assert.equal(visible[0]?.id, slotId);
   assert.equal("status" in (visible[0] ?? {}), false);
+  assert.equal(visible[0]?.requestEligibility, "requestable");
 
   const beforeDirectoryRead = new Date();
   const directory = await publicCoachDirectoryRecords({
@@ -501,14 +502,14 @@ test("concurrent overlapping publication produces exactly one slot", async () =>
   );
 });
 
-test("held and booked slots are hidden publicly and immutable to availability controls", async () => {
+test("non-open slots expose bounded public request state and remain immutable", async () => {
   const slots = await withActorDatabaseContext(firstActor, (transaction) =>
     currentOwnedCoachAvailabilityRecords(transaction, firstActor),
   );
-  const slot = slots.at(-1);
+  const slot = slots.find((candidate) => candidate.status === "open");
   assert.ok(slot);
 
-  for (const status of ["held", "booked"] as const) {
+  for (const status of ["held", "booked", "withdrawn"] as const) {
     await admin`
       update app.coach_availability_slots
       set status = ${status}
@@ -534,8 +535,13 @@ test("held and booked slots are hidden publicly and immutable to availability co
       firstActor.profileId,
     );
     assert.equal(
-      publicSlots.some((candidate) => candidate.id === slot.id),
-      false,
+      publicSlots.find((candidate) => candidate.id === slot.id)
+        ?.requestEligibility,
+      status === "booked"
+        ? "booked"
+        : status === "withdrawn"
+          ? "withdrawn"
+          : "unavailable",
     );
   }
 });

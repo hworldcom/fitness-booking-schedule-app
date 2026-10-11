@@ -24,9 +24,9 @@ import type { AuthorizedActor } from "@/server/authorization/contracts";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
 import { withDatabaseConnection } from "@/server/db/client";
 import {
-  availabilitySelect,
   mapPublicAvailability,
-  type AvailabilityRow,
+  publicAvailabilitySelect,
+  type PublicAvailabilityRow,
 } from "./availability-repository";
 
 type CoachProjectionRow = Readonly<{
@@ -62,7 +62,7 @@ type GymProjectionRow = Readonly<{
   timezone: string;
 }>;
 
-type DirectoryAvailabilityRow = AvailabilityRow &
+type DirectoryAvailabilityRow = PublicAvailabilityRow &
   Readonly<{
     profile_id: string;
     occurrence_rank: string | number;
@@ -426,7 +426,7 @@ export async function publicCoachDirectoryRecords(
       select
         slot.profile_id,
         slot.occurrence_rank,
-        ${availabilitySelect()}
+        ${publicAvailabilitySelect()}
       from ranked as slot
       where slot.occurrence_rank
         <= ${MAX_COACH_DIRECTORY_TODAY_SLOTS + 1}

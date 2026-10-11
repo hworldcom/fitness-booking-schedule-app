@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
 import {
-  bookDirectPrivateSession,
   cancelDirectPrivateBooking,
   completeDirectPrivateBooking,
+  privateSessionRequestEligibility,
 } from "@/server/coaches/booking-service";
 
 export type CoachMarketplaceActionResult = Readonly<{
@@ -56,7 +56,7 @@ export async function bookPrivateSessionAction(
   slotId: string,
 ): Promise<CoachMarketplaceActionResult> {
   if (!isCanonicalUuid(slotId)) return invalid("That time is invalid.");
-  const result = await bookDirectPrivateSession(slotId);
+  const result = await privateSessionRequestEligibility(slotId);
   if (result.status !== "authorized") return resultFailure(result.status);
   if (result.outcome === "conflict") {
     return Object.freeze({
@@ -65,11 +65,16 @@ export async function bookPrivateSessionAction(
         "That hour is no longer available. Refresh to see the latest schedule.",
     });
   }
-  refreshScheduling();
+  const message = {
+    requestable:
+      "This hour requires coach confirmation. No direct booking was created.",
+    booked: "That hour is already booked.",
+    withdrawn: "The coach withdrew that hour.",
+    unavailable: "That hour cannot receive a booking request.",
+  }[result.value.eligibility];
   return Object.freeze({
-    status: "saved",
-    message: "Session booked. It now appears in your schedule.",
-    bookingId: result.value,
+    status: "conflict",
+    message,
   });
 }
 
