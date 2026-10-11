@@ -73,6 +73,7 @@ function RequestIdentity({
         initials={profileInitials(request.clientDisplayName)}
         color="blue"
         small
+        imageUrl={request.clientAvatarUrl}
         alt=""
       />
       <div>

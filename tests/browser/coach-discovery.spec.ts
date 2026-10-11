@@ -109,6 +109,78 @@ test("guest browses and filters the persistent coach directory", async ({
   });
 });
 
+test("selected coach profile location stays geographically anchored while zooming out", async ({
+  page,
+}, testInfo) => {
+  await page.goto("/coaches/daniel-park");
+
+  const mapPanel = page.getByRole("region", {
+    name: "Daniel Park training locations map",
+  });
+  await expect(
+    mapPanel.getByLabel("Daniel Park training locations"),
+  ).toBeVisible({ timeout: 30_000 });
+  const chimosaMarker = mapPanel.getByRole("button", {
+    name: /Select training location 2: Chimosa/,
+  });
+  const tempelhoferMarker = mapPanel.getByRole("button", {
+    name: /Select training location 1: Tempelhofer Feld/,
+  });
+  await chimosaMarker.click();
+  await expect(chimosaMarker).toHaveAttribute("aria-pressed", "true");
+
+  for (let zoomStep = 0; zoomStep < 5; zoomStep += 1) {
+    await mapPanel.getByRole("button", { name: "Zoom out" }).click();
+    await page.waitForTimeout(400);
+  }
+  await expect
+    .poll(() =>
+      chimosaMarker.evaluate((marker) => {
+        const style = getComputedStyle(marker);
+        return Object.freeze({ position: style.position, scale: style.scale });
+      }),
+    )
+    .toEqual({ position: "absolute", scale: "none" });
+  const markerCenters = await Promise.all(
+    [chimosaMarker, tempelhoferMarker].map((marker) =>
+      marker.evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        return Object.freeze({
+          x: bounds.left + bounds.width / 2,
+          y: bounds.top + bounds.height / 2,
+        });
+      }),
+    ),
+  );
+  const mapBounds = await mapPanel
+    .locator(".coach-map-canvas")
+    .evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      return Object.freeze({
+        left: bounds.left,
+        top: bounds.top,
+        right: bounds.right,
+        bottom: bounds.bottom,
+      });
+    });
+  for (const center of markerCenters) {
+    expect(center.x).toBeGreaterThanOrEqual(mapBounds.left);
+    expect(center.x).toBeLessThanOrEqual(mapBounds.right);
+    expect(center.y).toBeGreaterThanOrEqual(mapBounds.top);
+    expect(center.y).toBeLessThanOrEqual(mapBounds.bottom);
+  }
+  expect(
+    Math.hypot(
+      markerCenters[0]!.x - markerCenters[1]!.x,
+      markerCenters[0]!.y - markerCenters[1]!.y,
+    ),
+  ).toBeLessThan(40);
+  await page.screenshot({
+    path: testInfo.outputPath("chimosa-selected-zoomed-out.png"),
+    fullPage: true,
+  });
+});
+
 test("guest opens a coach profile without fabricated availability", async ({
   page,
 }, testInfo) => {
@@ -128,6 +200,45 @@ test("guest opens a coach profile without fabricated availability", async ({
       .getByRole("region", { name: "Training locations" })
       .getByText("Northside Combat", { exact: true }),
   ).toBeVisible();
+  const profileMap = page.getByRole("region", {
+    name: "Sam Lee training locations map",
+  });
+  const profileMapCanvas = profileMap.getByLabel("Sam Lee training locations");
+  const profileMapUnavailable = profileMap.getByText("Map unavailable", {
+    exact: true,
+  });
+  await expect(profileMapCanvas.or(profileMapUnavailable)).toBeVisible({
+    timeout: 30_000,
+  });
+  const locationRow = page
+    .locator(".public-coach-locations li")
+    .filter({ hasText: "Northside Combat" });
+  const locationButton = locationRow.getByRole("button", {
+    name: "Show Northside Combat on the map",
+  });
+  await expect(locationButton).toBeVisible();
+  await expect(locationRow.locator(".public-coach-location-key")).toHaveText(
+    "1",
+  );
+  if (await profileMapCanvas.isVisible()) {
+    const locationMarker = profileMap.getByRole("button", {
+      name: /Select training location 1: Northside Combat/,
+    });
+    await expect(locationMarker).toBeVisible();
+    await expect(locationMarker).toHaveAttribute("aria-pressed", "true");
+    expect(await locationMarker.getAttribute("data-marker-color")).toBe(
+      await locationRow.getAttribute("data-location-color"),
+    );
+    await locationButton.focus();
+    await expect(locationButton).toBeFocused();
+    await locationButton.press("Enter");
+    await expect(locationButton).toHaveAttribute("aria-pressed", "true");
+  } else {
+    await expect(locationButton).toBeDisabled();
+    await expect(
+      profileMap.getByText(/remains available in the list below/),
+    ).toBeVisible();
+  }
   await expect(page.getByText("Primary base", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("heading", {
@@ -150,6 +261,34 @@ test("guest opens a coach profile without fabricated availability", async ({
     path: testInfo.outputPath("coach-profile.png"),
     fullPage: true,
   });
+});
+
+test("coach profile keeps its complete location list when the map provider fails", async ({
+  page,
+}) => {
+  await page.route("https://tiles.openfreemap.org/**", (route) =>
+    route.abort("failed"),
+  );
+  await page.goto("/coaches/sam-lee");
+
+  const locations = page.getByRole("region", { name: "Training locations" });
+  await expect(
+    locations.getByText("Northside Combat", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    locations.getByText(/Near Amerika-Gedenkbibliothek/),
+  ).toBeVisible();
+  await expect(
+    locations.getByText("Map unavailable", { exact: true }),
+  ).toBeVisible({ timeout: 30_000 });
+  await expect(
+    locations.getByRole("button", {
+      name: "Show Northside Combat on the map",
+    }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("heading", { name: "No scheduled times right now." }),
+  ).toBeVisible();
 });
 
 test("coach workspace stays protected and exposes no placeholder controls", async ({

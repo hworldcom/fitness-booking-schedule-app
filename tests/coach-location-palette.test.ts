@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { assignCoachLocationPaletteIndexes } from "@/features/coaches/coach-location-palette";
+import { assignCoachProfileLocationColors } from "@/features/coaches/coach-profile-location-colors";
 
 const COLLIDING_LOCATION_IDS = Object.freeze([
   "60000000-0000-4000-8000-000000000001",
@@ -44,4 +45,24 @@ test("location palette assignment rejects an empty palette", () => {
     () => assignCoachLocationPaletteIndexes(COLLIDING_LOCATION_IDS, 0),
     /positive palette size/,
   );
+});
+
+test("public profile locations receive deterministic distinct colors without a fixed palette cap", () => {
+  const locationIds = Object.freeze(
+    Array.from(
+      { length: 12 },
+      (_, index) =>
+        `60000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
+    ),
+  );
+  const first = assignCoachProfileLocationColors(locationIds);
+  const second = assignCoachProfileLocationColors(locationIds);
+  const accents = locationIds.map(
+    (locationId) => first.get(locationId)?.accent,
+  );
+
+  assert.equal(first.size, locationIds.length);
+  assert.equal(new Set(accents).size, locationIds.length);
+  assert.deepEqual([...first], [...second]);
+  assert.equal(assignCoachProfileLocationColors([]).size, 0);
 });

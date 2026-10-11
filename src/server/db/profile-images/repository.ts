@@ -63,6 +63,41 @@ export async function confirmedBookingClientAvatarReference(
   });
 }
 
+export async function bookingRequestClientAvatarReference(
+  transaction: ActorDatabaseTransaction,
+  requestId: string,
+): Promise<AccountAvatarReference | null> {
+  if (!isCanonicalUuid(requestId)) return null;
+  const rows = await transaction.execute<{
+    request_id: string;
+    client_profile_id: string;
+    avatar_storage_path: string;
+    avatar_updated_at: string | Date;
+  }>(sql`
+    select *
+    from app.current_coach_booking_request_client_avatar_reference(
+      ${requestId}::uuid
+    )
+  `);
+  if (rows.length === 0) return null;
+  const row = rows[0];
+  if (
+    rows.length !== 1 ||
+    !row ||
+    row.request_id !== requestId ||
+    !isOwnedProfileImageStoragePath(
+      row.avatar_storage_path,
+      row.client_profile_id,
+    )
+  ) {
+    throw new ProfileImageReferenceConflictError();
+  }
+  return Object.freeze({
+    path: row.avatar_storage_path,
+    updatedAt: isoTimestamp(row.avatar_updated_at),
+  });
+}
+
 function isoTimestamp(value: string | Date | null) {
   return value ? new Date(value).toISOString() : null;
 }

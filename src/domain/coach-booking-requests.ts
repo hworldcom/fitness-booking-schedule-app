@@ -45,6 +45,7 @@ export type OwnedCoachBookingRequestProjection = BookingRequestProjection &
   Readonly<{
     clientProfileId: string;
     clientDisplayName: string;
+    clientAvatarUrl: string | null;
   }>;
 
 export type CoachBookingRequestMutationProjection = Readonly<{

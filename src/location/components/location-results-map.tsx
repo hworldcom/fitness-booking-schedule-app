@@ -28,11 +28,17 @@ export function LocationResultsMap({
   selectedPointId,
   onSelectPoint,
   onUnavailable,
+  canvasAriaLabel = "Matching coach locations",
+  coincidentItemLabel = "Coach",
+  recenterOnSelection = true,
 }: {
   points: readonly LocationMapPoint[];
   selectedPointId: string | null;
   onSelectPoint: (pointId: string) => void;
   onUnavailable: () => void;
+  canvasAriaLabel?: string;
+  coincidentItemLabel?: string;
+  recenterOnSelection?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -67,7 +73,7 @@ export function LocationResultsMap({
         new maplibregl.NavigationControl({ showCompass: false }),
         "top-right",
       );
-      map.getCanvas().setAttribute("aria-label", "Matching coach locations");
+      map.getCanvas().setAttribute("aria-label", canvasAriaLabel);
       const handleLoad = () => active && setReady(true);
       const handleError = () => active && onUnavailableRef.current();
       map.once("load", handleLoad);
@@ -83,7 +89,7 @@ export function LocationResultsMap({
     } catch {
       onUnavailableRef.current();
     }
-  }, []);
+  }, [canvasAriaLabel]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -111,11 +117,26 @@ export function LocationResultsMap({
         "aria-label",
         layout.coincidentCount === 1
           ? point.ariaLabel
-          : `${point.ariaLabel}. Coach ${layout.coincidentIndex} of ${layout.coincidentCount} at these coordinates.`,
+          : `${point.ariaLabel}. ${coincidentItemLabel} ${layout.coincidentIndex} of ${layout.coincidentCount} at these coordinates.`,
       );
       element.setAttribute("aria-pressed", "false");
       element.dataset.coincidentCount = String(layout.coincidentCount);
       element.dataset.markerOffset = layout.offset.join(",");
+      if (point.markerAppearance) {
+        element.style.setProperty(
+          "--location-marker-background",
+          point.markerAppearance.background,
+        );
+        element.style.setProperty(
+          "--location-marker-foreground",
+          point.markerAppearance.foreground,
+        );
+        element.style.setProperty(
+          "--location-marker-accent",
+          point.markerAppearance.accent,
+        );
+        element.dataset.markerColor = point.markerAppearance.accent;
+      }
       const initials = document.createElement("span");
       initials.className = "location-map-marker-initials";
       initials.textContent = point.initials;
@@ -172,7 +193,7 @@ export function LocationResultsMap({
     } else if (!bounds.isEmpty()) {
       map.fitBounds(bounds, { padding: 54, maxZoom: 13, duration: 0 });
     }
-  }, [points, ready]);
+  }, [coincidentItemLabel, points, ready]);
 
   useEffect(() => {
     for (const [pointId, entry] of markersRef.current) {
@@ -180,7 +201,7 @@ export function LocationResultsMap({
       entry.element.classList.toggle("selected", selected);
       entry.element.setAttribute("aria-pressed", String(selected));
     }
-    if (!selectedPointId) return;
+    if (!selectedPointId || !recenterOnSelection) return;
     const point = points.find(({ id }) => id === selectedPointId);
     const map = mapRef.current;
     if (!point || !map) return;
@@ -192,7 +213,7 @@ export function LocationResultsMap({
       zoom: Math.max(map.getZoom(), 12.5),
       duration: reducedMotion ? 0 : 450,
     });
-  }, [points, selectedPointId]);
+  }, [points, ready, recenterOnSelection, selectedPointId]);
 
   return <div className="coach-map-canvas" ref={containerRef} />;
 }

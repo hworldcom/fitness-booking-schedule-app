@@ -22,6 +22,7 @@ function request(
     slotId,
     clientProfileId: id.replace("97000000", "98000000"),
     clientDisplayName: `Client ${id.at(-1)}`,
+    clientAvatarUrl: null,
     status,
     scheduledStartAt,
     scheduledEndAt: new Date(

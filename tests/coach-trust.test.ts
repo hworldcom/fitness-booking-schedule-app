@@ -154,6 +154,17 @@ test("public profiles list every active location, label the primary base and omi
   assert.match(html, /Kreuzberg mat space/);
   assert.match(html, /Primary base/);
   assert.match(html, /not the coach&#x27;s current position/);
+  assert.match(html, /Reviewed Coach training locations map/);
+  assert.match(html, /Loading the location map/);
+  assert.match(html, /Training location map legend/);
+  assert.match(html, /aria-label="Show Tempelhofer Feld on the map"/);
+  assert.match(html, /aria-label="Show Kreuzberg mat space on the map"/);
+  assert.match(html, /aria-pressed="true"/);
+  const locationColors = [
+    ...html.matchAll(/data-location-color="([^"]+)"/g),
+  ].map(([, color]) => color);
+  assert.equal(locationColors.length, 2);
+  assert.equal(new Set(locationColors).size, 2);
   assert.doesNotMatch(html, /Retired training room/);
   assert.doesNotMatch(html, /Old venue that must remain private/);
 });

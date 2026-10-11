@@ -6,6 +6,7 @@ import {
   isProfileImageMutationSnapshot,
   privateAccountAvatarUrl,
   privateBookingClientAvatarUrl,
+  privateBookingRequestClientAvatarUrl,
   profileImageStoragePath,
   publicCoachPortraitUrl,
 } from "@/profile-images/contracts";
@@ -42,6 +43,15 @@ test("presentation URLs are bounded by the declared source", () => {
   );
   assert.equal(privateBookingClientAvatarUrl("not-a-booking", updatedAt), null);
   assert.equal(privateBookingClientAvatarUrl(objectId, null), null);
+  assert.equal(
+    privateBookingRequestClientAvatarUrl(objectId, updatedAt),
+    `/api/coach/requests/${objectId}/client-avatar?v=2026-10-08T12%3A00%3A00.000Z`,
+  );
+  assert.equal(
+    privateBookingRequestClientAvatarUrl("not-a-request", updatedAt),
+    null,
+  );
+  assert.equal(privateBookingRequestClientAvatarUrl(objectId, null), null);
   assert.equal(
     publicCoachPortraitUrl(
       {

@@ -66,6 +66,16 @@ export function privateBookingClientAvatarUrl(
   return `/api/coach/bookings/${bookingId}/client-avatar?v=${encodeURIComponent(updatedAt)}`;
 }
 
+export function privateBookingRequestClientAvatarUrl(
+  requestId: string,
+  updatedAt: string | null,
+) {
+  if (!updatedAt || !new RegExp(`^${UUID_PATTERN}$`, "i").test(requestId)) {
+    return null;
+  }
+  return `/api/coach/requests/${requestId}/client-avatar?v=${encodeURIComponent(updatedAt)}`;
+}
+
 export function publicCoachPortraitUrl(
   reference: CoachPortraitReference | null,
   storageUrl: string | null,

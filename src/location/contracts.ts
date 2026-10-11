@@ -38,6 +38,11 @@ export type LocationMapPoint = Readonly<{
   longitude: number;
   initials: string;
   imageUrl: string | null;
+  markerAppearance?: Readonly<{
+    background: string;
+    foreground: string;
+    accent: string;
+  }>;
 }>;
 
 export type LocationSearchFailure =

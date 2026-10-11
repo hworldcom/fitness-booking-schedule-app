@@ -15,6 +15,7 @@ import { serverAuthClient } from "@/server/auth/client";
 import { currentActorProjection } from "@/server/db/authorization/repository";
 import {
   ProfileImageReferenceConflictError,
+  bookingRequestClientAvatarReference,
   confirmedBookingClientAvatarReference,
   currentAccountAvatarReference,
   currentCoachPortraitReference,
@@ -195,6 +196,34 @@ export async function currentAccountAvatarBytes() {
 export async function confirmedBookingClientAvatarBytes(bookingId: string) {
   const current = await withAuthorizedActor(async (transaction) =>
     confirmedBookingClientAvatarReference(transaction, bookingId),
+  );
+  if (current.status !== "authorized") return current;
+  if (!current.value?.path) {
+    return Object.freeze({ status: "not-found" as const });
+  }
+
+  try {
+    const client = await serverAuthClient();
+    if (!client) return Object.freeze({ status: "unavailable" as const });
+    const { data, error } = await client.storage
+      .from(ACCOUNT_AVATAR_BUCKET)
+      .download(current.value.path);
+    if (error || !data) {
+      return Object.freeze({ status: "unavailable" as const });
+    }
+    return Object.freeze({
+      status: "ready" as const,
+      bytes: new Uint8Array(await data.arrayBuffer()),
+      updatedAt: current.value.updatedAt,
+    });
+  } catch {
+    return Object.freeze({ status: "unavailable" as const });
+  }
+}
+
+export async function bookingRequestClientAvatarBytes(requestId: string) {
+  const current = await withAuthorizedActor(async (transaction) =>
+    bookingRequestClientAvatarReference(transaction, requestId),
   );
   if (current.status !== "authorized") return current;
   if (!current.value?.path) {

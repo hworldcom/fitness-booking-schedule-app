@@ -11,6 +11,7 @@ import {
 } from "@/domain/coach-booking-requests";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
 import { isCoachPublicSlug } from "@/domain/coaches";
+import { privateBookingRequestClientAvatarUrl } from "@/profile-images/contracts";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
 
 const DEFAULT_PAGE_SIZE = 25;
@@ -25,6 +26,7 @@ type BookingRequestRow = Readonly<{
   coach_slug: string;
   client_profile_id: string;
   client_display_name: string;
+  client_avatar_updated_at?: string | Date | null;
   status: string;
   scheduled_start_at: string | Date;
   scheduled_end_at: string | Date;
@@ -182,6 +184,10 @@ function mapCoachRequest(
     ...commonRequestProjection(row),
     clientProfileId: row.client_profile_id,
     clientDisplayName: row.client_display_name,
+    clientAvatarUrl: privateBookingRequestClientAvatarUrl(
+      row.id,
+      isoTimestamp(row.client_avatar_updated_at ?? null),
+    ),
   });
 }
 
@@ -489,6 +495,7 @@ export async function currentOwnedCoachBookingRequestRecords(
         coach_slug,
         client_profile_id,
         client_display_name,
+        client_avatar_updated_at,
         status,
         scheduled_start_at,
         scheduled_end_at,

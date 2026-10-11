@@ -17,6 +17,7 @@ import {
   type PublicCoachProfileState,
 } from "@/domain/coaches";
 import { CoachExploreResults } from "./coach-explore-results";
+import { CoachProfileLocations } from "./coach-profile-locations";
 
 export function CoachDirectory({ state }: { state: CoachDirectoryState }) {
   return (
@@ -192,34 +193,10 @@ export function CoachProfileView({
                 : "This fictional profile uses a public discovery point—not live tracking, current presence or a gym endorsement."}
             </p>
           </div>
-          <section
-            className="public-coach-locations"
-            aria-labelledby="public-coach-locations-title"
-          >
-            <div className="coach-section-heading">
-              <div>
-                <span className="eyebrow">CONFIRMED PLACES</span>
-                <h3 id="public-coach-locations-title">Training locations</h3>
-              </div>
-              <MapPin size={21} aria-hidden="true" />
-            </div>
-            <p>
-              These are training options, not the coach&apos;s current position.
-              Each available session names its actual venue.
-            </p>
-            <ul>
-              {activeLocations.map((location) => (
-                <li key={location.id}>
-                  <MapPin size={17} aria-hidden="true" />
-                  <span>
-                    <strong>{location.publicName}</strong>
-                    <small>{location.location.label}</small>
-                  </span>
-                  {location.isPrimary && <em>Primary base</em>}
-                </li>
-              ))}
-            </ul>
-          </section>
+          <CoachProfileLocations
+            coachName={coach.displayName}
+            locations={activeLocations}
+          />
         </section>
         {marketplace}
       </div>

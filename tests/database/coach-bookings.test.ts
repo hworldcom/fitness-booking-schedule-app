@@ -42,6 +42,7 @@ import {
 } from "@/server/db/coaches/repository";
 import { enrollApplicationProfile } from "@/server/db/identity/repository";
 import {
+  bookingRequestClientAvatarReference,
   confirmedBookingClientAvatarReference,
   setCurrentAccountAvatarReference,
   setCurrentCoachPortraitReference,
@@ -498,6 +499,110 @@ test("more than five clients can request one occurrence without holding it", asy
   );
   assert.equal(secondCoachPage.items.length, 1);
   assert.equal(secondCoachPage.nextCursor, null);
+  const coachRequests = [...firstCoachPage.items, ...secondCoachPage.items];
+  const firstClientRequest = coachRequests.find(
+    (request) => request.id === requests[0]?.requestId,
+  );
+  assert.match(
+    firstClientRequest?.clientAvatarUrl ?? "",
+    new RegExp(
+      `^/api/coach/requests/${requests[0]?.requestId}/client-avatar[?]v=`,
+    ),
+  );
+  assert.ok(
+    coachRequests
+      .filter((request) => request.id !== requests[0]?.requestId)
+      .every((request) => request.clientAvatarUrl === null),
+  );
+
+  const avatarReference = await withActorDatabaseContext(
+    coachActor,
+    (transaction) =>
+      bookingRequestClientAvatarReference(transaction, requests[0]!.requestId),
+  );
+  const accountPath = `${firstClientActor.profileId}/${firstClientAvatarObjectId}.webp`;
+  assert.equal(avatarReference?.path, accountPath);
+  assert.ok(avatarReference?.updatedAt);
+  assert.equal(
+    await withActorDatabaseContext(firstClientActor, (transaction) =>
+      bookingRequestClientAvatarReference(transaction, requests[0]!.requestId),
+    ),
+    null,
+  );
+  assert.equal(
+    await withActorDatabaseContext(secondClientActor, (transaction) =>
+      bookingRequestClientAvatarReference(transaction, requests[0]!.requestId),
+    ),
+    null,
+  );
+
+  let coachAvatarCount = -1;
+  let unrelatedAvatarCount = -1;
+  await assert.rejects(
+    admin.begin(async (transaction) => {
+      await transaction`set local role authenticated`;
+      await transaction`
+        select set_config(
+          'request.jwt.claim.sub',
+          ${firstClientAuthUserId},
+          true
+        )
+      `;
+      await transaction`
+        insert into storage.objects (bucket_id, name)
+        values ('account-avatars', ${accountPath})
+      `;
+      await transaction`
+        select set_config('request.jwt.claim.sub', ${coachAuthUserId}, true)
+      `;
+      const [coachResult] = await transaction<{ count: number }[]>`
+        select count(*)::integer as count
+        from storage.objects
+        where bucket_id = 'account-avatars'
+          and name = ${accountPath}
+      `;
+      coachAvatarCount = coachResult?.count ?? 0;
+      await transaction`
+        select set_config(
+          'request.jwt.claim.sub',
+          ${secondClientAuthUserId},
+          true
+        )
+      `;
+      const [unrelatedResult] = await transaction<{ count: number }[]>`
+        select count(*)::integer as count
+        from storage.objects
+        where bucket_id = 'account-avatars'
+          and name = ${accountPath}
+      `;
+      unrelatedAvatarCount = unrelatedResult?.count ?? 0;
+      throw new Error("roll back request avatar policy fixture");
+    }),
+    /roll back request avatar policy fixture/,
+  );
+  assert.deepEqual(
+    { coachAvatarCount, unrelatedAvatarCount },
+    { coachAvatarCount: 1, unrelatedAvatarCount: 0 },
+  );
+
+  await withActorDatabaseContext(coachActor, (transaction) =>
+    declineCoachBookingRequestRecord(transaction, requests[0]!.requestId),
+  );
+  const terminalCoachPage = await withActorDatabaseContext(
+    coachActor,
+    (transaction) =>
+      currentOwnedCoachBookingRequestRecords(transaction, { pageSize: 50 }),
+  );
+  const terminalRequest = terminalCoachPage.items.find(
+    (request) => request.id === requests[0]!.requestId,
+  );
+  assert.equal(terminalRequest?.status, "declined");
+  assert.match(
+    terminalRequest?.clientAvatarUrl ?? "",
+    new RegExp(
+      `^/api/coach/requests/${requests[0]?.requestId}/client-avatar[?]v=`,
+    ),
+  );
 
   for (const actor of clients) {
     const clientPage = await withActorDatabaseContext(actor, (transaction) =>
@@ -1047,8 +1152,11 @@ test("confirmed-booking history and avatar privacy remain intact", async () => {
     cancelledDirectory.primaryLocation.id,
     beforeBookingDirectory.primaryLocation.id,
   );
+  // The booking-scoped reference is revoked below. This coach still owns a
+  // retained booking-request attempt from the same client, so the independent
+  // request-history policy continues to authorize the current Storage object.
   assert.deepEqual(await storageVisibility(), {
-    coachCount: 0,
+    coachCount: 1,
     unrelatedCount: 0,
   });
   assert.equal(
