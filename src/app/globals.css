@@ -383,6 +383,9 @@ button {
   margin-left: 226px;
   min-height: 100vh;
 }
+.app-main.public-app-main {
+  margin-left: 0;
+}
 .topbar {
   height: 82px;
   border-bottom: 1px solid var(--line);
@@ -391,6 +394,76 @@ button {
   gap: 26px;
   align-items: center;
   background: #fafbf6;
+}
+.public-header {
+  position: sticky;
+  top: 0;
+  z-index: 35;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  backdrop-filter: blur(16px);
+}
+.public-header-inner {
+  width: 100%;
+  max-width: 1490px;
+  min-height: 76px;
+  margin: 0 auto;
+  padding: 0 36px;
+  display: flex;
+  align-items: center;
+  gap: 34px;
+}
+.public-primary-navigation,
+.public-header-actions {
+  display: flex;
+  align-items: center;
+}
+.public-primary-navigation {
+  gap: 28px;
+}
+.public-primary-navigation a,
+.public-coach-entry,
+.public-account-link {
+  color: #59644f;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.public-primary-navigation a:hover,
+.public-primary-navigation a.active,
+.public-coach-entry:hover,
+.public-account-link:hover {
+  color: var(--ink);
+}
+.public-primary-navigation a.active {
+  text-decoration: underline;
+  text-decoration-color: #9fbd4f;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 8px;
+}
+.public-header-actions {
+  min-width: 0;
+  margin-left: auto;
+  justify-content: flex-end;
+  gap: 18px;
+}
+.public-coach-entry {
+  padding: 9px 15px;
+  border: 1px solid #ccd4bd;
+  border-radius: 999px;
+  background: #fff;
+}
+.public-coach-entry-short {
+  display: none;
+}
+.public-account-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.public-account-avatar {
+  display: inline-flex;
+  border-radius: 50%;
 }
 .location {
   display: flex;
@@ -2604,6 +2677,16 @@ h1 {
     padding: 0 26px;
     gap: 16px;
   }
+  .public-header-inner {
+    padding: 0 26px;
+    gap: 24px;
+  }
+  .public-primary-navigation {
+    gap: 20px;
+  }
+  .public-header-actions {
+    gap: 12px;
+  }
   .header-right {
     gap: 12px;
   }
@@ -2708,6 +2791,51 @@ h1 {
   }
   .app-main {
     margin-left: 0;
+  }
+  .public-header-inner {
+    min-height: 0;
+    padding: 11px 20px 10px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 9px 16px;
+  }
+  .public-header .brand {
+    font-size: 21px;
+  }
+  .public-primary-navigation {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: center;
+    gap: 30px;
+    border-top: 1px solid #e3e6da;
+    padding-top: 9px;
+  }
+  .public-primary-navigation a,
+  .public-coach-entry,
+  .public-account-link {
+    font-size: 10px;
+  }
+  .public-primary-navigation a.active {
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+  .public-header-actions {
+    grid-column: 2;
+    grid-row: 1;
+    gap: 9px;
+  }
+  .public-coach-entry {
+    padding: 7px 10px;
+  }
+  .public-account-link {
+    gap: 4px;
+  }
+  .public-account-link svg {
+    display: none;
+  }
+  .public-header .auth-status-link {
+    font-size: 10px;
+    padding: 7px 0;
   }
   .topbar {
     height: 68px;
@@ -2814,6 +2942,9 @@ h1 {
     gap: 8px;
     flex-wrap: wrap;
     font-size: 10px;
+  }
+  .public-app-main .app-footer {
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
   }
   .app-footer > span:nth-child(2) {
     display: none;
@@ -2931,6 +3062,31 @@ h1 {
   }
   .topbar {
     padding: 0 16px;
+  }
+  .public-header-inner {
+    padding: 10px 16px 9px;
+    gap: 8px 10px;
+  }
+  .public-header .brand {
+    font-size: 19px;
+  }
+  .public-header-actions {
+    gap: 7px;
+  }
+  .public-coach-entry {
+    min-width: 57px;
+    text-align: center;
+  }
+  .public-coach-entry-wide {
+    display: none;
+  }
+  .public-coach-entry-short {
+    display: inline;
+  }
+  .public-account-link span {
+    max-width: 68px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .demo-strip {
     padding: 7px 16px;

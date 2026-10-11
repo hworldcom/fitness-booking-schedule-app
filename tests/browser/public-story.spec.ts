@@ -76,18 +76,43 @@ test("how it works explains authoritative scheduling transitions", async ({
   });
 });
 
-test("public navigation exposes scheduling routes only", async ({
+test("public routes use the compact marketplace header", async ({
   page,
 }, testInfo) => {
+  for (const path of [
+    "/",
+    "/explore",
+    "/coaches/daniel-park",
+    "/how-it-works",
+    "/sign-in",
+  ]) {
+    await page.goto(path);
+    await expect(page.locator(".public-header")).toBeVisible();
+    await expect(page.locator(".sidebar")).toHaveCount(0);
+    await expect(page.locator(".mobile-nav")).toHaveCount(0);
+    await expect(
+      page.getByRole("navigation", { name: "Public navigation" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Explore", exact: true }).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "How it works", exact: true }).first(),
+    ).toBeVisible();
+  }
+
   await page.goto("/");
   await expect(page.locator(".demo-strip")).toContainText(
     "Coach discovery and coach-confirmed scheduling preview.",
   );
-  for (const name of ["Explore", "How it works", "Profile"]) {
-    await expect(
-      page.getByRole("link", { name, exact: true }).first(),
-    ).toBeVisible();
-  }
+  await expect(
+    page
+      .getByRole("banner")
+      .getByRole("link", { name: "Become a coach", exact: true }),
+  ).toHaveAttribute(
+    "href",
+    "/sign-in?returnTo=%2Fprofile%2Fcoach&intent=coach",
+  );
   await expect(
     page.getByRole("link", { name: "My sessions", exact: true }),
   ).toHaveCount(0);
@@ -100,8 +125,52 @@ test("public navigation exposes scheduling routes only", async ({
   await expect(
     page.getByRole("link", { name: "Following", exact: true }),
   ).toHaveCount(0);
-  if (testInfo.project.name === "desktop") {
-    await page.getByRole("button", { name: "About this preview" }).click();
-    await expect(page.getByText(/focused scheduling preview/)).toBeVisible();
+
+  await page.keyboard.press("Tab");
+  await expect(
+    page.getByRole("link", { name: "Skip to content" }),
+  ).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(
+    page.getByRole("link", { name: "MovX Club home" }),
+  ).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(
+    page.getByRole("link", { name: "Explore", exact: true }).first(),
+  ).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(
+    page.getByRole("link", { name: "How it works", exact: true }).first(),
+  ).toBeFocused();
+
+  await page.getByRole("button", { name: "Fictional profiles" }).click();
+  await expect(page.getByText(/focused scheduling preview/)).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByText(/focused scheduling preview/)).toHaveCount(0);
+
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+
+  if (testInfo.project.name === "mobile") {
+    await expect(page.locator(".public-header")).toHaveCSS(
+      "position",
+      "sticky",
+    );
+  }
+});
+
+test("private routes retain the workspace chrome", async ({ page }) => {
+  await page.goto("/profile");
+  await expect(page.locator(".public-header")).toHaveCount(0);
+
+  if ((await page.viewportSize())!.width <= 760) {
+    await expect(page.locator(".sidebar")).toBeHidden();
+    await expect(page.locator(".mobile-nav")).toBeVisible();
+  } else {
+    await expect(page.locator(".sidebar")).toBeVisible();
+    await expect(page.locator(".mobile-nav")).toBeHidden();
   }
 });

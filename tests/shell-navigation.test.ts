@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ActorSnapshot } from "@/auth/actor-contracts";
-import { isNavigationHrefActive, navigationForActor } from "@/components/shell";
+import {
+  isNavigationHrefActive,
+  isPublicMarketplacePath,
+  navigationForActor,
+  publicAccountNavigationForActor,
+} from "@/components/shell";
 import type { CoachAccessStatus } from "@/domain/coaches";
 
 const PUBLIC_PATHS = ["/", "/explore", "/how-it-works", "/profile"];
@@ -92,4 +97,62 @@ test("coach workspace active state does not match public coach profiles", () => 
   assert.equal(isNavigationHrefActive("/coach", "/coach"), true);
   assert.equal(isNavigationHrefActive("/coach/settings", "/coach"), true);
   assert.equal(isNavigationHrefActive("/coaches/daniel-park", "/coach"), false);
+});
+
+test("public shell mode is restricted to the adopted marketplace routes", () => {
+  for (const path of [
+    "/",
+    "/explore",
+    "/coaches/daniel-park",
+    "/how-it-works",
+    "/sign-in",
+  ]) {
+    assert.equal(isPublicMarketplacePath(path), true, path);
+  }
+
+  for (const path of [
+    "/coaches",
+    "/coaches/daniel-park/schedule",
+    "/sessions",
+    "/coach",
+    "/profile",
+    "/profile/coach",
+  ]) {
+    assert.equal(isPublicMarketplacePath(path), false, path);
+  }
+});
+
+test("public account controls expose only authorized private destinations", () => {
+  for (const status of [
+    "preview",
+    "signed-out",
+    "forbidden",
+    "unavailable",
+  ] as const) {
+    assert.deepEqual(publicAccountNavigationForActor({ status }), []);
+  }
+  assert.deepEqual(
+    publicAccountNavigationForActor(authorizedActor("not-applied")).map(
+      ({ href }) => href,
+    ),
+    ["/sessions"],
+  );
+  assert.deepEqual(
+    publicAccountNavigationForActor(authorizedActor("approved")).map(
+      ({ href }) => href,
+    ),
+    ["/sessions", "/coach"],
+  );
+  assert.deepEqual(
+    publicAccountNavigationForActor(authorizedActor("demo")).map(
+      ({ href }) => href,
+    ),
+    ["/sessions", "/coach"],
+  );
+  assert.deepEqual(
+    publicAccountNavigationForActor(authorizedActor("suspended")).map(
+      ({ href }) => href,
+    ),
+    ["/sessions", "/coach"],
+  );
 });
