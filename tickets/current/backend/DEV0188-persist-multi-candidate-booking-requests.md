@@ -5,7 +5,7 @@
 - Last updated: 2026-10-11
 - Milestone: Scheduling-only booking-policy follow-up
 - Coordination: [COR0016 — Coach-confirmed booking requests](../organisatory/COR0016-coach-confirmed-booking-requests.md)
-- Related records: contract dependency [DEV0186 — Adopt booking-request and notice policies](../organisatory/DEV0186-adopt-booking-request-and-notice-policies.md), eligibility dependency [DEV0187 — Enforce booking-request eligibility](DEV0187-enforce-booking-request-eligibility.md), conversation consumer [DEV0183 — Persist authorized session notes](DEV0183-persist-authorized-session-notes.md), direct-booking baseline [DEV0141 — Persist direct private bookings](../../archive/backend/DEV0141-persist-direct-private-bookings.md)
+- Related records: completed contract dependency [DEV0186 — Adopt booking-request and notice policies](../../archive/organisatory/DEV0186-adopt-booking-request-and-notice-policies.md), eligibility dependency [DEV0187 — Enforce booking-request eligibility](DEV0187-enforce-booking-request-eligibility.md), conversation consumer [DEV0183 — Persist authorized session notes](DEV0183-persist-authorized-session-notes.md), direct-booking baseline [DEV0141 — Persist direct private bookings](../../archive/backend/DEV0141-persist-direct-private-bookings.md)
 
 ## Objective and context
 

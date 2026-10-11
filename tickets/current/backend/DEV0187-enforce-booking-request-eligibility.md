@@ -1,11 +1,11 @@
 # Ticket DEV0187: Enforce booking-request eligibility
 
-- Status: Draft
+- Status: Ready
 - Created: 2026-10-10
 - Last updated: 2026-10-11
 - Milestone: Scheduling-only booking-policy follow-up
 - Coordination: [COR0016 — Coach-confirmed booking requests](../organisatory/COR0016-coach-confirmed-booking-requests.md)
-- Related records: contract dependency [DEV0186 — Adopt booking-request and notice policies](../organisatory/DEV0186-adopt-booking-request-and-notice-policies.md), request consumer [DEV0188 — Persist multi-candidate booking requests](DEV0188-persist-multi-candidate-booking-requests.md), availability baseline [DEV0177 — Bind availability to training locations](../../archive/backend/DEV0177-bind-availability-to-training-locations.md)
+- Related records: completed contract dependency [DEV0186 — Adopt booking-request and notice policies](../../archive/organisatory/DEV0186-adopt-booking-request-and-notice-policies.md), request consumer [DEV0188 — Persist multi-candidate booking requests](DEV0188-persist-multi-candidate-booking-requests.md), availability baseline [DEV0177 — Bind availability to training locations](../../archive/backend/DEV0177-bind-availability-to-training-locations.md)
 
 ## Objective and context
 
@@ -34,7 +34,7 @@ Replace immediate-booking eligibility with one authoritative approval-request bo
 
 ## Assumptions, decisions, and dependencies
 
-- DEV0186 must complete before this ticket becomes Ready.
+- DEV0186 completed on 2026-10-11; this ticket is Ready to implement its authoritative approval-only eligibility contract.
 - Keep the seven-day publication horizon unchanged. Maximum-advance configurability is not part of this ticket.
 - Avoid adding policy storage for one fixed global rule. Keep the cutoff in one tested domain/database boundary so a later configurability ticket can replace its source without changing request semantics.
 - The current service area is Berlin. Occurrence instants remain timezone-safe and public presentation uses `Europe/Berlin`; browser timezone does not change eligibility.
@@ -91,7 +91,7 @@ Pending validation.
 - Date and environment: Not run.
 - Exact commands and outcomes: Not run.
 - Manual steps and observed outcomes: Not run.
-- Failed, blocked, or not-run checks: All checks await DEV0186 and implementation.
+- Failed, blocked, or not-run checks: All checks await implementation; the DEV0186 contract dependency is complete.
 
 | Criterion | Evidence | Result  |
 | --------- | -------- | ------- |

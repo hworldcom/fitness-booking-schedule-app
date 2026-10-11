@@ -1,11 +1,11 @@
 # Coordination COR0016: Coach-confirmed booking requests
 
-- Status: Ready
+- Status: In progress
 - Created: 2026-10-10
 - Last updated: 2026-10-11
 - Milestone: Scheduling-only booking-policy follow-up
 - Converted from: Not applicable — created as a coordination record
-- Tracked development tickets: ready [DEV0186 — Adopt booking-request and notice policies](DEV0186-adopt-booking-request-and-notice-policies.md); draft [DEV0187 — Enforce booking-request eligibility](../backend/DEV0187-enforce-booking-request-eligibility.md), [DEV0188 — Persist multi-candidate booking requests](../backend/DEV0188-persist-multi-candidate-booking-requests.md), [DEV0189 — Add the coach booking-request queue](../frontend/DEV0189-add-coach-booking-request-queue.md) and [DEV0190 — Add the client booking-request flow](../frontend/DEV0190-add-client-booking-request-flow.md)
+- Tracked development tickets: completed [DEV0186 — Adopt booking-request and notice policies](../../archive/organisatory/DEV0186-adopt-booking-request-and-notice-policies.md); ready [DEV0187 — Enforce booking-request eligibility](../backend/DEV0187-enforce-booking-request-eligibility.md); draft [DEV0188 — Persist multi-candidate booking requests](../backend/DEV0188-persist-multi-candidate-booking-requests.md), [DEV0189 — Add the coach booking-request queue](../frontend/DEV0189-add-coach-booking-request-queue.md) and [DEV0190 — Add the client booking-request flow](../frontend/DEV0190-add-client-booking-request-flow.md)
 - Related records: direct-booking baseline [DEV0141 — Persist direct private bookings](../../archive/backend/DEV0141-persist-direct-private-bookings.md), availability baseline [DEV0177 — Bind availability to training locations](../../archive/backend/DEV0177-bind-availability-to-training-locations.md), request-conversation integration [COR0015 — Session notes and training plans](COR0015-session-notes-and-training-plans.md)
 
 ## Objective and boundaries
@@ -18,13 +18,13 @@ COR0015 separately owns shared request/session conversation content. This record
 
 ## Direct development work
 
-| Implementation part | Development ticket                                                                                                   | Owned deliverable                                                                                                                                                      | Start condition or dependency     |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| Product contract    | [DEV0186 — Adopt booking-request and notice policies](DEV0186-adopt-booking-request-and-notice-policies.md)          | Define approval-only request semantics, fixed notice/deadline rules, lifecycle, repeat requests, client copy, privacy and acceptance/closure behavior.                 | Ready; first delivery step.       |
-| Request eligibility | [DEV0187 — Enforce booking-request eligibility](../backend/DEV0187-enforce-booking-request-eligibility.md)           | Replace immediate booking eligibility with server-derived 24-hour request cutoffs and truthful public projections while keeping the seven-day horizon.                 | Starts after DEV0186 completes.   |
-| Request persistence | [DEV0188 — Persist multi-candidate booking requests](../backend/DEV0188-persist-multi-candidate-booking-requests.md) | Add independent per-client requests without a candidate cap, 12-hour deadlines, repeat attempts after terminal outcomes and atomic acceptance/occurrence closure.      | Starts after DEV0186 and DEV0187. |
-| Coach interface     | [DEV0189 — Add the coach booking-request queue](../frontend/DEV0189-add-coach-booking-request-queue.md)              | Add a private paginated pending-request queue with accept/decline and close-occurrence actions, deadlines and responsive failure states.                               | Starts after DEV0187 and DEV0188. |
-| Client interface    | [DEV0190 — Add the client booking-request flow](../frontend/DEV0190-add-client-booking-request-flow.md)              | Replace direct Book actions with Request actions, saved pending status, withdrawal/retry, decision history and truthful cutoff presentation without candidate leakage. | Starts after DEV0187 and DEV0188. |
+| Implementation part | Development ticket                                                                                                                     | Owned deliverable                                                                                                                                                      | Start condition or dependency     |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| Product contract    | [DEV0186 — Adopt booking-request and notice policies](../../archive/organisatory/DEV0186-adopt-booking-request-and-notice-policies.md) | Define approval-only request semantics, fixed notice/deadline rules, lifecycle, repeat requests, client copy, privacy and acceptance/closure behavior.                 | Completed 2026-10-11.             |
+| Request eligibility | [DEV0187 — Enforce booking-request eligibility](../backend/DEV0187-enforce-booking-request-eligibility.md)                             | Replace immediate booking eligibility with server-derived 24-hour request cutoffs and truthful public projections while keeping the seven-day horizon.                 | Ready; DEV0186 completed.         |
+| Request persistence | [DEV0188 — Persist multi-candidate booking requests](../backend/DEV0188-persist-multi-candidate-booking-requests.md)                   | Add independent per-client requests without a candidate cap, 12-hour deadlines, repeat attempts after terminal outcomes and atomic acceptance/occurrence closure.      | Starts after DEV0186 and DEV0187. |
+| Coach interface     | [DEV0189 — Add the coach booking-request queue](../frontend/DEV0189-add-coach-booking-request-queue.md)                                | Add a private paginated pending-request queue with accept/decline and close-occurrence actions, deadlines and responsive failure states.                               | Starts after DEV0187 and DEV0188. |
+| Client interface    | [DEV0190 — Add the client booking-request flow](../frontend/DEV0190-add-client-booking-request-flow.md)                                | Replace direct Book actions with Request actions, saved pending status, withdrawal/retry, decision history and truthful cutoff presentation without candidate leakage. | Starts after DEV0187 and DEV0188. |
 
 All required confirmation/policy implementation parts have direct development tickets. COR0015's DEV0183-DEV0185 remain peer work under their own coordination and own request/session conversation content rather than duplicating that implementation here.
 
@@ -36,8 +36,8 @@ All required confirmation/policy implementation parts have direct development ti
 
 ## Delivery sequence and completion conditions
 
-1. Complete DEV0186 first to make the fixed notice/deadline rules, request states, repeat-request behavior, selection privacy and terminology authoritative.
-2. Complete DEV0187 to expose and enforce approval-only request eligibility and the 24-hour cutoff instead of immediate booking.
+1. DEV0186 completed the authoritative fixed notice/deadline rules, request states, repeat-request behavior, selection privacy and terminology.
+2. Complete ready DEV0187 to expose and enforce approval-only request eligibility and the 24-hour cutoff instead of immediate booking.
 3. Complete DEV0188 to add the concurrent request queue and atomic selection lifecycle.
 4. DEV0189 and DEV0190 may proceed in parallel after the backend contracts exist; integrate with COR0015's conversation surfaces without taking ownership of their content model.
 5. Complete this coordination only when all five direct tickets are Completed or explicitly cancelled/replaced; every booking begins as an approval request; multiple isolated requests can coexist without holding the occurrence; exactly one request can become confirmed; accepting one or closing the occurrence terminalizes all other pending requests atomically; the 24-hour notice and 12-hour decision deadline are authoritative; and responsive two-account browser/database validation passes.
@@ -52,11 +52,13 @@ All required confirmation/policy implementation parts have direct development ti
 - 2026-10-11: The user chose no pending-request cap, allowed a client to submit a new request after withdrawal, expiry or explicit coach decline while the occurrence remains eligible, and approved automatic closure of other pending requests when one is accepted.
 - 2026-10-11: The user added a coach action to close one occurrence when no longer available. Closing marks that occurrence unavailable to new requests and atomically closes its pending requests; it does not silently edit the recurring availability rule.
 - 2026-10-11: The first release serves Berlin only. Deadlines remain stored and compared as database instants and are presented in `Europe/Berlin`; broader timezone behavior remains a future concern rather than being discarded.
+- 2026-10-11: DEV0186 completed and archived after making the approval-only lifecycle authoritative in the MVP specification and aligning the README product summary. DEV0187 is now Ready as the next runtime step.
 
 ## Validation results
 
 - Planning validation completed on 2026-10-10: Prettier accepted the ticket index and all eleven current COR0015/COR0016 records; a targeted checker validated relative links in twelve affected files and reciprocal membership for all nine DEV records; repository search found one heading for each new ID; prohibited competition-oriented client copy was absent; `git diff --check` passed.
 - Planning amendment validation completed on 2026-10-11: Prettier accepted the eight affected index/work-record files; all relative Markdown links resolved; one heading exists for COR0016 and each of DEV0186-DEV0190; no reference to either superseded DEV0187/DEV0189 filename remains; and `git diff --check` passed. Application/database checks remain owned by the implementation tickets and were not run for this planning-only revision.
+- DEV0186 contract validation completed on 2026-10-11: Prettier and `git diff --check` passed; a targeted checker confirmed C19-C24, all six request transitions, cutoff/deadline, cancellation recovery, decision concurrency, prohibited-copy removal, links and archive/status consistency. No runtime validation was claimed.
 - Runtime validation is owned by DEV0187-DEV0190 and has not started.
 
 ## Risks, limitations, and follow-ups
@@ -72,7 +74,7 @@ All required confirmation/policy implementation parts have direct development ti
 ## Completion and review references
 
 - Completed: Not completed.
-- Direct development tickets: DEV0186 Ready; DEV0187-DEV0190 Draft.
+- Direct development tickets: DEV0186 Completed; DEV0187 Ready; DEV0188-DEV0190 Draft.
 - Commit: Not applicable — coordination-record IDs are not used in commit subjects.
 - Review: No integration review created.
 - Deployment or release: Not deployed or released.
