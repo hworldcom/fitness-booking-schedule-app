@@ -30,7 +30,7 @@ Delivered reusable foundations include:
 - list-first coach discovery with an OpenFreeMap-backed interactive map;
 - location-bound recurring one-hour availability, deterministic dated occurrences and a responsive compatibility calendar pending its location selector.
 
-Direct scheduling-only booking and runtime cleanup were delivered under COR0011. The specification now targets coach-confirmed requests under current [COR0016](tickets/current/organisatory/COR0016-coach-confirmed-booking-requests.md); that request lifecycle is documented but not yet implemented. The former membership, wallet, payment, group-event and social features are not current product surfaces.
+Direct scheduling-only booking and runtime cleanup were delivered under COR0011. Coach-confirmed request eligibility and the private multi-candidate persistence lifecycle are now delivered under current [COR0016](tickets/current/organisatory/COR0016-coach-confirmed-booking-requests.md); coach and client request interfaces remain the next slices. The former membership, wallet, payment, group-event and social features are not current product surfaces.
 
 The delivered contract permits multiple coach training locations, one coach-selected primary Explore marker and actual-location availability assignments. Profile location management, the location-aware calendar and primary-marker discovery are integrated under completed [COR0014](tickets/archive/organisatory/COR0014-multi-location-coach-scheduling.md).
 

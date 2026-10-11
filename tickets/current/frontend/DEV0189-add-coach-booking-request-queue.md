@@ -1,11 +1,11 @@
 # Ticket DEV0189: Add the coach booking-request queue
 
-- Status: Draft
+- Status: Ready
 - Created: 2026-10-10
 - Last updated: 2026-10-11
 - Milestone: Scheduling-only booking-policy follow-up
 - Coordination: [COR0016 — Coach-confirmed booking requests](../organisatory/COR0016-coach-confirmed-booking-requests.md)
-- Related records: completed eligibility dependency [DEV0187 — Enforce booking-request eligibility](../../archive/backend/DEV0187-enforce-booking-request-eligibility.md), request dependency [DEV0188 — Persist multi-candidate booking requests](../backend/DEV0188-persist-multi-candidate-booking-requests.md), conversation interface [DEV0184 — Add the coach session workspace](DEV0184-add-coach-session-workspace.md)
+- Related records: completed eligibility dependency [DEV0187 — Enforce booking-request eligibility](../../archive/backend/DEV0187-enforce-booking-request-eligibility.md), completed request dependency [DEV0188 — Persist multi-candidate booking requests](../../archive/backend/DEV0188-persist-multi-candidate-booking-requests.md), conversation interface [DEV0184 — Add the coach session workspace](DEV0184-add-coach-session-workspace.md)
 
 ## Objective and context
 
@@ -35,7 +35,7 @@ Give coaches a private queue for deciding approval requests and a way to close o
 
 ## Assumptions, decisions, and dependencies
 
-- DEV0187 and DEV0188 must complete before this ticket becomes Ready.
+- DEV0187 and DEV0188 are complete; this ticket is Ready to consume their authoritative eligibility, participant projection and mutation contracts.
 - Reuse Coach workspace Bookings for request decisions; do not add a policy form or a fourth coach tab.
 - Client private avatars remain unavailable for pending requests unless the authoritative contract explicitly changes the confirmed-booking media boundary; stable initials are sufficient.
 - DEV0184 owns note composition and may enhance each request detail after this ticket establishes the queue.
@@ -92,7 +92,7 @@ Pending validation.
 - Date and environment: Not run.
 - Exact commands and outcomes: Not run.
 - Manual steps and observed outcomes: Not run.
-- Failed, blocked, or not-run checks: All checks await backend dependencies and implementation.
+- Failed, blocked, or not-run checks: Backend dependencies are complete; checks await implementation.
 
 | Criterion | Evidence | Result  |
 | --------- | -------- | ------- |

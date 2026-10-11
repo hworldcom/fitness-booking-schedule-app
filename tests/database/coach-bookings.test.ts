@@ -25,6 +25,16 @@ import {
   currentCoachPrivateBookingRecords,
 } from "@/server/db/coaches/booking-repository";
 import {
+  acceptCoachBookingRequestRecord,
+  closeCoachBookingRequestOccurrenceRecord,
+  CoachBookingRequestConflictError,
+  createCoachBookingRequestRecord,
+  currentClientCoachBookingRequestRecords,
+  currentOwnedCoachBookingRequestRecords,
+  declineCoachBookingRequestRecord,
+  withdrawCoachBookingRequestRecord,
+} from "@/server/db/coaches/booking-request-repository";
+import {
   publicCoachDirectoryRecords,
   upsertOwnedCoachProfileRecord,
 } from "@/server/db/coaches/repository";
@@ -50,6 +60,12 @@ process.env.DATABASE_URL = runtimeUrl.toString();
 const coachAuthUserId = "98000000-0000-4000-8000-000000000001";
 const firstClientAuthUserId = "98000000-0000-4000-8000-000000000002";
 const secondClientAuthUserId = "98000000-0000-4000-8000-000000000003";
+const additionalClientAuthUserIds = [
+  "98000000-0000-4000-8000-000000000004",
+  "98000000-0000-4000-8000-000000000005",
+  "98000000-0000-4000-8000-000000000006",
+  "98000000-0000-4000-8000-000000000007",
+] as const;
 const fixtureGymId = "40000000-0000-4000-8000-000000000001";
 const firstClientAvatarObjectId = "98000000-0000-4000-8000-000000000011";
 const coachPortraitObjectId = "98000000-0000-4000-8000-000000000012";
@@ -67,6 +83,7 @@ const admin = postgres(adminConnectionString, {
 let coachActor: AuthorizedActor;
 let firstClientActor: AuthorizedActor;
 let secondClientActor: AuthorizedActor;
+const additionalClientActors: AuthorizedActor[] = [];
 
 const coachProfile: CoachProfileInput = Object.freeze({
   displayName: "Booking Coach",
@@ -192,7 +209,16 @@ async function removeFixtures() {
     coachAuthUserId,
     firstClientAuthUserId,
     secondClientAuthUserId,
+    ...additionalClientAuthUserIds,
   ];
+  await admin`
+    delete from app.coach_booking_requests
+    where client_profile_id in (
+      select id from app.profiles where auth_user_id in ${admin(authIds)}
+    ) or coach_profile_id in (
+      select id from app.profiles where auth_user_id in ${admin(authIds)}
+    )
+  `;
   await admin`
     delete from app.coach_booking_credit_operations
     where booking_id in (
@@ -266,6 +292,12 @@ before(async () => {
       (${firstClientAuthUserId}::uuid, false, false),
       (${secondClientAuthUserId}::uuid, false, false)
   `;
+  for (const authUserId of additionalClientAuthUserIds) {
+    await admin`
+      insert into auth.users (id, is_sso_user, is_anonymous)
+      values (${authUserId}::uuid, false, false)
+    `;
+  }
   const coach = await enrollApplicationProfile(
     coachAuthUserId,
     "Booking Coach",
@@ -284,6 +316,14 @@ before(async () => {
   coachActor = actorFromRecord(coachAuthUserId, coach);
   firstClientActor = actorFromRecord(firstClientAuthUserId, firstClient);
   secondClientActor = actorFromRecord(secondClientAuthUserId, secondClient);
+  for (const [index, authUserId] of additionalClientAuthUserIds.entries()) {
+    const client = await enrollApplicationProfile(
+      authUserId,
+      `Booking Client ${index + 3}`,
+    );
+    assert.ok(client);
+    additionalClientActors.push(actorFromRecord(authUserId, client));
+  }
   await withActorDatabaseContext(coachActor, submitOwnedCoachApplicationRecord);
   await withActorDatabaseContext(coachActor, (transaction) =>
     upsertOwnedCoachProfileRecord(transaction, {
@@ -407,6 +447,372 @@ test("actor-safe eligibility and public projections use database time", async ()
       ?.requestEligibility,
     "requestable",
   );
+});
+
+test("more than five clients can request one occurrence without holding it", async () => {
+  const slotId = await createSlot(30);
+  const clients = [
+    firstClientActor,
+    secondClientActor,
+    ...additionalClientActors,
+  ];
+  const requests = await Promise.all(
+    clients.map((actor) =>
+      withActorDatabaseContext(actor, (transaction) =>
+        createCoachBookingRequestRecord(transaction, slotId),
+      ),
+    ),
+  );
+  assert.equal(new Set(requests.map((request) => request.requestId)).size, 6);
+  assert.ok(requests.every((request) => request.status === "pending"));
+
+  const retry = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) => createCoachBookingRequestRecord(transaction, slotId),
+  );
+  assert.equal(retry.requestId, requests[0]?.requestId);
+
+  const [slot] = await admin<{ status: string }[]>`
+    select status
+    from app.coach_availability_slots
+    where id = ${slotId}::uuid
+  `;
+  assert.equal(slot?.status, "open");
+
+  const firstCoachPage = await withActorDatabaseContext(
+    coachActor,
+    (transaction) =>
+      currentOwnedCoachBookingRequestRecords(transaction, { pageSize: 5 }),
+  );
+  assert.equal(firstCoachPage.items.length, 5);
+  assert.ok(firstCoachPage.nextCursor);
+  const secondCoachPage = await withActorDatabaseContext(
+    coachActor,
+    (transaction) =>
+      currentOwnedCoachBookingRequestRecords(transaction, {
+        pageSize: 5,
+        cursor: firstCoachPage.nextCursor,
+      }),
+  );
+  assert.equal(secondCoachPage.items.length, 1);
+  assert.equal(secondCoachPage.nextCursor, null);
+
+  for (const actor of clients) {
+    const clientPage = await withActorDatabaseContext(actor, (transaction) =>
+      currentClientCoachBookingRequestRecords(transaction),
+    );
+    const ownRequests = clientPage.items.filter(
+      (request) => request.slotId === slotId,
+    );
+    assert.equal(ownRequests.length, 1);
+    assert.equal("clientDisplayName" in ownRequests[0]!, false);
+    assert.equal("clientProfileId" in ownRequests[0]!, false);
+    if (actor.profileId === firstClientActor.profileId) {
+      assert.equal(
+        new Date(ownRequests[0]!.decisionDeadlineAt).getTime() -
+          new Date(ownRequests[0]!.createdAt).getTime(),
+        12 * 60 * 60 * 1000,
+      );
+    }
+  }
+  await assert.rejects(
+    withActorDatabaseContext(coachActor, (transaction) =>
+      currentOwnedCoachBookingRequestRecords(transaction, { pageSize: 51 }),
+    ),
+    CoachBookingRequestConflictError,
+  );
+  await assert.rejects(
+    withActorDatabaseContext(firstClientActor, (transaction) =>
+      transaction.execute(sql`
+        select id
+        from app.coach_booking_requests
+        where slot_id = ${slotId}::uuid
+      `),
+    ),
+  );
+});
+
+test("late requests use the occurrence start as their decision deadline", async () => {
+  const slotId = await createSlot(8);
+  const request = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) => createCoachBookingRequestRecord(transaction, slotId),
+  );
+  const page = await withActorDatabaseContext(firstClientActor, (transaction) =>
+    currentClientCoachBookingRequestRecords(transaction),
+  );
+  const projection = page.items.find(
+    (candidate) => candidate.id === request.requestId,
+  );
+  assert.ok(projection);
+  assert.equal(projection.decisionDeadlineAt, projection.scheduledStartAt);
+});
+
+test("withdrawal and decline permit a new eligible attempt", async () => {
+  const slotId = await createSlot(32);
+  const first = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) => createCoachBookingRequestRecord(transaction, slotId),
+  );
+  await assert.rejects(
+    withActorDatabaseContext(secondClientActor, (transaction) =>
+      withdrawCoachBookingRequestRecord(transaction, first.requestId),
+    ),
+    CoachBookingRequestConflictError,
+  );
+  const withdrawn = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) =>
+      withdrawCoachBookingRequestRecord(transaction, first.requestId),
+  );
+  assert.equal(withdrawn.status, "withdrawn");
+  assert.equal(
+    (
+      await withActorDatabaseContext(firstClientActor, (transaction) =>
+        withdrawCoachBookingRequestRecord(transaction, first.requestId),
+      )
+    ).status,
+    "withdrawn",
+  );
+
+  const second = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) => createCoachBookingRequestRecord(transaction, slotId),
+  );
+  assert.notEqual(second.requestId, first.requestId);
+  await assert.rejects(
+    withActorDatabaseContext(secondClientActor, (transaction) =>
+      declineCoachBookingRequestRecord(transaction, second.requestId),
+    ),
+    CoachBookingRequestConflictError,
+  );
+  const declined = await withActorDatabaseContext(coachActor, (transaction) =>
+    declineCoachBookingRequestRecord(transaction, second.requestId),
+  );
+  assert.equal(declined.status, "declined");
+
+  const third = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) => createCoachBookingRequestRecord(transaction, slotId),
+  );
+  assert.notEqual(third.requestId, second.requestId);
+  assert.equal(third.status, "pending");
+});
+
+test("concurrent acceptance creates one booking and closes other requests", async () => {
+  const slotId = await createSlot(34);
+  const requestActors = [
+    firstClientActor,
+    secondClientActor,
+    additionalClientActors[0]!,
+  ];
+  const requests = await Promise.all(
+    requestActors.map((actor) =>
+      withActorDatabaseContext(actor, (transaction) =>
+        createCoachBookingRequestRecord(transaction, slotId),
+      ),
+    ),
+  );
+  const results = await Promise.all([
+    withActorDatabaseContext(coachActor, (transaction) =>
+      acceptCoachBookingRequestRecord(transaction, requests[0]!.requestId),
+    ),
+    withActorDatabaseContext(coachActor, (transaction) =>
+      acceptCoachBookingRequestRecord(transaction, requests[1]!.requestId),
+    ),
+  ]);
+  assert.equal(
+    results.filter((result) => result.status === "accepted").length,
+    1,
+  );
+  assert.equal(
+    results.filter((result) => result.status === "not-selected").length,
+    1,
+  );
+
+  const [bookingCount] = await admin<{ count: number }[]>`
+    select count(*)::integer as count
+    from app.coach_private_bookings
+    where slot_id = ${slotId}::uuid
+      and status = 'confirmed'
+  `;
+  assert.equal(bookingCount?.count, 1);
+  const requestRows = await admin<
+    { id: string; status: string; accepted_booking_id: string | null }[]
+  >`
+    select id, status, accepted_booking_id
+    from app.coach_booking_requests
+    where slot_id = ${slotId}::uuid
+    order by id
+  `;
+  assert.equal(
+    requestRows.filter((request) => request.status === "accepted").length,
+    1,
+  );
+  assert.equal(
+    requestRows.filter((request) => request.status === "not-selected").length,
+    2,
+  );
+  const accepted = requestRows.find((request) => request.status === "accepted");
+  assert.ok(accepted?.accepted_booking_id);
+
+  const acceptedIndex = requests.findIndex(
+    (request) => request.requestId === accepted.id,
+  );
+  assert.notEqual(acceptedIndex, -1);
+  await withActorDatabaseContext(requestActors[acceptedIndex]!, (transaction) =>
+    cancelDirectPrivateBookingRecord(
+      transaction,
+      accepted.accepted_booking_id!,
+    ),
+  );
+  const [reopened] = await admin<{ status: string }[]>`
+    select status from app.coach_availability_slots where id = ${slotId}::uuid
+  `;
+  assert.equal(reopened?.status, "open");
+  const retryActor = requestActors.find(
+    (_actor, index) => index !== acceptedIndex,
+  )!;
+  const retried = await withActorDatabaseContext(retryActor, (transaction) =>
+    createCoachBookingRequestRecord(transaction, slotId),
+  );
+  assert.equal(retried.status, "pending");
+});
+
+test("participant reads reconcile elapsed request deadlines", async () => {
+  const slotId = await createSlot(36);
+  const request = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) => createCoachBookingRequestRecord(transaction, slotId),
+  );
+  await admin`
+    update app.coach_booking_requests
+    set
+      created_at = statement_timestamp() - interval '13 hours',
+      decision_deadline_at = statement_timestamp() - interval '1 minute'
+    where id = ${request.requestId}::uuid
+  `;
+  const page = await withActorDatabaseContext(firstClientActor, (transaction) =>
+    currentClientCoachBookingRequestRecords(transaction),
+  );
+  assert.equal(
+    page.items.find((candidate) => candidate.id === request.requestId)?.status,
+    "expired",
+  );
+  const retried = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) => createCoachBookingRequestRecord(transaction, slotId),
+  );
+  assert.notEqual(retried.requestId, request.requestId);
+});
+
+test("coach occurrence closure is atomic, authorized and idempotent", async () => {
+  const slotId = await createSlot(38);
+  const requests = await Promise.all(
+    [firstClientActor, secondClientActor].map((actor) =>
+      withActorDatabaseContext(actor, (transaction) =>
+        createCoachBookingRequestRecord(transaction, slotId),
+      ),
+    ),
+  );
+  await assert.rejects(
+    withActorDatabaseContext(firstClientActor, (transaction) =>
+      closeCoachBookingRequestOccurrenceRecord(transaction, slotId),
+    ),
+    CoachBookingRequestConflictError,
+  );
+  assert.equal(
+    await withActorDatabaseContext(coachActor, (transaction) =>
+      closeCoachBookingRequestOccurrenceRecord(transaction, slotId),
+    ),
+    "withdrawn",
+  );
+  assert.equal(
+    await withActorDatabaseContext(coachActor, (transaction) =>
+      closeCoachBookingRequestOccurrenceRecord(transaction, slotId),
+    ),
+    "withdrawn",
+  );
+  const rows = await admin<{ id: string; status: string }[]>`
+    select id, status
+    from app.coach_booking_requests
+    where slot_id = ${slotId}::uuid
+  `;
+  assert.equal(rows.length, requests.length);
+  assert.ok(rows.every((request) => request.status === "occurrence-closed"));
+  await assert.rejects(
+    withActorDatabaseContext(additionalClientActors[0]!, (transaction) =>
+      createCoachBookingRequestRecord(transaction, slotId),
+    ),
+    CoachBookingRequestConflictError,
+  );
+});
+
+test("failed acceptance rolls back request and occurrence mutations", async () => {
+  const slotId = await createSlot(40);
+  const request = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) => createCoachBookingRequestRecord(transaction, slotId),
+  );
+  await admin.begin(async (transaction) => {
+    await transaction`
+      select set_config('app.coach_booking_management', 'on', true)
+    `;
+    const [slot] = await transaction<{ starts_at: Date; ends_at: Date }[]>`
+      select starts_at, ends_at
+      from app.coach_availability_slots
+      where id = ${slotId}::uuid
+      for update
+    `;
+    assert.ok(slot);
+    await transaction`
+      insert into app.coach_private_bookings (
+        id,
+        run_id,
+        slot_id,
+        coach_profile_id,
+        client_profile_id,
+        credit_projection_id,
+        status,
+        scheduled_start_at,
+        scheduled_end_at,
+        early_return_until,
+        hold_expires_at
+      ) values (
+        ${randomUUID()}::uuid,
+        ${coachActor.runId}::uuid,
+        ${slotId}::uuid,
+        ${coachActor.profileId}::uuid,
+        ${secondClientActor.profileId}::uuid,
+        null,
+        'confirmed',
+        ${slot.starts_at},
+        ${slot.ends_at},
+        ${slot.starts_at},
+        ${slot.starts_at}
+      )
+    `;
+  });
+  await assert.rejects(
+    withActorDatabaseContext(coachActor, (transaction) =>
+      acceptCoachBookingRequestRecord(transaction, request.requestId),
+    ),
+    CoachBookingRequestConflictError,
+  );
+  const [state] = await admin<
+    { request_status: string; slot_status: string }[]
+  >`
+    select
+      request.status as request_status,
+      slot.status as slot_status
+    from app.coach_booking_requests as request
+    join app.coach_availability_slots as slot on slot.id = request.slot_id
+    where request.id = ${request.requestId}::uuid
+  `;
+  assert.deepEqual(state, {
+    request_status: "pending",
+    slot_status: "open",
+  });
 });
 
 test("confirmed-booking history and avatar privacy remain intact", async () => {
@@ -725,6 +1131,10 @@ test("suspension blocks new activity but preserves safe resolution of existing s
   const bookedSlotId = await createSlot(16);
   const openSlotId = await createSlot(18);
   const bookingId = await createConfirmedBooking(bookedSlotId);
+  const pendingRequest = await withActorDatabaseContext(
+    firstClientActor,
+    (transaction) => createCoachBookingRequestRecord(transaction, openSlotId),
+  );
 
   const [suspended] = await admin<{ status: string }[]>`
     select app.review_coach_application(
@@ -743,6 +1153,12 @@ test("suspension blocks new activity but preserves safe resolution of existing s
     where profile_id = ${coachActor.profileId}::uuid
   `;
   assert.equal(profile?.visibility, "hidden");
+  const [closedRequest] = await admin<{ status: string }[]>`
+    select status
+    from app.coach_booking_requests
+    where id = ${pendingRequest.requestId}::uuid
+  `;
+  assert.equal(closedRequest?.status, "occurrence-closed");
 
   await assert.rejects(createSlot(20), CoachAvailabilityConflictError);
   assert.equal(

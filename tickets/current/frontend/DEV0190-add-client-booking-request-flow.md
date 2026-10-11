@@ -1,11 +1,11 @@
 # Ticket DEV0190: Add the client booking-request flow
 
-- Status: Draft
+- Status: Ready
 - Created: 2026-10-10
 - Last updated: 2026-10-11
 - Milestone: Scheduling-only booking-policy follow-up
 - Coordination: [COR0016 — Coach-confirmed booking requests](../organisatory/COR0016-coach-confirmed-booking-requests.md)
-- Related records: completed eligibility dependency [DEV0187 — Enforce booking-request eligibility](../../archive/backend/DEV0187-enforce-booking-request-eligibility.md), request dependency [DEV0188 — Persist multi-candidate booking requests](../backend/DEV0188-persist-multi-candidate-booking-requests.md), conversation interface [DEV0185 — Add client session collaboration](DEV0185-add-client-session-collaboration.md), client-history baseline [DEV0144 — Show client booking history](../../archive/frontend/DEV0144-show-client-booking-history.md)
+- Related records: completed eligibility dependency [DEV0187 — Enforce booking-request eligibility](../../archive/backend/DEV0187-enforce-booking-request-eligibility.md), completed request dependency [DEV0188 — Persist multi-candidate booking requests](../../archive/backend/DEV0188-persist-multi-candidate-booking-requests.md), conversation interface [DEV0185 — Add client session collaboration](DEV0185-add-client-session-collaboration.md), client-history baseline [DEV0144 — Show client booking history](../../archive/frontend/DEV0144-show-client-booking-history.md)
 
 ## Objective and context
 
@@ -39,7 +39,7 @@ Replace immediate booking with a saved coach-approval request for every eligible
 
 ## Assumptions, decisions, and dependencies
 
-- DEV0187 and DEV0188 must complete before this ticket becomes Ready.
+- DEV0187 and DEV0188 are complete; this ticket is Ready to consume their authoritative eligibility, participant projection and mutation contracts.
 - Reuse My sessions with a distinct Requests group rather than create a global inbox.
 - The phrase `reserved` is avoided for pending state. The completed action is a saved request, not assigned capacity.
 - The first release is Berlin-only. Show the concrete deadline in `Europe/Berlin` while consuming the server-provided instant; do not compute authority from the browser clock.
@@ -98,7 +98,7 @@ Pending validation.
 - Date and environment: Not run.
 - Exact commands and outcomes: Not run.
 - Manual steps and observed outcomes: Not run.
-- Failed, blocked, or not-run checks: All checks await backend dependencies and implementation.
+- Failed, blocked, or not-run checks: Backend dependencies are complete; checks await implementation.
 
 | Criterion | Evidence | Result  |
 | --------- | -------- | ------- |

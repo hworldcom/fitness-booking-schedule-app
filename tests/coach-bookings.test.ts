@@ -10,12 +10,33 @@ import {
   isFutureConfirmedBooking,
   type PrivateBookingProjection,
 } from "@/domain/coach-bookings";
+import {
+  COACH_BOOKING_REQUEST_STATUSES,
+  isCoachBookingRequestStatus,
+} from "@/domain/coach-booking-requests";
 import { ClientSessionCoachIdentity } from "@/features/profile/client-session-coach-identity";
 
 test("booking identifiers require canonical UUIDs", () => {
   assert.equal(isCanonicalUuid("11111111-1111-4111-8111-111111111111"), true);
   assert.equal(isCanonicalUuid("11111111-1111-1111-1111-111111111111"), false);
   assert.equal(isCanonicalUuid("not-a-booking-id"), false);
+});
+
+test("booking requests expose only the approved lifecycle states", () => {
+  assert.deepEqual(COACH_BOOKING_REQUEST_STATUSES, [
+    "pending",
+    "accepted",
+    "declined",
+    "withdrawn",
+    "expired",
+    "not-selected",
+    "occurrence-closed",
+  ]);
+  for (const status of COACH_BOOKING_REQUEST_STATUSES) {
+    assert.equal(isCoachBookingRequestStatus(status), true);
+  }
+  assert.equal(isCoachBookingRequestStatus("confirmed"), false);
+  assert.equal(isCoachBookingRequestStatus("cancellation-requested"), false);
 });
 
 test("the scheduling lifecycle exposes only current terminal states", () => {

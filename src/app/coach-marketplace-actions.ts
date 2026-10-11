@@ -2,10 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
+import type { CoachBookingRequestStatus } from "@/domain/coach-booking-requests";
+import {
+  acceptCoachBookingRequest,
+  closeCoachBookingRequestOccurrence,
+  createCoachBookingRequest,
+  declineCoachBookingRequest,
+  withdrawCoachBookingRequest,
+} from "@/server/coaches/booking-request-service";
 import {
   cancelDirectPrivateBooking,
   completeDirectPrivateBooking,
-  privateSessionRequestEligibility,
 } from "@/server/coaches/booking-service";
 
 export type CoachMarketplaceActionResult = Readonly<{
@@ -18,6 +25,8 @@ export type CoachMarketplaceActionResult = Readonly<{
     | "unavailable";
   message: string;
   bookingId?: string;
+  requestId?: string;
+  requestStatus?: CoachBookingRequestStatus;
 }>;
 
 function invalid(message: string): CoachMarketplaceActionResult {
@@ -52,11 +61,11 @@ function refreshScheduling() {
   revalidatePath("/coaches/[slug]", "page");
 }
 
-export async function bookPrivateSessionAction(
+export async function requestPrivateSessionAction(
   slotId: string,
 ): Promise<CoachMarketplaceActionResult> {
   if (!isCanonicalUuid(slotId)) return invalid("That time is invalid.");
-  const result = await privateSessionRequestEligibility(slotId);
+  const result = await createCoachBookingRequest(slotId);
   if (result.status !== "authorized") return resultFailure(result.status);
   if (result.outcome === "conflict") {
     return Object.freeze({
@@ -65,16 +74,124 @@ export async function bookPrivateSessionAction(
         "That hour is no longer available. Refresh to see the latest schedule.",
     });
   }
-  const message = {
-    requestable:
-      "This hour requires coach confirmation. No direct booking was created.",
-    booked: "That hour is already booked.",
-    withdrawn: "The coach withdrew that hour.",
-    unavailable: "That hour cannot receive a booking request.",
-  }[result.value.eligibility];
+  refreshScheduling();
   return Object.freeze({
-    status: "conflict",
-    message,
+    status: "saved",
+    message:
+      "Request saved. This session is awaiting coach confirmation and is not booked yet.",
+    requestId: result.value.requestId,
+    requestStatus: result.value.status,
+  });
+}
+
+export async function bookPrivateSessionAction(
+  slotId: string,
+): Promise<CoachMarketplaceActionResult> {
+  return requestPrivateSessionAction(slotId);
+}
+
+export async function withdrawPrivateSessionRequestAction(
+  requestId: string,
+): Promise<CoachMarketplaceActionResult> {
+  if (!isCanonicalUuid(requestId)) return invalid("That request is invalid.");
+  const result = await withdrawCoachBookingRequest(requestId);
+  if (result.status !== "authorized") return resultFailure(result.status);
+  if (result.outcome === "conflict" || result.value.status !== "withdrawn") {
+    return Object.freeze({
+      status: "conflict",
+      message: "That request can no longer be withdrawn.",
+      ...(result.outcome === "saved"
+        ? {
+            requestId: result.value.requestId,
+            requestStatus: result.value.status,
+          }
+        : {}),
+    });
+  }
+  refreshScheduling();
+  return Object.freeze({
+    status: "saved",
+    message: "Request withdrawn.",
+    requestId: result.value.requestId,
+    requestStatus: result.value.status,
+  });
+}
+
+export async function declinePrivateSessionRequestAction(
+  requestId: string,
+): Promise<CoachMarketplaceActionResult> {
+  if (!isCanonicalUuid(requestId)) return invalid("That request is invalid.");
+  const result = await declineCoachBookingRequest(requestId);
+  if (result.status !== "authorized") return resultFailure(result.status);
+  if (result.outcome === "conflict" || result.value.status !== "declined") {
+    return Object.freeze({
+      status: "conflict",
+      message: "That request can no longer be declined.",
+      ...(result.outcome === "saved"
+        ? {
+            requestId: result.value.requestId,
+            requestStatus: result.value.status,
+          }
+        : {}),
+    });
+  }
+  refreshScheduling();
+  return Object.freeze({
+    status: "saved",
+    message: "Request declined. The occurrence remains open.",
+    requestId: result.value.requestId,
+    requestStatus: result.value.status,
+  });
+}
+
+export async function acceptPrivateSessionRequestAction(
+  requestId: string,
+): Promise<CoachMarketplaceActionResult> {
+  if (!isCanonicalUuid(requestId)) return invalid("That request is invalid.");
+  const result = await acceptCoachBookingRequest(requestId);
+  if (result.status !== "authorized") return resultFailure(result.status);
+  if (
+    result.outcome === "conflict" ||
+    result.value.status !== "accepted" ||
+    result.value.bookingId === null
+  ) {
+    return Object.freeze({
+      status: "conflict",
+      message: "That request can no longer be accepted.",
+      ...(result.outcome === "saved"
+        ? {
+            requestId: result.value.requestId,
+            requestStatus: result.value.status,
+          }
+        : {}),
+    });
+  }
+  refreshScheduling();
+  return Object.freeze({
+    status: "saved",
+    message: "Request accepted. The private session is confirmed.",
+    requestId: result.value.requestId,
+    requestStatus: result.value.status,
+    bookingId: result.value.bookingId,
+  });
+}
+
+export async function closePrivateSessionOccurrenceAction(
+  slotId: string,
+): Promise<CoachMarketplaceActionResult> {
+  if (!isCanonicalUuid(slotId)) return invalid("That time is invalid.");
+  const result = await closeCoachBookingRequestOccurrence(slotId);
+  if (result.status !== "authorized") return resultFailure(result.status);
+  if (result.outcome === "conflict" || result.value !== "withdrawn") {
+    return Object.freeze({
+      status: "conflict",
+      message: "That occurrence can no longer be closed.",
+    });
+  }
+  refreshScheduling();
+  return Object.freeze({
+    status: "saved",
+    message: "Occurrence closed. Its pending requests are no longer active.",
   });
 }
 
