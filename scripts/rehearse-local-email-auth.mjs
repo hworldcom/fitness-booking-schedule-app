@@ -106,7 +106,7 @@ async function verifyAccountProfile(
   await page
     .getByRole("heading", { name: displayName, exact: true })
     .waitFor({ timeout: 20_000 });
-  await page.getByText("Email-backed MovX profile").waitFor();
+  await page.getByText("Email-backed MovX identity").waitFor();
   if (coachState === "pending") {
     await page
       .getByRole("heading", { name: "Coach application pending" })

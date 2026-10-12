@@ -39,6 +39,7 @@ import {
 import { assignCoachLocationPaletteIndexes } from "@/features/coaches/coach-location-palette";
 import type { CoachWorkspaceView } from "@/features/coaches/coach-workspace-view";
 import { CoachWorkspaceNavigation } from "@/features/coaches/coach-workspace-navigation";
+import { CoachWorkspaceHeader } from "@/features/coaches/coach-workspace-header";
 
 const INITIAL_COACH_AVAILABILITY_ACTION_STATE: CoachAvailabilityActionState =
   Object.freeze({ status: "idle", message: "", errors: Object.freeze([]) });
@@ -688,44 +689,7 @@ export function CoachAvailabilityPanel({
 }) {
   return (
     <div className="coach-workspace">
-      <header className="coach-workspace-header">
-        <div>
-          <span className="eyebrow">COACH WORKSPACE</span>
-          <h1>Run your coaching week.</h1>
-          <p>
-            Welcome, {ownerDisplayName}. Schedule locations, review requests and
-            maintain your public presence.
-          </p>
-        </div>
-        <div className="coach-workspace-header-actions">
-          <div
-            className={`coach-publication-state ${coach?.visibility ?? "missing"}`}
-          >
-            <span aria-hidden="true" />
-            <span>
-              <strong>
-                {coach?.visibility === "visible"
-                  ? "Profile published"
-                  : coach
-                    ? "Profile hidden"
-                    : "Profile not set up"}
-              </strong>
-              <small>
-                {coach?.visibility === "visible"
-                  ? "Visible in Explore"
-                  : coach
-                    ? "Not visible in Explore"
-                    : "Complete your coach profile"}
-              </small>
-            </span>
-          </div>
-          {coach?.visibility === "visible" && (
-            <Link className="button secondary" href={`/coaches/${coach.slug}`}>
-              <Eye size={16} aria-hidden="true" /> View public profile
-            </Link>
-          )}
-        </div>
-      </header>
+      <CoachWorkspaceHeader coach={coach} ownerDisplayName={ownerDisplayName} />
       <CoachWorkspaceNavigation active={view} />
 
       {view === "bookings" && coach ? (

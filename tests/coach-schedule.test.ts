@@ -11,6 +11,8 @@ import type {
 } from "@/domain/coaches";
 import { CoachAvailabilityPanel } from "@/features/coaches/coach-availability-panel";
 import { CoachApplicationGate } from "@/features/coaches/coach-application-gate";
+import { CoachProfilePreview } from "@/features/coaches/coach-profile-preview";
+import { CoachWorkspaceHeader } from "@/features/coaches/coach-workspace-header";
 import { CoachWorkspaceNavigation } from "@/features/coaches/coach-workspace-navigation";
 import { resolveCoachWorkspaceView } from "@/features/coaches/coach-workspace-view";
 
@@ -170,6 +172,44 @@ test("coach views share Profile-first navigation with one selected destination",
     );
     assert.doesNotMatch(html, /> Availability</);
   }
+});
+
+test("coach workspace heading and profile preview use current bounded coach data", () => {
+  const header = renderToStaticMarkup(
+    createElement(CoachWorkspaceHeader, {
+      coach: COACH,
+      ownerDisplayName: "Schedule Coach",
+    }),
+  );
+  assert.match(header, /Run your coaching week/);
+  assert.match(header, /Welcome, Schedule Coach/);
+  assert.match(header, /Profile published/);
+  assert.match(header, /href="\/coaches\/schedule-coach"/);
+
+  const preview = renderToStaticMarkup(
+    createElement(CoachProfilePreview, {
+      coach: COACH,
+      publicationAllowed: true,
+    }),
+  );
+  assert.match(preview, /PUBLIC PREVIEW/);
+  assert.match(preview, /Published/);
+  assert.match(preview, />SC<\/span>/);
+  assert.match(preview, /Schedule Coach/);
+  assert.match(preview, /Private coaching with deliberate practice/);
+  assert.match(preview, /Tempelhofer Feld/);
+  assert.match(preview, /Other active places/);
+  assert.match(preview, /<dd>1<\/dd>/);
+
+  const draft = renderToStaticMarkup(
+    createElement(CoachProfilePreview, {
+      coach: Object.freeze({ ...COACH, visibility: "hidden" as const }),
+      publicationAllowed: false,
+    }),
+  );
+  assert.match(draft, /PRIVATE DRAFT PREVIEW/);
+  assert.match(draft, /Not public/);
+  assert.doesNotMatch(draft, /Published/);
 });
 
 test("coach working week renders one keyboard-operable one-hour control per cell", () => {

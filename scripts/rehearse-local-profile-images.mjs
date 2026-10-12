@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { mkdir } from "node:fs/promises";
 import { chromium } from "@playwright/test";
 
 const siteUrl =
@@ -7,6 +8,7 @@ const siteUrl =
 const mailboxUrl =
   process.env.PROFILE_IMAGE_TEST_MAILPIT_URL ?? "http://127.0.0.1:55324";
 const fixturePath = "public/images/coaches/daniel-park.webp";
+const evidenceDirectory = "test-results/profile-workspace-rehearsal";
 const testScope = process.env.PROFILE_IMAGE_TEST_SCOPE ?? "all";
 if (!new Set(["all", "account", "coach"]).has(testScope)) {
   throw new Error("PROFILE_IMAGE_TEST_SCOPE must be all, account or coach.");
@@ -125,9 +127,11 @@ function restoreDanielFixture() {
   runNpmScript("db:seed");
 }
 
+await mkdir(evidenceDirectory, { recursive: true });
 const browser = await chromium.launch({ channel: "chrome" });
 let accountPage;
 let coachPage;
+let accountMutationOwned = false;
 try {
   if (testScope !== "coach") {
     const accountContext = await browser.newContext({
@@ -141,13 +145,28 @@ try {
       `${siteUrl}/api/auth/actor`,
     );
     const initialActor = await initialActorResponse.json();
-    assert.equal(initialActor.profile.avatarUrl, null);
     assert.equal(initialActor.profile.coachPortraitUrl, null);
-    await assertShellInitials(accountPage, "HO");
+    const accountStartsEmpty = initialActor.profile.avatarUrl === null;
+    if (!accountStartsEmpty) {
+      assert.match(
+        initialActor.profile.avatarUrl,
+        /^\/api\/profile\/avatar[?]v=/,
+      );
+    }
 
     await accountPage.goto(`${siteUrl}/profile`, {
       waitUntil: "domcontentloaded",
     });
+    await accountPage
+      .locator(".account-profile-header")
+      .getByRole("heading", { name: "Profile." })
+      .waitFor();
+    const accountRole = accountPage.locator(".account-profile-summary > p");
+    await accountRole.waitFor();
+    assert.equal((await accountRole.textContent())?.trim(), "Client account");
+    await accountPage
+      .getByText("Your account image stays private.", { exact: true })
+      .waitFor();
     const accountInput = accountPage.locator(
       '.profile-image-uploader input[type="file"]',
     );
@@ -158,15 +177,26 @@ try {
       ),
       true,
     );
-    await accountInput.setInputFiles(fixturePath);
-    await accountPage.getByText("Account avatar saved.").waitFor({
-      timeout: 30_000,
-    });
+    if (accountStartsEmpty) {
+      accountMutationOwned = true;
+      await accountInput.setInputFiles(fixturePath);
+      await accountPage.getByText("Account avatar saved.").waitFor({
+        timeout: 30_000,
+      });
+    }
     await accountPage.getByAltText("Hoang account avatar").first().waitFor();
     await assertShellImages(accountPage, "/api/profile/avatar?v=");
     await accountPage.setViewportSize({ width: 1440, height: 1040 });
     await assertShellImagesVisible(accountPage);
+    await accountPage.screenshot({
+      path: `${evidenceDirectory}/account-profile-desktop.png`,
+      fullPage: true,
+    });
     await accountPage.setViewportSize({ width: 393, height: 852 });
+    await accountPage.screenshot({
+      path: `${evidenceDirectory}/account-profile-mobile.png`,
+      fullPage: true,
+    });
     const privateImage = await accountPage.request.get(
       `${siteUrl}/api/profile/avatar`,
     );
@@ -192,13 +222,16 @@ try {
       ),
       true,
     );
-    await removeVisibleImage(accountPage);
-    const finalActor = await (
-      await accountPage.request.get(`${siteUrl}/api/auth/actor`)
-    ).json();
-    assert.equal(finalActor.profile.avatarUrl, null);
-    assert.equal(finalActor.profile.coachPortraitUrl, null);
-    await assertShellInitials(accountPage, "HO");
+    if (accountStartsEmpty) {
+      await removeVisibleImage(accountPage);
+      accountMutationOwned = false;
+      const finalActor = await (
+        await accountPage.request.get(`${siteUrl}/api/auth/actor`)
+      ).json();
+      assert.equal(finalActor.profile.avatarUrl, null);
+      assert.equal(finalActor.profile.coachPortraitUrl, null);
+      await assertShellInitials(accountPage, "HO");
+    }
   }
 
   if (testScope !== "account") {
@@ -207,15 +240,21 @@ try {
     });
     coachPage = await coachContext.newPage();
     await signIn(coachPage, "daniel.park@coaches.movx.test", "Daniel Park");
-    await assertShellImages(coachPage, "/images/coaches/daniel-park.webp");
-    await assertShellImagesVisible(coachPage);
     await coachPage.goto(`${siteUrl}/profile`, {
       waitUntil: "domcontentloaded",
     });
+    const coachAccountRole = coachPage.locator(".account-profile-summary > p");
+    await coachAccountRole.waitFor();
+    assert.equal(
+      (await coachAccountRole.textContent())?.trim(),
+      "Client and coach account",
+    );
     await coachPage
       .getByAltText("Daniel Park public coach portrait")
       .first()
       .waitFor();
+    await assertShellImages(coachPage, "/images/coaches/daniel-park.webp");
+    await assertShellImagesVisible(coachPage);
     assert.equal(
       await coachPage
         .getByRole("button", { name: "Remove", exact: true })
@@ -247,6 +286,40 @@ try {
       waitUntil: "domcontentloaded",
     });
     await coachPage
+      .getByRole("heading", { name: "Run your coaching week." })
+      .waitFor();
+    await coachPage
+      .getByRole("navigation", { name: "Coach workspace" })
+      .getByRole("link", { name: "Profile", exact: true })
+      .waitFor();
+    await coachPage
+      .getByRole("heading", { name: "Edit your public coach profile." })
+      .waitFor();
+    assert.deepEqual(
+      await coachPage.evaluate(() => {
+        const header = document.querySelector(".coach-workspace-header");
+        const navigation = document.querySelector(".coach-workspace-nav");
+        const content = document.querySelector(".coach-profile-view-heading");
+        return {
+          headerBeforeNavigation: Boolean(
+            header &&
+            navigation &&
+            header.compareDocumentPosition(navigation) &
+              Node.DOCUMENT_POSITION_FOLLOWING,
+          ),
+          navigationBeforeContent: Boolean(
+            navigation &&
+            content &&
+            navigation.compareDocumentPosition(content) &
+              Node.DOCUMENT_POSITION_FOLLOWING,
+          ),
+        };
+      }),
+      { headerBeforeNavigation: true, navigationBeforeContent: true },
+    );
+    await coachPage.getByLabel("Coach profile preview").waitFor();
+    await coachPage.locator(".coach-profile-location-overview").waitFor();
+    await coachPage
       .locator('.profile-image-uploader input[type="file"]')
       .setInputFiles(fixturePath);
     await coachPage.getByText("Public coach portrait saved.").waitFor({
@@ -256,6 +329,22 @@ try {
       coachPage,
       "/storage/v1/object/public/coach-portraits/",
     );
+    await coachPage.getByText("Published", { exact: true }).waitFor();
+    await coachPage.screenshot({
+      path: `${evidenceDirectory}/coach-profile-desktop.png`,
+      fullPage: true,
+    });
+    await coachPage.setViewportSize({ width: 393, height: 852 });
+    assert.equal(
+      await coachPage.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+      true,
+    );
+    await coachPage.screenshot({
+      path: `${evidenceDirectory}/coach-profile-mobile.png`,
+      fullPage: true,
+    });
     await coachPage.goto(`${siteUrl}/coaches/daniel-park`, {
       waitUntil: "domcontentloaded",
     });
@@ -269,13 +358,13 @@ try {
 
   const scopeSummary =
     testScope === "all"
-      ? "private account upload/removal, public coach upload/removal, both shell icons, fallback precedence, mobile overflow and intended-surface rendering"
+      ? "private account upload/removal, public coach upload/removal, both shell icons, fallback precedence, redesigned account/coach profile hierarchy, desktop/mobile evidence, mobile overflow and intended-surface rendering"
       : testScope === "account"
         ? "private account upload/removal, both shell icons, private serving and mobile overflow"
         : "public coach upload/removal, both shell icons, fallback precedence and public-profile rendering";
   console.log(`Profile image rehearsal passed for ${scopeSummary}.`);
 } finally {
-  if (accountPage) {
+  if (accountPage && accountMutationOwned) {
     try {
       await accountPage.goto(`${siteUrl}/profile`, {
         waitUntil: "domcontentloaded",

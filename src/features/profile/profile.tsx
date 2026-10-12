@@ -1,11 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { BadgeCheck, UserRound } from "lucide-react";
+import {
+  CalendarClock,
+  CheckCircle2,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 import { useActor } from "@/auth/client/actor-provider";
 import { profileInitials } from "@/auth/profile-presentation";
 import { signInHref } from "@/auth/return-to";
-import { Avatar, Empty, Pill } from "@/components/ui";
+import { Avatar, Empty } from "@/components/ui";
 import type { CoachAccessProjection } from "@/domain/coaches";
 import { accountProfileImagePresentation } from "@/profile-images/presentation";
 import { ProfileImageUploader } from "./profile-image-uploader";
@@ -68,64 +73,103 @@ export function Profile({
     actor.profile.coachPortraitUrl,
   );
 
+  const profileImageSummary = actor.profile.avatarUrl
+    ? "Private account avatar set"
+    : actor.profile.coachPortraitUrl
+      ? "Public coach portrait used as fallback"
+      : "Initials used until you add an avatar";
+
   return (
-    <>
-      <div className="page-heading">
+    <div className="account-profile-workspace">
+      <header className="account-profile-header">
         <div>
-          <span className="eyebrow">YOUR ACCOUNT PROFILE</span>
+          <span className="eyebrow">ACCOUNT</span>
           <h1>
-            Your MovX account<span className="lime-text">.</span>
+            Profile<span className="lime-text">.</span>
           </h1>
-        </div>
-      </div>
-      <section className="profile-cover">
-        <span className="profile-cover-word">KEEP SHOWING UP.</span>
-        <span className="cover-spark">✳</span>
-      </section>
-      <div className="profile-heading">
-        <Avatar
-          initials={profileInitials(actor.profile.displayName)}
-          imageUrl={profileImage.imageUrl}
-          alt={
-            profileImage.source === "account"
-              ? `${actor.profile.displayName} account avatar`
-              : profileImage.source === "coach"
-                ? `${actor.profile.displayName} public coach portrait`
-                : ""
-          }
-        />
-        <div>
-          <h2>{actor.profile.displayName}</h2>
           <p>
-            <UserRound size={14} />
-            Email-backed MovX profile
+            Manage the personal picture used on signed-in MovX surfaces and
+            review this account&apos;s current access.
           </p>
-          <Pill>Account profile</Pill>
         </div>
-      </div>
-      <ProfileImageUploader
-        endpoint="/api/profile/avatar"
-        currentImageUrl={actor.profile.avatarUrl}
-        fallbackImageUrl={actor.profile.coachPortraitUrl}
-        displayName={actor.profile.displayName}
-        initials={profileInitials(actor.profile.displayName)}
-        kind="account"
-      />
-      <section className="profile-public-note account-profile-note">
-        <BadgeCheck size={24} />
-        <h2>Your profile is connected to this account.</h2>
-        <p>
-          Your upcoming sessions and retained booking history have their own
-          private schedule. Coach tools appear here only after this account has
-          entered the separate coach-application path.
-        </p>
-        <Link className="text-link" href="/sessions">
-          Open My sessions
+        <Link className="button secondary" href="/sessions">
+          <CalendarClock size={16} aria-hidden="true" /> Open My sessions
         </Link>
-      </section>
+      </header>
+
+      <div className="account-profile-layout">
+        <div className="account-profile-editor">
+          <ProfileImageUploader
+            endpoint="/api/profile/avatar"
+            currentImageUrl={actor.profile.avatarUrl}
+            fallbackImageUrl={actor.profile.coachPortraitUrl}
+            displayName={actor.profile.displayName}
+            initials={profileInitials(actor.profile.displayName)}
+            kind="account"
+          />
+          <section className="account-profile-privacy-note">
+            <ShieldCheck size={22} aria-hidden="true" />
+            <div>
+              <h2>Your account image stays private.</h2>
+              <p>
+                It appears only on signed-in account and authorized session
+                surfaces. A separate coach portrait is the only profile image
+                intended for public discovery.
+              </p>
+            </div>
+          </section>
+        </div>
+
+        <aside className="account-profile-summary">
+          <span className="eyebrow">ACCOUNT SUMMARY</span>
+          <Avatar
+            initials={profileInitials(actor.profile.displayName)}
+            imageUrl={profileImage.imageUrl}
+            alt={
+              profileImage.source === "account"
+                ? `${actor.profile.displayName} account avatar`
+                : profileImage.source === "coach"
+                  ? `${actor.profile.displayName} public coach portrait`
+                  : ""
+            }
+          />
+          <h2>{actor.profile.displayName}</h2>
+          <p>{accountProfileRole(coachAccess?.status ?? "not-applied")}</p>
+          <ul>
+            <li>
+              <CheckCircle2 size={16} aria-hidden="true" />
+              Email-backed MovX identity
+            </li>
+            <li>
+              <UserRound size={16} aria-hidden="true" />
+              {profileImageSummary}
+            </li>
+            <li>
+              <CalendarClock size={16} aria-hidden="true" />
+              Private sessions and request history available
+            </li>
+          </ul>
+        </aside>
+      </div>
       {coachEntry && <CoachAccountEntry entry={coachEntry} />}
-    </>
+    </div>
   );
+}
+
+export function accountProfileRole(status: CoachAccessProjection["status"]) {
+  switch (status) {
+    case "approved":
+    case "demo":
+      return "Client and coach account";
+    case "suspended":
+      return "Client account · coach access suspended";
+    case "pending":
+      return "Client account · coach application pending";
+    case "rejected":
+      return "Client account · coach application needs changes";
+    case "not-applied":
+      return "Client account";
+  }
 }
 
 type CoachAccountEntryContent = Readonly<{
