@@ -1,24 +1,24 @@
 # MovX Club
 
-**Find a coach. Pick a time. Request your session.**
+**Find a coach. Pick a time. Request a session—or fund a group event together.**
 
 MovX Club is a focused scheduling application for martial-arts clients and coaches. Guests discover fictional coaches and real published availability. Email-authenticated clients request one capacity-one private session, and the coach confirms one client before a booking exists. Coaches manage their public profile, training locations, location-aware recurring one-hour availability, request queue and booked schedule.
 
-This standalone scheduling repository intentionally excludes blockchain, wallets, passes, credits, token payments, group events and social/feed behavior. Historical records and migrations may describe those superseded features, but they do not define the current product or runtime. The separate [fitness-booking-social-app](https://github.com/hworldcom/fitness-booking-social-app) repository preserves the Solana hackathon product.
+Branch `hackathon/solana-group-events` extends this current scheduling application with one isolated hackathon loop: Phantom personal-wallet linking and coach-created threshold-funded group events on Solana Devnet. Participants fund one full-price spot in test EURC; deadline settlement permits one exact coach payout when the minimum succeeds or independent participant refunds when it fails. Private scheduling remains wallet- and payment-free, and passes/credits, social feeds and mainnet remain excluded.
 
-Start with the [MVP specification](docs/mvp-spec.md), the single current product contract. The scheduling-product split is recorded by completed [COR0011](tickets/archive/organisatory/COR0011-scheduling-only-product.md); hosted deployment and rehearsal remain separate operational work.
+Start with the [MVP specification](docs/mvp-spec.md), the single current branch product contract. The delivered scheduling baseline is recorded by completed [COR0011](tickets/archive/organisatory/COR0011-scheduling-only-product.md), and the hackathon extension is coordinated by current [COR0019](tickets/current/organisatory/COR0019-hackathon-solana-group-events.md). Archived marketplace records are implementation/history references, not proof that the new branch runtime is already restored.
 
 ## Repository guide
 
 | Location                                             | Responsibility                                             |
 | ---------------------------------------------------- | ---------------------------------------------------------- |
-| [docs/mvp-spec.md](docs/mvp-spec.md)                 | Current scheduling behavior and delivery contract.         |
+| [docs/mvp-spec.md](docs/mvp-spec.md)                 | Current scheduling and hackathon delivery contract.        |
 | [AGENTS.md](AGENTS.md)                               | Contributor workflow, ticket, validation and commit rules. |
 | [tickets/README.md](tickets/README.md)               | Current and archived development/coordination records.     |
 | [docs/archive/2026-09-18/](docs/archive/2026-09-18/) | Superseded product drafts retained for context only.       |
 | [supabase/README.md](supabase/README.md)             | Local database and hosted migration operations.            |
 
-## Current foundation
+## Delivered scheduling foundation
 
 Delivered reusable foundations include:
 
@@ -30,9 +30,21 @@ Delivered reusable foundations include:
 - list-first coach discovery with an OpenFreeMap-backed interactive map;
 - location-bound recurring one-hour availability, deterministic dated occurrences and a responsive compatibility calendar pending its location selector.
 
-Direct scheduling-only booking and runtime cleanup were delivered under COR0011. The approval-only request lifecycle, separate coach/client interfaces and atomic conversion of one accepted request into the confirmed booking are delivered under completed [COR0016](tickets/archive/organisatory/COR0016-coach-confirmed-booking-requests.md). The former membership, wallet, payment, group-event and social features are not current product surfaces.
+Direct scheduling-only booking and runtime cleanup were delivered under COR0011. The approval-only request lifecycle, separate coach/client interfaces and atomic conversion of one accepted request into the confirmed booking are delivered under completed [COR0016](tickets/archive/organisatory/COR0016-coach-confirmed-booking-requests.md). Wallet and group-event runtime is not yet restored merely because historical migrations or records remain; DEV0211–DEV0217 own that new delivery.
 
 The delivered contract permits multiple coach training locations, one coach-selected primary Explore marker and actual-location availability assignments. Profile location management, the location-aware calendar and primary-marker discovery are integrated under completed [COR0014](tickets/archive/organisatory/COR0014-multi-location-coach-scheduling.md).
+
+## Hackathon group-event track
+
+The adopted branch contract reuses the previously clarified and locally proven group-event rules:
+
+- Phantom is discovered through Wallet Standard, while email remains MovX login and coach authority.
+- Circle's official six-decimal Devnet EURC is the only seat token; test tokens have no financial value.
+- One wallet funds one complete spot. The platform fee payer covers SOL fees and approved rent but never supplies EURC or replaces the user's signature.
+- Funding settles only at or after its immutable deadline. Success pays the frozen coach recipient once; failure gives every contributor one independent participant-signed exact refund.
+- EventPool terms and location snapshots become immutable when bound. Coach cancellation, attendance/no-show disputes, chargebacks, waitlists, transfers and mainnet are outside the hackathon scope.
+
+[DEV0210](tickets/archive/organisatory/DEV0210-adopt-hackathon-group-event-contract.md) owns the adopted contract. Wallet, catalogue, program, sponsored Devnet integration, interface and final rehearsal remain separate DEV0211–DEV0217 tickets. Until those tickets complete, the commands below start the delivered scheduling application rather than claiming wallet/event behavior exists.
 
 ## Run locally
 
