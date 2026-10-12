@@ -69,13 +69,13 @@ export default async function Page({
   const coachRequestPage =
     requestState?.status === "authorized" ? requestState.page : null;
   const bookingContent = (
-    <>
+    <div className="coach-bookings-workspace">
       <CoachBookingRequestQueue initialPage={coachRequestPage} />
       <CoachClientCards
         bookings={coachBookings}
         referenceTime={new Date().toISOString()}
       />
-    </>
+    </div>
   );
 
   if (

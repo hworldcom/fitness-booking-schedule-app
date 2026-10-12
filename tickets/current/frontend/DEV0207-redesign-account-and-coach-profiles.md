@@ -1,11 +1,11 @@
 # Ticket DEV0207: Redesign account and coach Profiles
 
-- Status: Draft
+- Status: Ready
 - Created: 2026-10-12
 - Last updated: 2026-10-12
 - Milestone: Scheduling interface authenticated-workspace follow-up
 - Coordination: [COR0018 — Authenticated workspace redesign](../organisatory/COR0018-authenticated-workspace-redesign.md)
-- Related records: completed contract [DEV0202 — Adopt the authenticated workspace redesign contract](../../archive/organisatory/DEV0202-adopt-authenticated-workspace-redesign-contract.md), completed shell dependency [DEV0203 — Introduce the authenticated workspace shell](../../archive/frontend/DEV0203-introduce-authenticated-workspace-shell.md), coach-frame dependency [DEV0205 — Redesign coach Schedule](DEV0205-redesign-coach-schedule.md), image baseline [COR0012 — Profile images](../../archive/organisatory/COR0012-profile-images.md) and location baseline [DEV0178 — Manage coach training locations](../../archive/frontend/DEV0178-manage-coach-training-locations.md)
+- Related records: completed contract [DEV0202 — Adopt the authenticated workspace redesign contract](../../archive/organisatory/DEV0202-adopt-authenticated-workspace-redesign-contract.md), completed shell dependency [DEV0203 — Introduce the authenticated workspace shell](../../archive/frontend/DEV0203-introduce-authenticated-workspace-shell.md), completed coach-frame dependency [DEV0205 — Redesign coach Schedule](../../archive/frontend/DEV0205-redesign-coach-schedule.md), image baseline [COR0012 — Profile images](../../archive/organisatory/COR0012-profile-images.md) and location baseline [DEV0178 — Manage coach training locations](../../archive/frontend/DEV0178-manage-coach-training-locations.md)
 
 ## Objective and context
 

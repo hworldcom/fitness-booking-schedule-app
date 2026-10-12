@@ -3,6 +3,7 @@
 import {
   CalendarCheck2,
   Check,
+  MapPin,
   RotateCcw,
   ShieldAlert,
   UserRound,
@@ -75,8 +76,11 @@ export function CoachClientCards({
       <div className="coach-client-cards-heading">
         <div>
           <span className="eyebrow">BOOKED SCHEDULE</span>
-          <h2>Private sessions</h2>
-          <p>Review who booked each session and manage its current status.</p>
+          <h2>Booked sessions</h2>
+          <p>
+            Review the clients you confirmed and manage the actions available
+            for each session&apos;s current status.
+          </p>
         </div>
         <span className="coach-slot-count">
           {bookings === null
@@ -116,58 +120,65 @@ export function CoachClientCards({
                   <Avatar
                     initials={profileInitials(booking.clientDisplayName)}
                     color="blue"
-                    small
                     imageUrl={booking.clientAvatarUrl}
                     alt={`${booking.clientDisplayName}'s profile picture`}
                   />
                   <div>
                     <h3>{booking.clientDisplayName}</h3>
-                    <span>{booking.location.publicLabel}</span>
+                    <span>
+                      <MapPin size={13} aria-hidden="true" />
+                      {booking.location.publicLabel}
+                    </span>
                   </div>
                 </header>
-                <div className="coach-client-booking-heading">
+                <div className="coach-client-card-main">
                   <span>
-                    <CalendarCheck2 size={15} aria-hidden="true" />
-                    <strong>{bookingTime(booking)}</strong>
+                    <small>Session time</small>
+                    <strong>
+                      <CalendarCheck2 size={15} aria-hidden="true" />
+                      {bookingTime(booking)}
+                    </strong>
                   </span>
                   <em className={`coach-booking-status ${booking.status}`}>
                     {booking.status}
                   </em>
                 </div>
-                {cancellable && (
-                  <button
-                    type="button"
-                    className="button secondary"
-                    disabled={busyKey !== null}
-                    onClick={() =>
-                      void runAction(`cancel:${booking.id}`, () =>
-                        cancelPrivateBookingAction(booking.id),
-                      )
-                    }
-                  >
-                    <RotateCcw size={15} aria-hidden="true" />
-                    {busyKey === `cancel:${booking.id}`
-                      ? "Cancelling…"
-                      : "Cancel session"}
-                  </button>
-                )}
-                {completable && (
-                  <button
-                    type="button"
-                    className="button dark coach-complete-booking"
-                    disabled={busyKey !== null}
-                    onClick={() =>
-                      void runAction(`complete:${booking.id}`, () =>
-                        completePrivateBookingAction(booking.id),
-                      )
-                    }
-                  >
-                    <Check size={15} aria-hidden="true" />
-                    {busyKey === `complete:${booking.id}`
-                      ? "Saving…"
-                      : "Mark completed"}
-                  </button>
-                )}
+                <div className="coach-client-card-actions">
+                  {cancellable && (
+                    <button
+                      type="button"
+                      className="button secondary"
+                      disabled={busyKey !== null}
+                      onClick={() =>
+                        void runAction(`cancel:${booking.id}`, () =>
+                          cancelPrivateBookingAction(booking.id),
+                        )
+                      }
+                    >
+                      <RotateCcw size={15} aria-hidden="true" />
+                      {busyKey === `cancel:${booking.id}`
+                        ? "Cancelling…"
+                        : "Cancel session"}
+                    </button>
+                  )}
+                  {completable && (
+                    <button
+                      type="button"
+                      className="button dark coach-complete-booking"
+                      disabled={busyKey !== null}
+                      onClick={() =>
+                        void runAction(`complete:${booking.id}`, () =>
+                          completePrivateBookingAction(booking.id),
+                        )
+                      }
+                    >
+                      <Check size={15} aria-hidden="true" />
+                      {busyKey === `complete:${booking.id}`
+                        ? "Saving…"
+                        : "Mark completed"}
+                    </button>
+                  )}
+                </div>
               </article>
             );
           })}

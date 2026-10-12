@@ -72,15 +72,13 @@ function RequestIdentity({
       <Avatar
         initials={profileInitials(request.clientDisplayName)}
         color="blue"
-        small
         imageUrl={request.clientAvatarUrl}
         alt=""
       />
       <div>
         <strong>{request.clientDisplayName}</strong>
         <span>
-          <Clock3 size={13} aria-hidden="true" /> Decision by{" "}
-          {requestDeadline(request)}
+          Requested {dateTimeParts(request.createdAt, BERLIN_TIMEZONE)}
         </span>
       </div>
     </div>
@@ -220,11 +218,11 @@ export function CoachBookingRequestQueue({
       <div className="coach-request-queue-heading">
         <div>
           <span className="eyebrow">BOOKING REQUESTS</span>
-          <h2>Choose who to confirm</h2>
+          <h2>Booking requests</h2>
           <p>
-            Requests do not reserve an occurrence. Accepting one client creates
-            the confirmed booking and closes the other pending requests for that
-            time.
+            Choose a client to confirm. Requests do not reserve the time;
+            accepting one creates the booking and closes the other pending
+            requests for that occurrence.
           </p>
         </div>
         <span className="coach-slot-count">
@@ -290,22 +288,14 @@ export function CoachBookingRequestQueue({
                   {group.requests.map((request) => (
                     <li key={request.id}>
                       <RequestIdentity request={request} />
+                      <span className="coach-request-deadline">
+                        <small>Decision by</small>
+                        <strong>
+                          <Clock3 size={13} aria-hidden="true" />
+                          {requestDeadline(request)}
+                        </strong>
+                      </span>
                       <div className="coach-request-actions">
-                        <button
-                          type="button"
-                          className="button dark"
-                          disabled={busyKey !== null}
-                          onClick={() =>
-                            void runMutation(`accept:${request.id}`, () =>
-                              acceptPrivateSessionRequestAction(request.id),
-                            )
-                          }
-                        >
-                          <Check size={15} aria-hidden="true" />
-                          {busyKey === `accept:${request.id}`
-                            ? "Accepting…"
-                            : "Accept"}
-                        </button>
                         <button
                           type="button"
                           className="button secondary"
@@ -320,6 +310,21 @@ export function CoachBookingRequestQueue({
                           {busyKey === `decline:${request.id}`
                             ? "Declining…"
                             : "Decline"}
+                        </button>
+                        <button
+                          type="button"
+                          className="button dark"
+                          disabled={busyKey !== null}
+                          onClick={() =>
+                            void runMutation(`accept:${request.id}`, () =>
+                              acceptPrivateSessionRequestAction(request.id),
+                            )
+                          }
+                        >
+                          <Check size={15} aria-hidden="true" />
+                          {busyKey === `accept:${request.id}`
+                            ? "Accepting…"
+                            : "Accept"}
                         </button>
                       </div>
                     </li>

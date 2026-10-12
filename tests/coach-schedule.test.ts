@@ -254,7 +254,7 @@ test("Schedule keeps occupied status without rendering private booking detail", 
       bookingContent: createElement(
         "section",
         { id: "client-bookings" },
-        createElement("h2", null, "Private sessions"),
+        createElement("h2", null, "Booked sessions"),
         createElement("span", null, "Booking Client"),
         createElement("img", {
           src: "/api/coach/bookings/example/client-avatar",
@@ -269,7 +269,7 @@ test("Schedule keeps occupied status without rendering private booking detail", 
   assert.match(html, /Dated class times/);
   assert.match(html, /booked/);
   assert.match(html, /Reserved hour/);
-  assert.doesNotMatch(html, /Private sessions/);
+  assert.doesNotMatch(html, /Booked sessions/);
   assert.doesNotMatch(html, /Booking Client/);
   assert.doesNotMatch(html, /client-avatar/);
 });
@@ -284,7 +284,7 @@ test("Bookings renders booking detail without the Schedule editor or occurrence 
       bookingContent: createElement(
         "section",
         { id: "client-bookings" },
-        createElement("h2", null, "Private sessions"),
+        createElement("h2", null, "Booked sessions"),
         createElement("span", null, "Booking Client"),
         createElement("img", {
           src: "/api/coach/bookings/example/client-avatar",
@@ -297,7 +297,7 @@ test("Bookings renders booking detail without the Schedule editor or occurrence 
   );
 
   assert.match(html, /Run your coaching week/);
-  assert.match(html, /Private sessions/);
+  assert.match(html, /Booked sessions/);
   assert.match(html, /Booking Client/);
   assert.match(html, /client-avatar/);
   assert.match(

@@ -1193,6 +1193,221 @@
   line-height: 1.55;
 }
 
+.coach-bookings-workspace {
+  display: grid;
+  gap: 42px;
+}
+
+.coach-bookings-workspace .coach-request-queue,
+.coach-bookings-workspace .coach-client-cards {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.coach-bookings-workspace .coach-request-queue-heading,
+.coach-bookings-workspace .coach-client-cards-heading {
+  align-items: flex-end;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #dfe2d8;
+  padding-bottom: 17px;
+}
+
+.coach-bookings-workspace .coach-request-queue-heading h2,
+.coach-bookings-workspace .coach-client-cards-heading h2 {
+  margin-top: 6px;
+  color: var(--ink);
+  font-size: clamp(25px, 3vw, 34px);
+  font-weight: 620;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+.coach-bookings-workspace .coach-request-queue-heading p,
+.coach-bookings-workspace .coach-client-cards-heading p {
+  max-width: 720px;
+  margin-top: 7px;
+  color: #727d70;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.coach-bookings-workspace .coach-request-group-list {
+  gap: 12px;
+}
+
+.coach-bookings-workspace .coach-request-group {
+  border-color: #dfe2d8;
+  border-radius: 18px;
+  background: white;
+  box-shadow: 0 8px 28px rgb(31 51 38 / 3%);
+}
+
+.coach-bookings-workspace .coach-request-group > header {
+  align-items: center;
+  background: #edf4e2;
+  padding: 17px 18px;
+}
+
+.coach-bookings-workspace .coach-request-group > header strong {
+  font-size: 13px;
+}
+
+.coach-bookings-workspace .coach-request-candidates > li {
+  display: grid;
+  min-height: 74px;
+  grid-template-columns: minmax(190px, 1fr) minmax(190px, auto) auto;
+  gap: 20px;
+  padding: 15px 18px;
+}
+
+.coach-bookings-workspace .coach-request-identity {
+  gap: 11px;
+}
+
+.coach-bookings-workspace .coach-request-identity strong {
+  font-size: 12px;
+}
+
+.coach-bookings-workspace .coach-request-identity span {
+  margin-top: 3px;
+  font-size: 8px;
+}
+
+.coach-request-deadline {
+  display: grid;
+  justify-items: end;
+  gap: 3px;
+  color: #5e695a;
+  text-align: right;
+}
+
+.coach-request-deadline small {
+  color: #7b8477;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.coach-request-deadline strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.coach-bookings-workspace .coach-request-actions .button {
+  min-height: 44px;
+  border-radius: 999px;
+  padding: 8px 14px;
+}
+
+.coach-bookings-workspace .coach-request-close-trigger {
+  min-height: 44px;
+  margin: 0 18px 16px auto;
+}
+
+.coach-bookings-workspace .coach-request-history {
+  margin-top: 28px;
+  border: 1px solid #dfe2d8;
+  border-radius: 16px;
+  background: #efefe9;
+  padding: 16px 18px;
+}
+
+.coach-bookings-workspace .coach-request-history-group {
+  border-radius: 14px;
+}
+
+.coach-bookings-workspace .coach-request-history-group > header {
+  background: #f7f8f4;
+  padding: 13px 15px;
+}
+
+.coach-bookings-workspace .coach-request-history-group li {
+  padding: 13px 15px;
+}
+
+.coach-bookings-workspace .coach-client-card-grid {
+  grid-template-columns: 1fr;
+  gap: 11px;
+}
+
+.coach-bookings-workspace .coach-client-card {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(240px, 0.9fr) auto;
+  align-items: center;
+  gap: 20px;
+  border-color: #dfe2d8;
+  border-radius: 18px;
+  background: white;
+  padding: 18px;
+  box-shadow: 0 8px 28px rgb(31 51 38 / 3%);
+}
+
+.coach-bookings-workspace .coach-client-card > header {
+  gap: 11px;
+}
+
+.coach-bookings-workspace .coach-client-card h3 {
+  font-size: 14px;
+}
+
+.coach-bookings-workspace .coach-client-card header > div > span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  line-height: 1.45;
+}
+
+.coach-client-card-main {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.coach-client-card-main > span {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.coach-client-card-main > span > small {
+  color: #7b8477;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.coach-client-card-main > span > strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #34482d;
+  font-size: 10px;
+}
+
+.coach-client-card-actions {
+  display: flex;
+  min-width: 128px;
+  justify-content: flex-end;
+}
+
+.coach-client-card-actions .button {
+  min-height: 44px;
+  border-radius: 999px;
+  padding: 8px 14px;
+  white-space: nowrap;
+}
+
 @media (max-width: 760px) {
   .coach-workspace-header {
     align-items: flex-start;
@@ -1433,5 +1648,61 @@
 
   .coach-workspace-nav a svg {
     display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .coach-bookings-workspace .coach-request-candidates > li {
+    grid-template-columns: minmax(180px, 1fr) auto;
+  }
+
+  .coach-bookings-workspace .coach-request-actions {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+
+  .coach-bookings-workspace .coach-client-card {
+    grid-template-columns: minmax(210px, 1fr) minmax(220px, 1fr);
+  }
+
+  .coach-bookings-workspace .coach-client-card-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .coach-bookings-workspace {
+    gap: 36px;
+  }
+
+  .coach-bookings-workspace .coach-request-candidates > li,
+  .coach-bookings-workspace .coach-client-card {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .coach-bookings-workspace .coach-request-deadline {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .coach-bookings-workspace .coach-request-actions,
+  .coach-bookings-workspace .coach-client-card-actions {
+    grid-column: auto;
+    justify-self: stretch;
+  }
+
+  .coach-bookings-workspace .coach-client-card-main {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .coach-bookings-workspace .coach-client-card-actions {
+    width: 100%;
+  }
+
+  .coach-bookings-workspace .coach-client-card-actions .button {
+    width: 100%;
+    justify-content: center;
   }
 }

@@ -356,7 +356,12 @@ async function rehearseQueue(page, slotIds) {
   await page.goto(`${siteUrl}/coach?view=bookings`, {
     waitUntil: "domcontentloaded",
   });
-  await page.getByRole("heading", { name: "Choose who to confirm" }).waitFor();
+  await page.waitForLoadState("networkidle");
+  await page
+    .getByRole("heading", { name: "Run your coaching week." })
+    .waitFor();
+  await page.getByText("Profile published", { exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Booking requests" }).waitFor();
   await page.getByText("20 pending shown", { exact: true }).waitFor();
   await loadEveryRequestPage(page);
   await page.getByText("24 pending", { exact: true }).waitFor();
@@ -383,6 +388,8 @@ async function rehearseQueue(page, slotIds) {
   const firstAccept = pendingGroup(page, slotIds[0])
     .getByRole("button", { name: "Accept", exact: true })
     .first();
+  const firstAcceptBox = await firstAccept.boundingBox();
+  assert.ok(firstAcceptBox && firstAcceptBox.height >= 44);
   await firstAccept.focus();
   assert.equal(
     await firstAccept.evaluate((element) => element === document.activeElement),
@@ -447,6 +454,12 @@ async function rehearseQueue(page, slotIds) {
     .locator("article.coach-client-card")
     .filter({ hasText: acceptedClient })
     .waitFor();
+  const acceptedBookingCard = page
+    .locator("article.coach-client-card")
+    .filter({ hasText: acceptedClient });
+  await acceptedBookingCard
+    .getByRole("button", { name: "Cancel session" })
+    .waitFor();
 
   const closeGroup = pendingGroup(page, slotIds[2]);
   await closeGroup
@@ -475,6 +488,10 @@ async function rehearseQueue(page, slotIds) {
     .getByText("Occurrence closed", { exact: true })
     .first()
     .waitFor();
+  await page.screenshot({
+    path: `${evidenceDirectory}/coach-request-workflow-complete-desktop.png`,
+    fullPage: true,
+  });
 }
 
 await cleanupRehearsalFixtures();
