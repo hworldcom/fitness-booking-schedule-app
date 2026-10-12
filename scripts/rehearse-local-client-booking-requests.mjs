@@ -50,7 +50,8 @@ async function actorByEmail(email) {
       profile.display_name,
       participant.run_id::text as run_id,
       participant.role,
-      coach.public_slug
+      coach.public_slug,
+      coach.portrait_path
     from auth.users as auth_user
     join app.profiles as profile
       on profile.auth_user_id = auth_user.id
@@ -446,6 +447,24 @@ try {
   await requestCard(clientPage, slotIds[0])
     .getByText("Withdrawn", { exact: true })
     .waitFor();
+  const withdrawnHistoryCard = requestCard(clientPage, slotIds[0]);
+  const withdrawnCoachLink = withdrawnHistoryCard.getByRole("link", {
+    name: `View ${coach.display_name}'s coach profile`,
+  });
+  assert.equal(
+    await withdrawnCoachLink.getAttribute("href"),
+    `/coaches/${coach.public_slug}`,
+  );
+  const withdrawnCoachPortrait = withdrawnCoachLink.locator("img");
+  await withdrawnCoachPortrait.waitFor();
+  assert.equal(
+    await withdrawnCoachPortrait.getAttribute("src"),
+    coach.portrait_path,
+  );
+  assert.equal(
+    await withdrawnCoachPortrait.getAttribute("alt"),
+    `${coach.display_name}'s coach portrait`,
+  );
   await requestSession(clientPage, coach.public_slug, slotIds[0]);
 
   await coachPage.goto(siteUrl + "/coach?view=bookings", {
@@ -548,6 +567,27 @@ try {
     (await clientPage.locator(".client-session-date-tile").count()) >= 4,
     "Requests and confirmed sessions should use the shared date presentation.",
   );
+  const requestHistoryCards = clientPage.locator(
+    'section[aria-labelledby="request-history-title"] article.client-request-card',
+  );
+  const requestHistoryCount = await requestHistoryCards.count();
+  assert.ok(requestHistoryCount >= 4);
+  assert.equal(
+    await requestHistoryCards
+      .locator(`img[alt="${coach.display_name}'s coach portrait"]`)
+      .count(),
+    requestHistoryCount,
+    "Every retained request-history card should show the coach portrait.",
+  );
+  assert.equal(
+    await requestHistoryCards
+      .getByRole("link", {
+        name: `View ${coach.display_name}'s coach profile`,
+      })
+      .count(),
+    requestHistoryCount,
+    "Every retained request-history identity should link to the coach profile.",
+  );
 
   const clientText = await clientPage.locator("body").innerText();
   assert.doesNotMatch(clientText, new RegExp(competitorDisplayName, "i"));
@@ -607,7 +647,7 @@ try {
   await clientContext.close();
   await coachContext.close();
   console.log(
-    "Client request rehearsal passed for persistence, withdrawal/retry, decline/retry, acceptance, closure, expiry, confirmed-booking continuity, candidate privacy, keyboard operation and responsive layout.",
+    "Client request rehearsal passed for persistence, withdrawal/retry, decline/retry, acceptance, closure, expiry, coach portraits/profile links, confirmed-booking continuity, candidate privacy, keyboard operation and responsive layout.",
   );
 } finally {
   await browser.close();

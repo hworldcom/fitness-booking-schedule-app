@@ -165,6 +165,12 @@ export function ClientBookingRequests({
               <Avatar
                 initials={profileInitials(request.coachDisplayName)}
                 color="lavender"
+                imageUrl={request.coachPortraitUrl}
+                alt={
+                  request.coachPortraitUrl
+                    ? `${request.coachDisplayName}'s coach portrait`
+                    : ""
+                }
               />
               <span>
                 <small>Coach</small>

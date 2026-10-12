@@ -39,6 +39,7 @@ export type ClientCoachBookingRequestProjection = BookingRequestProjection &
     coachProfileId: string;
     coachDisplayName: string;
     coachSlug: string;
+    coachPortraitUrl: string | null;
   }>;
 
 export type OwnedCoachBookingRequestProjection = BookingRequestProjection &

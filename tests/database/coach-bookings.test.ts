@@ -612,6 +612,12 @@ test("more than five clients can request one occurrence without holding it", asy
       (request) => request.slotId === slotId,
     );
     assert.equal(ownRequests.length, 1);
+    assert.match(
+      ownRequests[0]!.coachPortraitUrl ?? "",
+      new RegExp(
+        `/storage/v1/object/public/coach-portraits/${coachActor.profileId}/${coachPortraitObjectId}[.]webp[?]v=`,
+      ),
+    );
     assert.equal("clientDisplayName" in ownRequests[0]!, false);
     assert.equal("clientProfileId" in ownRequests[0]!, false);
     if (actor.profileId === firstClientActor.profileId) {
@@ -685,7 +691,11 @@ test("exact and displayed-slot client projections remain actor-owned", async () 
   assert.ok(
     selected.every(
       (request) =>
-        !("clientProfileId" in request) && !("clientDisplayName" in request),
+        !("clientProfileId" in request) &&
+        !("clientDisplayName" in request) &&
+        new RegExp(
+          `/storage/v1/object/public/coach-portraits/${coachActor.profileId}/${coachPortraitObjectId}[.]webp[?]v=`,
+        ).test(request.coachPortraitUrl ?? ""),
     ),
   );
 
@@ -698,6 +708,12 @@ test("exact and displayed-slot client projections remain actor-owned", async () 
       ),
   );
   assert.equal(exact?.id, firstRequest.requestId);
+  assert.match(
+    exact?.coachPortraitUrl ?? "",
+    new RegExp(
+      `/storage/v1/object/public/coach-portraits/${coachActor.profileId}/${coachPortraitObjectId}[.]webp[?]v=`,
+    ),
+  );
   assert.equal(
     await withActorDatabaseContext(secondClientActor, (transaction) =>
       currentClientCoachBookingRequestRecord(

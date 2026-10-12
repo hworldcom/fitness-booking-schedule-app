@@ -11,7 +11,13 @@ import {
 } from "@/domain/coach-booking-requests";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
 import { isCoachPublicSlug } from "@/domain/coaches";
-import { privateBookingRequestClientAvatarUrl } from "@/profile-images/contracts";
+import { supabasePublicConfig } from "@/auth/config";
+import {
+  isOwnedProfileImageStoragePath,
+  privateBookingRequestClientAvatarUrl,
+  publicCoachPortraitUrl,
+  type CoachPortraitReference,
+} from "@/profile-images/contracts";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
 
 const DEFAULT_PAGE_SIZE = 25;
@@ -24,6 +30,9 @@ type BookingRequestRow = Readonly<{
   coach_profile_id: string;
   coach_display_name: string;
   coach_slug: string;
+  coach_portrait_source: string | null;
+  coach_portrait_path: string | null;
+  coach_portrait_updated_at: string | Date | null;
   client_profile_id: string;
   client_display_name: string;
   client_avatar_updated_at?: string | Date | null;
@@ -174,7 +183,47 @@ function mapClientRequest(
     coachProfileId: row.coach_profile_id,
     coachDisplayName: row.coach_display_name,
     coachSlug: row.coach_slug,
+    coachPortraitUrl: clientCoachPortraitUrl(row),
   });
+}
+
+function clientCoachPortraitUrl(row: BookingRequestRow) {
+  if (
+    row.coach_portrait_source === null &&
+    row.coach_portrait_path === null &&
+    row.coach_portrait_updated_at === null
+  ) {
+    return null;
+  }
+
+  const updatedAt = isoTimestamp(row.coach_portrait_updated_at);
+  if (
+    (row.coach_portrait_source !== "fixture" &&
+      row.coach_portrait_source !== "storage") ||
+    row.coach_portrait_path === null ||
+    updatedAt === null ||
+    (row.coach_portrait_source === "fixture" &&
+      row.coach_portrait_path !== `/images/coaches/${row.coach_slug}.webp`) ||
+    (row.coach_portrait_source === "storage" &&
+      !isOwnedProfileImageStoragePath(
+        row.coach_portrait_path,
+        row.coach_profile_id,
+      ))
+  ) {
+    throw new CoachBookingRequestConflictError();
+  }
+
+  const reference: CoachPortraitReference = Object.freeze({
+    source: row.coach_portrait_source,
+    path: row.coach_portrait_path,
+    updatedAt,
+  });
+  const portraitUrl = publicCoachPortraitUrl(
+    reference,
+    supabasePublicConfig()?.url ?? null,
+  );
+  if (!portraitUrl) throw new CoachBookingRequestConflictError();
+  return portraitUrl;
 }
 
 function mapCoachRequest(
@@ -367,32 +416,38 @@ export async function currentClientCoachBookingRequestRecords(
   return requestOperation(async () => {
     const rows = await transaction.execute<BookingRequestRow>(sql`
       select
-        id,
-        slot_id,
-        coach_profile_id,
-        coach_display_name,
-        coach_slug,
-        client_profile_id,
-        client_display_name,
-        status,
-        scheduled_start_at,
-        scheduled_end_at,
-        coach_timezone,
-        coach_training_location_id,
-        training_location_name,
-        location_kind,
-        gym_name,
-        public_location_label,
-        decision_deadline_at,
-        decided_at,
-        accepted_booking_id,
-        created_at,
-        updated_at
+        request.id,
+        request.slot_id,
+        request.coach_profile_id,
+        request.coach_display_name,
+        request.coach_slug,
+        coach.portrait_source as coach_portrait_source,
+        coach.portrait_path as coach_portrait_path,
+        coach.portrait_updated_at as coach_portrait_updated_at,
+        request.client_profile_id,
+        request.client_display_name,
+        request.status,
+        request.scheduled_start_at,
+        request.scheduled_end_at,
+        request.coach_timezone,
+        request.coach_training_location_id,
+        request.training_location_name,
+        request.location_kind,
+        request.gym_name,
+        request.public_location_label,
+        request.decision_deadline_at,
+        request.decided_at,
+        request.accepted_booking_id,
+        request.created_at,
+        request.updated_at
       from app.current_client_coach_booking_requests(
         ${pageSize}::integer,
         ${cursor?.createdAt ?? null}::timestamptz,
         ${cursor?.id ?? null}::uuid
-      )
+      ) as request
+      left join app.coach_profiles as coach
+        on coach.run_id = request.run_id
+        and coach.profile_id = request.coach_profile_id
     `);
     return requestPage(rows.map(mapClientRequest), pageSize);
   });
@@ -408,28 +463,35 @@ export async function currentClientCoachBookingRequestRecord(
   return requestOperation(async () => {
     const rows = await transaction.execute<BookingRequestRow>(sql`
       select
-        id,
-        slot_id,
-        coach_profile_id,
-        coach_display_name,
-        coach_slug,
-        client_profile_id,
-        client_display_name,
-        status,
-        scheduled_start_at,
-        scheduled_end_at,
-        coach_timezone,
-        coach_training_location_id,
-        training_location_name,
-        location_kind,
-        gym_name,
-        public_location_label,
-        decision_deadline_at,
-        decided_at,
-        accepted_booking_id,
-        created_at,
-        updated_at
+        request.id,
+        request.slot_id,
+        request.coach_profile_id,
+        request.coach_display_name,
+        request.coach_slug,
+        coach.portrait_source as coach_portrait_source,
+        coach.portrait_path as coach_portrait_path,
+        coach.portrait_updated_at as coach_portrait_updated_at,
+        request.client_profile_id,
+        request.client_display_name,
+        request.status,
+        request.scheduled_start_at,
+        request.scheduled_end_at,
+        request.coach_timezone,
+        request.coach_training_location_id,
+        request.training_location_name,
+        request.location_kind,
+        request.gym_name,
+        request.public_location_label,
+        request.decision_deadline_at,
+        request.decided_at,
+        request.accepted_booking_id,
+        request.created_at,
+        request.updated_at
       from app.current_client_coach_booking_request(${requestId}::uuid)
+        as request
+      left join app.coach_profiles as coach
+        on coach.run_id = request.run_id
+        and coach.profile_id = request.coach_profile_id
     `);
     if (rows.length > 1) throw new CoachBookingRequestConflictError();
     return rows[0] ? mapClientRequest(rows[0]) : null;
@@ -444,33 +506,39 @@ export async function currentClientPendingCoachBookingRequestRecords(
   return requestOperation(async () => {
     const rows = await transaction.execute<BookingRequestRow>(sql`
       select
-        id,
-        slot_id,
-        coach_profile_id,
-        coach_display_name,
-        coach_slug,
-        client_profile_id,
-        client_display_name,
-        status,
-        scheduled_start_at,
-        scheduled_end_at,
-        coach_timezone,
-        coach_training_location_id,
-        training_location_name,
-        location_kind,
-        gym_name,
-        public_location_label,
-        decision_deadline_at,
-        decided_at,
-        accepted_booking_id,
-        created_at,
-        updated_at
+        request.id,
+        request.slot_id,
+        request.coach_profile_id,
+        request.coach_display_name,
+        request.coach_slug,
+        coach.portrait_source as coach_portrait_source,
+        coach.portrait_path as coach_portrait_path,
+        coach.portrait_updated_at as coach_portrait_updated_at,
+        request.client_profile_id,
+        request.client_display_name,
+        request.status,
+        request.scheduled_start_at,
+        request.scheduled_end_at,
+        request.coach_timezone,
+        request.coach_training_location_id,
+        request.training_location_name,
+        request.location_kind,
+        request.gym_name,
+        request.public_location_label,
+        request.decision_deadline_at,
+        request.decided_at,
+        request.accepted_booking_id,
+        request.created_at,
+        request.updated_at
       from app.current_client_pending_coach_booking_requests(
         array[${sql.join(
           selection.map((slotId) => sql`${slotId}::uuid`),
           sql`, `,
         )}]::uuid[]
-      )
+      ) as request
+      left join app.coach_profiles as coach
+        on coach.run_id = request.run_id
+        and coach.profile_id = request.coach_profile_id
     `);
     return Object.freeze(rows.map(mapClientRequest));
   });

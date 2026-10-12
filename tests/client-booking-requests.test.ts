@@ -19,6 +19,7 @@ function request(
     coachProfileId: "93000000-0000-4000-8000-000000000001",
     coachDisplayName: "Test Coach",
     coachSlug: "test-coach",
+    coachPortraitUrl: "/images/coaches/test-coach.webp",
     status,
     scheduledStartAt: "2026-10-13T10:00:00.000Z",
     scheduledEndAt: "2026-10-13T11:00:00.000Z",
