@@ -206,6 +206,12 @@
   font-weight: 500;
 }
 
+.mobile-explore-view-switch,
+.mobile-map-recovery,
+.mobile-map-back {
+  display: none;
+}
+
 .coach-card-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -2569,6 +2575,69 @@
 }
 
 @media (max-width: 980px) {
+  .mobile-explore-view-switch {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 16px;
+    border: 1px solid #dfe5da;
+    border-radius: 15px;
+    background: #edf1e9;
+    padding: 5px;
+  }
+
+  .mobile-explore-view-switch > a,
+  .mobile-explore-view-disabled {
+    display: flex;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 11px;
+    color: #63705f;
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .mobile-explore-view-switch > a.active {
+    background: var(--coach-forest);
+    box-shadow: 0 6px 16px rgb(25 49 38 / 14%);
+    color: var(--coach-lime);
+  }
+
+  .mobile-explore-view-switch small {
+    display: grid;
+    min-width: 21px;
+    height: 21px;
+    place-items: center;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 14%);
+    font-size: 8px;
+  }
+
+  .mobile-explore-view-disabled {
+    cursor: not-allowed;
+    opacity: 0.62;
+  }
+
+  .mobile-map-recovery {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin-bottom: 16px;
+    border: 1px solid #d8e2cf;
+    border-radius: 13px;
+    background: #f0f4eb;
+    padding: 12px 14px;
+    color: #5a6c51;
+    font-size: 10px;
+    line-height: 1.55;
+  }
+
+  .mobile-map-recovery strong {
+    color: #34482d;
+  }
+
   .coach-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2602,15 +2671,61 @@
     grid-template-columns: 1fr;
   }
 
+  .coach-explore-layout.mobile-view-list > .coach-map-panel,
+  .coach-explore-layout.mobile-view-map.map-unavailable > .coach-map-panel {
+    display: none;
+  }
+
+  .coach-explore-layout.mobile-view-map > .coach-card-grid {
+    display: none;
+  }
+
+  .coach-explore-layout.mobile-view-map.map-unavailable > .coach-card-grid {
+    display: grid;
+  }
+
   .coach-map-panel {
     position: static;
     overflow: hidden;
     max-height: none;
   }
 
+  .mobile-view-map .coach-map-panel {
+    display: block;
+    margin-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+
+  .mobile-map-back {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 7px;
+    justify-self: start;
+    border-radius: 999px;
+    background: #edf3e5;
+    padding: 9px 13px;
+    color: #405838;
+    font-size: 10px;
+    font-weight: 850;
+  }
+
+  .mobile-view-map .coach-map-detail:focus {
+    outline: 3px solid #91ad61;
+    outline-offset: -3px;
+  }
+
   .coach-map-canvas,
   .coach-map-state {
     min-height: 440px;
+  }
+
+  .mobile-view-map .coach-map-canvas,
+  .mobile-view-map .coach-map-state {
+    min-height: max(420px, calc(100dvh - 235px - env(safe-area-inset-bottom)));
+  }
+
+  .mobile-view-map .coach-map-panel.has-selection .coach-map-canvas {
+    min-height: max(360px, calc(100dvh - 410px - env(safe-area-inset-bottom)));
   }
 }
 

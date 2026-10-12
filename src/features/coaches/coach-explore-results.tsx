@@ -2,13 +2,28 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback, useMemo, useRef, useState } from "react";
-import { ArrowRight, MapPinned, MapPinOff } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  List,
+  Map as MapIcon,
+  MapPinned,
+  MapPinOff,
+} from "lucide-react";
 import { profileInitials } from "@/auth/profile-presentation";
-import type { CoachDirectoryEntry } from "@/domain/coaches";
+import type {
+  CoachDirectoryEntry,
+  CoachDirectoryFilters,
+} from "@/domain/coaches";
 import { Avatar } from "@/components/ui";
 import { CompactCoachCard } from "./compact-coach-card";
 import { CoachTodayAvailability } from "./coach-today-availability";
+import {
+  coachDirectoryHref,
+  type CoachExploreView,
+} from "./marketplace-search-contract";
 
 const LazyLocationResultsMap = dynamic(
   () =>
@@ -31,12 +46,20 @@ const LazyLocationResultsMap = dynamic(
 
 export function CoachExploreResults({
   entries,
+  filters,
+  view,
 }: {
   entries: readonly CoachDirectoryEntry[];
+  filters: CoachDirectoryFilters;
+  view: CoachExploreView;
 }) {
+  const router = useRouter();
   const [selectedCoachId, setSelectedCoachId] = useState<string | null>(null);
   const [providerUnavailable, setProviderUnavailable] = useState(false);
   const cardRefs = useRef(new Map<string, HTMLElement>());
+  const selectedPreviewRef = useRef<HTMLElement>(null);
+  const listHref = coachDirectoryHref(filters, {}, "list");
+  const mapHref = coachDirectoryHref(filters, {}, "map");
   const mapPoints = useMemo(
     () =>
       entries.map(({ coach, primaryLocation }) =>
@@ -58,6 +81,7 @@ export function CoachExploreResults({
 
   const selectFromMap = useCallback((profileId: string) => {
     setSelectedCoachId(profileId);
+    if (window.matchMedia("(max-width: 980px)").matches) return;
     const card = cardRefs.current.get(profileId);
     card?.focus({ preventScroll: true });
     card?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -65,7 +89,38 @@ export function CoachExploreResults({
   const markProviderUnavailable = useCallback(() => {
     setProviderUnavailable(true);
     setSelectedCoachId(null);
-  }, []);
+    if (window.matchMedia("(max-width: 980px)").matches && view === "map") {
+      router.replace(listHref, { scroll: false });
+    }
+  }, [listHref, router, view]);
+
+  const selectFromCard = useCallback(
+    (profileId: string) => {
+      setSelectedCoachId(profileId);
+      if (window.matchMedia("(max-width: 980px)").matches && view !== "map") {
+        router.push(mapHref, { scroll: false });
+      }
+    },
+    [mapHref, router, view],
+  );
+
+  useEffect(() => {
+    if (
+      view !== "map" ||
+      !selectedEntry ||
+      !window.matchMedia("(max-width: 980px)").matches
+    ) {
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => {
+      selectedPreviewRef.current?.focus({ preventScroll: true });
+      selectedPreviewRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [selectedEntry, view]);
 
   const mapStatus = providerUnavailable ? "provider" : "ready";
 
@@ -80,8 +135,47 @@ export function CoachExploreResults({
         </span>
         <small>Ordered by coach name</small>
       </div>
+      <nav
+        className="mobile-explore-view-switch"
+        aria-label="Explore results view"
+      >
+        <Link
+          href={listHref}
+          scroll={false}
+          className={view === "list" ? "active" : ""}
+          aria-current={view === "list" ? "page" : undefined}
+        >
+          <List size={18} aria-hidden="true" />
+          <span>List</span>
+          <small>{entries.length}</small>
+        </Link>
+        {mapStatus === "ready" ? (
+          <Link
+            href={mapHref}
+            scroll={false}
+            className={view === "map" ? "active" : ""}
+            aria-current={view === "map" ? "page" : undefined}
+          >
+            <MapIcon size={18} aria-hidden="true" />
+            <span>Map</span>
+          </Link>
+        ) : (
+          <span className="mobile-explore-view-disabled" aria-disabled="true">
+            <MapPinOff size={18} aria-hidden="true" />
+            <span>Map unavailable</span>
+          </span>
+        )}
+      </nav>
+      {providerUnavailable && (
+        <div className="mobile-map-recovery" role="status">
+          <MapPinOff size={18} aria-hidden="true" />
+          <span>
+            <strong>Map unavailable.</strong> Showing the complete coach list.
+          </span>
+        </div>
+      )}
       <div
-        className={`coach-explore-layout ${
+        className={`coach-explore-layout mobile-view-${view} ${
           mapStatus === "provider" ? "map-unavailable" : ""
         }`}
       >
@@ -101,7 +195,7 @@ export function CoachExploreResults({
                 onFocusCapture={() => setSelectedCoachId(coach.profileId)}
                 onShowOnMap={
                   mapStatus === "ready"
-                    ? () => setSelectedCoachId(coach.profileId)
+                    ? () => selectFromCard(coach.profileId)
                     : undefined
                 }
               />
@@ -116,6 +210,9 @@ export function CoachExploreResults({
           aria-label="Coach location map"
         >
           <div className="coach-map-heading">
+            <Link className="mobile-map-back" href={listHref} scroll={false}>
+              <ArrowLeft size={16} aria-hidden="true" /> Back to list
+            </Link>
             <div>
               <span className="eyebrow">COACH-SELECTED LOCATIONS</span>
               <h2>Map of matching coaches</h2>
@@ -130,6 +227,8 @@ export function CoachExploreResults({
               className="coach-map-detail"
               aria-label={`${selectedEntry.coach.displayName} map details`}
               aria-live="polite"
+              ref={selectedPreviewRef}
+              tabIndex={-1}
             >
               <header>
                 <Avatar

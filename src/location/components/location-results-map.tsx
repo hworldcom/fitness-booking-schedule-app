@@ -69,6 +69,11 @@ export function LocationResultsMap({
         cooperativeGestures: true,
       });
       mapRef.current = map;
+      const resizeObserver =
+        typeof ResizeObserver === "undefined"
+          ? null
+          : new ResizeObserver(() => map.resize());
+      resizeObserver?.observe(containerRef.current);
       map.addControl(
         new maplibregl.NavigationControl({ showCompass: false }),
         "top-right",
@@ -80,6 +85,7 @@ export function LocationResultsMap({
       map.on("error", handleError);
       return () => {
         active = false;
+        resizeObserver?.disconnect();
         map.off("error", handleError);
         for (const entry of markers.values()) removeMarkerEntry(entry);
         markers.clear();

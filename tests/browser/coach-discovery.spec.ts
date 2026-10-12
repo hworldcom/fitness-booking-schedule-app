@@ -203,9 +203,11 @@ test("Explore keeps every coach and profile link when the map provider fails", a
   );
   await page.goto("/explore");
 
-  await expect(page.getByText("Map unavailable", { exact: true })).toBeVisible({
-    timeout: 30_000,
-  });
+  await expect(
+    page
+      .getByLabel("Coach location map")
+      .getByText("Map unavailable", { exact: true }),
+  ).toBeVisible({ timeout: 30_000 });
   const cards = page.locator(".compact-coach-card.result");
   await expect(cards).toHaveCount(5);
   await expect(
@@ -228,6 +230,219 @@ test("Explore keeps every coach and profile link when the map provider fails", a
   await expect(
     page.getByText(/same coach results remain available in the list/i),
   ).toBeVisible();
+});
+
+test("desktop Explore keeps both result surfaces for a mobile view URL", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "Desktop non-regression only");
+  await page.goto("/explore?view=map");
+
+  await expect(page.locator(".compact-coach-card.result")).toHaveCount(5);
+  await expect(page.getByLabel("Coach location map")).toBeVisible();
+  await expect(
+    page.getByRole("navigation", { name: "Explore results view" }),
+  ).toBeHidden();
+});
+
+test("mobile Explore preserves filters and browser history while switching views", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile", "Mobile view-state only");
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/explore?discipline=Boxing");
+
+  const viewSwitch = page.getByRole("navigation", {
+    name: "Explore results view",
+  });
+  const listView = viewSwitch.getByRole("link", { name: /List/ });
+  const mapView = viewSwitch.getByRole("link", { name: "Map", exact: true });
+  await expect(listView).toHaveAttribute("aria-current", "page");
+  await expect(
+    page.locator(".compact-coach-card.result").first(),
+  ).toBeVisible();
+  await expect(page.getByLabel("Coach location map")).toBeHidden();
+
+  await mapView.click();
+  await expect(page).toHaveURL(/discipline=Boxing.*view=map/);
+  await expect(mapView).toHaveAttribute("aria-current", "page");
+  await expect(page.getByLabel("Coach location map")).toBeVisible();
+  await expect(page.locator(".compact-coach-card.result").first()).toBeHidden();
+  const mapViewport = await page
+    .locator(".coach-map-canvas")
+    .evaluate((map) => {
+      const bounds = map.getBoundingClientRect();
+      return { height: bounds.height, viewportHeight: window.innerHeight };
+    });
+  expect(mapViewport.height / mapViewport.viewportHeight).toBeGreaterThan(0.5);
+  await expect(page.locator(".maplibregl-ctrl-attrib")).toBeVisible();
+  await page.screenshot({
+    path: testInfo.outputPath("mobile-map-view.png"),
+  });
+
+  await page.reload();
+  await expect(page).toHaveURL(/discipline=Boxing.*view=map/);
+  await expect(page.getByLabel("Coach location map")).toBeVisible();
+  await page.getByRole("link", { name: "Back to list" }).click();
+  await expect(page).toHaveURL(/discipline=Boxing.*view=list/);
+  await expect(
+    page.locator(".compact-coach-card.result").first(),
+  ).toBeVisible();
+
+  await page.goBack();
+  await expect(page).toHaveURL(/discipline=Boxing.*view=map/);
+  await expect(page.getByLabel("Coach location map")).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/explore\?discipline=Boxing$/);
+  await expect(
+    page.locator(".compact-coach-card.result").first(),
+  ).toBeVisible();
+
+  await page.goto("/explore?discipline=Boxing&view=grid");
+  await expect(page).toHaveURL(/\/explore\?discipline=Boxing$/);
+  await expect(listView).toHaveAttribute("aria-current", "page");
+
+  await page.setViewportSize({ width: 430, height: 932 });
+  const controlSizes = await viewSwitch.locator("a").evaluateAll((controls) =>
+    controls.map((control) => {
+      const bounds = control.getBoundingClientRect();
+      return { width: bounds.width, height: bounds.height };
+    }),
+  );
+  for (const size of controlSizes) {
+    expect(size.width).toBeGreaterThanOrEqual(44);
+    expect(size.height).toBeGreaterThanOrEqual(44);
+  }
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+
+  await page.setViewportSize({ width: 667, height: 375 });
+  await viewSwitch.getByRole("link", { name: "Map", exact: true }).click();
+  await expect(page.getByRole("link", { name: "Back to list" })).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+});
+
+test("mobile card selection opens a focused truthful map preview", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile", "Mobile map preview only");
+  await page.setViewportSize({ width: 430, height: 932 });
+  await page.goto("/explore?discipline=Boxing");
+
+  const danielCard = page.locator(".compact-coach-card.result").filter({
+    has: page.getByRole("heading", { name: "Daniel Park" }),
+  });
+  await danielCard
+    .getByRole("button", { name: "Show Daniel Park on the map" })
+    .click();
+  await expect(page).toHaveURL(/discipline=Boxing.*view=map/);
+
+  const danielPreview = page.getByRole("region", {
+    name: "Daniel Park map details",
+  });
+  await expect(danielPreview).toBeVisible();
+  await expect(danielPreview).toBeFocused();
+  await expect(
+    danielPreview.getByText("Primary training location", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    danielPreview.getByRole("link", {
+      name: "View full profile and schedule",
+    }),
+  ).toHaveAttribute("href", "/coaches/daniel-park");
+  await expect(
+    danielPreview.getByRole("button", { name: /request|book/i }),
+  ).toHaveCount(0);
+  const selectedLayout = await page.evaluate(() => {
+    const preview = document.querySelector(".coach-map-detail");
+    const map = document.querySelector(".coach-map-canvas");
+    if (!preview || !map) return null;
+    const previewBounds = preview.getBoundingClientRect();
+    const mapBounds = map.getBoundingClientRect();
+    return {
+      mapHeight: mapBounds.height,
+      viewportHeight: window.innerHeight,
+      previewBottom: previewBounds.bottom,
+      mapTop: mapBounds.top,
+    };
+  });
+  expect(selectedLayout).not.toBeNull();
+  expect(
+    selectedLayout!.mapHeight / selectedLayout!.viewportHeight,
+  ).toBeGreaterThan(0.45);
+  expect(selectedLayout!.previewBottom).toBeLessThanOrEqual(
+    selectedLayout!.mapTop + 1,
+  );
+  await expect(page.locator(".maplibregl-ctrl-attrib")).toBeVisible();
+  await page.screenshot({
+    path: testInfo.outputPath("mobile-selected-coach-map.png"),
+  });
+
+  const mapPanel = page.getByLabel("Coach location map");
+  for (let zoomStep = 0; zoomStep < 3; zoomStep += 1) {
+    await mapPanel.getByRole("button", { name: "Zoom out" }).click();
+    await page.waitForTimeout(250);
+  }
+  const samMarker = page.getByRole("button", { name: /Select Sam Lee at/ });
+  await expect(samMarker).toBeVisible({ timeout: 30_000 });
+  await expect
+    .poll(async () => {
+      const marker = await samMarker.boundingBox();
+      const canvas = await page
+        .getByLabel("Matching coach locations")
+        .boundingBox();
+      return Boolean(
+        marker &&
+        canvas &&
+        marker.x >= canvas.x &&
+        marker.y >= canvas.y &&
+        marker.x + marker.width <= canvas.x + canvas.width &&
+        marker.y + marker.height <= canvas.y + canvas.height,
+      );
+    })
+    .toBe(true);
+  await samMarker.click();
+  const samPreview = page.getByRole("region", { name: "Sam Lee map details" });
+  await expect(samPreview).toBeVisible();
+  await expect(samPreview).toBeFocused();
+  await expect(
+    samPreview.getByText("No availability today", { exact: true }),
+  ).toBeVisible();
+});
+
+test("mobile map failure replaces the failed view with the complete list", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile", "Mobile recovery only");
+  await page.route("https://tiles.openfreemap.org/**", (route) =>
+    route.abort("failed"),
+  );
+  await page.goto("/explore?discipline=Boxing&view=map");
+
+  await expect(page).toHaveURL(/discipline=Boxing.*view=list/, {
+    timeout: 30_000,
+  });
+  await expect(
+    page.locator(".compact-coach-card.result").first(),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Map unavailable. Showing the complete coach list."),
+  ).toBeVisible();
+  const viewSwitch = page.getByRole("navigation", {
+    name: "Explore results view",
+  });
+  await expect(
+    viewSwitch.getByRole("link", { name: "Map", exact: true }),
+  ).toHaveCount(0);
+  await expect(viewSwitch.getByText("Map unavailable")).toBeVisible();
+  await expect(page.getByLabel("Coach location map")).toBeHidden();
 });
 
 test("selected coach profile location stays geographically anchored while zooming out", async ({

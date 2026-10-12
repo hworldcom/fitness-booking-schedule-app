@@ -5,7 +5,7 @@
 - Last updated: 2026-10-12
 - Milestone: Scheduling interface public-marketplace follow-up
 - Coordination: [COR0017 — Public marketplace redesign](../../current/organisatory/COR0017-public-marketplace-redesign.md)
-- Related records: implementation peers [DEV0196 — Introduce the public marketplace shell](../frontend/DEV0196-introduce-public-marketplace-shell.md), [DEV0197 — Share public marketplace search](../frontend/DEV0197-share-public-marketplace-search.md), [DEV0198 — Build the search-first marketplace home](../frontend/DEV0198-build-search-first-marketplace-home.md), [DEV0199 — Redesign desktop coach Explore](../frontend/DEV0199-redesign-desktop-coach-explore.md), [DEV0200 — Add mobile Explore map/list state](../../current/frontend/DEV0200-add-mobile-explore-map-list-state.md) and [DEV0201 — Polish public marketplace accessibility](../../current/frontend/DEV0201-polish-public-marketplace-accessibility.md)
+- Related records: implementation peers [DEV0196 — Introduce the public marketplace shell](../frontend/DEV0196-introduce-public-marketplace-shell.md), [DEV0197 — Share public marketplace search](../frontend/DEV0197-share-public-marketplace-search.md), [DEV0198 — Build the search-first marketplace home](../frontend/DEV0198-build-search-first-marketplace-home.md), [DEV0199 — Redesign desktop coach Explore](../frontend/DEV0199-redesign-desktop-coach-explore.md), [DEV0200 — Add mobile Explore map/list state](../frontend/DEV0200-add-mobile-explore-map-list-state.md) and [DEV0201 — Polish public marketplace accessibility](../../current/frontend/DEV0201-polish-public-marketplace-accessibility.md)
 
 ## Objective and context
 

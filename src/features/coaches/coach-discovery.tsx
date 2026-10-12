@@ -17,8 +17,15 @@ import {
 import { CoachExploreResults } from "./coach-explore-results";
 import { CoachProfileLocations } from "./coach-profile-locations";
 import { PublicMarketplaceSearch } from "./public-marketplace-search";
+import type { CoachExploreView } from "./marketplace-search-contract";
 
-export function CoachDirectory({ state }: { state: CoachDirectoryState }) {
+export function CoachDirectory({
+  state,
+  view = "list",
+}: {
+  state: CoachDirectoryState;
+  view?: CoachExploreView;
+}) {
   return (
     <div className="coach-discovery">
       <header className="coach-directory-hero">
@@ -66,7 +73,11 @@ export function CoachDirectory({ state }: { state: CoachDirectoryState }) {
           </Link>
         </section>
       ) : (
-        <CoachExploreResults entries={state.entries} />
+        <CoachExploreResults
+          entries={state.entries}
+          filters={state.filters}
+          view={view}
+        />
       )}
     </div>
   );

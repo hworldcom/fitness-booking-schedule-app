@@ -7,8 +7,10 @@ import {
   normalizeCoachDirectoryFilters,
 } from "@/domain/coaches";
 import {
+  canonicalCoachExploreView,
   coachDirectoryHref,
   isCanonicalCoachDirectorySearch,
+  normalizeCoachExploreView,
 } from "@/features/coaches/marketplace-search-contract";
 import { PublicMarketplaceSearch } from "@/features/coaches/public-marketplace-search";
 
@@ -40,6 +42,25 @@ test("marketplace search URLs contain only normalized supported filters", () => 
     coachDirectoryHref(normalizeCoachDirectoryFilters({})),
     "/explore",
   );
+  assert.equal(
+    coachDirectoryHref(FILTERS, {}, "map"),
+    "/explore?q=patient+footwork&discipline=Muay+Thai&location=Kreuzberg&view=map",
+  );
+  assert.equal(
+    coachDirectoryHref(FILTERS, { discipline: null }, "list"),
+    "/explore?q=patient+footwork&location=Kreuzberg&view=list",
+  );
+});
+
+test("mobile Explore view state is bounded and defaults safely to list", () => {
+  assert.equal(normalizeCoachExploreView({}), "list");
+  assert.equal(normalizeCoachExploreView({ view: "list" }), "list");
+  assert.equal(normalizeCoachExploreView({ view: "map" }), "map");
+  assert.equal(normalizeCoachExploreView({ view: "grid" }), "list");
+  assert.equal(normalizeCoachExploreView({ view: ["map", "list"] }), "list");
+  assert.equal(canonicalCoachExploreView({}), null);
+  assert.equal(canonicalCoachExploreView({ view: "map" }), "map");
+  assert.equal(canonicalCoachExploreView({ view: "grid" }), null);
 });
 
 test("canonical search rejects blank, repeated, legacy and unknown parameters", () => {
@@ -60,6 +81,8 @@ test("canonical search rejects blank, repeated, legacy and unknown parameters", 
     { discipline: "Yoga" },
     { service: "private-training" },
     { when: "tomorrow" },
+    { view: "grid" },
+    { view: ["map", "list"] },
   ]) {
     assert.equal(
       isCanonicalCoachDirectorySearch(
@@ -69,6 +92,20 @@ test("canonical search rejects blank, repeated, legacy and unknown parameters", 
       false,
     );
   }
+
+  assert.equal(
+    isCanonicalCoachDirectorySearch(
+      {
+        q: "patient footwork",
+        discipline: "Muay Thai",
+        location: "Kreuzberg",
+        view: "map",
+      },
+      FILTERS,
+      "map",
+    ),
+    true,
+  );
 
   const overlongQuery = "x".repeat(100);
   const boundedFilters = normalizeCoachDirectoryFilters({ q: overlongQuery });
