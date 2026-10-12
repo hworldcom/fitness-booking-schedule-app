@@ -342,47 +342,54 @@ function WorkingWeekEditor({
 
   return (
     <section className="coach-working-week" aria-busy={pending}>
-      <div className="coach-working-week-heading">
-        <div>
-          <span className="eyebrow">YOUR REPEATING SCHEDULE</span>
-          <h2>Your working week</h2>
-          <p>
-            Choose each hour you normally teach. Selected cells repeat every
-            week in {coach.timezone}; you do not need to add future dates one by
-            one.
-          </p>
-        </div>
-        <span className="coach-slot-count">
-          {draftAssignments.size} selected hour
-          {draftAssignments.size === 1 ? "" : "s"}
-          {dirty ? " · Unsaved" : ""}
-        </span>
-      </div>
-
-      <div className="coach-week-context">
-        <CalendarClock size={18} aria-hidden="true" />
-        <span>
-          <strong>Every selected cell is one hour.</strong>
-          <small>
-            Removing one stops future open times. Held or booked classes stay
-            unchanged.
-          </small>
-        </span>
-        <MapPin size={18} aria-hidden="true" />
-        <span>
-          <strong>{selectedLocation.publicName}</strong>
-          <small>
-            Every cell keeps its assigned venue. New assignments use the
-            location tool below; later profile edits do not move existing
-            classes.
-          </small>
-        </span>
-      </div>
-
       <form onSubmit={saveSchedule}>
-        <ActionResult state={state} />
         <input type="hidden" name="selectedRules" value={selectedRules} />
         <input type="hidden" name="expectedRules" value={expectedRules} />
+        <div className="coach-working-week-heading">
+          <div>
+            <span className="eyebrow">YOUR REPEATING SCHEDULE</span>
+            <h2>Weekly schedule</h2>
+            <p>
+              Choose times first, then save once. Every selected one-hour block
+              repeats in {coach.timezone} and belongs to a training location.
+            </p>
+          </div>
+          <div className="coach-week-heading-actions">
+            <span className="coach-slot-count">
+              {draftAssignments.size} selected hour
+              {draftAssignments.size === 1 ? "" : "s"}
+              {dirty ? " · Unsaved" : ""}
+            </span>
+            <button
+              type="submit"
+              className="button dark"
+              disabled={!dirty || pending || pendingDecision !== null}
+            >
+              <Save size={16} aria-hidden="true" />
+              {pending ? "Saving schedule…" : "Save schedule"}
+            </button>
+          </div>
+        </div>
+
+        <ActionResult state={state} />
+        <div className="coach-week-context">
+          <CalendarClock size={18} aria-hidden="true" />
+          <span>
+            <strong>Every selected cell is one hour.</strong>
+            <small>
+              Removing one stops future open times. Held or booked classes stay
+              unchanged.
+            </small>
+          </span>
+          <MapPin size={18} aria-hidden="true" />
+          <span>
+            <strong>{selectedLocation.publicName}</strong>
+            <small>
+              New assignments use the location tool below. Existing cells keep
+              their saved venue until you explicitly move them.
+            </small>
+          </span>
+        </div>
         <div className="coach-week-location-tools">
           <label className="coach-week-location-selector">
             <span>
@@ -486,14 +493,6 @@ function WorkingWeekEditor({
               ? "Your changes are only on this screen until you save."
               : "Your displayed working week is saved."}
           </p>
-          <button
-            type="submit"
-            className="button dark"
-            disabled={!dirty || pending || pendingDecision !== null}
-          >
-            <Save size={16} aria-hidden="true" />
-            {pending ? "Saving schedule…" : "Save schedule"}
-          </button>
         </div>
         <label className="coach-week-mobile-picker">
           <span>Day</span>
@@ -689,28 +688,45 @@ export function CoachAvailabilityPanel({
 }) {
   return (
     <div className="coach-workspace">
-      <CoachWorkspaceNavigation active={view} />
       <header className="coach-workspace-header">
         <div>
           <span className="eyebrow">COACH WORKSPACE</span>
-          <h1>
-            {view === "bookings"
-              ? "Review your bookings"
-              : "Set your working week"}
-            <span className="lime-text">.</span>
-          </h1>
+          <h1>Run your coaching week.</h1>
           <p>
-            {view === "bookings"
-              ? `Welcome, ${ownerDisplayName}. See who booked each private session and manage the actions available for its current status.`
-              : `Welcome, ${ownerDisplayName}. Choose the one-hour times you normally teach once, and MovX keeps the next seven days ready for clients. Nothing here tracks your live location.`}
+            Welcome, {ownerDisplayName}. Schedule locations, review requests and
+            maintain your public presence.
           </p>
         </div>
-        {coach?.visibility === "visible" && (
-          <Link className="button secondary" href={`/coaches/${coach.slug}`}>
-            <Eye size={16} aria-hidden="true" /> View public profile
-          </Link>
-        )}
+        <div className="coach-workspace-header-actions">
+          <div
+            className={`coach-publication-state ${coach?.visibility ?? "missing"}`}
+          >
+            <span aria-hidden="true" />
+            <span>
+              <strong>
+                {coach?.visibility === "visible"
+                  ? "Profile published"
+                  : coach
+                    ? "Profile hidden"
+                    : "Profile not set up"}
+              </strong>
+              <small>
+                {coach?.visibility === "visible"
+                  ? "Visible in Explore"
+                  : coach
+                    ? "Not visible in Explore"
+                    : "Complete your coach profile"}
+              </small>
+            </span>
+          </div>
+          {coach?.visibility === "visible" && (
+            <Link className="button secondary" href={`/coaches/${coach.slug}`}>
+              <Eye size={16} aria-hidden="true" /> View public profile
+            </Link>
+          )}
+        </div>
       </header>
+      <CoachWorkspaceNavigation active={view} />
 
       {view === "bookings" && coach ? (
         bookingContent

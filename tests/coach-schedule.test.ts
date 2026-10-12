@@ -184,8 +184,10 @@ test("coach working week renders one keyboard-operable one-hour control per cell
     }),
   );
 
-  assert.match(html, /Set your working week/);
-  assert.match(html, /Your working week/);
+  assert.match(html, /Run your coaching week/);
+  assert.match(html, /Profile published/);
+  assert.match(html, /Visible in Explore/);
+  assert.match(html, /Weekly schedule/);
   assert.match(html, /Europe\/Berlin/);
   assert.match(html, /Tempelhofer Feld/);
   assert.match(html, /Assignment location/);
@@ -235,8 +237,8 @@ test("coach working week renders one keyboard-operable one-hour control per cell
   assert.doesNotMatch(html, /datetime-local/);
   assert.doesNotMatch(html, /Publish slot/);
   assert.ok(
-    html.indexOf('class="coach-workspace-nav"') <
-      html.indexOf('class="coach-workspace-header"'),
+    html.indexOf('class="coach-workspace-header"') <
+      html.indexOf('class="coach-workspace-nav"'),
   );
   assert.match(html, /aria-current="page" class="active" href="\/coach"/);
   assert.match(html, /href="\/coach\?view=bookings"/);
@@ -294,7 +296,7 @@ test("Bookings renders booking detail without the Schedule editor or occurrence 
     }),
   );
 
-  assert.match(html, /Review your bookings/);
+  assert.match(html, /Run your coaching week/);
   assert.match(html, /Private sessions/);
   assert.match(html, /Booking Client/);
   assert.match(html, /client-avatar/);
@@ -302,12 +304,12 @@ test("Bookings renders booking detail without the Schedule editor or occurrence 
     html,
     /aria-current="page" class="active" href="\/coach\?view=bookings"/,
   );
-  assert.doesNotMatch(html, /Your working week/);
+  assert.doesNotMatch(html, /Weekly schedule/);
   assert.doesNotMatch(html, /Dated class times/);
   assert.doesNotMatch(html, /Save schedule/);
   assert.ok(
-    html.indexOf('class="coach-workspace-nav"') <
-      html.indexOf('class="coach-workspace-header"'),
+    html.indexOf('class="coach-workspace-header"') <
+      html.indexOf('class="coach-workspace-nav"'),
   );
 });
 
@@ -354,6 +356,6 @@ test("hidden coach profile keeps the recurring editor unavailable", () => {
   );
 
   assert.match(html, /Publish your profile before offering times/);
-  assert.doesNotMatch(html, /Your working week/);
+  assert.doesNotMatch(html, /Weekly schedule/);
   assert.equal((html.match(/<button/g) ?? []).length, 0);
 });

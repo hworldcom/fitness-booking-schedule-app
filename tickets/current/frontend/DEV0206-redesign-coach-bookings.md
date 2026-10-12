@@ -1,11 +1,11 @@
 # Ticket DEV0206: Redesign coach Bookings
 
-- Status: Draft
+- Status: Ready
 - Created: 2026-10-12
 - Last updated: 2026-10-12
 - Milestone: Scheduling interface authenticated-workspace follow-up
 - Coordination: [COR0018 — Authenticated workspace redesign](../organisatory/COR0018-authenticated-workspace-redesign.md)
-- Related records: completed contract [DEV0202 — Adopt the authenticated workspace redesign contract](../../archive/organisatory/DEV0202-adopt-authenticated-workspace-redesign-contract.md), coach-frame dependency [DEV0205 — Redesign coach Schedule](DEV0205-redesign-coach-schedule.md), request baseline [DEV0189 — Add the coach booking-request queue](../../archive/frontend/DEV0189-add-coach-booking-request-queue.md) and booking-avatar baseline [DEV0169 — Show client avatars in coach bookings](../../archive/frontend/DEV0169-show-client-avatars-in-coach-bookings.md)
+- Related records: completed contract [DEV0202 — Adopt the authenticated workspace redesign contract](../../archive/organisatory/DEV0202-adopt-authenticated-workspace-redesign-contract.md), completed coach-frame dependency [DEV0205 — Redesign coach Schedule](../../archive/frontend/DEV0205-redesign-coach-schedule.md), request baseline [DEV0189 — Add the coach booking-request queue](../../archive/frontend/DEV0189-add-coach-booking-request-queue.md) and booking-avatar baseline [DEV0169 — Show client avatars in coach bookings](../../archive/frontend/DEV0169-show-client-avatars-in-coach-bookings.md)
 
 ## Objective and context
 

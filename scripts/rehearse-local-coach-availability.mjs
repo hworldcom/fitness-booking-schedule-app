@@ -373,7 +373,12 @@ async function rehearseAvailability(
   secondaryGymName,
 ) {
   await page.goto(`${siteUrl}/coach`, { waitUntil: "domcontentloaded" });
-  await page.getByRole("heading", { name: "Set your working week." }).waitFor();
+  await page.waitForLoadState("networkidle");
+  await page
+    .getByRole("heading", { name: "Run your coaching week." })
+    .waitFor();
+  await page.getByText("Profile published", { exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Weekly schedule" }).waitFor();
   await assertCoachPrimaryNavigation(page);
   let scheduleMutationRequests = 0;
   const countScheduleMutation = (request) => {
@@ -474,7 +479,7 @@ async function rehearseAvailability(
   await page.goto(`${siteUrl}${publicProfileHref}`, {
     waitUntil: "domcontentloaded",
   });
-  await page.getByRole("heading", { name: "2 open hours." }).waitFor();
+  await page.getByRole("heading", { name: "2 scheduled hours." }).waitFor();
   await page.getByText(workingDay.weekday, { exact: false }).first().waitFor();
   await page.getByText(primaryGymName, { exact: true }).last().waitFor();
   await page.getByText(secondaryGymName, { exact: true }).last().waitFor();
@@ -483,7 +488,7 @@ async function rehearseAvailability(
     fullPage: true,
   });
 
-  await page.goto(`${siteUrl}/coach`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${siteUrl}/coach`, { waitUntil: "networkidle" });
   const removePrimaryCell = page.getByRole("button", {
     name: `Remove ${primaryGymName} from ${workingDay.weekday} ${workingDay.firstHour}–11:00`,
   });
@@ -571,9 +576,17 @@ async function rehearseAvailability(
   await page.goto(`${siteUrl}${publicProfileHref}`, {
     waitUntil: "domcontentloaded",
   });
-  await page
-    .getByRole("heading", { name: "No open times right now." })
-    .waitFor();
+  const publicScheduleHeading = page.locator("#open-slots-title");
+  await publicScheduleHeading.waitFor();
+  assert.equal(await publicScheduleHeading.textContent(), "2 scheduled hours.");
+  const closedPublicSlots = page
+    .locator(".coach-bookable-slot-list > li")
+    .filter({ hasText: "Closed by coach" });
+  assert.equal(await closedPublicSlots.count(), 2);
+  assert.equal(
+    await page.getByRole("button", { name: "Request session" }).count(),
+    0,
+  );
   page.off("request", countScheduleMutation);
 }
 
