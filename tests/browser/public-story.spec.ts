@@ -9,32 +9,79 @@ test("home presents the focused scheduling loop", async ({
   );
   await expect(
     page.getByRole("heading", {
-      name: "Find the right coach. Request one clear hour.",
+      name: "Find your coach. Request a time that works.",
     }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", {
-      name: "Discovery and scheduling in four steps.",
+      name: "A first look at the directory.",
     }),
   ).toBeVisible();
   await expect(
-    page.getByText("See real open hours", { exact: true }),
+    page.getByRole("heading", {
+      name: "Three steps from search to a clear answer.",
+    }),
   ).toBeVisible();
   await expect(
-    page.getByText("Request coach confirmation", { exact: true }),
+    page.getByText("Pick a published hour", { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText(
-      "Sign in by email and request any published hour before training starts.",
-      { exact: true },
-    ),
+    page.getByText("Request confirmation", { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "See how scheduling works" }),
+    page.getByText(/request stays pending until the coach accepts it/i),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "How coach confirmation works" }),
   ).toHaveAttribute("href", "/how-it-works");
+  const previewGrid = page.locator(".home-coach-preview-grid");
+  const previewState = page.locator(".home-coach-discovery-state");
+  await expect(previewGrid.or(previewState)).toBeVisible();
+  if (await previewGrid.isVisible()) {
+    const cards = previewGrid.locator(".compact-coach-card");
+    expect(await cards.count()).toBeGreaterThan(0);
+    expect(await cards.count()).toBeLessThanOrEqual(3);
+    const firstCard = cards.first();
+    const profileLink = firstCard.getByRole("link", {
+      name: /View profile and schedule/,
+    });
+    await expect(profileLink).toHaveAttribute(
+      "href",
+      /^\/coaches\/[a-z0-9-]+$/,
+    );
+    await expect(
+      firstCard.getByText(/Verified coach|Demo coach/, { exact: true }),
+    ).toBeVisible();
+    if ((await cards.count()) > 1) {
+      await expect(cards.nth(1).locator(".avatar img")).toHaveCount(0);
+      await expect(cards.nth(1).locator(".avatar")).not.toBeEmpty();
+    }
+    await profileLink.click();
+    await expect(page).toHaveURL(/\/coaches\/[a-z0-9-]+$/);
+    await page.goBack();
+    await expect(
+      page.getByRole("heading", {
+        name: "Find your coach. Request a time that works.",
+      }),
+    ).toBeVisible();
+  } else {
+    await expect(
+      previewState.getByRole("heading", {
+        name: /Coach previews are temporarily unavailable|No public coaches yet/,
+      }),
+    ).toBeVisible();
+  }
+  await expect(
+    page
+      .locator(".marketplace-home-coach-cta")
+      .getByRole("link", { name: "Become a coach" }),
+  ).toHaveAttribute(
+    "href",
+    "/sign-in?intent=coach&returnTo=%2Fprofile%2Fcoach",
+  );
   const copy = await page.locator("main").innerText();
   expect(copy).not.toMatch(
-    /Solana|wallet|EURC|credits|group funding|pass purchase|24 hours/i,
+    /Solana|wallet|EURC|credits|group funding|pass purchase|24 hours|near you|rating|price/i,
   );
   expect(
     await page.evaluate(
@@ -45,6 +92,34 @@ test("home presents the focused scheduling loop", async ({
     path: testInfo.outputPath("scheduling-story-home.png"),
     fullPage: true,
   });
+});
+
+test("home marketplace remains usable at the adopted review widths", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  for (const width of [375, 430, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    await expect(
+      page.getByRole("form", { name: "Search coaches" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        name: "A first look at the directory.",
+      }),
+    ).toBeVisible();
+    await expect(
+      page
+        .locator(".marketplace-home-coach-cta")
+        .getByRole("link", { name: "Become a coach" }),
+    ).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+  }
 });
 
 test("how it works explains authoritative scheduling transitions", async ({

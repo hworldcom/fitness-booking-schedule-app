@@ -8,50 +8,33 @@
   padding: 14px 0 48px;
 }
 
-.coach-hero {
+.marketplace-home-hero {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(330px, 0.85fr);
+  grid-template-columns: minmax(0, 0.82fr) minmax(560px, 1.18fr);
   align-items: center;
-  gap: clamp(38px, 6vw, 76px);
-  min-height: 570px;
+  gap: clamp(34px, 5vw, 64px);
   overflow: hidden;
   border-radius: 26px;
   background: var(--story-forest);
-  padding: clamp(38px, 6vw, 70px);
+  padding: clamp(34px, 5vw, 58px);
   color: #fff;
   isolation: isolate;
 }
 
-.coach-hero::before,
-.coach-hero::after {
+.marketplace-home-hero::before {
   position: absolute;
   z-index: -1;
+  top: -210px;
+  right: -130px;
+  width: 480px;
+  height: 480px;
   border-radius: 50%;
+  background: rgb(114 162 105 / 20%);
   content: "";
 }
 
-.coach-hero::before {
-  top: -180px;
-  right: -130px;
-  width: 440px;
-  height: 440px;
-  background: rgb(114 162 105 / 20%);
-}
-
-.coach-hero::after {
-  right: 13%;
-  bottom: -250px;
-  width: 390px;
-  height: 390px;
-  border: 1px solid rgb(200 239 142 / 15%);
-}
-
-.coach-hero-copy {
-  max-width: 660px;
-}
-
-.coach-hero .eyebrow,
+.marketplace-home-hero .eyebrow,
 .coach-devnet-story .eyebrow,
 .coach-story-cta .eyebrow,
 .how-story-hero .eyebrow,
@@ -59,15 +42,15 @@
   color: var(--story-lime);
 }
 
-.coach-hero h1,
+.marketplace-home-hero h1,
 .how-story-hero h1 {
   margin: 18px 0 24px;
-  font-size: clamp(44px, 5.8vw, 69px);
+  font-size: clamp(43px, 5.4vw, 64px);
   line-height: 0.98;
-  letter-spacing: -3.4px;
+  letter-spacing: -3.1px;
 }
 
-.coach-hero-copy > p,
+.marketplace-home-hero-copy > p,
 .how-story-hero > div:first-child > p {
   max-width: 650px;
   color: #d4ddd5;
@@ -75,187 +58,177 @@
   line-height: 1.75;
 }
 
-.coach-story-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 11px;
-  margin-top: 30px;
-}
-
-.coach-button-ghost {
-  border: 1px solid rgb(255 255 255 / 32%);
-  color: #fff;
-}
-
-.coach-button-ghost:hover {
-  background: rgb(255 255 255 / 8%);
-}
-
-.coach-preview-note {
+.marketplace-home-confirmation-note {
   display: flex;
   align-items: flex-start;
   gap: 9px;
-  margin-top: 27px;
+  margin-top: 24px;
   color: #c8d3ca;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   line-height: 1.6;
 }
 
-.coach-preview-note svg {
+.marketplace-home-confirmation-note svg {
   color: var(--story-lime);
 }
 
-.coach-hero-visual {
-  position: relative;
-  display: grid;
-  gap: 12px;
-  border: 1px solid rgb(255 255 255 / 13%);
-  border-radius: 24px;
-  background: rgb(255 255 255 / 7%);
-  padding: 19px;
+.marketplace-home-how-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 22px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.marketplace-home-how-link:hover {
+  color: var(--story-lime);
+}
+
+.marketplace-home-search-panel {
+  min-width: 0;
+  border-radius: 22px;
+  background: #f4f6f0;
+  padding: clamp(22px, 3vw, 31px);
+  color: var(--story-forest);
   box-shadow: 0 28px 70px rgb(0 0 0 / 16%);
-  backdrop-filter: blur(12px);
 }
 
-.coach-home-marketplace-search {
-  margin-top: 18px;
-  border: 1px solid #dfe5da;
-  border-radius: 24px;
-  background: #f1f4ed;
-  padding: clamp(28px, 5vw, 48px);
+.marketplace-home-search-panel > .eyebrow {
+  color: #5d7155;
 }
 
-.coach-home-search-heading {
-  display: grid;
-  max-width: 900px;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 0.72fr);
+.marketplace-home-search-panel > h2 {
+  margin: 7px 0 5px;
+  font-size: clamp(27px, 3vw, 36px);
+  letter-spacing: -1.6px;
+}
+
+.marketplace-home-search-panel > p {
+  max-width: 560px;
+  color: #687267;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.marketplace-home-search-panel .marketplace-search {
+  margin: 20px 0 0;
+}
+
+.marketplace-home-search-panel .coach-filters {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  box-shadow: none;
+}
+
+.marketplace-home-search-panel .coach-filters .button {
+  align-self: stretch;
+}
+
+.home-coach-discovery {
+  padding: clamp(62px, 8vw, 92px) clamp(3px, 3vw, 34px) 0;
+}
+
+.home-coach-discovery-heading {
+  display: flex;
   align-items: end;
-  gap: 8px 40px;
+  justify-content: space-between;
+  gap: 28px;
 }
 
-.coach-home-search-heading .eyebrow {
-  grid-column: 1 / -1;
+.home-coach-discovery-heading > div {
+  max-width: 720px;
 }
 
-.coach-home-search-heading h2 {
-  margin: 4px 0 0;
+.home-coach-discovery-heading h2,
+.marketplace-home-coach-cta h2 {
+  margin: 11px 0 12px;
   font-size: clamp(30px, 4vw, 46px);
   line-height: 1.05;
   letter-spacing: -2px;
 }
 
-.coach-home-search-heading > p {
+.home-coach-discovery-heading p,
+.marketplace-home-coach-cta p {
   color: #697268;
   font-size: 13px;
   line-height: 1.8;
 }
 
-.coach-home-marketplace-search .marketplace-search {
-  margin-bottom: 0;
+.home-coach-discovery-heading > .text-link {
+  flex: 0 0 auto;
+  margin-bottom: 7px;
 }
 
-.coach-visual-label {
-  padding: 3px 5px 4px;
-  color: var(--story-lime);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.09em;
+.home-coach-discovery-summary {
+  margin: 28px 0 12px;
+  color: #687267;
+  font-size: 10px;
+  font-weight: 750;
 }
 
-.coach-location-preview,
-.coach-week-preview,
-.coach-pass-preview,
-.coach-group-preview {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  border-radius: 16px;
-  background: var(--story-paper);
-  padding: 16px;
-  color: var(--story-forest);
-}
-
-.coach-week-preview {
-  justify-content: space-between;
-  background: #eef5e8;
-}
-
-.coach-pass-preview {
-  background: var(--story-lime);
-}
-
-.coach-group-preview {
-  background: #ede7f6;
-}
-
-.coach-location-preview small,
-.coach-week-preview small,
-.coach-pass-preview small,
-.coach-group-preview small {
-  display: block;
-  margin-bottom: 3px;
-  color: #687466;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-}
-
-.coach-location-preview strong,
-.coach-week-preview strong,
-.coach-pass-preview strong,
-.coach-group-preview strong {
-  display: block;
-  font-family: var(--font-display);
-  font-size: 13px;
-  line-height: 1.35;
-}
-
-.coach-location-icon,
-.coach-pass-count,
-.coach-group-count {
+.home-coach-preview-grid {
   display: grid;
-  flex: 0 0 auto;
-  place-items: center;
-  width: 43px;
-  height: 43px;
-  border-radius: 50%;
-  background: var(--story-forest);
-  color: var(--story-lime);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
 }
 
-.coach-pass-count {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.coach-group-count {
-  background: #4a3d59;
-  color: #eef6d9;
-}
-
-.coach-time-chip {
-  display: inline-flex;
-  flex: 0 0 auto;
+.home-coach-discovery-state {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 5px;
-  border-radius: 999px;
+  gap: 17px;
+  margin-top: 28px;
+  border: 1px solid #dce4d5;
+  border-radius: 20px;
+  background: #f3f6ef;
+  padding: clamp(22px, 4vw, 34px);
+  color: #4b6141;
+}
+
+.home-coach-discovery-state h3 {
+  margin-bottom: 4px;
+  font-size: 20px;
+}
+
+.home-coach-discovery-state p {
+  max-width: 670px;
+  color: #687267;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.marketplace-home-coach-cta {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(22px, 4vw, 42px);
+  margin-top: clamp(62px, 8vw, 92px);
+  border-radius: 24px;
+  background: #eaf2e2;
+  padding: clamp(29px, 5vw, 52px);
+}
+
+.marketplace-home-coach-cta-icon {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
   background: #fff;
-  padding: 7px 9px;
-  font-size: 9px;
-  font-weight: 800;
+  color: #48613c;
 }
 
-.coach-hero-visual > p {
-  padding: 4px 5px 1px;
-  color: #c5d0c7;
-  font-size: 9px;
-  line-height: 1.65;
+.marketplace-home-coach-cta > div {
+  max-width: 690px;
 }
 
-.coach-story-section,
-.coach-two-sides {
+.marketplace-home-coach-cta .button {
+  white-space: nowrap;
+}
+
+.coach-story-section {
   padding: clamp(62px, 8vw, 92px) clamp(3px, 3vw, 34px) 0;
 }
 
@@ -293,6 +266,10 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 13px;
   margin-top: 36px;
+}
+
+.coach-step-grid.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .coach-step-card {
@@ -452,74 +429,6 @@
 .how-group-story {
   border-color: #ddd6e8;
   background: #f7f3fb;
-}
-
-.coach-benefit-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-  margin-top: 32px;
-}
-
-.coach-benefit-card {
-  position: relative;
-  min-height: 290px;
-  overflow: hidden;
-  border: 1px solid #ddd6e8;
-  border-radius: 22px;
-  background: #f1ebf7;
-  padding: clamp(26px, 4vw, 40px);
-}
-
-.coach-benefit-card.coach {
-  border-color: #d0dfc1;
-  background: #edf4e7;
-}
-
-.coach-benefit-card .eyebrow {
-  margin-bottom: 13px;
-}
-
-.coach-benefit-card h3 {
-  max-width: 420px;
-  margin-bottom: 22px;
-  font-size: clamp(24px, 3vw, 34px);
-}
-
-.coach-benefit-card ul {
-  display: grid;
-  gap: 11px;
-  max-width: 470px;
-  list-style: none;
-}
-
-.coach-benefit-card li {
-  display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
-  align-items: center;
-  color: #656b62;
-  font-size: 11px;
-  line-height: 1.6;
-}
-
-.coach-benefit-card li svg {
-  box-sizing: content-box;
-  border-radius: 50%;
-  background: #fff;
-  padding: 3px;
-  color: #445b35;
-}
-
-.coach-benefit-icon {
-  position: absolute;
-  top: 28px;
-  right: 28px;
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: rgb(255 255 255 / 70%);
 }
 
 .coach-devnet-story {
@@ -726,8 +635,27 @@
 }
 
 @media (max-width: 1050px) {
-  .coach-step-grid {
+  .marketplace-home-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .marketplace-home-hero-copy {
+    max-width: 760px;
+  }
+
+  .home-coach-preview-grid,
+  .coach-step-grid,
+  .coach-step-grid.three {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .marketplace-home-coach-cta {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .marketplace-home-coach-cta .button {
+    grid-column: 2;
+    justify-self: start;
   }
 
   .coach-pass-story,
@@ -751,13 +679,8 @@
 }
 
 @media (max-width: 900px) {
-  .coach-hero,
   .how-story-hero {
     grid-template-columns: 1fr;
-  }
-
-  .coach-hero-visual {
-    max-width: 580px;
   }
 
   .how-details-grid {
@@ -778,51 +701,59 @@
     padding-top: 3px;
   }
 
-  .coach-hero,
+  .marketplace-home-hero,
   .how-story-hero {
     min-height: 0;
     border-radius: 22px;
     padding: 31px 22px;
   }
 
-  .coach-home-marketplace-search {
-    border-radius: 20px;
-    padding: 27px 20px;
+  .marketplace-home-search-panel {
+    border-radius: 18px;
+    padding: 20px;
   }
 
-  .coach-home-search-heading {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-
-  .coach-home-search-heading .eyebrow {
-    grid-column: auto;
-  }
-
-  .coach-home-search-heading h2 {
-    font-size: 34px;
-  }
-
-  .coach-hero h1,
+  .marketplace-home-hero h1,
   .how-story-hero h1 {
     font-size: clamp(40px, 12vw, 53px);
     letter-spacing: -2.6px;
   }
 
-  .coach-story-actions .button {
+  .marketplace-home-search-panel .coach-filters,
+  .home-coach-preview-grid,
+  .coach-step-grid,
+  .coach-step-grid.three,
+  .marketplace-home-coach-cta {
+    grid-template-columns: 1fr;
+  }
+
+  .home-coach-discovery-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .home-coach-discovery-heading > .text-link {
+    margin: 0;
+  }
+
+  .home-coach-discovery-state {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .home-coach-discovery-state .button {
+    grid-column: 1 / -1;
     width: 100%;
   }
 
-  .coach-week-preview {
-    align-items: flex-start;
-    flex-direction: column;
+  .marketplace-home-coach-cta {
+    text-align: left;
   }
 
-  .coach-step-grid,
-  .coach-benefit-grid,
-  .coach-devnet-story ol,
-  .coach-story-cta {
-    grid-template-columns: 1fr;
+  .marketplace-home-coach-cta .button {
+    grid-column: auto;
+    justify-self: stretch;
+    width: 100%;
   }
 
   .coach-step-card {
@@ -853,14 +784,9 @@
   }
 
   .coach-story-section,
-  .coach-two-sides {
+  .home-coach-discovery {
     padding-right: 0;
     padding-left: 0;
-  }
-
-  .coach-benefit-icon {
-    position: static;
-    margin-bottom: 22px;
   }
 
   .coach-story-cta .button {
@@ -873,15 +799,9 @@
 }
 
 @media (max-width: 390px) {
-  .coach-hero h1,
+  .marketplace-home-hero h1,
   .how-story-hero h1 {
     font-size: 38px;
-  }
-
-  .coach-location-preview,
-  .coach-pass-preview,
-  .coach-group-preview {
-    align-items: flex-start;
   }
 
   .coach-pass-options article {

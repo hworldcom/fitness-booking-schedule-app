@@ -3,18 +3,26 @@ import {
   ArrowRight,
   CalendarCheck2,
   CalendarDays,
-  Check,
   Clock3,
-  Compass,
-  MapPin,
   ShieldCheck,
   UserRoundSearch,
   UsersRound,
 } from "lucide-react";
-import { normalizeCoachDirectoryFilters } from "@/domain/coaches";
+import {
+  normalizeCoachDirectoryFilters,
+  type CoachDirectoryState,
+} from "@/domain/coaches";
+import { HomeCoachDiscovery } from "@/features/coaches/home-coach-discovery";
 import { PublicMarketplaceSearch } from "@/features/coaches/public-marketplace-search";
 
 const emptyMarketplaceSearch = normalizeCoachDirectoryFilters({});
+
+type StoryStep = Readonly<{
+  number: string;
+  title: string;
+  description: string;
+  Icon: typeof UserRoundSearch;
+}>;
 
 const schedulingSteps = [
   {
@@ -45,17 +53,41 @@ const schedulingSteps = [
       "Clients or coaches can cancel future sessions, and coaches complete elapsed sessions.",
     Icon: Clock3,
   },
-] as const;
+] as const satisfies readonly StoryStep[];
+
+const homeSchedulingSteps = [
+  {
+    number: "01",
+    title: "Find your coach",
+    description:
+      "Compare public profiles, disciplines and coach-selected primary training places.",
+    Icon: UserRoundSearch,
+  },
+  {
+    number: "02",
+    title: "Pick a published hour",
+    description:
+      "Choose one exact time and place from the coach’s real database-backed schedule.",
+    Icon: CalendarDays,
+  },
+  {
+    number: "03",
+    title: "Request confirmation",
+    description:
+      "Your request stays pending until the coach accepts it. It is not an instant booking.",
+    Icon: CalendarCheck2,
+  },
+] as const satisfies readonly StoryStep[];
 
 function StoryStepGrid({
   steps = schedulingSteps,
 }: {
-  steps?: typeof schedulingSteps;
+  steps?: readonly StoryStep[];
 }) {
   return (
-    <div className="coach-step-grid">
+    <div className={`coach-step-grid ${steps.length === 3 ? "three" : ""}`}>
       {steps.map(({ number, title, description, Icon }) => (
-        <article key={number}>
+        <article className="coach-step-card" key={number}>
           <span className="coach-step-number">{number}</span>
           <Icon size={23} aria-hidden="true" />
           <h3>{title}</h3>
@@ -66,172 +98,89 @@ function StoryStepGrid({
   );
 }
 
-export function CoachStoryHome() {
+export function CoachStoryHome({
+  directory,
+}: {
+  directory: CoachDirectoryState;
+}) {
   return (
     <div className="coach-story">
-      <section className="coach-hero" aria-labelledby="coach-hero-title">
-        <div className="coach-hero-copy">
+      <section
+        className="marketplace-home-hero"
+        aria-labelledby="coach-hero-title"
+      >
+        <div className="marketplace-home-hero-copy">
           <span className="eyebrow">
-            COACH DISCOVERY · COACH-CONFIRMED SCHEDULING
+            PRIVATE MARTIAL-ARTS COACHING · BERLIN
           </span>
           <h1 id="coach-hero-title">
-            Find the right coach. Request one clear hour.
+            Find your coach. Request a time that works.
           </h1>
           <p>
-            Explore martial-arts coaches, compare their confirmed training
-            places and choose from real published availability. Email sign-in is
-            all you need to request a private session.
+            Search public coach profiles by name, focus, discipline or training
+            place. Choose from real published availability when you open a full
+            profile.
           </p>
-          <div className="coach-story-actions">
-            <Link className="button lime" href="/explore">
-              Explore coaches <ArrowRight size={17} aria-hidden="true" />
-            </Link>
-            <Link className="button coach-button-ghost" href="/how-it-works">
-              See how scheduling works
-            </Link>
-          </div>
-          <div className="coach-preview-note">
+          <div className="marketplace-home-confirmation-note">
             <ShieldCheck size={17} aria-hidden="true" />
             <span>
-              Public product preview · fictional coaches and locations
+              A request is pending until the coach confirms it. No instant
+              booking is promised.
             </span>
           </div>
+          <Link className="marketplace-home-how-link" href="/how-it-works">
+            How coach confirmation works
+            <ArrowRight size={16} aria-hidden="true" />
+          </Link>
         </div>
-        <div className="coach-hero-visual" aria-label="Scheduling preview">
-          <span className="coach-visual-label">ONE FOCUSED LOOP</span>
-          <div className="coach-location-preview">
-            <span className="coach-location-icon" aria-hidden="true">
-              <MapPin size={22} />
-            </span>
-            <span>
-              <small>DISCOVER</small>
-              <strong>A coach and confirmed training place</strong>
-            </span>
-          </div>
-          <div className="coach-week-preview">
-            <span>
-              <small>SCHEDULE</small>
-              <strong>Published one-hour availability</strong>
-            </span>
-            <span className="coach-time-chip">
-              <Clock3 size={14} aria-hidden="true" /> One hour
-            </span>
-          </div>
-          <div className="coach-group-preview">
-            <span className="coach-group-count" aria-hidden="true">
-              <CalendarCheck2 size={21} />
-            </span>
-            <span>
-              <small>REQUEST</small>
-              <strong>Pending first · confirmed by the coach</strong>
-            </span>
-          </div>
+        <div className="marketplace-home-search-panel">
+          <span className="eyebrow">START YOUR SEARCH</span>
+          <h2>Coach, focus or place.</h2>
           <p>
-            Availability and bookings come from PostgreSQL. Empty and
-            unavailable states stay explicit.
+            These are the filters MovX can verify today. Search opens the full
+            directory.
           </p>
+          <PublicMarketplaceSearch filters={emptyMarketplaceSearch} />
         </div>
       </section>
 
-      <section
-        className="coach-home-marketplace-search"
-        aria-labelledby="home-marketplace-search-title"
-      >
-        <div className="coach-home-search-heading">
-          <span className="eyebrow">DISCOVER COACHES</span>
-          <h2 id="home-marketplace-search-title">
-            Search by coach, focus or place.
-          </h2>
-          <p>
-            Start with the filters MovX can verify today. Search opens the full
-            coach directory.
-          </p>
-        </div>
-        <PublicMarketplaceSearch filters={emptyMarketplaceSearch} />
-      </section>
+      <HomeCoachDiscovery state={directory} />
 
       <section className="coach-story-section" aria-labelledby="loop-title">
         <div className="coach-section-heading">
           <span className="eyebrow">HOW IT WORKS</span>
-          <h2 id="loop-title">Discovery and scheduling in four steps.</h2>
+          <h2 id="loop-title">Three steps from search to a clear answer.</h2>
           <p>
-            The coach, place, exact time and booking status remain connected.
+            The coach, place, exact hour and pending status remain connected.
           </p>
         </div>
-        <StoryStepGrid />
+        <StoryStepGrid steps={homeSchedulingSteps} />
       </section>
 
-      <section className="coach-two-sides" aria-labelledby="two-sides-title">
-        <div className="coach-section-heading">
-          <span className="eyebrow">BUILT FOR BOTH SIDES</span>
-          <h2 id="two-sides-title">One schedule, clear permissions.</h2>
+      <section
+        className="marketplace-home-coach-cta"
+        aria-labelledby="home-coach-cta-title"
+      >
+        <span className="marketplace-home-coach-cta-icon" aria-hidden="true">
+          <UsersRound size={27} />
+        </span>
+        <div>
+          <span className="eyebrow">COACH ON MOVX</span>
+          <h2 id="home-coach-cta-title">
+            Publish your places and decide which requests to confirm.
+          </h2>
+          <p>
+            Build a private application first. Approved coaches can publish a
+            profile, location-aware availability and manage their own request
+            queue.
+          </p>
         </div>
-        <div className="coach-benefit-grid">
-          <article className="coach-benefit-card member">
-            <span className="coach-benefit-icon" aria-hidden="true">
-              <Compass size={23} />
-            </span>
-            <span className="eyebrow">FOR CLIENTS</span>
-            <h3>Choose and manage your private sessions.</h3>
-            <ul>
-              <li>
-                <Check size={15} aria-hidden="true" /> Compare coaches, places
-                and open times
-              </li>
-              <li>
-                <Check size={15} aria-hidden="true" /> Request one exact future
-                hour before training starts
-              </li>
-              <li>
-                <Check size={15} aria-hidden="true" /> Cancel your future
-                confirmed booking
-              </li>
-            </ul>
-          </article>
-          <article className="coach-benefit-card coach">
-            <span className="coach-benefit-icon" aria-hidden="true">
-              <UsersRound size={23} />
-            </span>
-            <span className="eyebrow">FOR COACHES</span>
-            <h3>Apply, get approved and confirm requested time.</h3>
-            <ul>
-              <li>
-                <Check size={15} aria-hidden="true" /> Prepare a private coach
-                application and profile
-              </li>
-              <li>
-                <Check size={15} aria-hidden="true" /> Publish recurring
-                one-hour availability
-              </li>
-              <li>
-                <Check size={15} aria-hidden="true" /> Cancel future or complete
-                elapsed sessions
-              </li>
-            </ul>
-            <Link
-              className="text-link"
-              href="/sign-in?intent=coach&returnTo=%2Fprofile%2Fcoach"
-            >
-              Become a coach <ArrowRight size={15} aria-hidden="true" />
-            </Link>
-          </article>
-        </div>
-      </section>
-
-      <section className="coach-final-cta">
-        <span className="eyebrow">READY TO EXPLORE?</span>
-        <h2>Start with a coach and an open hour.</h2>
-        <div className="coach-story-actions">
-          <Link className="button lime" href="/explore">
-            Browse schedules <ArrowRight size={17} aria-hidden="true" />
-          </Link>
-          <Link
-            className="button coach-button-ghost"
-            href="/sign-in?intent=coach&returnTo=%2Fprofile%2Fcoach"
-          >
-            Apply to coach
-          </Link>
-        </div>
+        <Link
+          className="button lime"
+          href="/sign-in?intent=coach&returnTo=%2Fprofile%2Fcoach"
+        >
+          Become a coach <ArrowRight size={16} aria-hidden="true" />
+        </Link>
       </section>
     </div>
   );

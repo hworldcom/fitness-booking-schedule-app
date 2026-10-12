@@ -449,6 +449,137 @@
   outline-offset: 2px;
 }
 
+.compact-coach-card {
+  display: flex;
+  min-width: 0;
+  min-height: 390px;
+  flex-direction: column;
+  gap: 16px;
+  border: 1px solid #dfe5da;
+  border-radius: 20px;
+  background: #fff;
+  padding: 20px;
+  box-shadow: 0 14px 38px rgb(25 49 38 / 4%);
+}
+
+.compact-coach-card > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.compact-coach-identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 11px;
+}
+
+.compact-coach-identity > .avatar {
+  width: 56px;
+  height: 56px;
+  font-size: 15px;
+}
+
+.compact-coach-identity > span {
+  min-width: 0;
+}
+
+.compact-coach-identity small {
+  display: block;
+  margin-bottom: 3px;
+  color: #788074;
+  font-size: 7px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+.compact-coach-identity h3 {
+  overflow: hidden;
+  font-size: 20px;
+  letter-spacing: -0.7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact-coach-card > header > .pill {
+  flex: 0 0 auto;
+  font-size: 8px;
+}
+
+.compact-coach-disciplines {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.compact-coach-disciplines span {
+  border-radius: 999px;
+  background: #edf3e5;
+  padding: 5px 8px;
+  color: #50673e;
+  font-size: 8px;
+  font-weight: 750;
+}
+
+.compact-coach-location {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: auto;
+  border-radius: 12px;
+  background: #f3f5ef;
+  padding: 12px;
+  color: #445b38;
+}
+
+.compact-coach-location > span,
+.compact-coach-location small,
+.compact-coach-location strong,
+.compact-coach-location em {
+  display: block;
+  min-width: 0;
+}
+
+.compact-coach-location small {
+  margin-bottom: 4px;
+  color: #63755a;
+  font-size: 7px;
+  font-weight: 850;
+  letter-spacing: 0.07em;
+}
+
+.compact-coach-location strong {
+  overflow: hidden;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact-coach-location em {
+  overflow: hidden;
+  margin-top: 3px;
+  color: #747d71;
+  font-size: 8px;
+  font-style: normal;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact-coach-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid #e4e8df;
+  padding-top: 14px;
+  color: #344c2a;
+  font-size: 10px;
+  font-weight: 800;
+}
+
 .coach-map-panel {
   position: sticky;
   top: 18px;
