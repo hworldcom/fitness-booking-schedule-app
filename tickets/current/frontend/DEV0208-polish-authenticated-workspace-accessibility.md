@@ -5,7 +5,7 @@
 - Last updated: 2026-10-12
 - Milestone: Scheduling interface authenticated-workspace follow-up
 - Coordination: [COR0018 — Authenticated workspace redesign](../organisatory/COR0018-authenticated-workspace-redesign.md)
-- Related records: integration dependencies [DEV0203 — Introduce the authenticated workspace shell](DEV0203-introduce-authenticated-workspace-shell.md), [DEV0204 — Redesign client My sessions](DEV0204-redesign-client-my-sessions.md), [DEV0205 — Redesign coach Schedule](DEV0205-redesign-coach-schedule.md), [DEV0206 — Redesign coach Bookings](DEV0206-redesign-coach-bookings.md) and [DEV0207 — Redesign account and coach Profiles](DEV0207-redesign-account-and-coach-profiles.md); public integration peer [DEV0201 — Polish public marketplace accessibility](DEV0201-polish-public-marketplace-accessibility.md)
+- Related records: completed integration dependency [DEV0203 — Introduce the authenticated workspace shell](../../archive/frontend/DEV0203-introduce-authenticated-workspace-shell.md); pending integration dependencies [DEV0204 — Redesign client My sessions](DEV0204-redesign-client-my-sessions.md), [DEV0205 — Redesign coach Schedule](DEV0205-redesign-coach-schedule.md), [DEV0206 — Redesign coach Bookings](DEV0206-redesign-coach-bookings.md) and [DEV0207 — Redesign account and coach Profiles](DEV0207-redesign-account-and-coach-profiles.md); public integration peer [DEV0201 — Polish public marketplace accessibility](DEV0201-polish-public-marketplace-accessibility.md)
 
 ## Objective and context
 

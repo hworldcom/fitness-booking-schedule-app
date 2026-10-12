@@ -5,7 +5,7 @@
 - Last updated: 2026-10-12
 - Milestone: Scheduling interface authenticated-workspace follow-up
 - Coordination: [COR0018 — Authenticated workspace redesign](../organisatory/COR0018-authenticated-workspace-redesign.md)
-- Related records: completed contract [DEV0202 — Adopt the authenticated workspace redesign contract](../../archive/organisatory/DEV0202-adopt-authenticated-workspace-redesign-contract.md), shell dependency [DEV0203 — Introduce the authenticated workspace shell](DEV0203-introduce-authenticated-workspace-shell.md), schedule baseline [DEV0179 — Edit a location-aware working week](../../archive/frontend/DEV0179-edit-location-aware-working-week.md) and color baseline [DEV0181 — Distinguish schedule location colors](../../archive/frontend/DEV0181-distinguish-schedule-location-colors.md)
+- Related records: completed contract [DEV0202 — Adopt the authenticated workspace redesign contract](../../archive/organisatory/DEV0202-adopt-authenticated-workspace-redesign-contract.md), completed shell dependency [DEV0203 — Introduce the authenticated workspace shell](../../archive/frontend/DEV0203-introduce-authenticated-workspace-shell.md), schedule baseline [DEV0179 — Edit a location-aware working week](../../archive/frontend/DEV0179-edit-location-aware-working-week.md) and color baseline [DEV0181 — Distinguish schedule location colors](../../archive/frontend/DEV0181-distinguish-schedule-location-colors.md)
 
 ## Objective and context
 

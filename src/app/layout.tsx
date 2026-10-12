@@ -4,6 +4,7 @@ import "@fontsource-variable/bricolage-grotesque";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
 import "./club-theme.css";
+import "./authenticated-workspace.css";
 import "./coming-soon.css";
 import "./coach-story.css";
 import "./coach-discovery.css";

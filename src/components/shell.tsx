@@ -6,6 +6,7 @@ import { useState, type ReactNode } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
+  BriefcaseBusiness,
   CalendarCheck2,
   CircleHelp,
   House,
@@ -53,7 +54,7 @@ const clientNavigation = {
 const coachNavigation = {
   label: "Coach workspace",
   href: "/coach",
-  Icon: CalendarCheck2,
+  Icon: BriefcaseBusiness,
 };
 
 const publicHeaderNavigation = [
@@ -98,6 +99,29 @@ export function navigationForActor(actor: ActorSnapshot) {
   ];
 }
 
+export function mobileNavigationForActor(actor: ActorSnapshot) {
+  return navigationForActor(actor).filter(
+    ({ href }) => href !== "/" && href !== "/how-it-works",
+  );
+}
+
+export function workspaceRoleLabel(actor: ActorSnapshot) {
+  if (actor.status !== "authorized") return "MovX preview";
+  switch (actor.coachAccessStatus) {
+    case "approved":
+    case "demo":
+      return "Coach and client";
+    case "suspended":
+      return "Coach access limited";
+    case "pending":
+      return "Coach application pending";
+    case "rejected":
+      return "Coach application needs changes";
+    case "not-applied":
+      return "Client account";
+  }
+}
+
 export function publicAccountNavigationForActor(actor: ActorSnapshot) {
   if (actor.status !== "authorized") return [];
   return hasCoachWorkspaceNavigation(actor)
@@ -134,7 +158,9 @@ export function Shell({ children }: { children: ReactNode }) {
       )
     : null;
   const visibleNavigation = navigationForActor(actor);
+  const mobileNavigation = mobileNavigationForActor(actor);
   const publicAccountNavigation = publicAccountNavigationForActor(actor);
+  const roleLabel = workspaceRoleLabel(actor);
   const active = (href: string) => isNavigationHrefActive(path, href);
 
   return (
@@ -143,16 +169,15 @@ export function Shell({ children }: { children: ReactNode }) {
         Skip to content
       </a>
       {!publicShell && (
-        <aside className="sidebar">
-          <Link href="/" className="brand-home" aria-label="MovX Club home">
-            <Brand />
-          </Link>
-          <div className="sidebar-caption">
-            FIND YOUR COACH.
-            <br />
-            BOOK YOUR HOUR.
+        <aside className="sidebar authenticated-sidebar">
+          <div className="authenticated-sidebar-heading">
+            <Link href="/" className="brand-home" aria-label="MovX Club home">
+              <Brand />
+            </Link>
+            <span>PRIVATE WORKSPACE</span>
           </div>
           <nav aria-label="Main navigation">
+            <span className="authenticated-nav-label">Navigate</span>
             {visibleNavigation.map(({ label, href, Icon }) => (
               <Link
                 href={href}
@@ -171,40 +196,40 @@ export function Shell({ children }: { children: ReactNode }) {
             ))}
           </nav>
           <div className="sidebar-bottom">
-            <div className="club-note">
-              <span className="little-spark">✳</span>
-              <strong>Meet the demo coaches.</strong>
-              <p>Browse disciplines, places and published one-hour sessions.</p>
-              <Link href="/explore">
-                Explore schedules <ArrowUpRight size={16} />
-              </Link>
-            </div>
-            <button className="preview-link" onClick={() => setAboutOpen(true)}>
+            <button
+              className="preview-link authenticated-preview-card"
+              onClick={() => setAboutOpen(true)}
+            >
               <Info size={15} aria-hidden="true" />
-              About this preview
+              <span>
+                <strong>Scheduling preview</strong>
+                <small>Fictional coaches and places</small>
+              </span>
             </button>
             {currentProfile && (
-              <Link href="/profile" className="sidebar-profile">
+              <Link
+                href="/profile"
+                className="sidebar-profile authenticated-account-card"
+              >
                 <Avatar
                   initials={profileInitials(currentProfile.displayName)}
                   imageUrl={currentProfileImage?.imageUrl}
                 />
                 <span>
                   <strong>{currentProfile.displayName}</strong>
-                  <small>Your account profile</small>
+                  <small>{roleLabel}</small>
                 </span>
                 <ArrowUpRight size={18} />
               </Link>
             )}
-            <span className="sidebar-tagline">
-              Discover. Schedule.
-              <br />
-              <span>Train with clarity.</span>
-            </span>
           </div>
         </aside>
       )}
-      <div className={`app-main ${publicShell ? "public-app-main" : ""}`}>
+      <div
+        className={`app-main ${
+          publicShell ? "public-app-main" : "authenticated-app-main"
+        }`}
+      >
         {publicShell ? (
           <header className="public-header">
             <div className="public-header-inner">
@@ -268,10 +293,15 @@ export function Shell({ children }: { children: ReactNode }) {
             </div>
           </header>
         ) : (
-          <header className="topbar">
+          <header className="topbar authenticated-topbar">
             <Link href="/" className="mobile-brand" aria-label="MovX Club home">
               <Brand compact />
             </Link>
+            <span className="authenticated-mobile-role">{roleLabel}</span>
+            <div className="authenticated-topbar-context">
+              <span>AUTHENTICATED WORKSPACE</span>
+              <strong>{roleLabel}</strong>
+            </div>
             <span className="location">
               <MapPin size={16} aria-hidden="true" />
               <span>Berlin, Germany</span>
@@ -298,7 +328,11 @@ export function Shell({ children }: { children: ReactNode }) {
             </div>
           </header>
         )}
-        <div className="demo-strip">
+        <div
+          className={`demo-strip ${
+            publicShell ? "" : "authenticated-demo-strip"
+          }`}
+        >
           <span>
             <i /> DEMO WORLD
           </span>
@@ -307,10 +341,20 @@ export function Shell({ children }: { children: ReactNode }) {
             Fictional profiles <Info size={13} aria-hidden="true" />
           </button>
         </div>
-        <main id="main-content" className="page-content" tabIndex={-1}>
+        <main
+          id="main-content"
+          className={`page-content ${
+            publicShell ? "" : "authenticated-page-content"
+          }`}
+          tabIndex={-1}
+        >
           {children}
         </main>
-        <footer className="app-footer">
+        <footer
+          className={`app-footer ${
+            publicShell ? "" : "authenticated-app-footer"
+          }`}
+        >
           <span className="footer-contact-line">
             <span>MovX Club © 2026</span>
             <a className="footer-contact" href="mailto:hello@movx.club">
@@ -322,13 +366,17 @@ export function Shell({ children }: { children: ReactNode }) {
         </footer>
       </div>
       {!publicShell && (
-        <nav className="mobile-nav" aria-label="Mobile navigation">
-          {visibleNavigation.map(({ label, href, Icon }) => (
+        <nav
+          className="mobile-nav authenticated-mobile-nav"
+          aria-label="Mobile navigation"
+        >
+          {mobileNavigation.map(({ label, href, Icon }) => (
             <Link
               key={href}
               href={href}
               className={active(href) ? "active" : ""}
               aria-current={active(href) ? "page" : undefined}
+              aria-label={label}
             >
               <Icon
                 size={21}
@@ -336,7 +384,13 @@ export function Shell({ children }: { children: ReactNode }) {
                 aria-hidden="true"
                 fill={href === "/" && active(href) ? "currentColor" : "none"}
               />
-              <span>{label}</span>
+              <span>
+                {label === "My sessions"
+                  ? "Sessions"
+                  : label === "Coach workspace"
+                    ? "Workspace"
+                    : label}
+              </span>
             </Link>
           ))}
         </nav>

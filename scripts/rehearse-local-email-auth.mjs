@@ -96,7 +96,12 @@ async function completeProfile(page, displayName) {
   return actor;
 }
 
-async function verifyAccountProfile(page, displayName, coachState = "none") {
+async function verifyAccountProfile(
+  page,
+  displayName,
+  coachState = "none",
+  evidenceName,
+) {
   await page.goto(`${siteUrl}/profile`, { waitUntil: "domcontentloaded" });
   await page
     .getByRole("heading", { name: displayName, exact: true })
@@ -125,7 +130,22 @@ async function verifyAccountProfile(page, displayName, coachState = "none") {
   await page
     .getByRole("heading", { name: "Your private-session schedule" })
     .waitFor();
-  await page.getByText("No sessions booked yet.").waitFor();
+  await page.getByText("No confirmed sessions yet.").waitFor();
+  await page.locator(".authenticated-app-main").waitFor();
+  if ((await page.viewportSize()).width <= 760) {
+    const mobileNavigation = page.getByRole("navigation", {
+      name: "Mobile navigation",
+    });
+    await mobileNavigation.waitFor();
+    for (const destination of ["Explore", "My sessions", "Profile"]) {
+      await mobileNavigation
+        .getByRole("link", { name: destination, exact: true })
+        .waitFor();
+    }
+  } else {
+    await page.locator(".authenticated-sidebar").waitFor();
+    await page.getByText("PRIVATE WORKSPACE", { exact: true }).waitFor();
+  }
   await page
     .getByRole("link", { name: "My sessions", exact: true })
     .first()
@@ -148,6 +168,12 @@ async function verifyAccountProfile(page, displayName, coachState = "none") {
     0,
   );
   assert.equal(await page.getByText("Illustrative history").count(), 0);
+  if (evidenceName) {
+    await page.screenshot({
+      path: `${evidenceDirectory}/${evidenceName}`,
+      fullPage: true,
+    });
+  }
 }
 
 async function signOut(page) {
@@ -199,7 +225,12 @@ try {
   await firstPage
     .getByRole("link", { name: "Your profile: Riley Morgan" })
     .waitFor();
-  await verifyAccountProfile(firstPage, "Riley Morgan");
+  await verifyAccountProfile(
+    firstPage,
+    "Riley Morgan",
+    "none",
+    "client-workspace-desktop.png",
+  );
   await signOut(firstPage);
 
   const secondContext = await browser.newContext({
@@ -237,7 +268,12 @@ try {
   await secondPage
     .getByRole("heading", { name: "Become discoverable as a coach." })
     .waitFor();
-  await verifyAccountProfile(secondPage, "Morgan Lee", "pending");
+  await verifyAccountProfile(
+    secondPage,
+    "Morgan Lee",
+    "pending",
+    "client-workspace-mobile.png",
+  );
   assert.equal(
     await secondPage.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,

@@ -4,8 +4,10 @@ import type { ActorSnapshot } from "@/auth/actor-contracts";
 import {
   isNavigationHrefActive,
   isPublicMarketplacePath,
+  mobileNavigationForActor,
   navigationForActor,
   publicAccountNavigationForActor,
+  workspaceRoleLabel,
 } from "@/components/shell";
 import type { CoachAccessStatus } from "@/domain/coaches";
 
@@ -154,5 +156,49 @@ test("public account controls expose only authorized private destinations", () =
       ({ href }) => href,
     ),
     ["/sessions", "/coach"],
+  );
+});
+
+test("mobile workspace navigation stays bounded to primary private destinations", () => {
+  assert.deepEqual(
+    mobileNavigationForActor({ status: "preview" }).map(({ href }) => href),
+    ["/explore", "/profile"],
+  );
+  assert.deepEqual(
+    mobileNavigationForActor(authorizedActor("not-applied")).map(
+      ({ label, href }) => ({ label, href }),
+    ),
+    [
+      { label: "Explore", href: "/explore" },
+      { label: "My sessions", href: "/sessions" },
+      { label: "Profile", href: "/profile" },
+    ],
+  );
+  assert.deepEqual(
+    mobileNavigationForActor(authorizedActor("approved")).map(
+      ({ label, href }) => ({ label, href }),
+    ),
+    [
+      { label: "Explore", href: "/explore" },
+      { label: "My sessions", href: "/sessions" },
+      { label: "Coach workspace", href: "/coach" },
+      { label: "Profile", href: "/profile/coach" },
+    ],
+  );
+});
+
+test("authenticated workspace role copy reflects capability without granting it", () => {
+  assert.equal(workspaceRoleLabel({ status: "signed-out" }), "MovX preview");
+  assert.equal(
+    workspaceRoleLabel(authorizedActor("not-applied")),
+    "Client account",
+  );
+  assert.equal(
+    workspaceRoleLabel(authorizedActor("approved")),
+    "Coach and client",
+  );
+  assert.equal(
+    workspaceRoleLabel(authorizedActor("suspended")),
+    "Coach access limited",
   );
 });

@@ -237,16 +237,82 @@ test("public routes use the compact marketplace header", async ({
   }
 });
 
-test("private routes retain the workspace chrome", async ({ page }) => {
-  await page.goto("/profile");
-  await expect(page.locator(".public-header")).toHaveCount(0);
+test("private routes retain the workspace chrome", async ({
+  page,
+}, testInfo) => {
+  const projectViewport = page.viewportSize();
+  const widths =
+    projectViewport && projectViewport.width <= 760 ? [375, 430] : [1440];
 
-  if ((await page.viewportSize())!.width <= 760) {
-    await expect(page.locator(".sidebar")).toBeHidden();
-    await expect(page.locator(".mobile-nav")).toBeVisible();
-  } else {
-    await expect(page.locator(".sidebar")).toBeVisible();
-    await expect(page.locator(".mobile-nav")).toBeHidden();
+  for (const width of widths) {
+    if (projectViewport) {
+      await page.setViewportSize({ width, height: projectViewport.height });
+    }
+    await page.goto("/profile");
+    await expect(page.locator(".public-header")).toHaveCount(0);
+    await expect(page.locator(".authenticated-app-main")).toBeVisible();
+    await expect(page.locator(".authenticated-topbar")).toBeVisible();
+
+    if (width <= 760) {
+      await expect(page.locator(".sidebar")).toBeHidden();
+      const mobileNavigation = page.getByRole("navigation", {
+        name: "Mobile navigation",
+      });
+      await expect(mobileNavigation).toBeVisible();
+      const exploreLink = mobileNavigation.getByRole("link", {
+        name: "Explore",
+      });
+      await expect(exploreLink).toBeVisible();
+      await expect(
+        mobileNavigation.getByRole("link", { name: "Profile" }),
+      ).toBeVisible();
+      await expect(
+        mobileNavigation.getByRole("link", { name: "Home" }),
+      ).toHaveCount(0);
+      await expect(
+        mobileNavigation.getByRole("link", { name: "How it works" }),
+      ).toHaveCount(0);
+      const controlSizes = await mobileNavigation
+        .locator("a")
+        .evaluateAll((controls) =>
+          controls.map((control) => {
+            const bounds = control.getBoundingClientRect();
+            return { width: bounds.width, height: bounds.height };
+          }),
+        );
+      for (const size of controlSizes) {
+        expect(size.width).toBeGreaterThanOrEqual(44);
+        expect(size.height).toBeGreaterThanOrEqual(44);
+      }
+      await exploreLink.focus();
+      await expect(exploreLink).toBeFocused();
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      const footerContentBottom = await page
+        .locator(".authenticated-app-footer .footer-contact-line")
+        .evaluate((element) => element.getBoundingClientRect().bottom);
+      const navigationTop = await mobileNavigation.evaluate(
+        (element) => element.getBoundingClientRect().top,
+      );
+      expect(footerContentBottom).toBeLessThanOrEqual(navigationTop);
+    } else {
+      await expect(page.locator(".authenticated-sidebar")).toBeVisible();
+      await expect(
+        page.getByText("PRIVATE WORKSPACE", { exact: true }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: /Scheduling preview/ }),
+      ).toBeVisible();
+      await expect(page.locator(".mobile-nav")).toBeHidden();
+    }
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      path: testInfo.outputPath(`authenticated-workspace-${width}.png`),
+      fullPage: true,
+    });
   }
 });
 
