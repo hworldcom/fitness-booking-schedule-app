@@ -5,7 +5,7 @@
 - Last updated: 2026-10-12
 - Milestone: Scheduling interface public-marketplace follow-up
 - Coordination: [COR0017 — Public marketplace redesign](../organisatory/COR0017-public-marketplace-redesign.md)
-- Related records: completed integration dependencies [DEV0196 — Introduce the public marketplace shell](../../archive/frontend/DEV0196-introduce-public-marketplace-shell.md), [DEV0197 — Share public marketplace search](../../archive/frontend/DEV0197-share-public-marketplace-search.md), [DEV0198 — Build the search-first marketplace home](../../archive/frontend/DEV0198-build-search-first-marketplace-home.md), [DEV0199 — Redesign desktop coach Explore](../../archive/frontend/DEV0199-redesign-desktop-coach-explore.md) and [DEV0200 — Add mobile Explore map/list state](../../archive/frontend/DEV0200-add-mobile-explore-map-list-state.md)
+- Related records: completed integration dependencies [DEV0196 — Introduce the public marketplace shell](../../archive/frontend/DEV0196-introduce-public-marketplace-shell.md), [DEV0197 — Share public marketplace search](../../archive/frontend/DEV0197-share-public-marketplace-search.md), [DEV0198 — Build the search-first marketplace home](../../archive/frontend/DEV0198-build-search-first-marketplace-home.md), [DEV0199 — Redesign desktop coach Explore](../../archive/frontend/DEV0199-redesign-desktop-coach-explore.md) and [DEV0200 — Add mobile Explore map/list state](../../archive/frontend/DEV0200-add-mobile-explore-map-list-state.md); separate private-interface follow-up [COR0018 — Authenticated workspace redesign](../organisatory/COR0018-authenticated-workspace-redesign.md)
 
 ## Objective and context
 
