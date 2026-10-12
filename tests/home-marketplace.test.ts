@@ -10,6 +10,8 @@ import {
   type CoachDirectoryState,
 } from "@/domain/coaches";
 import { HomeCoachDiscovery } from "@/features/coaches/home-coach-discovery";
+import { CompactCoachCard } from "@/features/coaches/compact-coach-card";
+import { CoachDirectory } from "@/features/coaches/coach-discovery";
 import { CoachStoryHome } from "@/features/public/coach-story";
 
 const filters = normalizeCoachDirectoryFilters({});
@@ -144,6 +146,53 @@ test("ready home discovery renders authoritative profiles and fallbacks only", (
   assert.match(markup, /No availability today/);
   assert.match(markup, /href="\/coaches\/amina-ali"/);
   assert.doesNotMatch(markup, /near you|recommended|rating|price/i);
+});
+
+test("compact result card exposes truthful comparison and selection boundaries", () => {
+  const entry = entries[1]!;
+  const markup = renderToStaticMarkup(
+    createElement(CompactCoachCard, {
+      entry,
+      variant: "result",
+      selected: true,
+      onShowOnMap: () => undefined,
+    }),
+  );
+
+  assert.match(markup, /compact-coach-card result selected/);
+  assert.match(markup, /data-selected="true"/);
+  assert.match(markup, /tabindex="-1"/);
+  assert.match(markup, />BB<\/span>/);
+  assert.match(markup, /Bao Bui teaches focused private training/);
+  assert.match(markup, /Primary training location/);
+  assert.match(markup, /No availability today/);
+  assert.match(markup, /aria-label="Show Bao Bui on the map"/);
+  assert.match(markup, /aria-pressed="true"/);
+  assert.match(markup, /href="\/coaches\/bao-bui"/);
+});
+
+test("Explore keeps explicit empty and unavailable directory states", () => {
+  const empty = renderToStaticMarkup(
+    createElement(CoachDirectory, {
+      state: Object.freeze({
+        status: "ready" as const,
+        entries: Object.freeze([]),
+        filters,
+      }),
+    }),
+  );
+  assert.match(empty, /No coaches match these filters/);
+  assert.match(empty, /Clear filters/);
+  assert.doesNotMatch(empty, /coach-map-panel|compact-coach-card result/);
+
+  const unavailable = renderToStaticMarkup(
+    createElement(CoachDirectory, {
+      state: Object.freeze({ status: "unavailable" as const, filters }),
+    }),
+  );
+  assert.match(unavailable, /Coach discovery is temporarily unavailable/);
+  assert.match(unavailable, /No fixture fallback or invented availability/);
+  assert.doesNotMatch(unavailable, /coach-map-panel|compact-coach-card result/);
 });
 
 test("home discovery keeps empty and unavailable data states honest", () => {

@@ -5,7 +5,7 @@
 - Last updated: 2026-10-12
 - Milestone: Scheduling interface public-marketplace follow-up
 - Coordination: [COR0017 — Public marketplace redesign](../organisatory/COR0017-public-marketplace-redesign.md)
-- Related records: completed contract dependency [DEV0195 — Adopt the public marketplace redesign contract](../../archive/organisatory/DEV0195-adopt-public-marketplace-redesign-contract.md), Explore dependency [DEV0199 — Redesign desktop coach Explore](DEV0199-redesign-desktop-coach-explore.md), completed shell dependency [DEV0196 — Introduce the public marketplace shell](../../archive/frontend/DEV0196-introduce-public-marketplace-shell.md) and final integration [DEV0201 — Polish public marketplace accessibility](DEV0201-polish-public-marketplace-accessibility.md)
+- Related records: completed contract dependency [DEV0195 — Adopt the public marketplace redesign contract](../../archive/organisatory/DEV0195-adopt-public-marketplace-redesign-contract.md), completed Explore dependency [DEV0199 — Redesign desktop coach Explore](../../archive/frontend/DEV0199-redesign-desktop-coach-explore.md), completed shell dependency [DEV0196 — Introduce the public marketplace shell](../../archive/frontend/DEV0196-introduce-public-marketplace-shell.md) and final integration [DEV0201 — Polish public marketplace accessibility](DEV0201-polish-public-marketplace-accessibility.md)
 
 ## Objective and context
 

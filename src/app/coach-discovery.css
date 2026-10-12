@@ -208,52 +208,19 @@
 
 .coach-card-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 17px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
 }
 
 .coach-explore-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.16fr) minmax(330px, 0.84fr);
+  grid-template-columns: minmax(0, 3fr) minmax(360px, 2fr);
   align-items: start;
-  gap: 18px;
+  gap: 24px;
 }
 
-.coach-card {
-  display: flex;
-  min-width: 0;
-  min-height: 390px;
-  flex-direction: column;
-  gap: 18px;
-  border: 1px solid #dfe5da;
-  border-radius: 20px;
-  background: var(--coach-paper);
-  padding: 23px;
-  box-shadow: 0 14px 38px rgb(25 49 38 / 4%);
-}
-
-.coach-card.selected {
-  border-color: #91ad61;
-  box-shadow:
-    0 0 0 3px rgb(157 188 102 / 18%),
-    0 14px 38px rgb(25 49 38 / 5%);
-}
-
-.coach-card:focus {
-  outline: none;
-}
-
-.coach-card-topline {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.coach-card h2 {
-  margin-bottom: 10px;
-  font-size: 24px;
-  letter-spacing: -0.8px;
+.coach-explore-layout.map-unavailable {
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 0.36fr);
 }
 
 .coach-discipline-list {
@@ -269,54 +236,6 @@
   color: #4a6337;
   font-size: 9px;
   font-weight: 750;
-}
-
-.coach-card-bio {
-  display: -webkit-box;
-  overflow: hidden;
-  color: #667065;
-  font-size: 11px;
-  line-height: 1.75;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
-}
-
-.coach-location-line {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-top: auto;
-  border-radius: 12px;
-  background: #f0f3eb;
-  padding: 13px;
-  color: #3f5435;
-}
-
-.coach-location-line span,
-.coach-location-line strong,
-.coach-location-line small {
-  display: block;
-  min-width: 0;
-}
-
-.coach-location-line strong {
-  font-size: 10px;
-}
-
-.coach-location-line small {
-  margin-top: 4px;
-  color: #747e72;
-  font-size: 9px;
-  line-height: 1.5;
-}
-
-.coach-location-line .coach-location-kicker {
-  margin: 0 0 5px;
-  color: #5c7449;
-  font-size: 8px;
-  font-weight: 850;
-  letter-spacing: 0.7px;
-  text-transform: uppercase;
 }
 
 .coach-today-availability {
@@ -406,7 +325,6 @@
   font-weight: 750;
 }
 
-.coach-card-link,
 .coach-back-link {
   display: inline-flex;
   align-items: center;
@@ -414,39 +332,6 @@
   color: #344c2a;
   font-size: 11px;
   font-weight: 800;
-}
-
-.coach-card-link {
-  flex: 1;
-  justify-content: space-between;
-}
-
-.coach-card-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border-top: 1px solid #e4e8df;
-  padding-top: 15px;
-}
-
-.coach-card-map-button {
-  border-radius: 999px;
-  background: #edf3e5;
-  padding: 7px 10px;
-  color: #4a603b;
-  font-size: 9px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.coach-card-map-button[aria-pressed="true"] {
-  background: var(--coach-forest);
-  color: var(--coach-lime);
-}
-
-.coach-card-map-button:focus-visible {
-  outline: 3px solid rgb(180 214 114 / 35%);
-  outline-offset: 2px;
 }
 
 .compact-coach-card {
@@ -462,11 +347,42 @@
   box-shadow: 0 14px 38px rgb(25 49 38 / 4%);
 }
 
+.compact-coach-card.result {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(190px, 0.9fr);
+  grid-template-areas:
+    "identity location"
+    "disciplines location"
+    "biography availability"
+    "actions actions";
+  gap: 12px 18px;
+  padding: 18px;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.compact-coach-card.result.selected {
+  border-color: #91ad61;
+  box-shadow:
+    0 0 0 3px rgb(157 188 102 / 18%),
+    0 14px 38px rgb(25 49 38 / 5%);
+}
+
+.compact-coach-card.result:focus {
+  outline: none;
+}
+
 .compact-coach-card > header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+}
+
+.compact-coach-card.result > header {
+  grid-area: identity;
 }
 
 .compact-coach-identity {
@@ -503,6 +419,18 @@
   white-space: nowrap;
 }
 
+.compact-coach-identity h2 {
+  overflow-wrap: anywhere;
+  font-size: 22px;
+  letter-spacing: -0.8px;
+}
+
+.compact-coach-card.result .compact-coach-identity > .avatar {
+  width: 68px;
+  height: 68px;
+  font-size: 17px;
+}
+
 .compact-coach-card > header > .pill {
   flex: 0 0 auto;
   font-size: 8px;
@@ -514,6 +442,11 @@
   gap: 6px;
 }
 
+.compact-coach-card.result .compact-coach-disciplines {
+  grid-area: disciplines;
+  align-self: start;
+}
+
 .compact-coach-disciplines span {
   border-radius: 999px;
   background: #edf3e5;
@@ -521,6 +454,18 @@
   color: #50673e;
   font-size: 8px;
   font-weight: 750;
+}
+
+.compact-coach-bio {
+  display: -webkit-box;
+  grid-area: biography;
+  align-self: start;
+  overflow: hidden;
+  color: #667065;
+  font-size: 10px;
+  line-height: 1.65;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 .compact-coach-location {
@@ -532,6 +477,12 @@
   background: #f3f5ef;
   padding: 12px;
   color: #445b38;
+}
+
+.compact-coach-card.result .compact-coach-location {
+  grid-area: location;
+  align-self: stretch;
+  margin-top: 0;
 }
 
 .compact-coach-location > span,
@@ -548,6 +499,7 @@
   font-size: 7px;
   font-weight: 850;
   letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
 
 .compact-coach-location strong {
@@ -568,22 +520,60 @@
   white-space: nowrap;
 }
 
+.compact-coach-card.result > .coach-today-availability {
+  grid-area: availability;
+  align-self: start;
+}
+
+.compact-coach-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid #e4e8df;
+  padding-top: 14px;
+}
+
+.compact-coach-card.result .compact-coach-actions {
+  grid-area: actions;
+}
+
 .compact-coach-link {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex: 1;
   gap: 12px;
-  border-top: 1px solid #e4e8df;
-  padding-top: 14px;
   color: #344c2a;
   font-size: 10px;
   font-weight: 800;
 }
 
+.compact-coach-map-button {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #edf3e5;
+  padding: 7px 10px;
+  color: #4a603b;
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.compact-coach-map-button[aria-pressed="true"] {
+  background: var(--coach-forest);
+  color: var(--coach-lime);
+}
+
+.compact-coach-map-button:focus-visible {
+  outline: 3px solid rgb(180 214 114 / 35%);
+  outline-offset: 2px;
+}
+
 .coach-map-panel {
   position: sticky;
-  top: 18px;
-  overflow: hidden;
+  top: 92px;
+  overflow: auto;
+  max-height: calc(100vh - 108px);
   border: 1px solid #dfe5da;
   border-radius: 20px;
   background: white;
@@ -688,7 +678,11 @@
 
 .coach-map-canvas,
 .coach-map-state {
-  min-height: 570px;
+  min-height: clamp(390px, 52vh, 570px);
+}
+
+.coach-map-panel.has-selection .coach-map-canvas {
+  min-height: clamp(340px, 40vh, 450px);
 }
 
 .coach-map-canvas {
@@ -2579,6 +2573,17 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .compact-coach-card.result {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "identity"
+      "disciplines"
+      "biography"
+      "location"
+      "availability"
+      "actions";
+  }
+
   .coach-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2592,12 +2597,15 @@
     flex-wrap: wrap;
   }
 
-  .coach-explore-layout {
+  .coach-explore-layout,
+  .coach-explore-layout.map-unavailable {
     grid-template-columns: 1fr;
   }
 
   .coach-map-panel {
     position: static;
+    overflow: hidden;
+    max-height: none;
   }
 
   .coach-map-canvas,
@@ -2682,10 +2690,6 @@
     padding: 6px 0;
   }
 
-  .coach-card {
-    min-height: 0;
-  }
-
   .public-coach-identity {
     display: grid;
   }
@@ -2743,13 +2747,13 @@
 
   .coach-location-entry-mode,
   .coach-location-confirm,
-  .coach-card-actions {
+  .compact-coach-actions {
     align-items: stretch;
     flex-direction: column;
   }
 
   .coach-location-confirm .button,
-  .coach-card-map-button {
+  .compact-coach-map-button {
     width: 100%;
   }
 
