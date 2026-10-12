@@ -130,6 +130,11 @@ async function verifyAccountProfile(
   await page
     .getByRole("heading", { name: "Your private-session schedule" })
     .waitFor();
+  await page.getByRole("heading", { name: "My sessions" }).waitFor();
+  await page
+    .getByRole("navigation", { name: "My sessions sections" })
+    .getByRole("link", { name: "Booking requests" })
+    .waitFor();
   await page.getByText("No confirmed sessions yet.").waitFor();
   await page.locator(".authenticated-app-main").waitFor();
   if ((await page.viewportSize()).width <= 760) {

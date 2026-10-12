@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowUpRight,
   CalendarClock,
   Clock3,
   History,
@@ -20,12 +21,15 @@ import type {
   CoachBookingRequestPage,
   CoachBookingRequestPageCursor,
 } from "@/domain/coach-booking-requests";
+import { profileInitials } from "@/auth/profile-presentation";
+import { Avatar } from "@/components/ui";
 import {
   clientBookingRequestGroups,
   clientBookingRequestStatusDescription,
   clientBookingRequestStatusLabel,
   mergeClientBookingRequestPages,
 } from "./client-booking-request-model";
+import { ClientSessionDateTile } from "./client-session-date-tile";
 
 const BERLIN_TIMEZONE = "Europe/Berlin";
 
@@ -148,31 +152,49 @@ export function ClientBookingRequests({
         data-request-id={request.id}
         data-slot-id={request.slotId}
       >
-        <header>
-          <Link href={"/coaches/" + request.coachSlug}>
-            <small>Coach</small>
-            <strong>{request.coachDisplayName}</strong>
-          </Link>
-          <span className={"coach-booking-status " + request.status}>
-            {clientBookingRequestStatusLabel(request.status)}
-          </span>
-        </header>
-        <p>
-          <Clock3 size={16} aria-hidden="true" />
-          <strong>{requestTime(request)}</strong>
-        </p>
-        <p>
-          <MapPin size={16} aria-hidden="true" />
-          <span>
-            {request.location.name}
-            <small>{request.location.publicLabel}</small>
-          </span>
-        </p>
-        <p className="client-request-description">
-          {clientBookingRequestStatusDescription(request.status)}
-        </p>
+        <ClientSessionDateTile
+          timestamp={request.scheduledStartAt}
+          timeZone={request.coachTimezone}
+        />
+        <div className="client-request-card-main">
+          <header>
+            <Link
+              href={"/coaches/" + request.coachSlug}
+              aria-label={`View ${request.coachDisplayName}'s coach profile`}
+            >
+              <Avatar
+                initials={profileInitials(request.coachDisplayName)}
+                color="lavender"
+              />
+              <span>
+                <small>Coach</small>
+                <strong>{request.coachDisplayName}</strong>
+              </span>
+              <ArrowUpRight size={14} aria-hidden="true" />
+            </Link>
+            <span className={"coach-booking-status " + request.status}>
+              {clientBookingRequestStatusLabel(request.status)}
+            </span>
+          </header>
+          <div className="client-session-facts">
+            <p>
+              <Clock3 size={16} aria-hidden="true" />
+              <strong>{requestTime(request)}</strong>
+            </p>
+            <p>
+              <MapPin size={16} aria-hidden="true" />
+              <span>
+                {request.location.name}
+                <small>{request.location.publicLabel}</small>
+              </span>
+            </p>
+          </div>
+          <p className="client-request-description">
+            {clientBookingRequestStatusDescription(request.status)}
+          </p>
+        </div>
         {request.status === "pending" && (
-          <>
+          <div className="client-session-card-actions">
             <small className="client-request-deadline">
               Decision by {requestDeadline(request)}
             </small>
@@ -187,7 +209,7 @@ export function ClientBookingRequests({
                 ? "Withdrawing…"
                 : "Withdraw request"}
             </button>
-          </>
+          </div>
         )}
       </article>
     );
@@ -198,10 +220,10 @@ export function ClientBookingRequests({
       <header className="client-request-heading">
         <div>
           <span className="eyebrow">BOOKING REQUESTS</span>
-          <h2>Coach confirmation</h2>
+          <h2>Requests awaiting a coach</h2>
           <p>
-            Pending requests are saved, but they are not confirmed sessions
-            until the coach accepts them.
+            A request is saved immediately, but it becomes a session only after
+            the coach accepts it.
           </p>
         </div>
         <span className="client-session-count">

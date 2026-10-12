@@ -15,6 +15,10 @@ import {
   isCoachBookingRequestStatus,
 } from "@/domain/coach-booking-requests";
 import { ClientSessionCoachIdentity } from "@/features/profile/client-session-coach-identity";
+import {
+  ClientSessionDateTile,
+  clientSessionDateParts,
+} from "@/features/profile/client-session-date-tile";
 
 test("booking identifiers require canonical UUIDs", () => {
   assert.equal(isCanonicalUuid("11111111-1111-4111-8111-111111111111"), true);
@@ -211,4 +215,23 @@ test("client session coach identity links its portrait and name to the public pr
   assert.match(fallback, /href="\/coaches\/sam-lee"/);
   assert.doesNotMatch(fallback, /<img/);
   assert.match(fallback, />SL<\/span>/);
+});
+
+test("client session date tiles use the coach timezone without replacing the full timestamp", () => {
+  assert.deepEqual(
+    clientSessionDateParts("2026-10-13T22:30:00.000Z", "Europe/Berlin"),
+    { day: "14", month: "OCT", weekday: "WED" },
+  );
+
+  const tile = renderToStaticMarkup(
+    createElement(ClientSessionDateTile, {
+      timestamp: "2026-10-13T22:30:00.000Z",
+      timeZone: "Europe/Berlin",
+    }),
+  );
+  assert.match(tile, /dateTime="2026-10-13T22:30:00.000Z"/);
+  assert.match(tile, />14<\/strong>/);
+  assert.match(tile, />OCT<\/span>/);
+  assert.match(tile, />WED<\/small>/);
+  assert.match(tile, /aria-hidden="true"/);
 });

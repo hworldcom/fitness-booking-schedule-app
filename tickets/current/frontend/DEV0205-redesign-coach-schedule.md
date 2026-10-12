@@ -1,6 +1,6 @@
 # Ticket DEV0205: Redesign coach Schedule
 
-- Status: Draft
+- Status: Ready
 - Created: 2026-10-12
 - Last updated: 2026-10-12
 - Milestone: Scheduling interface authenticated-workspace follow-up

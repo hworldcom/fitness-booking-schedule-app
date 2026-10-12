@@ -20,6 +20,7 @@ import {
   type PrivateBookingProjection,
 } from "@/domain/coach-bookings";
 import { ClientSessionCoachIdentity } from "./client-session-coach-identity";
+import { ClientSessionDateTile } from "./client-session-date-tile";
 
 function bookingTime(booking: PrivateBookingProjection) {
   const day = new Intl.DateTimeFormat("en-GB", {
@@ -84,37 +85,47 @@ export function ClientSessions({
     const cancellable = isFutureConfirmedBooking(booking, referenceTime);
     return (
       <article className="client-session-card" key={booking.id}>
-        <header>
-          <ClientSessionCoachIdentity
-            displayName={booking.coachDisplayName}
-            slug={booking.coachSlug}
-            portraitUrl={booking.coachPortraitUrl}
-          />
-          <span className={`coach-booking-status ${booking.status}`}>
-            {statusLabel(booking)}
-          </span>
-        </header>
-        <p>
-          <Clock3 size={16} aria-hidden="true" />
-          <strong>{bookingTime(booking)}</strong>
-        </p>
-        <p>
-          <MapPin size={16} aria-hidden="true" />
-          <span>
-            {booking.location.name}
-            <small>{booking.location.publicLabel}</small>
-          </span>
-        </p>
+        <ClientSessionDateTile
+          timestamp={booking.scheduledStartAt}
+          timeZone={booking.coachTimezone}
+        />
+        <div className="client-session-card-main">
+          <header>
+            <ClientSessionCoachIdentity
+              displayName={booking.coachDisplayName}
+              slug={booking.coachSlug}
+              portraitUrl={booking.coachPortraitUrl}
+            />
+            <span className={`coach-booking-status ${booking.status}`}>
+              {statusLabel(booking)}
+            </span>
+          </header>
+          <div className="client-session-facts">
+            <p>
+              <Clock3 size={16} aria-hidden="true" />
+              <strong>{bookingTime(booking)}</strong>
+            </p>
+            <p>
+              <MapPin size={16} aria-hidden="true" />
+              <span>
+                {booking.location.name}
+                <small>{booking.location.publicLabel}</small>
+              </span>
+            </p>
+          </div>
+        </div>
         {cancellable && (
-          <button
-            type="button"
-            className="button secondary"
-            disabled={busyBookingId !== null}
-            onClick={() => void cancelBooking(booking.id)}
-          >
-            <RotateCcw size={15} aria-hidden="true" />
-            {busyBookingId === booking.id ? "Cancelling…" : "Cancel session"}
-          </button>
+          <div className="client-session-card-actions">
+            <button
+              type="button"
+              className="button secondary"
+              disabled={busyBookingId !== null}
+              onClick={() => void cancelBooking(booking.id)}
+            >
+              <RotateCcw size={15} aria-hidden="true" />
+              {busyBookingId === booking.id ? "Cancelling…" : "Cancel session"}
+            </button>
+          </div>
         )}
       </article>
     );
@@ -124,8 +135,8 @@ export function ClientSessions({
     <section className="client-sessions" id="my-sessions">
       <header className="client-sessions-heading">
         <div>
-          <span className="eyebrow">MY SESSIONS</span>
-          <h1>Your private-session schedule</h1>
+          <span className="eyebrow">CONFIRMED TRAINING</span>
+          <h2>Your private-session schedule</h2>
           <p>
             Every session shown here comes from your actor-scoped scheduling
             record.

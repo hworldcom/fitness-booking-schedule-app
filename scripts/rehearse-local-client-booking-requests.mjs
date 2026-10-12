@@ -361,6 +361,7 @@ async function requestSession(page, coachSlug, slotId) {
   await page.goto(siteUrl + "/coaches/" + coachSlug, {
     waitUntil: "domcontentloaded",
   });
+  await page.waitForLoadState("networkidle");
   const slot = profileSlot(page, slotId);
   await slot.getByRole("button", { name: "Request session" }).click();
   await page.getByText("Request saved.", { exact: true }).waitFor();
@@ -450,6 +451,7 @@ try {
   await coachPage.goto(siteUrl + "/coach?view=bookings", {
     waitUntil: "domcontentloaded",
   });
+  await coachPage.waitForLoadState("networkidle");
   const declinedRow = await coachCandidateRow(
     coachPage,
     slotIds[0],
@@ -471,6 +473,7 @@ try {
   await requestSession(clientPage, coach.public_slug, slotIds[0]);
 
   await coachPage.reload({ waitUntil: "domcontentloaded" });
+  await coachPage.waitForLoadState("networkidle");
   const acceptedRow = await coachCandidateRow(
     coachPage,
     slotIds[0],
@@ -501,6 +504,7 @@ try {
   await coachPage.goto(siteUrl + "/coach?view=bookings", {
     waitUntil: "domcontentloaded",
   });
+  await coachPage.waitForLoadState("networkidle");
   const closeGroup = coachGroup(coachPage, slotIds[1]);
   await closeGroup
     .getByRole("button", { name: "Close this occurrence", exact: true })
@@ -535,6 +539,16 @@ try {
     .getByText("Expired", { exact: true })
     .waitFor();
 
+  await clientPage.getByRole("heading", { name: "My sessions" }).waitFor();
+  await clientPage
+    .getByRole("navigation", { name: "My sessions sections" })
+    .getByRole("link", { name: "Confirmed sessions" })
+    .waitFor();
+  assert.ok(
+    (await clientPage.locator(".client-session-date-tile").count()) >= 4,
+    "Requests and confirmed sessions should use the shared date presentation.",
+  );
+
   const clientText = await clientPage.locator("body").innerText();
   assert.doesNotMatch(clientText, new RegExp(competitorDisplayName, "i"));
   assert.doesNotMatch(clientText, /other requests|other candidates/i);
@@ -542,17 +556,40 @@ try {
     path: evidenceDirectory + "/client-requests-desktop.png",
     fullPage: true,
   });
-  await clientPage.setViewportSize({ width: 393, height: 852 });
-  assert.equal(
-    await clientPage.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
-    ),
-    true,
-  );
+  for (const width of [375, 430]) {
+    await clientPage.setViewportSize({ width, height: 852 });
+    assert.equal(
+      await clientPage.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+      true,
+    );
+    const actionSizes = await clientPage
+      .locator(".client-session-card-actions .button")
+      .evaluateAll((controls) =>
+        controls.map((control) => control.getBoundingClientRect().height),
+      );
+    assert.ok(actionSizes.every((height) => height >= 44));
+  }
   await clientPage.screenshot({
     path: evidenceDirectory + "/client-requests-mobile.png",
     fullPage: true,
   });
+
+  await coachPage.goto(siteUrl + "/sessions", {
+    waitUntil: "domcontentloaded",
+  });
+  await coachPage
+    .getByText("These are sessions you requested as a client.", {
+      exact: true,
+    })
+    .waitFor();
+  assert.equal(
+    await coachPage
+      .getByRole("link", { name: "Open coach workspace", exact: true })
+      .getAttribute("href"),
+    "/coach",
+  );
 
   const responseBodies = await Promise.all(
     responseBodyPromises.map((body) =>

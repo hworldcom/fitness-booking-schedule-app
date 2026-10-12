@@ -5,6 +5,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
 import "./club-theme.css";
 import "./authenticated-workspace.css";
+import "./client-sessions-workspace.css";
 import "./coming-soon.css";
 import "./coach-story.css";
 import "./coach-discovery.css";
