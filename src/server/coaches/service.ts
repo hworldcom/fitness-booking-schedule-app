@@ -279,6 +279,12 @@ export async function currentCoachAvailabilityWorkspace(): Promise<CoachAvailabi
       coach,
       rules,
       slots,
+      actorScope: [
+        actor.authUserId,
+        actor.profileId,
+        actor.runId,
+        actor.runRole,
+      ].join(":"),
       ownerDisplayName: owner.displayName,
       coachAccess: owner.coachAccess,
     });

@@ -277,6 +277,7 @@ export type CoachAvailabilityWorkspaceState =
       coach: CoachProjection | null;
       rules: readonly OwnedCoachAvailabilityRule[];
       slots: readonly OwnedCoachAvailabilitySlot[];
+      actorScope: string;
       ownerDisplayName: string;
       coachAccess: CoachAccessProjection;
     }>

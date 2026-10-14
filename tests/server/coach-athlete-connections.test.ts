@@ -3,6 +3,7 @@ import test from "node:test";
 import { GET } from "@/app/api/connections/[connectionId]/athlete-avatar/route";
 import {
   loadConnectionHistoryAction,
+  loadConnectionPagesAction,
   loadConnectionPageAction,
   mutateConnectionAction,
 } from "@/app/connections/actions";
@@ -101,6 +102,12 @@ test("untrusted connection/action/cursor inputs fail before identity or database
   form.set("operationId", id);
   form.set("previousId", "old-invalid");
   assert.equal((await mutateConnectionAction(idle, form)).status, "invalid");
+  assert.deepEqual(await loadConnectionPagesAction("operator"), {
+    accepted: null,
+    incoming: null,
+    outgoing: null,
+    history: null,
+  });
   assert.deepEqual(await loadConnectionPageAction("operator", "accepted"), {
     status: "invalid",
   });
@@ -126,4 +133,64 @@ test("untrusted connection/action/cursor inputs fail before identity or database
   assert.deepEqual(await currentConnectionHistory(id, { pageSize: 51 }), {
     status: "invalid",
   });
+});
+
+test("connection cache versions bind actor/run/perspective and every authoritative read, even when empty data repeats", async () => {
+  const { connectionWorkspaceVersion } =
+    await import("@/server/connections/workspace-version");
+  const empty = { accepted: { items: [], nextCursor: null } };
+  const first = connectionWorkspaceVersion(
+    "auth-a:profile-a:run-a:member",
+    "athlete",
+    empty,
+    "read-one",
+  );
+  assert.equal(
+    first,
+    connectionWorkspaceVersion(
+      "auth-a:profile-a:run-a:member",
+      "athlete",
+      JSON.parse(JSON.stringify(empty)),
+      "read-one",
+    ),
+  );
+  for (const scope of [
+    "auth-b:profile-b:run-a:member",
+    "auth-a:profile-a:run-b:member",
+    "auth-a:profile-a:run-a:operator",
+  ])
+    assert.notEqual(
+      first,
+      connectionWorkspaceVersion(scope, "athlete", empty, "read-one"),
+    );
+  assert.notEqual(
+    first,
+    connectionWorkspaceVersion(
+      "auth-a:profile-a:run-a:member",
+      "coach",
+      empty,
+      "read-one",
+    ),
+  );
+  assert.notEqual(
+    first,
+    connectionWorkspaceVersion(
+      "auth-a:profile-a:run-a:member",
+      "athlete",
+      empty,
+      "read-two",
+    ),
+  );
+  assert.notEqual(
+    connectionWorkspaceVersion(
+      "auth-a:profile-a:run-a:member",
+      "athlete",
+      empty,
+    ),
+    connectionWorkspaceVersion(
+      "auth-a:profile-a:run-a:member",
+      "athlete",
+      empty,
+    ),
+  );
 });

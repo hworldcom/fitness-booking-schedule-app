@@ -4,12 +4,14 @@ import { useRef } from "react";
 import type {
   BookingConnectionContext,
   ConnectionDecision,
+  ConnectionRole,
 } from "@/domain/coach-athlete-connections";
 import type { PrivateBookingProjection } from "@/domain/coach-bookings";
 import { ConnectionDisconnectControl } from "./connection-disconnect-control";
-import { connectionStatusLabel } from "./coach-connections-model";
+import { connectionStatusLabel } from "./connection-model";
 
 export function BookingConnectionOptions({
+  role = "coach",
   booking,
   context,
   error,
@@ -18,6 +20,7 @@ export function BookingConnectionOptions({
   onLoad,
   onMutation,
 }: {
+  role?: ConnectionRole;
   booking: PrivateBookingProjection;
   context: BookingConnectionContext | null | undefined;
   error: string | null;
@@ -46,10 +49,14 @@ export function BookingConnectionOptions({
     onMutation(form);
   }
   const connection = context?.connection;
+  const name =
+    role === "coach" ? booking.clientDisplayName : booking.coachDisplayName;
+  const list = role === "coach" ? "My athletes" : "My coaches";
+  const target = role === "coach" ? "my-athletes" : "my-coaches";
   return (
     <div
       className="coach-booking-connection"
-      aria-label={`Connection with ${booking.clientDisplayName}`}
+      aria-label={`Connection with ${name}`}
     >
       {context === undefined || context === null ? (
         <>
@@ -75,9 +82,12 @@ export function BookingConnectionOptions({
               : "Not connected"}
             .
             {connection?.status === "pending" &&
-              (connection.recipientProfileId === connection.coachProfileId
-                ? " This athlete is waiting for your decision."
-                : " The athlete must accept your request.")}
+              (connection.recipientProfileId ===
+              (role === "coach"
+                ? connection.coachProfileId
+                : connection.athleteProfileId)
+                ? ` This ${role === "coach" ? "athlete" : "coach"} is waiting for your decision.`
+                : ` The ${role === "coach" ? "athlete" : "coach"} must accept your request.`)}
           </p>
           <div className="coach-connection-actions">
             {mayInitiate && context.canSend && (
@@ -124,11 +134,11 @@ export function BookingConnectionOptions({
             )}
             {connection?.canDisconnect && (
               <>
-                <a href="#my-athletes" className="button secondary">
-                  View My athletes
+                <a href={`#${target}`} className="button secondary">
+                  View {list}
                 </a>
                 <ConnectionDisconnectControl
-                  name={booking.clientDisplayName}
+                  name={name}
                   disabled={busy}
                   onDisconnect={() => decide("disconnect")}
                 />

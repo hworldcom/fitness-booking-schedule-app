@@ -1,26 +1,29 @@
 "use client";
 
+import Link from "next/link";
 import { ConnectionAvatar } from "./connection-avatar";
 import type {
   ConnectionDecision,
   ConnectionProjection,
   ConnectionSection,
+  ConnectionRole,
 } from "@/domain/coach-athlete-connections";
 import {
-  COACH_CONNECTION_SECTIONS,
+  CONNECTION_SECTIONS,
   connectionStatusLabel,
-  type CoachConnectionPages,
-} from "./coach-connections-model";
+  connectionPresentation,
+  type ConnectionPages,
+} from "./connection-model";
 import { ConnectionDisconnectControl } from "./connection-disconnect-control";
 import type { ReactNode } from "react";
 
-const labels = {
+const sectionLabels = {
   accepted: "My athletes",
   incoming: "Incoming connection requests",
   outgoing: "Outgoing connection requests",
   history: "Previous connection requests",
 };
-const empty = {
+const sectionEmpty = {
   accepted:
     "No connected athletes yet. Open Connection options on a shared session to send a request.",
   incoming: "No incoming connection requests.",
@@ -28,7 +31,8 @@ const empty = {
   history: "No previous connection requests.",
 };
 
-export function CoachAthleteConnections({
+export function ConnectionLists({
+  role = "coach",
   pages,
   busy,
   mayInitiate,
@@ -38,7 +42,8 @@ export function CoachAthleteConnections({
   onHistory,
   renderHistory,
 }: {
-  pages: CoachConnectionPages;
+  role?: ConnectionRole;
+  pages: ConnectionPages;
   busy: boolean;
   mayInitiate: boolean;
   onRefresh: () => void;
@@ -47,16 +52,26 @@ export function CoachAthleteConnections({
   onHistory: (row: ConnectionProjection) => void;
   renderHistory: (row: ConnectionProjection) => ReactNode;
 }) {
+  const noun = role === "coach" ? "athletes" : "coaches";
+  const title = role === "coach" ? "My athletes" : "My coaches";
+  const target = role === "coach" ? "my-athletes" : "my-coaches";
+  const labels = { ...sectionLabels, accepted: title };
+  const empty = {
+    ...sectionEmpty,
+    accepted: `No connected ${noun} yet. Open Connection options on a shared session to send a request.`,
+  };
+  const name = (row: ConnectionProjection) =>
+    connectionPresentation(row, role).name;
   return (
     <section
       className="coach-connections"
-      id="my-athletes"
-      aria-labelledby="my-athletes-heading"
+      id={target}
+      aria-labelledby={`${target}-heading`}
     >
       <header className="coach-connections-heading">
         <div>
           <span className="eyebrow">YOUR CONNECTIONS</span>
-          <h2 id="my-athletes-heading">My athletes</h2>
+          <h2 id={`${target}-heading`}>{title}</h2>
           <p>
             Connections need both people to accept. Booking a session does not
             connect you automatically.
@@ -71,7 +86,7 @@ export function CoachAthleteConnections({
           Refresh connections
         </button>
       </header>
-      {COACH_CONNECTION_SECTIONS.map((section) => {
+      {CONNECTION_SECTIONS.map((section) => {
         const page = pages[section];
         return (
           <section
@@ -112,25 +127,40 @@ export function CoachAthleteConnections({
                     key={row.id}
                     data-connection-id={row.id}
                     data-pair-id={row.pairId}
-                    id={`coach-connection-${row.id}`}
+                    id={`${role}-connection-${row.id}`}
                     tabIndex={-1}
-                    aria-label={`${row.athleteDisplayName} · ${connectionStatusLabel(row.status)}`}
+                    aria-label={`${name(row)} · ${connectionStatusLabel(row.status)}`}
                   >
                     <header>
                       <ConnectionAvatar
-                        name={row.athleteDisplayName}
-                        imageUrl={
-                          row.status === "accepted"
-                            ? row.athleteAvatarUrl
-                            : null
-                        }
+                        name={name(row)}
+                        imageUrl={connectionPresentation(row, role).imageUrl}
                       />
                       <div>
-                        <h4>{row.athleteDisplayName}</h4>
+                        <h4>{name(row)}</h4>
                         <span>{connectionStatusLabel(row.status)}</span>
                       </div>
                     </header>
+                    {role === "athlete" &&
+                      row.status === "accepted" &&
+                      !row.coachPublic && (
+                        <p>
+                          This coach is not available for new session requests.
+                        </p>
+                      )}
                     <div className="coach-connection-actions">
+                      {role === "athlete" &&
+                        row.status === "accepted" &&
+                        row.coachPublic && (
+                          <Link
+                            className="button secondary"
+                            href={
+                              connectionPresentation(row, role).profileHref!
+                            }
+                          >
+                            View coach and request a session
+                          </Link>
+                        )}
                       {mayInitiate && row.canAccept && (
                         <button
                           type="button"
@@ -173,7 +203,7 @@ export function CoachAthleteConnections({
                       )}
                       {row.canDisconnect && (
                         <ConnectionDisconnectControl
-                          name={row.athleteDisplayName}
+                          name={name(row)}
                           disabled={busy}
                           onDisconnect={() => onDecision(row, "disconnect")}
                         />
@@ -200,7 +230,7 @@ export function CoachAthleteConnections({
                 >
                   Load more{" "}
                   {section === "accepted"
-                    ? "athletes"
+                    ? noun
                     : section === "history"
                       ? "previous connections"
                       : section + " requests"}

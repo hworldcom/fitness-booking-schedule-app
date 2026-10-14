@@ -129,7 +129,16 @@ export async function currentClientSessionWorkspace(
       transaction,
       options,
     );
-    return Object.freeze({ bookings, requests });
+    return Object.freeze({
+      bookings,
+      requests,
+      actorScope: [
+        actor.authUserId,
+        actor.profileId,
+        actor.runId,
+        actor.runRole,
+      ].join(":"),
+    });
   });
   if (result.status !== "authorized") return result;
   return Object.freeze({ status: "authorized" as const, ...result.value });

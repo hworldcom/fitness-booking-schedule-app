@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   loadBookingConnectionContextAction,
-  loadCoachConnectionPagesAction,
+  loadConnectionPagesAction,
   loadConnectionHistoryAction,
   loadConnectionPageAction,
   mutateConnectionAction,
@@ -17,19 +17,21 @@ import type {
   ConnectionPage,
   ConnectionProjection,
   ConnectionSection,
+  ConnectionRole,
 } from "@/domain/coach-athlete-connections";
 import type { PrivateBookingProjection } from "@/domain/coach-bookings";
-import { CoachClientCards } from "./coach-client-cards";
+import { CoachClientCards } from "../coaches/coach-client-cards";
+import { ClientSessions } from "../profile/client-sessions";
 import { BookingConnectionOptions } from "./booking-connection-options";
-import { CoachAthleteConnections } from "./coach-athlete-connections";
-import { CoachConnectionHistory } from "./coach-connection-history";
+import { ConnectionLists } from "./connection-lists";
+import { ConnectionHistory } from "./connection-history";
 import {
   applyConnectionResult,
   connectionReadMessage,
-  mergeConnectionRows,
+  freshConnectionRange,
   UNAVAILABLE_CONNECTION_PAGES,
-  type CoachConnectionPages,
-} from "./coach-connections-model";
+  type ConnectionPages,
+} from "./connection-model";
 
 const idle: ConnectionActionState = {
   status: "idle",
@@ -53,23 +55,25 @@ type ContextState = {
   >;
 };
 
-export function CoachConnectionsWorkspace({
+export function ConnectionWorkspace({
+  role = "coach",
   bookings,
   referenceTime,
   initialPages,
   sourceVersion,
   mayInitiate,
 }: {
+  role?: ConnectionRole;
   bookings: readonly PrivateBookingProjection[] | null;
   referenceTime: string;
-  initialPages: CoachConnectionPages;
+  initialPages: ConnectionPages;
   sourceVersion: string;
   mayInitiate: boolean;
 }) {
   const router = useRouter();
   const [local, setLocal] = useState<{
     source: string;
-    pages: CoachConnectionPages;
+    pages: ConnectionPages;
   } | null>(null);
   const [contexts, setContexts] = useState<ContextState | null>(null);
   const [contextRevision, setContextRevision] = useState(0);
@@ -93,6 +97,7 @@ export function CoachConnectionsWorkspace({
       ? history
       : null;
   const busy = pending || busyKey !== null;
+  const SessionCards = role === "coach" ? CoachClientCards : ClientSessions;
   const bookingIds = new Set(bookings?.map((row) => row.id));
   useEffect(() => {
     if (result) feedback.current?.focus();
@@ -124,7 +129,7 @@ export function CoachConnectionsWorkspace({
     });
   }
   async function refreshPages() {
-    const next = await loadCoachConnectionPagesAction();
+    const next = await loadConnectionPagesAction(role);
     setLocal({ source: sourceVersion, pages: next });
     return next;
   }
@@ -163,7 +168,7 @@ export function CoachConnectionsWorkspace({
       if (next.status === "saved" && next.connection) {
         setLocal({
           source: sourceVersion,
-          pages: applyConnectionResult(pages, next.connection),
+          pages: applyConnectionResult(pages, next.connection, role),
         });
         await refreshPages();
       } else if (
@@ -207,10 +212,9 @@ export function CoachConnectionsWorkspace({
       const current = pages[section];
       if (section === "accepted") setHistory(null);
       setLocal({ source: sourceVersion, pages: { ...pages, [section]: null } });
-      const next = await loadConnectionPageAction(
-        "coach",
-        section,
-        current?.nextCursor ?? null,
+      const next = await freshConnectionRange(
+        (current?.items.length ?? 0) + 20,
+        (cursor) => loadConnectionPageAction(role, section, cursor),
       );
       if (next.status !== "ready") {
         setLocal({
@@ -227,16 +231,14 @@ export function CoachConnectionsWorkspace({
           ...pages,
           [section]: {
             ...next.value,
-            items: current
-              ? mergeConnectionRows(current.items, next.value.items)
-              : next.value.items,
+            items: next.value.items,
           },
         },
       });
       const firstNew = next.value.items.find(
         (row) => !current?.items.some((item) => item.id === row.id),
       );
-      if (firstNew) setFocusTarget({ id: `coach-connection-${firstNew.id}` });
+      if (firstNew) setFocusTarget({ id: `${role}-connection-${firstNew.id}` });
     });
   }
   function loadHistory(row: ConnectionProjection, more = false) {
@@ -252,9 +254,9 @@ export function CoachConnectionsWorkspace({
         page: null,
         message: null,
       });
-      const next = await loadConnectionHistoryAction(
-        row.pairId,
-        current?.nextCursor ?? null,
+      const next = await freshConnectionRange(
+        (current?.items.length ?? 0) + 20,
+        (cursor) => loadConnectionHistoryAction(row.pairId, cursor),
       );
       if (next.status !== "ready") {
         setHistory({
@@ -277,9 +279,7 @@ export function CoachConnectionsWorkspace({
         pairId: row.pairId,
         page: {
           ...next.value,
-          items: current
-            ? mergeConnectionRows(current.items, next.value.items)
-            : next.value.items,
+          items: next.value.items,
         },
         message: null,
       });
@@ -301,12 +301,13 @@ export function CoachConnectionsWorkspace({
           {result.message}
         </p>
       )}
-      <CoachClientCards
+      <SessionCards
         bookings={bookings}
         referenceTime={referenceTime}
         renderConnection={(booking) => (
           <BookingConnectionOptions
             key={`${booking.id}:${booking.status}:${contextRevision}`}
+            role={role}
             booking={booking}
             context={contextEntries[booking.id]?.value}
             error={contextEntries[booking.id]?.message ?? null}
@@ -317,7 +318,8 @@ export function CoachConnectionsWorkspace({
           />
         )}
       />
-      <CoachAthleteConnections
+      <ConnectionLists
+        role={role}
         pages={pages}
         busy={busy}
         mayInitiate={mayInitiate}
@@ -327,8 +329,11 @@ export function CoachConnectionsWorkspace({
         onHistory={(row) => loadHistory(row)}
         renderHistory={(row) =>
           visibleHistory?.attemptId === row.id ? (
-            <CoachConnectionHistory
-              name={row.athleteDisplayName}
+            <ConnectionHistory
+              role={role}
+              name={
+                role === "coach" ? row.athleteDisplayName : row.coachDisplayName
+              }
               page={visibleHistory.page}
               message={visibleHistory.message}
               busy={busy}

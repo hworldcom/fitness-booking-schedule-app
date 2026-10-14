@@ -47,6 +47,10 @@ All six direct records are flat peers, each with reciprocal membership. Every re
 
 ## Progress and integration record
 
+- 2026-10-14: The user requested a DEV0223 checkpoint commit of all pending changes. Fresh isolated snapshots passed static/build checks; the latest read-freshness refinement passed 141 unit/model/render + 15 server tests. DEV0223 remains In progress pending final actor-bound rehearsals, cleanup and completion review; this coordination stays open. No new data or hosted rehearsal was performed for the commit.
+
+- 2026-10-14: DEV0223 started after the user requested the next ticket. It owns My sessions → My coaches, perspective-aware reuse of the delivered connection controls and combined two-web-interface consent/recovery validation. Home and backend eligibility remain unchanged; COR0015 shared content is separate.
+
 - 2026-10-14: DEV0222 completed Coach workspace → Bookings connection controls, separate accepted/request/terminal lists and complete older-page shared-history navigation. Real coach Server Actions plus actor-checked counterpart operations proved both-side removal/fresh acceptance, all 30 original history references, 22 accepted athletes, cancellation recovery, private-media fallback and desktop/mobile keyboard use. Independent DEV0234 restored typed SQL-conflict feedback after rollback. The athlete web interface remains DEV0223; this rehearsal does not claim both web interfaces or COR0015 shared-content recovery are delivered.
 
 - 2026-10-14: DEV0222 started after confirming completed/committed DEV0228 and a clean tree. Its scope is Coach workspace → Bookings, on-demand connection options and private My athletes/history with dedicated styles. DEV0223 remains a separate athlete consumer; Home files are outside this slice.
@@ -80,7 +84,7 @@ DEV0219 completed on 2026-10-14: fifteen-document formatting, local link/anchor/
 ## Completion and review references
 
 - Completed: Not completed.
-- Direct development tickets: DEV0219 and DEV0220 Completed; DEV0230 and DEV0221 Completed; DEV0222 Completed; DEV0223 Draft.
+- Direct development tickets: DEV0219 and DEV0220 Completed; DEV0230 and DEV0221 Completed; DEV0222 Completed; DEV0223 In progress.
 - Commit: Not applicable — coordination IDs are not commit subjects.
 - Review: No independent review created.
-- Deployment or release: Backend and coach interface implemented and locally validated; athlete interface remains planned. No hosted deployment or release.
+- Deployment or release: Backend and coach interface implemented and locally validated; athlete interface is implemented with final integration/completion checks pending. No hosted deployment or release.

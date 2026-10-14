@@ -9,13 +9,15 @@ import type {
 import type { PrivateBookingProjection } from "@/domain/coach-bookings";
 import {
   applyConnectionResult,
-  coachConnectionSection,
+  connectionSection,
+  connectionPresentation,
+  freshConnectionRange,
   mergeConnectionRows,
-  type CoachConnectionPages,
-} from "@/features/coaches/coach-connections-model";
-import { CoachAthleteConnections } from "@/features/coaches/coach-athlete-connections";
-import { CoachConnectionHistory } from "@/features/coaches/coach-connection-history";
-import { BookingConnectionOptions } from "@/features/coaches/booking-connection-options";
+  type ConnectionPages,
+} from "@/features/connections/connection-model";
+import { ConnectionLists } from "@/features/connections/connection-lists";
+import { ConnectionHistory } from "@/features/connections/connection-history";
+import { BookingConnectionOptions } from "@/features/connections/booking-connection-options";
 
 const id = (n: number) =>
   `9a222000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -49,9 +51,7 @@ function connection(
     ...patch,
   };
 }
-function pages(
-  patch: Partial<CoachConnectionPages> = {},
-): CoachConnectionPages {
+function pages(patch: Partial<ConnectionPages> = {}): ConnectionPages {
   const empty = { items: [], nextCursor: null };
   return {
     accepted: empty,
@@ -62,9 +62,9 @@ function pages(
   };
 }
 const noop = () => {};
-function markup(value: CoachConnectionPages, mayInitiate = true) {
+function markup(value: ConnectionPages, mayInitiate = true) {
   return renderToStaticMarkup(
-    createElement(CoachAthleteConnections, {
+    createElement(ConnectionLists, {
       pages: value,
       busy: false,
       mayInitiate,
@@ -104,19 +104,19 @@ const booking: PrivateBookingProjection = {
 };
 
 test("connection consent sections follow recipient and terminal state, not the send button", () => {
-  assert.equal(coachConnectionSection(connection()), "outgoing");
+  assert.equal(connectionSection(connection()), "outgoing");
   assert.equal(
-    coachConnectionSection(
+    connectionSection(
       connection(1, { senderProfileId: id(102), recipientProfileId: id(101) }),
     ),
     "incoming",
   );
   assert.equal(
-    coachConnectionSection(connection(1, { status: "accepted" })),
+    connectionSection(connection(1, { status: "accepted" })),
     "accepted",
   );
   for (const status of ["declined", "withdrawn", "removed"] as const)
-    assert.equal(coachConnectionSection(connection(1, { status })), "history");
+    assert.equal(connectionSection(connection(1, { status })), "history");
 });
 
 test("overlapping older pages preserve stable identities, server order and microsecond values", () => {
@@ -288,7 +288,7 @@ test("history keeps one continuing accepted request/session and unsuccessful ori
     bookingStatus: null,
   };
   const html = renderToStaticMarkup(
-    createElement(CoachConnectionHistory, {
+    createElement(ConnectionHistory, {
       name: "Amina Athlete",
       page: {
         items: [first, declined],
@@ -341,4 +341,202 @@ test("booking context remains unknown until checked and reconnect requires an ex
   );
   assert.doesNotMatch(cancelled, /Send connection request/);
   assert.match(cancelled, /confirmed or completed shared session is required/);
+});
+
+test("athlete perspective reverses consent sections without changing actor IDs or consent", () => {
+  const outgoing = connection(1, {
+    senderProfileId: id(102),
+    recipientProfileId: id(101),
+  });
+  assert.equal(connectionSection(outgoing, "athlete"), "outgoing");
+  assert.equal(connectionSection(outgoing, "coach"), "incoming");
+  const incoming = connection();
+  assert.equal(connectionSection(incoming, "athlete"), "incoming");
+  const applied = applyConnectionResult(pages(), outgoing, "athlete");
+  assert.equal(applied.outgoing?.items[0].id, outgoing.id);
+  assert.equal(applied.accepted?.items.length, 0);
+});
+
+test("athlete coach presentation never selects athlete private media and gates public shortcuts", () => {
+  const connected = connection(1, {
+    status: "accepted",
+    coachPortraitUrl: "/images/coaches/daniel.webp",
+    athleteAvatarUrl: "/api/connections/private/athlete-avatar",
+  });
+  assert.deepEqual(connectionPresentation(connected, "athlete"), {
+    name: "Test Coach",
+    imageUrl: "/images/coaches/daniel.webp",
+    profileHref: "/coaches/test-coach",
+  });
+  assert.deepEqual(
+    connectionPresentation({ ...connected, coachPublic: false }, "athlete"),
+    { name: "Test Coach", imageUrl: null, profileHref: null },
+  );
+  assert.equal(
+    connectionPresentation({ ...connected, status: "pending" }, "athlete")
+      .profileHref,
+    null,
+  );
+});
+
+test("My coaches uses retained counterpart identity, server flags and no hidden-coach new-session action", () => {
+  const row = connection(1, {
+    status: "accepted",
+    coachPublic: false,
+    canDisconnect: true,
+  });
+  const html = renderToStaticMarkup(
+    createElement(ConnectionLists, {
+      role: "athlete",
+      pages: pages({ accepted: { items: [row], nextCursor: null } }),
+      busy: false,
+      mayInitiate: true,
+      onRefresh: noop,
+      onPage: noop,
+      onDecision: noop,
+      onHistory: noop,
+      renderHistory: () => null,
+    }),
+  );
+  assert.match(html, /My coaches/);
+  assert.match(html, /Test Coach/);
+  assert.doesNotMatch(
+    html,
+    /Amina Athlete|View coach and request a session|\/coaches\/test-coach|athlete-avatar/,
+  );
+  assert.match(html, /Disconnect/);
+  assert.match(html, /not available for new session requests/);
+  const incoming = renderToStaticMarkup(
+    createElement(ConnectionLists, {
+      role: "athlete",
+      pages: pages({
+        incoming: {
+          items: [connection(2, { canAccept: false, canDecline: true })],
+          nextCursor: null,
+        },
+      }),
+      busy: false,
+      mayInitiate: true,
+      onRefresh: noop,
+      onPage: noop,
+      onDecision: noop,
+      onHistory: noop,
+      renderHistory: () => null,
+    }),
+  );
+  assert.doesNotMatch(incoming, /Accept connection/);
+  assert.match(incoming, /Decline connection/);
+});
+
+test("athlete booking controls ask the coach for consent and link the athlete list", () => {
+  const incoming = renderToStaticMarkup(
+    createElement(BookingConnectionOptions, {
+      role: "athlete",
+      booking,
+      context: {
+        canSend: false,
+        connection: connection(1, {
+          canAccept: true,
+          canDecline: true,
+          canWithdraw: false,
+        }),
+      },
+      error: null,
+      busy: false,
+      mayInitiate: true,
+      onLoad: noop,
+      onMutation: noop,
+    }),
+  );
+  assert.match(incoming, /Connection with Test Coach/);
+  assert.match(incoming, /This coach is waiting for your decision/);
+  assert.match(incoming, /Accept connection/);
+  assert.doesNotMatch(incoming, /Send connection request/);
+  const accepted = renderToStaticMarkup(
+    createElement(BookingConnectionOptions, {
+      role: "athlete",
+      booking,
+      context: {
+        canSend: false,
+        connection: connection(1, { status: "accepted", canDisconnect: true }),
+      },
+      error: null,
+      busy: false,
+      mayInitiate: true,
+      onLoad: noop,
+      onMutation: noop,
+    }),
+  );
+  assert.match(accepted, /href="#my-coaches"/);
+  assert.match(accepted, /View My coaches/);
+});
+
+test("athlete history returns to the original athlete session, preserving selected-request continuity", () => {
+  const row: ConnectionHistoryReference = {
+    id: id(310),
+    requestId: id(310),
+    bookingId: booking.id,
+    requestStatus: "accepted",
+    bookingStatus: "cancelled",
+    createdAt: "2026-10-14T10:00:00.123456+00:00",
+    scheduledStartAt: booking.scheduledStartAt,
+    scheduledEndAt: booking.scheduledEndAt,
+    coachTimezone: booking.coachTimezone,
+    trainingLocationName: booking.location.name,
+    publicLocationLabel: booking.location.publicLabel,
+  };
+  const html = renderToStaticMarkup(
+    createElement(ConnectionHistory, {
+      role: "athlete",
+      name: "Test Coach",
+      page: { items: [row], nextCursor: null },
+      message: null,
+      busy: false,
+      bookingIds: new Set([booking.id]),
+      onLoad: noop,
+    }),
+  );
+  assert.match(html, new RegExp(`href="#athlete-booking-${booking.id}"`));
+  assert.match(html, /Accepted request · Cancelled session/);
+  assert.equal((html.match(/data-history-id=/g) ?? []).length, 1);
+  assert.doesNotMatch(html, /coach-booking-|conversation|private note/);
+});
+
+test("loading another page rebuilds authorised rows and current statuses without restoring revoked cached entries", async () => {
+  const cursor = { createdAt: "2026-10-14T10:00:00.123456+00:00", id: id(8) };
+  const calls: unknown[] = [];
+  const result = await freshConnectionRange(4, async (after) => {
+    calls.push(after);
+    return {
+      status: "ready" as const,
+      value: after
+        ? { items: [{ id: id(4), status: "cancelled" }], nextCursor: null }
+        : {
+            items: [
+              { id: id(2), status: "cancelled" },
+              { id: id(3), status: "confirmed" },
+            ],
+            nextCursor: cursor,
+          },
+    };
+  });
+  assert.deepEqual(calls, [null, cursor]);
+  assert.equal(result.status, "ready");
+  if (result.status === "ready") {
+    assert.deepEqual(
+      result.value.items.map((row) => row.id),
+      [id(2), id(3), id(4)],
+    );
+    assert.equal(result.value.items[0].status, "cancelled");
+    assert.equal(result.value.nextCursor, null);
+  }
+  const denied = await freshConnectionRange(4, async (after) =>
+    after
+      ? { status: "forbidden" as const }
+      : {
+          status: "ready" as const,
+          value: { items: [{ id: id(2) }], nextCursor: cursor },
+        },
+  );
+  assert.deepEqual(denied, { status: "forbidden" });
 });

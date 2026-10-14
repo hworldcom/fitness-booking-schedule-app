@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   cancelPrivateBookingAction,
   type CoachMarketplaceActionResult,
@@ -41,7 +41,7 @@ function bookingTime(booking: PrivateBookingProjection) {
 function statusLabel(booking: PrivateBookingProjection) {
   if (booking.status === "cancelled") {
     return booking.cancelledBy
-      ? `Cancelled by ${booking.cancelledBy}`
+      ? `Cancelled by ${booking.cancelledBy === "client" ? "athlete" : booking.cancelledBy}`
       : "Cancelled";
   }
   return booking.status === "completed" ? "Completed" : "Confirmed";
@@ -50,9 +50,11 @@ function statusLabel(booking: PrivateBookingProjection) {
 export function ClientSessions({
   bookings,
   referenceTime,
+  renderConnection,
 }: {
   bookings: readonly PrivateBookingProjection[] | null;
   referenceTime: string;
+  renderConnection?: (booking: PrivateBookingProjection) => ReactNode;
 }) {
   const router = useRouter();
   const [busyBookingId, setBusyBookingId] = useState<string | null>(null);
@@ -84,7 +86,11 @@ export function ClientSessions({
   function bookingCard(booking: PrivateBookingProjection) {
     const cancellable = isFutureConfirmedBooking(booking, referenceTime);
     return (
-      <article className="client-session-card" key={booking.id}>
+      <article
+        className="client-session-card"
+        key={booking.id}
+        id={`athlete-booking-${booking.id}`}
+      >
         <ClientSessionDateTile
           timestamp={booking.scheduledStartAt}
           timeZone={booking.coachTimezone}
@@ -113,6 +119,7 @@ export function ClientSessions({
               </span>
             </p>
           </div>
+          {renderConnection?.(booking)}
         </div>
         {cancellable && (
           <div className="client-session-card-actions">

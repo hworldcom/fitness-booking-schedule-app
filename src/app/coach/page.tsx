@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { connectionWorkspaceVersion } from "@/server/connections/workspace-version";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -6,10 +6,10 @@ import { signInHref } from "@/auth/return-to";
 import { saveCoachAvailabilityRulesAction } from "./actions";
 import { CoachAvailabilityPanel } from "@/features/coaches/coach-availability-panel";
 import { CoachApplicationGate } from "@/features/coaches/coach-application-gate";
-import { CoachConnectionsWorkspace } from "@/features/coaches/coach-connections-workspace";
-import { UNAVAILABLE_CONNECTION_PAGES } from "@/features/coaches/coach-connections-model";
-import { loadCoachConnectionPagesAction } from "@/app/connections/actions";
-import "./connections.css";
+import { ConnectionWorkspace } from "@/features/connections/connection-workspace";
+import { UNAVAILABLE_CONNECTION_PAGES } from "@/features/connections/connection-model";
+import { loadConnectionPagesAction } from "@/app/connections/actions";
+import "@/features/connections/connections.css";
 import { CoachBookingRequestQueue } from "@/features/coaches/coach-booking-request-queue";
 import { resolveCoachWorkspaceView } from "@/features/coaches/coach-workspace-view";
 import { currentOwnedCoachBookingRequestPage } from "@/server/coaches/booking-request-service";
@@ -78,7 +78,7 @@ export default async function Page({
   const connectionPages =
     view === "bookings" &&
     (mayInitiate || state.coachAccess.status === "suspended")
-      ? await loadCoachConnectionPagesAction()
+      ? await loadConnectionPagesAction("coach")
       : UNAVAILABLE_CONNECTION_PAGES;
   const bookingContent = (
     <div className="coach-bookings-workspace">
@@ -91,20 +91,18 @@ export default async function Page({
         <a href="#my-athletes">My athletes</a>
       </nav>
       <CoachBookingRequestQueue initialPage={coachRequestPage} />
-      <CoachConnectionsWorkspace
+      <ConnectionWorkspace
+        role="coach"
         bookings={coachBookings}
         referenceTime={new Date().toISOString()}
         initialPages={connectionPages}
-        sourceVersion={createHash("sha256")
-          .update(
-            JSON.stringify([
-              connectionPages,
-              coachBookings,
-              coachRequestPage,
-              state.coachAccess.status,
-            ]),
-          )
-          .digest("hex")}
+        key={state.actorScope}
+        sourceVersion={connectionWorkspaceVersion(state.actorScope, "coach", [
+          connectionPages,
+          coachBookings,
+          coachRequestPage,
+          state.coachAccess.status,
+        ])}
         mayInitiate={mayInitiate}
       />
     </div>

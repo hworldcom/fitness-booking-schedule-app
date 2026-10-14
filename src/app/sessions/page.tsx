@@ -1,3 +1,4 @@
+import { connectionWorkspaceVersion } from "@/server/connections/workspace-version";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -5,7 +6,9 @@ import { BriefcaseBusiness } from "lucide-react";
 import { signInHref } from "@/auth/return-to";
 import { ProtectedAccessUnavailable } from "@/features/auth/protected-access";
 import { ClientBookingRequests } from "@/features/profile/client-booking-requests";
-import { ClientSessions } from "@/features/profile/client-sessions";
+import { ConnectionWorkspace } from "@/features/connections/connection-workspace";
+import { loadConnectionPagesAction } from "@/app/connections/actions";
+import "@/features/connections/connections.css";
 import { protectedPageAccess } from "@/server/authorization/page-access";
 import { currentClientSessionWorkspace } from "@/server/coaches/booking-request-service";
 import { currentCoachAccess } from "@/server/coaches/service";
@@ -52,6 +55,7 @@ export default async function Page() {
     return <ProtectedAccessUnavailable />;
   }
 
+  const connectionPages = await loadConnectionPagesAction("athlete");
   const coachCanOpenWorkspace =
     coachState.status === "authorized" &&
     ["approved", "demo", "suspended"].includes(coachState.coachAccess.status);
@@ -68,6 +72,7 @@ export default async function Page() {
         <nav aria-label="My sessions sections">
           <a href="#booking-requests">Booking requests</a>
           <a href="#my-sessions">Confirmed sessions</a>
+          <a href="#my-coaches">My coaches</a>
         </nav>
       </header>
       {coachCanOpenWorkspace && (
@@ -83,7 +88,16 @@ export default async function Page() {
         </aside>
       )}
       <ClientBookingRequests initialPage={bookingState.requests} />
-      <ClientSessions
+      <ConnectionWorkspace
+        role="athlete"
+        mayInitiate={true}
+        initialPages={connectionPages}
+        key={bookingState.actorScope}
+        sourceVersion={connectionWorkspaceVersion(
+          bookingState.actorScope,
+          "athlete",
+          [connectionPages, bookingState.bookings, bookingState.requests],
+        )}
         bookings={bookingState.bookings}
         referenceTime={new Date().toISOString()}
       />

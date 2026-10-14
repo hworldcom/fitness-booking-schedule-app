@@ -3,13 +3,15 @@
 import type {
   ConnectionHistoryReference,
   ConnectionPage,
+  ConnectionRole,
 } from "@/domain/coach-athlete-connections";
 import {
   connectionHistoryStatus,
   connectionHistoryTime,
-} from "./coach-connections-model";
+} from "./connection-model";
 
-export function CoachConnectionHistory({
+export function ConnectionHistory({
+  role = "coach",
   name,
   page,
   message,
@@ -17,6 +19,7 @@ export function CoachConnectionHistory({
   bookingIds,
   onLoad,
 }: {
+  role?: ConnectionRole;
   name: string;
   page: ConnectionPage<ConnectionHistoryReference> | null;
   message: string | null;
@@ -64,7 +67,7 @@ export function CoachConnectionHistory({
                 <span>{connectionHistoryStatus(row)}</span>
               </div>
               {row.bookingId && bookingIds.has(row.bookingId) && (
-                <a href={`#coach-booking-${row.bookingId}`}>View session</a>
+                <a href={`#${role}-booking-${row.bookingId}`}>View session</a>
               )}
             </li>
           ))}

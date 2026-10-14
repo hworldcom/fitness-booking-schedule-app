@@ -25,6 +25,7 @@
     "test:coach-locations": "node scripts/rehearse-local-coach-locations.mjs",
     "test:coach-requests": "node scripts/rehearse-local-coach-booking-requests.mjs",
     "test:coach-connections": "tsx --conditions=react-server scripts/rehearse-local-coach-connections.ts",
+    "test:athlete-connections": "tsx --conditions=react-server scripts/rehearse-local-athlete-connections.ts",
     "test:client-requests": "node scripts/rehearse-local-client-booking-requests.mjs",
     "test:profile-images": "node scripts/rehearse-local-profile-images.mjs",
     "test:e2e": "playwright test",

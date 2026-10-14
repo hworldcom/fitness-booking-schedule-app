@@ -180,7 +180,8 @@
   cursor: wait;
   opacity: 0.65;
 }
-.coach-connections-workspace .coach-client-card[id] {
+.coach-connections-workspace .coach-client-card[id],
+.coach-connections-workspace .client-session-card[id] {
   scroll-margin-top: 96px;
 }
 @media (max-width: 720px) {
