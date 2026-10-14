@@ -124,6 +124,7 @@
 
 .marketplace-home-search-panel .coach-filters .button {
   align-self: stretch;
+  grid-column: 1 / -1;
 }
 
 .home-coach-discovery {

@@ -2,7 +2,7 @@
 
 - Status: In progress
 - Created: 2026-10-12
-- Last updated: 2026-10-12
+- Last updated: 2026-10-14
 - Milestone: Scheduling interface public-marketplace follow-up
 - Converted from: Not applicable — created as a coordination record
 - Tracked development tickets: completed [DEV0195 — Adopt the public marketplace redesign contract](../../archive/organisatory/DEV0195-adopt-public-marketplace-redesign-contract.md), completed [DEV0196 — Introduce the public marketplace shell](../../archive/frontend/DEV0196-introduce-public-marketplace-shell.md), completed [DEV0197 — Share public marketplace search](../../archive/frontend/DEV0197-share-public-marketplace-search.md), completed [DEV0198 — Build the search-first marketplace home](../../archive/frontend/DEV0198-build-search-first-marketplace-home.md), completed [DEV0199 — Redesign desktop coach Explore](../../archive/frontend/DEV0199-redesign-desktop-coach-explore.md), completed [DEV0200 — Add mobile Explore map/list state](../../archive/frontend/DEV0200-add-mobile-explore-map-list-state.md) and draft [DEV0201 — Polish public marketplace accessibility](../frontend/DEV0201-polish-public-marketplace-accessibility.md)
@@ -32,6 +32,7 @@ All required first-delivery implementation parts have direct development tickets
 
 ## Other relationships
 
+- Independent later Home follow-up [DEV0226](../../archive/frontend/DEV0226-remove-home-coach-focus-search.md) owns the temporary coach/focus-field removal and preserves discipline/location submission to Explore. It is not a direct member of this coordination record. DEV0201 reviews the resulting Home/Explore distinction against the amended specification; the original completed peer records remain historical delivery evidence.
 - DEV0095 supplies the current truthful explainer-first homepage. DEV0198 changes its hierarchy but must preserve its booking-confirmation and demo-disclosure language.
 - DEV0153 supplies actor-aware private navigation. DEV0196 changes public chrome only and must not remove `My sessions`, `Coach workspace`, coach Profile routing or personal account access from authorized actors.
 - DEV0174, DEV0180 and DEV0194 supply the provider-neutral map, permanent primary-location semantics, accessible list fallback and stable marker positioning. DEV0199-DEV0200 are presentation consumers, not new location providers or geospatial authorities.

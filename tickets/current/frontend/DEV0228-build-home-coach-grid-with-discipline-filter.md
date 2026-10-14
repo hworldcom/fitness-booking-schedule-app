@@ -5,7 +5,7 @@
 - Last updated: 2026-10-14
 - Milestone: M3 — Scheduling interface follow-up
 - Coordination: None — independent development ticket
-- Related records: preceding search simplification [DEV0226](DEV0226-remove-home-coach-focus-search.md); independent future coach/focus search [DEV0227](DEV0227-reintroduce-home-search-after-client-feedback.md); historical Home [DEV0198](../../archive/frontend/DEV0198-build-search-first-marketplace-home.md) and shared-search [DEV0197](../../archive/frontend/DEV0197-share-public-marketplace-search.md) baselines; downstream public integration review [DEV0201](DEV0201-polish-public-marketplace-accessibility.md) under [COR0017](../organisatory/COR0017-public-marketplace-redesign.md)
+- Related records: preceding search simplification [DEV0226](../../archive/frontend/DEV0226-remove-home-coach-focus-search.md); independent future coach/focus search [DEV0227](DEV0227-reintroduce-home-search-after-client-feedback.md); historical Home [DEV0198](../../archive/frontend/DEV0198-build-search-first-marketplace-home.md) and shared-search [DEV0197](../../archive/frontend/DEV0197-share-public-marketplace-search.md) baselines; downstream public integration review [DEV0201](DEV0201-polish-public-marketplace-accessibility.md) under [COR0017](../organisatory/COR0017-public-marketplace-redesign.md)
 
 ## Objective and context
 
@@ -85,15 +85,15 @@ Created an independent grid plan rather than expanding DEV0226's small search-fi
 
 ### Affected files
 
-| File or component                                                          | Change and purpose                                                                                                                                                                     |
-| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| This record                                                                | Captures confirmed grid/search decisions and proposed implementation/validation details.                                                                                               |
-| [DEV0226](DEV0226-remove-home-coach-focus-search.md)                       | Links the later grid task and records that retaining search does not cancel the text-field removal.                                                                                    |
-| [DEV0227](DEV0227-reintroduce-home-search-after-client-feedback.md)        | Links the planned grid as a later baseline for any future text-search decision.                                                                                                        |
-| [Ticket index](../../README.md)                                            | Lists this Draft and advances the next development identifier.                                                                                                                         |
-| `work/design-previews/movx-home-search-grid.html`                          | Discussion preview with one grid, discipline/location controls and an optional, disabled distance field; uses illustrative local data and the existing fictional Daniel portrait.      |
-| `work/design-previews/movx-home-search-grid-preview.html` and preview PNGs | Standalone visual-review wrapper and desktop/mobile screenshots; response evidence, not application routes or deployed assets.                                                         |
-| `work/design-previews/movx-discovery-preview.html` and its browser wrapper | Interactive discussion preview for typed/scrollable disciplines, preset-location/radius scenarios, the initial 15-coach limit and conditional Load more. Uses fictional examples only. |
+| File or component                                                           | Change and purpose                                                                                                                                                                     |
+| --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| This record                                                                 | Captures confirmed grid/search decisions and proposed implementation/validation details.                                                                                               |
+| [DEV0226](../../archive/frontend/DEV0226-remove-home-coach-focus-search.md) | Links the later grid task and records that retaining search does not cancel the text-field removal.                                                                                    |
+| [DEV0227](DEV0227-reintroduce-home-search-after-client-feedback.md)         | Links the planned grid as a later baseline for any future text-search decision.                                                                                                        |
+| [Ticket index](../../README.md)                                             | Lists this Draft and advances the next development identifier.                                                                                                                         |
+| `work/design-previews/movx-home-search-grid.html`                           | Discussion preview with one grid, discipline/location controls and an optional, disabled distance field; uses illustrative local data and the existing fictional Daniel portrait.      |
+| `work/design-previews/movx-home-search-grid-preview.html` and preview PNGs  | Standalone visual-review wrapper and desktop/mobile screenshots; response evidence, not application routes or deployed assets.                                                         |
+| `work/design-previews/movx-discovery-preview.html` and its browser wrapper  | Interactive discussion preview for typed/scrollable disciplines, preset-location/radius scenarios, the initial 15-coach limit and conditional Load more. Uses fictional examples only. |
 
 ### Decisions and deviations
 

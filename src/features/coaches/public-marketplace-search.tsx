@@ -8,34 +8,42 @@ import { coachDirectoryHref } from "./marketplace-search-contract";
 
 export function PublicMarketplaceSearch({
   filters,
+  includeQuery = true,
 }: {
   filters: CoachDirectoryFilters;
+  includeQuery?: boolean;
 }) {
+  const searchFilters = includeQuery ? filters : { ...filters, query: "" };
   const hasActiveFilters = Boolean(
-    filters.query || filters.discipline || filters.location,
+    searchFilters.query || searchFilters.discipline || searchFilters.location,
   );
 
   return (
-    <div className="marketplace-search" key={coachDirectoryHref(filters)}>
+    <div className="marketplace-search" key={coachDirectoryHref(searchFilters)}>
       <form
         className="coach-filters"
         action="/explore"
         method="get"
         aria-label="Search coaches"
       >
-        <label>
-          <span>Search coach or focus</span>
-          <input
-            type="search"
-            name="q"
-            defaultValue={filters.query}
-            placeholder="Try fundamentals or footwork"
-            maxLength={80}
-          />
-        </label>
+        {includeQuery && (
+          <label>
+            <span>Search coach or focus</span>
+            <input
+              type="search"
+              name="q"
+              defaultValue={searchFilters.query}
+              placeholder="Try fundamentals or footwork"
+              maxLength={80}
+            />
+          </label>
+        )}
         <label>
           <span>Discipline</span>
-          <select name="discipline" defaultValue={filters.discipline ?? ""}>
+          <select
+            name="discipline"
+            defaultValue={searchFilters.discipline ?? ""}
+          >
             <option value="">All disciplines</option>
             {COACH_DISCIPLINES.map((discipline) => (
               <option key={discipline} value={discipline}>
@@ -49,7 +57,7 @@ export function PublicMarketplaceSearch({
           <input
             type="search"
             name="location"
-            defaultValue={filters.location}
+            defaultValue={searchFilters.location}
             placeholder="Gym or public place"
             maxLength={120}
           />
@@ -67,21 +75,23 @@ export function PublicMarketplaceSearch({
         <div className="marketplace-discipline-chips">
           <Link
             className={`marketplace-discipline-chip ${
-              filters.discipline === null ? "active" : ""
+              searchFilters.discipline === null ? "active" : ""
             }`}
-            href={coachDirectoryHref(filters, { discipline: null })}
-            aria-current={filters.discipline === null ? "page" : undefined}
+            href={coachDirectoryHref(searchFilters, { discipline: null })}
+            aria-current={
+              searchFilters.discipline === null ? "page" : undefined
+            }
           >
             All
           </Link>
           {COACH_DISCIPLINES.map((discipline) => {
-            const selected = filters.discipline === discipline;
+            const selected = searchFilters.discipline === discipline;
             return (
               <Link
                 className={`marketplace-discipline-chip ${
                   selected ? "active" : ""
                 }`}
-                href={coachDirectoryHref(filters, { discipline })}
+                href={coachDirectoryHref(searchFilters, { discipline })}
                 aria-current={selected ? "page" : undefined}
                 key={discipline}
               >

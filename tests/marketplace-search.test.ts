@@ -141,3 +141,32 @@ test("shared search renders one GET contract and supported discipline links", ()
   assert.doesNotMatch(html, /name="service"/);
   assert.doesNotMatch(html, /name="when"|price|rating|distance/i);
 });
+
+test("Home search omits coach query controls and query-bearing discipline links", () => {
+  const html = renderToStaticMarkup(
+    createElement(PublicMarketplaceSearch, {
+      filters: FILTERS,
+      includeQuery: false,
+    }),
+  );
+  assert.match(html, /action="\/explore"/);
+  assert.match(html, /method="get"/);
+  assert.match(html, /name="discipline"/);
+  assert.match(html, /name="location"[^>]*value="Kreuzberg"/);
+  assert.match(
+    html,
+    /href="\/explore\?discipline=Boxing&amp;location=Kreuzberg"/,
+  );
+  assert.match(html, /href="\/explore\?location=Kreuzberg"/);
+  assert.doesNotMatch(html, /name="q"|Search coach or focus|[?&](?:amp;)?q=/);
+  assert.equal(FILTERS.query, "patient footwork");
+
+  const queryOnly = renderToStaticMarkup(
+    createElement(PublicMarketplaceSearch, {
+      filters: normalizeCoachDirectoryFilters({ q: "footwork" }),
+      includeQuery: false,
+    }),
+  );
+  assert.doesNotMatch(queryOnly, /Clear search|name="q"|[?&](?:amp;)?q=/);
+  assert.match(queryOnly, /aria-current="page"[^>]*>All/);
+});

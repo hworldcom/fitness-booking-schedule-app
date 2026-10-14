@@ -117,9 +117,8 @@ export function CoachStoryHome({
             Find your coach. Request a time that works.
           </h1>
           <p>
-            Search public coach profiles by name, focus, discipline or training
-            place. Choose from real published availability when you open a full
-            profile.
+            Browse public coach profiles by discipline or training place. Open a
+            profile to compare real published availability.
           </p>
           <div className="marketplace-home-confirmation-note">
             <ShieldCheck size={17} aria-hidden="true" />
@@ -135,12 +134,15 @@ export function CoachStoryHome({
         </div>
         <div className="marketplace-home-search-panel">
           <span className="eyebrow">START YOUR SEARCH</span>
-          <h2>Coach, focus or place.</h2>
+          <h2>Discipline or training place.</h2>
           <p>
-            These are the filters MovX can verify today. Search opens the full
+            Choose a discipline or training place to explore the full coach
             directory.
           </p>
-          <PublicMarketplaceSearch filters={emptyMarketplaceSearch} />
+          <PublicMarketplaceSearch
+            filters={emptyMarketplaceSearch}
+            includeQuery={false}
+          />
         </div>
       </section>
 

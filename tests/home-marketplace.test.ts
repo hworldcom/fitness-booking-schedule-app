@@ -234,5 +234,9 @@ test("home orders working discovery before the concise confirmation flow", () =>
   assert.ok(explanationIndex > previewIndex);
   assert.match(markup, /request stays pending until the coach accepts it/i);
   assert.match(markup, /not an instant booking/i);
+  assert.match(markup, /Discipline or training place/);
+  assert.match(markup, /name="discipline"/);
+  assert.match(markup, /name="location"/);
+  assert.doesNotMatch(markup, /name="q"|Search coach or focus|by name, focus/);
   assert.doesNotMatch(markup, /name="when"|near you|rating|price/i);
 });

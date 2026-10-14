@@ -5,7 +5,7 @@
 - Last updated: 2026-10-14
 - Milestone: Future discovery improvement — after client feedback
 - Coordination: None — independent development ticket
-- Related records: prior-removal dependency [DEV0226 — Remove Home coach or focus search](DEV0226-remove-home-coach-focus-search.md); later Home grid baseline [DEV0228](DEV0228-build-home-coach-grid-with-discipline-filter.md); historical search implementation [DEV0197](../../archive/frontend/DEV0197-share-public-marketplace-search.md) and Home baseline [DEV0198](../../archive/frontend/DEV0198-build-search-first-marketplace-home.md)
+- Related records: prior-removal dependency [DEV0226 — Remove Home coach or focus search](../../archive/frontend/DEV0226-remove-home-coach-focus-search.md); later Home grid baseline [DEV0228](DEV0228-build-home-coach-grid-with-discipline-filter.md); historical search implementation [DEV0197](../../archive/frontend/DEV0197-share-public-marketplace-search.md) and Home baseline [DEV0198](../../archive/frontend/DEV0198-build-search-first-marketplace-home.md)
 
 ## Objective and context
 
@@ -69,11 +69,11 @@ Created a Draft follow-up linked to the temporary Home removal. It preserves the
 
 ### Affected files
 
-| File or component                                    | Change and purpose                                                                                     |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| This record                                          | Tracks the feedback prerequisite, unresolved decisions and provisional implementation/validation plan. |
-| [DEV0226](DEV0226-remove-home-coach-focus-search.md) | Links the temporary removal to this independent future follow-up.                                      |
-| [Ticket index](../../README.md)                      | Makes the Draft follow-up discoverable with its true status.                                           |
+| File or component                                                           | Change and purpose                                                                                     |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| This record                                                                 | Tracks the feedback prerequisite, unresolved decisions and provisional implementation/validation plan. |
+| [DEV0226](../../archive/frontend/DEV0226-remove-home-coach-focus-search.md) | Links the temporary removal to this independent future follow-up.                                      |
+| [Ticket index](../../README.md)                                             | Makes the Draft follow-up discoverable with its true status.                                           |
 
 ### Decisions and deviations
 

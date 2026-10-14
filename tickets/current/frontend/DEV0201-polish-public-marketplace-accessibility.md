@@ -2,7 +2,7 @@
 
 - Status: Draft
 - Created: 2026-10-12
-- Last updated: 2026-10-12
+- Last updated: 2026-10-14
 - Milestone: Scheduling interface public-marketplace follow-up
 - Coordination: [COR0017 — Public marketplace redesign](../organisatory/COR0017-public-marketplace-redesign.md)
 - Related records: completed integration dependencies [DEV0196 — Introduce the public marketplace shell](../../archive/frontend/DEV0196-introduce-public-marketplace-shell.md), [DEV0197 — Share public marketplace search](../../archive/frontend/DEV0197-share-public-marketplace-search.md), [DEV0198 — Build the search-first marketplace home](../../archive/frontend/DEV0198-build-search-first-marketplace-home.md), [DEV0199 — Redesign desktop coach Explore](../../archive/frontend/DEV0199-redesign-desktop-coach-explore.md) and [DEV0200 — Add mobile Explore map/list state](../../archive/frontend/DEV0200-add-mobile-explore-map-list-state.md); separate private-interface follow-up [COR0018 — Authenticated workspace redesign](../organisatory/COR0018-authenticated-workspace-redesign.md)
@@ -34,6 +34,7 @@ Perform the final cross-surface accessibility, responsive and failure-state pass
 
 - DEV0195 supplies the adopted public/private navigation, search-first data and responsive Explore acceptance contract.
 - DEV0196-DEV0200 must each meet their own acceptance criteria before this ticket starts.
+- Later independent Home follow-up [DEV0226](../../archive/frontend/DEV0226-remove-home-coach-focus-search.md) removes only Home's coach/focus field. Review the retained Home discipline/location controls and Explore's full query search against the current specification; this follow-up does not transfer its implementation scope into integration polish.
 - Existing MovX tokens, Bricolage Grotesque display type and Manrope body type remain the visual foundation.
 - Automated accessibility checks assist but do not replace manual keyboard, responsive and screen-reader-oriented semantic review.
 
@@ -61,6 +62,8 @@ Perform the final cross-surface accessibility, responsive and failure-state pass
 ## Implementation record
 
 Pending implementation.
+
+2026-10-14 downstream handoff from DEV0226: Home now has an explicit shared-form configuration that omits coach/focus input and query-bearing links, while Explore retains its default query contract. DEV0226 owns focused keyboard/responsive/submission validation. This ticket remains Draft and still owes the broader public integration review.
 
 ### Changes and rationale
 

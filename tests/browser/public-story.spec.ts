@@ -104,6 +104,20 @@ test("home marketplace remains usable at the adopted review widths", async ({
     await expect(
       page.getByRole("form", { name: "Search coaches" }),
     ).toBeVisible();
+    await expect(page.locator('input[name="q"]')).toHaveCount(0);
+    const discipline = page.getByRole("combobox", {
+      name: "Discipline",
+      exact: true,
+    });
+    const location = page.getByLabel("Location", { exact: true });
+    await discipline.focus();
+    await expect(discipline).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(location).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(
+      page.getByRole("button", { name: "Search coaches", exact: true }),
+    ).toBeFocused();
     await expect(
       page.getByRole("heading", {
         name: "A first look at the directory.",
@@ -329,19 +343,33 @@ test("home search and discipline links share the canonical Explore contract", as
   await page.goto("/");
   const search = page.getByRole("form", { name: "Search coaches" });
   await expect(search).toBeVisible();
-  await search.getByLabel("Search coach or focus").fill(" patient  footwork ");
+  await expect(search.getByLabel("Search coach or focus")).toHaveCount(0);
+  await expect(search.locator('[name="q"]')).toHaveCount(0);
+  await page
+    .getByRole("navigation", { name: "Browse coaches by discipline" })
+    .getByRole("link", { name: "Boxing", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/explore\?discipline=Boxing$/);
+  await page.goBack();
+  await expect(search.locator('[name="q"]')).toHaveCount(0);
   await search.getByLabel("Discipline").selectOption("Muay Thai");
   await search.getByLabel("Location").fill(" Kreuzberg ");
   await search.getByLabel("Location").press("Enter");
 
+  await expect(page).toHaveURL(
+    /\/explore\?discipline=Muay\+Thai&location=Kreuzberg$/,
+  );
+  await expect(search.getByLabel("Search coach or focus")).toHaveValue("");
+  await expect(search.getByLabel("Discipline")).toHaveValue("Muay Thai");
+  await expect(search.getByLabel("Location")).toHaveValue("Kreuzberg");
+  await search.getByLabel("Search coach or focus").fill(" patient  footwork ");
+  await search.getByLabel("Search coach or focus").press("Enter");
   await expect(page).toHaveURL(
     /\/explore\?q=patient\+footwork&discipline=Muay\+Thai&location=Kreuzberg$/,
   );
   await expect(search.getByLabel("Search coach or focus")).toHaveValue(
     "patient footwork",
   );
-  await expect(search.getByLabel("Discipline")).toHaveValue("Muay Thai");
-  await expect(search.getByLabel("Location")).toHaveValue("Kreuzberg");
   await expect(
     page
       .getByRole("navigation", { name: "Browse coaches by discipline" })
@@ -397,18 +425,28 @@ test("marketplace search submits without JavaScript", async ({
   try {
     await page.goto("/");
     const search = page.getByRole("form", { name: "Search coaches" });
-    await search.getByLabel("Search coach or focus").fill("boxing basics");
+    await expect(search.locator('[name="q"]')).toHaveCount(0);
     await search.getByLabel("Discipline").selectOption("Boxing");
+    await search.getByLabel("Location").fill(" Kreuzberg ");
     await search
       .getByRole("button", { name: "Search coaches" })
       .click({ force: true });
     await expect(page).toHaveURL(
-      /\/explore\?q=boxing\+basics&discipline=Boxing$/,
+      /\/explore\?discipline=Boxing&location=Kreuzberg$/,
+    );
+    await expect(search.getByLabel("Search coach or focus")).toHaveValue("");
+    await expect(search.getByLabel("Discipline")).toHaveValue("Boxing");
+    await expect(search.getByLabel("Location")).toHaveValue("Kreuzberg");
+    await search.getByLabel("Search coach or focus").fill("boxing basics");
+    await search
+      .getByRole("button", { name: "Search coaches" })
+      .click({ force: true });
+    await expect(page).toHaveURL(
+      /\/explore\?q=boxing\+basics&discipline=Boxing&location=Kreuzberg$/,
     );
     await expect(search.getByLabel("Search coach or focus")).toHaveValue(
       "boxing basics",
     );
-    await expect(search.getByLabel("Discipline")).toHaveValue("Boxing");
   } finally {
     await context.close();
   }
