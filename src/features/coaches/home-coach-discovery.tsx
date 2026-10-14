@@ -1,15 +1,25 @@
 import Link from "next/link";
 import { ArrowRight, SearchX, UserRoundSearch } from "lucide-react";
-import {
-  homeCoachDirectoryPreview,
-  type CoachDirectoryState,
-} from "@/domain/coaches";
+import type { CoachDirectoryState } from "@/domain/coaches";
 import { CompactCoachCard } from "./compact-coach-card";
+import {
+  homeCoachDirectoryPage,
+  homeDirectoryHref,
+} from "./home-marketplace-contract";
+import { HomeLoadMore } from "./home-load-more";
 
-export function HomeCoachDiscovery({ state }: { state: CoachDirectoryState }) {
-  const preview =
-    state.status === "ready" ? homeCoachDirectoryPreview(state.entries) : [];
-
+export function HomeCoachDiscovery({
+  state,
+  page = 1,
+}: {
+  state: CoachDirectoryState;
+  page?: number;
+}) {
+  const result = homeCoachDirectoryPage(
+    state.status === "ready" ? state.entries : [],
+    page,
+  );
+  const filtered = Boolean(state.filters.discipline || state.filters.location);
   return (
     <section
       className="home-coach-discovery"
@@ -17,59 +27,75 @@ export function HomeCoachDiscovery({ state }: { state: CoachDirectoryState }) {
     >
       <div className="home-coach-discovery-heading">
         <div>
-          <span className="eyebrow">DISCOVER COACHES</span>
-          <h2 id="home-coach-discovery-title">
-            A first look at the directory.
-          </h2>
-          <p>
-            A bounded preview in coach-name order—not a proximity or
-            recommendation ranking.
-          </p>
+          <h2 id="home-coach-discovery-title">Discover coaches in Berlin</h2>
+          {state.status === "ready" && (
+            <p className="home-coach-discovery-summary" role="status">
+              {state.filters.discipline ?? "All disciplines"} · Showing{" "}
+              {result.entries.length} of {result.total} coach
+              {result.total === 1 ? "" : "es"}
+              {state.filters.location ? " · " + state.filters.location : ""}
+            </p>
+          )}
         </div>
-        <Link className="text-link" href="/explore">
-          View every coach <ArrowRight size={16} aria-hidden="true" />
-        </Link>
+        {filtered ? (
+          <Link className="text-link" href="/" prefetch={false}>
+            Clear filters
+          </Link>
+        ) : (
+          <Link className="text-link" href="/explore?view=map">
+            Explore with a map <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+        )}
       </div>
-
       {state.status === "unavailable" ? (
         <div className="home-coach-discovery-state" role="alert">
           <UserRoundSearch size={27} aria-hidden="true" />
           <div>
-            <h3>Coach previews are temporarily unavailable.</h3>
+            <h3>Coach discovery is temporarily unavailable.</h3>
             <p>
-              No fallback profiles or opening times were inserted. Open Explore
-              to try the live directory again.
+              Coach profiles could not be loaded. Please try your search again.
             </p>
           </div>
-          <Link className="button secondary" href="/explore">
-            Open Explore
-          </Link>
+          <a
+            className="button secondary"
+            href={homeDirectoryHref(state.filters)}
+          >
+            Try again
+          </a>
         </div>
-      ) : preview.length === 0 ? (
+      ) : result.total === 0 ? (
         <div className="home-coach-discovery-state">
           <SearchX size={27} aria-hidden="true" />
           <div>
-            <h3>No public coaches yet.</h3>
+            <h3>
+              {filtered
+                ? "No coaches match these filters."
+                : "No public coaches yet."}
+            </h3>
             <p>
-              The directory is available, but it has no visible coach profiles
-              to preview right now.
+              {filtered
+                ? "Try another discipline or training place."
+                : "There are no visible coach profiles to show right now."}
             </p>
           </div>
-          <Link className="button secondary" href="/explore">
-            Open Explore
-          </Link>
         </div>
       ) : (
         <>
-          <p className="home-coach-discovery-summary">
-            Showing {preview.length} of {state.entries.length} coach
-            {state.entries.length === 1 ? "" : "es"} · ordered by coach name
-          </p>
-          <div className="home-coach-preview-grid">
-            {preview.map((entry) => (
-              <CompactCoachCard entry={entry} key={entry.coach.profileId} />
+          <div id="home-coach-grid" className="home-coach-grid">
+            {result.entries.map((entry) => (
+              <CompactCoachCard
+                entry={entry}
+                variant="marketplace"
+                key={entry.coach.profileId}
+              />
             ))}
           </div>
+          <HomeLoadMore
+            filters={state.filters}
+            page={result.page}
+            hasMore={result.hasMore}
+            key={homeDirectoryHref(state.filters)}
+          />
         </>
       )}
     </section>

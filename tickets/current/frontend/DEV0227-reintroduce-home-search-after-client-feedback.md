@@ -5,7 +5,7 @@
 - Last updated: 2026-10-14
 - Milestone: Future discovery improvement — after client feedback
 - Coordination: None — independent development ticket
-- Related records: prior-removal dependency [DEV0226 — Remove Home coach or focus search](../../archive/frontend/DEV0226-remove-home-coach-focus-search.md); later Home grid baseline [DEV0228](DEV0228-build-home-coach-grid-with-discipline-filter.md); historical search implementation [DEV0197](../../archive/frontend/DEV0197-share-public-marketplace-search.md) and Home baseline [DEV0198](../../archive/frontend/DEV0198-build-search-first-marketplace-home.md)
+- Related records: prior-removal dependency [DEV0226 — Remove Home coach or focus search](../../archive/frontend/DEV0226-remove-home-coach-focus-search.md); later Home grid baseline [DEV0228](../../archive/frontend/DEV0228-build-home-coach-grid-with-discipline-filter.md); historical search implementation [DEV0197](../../archive/frontend/DEV0197-share-public-marketplace-search.md) and Home baseline [DEV0198](../../archive/frontend/DEV0198-build-search-first-marketplace-home.md)
 
 ## Objective and context
 
@@ -20,7 +20,7 @@ Use the [current discovery contract](../../../docs/mvp-spec.md#42-discover-a-coa
 
 ## Expected behavior and edge cases
 
-- Until evidence supports an adopted decision, Home keeps the simplified behavior delivered by DEV0226. Existing Explore search remains usable under its current contract.
+- Until evidence supports an adopted decision, Home keeps the coach/focus omission delivered by DEV0226 and the discipline/location grid baseline from DEV0228. Existing Explore search remains usable under its current contract.
 - Before implementation, record which discovery task clients struggle with, why discipline/location browsing and coach cards are insufficient, what the proposed search matches, where it appears and how success will be assessed.
 - If reintroduction is adopted, Home exposes the confirmed, accessible search flow using authoritative public coach data. Empty results, unavailable data, long/blank input, keyboard use, JavaScript-free submission and mobile layout have explicit behavior and truthful recovery.
 - Search never implies a confirmed booking, verified live fixture inventory, ranking, proximity or availability that the data cannot support.

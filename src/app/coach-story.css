@@ -8,49 +8,18 @@
   padding: 14px 0 48px;
 }
 
-.marketplace-home-hero {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 0.82fr) minmax(560px, 1.18fr);
-  align-items: center;
-  gap: clamp(34px, 5vw, 64px);
-  overflow: hidden;
-  border-radius: 26px;
-  background: var(--story-forest);
-  padding: clamp(34px, 5vw, 58px);
-  color: #fff;
-  isolation: isolate;
-}
-
-.marketplace-home-hero::before {
-  position: absolute;
-  z-index: -1;
-  top: -210px;
-  right: -130px;
-  width: 480px;
-  height: 480px;
-  border-radius: 50%;
-  background: rgb(114 162 105 / 20%);
-  content: "";
-}
-
-.marketplace-home-hero .eyebrow,
 .coach-devnet-story .eyebrow,
 .coach-story-cta .eyebrow,
 .how-story-hero .eyebrow,
 .coach-flow .eyebrow {
   color: var(--story-lime);
 }
-
-.marketplace-home-hero h1,
 .how-story-hero h1 {
   margin: 18px 0 24px;
   font-size: clamp(43px, 5.4vw, 64px);
   line-height: 0.98;
   letter-spacing: -3.1px;
 }
-
-.marketplace-home-hero-copy > p,
 .how-story-hero > div:first-child > p {
   max-width: 650px;
   color: #d4ddd5;
@@ -58,146 +27,295 @@
   line-height: 1.75;
 }
 
+.marketplace-home-hero {
+  padding: 22px 0 28px;
+  color: var(--story-forest);
+  text-align: center;
+}
+.marketplace-home-hero .eyebrow {
+  color: var(--muted);
+}
+.marketplace-home-hero h1 {
+  margin: 12px 0 10px;
+  font-size: clamp(30px, 4vw, 46px);
+  line-height: 1.12;
+  letter-spacing: -1.8px;
+}
+.marketplace-home-hero-copy > p {
+  color: var(--muted);
+  font-size: 14px;
+}
 .marketplace-home-confirmation-note {
   display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  margin-top: 24px;
-  color: #c8d3ca;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 13px;
+  color: var(--muted);
   font-size: 11px;
-  font-weight: 700;
-  line-height: 1.6;
 }
-
 .marketplace-home-confirmation-note svg {
-  color: var(--story-lime);
+  flex-shrink: 0;
 }
-
 .marketplace-home-how-link {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  margin-top: 22px;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.marketplace-home-how-link:hover {
-  color: var(--story-lime);
-}
-
-.marketplace-home-search-panel {
-  min-width: 0;
-  border-radius: 22px;
-  background: #f4f6f0;
-  padding: clamp(22px, 3vw, 31px);
+  gap: 6px;
+  margin-top: 12px;
   color: var(--story-forest);
-  box-shadow: 0 28px 70px rgb(0 0 0 / 16%);
-}
-
-.marketplace-home-search-panel > .eyebrow {
-  color: #5d7155;
-}
-
-.marketplace-home-search-panel > h2 {
-  margin: 7px 0 5px;
-  font-size: clamp(27px, 3vw, 36px);
-  letter-spacing: -1.6px;
-}
-
-.marketplace-home-search-panel > p {
-  max-width: 560px;
-  color: #687267;
   font-size: 11px;
-  line-height: 1.7;
 }
-
-.marketplace-home-search-panel .marketplace-search {
-  margin: 20px 0 0;
+.home-marketplace-search {
+  min-width: 0;
+  max-width: 880px;
+  margin: 0 auto 26px;
 }
-
-.marketplace-home-search-panel .coach-filters {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  box-shadow: none;
+.home-coach-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) auto;
+  align-items: center;
+  gap: 0;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 40px;
+  background: var(--white);
+  box-shadow: 0 8px 26px rgb(25 49 38 / 6%);
 }
-
-.marketplace-home-search-panel .coach-filters .button {
-  align-self: stretch;
-  grid-column: 1 / -1;
+.home-coach-search label {
+  min-width: 0;
+  padding: 6px 18px;
 }
-
-.home-coach-discovery {
-  padding: clamp(62px, 8vw, 92px) clamp(3px, 3vw, 34px) 0;
+.home-coach-search label + label {
+  border-left: 1px solid var(--line);
 }
-
-.home-coach-discovery-heading {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 28px;
-}
-
-.home-coach-discovery-heading > div {
-  max-width: 720px;
-}
-
-.home-coach-discovery-heading h2,
-.marketplace-home-coach-cta h2 {
-  margin: 11px 0 12px;
-  font-size: clamp(30px, 4vw, 46px);
-  line-height: 1.05;
-  letter-spacing: -2px;
-}
-
-.home-coach-discovery-heading p,
-.marketplace-home-coach-cta p {
-  color: #697268;
-  font-size: 13px;
-  line-height: 1.8;
-}
-
-.home-coach-discovery-heading > .text-link {
-  flex: 0 0 auto;
-  margin-bottom: 7px;
-}
-
-.home-coach-discovery-summary {
-  margin: 28px 0 12px;
-  color: #687267;
-  font-size: 10px;
+.home-coach-search label > span {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 11px;
   font-weight: 750;
 }
-
-.home-coach-preview-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+.home-coach-search input {
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
 }
-
-.home-coach-discovery-state {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+.home-coach-search input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+.home-coach-search .button {
+  min-height: 48px;
+  border-radius: 28px;
+  white-space: nowrap;
+}
+.home-discipline-navigation {
+  display: flex;
   align-items: center;
-  gap: 17px;
-  margin-top: 28px;
-  border: 1px solid #dce4d5;
-  border-radius: 20px;
-  background: #f3f6ef;
-  padding: clamp(22px, 4vw, 34px);
-  color: #4b6141;
+  gap: 10px;
+  min-width: 0;
+  margin-top: 18px;
 }
-
-.home-coach-discovery-state h3 {
-  margin-bottom: 4px;
-  font-size: 20px;
+.home-discipline-track {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  gap: 8px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 4px 4px 10px;
+  scroll-padding-inline: 4px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: #d4dccb transparent;
 }
-
-.home-coach-discovery-state p {
-  max-width: 670px;
-  color: #687267;
+.home-discipline-shortcut {
+  display: flex;
+  flex: 0 0 124px;
+  min-height: 82px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 8px;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  color: var(--muted);
+  text-align: center;
   font-size: 11px;
-  line-height: 1.7;
+  scroll-snap-align: start;
+}
+.home-discipline-shortcut.active {
+  border-color: #dce4d4;
+  background: #edf2e8;
+  color: var(--story-forest);
+  font-weight: 750;
+}
+.home-discipline-shortcut:hover {
+  background: #edf2e8;
+  color: var(--story-forest);
+}
+.home-discipline-scroll-button {
+  display: grid;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--story-forest);
+}
+.home-discipline-scroll-button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.home-coach-discovery {
+  padding: 4px 0 0;
+}
+.home-coach-discovery-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.home-coach-discovery-heading h2 {
+  margin: 0 0 5px;
+  font-size: 25px;
+  letter-spacing: -0.8px;
+}
+.home-coach-discovery-summary {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.home-coach-discovery-heading .text-link {
+  flex: none;
+  min-height: 44px;
+  align-items: center;
+}
+.home-coach-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 26px 18px;
+}
+.home-coach-pagination {
+  margin-top: 24px;
+  text-align: center;
+}
+.compact-coach-card.marketplace {
+  min-height: 0;
+  gap: 7px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+.compact-coach-card.marketplace > header {
+  position: relative;
+  display: block;
+}
+.compact-coach-card.marketplace .compact-coach-identity {
+  display: block;
+}
+.compact-coach-card.marketplace .compact-coach-identity > .avatar {
+  display: grid;
+  width: 100%;
+  height: 185px;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  background: #edf2e8;
+  color: #87947d;
+  font-size: 42px;
+  place-items: center;
+}
+.compact-coach-card.marketplace .compact-coach-identity img {
+  object-position: center 30%;
+}
+.compact-coach-card.marketplace .compact-coach-identity h3 {
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  letter-spacing: -0.2px;
+}
+.compact-coach-card.marketplace > header > .pill {
+  position: absolute;
+  top: 9px;
+  left: 9px;
+  background: var(--white);
+  color: var(--story-forest);
+  font-size: 10px;
+}
+.compact-coach-card.marketplace .compact-coach-disciplines {
+  gap: 4px;
+  font-size: 11px;
+}
+.compact-coach-card.marketplace .compact-coach-disciplines > span {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--muted);
+  font-size: inherit;
+  font-weight: 500;
+}
+.compact-coach-card.marketplace .compact-coach-location {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+.compact-coach-card.marketplace .compact-coach-location > svg {
+  display: none;
+}
+.compact-coach-card.marketplace .compact-coach-location small {
+  font-size: 9px;
+}
+.compact-coach-card.marketplace .compact-coach-location strong {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.compact-coach-card.marketplace .compact-coach-actions {
+  margin-top: auto;
+  border: 0;
+  padding: 0;
+}
+.compact-coach-card.marketplace .compact-coach-link {
+  min-height: 44px;
+  font-size: 11px;
+}
+.home-coach-discovery-state {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  border-radius: 16px;
+  background: #edf2e8;
+  padding: 24px;
+  color: var(--story-forest);
+}
+.home-coach-discovery-state > svg {
+  flex: none;
+}
+.home-coach-discovery-state > div {
+  flex: 1;
+}
+.home-coach-discovery-state h3 {
+  margin-bottom: 5px;
+  font-size: 19px;
+}
+.home-coach-discovery-state p {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .marketplace-home-coach-cta {
@@ -644,7 +762,6 @@
     max-width: 760px;
   }
 
-  .home-coach-preview-grid,
   .coach-step-grid,
   .coach-step-grid.three {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -721,7 +838,6 @@
   }
 
   .marketplace-home-search-panel .coach-filters,
-  .home-coach-preview-grid,
   .coach-step-grid,
   .coach-step-grid.three,
   .marketplace-home-coach-cta {
@@ -813,5 +929,119 @@
   .coach-pass-options article > span {
     width: 49px;
     height: 49px;
+  }
+}
+
+.coach-story-home .coach-story-section {
+  margin-top: 36px;
+  border-top: 1px solid var(--line);
+  padding: 28px 0 0;
+}
+.coach-story-home .coach-section-heading h2 {
+  font-size: 25px;
+  letter-spacing: -0.8px;
+}
+.coach-story-home .coach-section-heading p {
+  font-size: 12px;
+}
+.coach-story-home .coach-step-grid {
+  margin-top: 20px;
+}
+.coach-story-home .coach-step-card {
+  min-height: 0;
+  background: transparent;
+  border: 0;
+  padding: 16px 0;
+}
+.coach-story-home .coach-step-card h3 {
+  font-size: 16px;
+}
+.coach-story-home .coach-step-card > svg {
+  margin-bottom: 10px;
+}
+.coach-story-home .marketplace-home-coach-cta {
+  margin-top: 30px;
+  padding: 25px;
+}
+.coach-story-home .marketplace-home-coach-cta h2 {
+  font-size: 25px;
+  letter-spacing: -0.8px;
+}
+@media (max-width: 900px) {
+  .home-coach-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 800px) {
+  .home-coach-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .marketplace-home-hero {
+    padding: 18px 0 22px;
+    border-radius: 0;
+  }
+  .marketplace-home-hero h1 {
+    font-size: clamp(30px, 5vw, 40px);
+    letter-spacing: -1px;
+  }
+  .home-coach-search label {
+    padding: 6px 12px;
+  }
+  .home-coach-search .button {
+    padding-inline: 14px;
+  }
+  .home-coach-discovery-heading {
+    align-items: flex-start;
+  }
+  .home-coach-discovery-heading h2 {
+    font-size: 23px;
+  }
+  .home-coach-discovery-state {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 560px) {
+  .marketplace-home-hero {
+    text-align: left;
+  }
+  .marketplace-home-confirmation-note {
+    justify-content: flex-start;
+    align-items: flex-start;
+  }
+  .home-coach-search {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px;
+    border-radius: 20px;
+  }
+  .home-coach-search label {
+    padding: 7px 10px;
+  }
+  .home-coach-search label + label {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+  .home-coach-search input {
+    min-height: 40px;
+    font-size: 16px;
+  }
+  .home-coach-search .button {
+    margin-top: 8px;
+    border-radius: 13px;
+  }
+  .home-coach-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 12px;
+  }
+  .compact-coach-card.marketplace .compact-coach-identity > .avatar {
+    height: 155px;
+  }
+  .home-coach-discovery-heading {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .home-coach-discovery-heading .text-link {
+    min-height: 36px;
   }
 }

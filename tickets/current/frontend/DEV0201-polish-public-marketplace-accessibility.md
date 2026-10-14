@@ -34,7 +34,7 @@ Perform the final cross-surface accessibility, responsive and failure-state pass
 
 - DEV0195 supplies the adopted public/private navigation, search-first data and responsive Explore acceptance contract.
 - DEV0196-DEV0200 must each meet their own acceptance criteria before this ticket starts.
-- Later independent Home follow-up [DEV0226](../../archive/frontend/DEV0226-remove-home-coach-focus-search.md) removes only Home's coach/focus field. Review the retained Home discipline/location controls and Explore's full query search against the current specification; this follow-up does not transfer its implementation scope into integration polish.
+- Independent Home follow-ups [DEV0226](../../archive/frontend/DEV0226-remove-home-coach-focus-search.md) and [DEV0228](../../archive/frontend/DEV0228-build-home-coach-grid-with-discipline-filter.md) remove coach/focus search, then introduce one Home grid with typed/scrollable disciplines, Home discipline/location URLs and 15-item expanded-page navigation. Review the delivered Home controls, native validity, pagination/focus and Explore's retained full query search against the current specification; their implementation scope does not transfer into integration polish.
 - Existing MovX tokens, Bricolage Grotesque display type and Manrope body type remain the visual foundation.
 - Automated accessibility checks assist but do not replace manual keyboard, responsive and screen-reader-oriented semantic review.
 

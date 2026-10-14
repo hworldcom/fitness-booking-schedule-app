@@ -8,14 +8,9 @@ import {
   UserRoundSearch,
   UsersRound,
 } from "lucide-react";
-import {
-  normalizeCoachDirectoryFilters,
-  type CoachDirectoryState,
-} from "@/domain/coaches";
+import { type CoachDirectoryState } from "@/domain/coaches";
 import { HomeCoachDiscovery } from "@/features/coaches/home-coach-discovery";
-import { PublicMarketplaceSearch } from "@/features/coaches/public-marketplace-search";
-
-const emptyMarketplaceSearch = normalizeCoachDirectoryFilters({});
+import { HomeMarketplaceSearch } from "@/features/coaches/home-marketplace-search";
 
 type StoryStep = Readonly<{
   number: string;
@@ -100,11 +95,13 @@ function StoryStepGrid({
 
 export function CoachStoryHome({
   directory,
+  page = 1,
 }: {
   directory: CoachDirectoryState;
+  page?: number;
 }) {
   return (
-    <div className="coach-story">
+    <div className="coach-story coach-story-home">
       <section
         className="marketplace-home-hero"
         aria-labelledby="coach-hero-title"
@@ -113,13 +110,8 @@ export function CoachStoryHome({
           <span className="eyebrow">
             PRIVATE MARTIAL-ARTS COACHING · BERLIN
           </span>
-          <h1 id="coach-hero-title">
-            Find your coach. Request a time that works.
-          </h1>
-          <p>
-            Browse public coach profiles by discipline or training place. Open a
-            profile to compare real published availability.
-          </p>
+          <h1 id="coach-hero-title">Find your coach. Make time to train.</h1>
+          <p>Private martial-arts coaching across Berlin.</p>
           <div className="marketplace-home-confirmation-note">
             <ShieldCheck size={17} aria-hidden="true" />
             <span>
@@ -132,21 +124,10 @@ export function CoachStoryHome({
             <ArrowRight size={16} aria-hidden="true" />
           </Link>
         </div>
-        <div className="marketplace-home-search-panel">
-          <span className="eyebrow">START YOUR SEARCH</span>
-          <h2>Discipline or training place.</h2>
-          <p>
-            Choose a discipline or training place to explore the full coach
-            directory.
-          </p>
-          <PublicMarketplaceSearch
-            filters={emptyMarketplaceSearch}
-            includeQuery={false}
-          />
-        </div>
       </section>
+      <HomeMarketplaceSearch filters={directory.filters} />
 
-      <HomeCoachDiscovery state={directory} />
+      <HomeCoachDiscovery state={directory} page={page} />
 
       <section className="coach-story-section" aria-labelledby="loop-title">
         <div className="coach-section-heading">

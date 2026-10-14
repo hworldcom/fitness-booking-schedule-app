@@ -5,7 +5,7 @@
 - Last updated: 2026-10-14
 - Milestone: M3 — Scheduling interface follow-up
 - Coordination: None — independent development ticket
-- Related records: future-search follow-up [DEV0227 — Reintroduce Home search after client feedback](../../current/frontend/DEV0227-reintroduce-home-search-after-client-feedback.md); later grid redesign [DEV0228](../../current/frontend/DEV0228-build-home-coach-grid-with-discipline-filter.md); historical shared-search baseline [DEV0197](DEV0197-share-public-marketplace-search.md) and Home baseline [DEV0198](DEV0198-build-search-first-marketplace-home.md); downstream integration review [DEV0201](../../current/frontend/DEV0201-polish-public-marketplace-accessibility.md) under [COR0017](../../current/organisatory/COR0017-public-marketplace-redesign.md)
+- Related records: future-search follow-up [DEV0227 — Reintroduce Home search after client feedback](../../current/frontend/DEV0227-reintroduce-home-search-after-client-feedback.md); later grid redesign [DEV0228](DEV0228-build-home-coach-grid-with-discipline-filter.md); historical shared-search baseline [DEV0197](DEV0197-share-public-marketplace-search.md) and Home baseline [DEV0198](DEV0198-build-search-first-marketplace-home.md); downstream integration review [DEV0201](../../current/frontend/DEV0201-polish-public-marketplace-accessibility.md) under [COR0017](../../current/organisatory/COR0017-public-marketplace-redesign.md)
 
 ## Objective and context
 

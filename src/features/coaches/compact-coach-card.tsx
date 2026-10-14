@@ -8,7 +8,7 @@ import { CoachTodayAvailability } from "./coach-today-availability";
 
 type CompactCoachCardProps = Readonly<{
   entry: CoachDirectoryEntry;
-  variant?: "preview" | "result";
+  variant?: "preview" | "result" | "marketplace";
   selected?: boolean;
   cardRef?: Ref<HTMLElement>;
   onFocusCapture?: FocusEventHandler<HTMLElement>;
@@ -53,7 +53,7 @@ export function CompactCoachCard({
             alt=""
           />
           <span>
-            <small>PRIVATE COACHING</small>
+            {variant !== "marketplace" && <small>PRIVATE COACHING</small>}
             <Heading>{coach.displayName}</Heading>
           </span>
         </Link>
@@ -66,8 +66,13 @@ export function CompactCoachCard({
       </header>
 
       <div className="compact-coach-disciplines" aria-label="Disciplines">
-        {coach.disciplines.map((discipline) => (
-          <span key={discipline}>{discipline}</span>
+        {coach.disciplines.map((discipline, index) => (
+          <span key={discipline}>
+            {discipline}
+            {variant === "marketplace" && index < coach.disciplines.length - 1
+              ? " ·"
+              : ""}
+          </span>
         ))}
       </div>
 
@@ -76,13 +81,21 @@ export function CompactCoachCard({
       <div className="compact-coach-location">
         <MapPin size={17} aria-hidden="true" />
         <span>
-          <small>Primary training location</small>
+          <small>
+            {variant === "marketplace"
+              ? "Primary training place"
+              : "Primary training location"}
+          </small>
           <strong>{primaryLocation.publicName}</strong>
-          <em>{primaryLocation.location.label}</em>
+          {variant !== "marketplace" && (
+            <em>{primaryLocation.location.label}</em>
+          )}
         </span>
       </div>
 
-      <CoachTodayAvailability entry={entry} limit={1} />
+      {variant !== "marketplace" && (
+        <CoachTodayAvailability entry={entry} limit={1} />
+      )}
 
       <div className="compact-coach-actions">
         {onShowOnMap && (

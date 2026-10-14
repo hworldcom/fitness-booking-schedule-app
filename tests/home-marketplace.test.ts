@@ -3,102 +3,25 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
-  homeCoachDirectoryPreview,
-  MAX_HOME_COACH_PREVIEWS,
   normalizeCoachDirectoryFilters,
-  type CoachDirectoryEntry,
   type CoachDirectoryState,
 } from "@/domain/coaches";
 import { HomeCoachDiscovery } from "@/features/coaches/home-coach-discovery";
 import { CompactCoachCard } from "@/features/coaches/compact-coach-card";
 import { CoachDirectory } from "@/features/coaches/coach-discovery";
 import { CoachStoryHome } from "@/features/public/coach-story";
+import {
+  HOME_COACH_PAGE_SIZE,
+  HOME_DISCIPLINE_PATTERN,
+  homeDiscipline,
+  homeCoachDirectoryPage,
+  homeDirectoryHref,
+  isCanonicalHomeSearch,
+  normalizeHomeSearch,
+} from "@/features/coaches/home-marketplace-contract";
+import { directoryEntry } from "./fixtures/coach-directory";
 
 const filters = normalizeCoachDirectoryFilters({});
-
-function directoryEntry(
-  sequence: number,
-  displayName: string,
-  options: Readonly<{
-    portraitUrl?: string | null;
-    trustKind?: "verified" | "demo";
-    withAvailability?: boolean;
-  }> = {},
-): CoachDirectoryEntry {
-  const suffix = String(sequence).padStart(12, "0");
-  const profileId = `10000000-0000-4000-8000-${suffix}`;
-  const locationId = `60000000-0000-4000-8000-${suffix}`;
-  const location = Object.freeze({
-    id: locationId,
-    publicName: `${displayName} training base`,
-    timezone: "Europe/Berlin",
-    selectedGymId: null,
-    gymName: null,
-    location: Object.freeze({
-      kind: "independent" as const,
-      label: `${sequence} Teststrasse, Berlin`,
-      latitude: 52.5 + sequence / 100,
-      longitude: 13.4 + sequence / 100,
-      source: "manual" as const,
-      provider: null,
-      confirmedAt: "2026-10-12T08:00:00.000Z",
-    }),
-    status: "active" as const,
-    isPrimary: true,
-    sortOrder: 1,
-    deactivatedAt: null,
-    recordSource: options.trustKind === "verified" ? "user" : "fixture",
-    updatedAt: "2026-10-12T08:00:00.000Z",
-  });
-  return Object.freeze({
-    coach: Object.freeze({
-      profileId,
-      slug: displayName.toLowerCase().replaceAll(" ", "-"),
-      displayName,
-      bio: `${displayName} teaches focused private training.`,
-      serviceMode: "private-training" as const,
-      timezone: "Europe/Berlin",
-      primaryLocationId: locationId,
-      locations: Object.freeze([location]),
-      selectedGymId: null,
-      gymName: null,
-      location: location.location,
-      visibility: "visible" as const,
-      recordSource:
-        options.trustKind === "verified"
-          ? ("user" as const)
-          : ("fixture" as const),
-      trustKind: options.trustKind ?? "demo",
-      portraitUrl: options.portraitUrl ?? null,
-      disciplines: Object.freeze(["Boxing"] as const),
-    }),
-    primaryLocation: location,
-    todaySlots: options.withAvailability
-      ? Object.freeze([
-          Object.freeze({
-            id: `70000000-0000-4000-8000-${suffix}`,
-            startsAt: "2026-10-12T08:00:00.000Z",
-            endsAt: "2026-10-12T09:00:00.000Z",
-            coachTimezone: "Europe/Berlin",
-            requestEligibility: "requestable" as const,
-            location: Object.freeze({
-              trainingLocationId: locationId,
-              name: location.publicName,
-              kind: "independent" as const,
-              selectedGymId: null,
-              gymName: null,
-              label: location.location.label,
-              latitude: location.location.latitude,
-              longitude: location.location.longitude,
-              source: "manual" as const,
-              provider: null,
-              confirmedAt: location.location.confirmedAt,
-            }),
-          }),
-        ])
-      : Object.freeze([]),
-  });
-}
 
 const entries = Object.freeze([
   directoryEntry(1, "Amina Ali", {
@@ -111,15 +34,113 @@ const entries = Object.freeze([
   directoryEntry(4, "Dario Diaz"),
 ]);
 
-test("home preview remains bounded and preserves directory ordering", () => {
-  const preview = homeCoachDirectoryPreview(entries);
-  assert.equal(preview.length, MAX_HOME_COACH_PREVIEWS);
-  assert.deepEqual(
-    preview.map((entry) => entry.coach.displayName),
-    ["Amina Ali", "Bao Bui", "Carla Costa"],
+test("Home pagination expands in 15-coach increments and clamps to available rows", () => {
+  const rows = Object.freeze(
+    Array.from({ length: 31 }, (_, index) =>
+      directoryEntry(index + 1, "Coach " + String(index + 1).padStart(3, "0")),
+    ),
   );
-  assert.equal(entries.length, 4);
-  assert.ok(Object.isFrozen(preview));
+  for (const count of [0, 1, 14, 15, 16, 30, 31]) {
+    for (const page of [1, 2, 3, Number.MAX_SAFE_INTEGER, 0, NaN]) {
+      const slice = homeCoachDirectoryPage(rows.slice(0, count), page);
+      const expectedPage = Math.min(
+        Number.isSafeInteger(page) && page > 0 ? page : 1,
+        Math.max(1, Math.ceil(count / HOME_COACH_PAGE_SIZE)),
+      );
+      assert.equal(slice.page, expectedPage);
+      assert.equal(
+        slice.entries.length,
+        Math.min(count, expectedPage * HOME_COACH_PAGE_SIZE),
+      );
+      assert.equal(slice.hasMore, slice.entries.length < count);
+      assert.deepEqual(
+        slice.entries.map((row) => row.coach.profileId),
+        rows.slice(0, slice.entries.length).map((row) => row.coach.profileId),
+      );
+      assert.ok(Object.isFrozen(slice.entries));
+    }
+  }
+  assert.equal(rows.length, 31);
+});
+
+test("Home URLs normalize only discipline, location and safe pagination", () => {
+  const search = normalizeHomeSearch({
+    q: "ignored",
+    discipline: " bjj ",
+    location: " Mitte   Berlin ",
+    page: "2",
+    view: "map",
+  });
+  assert.equal(
+    homeDirectoryHref(search.filters, search.page),
+    "/?discipline=Brazilian+Jiu-Jitsu&location=Mitte+Berlin&page=2",
+  );
+  assert.equal(search.filters.query, "");
+  assert.equal(
+    isCanonicalHomeSearch(
+      {
+        discipline: "Brazilian Jiu-Jitsu",
+        location: "Mitte Berlin",
+        page: "2",
+      },
+      search.filters,
+      search.page,
+    ),
+    true,
+  );
+  assert.equal(
+    isCanonicalHomeSearch(
+      { q: "", page: "1" },
+      normalizeHomeSearch({}).filters,
+      1,
+    ),
+    false,
+  );
+  for (const page of [
+    "0",
+    "-1",
+    "1.5",
+    "Infinity",
+    "9007199254740992",
+    ["2", "3"],
+  ]) {
+    assert.equal(normalizeHomeSearch({ page }).page, 1);
+  }
+  assert.equal(homeDirectoryHref(normalizeHomeSearch({}).filters), "/");
+  assert.equal(homeDiscipline("constructor"), null);
+  assert.equal(homeDiscipline("__proto__"), null);
+  assert.equal(homeDiscipline(" kickboxing "), "Kickboxing");
+  const pattern = new RegExp("^(?:" + HOME_DISCIPLINE_PATTERN + ")$", "v");
+  assert.equal(pattern.test(" bjj "), true);
+  assert.equal(pattern.test("Muay   Thai"), true);
+  assert.equal(pattern.test("Yoga"), false);
+});
+
+test("Home renders one paginated grid and one card for a multi-discipline coach", () => {
+  const rows = Object.freeze(
+    Array.from({ length: 31 }, (_, index) =>
+      directoryEntry(index + 1, "Coach " + String(index + 1).padStart(3, "0"), {
+        disciplines: ["Boxing", "Muay Thai", "Kickboxing"],
+      }),
+    ),
+  );
+  for (const page of [1, 2, 3]) {
+    const html = renderToStaticMarkup(
+      createElement(HomeCoachDiscovery, {
+        state: { status: "ready", filters, entries: rows },
+        page,
+      }),
+    );
+    assert.equal(
+      [...html.matchAll(/class="compact-coach-card marketplace/g)].length,
+      Math.min(31, page * 15),
+    );
+    assert.equal([...html.matchAll(/id="home-coach-grid"/g)].length, 1);
+    assert.equal([...html.matchAll(/<h3>Coach 001<\/h3>/g)].length, 1);
+    if (page < 3)
+      assert.match(html, new RegExp('href="/\\?page=' + (page + 1) + '"'));
+    else assert.doesNotMatch(html, /Load more/);
+  }
 });
 
 test("ready home discovery renders authoritative profiles and fallbacks only", () => {
@@ -132,18 +153,18 @@ test("ready home discovery renders authoritative profiles and fallbacks only", (
     createElement(HomeCoachDiscovery, { state }),
   );
 
-  assert.match(markup, /Showing 3 of 4 coaches · ordered by coach name/);
+  assert.match(markup, /Showing 4 of 4 coaches/);
   assert.match(markup, /Amina Ali/);
   assert.match(markup, /Bao Bui/);
   assert.match(markup, /Carla Costa/);
-  assert.doesNotMatch(markup, /Dario Diaz/);
+  assert.match(markup, /Dario Diaz/);
+  assert.doesNotMatch(markup, /Load more/);
   assert.match(markup, /src="\/images\/coaches\/amina-ali.webp"/);
   assert.match(markup, />BB<\/span>/);
   assert.match(markup, /Verified coach/);
   assert.match(markup, /Demo coach/);
   assert.match(markup, /Amina Ali training base/);
-  assert.match(markup, /1 open time/);
-  assert.match(markup, /No availability today/);
+  assert.doesNotMatch(markup, /1 open time|No availability today/);
   assert.match(markup, /href="\/coaches\/amina-ali"/);
   assert.doesNotMatch(markup, /near you|recommended|rating|price/i);
 });
@@ -213,8 +234,8 @@ test("home discovery keeps empty and unavailable data states honest", () => {
       state: Object.freeze({ status: "unavailable", filters }),
     }),
   );
-  assert.match(unavailable, /Coach previews are temporarily unavailable/);
-  assert.match(unavailable, /No fallback profiles or opening times/);
+  assert.match(unavailable, /Coach discovery is temporarily unavailable/);
+  assert.match(unavailable, /Coach profiles could not be loaded/);
   assert.doesNotMatch(unavailable, /compact-coach-card/);
 });
 
@@ -225,7 +246,7 @@ test("home orders working discovery before the concise confirmation flow", () =>
     }),
   );
   const searchIndex = markup.indexOf('aria-label="Search coaches"');
-  const previewIndex = markup.indexOf("A first look at the directory.");
+  const previewIndex = markup.indexOf("Discover coaches in Berlin");
   const explanationIndex = markup.indexOf(
     "Three steps from search to a clear answer.",
   );
@@ -234,7 +255,9 @@ test("home orders working discovery before the concise confirmation flow", () =>
   assert.ok(explanationIndex > previewIndex);
   assert.match(markup, /request stays pending until the coach accepts it/i);
   assert.match(markup, /not an instant booking/i);
-  assert.match(markup, /Discipline or training place/);
+  assert.match(markup, /All disciplines/);
+  assert.match(markup, /action="\/"/);
+  assert.match(markup, /list="home-discipline-suggestions"/);
   assert.match(markup, /name="discipline"/);
   assert.match(markup, /name="location"/);
   assert.doesNotMatch(markup, /name="q"|Search coach or focus|by name, focus/);

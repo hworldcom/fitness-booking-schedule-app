@@ -158,19 +158,12 @@ export type CoachBookingRequestEligibilityProjection = Readonly<{
 }>;
 
 export const MAX_COACH_DIRECTORY_TODAY_SLOTS = 64;
-export const MAX_HOME_COACH_PREVIEWS = 3;
 
 export type CoachDirectoryEntry = Readonly<{
   coach: CoachProjection;
   primaryLocation: CoachTrainingLocation;
   todaySlots: readonly PublicCoachAvailabilitySlot[];
 }>;
-
-export function homeCoachDirectoryPreview(
-  entries: readonly CoachDirectoryEntry[],
-) {
-  return Object.freeze(entries.slice(0, MAX_HOME_COACH_PREVIEWS));
-}
 
 export type OwnedCoachAvailabilitySlot = CoachAvailabilitySlotProjection &
   Readonly<{
