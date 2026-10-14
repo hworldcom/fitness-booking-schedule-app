@@ -237,6 +237,8 @@ Document availability, local links, retained history excerpts and permanent iden
 - Final archive/link check: `python3 /tmp/dev0225-validate.py` passed 1,325 local references, 108 anchor-bearing references, 53 reciprocal memberships and all changed-reference/metadata/ID assertions; the six unchanged unrelated issues below remain reported. Owned Prettier `--check` passed for 59 Markdown files, and `git diff --check` passed.
 - `python3 /tmp/dev0225-stage.py` staged **108 owned documentary paths** and verified no source, script, test, package, environment or SQL path is included. Shared README/index/specification blobs contain only this ticket's changes; coach-rehearsal additions, live DEV0222/DEV0234 status/ID updates and their records remain unstaged. `git diff --cached --check` passed. A separate staged-snapshot check verified one correct status/index row for each of **138 committed-snapshot records**, excluding the other session's untracked DEV0234.
 
+Commit-scope correction — 2026-10-14: the initial scoped commit `2203ba3` omitted four working-tree repairs from its staging inventory: current/archive navigation guides, the historical secondary-button contrast excerpt and DEV0232’s link to this archived record. Final status review caught the omission. The follow-up stages those four paths plus this evidence correction; runtime and active connection work remain excluded. The completed pruning owns 63 corrected Markdown files and 48 deleted files; no existing Git commit is rewritten. Final correction validation passed 1,327 local references, 108 anchors, 53 memberships, all changed-reference checks, owned formatting for 63 Markdown files and both working/staged whitespace checks. The follow-up staged five documentary paths, including this record; no runtime path is included.
+
 ### Unchanged pre-existing references, outside pruning scope
 
 - `tickets/archive/organisatory/DEV0186-adopt-booking-request-and-notice-policies.md`: `../../../docs/mvp-spec.md#43-book-a-private-session` (anchor).
@@ -262,6 +264,6 @@ Six unrelated historical references remain as listed above; they were not caused
 ## Completion and review references
 
 - Completed: 2026-10-14 — AC1–AC4 passed for the adopted documentary pruning.
-- Commit: Prepared `[DEV0225] Prune blockchain documentary evidence`, covered by the user’s instruction to commit remaining work and start DEV0225. Concurrent unfinished work is excluded.
+- Commit: Initial pruning `2203ba3` (`[DEV0225] Prune blockchain documentary evidence`) and the scope-correction commit `[DEV0225] Finish documentary navigation repairs`, covered by the user’s instruction to commit remaining work and start DEV0225. Concurrent unfinished work is excluded.
 - Review: Manifest/excerpt/link/ownership/scope self-review; no independent review created.
 - Deployment or release: Not applicable — documentary pruning.

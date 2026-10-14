@@ -2,10 +2,12 @@
 
 - Status: Completed
 - Created: 2026-10-05
-- Last updated: 2026-10-05
+- Last updated: 2026-10-14
 - Milestone: Project maintenance
 - Coordination: None — independent development ticket
-- Related records: follows the completed coach social interface in [DEV0100](../../archive/backend/DEV0100-coach-follows-and-chronological-posts.md); observed during DEV0130 staging rehearsal
+- Related records: historical interface baseline [DEV0100](../../archive/backend/DEV0100-coach-follows-and-chronological-posts.md); superseded rehearsal reference pruned under DEV0225.
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): excluded-product rehearsal references were removed. Original independent CSS outcomes, completion date and dated command results remain; aggregate build results describe the original combined working tree, not a new isolated validation.
 
 ## Objective and context
 
@@ -68,7 +70,7 @@ No API, database, Solana, environment-variable, dependency or migration contract
 
 ## Validation results
 
-Validation completed on 2026-10-05 from the repository root. The production builds also included unrelated in-progress DEV0122/DEV0136 working-tree changes; the focused source and browser checks isolate this ticket's CSS behavior.
+Validation completed on 2026-10-05 from the repository root. The production builds also included unrelated in-progress working-tree changes; focused source/browser checks isolate this ticket’s CSS behavior.
 
 | Criterion | Evidence                                                                                                                                                                                                                                              | Result |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
@@ -78,7 +80,7 @@ Validation completed on 2026-10-05 from the repository root. The production buil
 
 ## Risks, limitations, and follow-ups
 
-The shared rule affects every secondary button, but the focused source check confirms that the more-specific coach-workspace color remains intact. Availability publishing remains an explicit coach action and is not a follow-up code defect from this ticket. The CSS fix has not yet been deployed to staging because the shared working tree contains unrelated uncommitted DEV0122/DEV0136 work; release should use a clean commit rather than mixing those changes.
+The shared rule affects every secondary button, but the focused source check confirms that the more-specific coach-workspace color remains intact. Availability publishing remains an explicit coach action and is not a follow-up code defect from this ticket. At the original completion date, staging deployment remained pending because the shared tree contained unrelated uncommitted work; release required a clean reviewed commit.
 
 ## Completion and review references
 

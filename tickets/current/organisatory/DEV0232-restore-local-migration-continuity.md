@@ -5,7 +5,7 @@
 - Last updated: 2026-10-14
 - Milestone: Local contributor workflow
 - Coordination: None — independent development ticket
-- Related records: discovery baseline [DEV0221](../../archive/backend/DEV0221-persist-coach-athlete-connections.md); independent historical-evidence review [DEV0225](DEV0225-remove-blockchain-historical-evidence.md)
+- Related records: discovery baseline [DEV0221](../../archive/backend/DEV0221-persist-coach-athlete-connections.md); independent historical-evidence review [DEV0225](../../archive/organisatory/DEV0225-remove-blockchain-historical-evidence.md)
 
 ## Objective and context
 
