@@ -5,7 +5,7 @@
 - Last updated: 2026-10-14
 - Milestone: M6 — Athlete terminology and coach–athlete connections
 - Converted from: Not applicable — created as a coordination record
-- Tracked development tickets: [DEV0219 — Adopt athlete terminology and connection contract](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md), [DEV0220 — Use athlete terminology on the website](../../archive/frontend/DEV0220-use-athlete-website-terminology.md), [DEV0221 — Persist coach–athlete connections](../../archive/backend/DEV0221-persist-coach-athlete-connections.md), [DEV0222 — Add coach My athletes](../frontend/DEV0222-add-coach-my-athletes.md), [DEV0223 — Add athlete My coaches](../frontend/DEV0223-add-athlete-my-coaches.md) and [DEV0230 — Adopt reconnection history recovery](../../archive/organisatory/DEV0230-adopt-reconnection-history-recovery.md)
+- Tracked development tickets: [DEV0219 — Adopt athlete terminology and connection contract](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md), [DEV0220 — Use athlete terminology on the website](../../archive/frontend/DEV0220-use-athlete-website-terminology.md), [DEV0221 — Persist coach–athlete connections](../../archive/backend/DEV0221-persist-coach-athlete-connections.md), [DEV0222 — Add coach My athletes](../../archive/frontend/DEV0222-add-coach-my-athletes.md), [DEV0223 — Add athlete My coaches](../frontend/DEV0223-add-athlete-my-coaches.md) and [DEV0230 — Adopt reconnection history recovery](../../archive/organisatory/DEV0230-adopt-reconnection-history-recovery.md)
 - Related records: completed scheduling dependency [COR0016](../../archive/organisatory/COR0016-coach-confirmed-booking-requests.md); independent session collaboration [COR0015](COR0015-session-notes-and-training-plans.md); downstream native planning [COR0013](COR0013-native-ios-application.md); downstream account retention [DEV0165](../backend/DEV0165-implement-account-deletion-lifecycle.md)
 
 ## Objective and boundaries
@@ -22,12 +22,14 @@ Runtime scope excludes general messaging, notifications, public athlete profiles
 | Disconnect/reconnect history contract           | [DEV0230](../../archive/organisatory/DEV0230-adopt-reconnection-history-recovery.md) | Adopt complete retained shared-history continuity and reconcile connection/conversation ownership without runtime edits.                                                                                          | Completed 2026-10-14; before final DEV0221 design.           |
 | Existing website terminology                    | [DEV0220](../../archive/frontend/DEV0220-use-athlete-website-terminology.md)         | Replace participant-facing vocabulary without changing internal identifiers or capabilities.                                                                                                                      | Completed 2026-10-14; independent of connection persistence. |
 | Persistence, authority and private media        | [DEV0221](../../archive/backend/DEV0221-persist-coach-athlete-connections.md)        | Own pair identity, qualifying-booking checks, requests/acceptance/removal, complete paginated shared request/booking references across reconnection, concurrency and revocable connection-scoped avatar delivery. | Completed 2026-10-14; interface dependencies may now start.  |
-| Coach connection interface                      | [DEV0222](../frontend/DEV0222-add-coach-my-athletes.md)                              | Own coach request controls, accepted My athletes and complete retained shared-history navigation after reconnection.                                                                                              | After DEV0220 and DEV0221.                                   |
+| Coach connection interface                      | [DEV0222](../../archive/frontend/DEV0222-add-coach-my-athletes.md)                   | Own coach request controls, accepted My athletes and complete retained shared-history navigation after reconnection.                                                                                              | Completed 2026-10-14; athlete interface integration remains. |
 | Athlete connection interface                    | [DEV0223](../frontend/DEV0223-add-athlete-my-coaches.md)                             | Own athlete request controls, accepted My coaches and complete retained shared-history navigation with safe profile/request/session shortcuts.                                                                    | After DEV0220 and DEV0221.                                   |
 
 All six direct records are flat peers, each with reciprocal membership. Every required part has exactly one owner; no required ticket is missing.
 
 ## Other relationships
+
+- Independent [DEV0234](../../archive/backend/DEV0234-preserve-connection-conflict-results.md) corrects SQL-conflict classification discovered by DEV0222. It is a backend validation dependency, not a new direct feature member or transferred schema/eligibility owner.
 
 - COR0016 supplies confirmed bookings, actor identity and cancellation/completion. Connection actions recheck qualifying booking state rather than treating a pending booking request as consent.
 - COR0015 independently owns request/session conversation persistence and rendering, shared plans/notes and coach-private notes. Connections neither gate exact participant permissions nor merge content across sessions. DEV0221–DEV0223 restore complete retained request/booking-history references and navigation; COR0015 supplies the original shared content. Connection-only completion does not claim full conversation recovery. Record the combined disconnect/reconnect conversation rehearsal after both deliveries; COR0015 runtime is not imported into these connection tickets.
@@ -45,6 +47,10 @@ All six direct records are flat peers, each with reciprocal membership. Every re
 
 ## Progress and integration record
 
+- 2026-10-14: DEV0222 completed Coach workspace → Bookings connection controls, separate accepted/request/terminal lists and complete older-page shared-history navigation. Real coach Server Actions plus actor-checked counterpart operations proved both-side removal/fresh acceptance, all 30 original history references, 22 accepted athletes, cancellation recovery, private-media fallback and desktop/mobile keyboard use. Independent DEV0234 restored typed SQL-conflict feedback after rollback. The athlete web interface remains DEV0223; this rehearsal does not claim both web interfaces or COR0015 shared-content recovery are delivered.
+
+- 2026-10-14: DEV0222 started after confirming completed/committed DEV0228 and a clean tree. Its scope is Coach workspace → Bookings, on-demand connection options and private My athletes/history with dedicated styles. DEV0223 remains a separate athlete consumer; Home files are outside this slice.
+
 - 2026-10-14: DEV0221 completed the backend: mutual consent and exact-attempt retries, ordered cancellation races, either-side disconnect/reconnect, every retained shared request/booking page and revocable athlete media. Its 59 database/206 pgTAP/141 app-server checks, fresh/upgrade replay, real Auth/Storage HTTP rehearsal and static/build checks passed. Independent DEV0231 corrected older SQL test assumptions. DEV0222/DEV0223 interfaces and COR0015 conversation content/rehearsal remain pending; local startup drift is independently tracked by DEV0232.
 
 - 2026-10-14: DEV0221 implementation started after DEV0230 was committed as `09033f5`. Its recorded design covers stable pair/attempt identity, explicit consent/retry authority, booking-row qualification locks, complete retained history references and revocable athlete media. Interfaces and conversation runtime remain separate work.
@@ -61,7 +67,7 @@ All six direct records are flat peers, each with reciprocal membership. Every re
 
 ## Validation results
 
-DEV0221 backend acceptance and private media/history authority passed on 2026-10-14; see its implementation record for exact commands and results. Two-account mobile/desktop/keyboard interface integration remains pending DEV0222/DEV0223, and conversation-body recovery remains pending COR0015.
+DEV0221 backend acceptance and private media/history authority passed on 2026-10-14. DEV0222 coach interface and independent DEV0234 conflict recovery also passed their local application/database/browser/static/build checks; see their implementation records for exact evidence. Combined two-web-interface integration remains pending DEV0223, and conversation-body recovery remains pending COR0015. This coordination record remains In progress.
 
 DEV0219 completed on 2026-10-14: fifteen-document formatting, local link/anchor/identifier/index/contract checks and diff review passed. Runtime integration is not run and cannot be claimed from contract completion.
 
@@ -74,7 +80,7 @@ DEV0219 completed on 2026-10-14: fifteen-document formatting, local link/anchor/
 ## Completion and review references
 
 - Completed: Not completed.
-- Direct development tickets: DEV0219 and DEV0220 Completed; DEV0230 and DEV0221 Completed; DEV0222/DEV0223 Draft.
+- Direct development tickets: DEV0219 and DEV0220 Completed; DEV0230 and DEV0221 Completed; DEV0222 Completed; DEV0223 Draft.
 - Commit: Not applicable — coordination IDs are not commit subjects.
 - Review: No independent review created.
-- Deployment or release: Backend implemented and locally validated; interfaces remain planned. No hosted deployment or release.
+- Deployment or release: Backend and coach interface implemented and locally validated; athlete interface remains planned. No hosted deployment or release.

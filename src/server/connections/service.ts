@@ -38,19 +38,21 @@ function validId(value: unknown): value is string {
 async function connectionWork<T>(
   work: Parameters<typeof withAuthorizedActor<T>>[0],
 ): Promise<ConnectionResult<T>> {
-  const result = await withAuthorizedActor(async (tx, actor) => {
-    try {
-      return Object.freeze({
-        status: "ready" as const,
-        value: await work(tx, actor),
-      });
-    } catch (error) {
-      if (error instanceof ConnectionConflictError)
-        return Object.freeze({ status: "conflict" as const });
-      throw error;
-    }
-  });
-  return result.status === "authorized" ? result.value : result;
+  try {
+    const result = await withAuthorizedActor(
+      async (tx, actor) =>
+        Object.freeze({
+          status: "ready" as const,
+          value: await work(tx, actor),
+        }),
+      { rethrow: (error) => error instanceof ConnectionConflictError },
+    );
+    return result.status === "authorized" ? result.value : result;
+  } catch (error) {
+    if (error instanceof ConnectionConflictError)
+      return Object.freeze({ status: "conflict" as const });
+    throw error;
+  }
 }
 export function currentBookingConnectionContext(bookingId: string) {
   if (!validId(bookingId))

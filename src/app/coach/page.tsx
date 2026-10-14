@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -5,7 +6,10 @@ import { signInHref } from "@/auth/return-to";
 import { saveCoachAvailabilityRulesAction } from "./actions";
 import { CoachAvailabilityPanel } from "@/features/coaches/coach-availability-panel";
 import { CoachApplicationGate } from "@/features/coaches/coach-application-gate";
-import { CoachClientCards } from "@/features/coaches/coach-client-cards";
+import { CoachConnectionsWorkspace } from "@/features/coaches/coach-connections-workspace";
+import { UNAVAILABLE_CONNECTION_PAGES } from "@/features/coaches/coach-connections-model";
+import { loadCoachConnectionPagesAction } from "@/app/connections/actions";
+import "./connections.css";
 import { CoachBookingRequestQueue } from "@/features/coaches/coach-booking-request-queue";
 import { resolveCoachWorkspaceView } from "@/features/coaches/coach-workspace-view";
 import { currentOwnedCoachBookingRequestPage } from "@/server/coaches/booking-request-service";
@@ -68,12 +72,40 @@ export default async function Page({
     bookingState?.status === "authorized" ? bookingState.coachBookings : null;
   const coachRequestPage =
     requestState?.status === "authorized" ? requestState.page : null;
+  const mayInitiate =
+    state.coachAccess.status === "approved" ||
+    state.coachAccess.status === "demo";
+  const connectionPages =
+    view === "bookings" &&
+    (mayInitiate || state.coachAccess.status === "suspended")
+      ? await loadCoachConnectionPagesAction()
+      : UNAVAILABLE_CONNECTION_PAGES;
   const bookingContent = (
     <div className="coach-bookings-workspace">
+      <nav
+        className="coach-connections-shortcuts"
+        aria-label="Bookings sections"
+      >
+        <a href="#booking-requests">Booking requests</a>
+        <a href="#client-bookings">Booked sessions</a>
+        <a href="#my-athletes">My athletes</a>
+      </nav>
       <CoachBookingRequestQueue initialPage={coachRequestPage} />
-      <CoachClientCards
+      <CoachConnectionsWorkspace
         bookings={coachBookings}
         referenceTime={new Date().toISOString()}
+        initialPages={connectionPages}
+        sourceVersion={createHash("sha256")
+          .update(
+            JSON.stringify([
+              connectionPages,
+              coachBookings,
+              coachRequestPage,
+              state.coachAccess.status,
+            ]),
+          )
+          .digest("hex")}
+        mayInitiate={mayInitiate}
       />
     </div>
   );

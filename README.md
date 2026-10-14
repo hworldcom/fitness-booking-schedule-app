@@ -185,6 +185,7 @@ npm run test:auth
 npm run test:coach-availability
 npm run test:coach-locations
 npm run test:coach-requests
+npm run test:coach-connections
 npm run test:client-requests
 npm run test:profile-images
 npm run lint
@@ -193,6 +194,8 @@ npm run format:check
 npm run build
 npm run test:e2e
 ```
+
+`test:coach-connections` requires the running Auth-enabled local app at `http://localhost:3100`. It creates tagged temporary coach/athlete accounts and private scheduling fixtures, exercises real coach connection actions, reconnect history, pagination, media fallback and responsive keyboard use, then removes only those exact accounts/images/records. The counterpart uses the existing actor-checked backend until the separate My coaches interface is delivered. Screenshots are ignored under `test-results/coach-connections-rehearsal/`; no private CLI configuration is printed or saved.
 
 `test:auth`, `test:coach-availability`, `test:coach-locations`, `test:coach-requests` and `test:client-requests` require the configured Auth-enabled local stack and a running application on port 3100. The availability rehearsal creates an approved local coach with two reviewed gyms; verifies local assignment, explicit keep/move/remove, one request per save, inactive-location conflict recovery, actual occurrence venues and responsive keyboard use; then removes only its exact `dev0104-coach-*` local accounts. The location rehearsal requires the provisioned Daniel Park coach account; it exercises add/edit/conflict/primary/public/deactivation flows, captures responsive evidence and removes only its unreferenced `DEV0178 …` local locations afterward. The coach-request rehearsal also uses the provisioned Daniel account, creates isolated `dev0189-client-*` local identities and authorized requests, validates pagination, decisions, closure, history, keyboard and responsive behavior, then removes those identities and their exact scheduling records. The athlete-request rehearsal uses the provisioned Hoang and Daniel accounts plus one isolated competitor; it validates request persistence, withdrawal and retry, coach decline and retry, acceptance, closure, expiry, candidate privacy, confirmed-session continuity, keyboard use and responsive layout, then removes only its three fixed occurrences, related records and isolated competitor. Database checks require isolated local PostgreSQL. Playwright starts a production server on port 3101 and writes ignored evidence to `test-results/`.
 

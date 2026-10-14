@@ -11,9 +11,31 @@ import {
 import {
   currentConnectionHistory,
   currentConnectionPage,
+  currentBookingConnectionContext,
   decideCoachAthleteConnection,
   sendCoachAthleteConnection,
 } from "@/server/connections/service";
+import {
+  COACH_CONNECTION_SECTIONS,
+  type CoachConnectionPages,
+} from "@/features/coaches/coach-connections-model";
+
+export async function loadCoachConnectionPagesAction(): Promise<CoachConnectionPages> {
+  const results = await Promise.all(
+    COACH_CONNECTION_SECTIONS.map(async (section) => {
+      const result = await currentConnectionPage("coach", section);
+      return [
+        section,
+        result.status === "ready" ? result.value : null,
+      ] as const;
+    }),
+  );
+  return Object.fromEntries(results) as CoachConnectionPages;
+}
+
+export async function loadBookingConnectionContextAction(bookingId: string) {
+  return currentBookingConnectionContext(bookingId);
+}
 
 export type ConnectionActionState = Readonly<{
   status:

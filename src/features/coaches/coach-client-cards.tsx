@@ -9,7 +9,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   cancelPrivateBookingAction,
   completePrivateBookingAction,
@@ -39,9 +39,11 @@ function bookingTime(booking: PrivateBookingProjection) {
 export function CoachClientCards({
   bookings,
   referenceTime,
+  renderConnection,
 }: {
   bookings: readonly PrivateBookingProjection[] | null;
   referenceTime: string;
+  renderConnection?: (booking: PrivateBookingProjection) => ReactNode;
 }) {
   const router = useRouter();
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -116,7 +118,11 @@ export function CoachClientCards({
             const cancellable = booking.status === "confirmed" && future;
             const completable = booking.status === "confirmed" && !future;
             return (
-              <article className="coach-client-card" key={booking.id}>
+              <article
+                className="coach-client-card"
+                key={booking.id}
+                id={`coach-booking-${booking.id}`}
+              >
                 <header>
                   <Avatar
                     initials={profileInitials(booking.clientDisplayName)}
@@ -180,6 +186,7 @@ export function CoachClientCards({
                     </button>
                   )}
                 </div>
+                {renderConnection?.(booking)}
               </article>
             );
           })}
