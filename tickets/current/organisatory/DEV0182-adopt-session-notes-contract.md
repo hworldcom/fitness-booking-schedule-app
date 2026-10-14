@@ -27,6 +27,8 @@ This ticket defines the new capability without implementing runtime code. It mus
 
 ## Expected behavior and edge cases
 
+- Under [DEV0230](../../archive/organisatory/DEV0230-adopt-reconnection-history-recovery.md), disconnection never deletes or resets retained shared conversations/plans/notes. Reconnected history reopens the same original request/booking content, including declined/withdrawn/expired/not-selected request threads and cancelled-session content. Preserve authors, timestamps, edited state and status permissions; terminal/cancelled content stays read-only. Complete pair-history references/navigation belong to DEV0221–DEV0223, and coach-private content never enters shared recovery.
+
 - Athlete is the existing training-participant capability adopted by [DEV0219](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md). Pending/accepted/removed coach–athlete connections neither gate exact request/session participant access nor merge content across sessions.
 
 - The coach owns one shared training plan per booking; the athlete reads it and responds through shared notes rather than overwriting it.
@@ -51,16 +53,18 @@ This ticket defines the new capability without implementing runtime code. It mus
 2. Extend participant journeys and the request/private-booking model with isolated pending conversations plus shared-plan, shared-note and coach-private-note boundaries.
 3. Define request/session status transitions, participant authorization, accepted-thread continuity, editing, content bounds and fail-closed behavior.
 4. Add definition-of-done and acceptance scenarios for isolated candidates, accepted continuity, terminal requests, cancelled/completed sessions, rebooking isolation and unrelated actors.
-5. Reconcile COR0015 and downstream ticket references, then run formatting, link and consistency checks.
+5. Preserve the DEV0230 reconnection rule in the contract and reconcile COR0015/downstream ownership. Pair-history navigation belongs to DEV0221–DEV0223; original conversation persistence/rendering remains DEV0183–DEV0185. Run formatting, link and consistency checks.
 
 ## Acceptance criteria
 
 - [ ] AC1: The specification defines isolated pending-request conversations plus one coach-authored shared plan, two-way session notes and coach-private notes with no public/cross-candidate access.
-- [ ] AC2: Pending/accepted/confirmed/completed/cancelled/declined/withdrawn/expired/not-selected behavior, accepted-thread continuity, author-edit ownership, rebooking isolation and unavailable-state behavior are explicit and testable.
+- [ ] AC2: Pending/accepted/confirmed/completed/cancelled/declined/withdrawn/expired/not-selected behavior, accepted-thread continuity, author-edit ownership, rebooking isolation and unavailable-state behavior are explicit and testable. Disconnection preserves all retained shared content; reconnection reopens original contexts with unchanged author/status permissions, including unsuccessful/cancelled history.
 - [ ] AC3: First-version text/entry bounds and non-goals prevent the feature from silently becoming chat, file storage or a longitudinal health record.
 - [ ] AC4: COR0015, its four direct DEV records and all affected specification/ticket links agree on ownership, sequence and terminology.
 
 ## Validation plan
+
+Verify retained original request/booking content and stable identifiers across connection-state changes, unsuccessful request states and cancelled sessions; the recovered shared projection excludes coach-private and unrelated content. When COR0020 runtime is delivered, additionally rehearse either-participant disconnection and fresh mutual reconnection through its complete history navigation. This ticket does not implement pair-history navigation or claim that combined runtime result before both deliveries.
 
 - Run Prettier against every changed Markdown file and `git diff --check`.
 - Check every affected relative Markdown link and verify reciprocal COR0015 membership for DEV0182-DEV0185.

@@ -13,10 +13,13 @@ Give athletes an accessible My coaches list and mutual connection controls after
 
 ## Scope and non-goals
 
-- In scope: eligible session Connect/request state, incoming/outgoing connection requests, accepted My coaches list, current public coach identity/portrait, safe shared-session and public-profile links, removal and failure recovery.
+- In scope: eligible session Connect/request state, incoming/outgoing connection requests, accepted My coaches list, current public coach identity/portrait, complete paginated shared request/booking-history navigation, safe public-profile links, disconnection/reconnection and failure recovery.
 - Out of scope: coach My athletes, backend authority, public athlete profiles, instant rebooking, chat, notifications and native runtime.
 
 ## Expected behavior and edge cases
+
+- Either participant can disconnect without deleting/resetting shared history. Fresh mutually accepted reconnection restores a complete paginated history view for the same pair, including unsuccessful booking requests and cancelled sessions. Keep original identifiers/statuses and show the selected request/booking conversation once.
+- Shared conversation/plan/note details remain owned by COR0015. History links reopen original contexts when those interfaces are delivered; terminal/cancelled content stays read-only and coach-private content never enters shared recovery. Existing exact-participant access survives disconnection.
 
 - The athlete may send or withdraw its request and accept/decline a coach's incoming request according to server state. Coaches training as athletes use the same account and flow.
 - My coaches separates accepted connections from incoming/outgoing requests and booking history. A coach is shown once per relationship regardless of session count.
@@ -34,17 +37,19 @@ Give athletes an accessible My coaches list and mutual connection controls after
 
 1. Review delivered athlete list/actions and current My sessions hierarchy plus bundled framework guidance.
 2. Add session-level connection controls, request sections and a paginated accepted My coaches list.
-3. Add shared-history/public-profile shortcuts, consent/removal feedback and hidden/suspended/conflict recovery.
+3. Add complete paginated shared request/booking-history and public-profile shortcuts, consent/disconnect/reconnect feedback and hidden/suspended/conflict recovery. Original conversation rendering stays DEV0185.
 4. Rehearse both initiation directions, coach-as-athlete and negative actor states on desktop/mobile with keyboard use.
 
 ## Acceptance criteria
 
 - [ ] AC1: An athlete sees only its own incoming/outgoing connection requests and accepted My coaches, with explicit recipient acceptance and current eligibility enforcement.
-- [ ] AC2: Accepted relationships show truthful coach identity/portrait and shared-session shortcuts; request-another-session honors existing discovery/approval rules.
+- [ ] AC2: Accepted relationships show truthful coach identity/portrait and complete paginated shared request/booking-history shortcuts, including unsuccessful/cancelled entries. Fresh accepted reconnection restores all retained history with original context/status and no duplicate accepted-request thread; request-another-session honors existing discovery/approval rules.
 - [ ] AC3: Removal, cancellation invalidation, duplicate/crossed requests, hidden/suspended coaches and unavailable/missing-image states preserve history and truthful actions.
 - [ ] AC4: Coach-as-athlete, unrelated-account denial, mobile/desktop and keyboard flows plus meaningful browser/regression tests, lint, type-check, formatting and build pass.
 
 ## Validation plan
+
+Disconnect from each participant side, mutually reconnect, reload and traverse older history pages. Verify all retained exact-pair requests/bookings return with original status/identifiers, including declined/withdrawn/expired/not-selected requests and cancelled sessions; selected-request/booking continuity appears once. Record conversation-body recovery only after COR0015 interfaces are delivered and a combined two-account rehearsal passes.
 
 Use persisted local two-account bookings to validate both initiation directions, pending-only/cancelled-only denial, confirmed/completed eligibility, crossed requests, removal, reload, pagination, coach-as-athlete and hidden/suspended coaches. Inspect responses for unrelated athlete/candidate/private-note data. Verify keyboard focus and mobile/desktop layout, then run relevant existing application/browser/auth checks, lint, type-check, format, build and diff checks.
 
@@ -64,7 +69,7 @@ Pending implementation.
 
 ### Decisions and deviations
 
-None yet; record adopted choices before material implementation changes.
+2026-10-14: [DEV0230](../../archive/organisatory/DEV0230-adopt-reconnection-history-recovery.md) records full shared-history recovery after reconnection. This interface owns history navigation; COR0015 owns request/session conversation rendering and original status/author permissions.
 
 ### Contracts, configuration, and operations
 

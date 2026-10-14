@@ -25,6 +25,8 @@ Persist the request/session-workspace contract adopted by DEV0182 with actor-sco
 
 ## Expected behavior and edge cases
 
+- Under [DEV0230](../../archive/organisatory/DEV0230-adopt-reconnection-history-recovery.md), disconnection never deletes or resets retained shared conversations/plans/notes. Reconnected history reopens the same original request/booking content, including declined/withdrawn/expired/not-selected request threads and cancelled-session content. Preserve authors, timestamps, edited state and status permissions; terminal/cancelled content stays read-only. Complete pair-history references/navigation belong to DEV0221–DEV0223, and coach-private content never enters shared recovery.
+
 - Athlete is the existing training-participant capability adopted by [DEV0219](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md). Pending/accepted/removed coach–athlete connections neither gate exact request/session participant access nor merge content across sessions.
 
 - Content always resolves through the exact request or booking UUID and current actor context. Slot or occurrence identity alone never grants access.
@@ -50,18 +52,20 @@ Persist the request/session-workspace contract adopted by DEV0182 with actor-sco
 2. Add schema, constraints, indexes, grants and actor-aware functions for bounded projection and mutation.
 3. Extend domain, repository and service contracts with separate coach and athlete projections so private metadata cannot be accidentally serialized to athletes.
 4. Add server actions with canonical identifier/body/version validation and precise saved/conflict/forbidden/unavailable results.
-5. Test fresh and upgrade migrations, cross-candidate isolation, accepted-request continuity, booking-state behavior, plan uniqueness, note limits, stale edits and rebooking separation.
+5. Test fresh/upgrade migrations, cross-candidate isolation, accepted-request continuity, booking-state behavior, plan uniqueness, note limits, stale edits and rebooking separation. Verify that connection changes never delete/reset shared content and original IDs reopen retained history without private-data leakage; pair-history cursor/navigation testing remains DEV0221–DEV0223.
 
 ## Acceptance criteria
 
 - [ ] AC1: Pending requests and existing bookings gain additive isolated workspaces, and each booking can hold at most one active coach-authored shared plan.
 - [ ] AC2: Shared content is readable only by the exact request/booking participants; private content and its metadata are returned only to the owning coach.
-- [ ] AC3: Pending request exchange, accepted-thread continuity, terminal-request/cancelled read-only behavior, confirmed/completed mutations, author-owned editing and optimistic conflicts are enforced atomically in PostgreSQL.
+- [ ] AC3: Pending request exchange, accepted-thread continuity, terminal-request/cancelled read-only behavior, confirmed/completed mutations, author-owned editing and optimistic conflicts are enforced atomically in PostgreSQL. Connection-state changes never delete/reset content; reopening original IDs after reconnection returns all retained shared plan/note entries with unchanged authors, timestamps and permissions, including unsuccessful/cancelled history.
 - [ ] AC4: Cross-booking, cross-run, unrelated, malformed, empty, oversized, stale and over-limit requests fail closed without partial writes.
 - [ ] AC5: Bounded repository/service/server-action projections support DEV0184/DEV0185 without exposing raw table access or private content through the athlete contract.
 - [ ] AC6: Fresh/upgrade migration, pgTAP, database integration, unit, lint, type and production-build validation pass for the affected boundary.
 
 ## Validation plan
+
+Verify retained original request/booking content and stable identifiers across connection-state changes, unsuccessful request states and cancelled sessions; the recovered shared projection excludes coach-private and unrelated content. When COR0020 runtime is delivered, additionally rehearse either-participant disconnection and fresh mutual reconnection through its complete history navigation. This ticket does not implement pair-history navigation or claim that combined runtime result before both deliveries.
 
 - Run fresh and upgrade Supabase migration paths plus database lint.
 - Add pgTAP assertions for constraints, grants, participant reads, private-note isolation, status transitions, edit ownership and concurrency/version behavior.

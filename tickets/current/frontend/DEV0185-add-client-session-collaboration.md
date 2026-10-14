@@ -28,6 +28,8 @@ Add the athlete-facing collaboration area to My sessions. Athletes need an isola
 
 ## Expected behavior and edge cases
 
+- Under [DEV0230](../../archive/organisatory/DEV0230-adopt-reconnection-history-recovery.md), disconnection never deletes or resets retained shared conversations/plans/notes. Reconnected history reopens the same original request/booking content, including declined/withdrawn/expired/not-selected request threads and cancelled-session content. Preserve authors, timestamps, edited state and status permissions; terminal/cancelled content stays read-only. Complete pair-history references/navigation belong to DEV0221–DEV0223, and coach-private content never enters shared recovery.
+
 - Athlete is the existing training-participant capability adopted by [DEV0219](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md). Pending/accepted/removed coach–athlete connections neither gate exact request/session participant access nor merge content across sessions.
 
 - The athlete opens request/session details from My sessions and keeps coach, time, venue and request/booking status visible.
@@ -49,7 +51,7 @@ Add the athlete-facing collaboration area to My sessions. Athletes need an isola
 ## Implementation plan
 
 1. Review the delivered DEV0183 athlete projection/actions and relevant bundled Next.js documentation.
-2. Add a disclosed session-detail area to My sessions with the shared plan and chronological shared thread.
+2. Add a disclosed session-detail area to My sessions with the shared plan and chronological shared thread. Reuse the original request/booking detail entry points for reconnected history links without rebuilding/copying conversation content; aggregate history navigation stays DEV0223.
 3. Add bounded athlete note create/edit forms with pending guards, character feedback and recoverable stale/unavailable results.
 4. Add accessible responsive styles and confirmed/completed/cancelled empty/read-only states.
 5. Add component/browser privacy assertions and complete an authenticated two-account desktop/mobile exchange rehearsal.
@@ -58,11 +60,13 @@ Add the athlete-facing collaboration area to My sessions. Athletes need an isola
 
 - [ ] AC1: The requesting/booked athlete can read the exact request thread and accepted booking's shared plan/thread without receiving other-candidate or coach-private content/metadata.
 - [ ] AC2: The athlete can add/edit only their own shared notes on confirmed/completed bookings and cannot mutate the plan or coach entries.
-- [ ] AC3: Unsuccessful terminal requests and cancelled sessions remain read-only, only the accepted thread continues, rebooked sessions begin empty and empty/unavailable/conflict states remain truthful and recoverable.
+- [ ] AC3: Unsuccessful terminal requests and cancelled sessions remain read-only, only the accepted thread continues, rebooked sessions begin empty and empty/unavailable/conflict states remain truthful and recoverable. Original detail links opened from reconnected history render all retained shared content with original identity/status, no reset/duplicate thread and no coach-private metadata.
 - [ ] AC4: The session detail remains keyboard-usable and responsive while preserving existing coach identity, time, venue, history and cancellation behavior.
 - [ ] AC5: Two-account end-to-end evidence proves that a coach sees the athlete's shared entry, the athlete sees coach-shared content, and the athlete never receives coach-private data.
 
 ## Validation plan
+
+Verify retained original request/booking content and stable identifiers across connection-state changes, unsuccessful request states and cancelled sessions; the recovered shared projection excludes coach-private and unrelated content. When COR0020 runtime is delivered, additionally rehearse either-participant disconnection and fresh mutual reconnection through its complete history navigation. This ticket does not implement pair-history navigation or claim that combined runtime result before both deliveries.
 
 - Add focused component/unit tests for shared-only rendering, author ownership, status behavior, draft preservation and action results.
 - Add Playwright coverage at desktop/mobile widths for plan/thread reading, athlete note create/edit, completed/cancelled behavior, keyboard use and unavailable/conflict states.

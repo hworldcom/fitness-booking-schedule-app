@@ -27,6 +27,8 @@ Extend each coach-owned pending request and booking detail with a usable collabo
 
 ## Expected behavior and edge cases
 
+- Under [DEV0230](../../archive/organisatory/DEV0230-adopt-reconnection-history-recovery.md), disconnection never deletes or resets retained shared conversations/plans/notes. Reconnected history reopens the same original request/booking content, including declined/withdrawn/expired/not-selected request threads and cancelled-session content. Preserve authors, timestamps, edited state and status permissions; terminal/cancelled content stays read-only. Complete pair-history references/navigation belong to DEV0221–DEV0223, and coach-private content never enters shared recovery.
+
 - Athlete is the existing training-participant capability adopted by [DEV0219](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md). Pending/accepted/removed coach–athlete connections neither gate exact request/session participant access nor merge content across sessions.
 
 - A coach opens notes from the existing Bookings card without losing athlete, time, location or status context.
@@ -50,18 +52,20 @@ Extend each coach-owned pending request and booking detail with a usable collabo
 1. Review the delivered DEV0183 coach projection/actions and relevant bundled Next.js documentation.
 2. Add session-workspace state and components to the coach Bookings surface while preserving existing cancellation/completion behavior.
 3. Build separate plan, shared-thread and private-note forms with character counts, explicit saves, pending guards and recoverable conflicts.
-4. Add responsive styles and accessible labels, focus order, status/error announcements and read-only terminal presentation.
+4. Add responsive styles and accessible labels, focus order, status/error announcements and read-only terminal presentation. Reuse original request/booking detail entry points for reconnected history links without rebuilding/copying conversation content; aggregate history navigation stays DEV0222.
 5. Add unit/component/browser coverage and complete authenticated desktop/mobile rehearsal against a real local booking.
 
 ## Acceptance criteria
 
 - [ ] AC1: The owning coach can exchange isolated shared notes in each pending request, continue only the accepted thread and create/revise one clearly athlete-visible training plan for the booking.
 - [ ] AC2: The coach can add/edit shared entries and separately add/edit coach-private entries without an ambiguous visibility toggle.
-- [ ] AC3: Terminal unsuccessful request/cancelled content is read-only, completed content accepts post-session notes, and stale/unavailable/validation failures preserve truthful recoverable UI.
+- [ ] AC3: Terminal unsuccessful request/cancelled content is read-only, completed content accepts post-session notes, and stale/unavailable/validation failures preserve truthful recoverable UI. Original detail links opened from reconnected history render retained shared content with its original identity/status and no reset or duplicate accepted thread; coach-private material remains separately authorised.
 - [ ] AC4: Keyboard and responsive desktop/mobile flows keep booking context, private visibility copy and mutation feedback usable.
 - [ ] AC5: Browser and negative-projection tests prove the coach view receives only its bookings and the private interface does not affect Schedule or public surfaces.
 
 ## Validation plan
+
+Verify retained original request/booking content and stable identifiers across connection-state changes, unsuccessful request states and cancelled sessions; the recovered shared projection excludes coach-private and unrelated content. When COR0020 runtime is delivered, additionally rehearse either-participant disconnection and fresh mutual reconnection through its complete history navigation. This ticket does not implement pair-history navigation or claim that combined runtime result before both deliveries.
 
 - Add focused component/unit tests for section visibility, status rules, local draft preservation and action-result handling.
 - Add Playwright coverage for plan save/edit, shared/private note save/edit, cancellation read-only behavior, keyboard operation and unavailable/conflict feedback at desktop and mobile widths.

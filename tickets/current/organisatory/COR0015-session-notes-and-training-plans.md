@@ -27,7 +27,7 @@ All required implementation parts have direct development tickets. The tickets a
 
 ## Other relationships
 
-- [COR0020 — Athlete terminology and connections](COR0020-athlete-terminology-and-connections.md) is independent web relationship work. Shared request/session content is authorized by its exact participants regardless of connection state; acceptance/removal never merges content or changes session permissions.
+- [COR0020 — Athlete terminology and connections](COR0020-athlete-terminology-and-connections.md) is independent web relationship work. Its contract amendment [DEV0230](../../archive/organisatory/DEV0230-adopt-reconnection-history-recovery.md) requires all retained shared conversations/plans/notes to be recoverable after reconnection, including declined/withdrawn/expired/not-selected requests and cancelled bookings. DEV0221–DEV0223 own complete shared-history references/navigation; DEV0183 owns original content preservation and DEV0184/DEV0185 own rendering. Shared request/session content is authorised by its exact participants regardless of connection state; acceptance/removal never deletes, resets or merges content or changes author/status permissions.
 
 - DEV0141 supplies booking identity, participant authority and terminal lifecycle behavior. Session content belongs to the booking, not its availability occurrence, so a cancellation and later rebooking cannot transfer notes between athletes.
 - DEV0144 and DEV0170 supply the two existing surfaces where session collaboration will appear. The new interface extends those views rather than creating a public or unrelated messaging destination.
@@ -40,9 +40,12 @@ All required implementation parts have direct development tickets. The tickets a
 2. Complete COR0016's DEV0188 request persistence before DEV0183 binds notes to requests and accepted bookings.
 3. Complete DEV0183 with fresh/upgrade migration coverage, per-request isolation, accepted-booking continuity, plan uniqueness, note bounds and concurrent-edit behavior.
 4. DEV0184 and DEV0185 can proceed after their corresponding COR0016 interfaces establish pending-request surfaces.
-5. Complete this coordination only when every direct ticket is Completed or explicitly cancelled/replaced; each pending candidate has an isolated shared thread, only the accepted thread continues into one booking, a coach can share/revise one plan, both confirmed participants can add shared notes, only the coach receives private notes, terminal request/cancelled-session threads are read-only, completed sessions accept post-session notes, unrelated actors fail closed, and responsive end-to-end validation passes.
+5. Preserve all retained shared content across connection-state changes and reopen original request/booking IDs without copying/resetting content. When COR0020 runtime is available, record the combined multi-page two-account disconnect/reconnect recovery rehearsal; connection/history-navigation delivery remains COR0020 and is not silently claimed here.
+6. Complete this coordination only when every direct ticket is Completed or explicitly cancelled/replaced; each pending candidate has an isolated shared thread, only the accepted thread continues into one booking, a coach can share/revise one plan, both confirmed participants can add shared notes, only the coach receives private notes, terminal request/cancelled-session threads are read-only, completed sessions accept post-session notes, unrelated actors fail closed, and responsive end-to-end validation passes.
 
 ## Progress and integration record
+
+- 2026-10-14: DEV0230 clarified that disconnection never deletes shared content and reconnection restores navigation to every retained shared thread/plan/note, including unsuccessful requests and cancelled bookings. Preserve original request/booking IDs, authors, timestamps and status permissions; terminal/cancelled content remains read-only and coach-private content stays separate. Combined recovery evidence requires both COR0015 and COR0020 delivery.
 
 - 2026-10-14: Adopted athlete vocabulary in the current plan and linked COR0020 as independent relationship work. Connected/disconnected state neither gates session notes nor creates a cross-session athlete record. Earlier dated planning history is preserved.
 - 2026-10-10: The user requested per-session coach/client note exchange for training plans, post-session thoughts and coach-only comments.
