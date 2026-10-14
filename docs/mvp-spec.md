@@ -61,6 +61,12 @@ The following constraints are confirmed for this scheduling project:
 
 Home’s temporary coach/focus removal is owned by [DEV0226](../tickets/archive/frontend/DEV0226-remove-home-coach-focus-search.md). Reintroduction requires a demonstrated need from client feedback and an adopted bounded design under [DEV0227](../tickets/current/frontend/DEV0227-reintroduce-home-search-after-client-feedback.md). The later grid/filter/Load more proposal remains separately planned under [DEV0228](../tickets/current/frontend/DEV0228-build-home-coach-grid-with-discipline-filter.md); its discussion previews do not change the current three-coach preview contract.
 
+### Confirmed pricing constraint for a future growth extension
+
+On 14 October 2026, the user selected **free sessions and paid sessions collected by the coach at the session** as the starting model for a future Group training & events growth extension. Its first version will display `Free` or a fixed per-person price with `Pay at the session` before joining. In-app payment collection is deferred; registration does not establish payment or attendance.
+
+This records a confirmed future pricing constraint, not a complete group-event delivery contract. [DEV0233](../tickets/current/organisatory/DEV0233-define-group-training-and-events-growth-scope.md) remains Draft while registration, minimum-count/deadline, cancellation, privacy and scheduling-conflict rules are settled. The current scheduling-only scope, capacity-one private-session lifecycle and runtime payment/event exclusions remain in force. Group-event milestones, acceptance scenarios and implementation tickets will be added when the remaining contract is adopted.
+
 ### Proposed implementation defaults
 
 The following are implementation defaults rather than additional user decisions:

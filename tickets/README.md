@@ -7,7 +7,7 @@ This directory records planned changes, task status and implementation evidence.
 - A **development ticket** is a small implementable task named `# Ticket DEVNNNN` with a `DEVNNNN-short-title.md` filename. It owns implementation and validation evidence, and its DEV ID is used in commits. Start one from [TEMPLATE.md](TEMPLATE.md).
 - A **coordination record** is a non-implementation umbrella named `# Coordination CORNNNN` with a `CORNNNN-short-title.md` filename. It maps a flat set of peer development tickets and is never used as a commit reference. Start one from [COORDINATION_TEMPLATE.md](COORDINATION_TEMPLATE.md).
 
-DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0231 and COR0021.
+DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0234 and COR0021.
 
 Every DEV record declares its direct coordination membership near the top: one linked COR, or `None — independent development ticket`. Direct membership is limited to one COR and must match that COR's work map. Dependencies, downstream consumers and historical links remain separate relationships.
 
@@ -58,12 +58,15 @@ DEV0210–DEV0218 and COR0019 were allocated on the local `hackathon/solana-grou
 
 DEV0226–DEV0228 are allocated to independently prepared Home planning records outside DEV0220/DEV0229. They are reserved for that work and must not be reused; committing DEV0220/DEV0229 does not include those plans.
 
+DEV0231–DEV0232 are allocated to independently prepared database-validation and local-migration-continuity work. They remain reserved if their records are not included in the DEV0233 planning commit and must not be reused.
+
 ## Ticket index
 
 ### Current records
 
 | Record                                                                                                                                           | Area         | Milestone                           | Status      | Outcome                                                                                                                                                         |
 | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ | ----------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [DEV0233 — Define group training and events growth scope](current/organisatory/DEV0233-define-group-training-and-events-growth-scope.md)         | Organisatory | Proposed growth extension           | Draft       | Confirm free/pay-at-session pricing for group training; registration, minimum-count behavior and the complete extension contract remain open.                   |
 | [DEV0228 — Build a Home coach grid with a discipline filter](current/frontend/DEV0228-build-home-coach-grid-with-discipline-filter.md)           | Frontend     | M3 scheduling interface follow-up   | Draft       | Plan one grid, typed/scrollable disciplines and retained location search; show 15 coaches initially with Load more only while further matches exist.            |
 | [DEV0227 — Reintroduce Home search after client feedback](current/frontend/DEV0227-reintroduce-home-search-after-client-feedback.md)             | Frontend     | Future discovery improvement        | Draft       | Revisit Home coach/focus search only after client feedback establishes a need and a bounded design is adopted.                                                  |
 | [DEV0225 — Remove blockchain historical evidence](current/organisatory/DEV0225-remove-blockchain-historical-evidence.md)                         | Organisatory | Historical-record pruning           | Draft       | Separately plan deletion of dedicated blockchain evidence, mixed-history corrections and reference/ID repairs.                                                  |
