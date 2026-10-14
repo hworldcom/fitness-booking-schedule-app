@@ -84,7 +84,12 @@ export function CoachExploreResults({
     if (window.matchMedia("(max-width: 980px)").matches) return;
     const card = cardRefs.current.get(profileId);
     card?.focus({ preventScroll: true });
-    card?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    card?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "instant"
+        : "smooth",
+      block: "nearest",
+    });
   }, []);
   const markProviderUnavailable = useCallback(() => {
     setProviderUnavailable(true);
@@ -115,7 +120,9 @@ export function CoachExploreResults({
     const frame = window.requestAnimationFrame(() => {
       selectedPreviewRef.current?.focus({ preventScroll: true });
       selectedPreviewRef.current?.scrollIntoView({
-        behavior: "smooth",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "instant"
+          : "smooth",
         block: "nearest",
       });
     });

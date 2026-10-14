@@ -5,7 +5,7 @@
 - Last updated: 2026-10-14
 - Milestone: Scheduling browser validation maintenance
 - Coordination: None — independent development ticket
-- Related records: validation consumer [DEV0220](DEV0220-use-athlete-website-terminology.md); broader public QA [DEV0201](../../current/frontend/DEV0201-polish-public-marketplace-accessibility.md) and private QA [DEV0208](../../current/frontend/DEV0208-polish-authenticated-workspace-accessibility.md)
+- Related records: validation consumer [DEV0220](DEV0220-use-athlete-website-terminology.md); broader public QA [DEV0201](DEV0201-polish-public-marketplace-accessibility.md) and private QA [DEV0208](../../current/frontend/DEV0208-polish-authenticated-workspace-accessibility.md)
 
 ## Objective and context
 

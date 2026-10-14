@@ -76,16 +76,19 @@ const homeSchedulingSteps = [
 
 function StoryStepGrid({
   steps = schedulingSteps,
+  headingLevel = 3,
 }: {
   steps?: readonly StoryStep[];
+  headingLevel?: 2 | 3;
 }) {
+  const Heading = headingLevel === 2 ? "h2" : "h3";
   return (
     <div className={`coach-step-grid ${steps.length === 3 ? "three" : ""}`}>
       {steps.map(({ number, title, description, Icon }) => (
         <article className="coach-step-card" key={number}>
           <span className="coach-step-number">{number}</span>
           <Icon size={23} aria-hidden="true" />
-          <h3>{title}</h3>
+          <Heading>{title}</Heading>
           <p>{description}</p>
         </article>
       ))}
@@ -182,7 +185,7 @@ export function HowItWorksStory() {
             whether to confirm one athlete.
           </p>
         </div>
-        <StoryStepGrid />
+        <StoryStepGrid headingLevel={2} />
       </section>
       <section className="coach-pass-story">
         <div className="coach-pass-story-copy">

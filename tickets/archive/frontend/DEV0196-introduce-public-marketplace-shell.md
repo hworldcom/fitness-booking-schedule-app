@@ -4,7 +4,7 @@
 - Created: 2026-10-12
 - Last updated: 2026-10-12
 - Milestone: Scheduling interface public-marketplace follow-up
-- Coordination: [COR0017 — Public marketplace redesign](../../current/organisatory/COR0017-public-marketplace-redesign.md)
+- Coordination: [COR0017 — Public marketplace redesign](../organisatory/COR0017-public-marketplace-redesign.md)
 - Related records: completed contract dependency [DEV0195 — Adopt the public marketplace redesign contract](../organisatory/DEV0195-adopt-public-marketplace-redesign-contract.md); navigation baselines [DEV0153 — Separate client and coach navigation](DEV0153-separate-client-and-coach-navigation.md), [DEV0168 — Detect profile images in account icons](DEV0168-detect-profile-images-in-account-icons.md) and [DEV0171 — Unify coach Profile navigation](DEV0171-unify-coach-profile-navigation.md)
 
 ## Objective and context

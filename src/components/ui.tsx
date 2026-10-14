@@ -49,6 +49,11 @@ export function Avatar({
     >
       {visibleImageUrl ? (
         <img
+          ref={(image) => {
+            if (image?.complete && image.naturalWidth === 0) {
+              setFailedImageUrl(visibleImageUrl);
+            }
+          }}
           src={visibleImageUrl}
           alt={alt}
           width={small ? 32 : 90}

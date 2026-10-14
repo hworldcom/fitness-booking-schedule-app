@@ -5,7 +5,7 @@
 - Last updated: 2026-10-14
 - Milestone: M3 — Scheduling interface follow-up
 - Coordination: None — independent development ticket
-- Related records: future-search follow-up [DEV0227 — Reintroduce Home search after client feedback](../../current/frontend/DEV0227-reintroduce-home-search-after-client-feedback.md); later grid redesign [DEV0228](DEV0228-build-home-coach-grid-with-discipline-filter.md); historical shared-search baseline [DEV0197](DEV0197-share-public-marketplace-search.md) and Home baseline [DEV0198](DEV0198-build-search-first-marketplace-home.md); downstream integration review [DEV0201](../../current/frontend/DEV0201-polish-public-marketplace-accessibility.md) under [COR0017](../../current/organisatory/COR0017-public-marketplace-redesign.md)
+- Related records: future-search follow-up [DEV0227 — Reintroduce Home search after client feedback](../../current/frontend/DEV0227-reintroduce-home-search-after-client-feedback.md); later grid redesign [DEV0228](DEV0228-build-home-coach-grid-with-discipline-filter.md); historical shared-search baseline [DEV0197](DEV0197-share-public-marketplace-search.md) and Home baseline [DEV0198](DEV0198-build-search-first-marketplace-home.md); downstream integration review [DEV0201](DEV0201-polish-public-marketplace-accessibility.md) under [COR0017](../organisatory/COR0017-public-marketplace-redesign.md)
 
 ## Objective and context
 
@@ -82,7 +82,7 @@ Reconciled the specification's C27, discovery flow, scheduling behavior, definit
 | [Home styles](../../../src/app/coach-story.css)                                                                                                                                  | Spans the Home submit action across its existing grid without altering Explore layout.                                          |
 | [Search tests](../../../tests/marketplace-search.test.ts), [Home tests](../../../tests/home-marketplace.test.ts) and [browser flow](../../../tests/browser/public-story.spec.ts) | Verify the Home/Explore boundary, query-free links/submission, responsive keyboard order, history and JavaScript-free behavior. |
 | [Specification](../../../docs/mvp-spec.md)                                                                                                                                       | Distinguishes Home's temporary discipline/location search from Explore's retained query contract.                               |
-| [DEV0201](../../current/frontend/DEV0201-polish-public-marketplace-accessibility.md) and [COR0017](../../current/organisatory/COR0017-public-marketplace-redesign.md)            | Record the downstream public integration boundary without changing direct coordination membership.                              |
+| [DEV0201](DEV0201-polish-public-marketplace-accessibility.md) and [COR0017](../organisatory/COR0017-public-marketplace-redesign.md)                                              | Record the downstream public integration boundary without changing direct coordination membership.                              |
 
 ### Decisions and deviations
 

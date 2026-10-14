@@ -1,0 +1,153 @@
+/* Public integration overrides; private workspace controls retain their styles. */
+html:has(.public-app-main) {
+  scroll-padding-top: 92px;
+}
+
+.public-app-main :is(button, input, select, .button) {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.public-app-main
+  :is(
+    .brand-home,
+    .public-primary-navigation a,
+    .public-coach-entry,
+    .public-account-link,
+    .auth-status-link,
+    .public-account-avatar,
+    .footer-contact,
+    .marketplace-discipline-chip,
+    .marketplace-clear-search,
+    .compact-coach-link,
+    .text-link,
+    .coach-back-link,
+    .home-coach-discovery-heading a,
+    .marketplace-home-how-link,
+    .coach-map-detail > a
+  ) {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+}
+
+.public-app-main :is(a, button, input, select, summary):focus-visible {
+  outline: 3px solid #496326;
+  outline-offset: 3px;
+}
+
+.public-app-main .pill.neutral,
+.public-app-main .compact-coach-card.marketplace .avatar {
+  color: #52634a;
+}
+
+.public-app-main
+  :is(
+    .coach-results-summary > small,
+    .compact-coach-identity small,
+    .compact-coach-location em,
+    .coach-map-heading > p,
+    .coach-map-state > span,
+    .coach-today-availability li small,
+    .coach-bookable-slot-list small,
+    .coach-location-note > p,
+    .public-coach-location-map-state > span,
+    .public-coach-locations li small,
+    .coach-step-card p,
+    .coach-pass-story-copy > p
+  ) {
+  color: #56634f;
+}
+
+.public-app-main .coach-step-card h2 {
+  margin-bottom: 9px;
+  font-size: 20px;
+}
+
+.public-app-main .public-account-link span {
+  max-width: none;
+  overflow: visible;
+  white-space: normal;
+}
+
+.public-app-main .public-coach-profile {
+  overflow-wrap: anywhere;
+}
+
+.public-app-main
+  :is(
+    .marketplace-search,
+    .marketplace-discipline-navigation,
+    .coach-filters label,
+    .coach-explore-layout > *,
+    .compact-coach-identity > span,
+    .public-coach-identity,
+    .public-coach-identity > div,
+    .public-coach-place,
+    .public-coach-place > div
+  ) {
+  min-width: 0;
+}
+
+.public-app-main
+  :is(
+    .compact-coach-identity h2,
+    .compact-coach-identity h3,
+    .compact-coach-location strong,
+    .compact-coach-location em,
+    .public-coach-header h1,
+    .public-coach-place strong,
+    .public-coach-place span,
+    .public-coach-locations strong,
+    .public-coach-locations small,
+    .coach-bookable-slot-list small,
+    .coach-map-detail h3,
+    .coach-map-primary strong,
+    .coach-map-primary em
+  ) {
+  overflow-wrap: anywhere;
+}
+
+.public-app-main .maplibregl-ctrl-group button {
+  width: 44px;
+  height: 44px;
+}
+
+.public-app-main .location-map-marker.selected {
+  z-index: 1;
+}
+
+.public-app-main .location-map-marker:focus-visible {
+  z-index: 2;
+}
+
+body:has(.public-app-main) .dialog .icon-button {
+  width: 44px;
+  height: 44px;
+}
+
+body:has(.public-app-main) .dialog button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+@media (max-width: 760px) {
+  html:has(.public-app-main) {
+    scroll-padding-top: 148px;
+  }
+}
+
+@media (max-width: 620px) {
+  .public-app-main .marketplace-discipline-chips {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 7px;
+  }
+
+  .public-app-main .marketplace-discipline-chip {
+    flex-shrink: 0;
+    justify-content: center;
+  }
+}

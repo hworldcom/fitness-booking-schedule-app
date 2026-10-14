@@ -4,7 +4,7 @@
 - Created: 2026-10-12
 - Last updated: 2026-10-12
 - Milestone: Scheduling interface public-marketplace follow-up
-- Coordination: [COR0017 — Public marketplace redesign](../../current/organisatory/COR0017-public-marketplace-redesign.md)
+- Coordination: [COR0017 — Public marketplace redesign](../organisatory/COR0017-public-marketplace-redesign.md)
 - Related records: completed contract dependency [DEV0195 — Adopt the public marketplace redesign contract](../organisatory/DEV0195-adopt-public-marketplace-redesign-contract.md); completed homepage consumer [DEV0198 — Build the search-first marketplace home](DEV0198-build-search-first-marketplace-home.md); completed Explore consumer [DEV0199 — Redesign desktop coach Explore](DEV0199-redesign-desktop-coach-explore.md)
 
 ## Objective and context

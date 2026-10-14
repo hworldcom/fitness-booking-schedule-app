@@ -11,8 +11,9 @@ export function HomeMarketplaceSearch({
   filters: CoachDirectoryFilters;
 }) {
   return (
-    <div className="home-marketplace-search" key={homeDirectoryHref(filters)}>
+    <div className="home-marketplace-search">
       <Form
+        key={homeDirectoryHref(filters)}
         action="/"
         className="home-coach-search"
         aria-label="Search coaches"

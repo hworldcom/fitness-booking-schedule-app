@@ -10,6 +10,7 @@ import "./coming-soon.css";
 import "./coach-story.css";
 import "./coach-discovery.css";
 import "./coach-workspace.css";
+import "./public-marketplace-accessibility.css";
 import { ActorProvider } from "@/auth/client/actor-provider";
 import { AuthSessionProvider } from "@/auth/client/session-provider";
 import { Shell } from "@/components/shell";
@@ -33,7 +34,7 @@ export default async function RootLayout({
     await initialAuthorizationState();
 
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <body>
         <AuthSessionProvider initialSession={initialSession}>
           <ActorProvider initialActor={initialActor}>

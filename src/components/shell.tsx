@@ -329,6 +329,8 @@ export function Shell({ children }: { children: ReactNode }) {
           </header>
         )}
         <div
+          role={publicShell ? "region" : undefined}
+          aria-label={publicShell ? "Demonstration data" : undefined}
           className={`demo-strip ${
             publicShell ? "" : "authenticated-demo-strip"
           }`}

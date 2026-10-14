@@ -4,7 +4,7 @@
 - Created: 2026-10-12
 - Last updated: 2026-10-12
 - Milestone: Scheduling interface public-marketplace follow-up
-- Coordination: [COR0017 — Public marketplace redesign](../../current/organisatory/COR0017-public-marketplace-redesign.md)
+- Coordination: [COR0017 — Public marketplace redesign](../organisatory/COR0017-public-marketplace-redesign.md)
 - Related records: completed contract dependency [DEV0195 — Adopt the public marketplace redesign contract](../organisatory/DEV0195-adopt-public-marketplace-redesign-contract.md), completed search dependency [DEV0197 — Share public marketplace search](DEV0197-share-public-marketplace-search.md), completed card dependency [DEV0198 — Build the search-first marketplace home](DEV0198-build-search-first-marketplace-home.md), completed mobile consumer [DEV0200 — Add mobile Explore map/list state](DEV0200-add-mobile-explore-map-list-state.md), map baselines [DEV0174 — Decouple location services](DEV0174-decouple-location-services.md) and [DEV0194 — Stabilize selected map markers](DEV0194-stabilize-selected-map-markers.md)
 
 ## Objective and context

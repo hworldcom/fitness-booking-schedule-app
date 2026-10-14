@@ -37,6 +37,20 @@ export function HomeDisciplineNavigation({
   const [canScroll, setCanScroll] = useState({ previous: false, next: false });
   useEffect(() => {
     const element = track.current;
+    const selected = element?.querySelector('[aria-current="page"]');
+    if (!element || !selected) return;
+    const bounds = element.getBoundingClientRect();
+    const item = selected.getBoundingClientRect();
+    const left =
+      item.left < bounds.left
+        ? item.left - bounds.left
+        : item.right > bounds.right
+          ? item.right - bounds.right
+          : 0;
+    if (left) element.scrollBy({ left, behavior: "instant" });
+  }, [filters.discipline]);
+  useEffect(() => {
+    const element = track.current;
     if (!element) return;
     const update = () =>
       setCanScroll({
