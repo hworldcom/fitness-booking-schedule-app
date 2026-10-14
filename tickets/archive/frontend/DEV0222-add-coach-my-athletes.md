@@ -4,8 +4,8 @@
 - Created: 2026-10-14
 - Last updated: 2026-10-14
 - Milestone: M6 — Athlete terminology and coach–athlete connections
-- Coordination: [COR0020 — Athlete terminology and coach–athlete connections](../../current/organisatory/COR0020-athlete-terminology-and-connections.md)
-- Related records: independent conflict-recovery dependency [DEV0234](../backend/DEV0234-preserve-connection-conflict-results.md); contract dependency [DEV0219 — Adopt athlete terminology and connection contract](../organisatory/DEV0219-adopt-athlete-connections-contract.md); backend dependency [DEV0221](../backend/DEV0221-persist-coach-athlete-connections.md); terminology dependency [DEV0220](DEV0220-use-athlete-website-terminology.md); athlete peer [DEV0223](../../current/frontend/DEV0223-add-athlete-my-coaches.md)
+- Coordination: [COR0020 — Athlete terminology and coach–athlete connections](../organisatory/COR0020-athlete-terminology-and-connections.md)
+- Related records: independent conflict-recovery dependency [DEV0234](../backend/DEV0234-preserve-connection-conflict-results.md); contract dependency [DEV0219 — Adopt athlete terminology and connection contract](../organisatory/DEV0219-adopt-athlete-connections-contract.md); backend dependency [DEV0221](../backend/DEV0221-persist-coach-athlete-connections.md); terminology dependency [DEV0220](DEV0220-use-athlete-website-terminology.md); athlete peer [DEV0223](DEV0223-add-athlete-my-coaches.md)
 
 ## Objective and context
 
@@ -90,7 +90,7 @@ Action locks, explicit retry states, stable operation UUIDs, authoritative refre
 | [Disconnect confirmation](../../../src/features/connections/connection-disconnect-control.tsx), [connection avatar](../../../src/features/connections/connection-avatar.tsx) and [route stylesheet](../../../src/features/connections/connections.css) | Preserve retained-history wording, focus, cold-load initials fallback, mobile layout and fixed-header anchor spacing without changing shared Avatar or Home styles.                |
 | [Model/render tests](../../../tests/coach-connections.test.ts) and [local rehearsal](../../../scripts/rehearse-local-coach-connections.ts)                                                                                                             | Add eight meaningful model/render checks and actual local HTTP/browser consent, paging, reconnection, media, permission and accessibility evidence.                                |
 | [Package scripts](../../../package.json) and [README](../../../README.md#checks)                                                                                                                                                                       | Document the guarded local rehearsal command and its tagged cleanup/prerequisites. No dependency changes.                                                                          |
-| [Specification](../../../docs/mvp-spec.md#1-product-status-and-document-authority), [COR0020](../../current/organisatory/COR0020-athlete-terminology-and-connections.md) and [ticket index](../../README.md)                                           | Record coach delivery, retain separate athlete/conversation ownership and reconcile completed links/statuses.                                                                      |
+| [Specification](../../../docs/mvp-spec.md#1-product-status-and-document-authority), [COR0020](../organisatory/COR0020-athlete-terminology-and-connections.md) and [ticket index](../../README.md)                                                      | Record coach delivery, retain separate athlete/conversation ownership and reconcile completed links/statuses.                                                                      |
 
 ### Decisions and deviations
 

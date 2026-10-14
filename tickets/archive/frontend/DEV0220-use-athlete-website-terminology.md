@@ -4,8 +4,8 @@
 - Created: 2026-10-14
 - Last updated: 2026-10-14
 - Milestone: M6 — Athlete terminology and coach–athlete connections
-- Coordination: [COR0020 — Athlete terminology and coach–athlete connections](../../current/organisatory/COR0020-athlete-terminology-and-connections.md)
-- Related records: contract dependency [DEV0219 — Adopt athlete terminology and connection contract](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md); validation dependency [DEV0229](DEV0229-correct-browser-rehearsal-assumptions.md); persistence peer [DEV0221](../backend/DEV0221-persist-coach-athlete-connections.md); interface peers [DEV0222](DEV0222-add-coach-my-athletes.md) and [DEV0223](../../current/frontend/DEV0223-add-athlete-my-coaches.md)
+- Coordination: [COR0020 — Athlete terminology and coach–athlete connections](../organisatory/COR0020-athlete-terminology-and-connections.md)
+- Related records: contract dependency [DEV0219 — Adopt athlete terminology and connection contract](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md); validation dependency [DEV0229](DEV0229-correct-browser-rehearsal-assumptions.md); persistence peer [DEV0221](../backend/DEV0221-persist-coach-athlete-connections.md); interface peers [DEV0222](DEV0222-add-coach-my-athletes.md) and [DEV0223](DEV0223-add-athlete-my-coaches.md)
 
 ## Objective and context
 
@@ -72,7 +72,7 @@ Implementation started on 2026-10-14 after confirming a clean main checkout, ins
 | [coach-story.tsx](../../../src/features/public/coach-story.tsx) and [coming-soon.tsx](../../../src/features/waitlist/coming-soon.tsx)                                                                                                                                                         | Public athlete vocabulary and confirmed-session lifecycle explanation.                      |
 | [profile navigation tests](../../../tests/profile-navigation.test.ts), [shell navigation tests](../../../tests/shell-navigation.test.ts), [queue tests](../../../tests/coach-booking-request-queue.test.ts) and [profile-image rehearsal](../../../scripts/rehearse-local-profile-images.mjs) | Update existing capability/lifecycle assertions to the new labels.                          |
 | [auth browser test](../../../tests/browser/auth.spec.ts)                                                                                                                                                                                                                                      | Preserve the sign-in-to-browsing check using the current home heading.                      |
-| [README](../../../README.md), [specification](../../../docs/mvp-spec.md), [COR0020](../../current/organisatory/COR0020-athlete-terminology-and-connections.md) and [ticket index](../../README.md)                                                                                            | Accurate participant language, delivered terminology status and lifecycle/navigation links. |
+| [README](../../../README.md), [specification](../../../docs/mvp-spec.md), [COR0020](../organisatory/COR0020-athlete-terminology-and-connections.md) and [ticket index](../../README.md)                                                                                                       | Accurate participant language, delivered terminology status and lifecycle/navigation links. |
 
 ### Decisions and deviations
 

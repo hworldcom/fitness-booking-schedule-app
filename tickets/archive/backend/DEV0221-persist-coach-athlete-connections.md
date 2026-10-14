@@ -4,8 +4,8 @@
 - Created: 2026-10-14
 - Last updated: 2026-10-14
 - Milestone: M6 — Athlete terminology and coach–athlete connections
-- Coordination: [COR0020 — Athlete terminology and coach–athlete connections](../../current/organisatory/COR0020-athlete-terminology-and-connections.md)
-- Related records: independent validation dependency [DEV0231](DEV0231-correct-pgtap-runtime-assumptions.md); local migration/startup follow-up [DEV0232](../../current/organisatory/DEV0232-restore-local-migration-continuity.md); contract dependency [DEV0219 — Adopt athlete terminology and connection contract](../organisatory/DEV0219-adopt-athlete-connections-contract.md); coach consumer [DEV0222](../frontend/DEV0222-add-coach-my-athletes.md); athlete consumer [DEV0223](../../current/frontend/DEV0223-add-athlete-my-coaches.md); account-retention follow-up [DEV0165](../../current/backend/DEV0165-implement-account-deletion-lifecycle.md)
+- Coordination: [COR0020 — Athlete terminology and coach–athlete connections](../organisatory/COR0020-athlete-terminology-and-connections.md)
+- Related records: independent validation dependency [DEV0231](DEV0231-correct-pgtap-runtime-assumptions.md); local migration/startup follow-up [DEV0232](../../current/organisatory/DEV0232-restore-local-migration-continuity.md); contract dependency [DEV0219 — Adopt athlete terminology and connection contract](../organisatory/DEV0219-adopt-athlete-connections-contract.md); coach consumer [DEV0222](../frontend/DEV0222-add-coach-my-athletes.md); athlete consumer [DEV0223](../frontend/DEV0223-add-athlete-my-coaches.md); account-retention follow-up [DEV0165](../../current/backend/DEV0165-implement-account-deletion-lifecycle.md)
 
 ## Objective and context
 

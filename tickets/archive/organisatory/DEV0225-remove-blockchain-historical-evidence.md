@@ -5,7 +5,7 @@
 - Last updated: 2026-10-14
 - Milestone: Scheduling documentation and historical-record pruning
 - Coordination: None — independent development ticket
-- Related records: backlog-maintenance dependency [DEV0224](DEV0224-refresh-scheduling-ticket-backlog.md); scheduling contract baseline [DEV0140](DEV0140-adopt-scheduling-only-contract.md); current relationship work [COR0020](../../current/organisatory/COR0020-athlete-terminology-and-connections.md)
+- Related records: backlog-maintenance dependency [DEV0224](DEV0224-refresh-scheduling-ticket-backlog.md); scheduling contract baseline [DEV0140](DEV0140-adopt-scheduling-only-contract.md); current relationship work [COR0020](COR0020-athlete-terminology-and-connections.md)
 
 ## Objective and context
 

@@ -1,11 +1,11 @@
 # Ticket DEV0223: Add athlete My coaches
 
-- Status: In progress
+- Status: Completed
 - Created: 2026-10-14
-- Last updated: 2026-10-14
+- Last updated: 2026-10-15
 - Milestone: M6 — Athlete terminology and coach–athlete connections
 - Coordination: [COR0020 — Athlete terminology and coach–athlete connections](../organisatory/COR0020-athlete-terminology-and-connections.md)
-- Related records: contract dependency [DEV0219 — Adopt athlete terminology and connection contract](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md); backend dependency [DEV0221](../../archive/backend/DEV0221-persist-coach-athlete-connections.md); terminology dependency [DEV0220](../../archive/frontend/DEV0220-use-athlete-website-terminology.md); coach peer [DEV0222](../../archive/frontend/DEV0222-add-coach-my-athletes.md); independent conflict-correction dependency [DEV0234](../../archive/backend/DEV0234-preserve-connection-conflict-results.md)
+- Related records: contract dependency [DEV0219 — Adopt athlete terminology and connection contract](../organisatory/DEV0219-adopt-athlete-connections-contract.md); backend dependency [DEV0221](../backend/DEV0221-persist-coach-athlete-connections.md); terminology dependency [DEV0220](DEV0220-use-athlete-website-terminology.md); coach peer [DEV0222](DEV0222-add-coach-my-athletes.md); independent conflict-correction dependency [DEV0234](../backend/DEV0234-preserve-connection-conflict-results.md)
 
 ## Objective and context
 
@@ -52,10 +52,10 @@ Give athletes an accessible My coaches list and mutual connection controls after
 
 ## Acceptance criteria
 
-- [ ] AC1: An athlete sees only its own incoming/outgoing connection requests and accepted My coaches, with explicit recipient acceptance and current eligibility enforcement.
-- [ ] AC2: Accepted relationships show truthful coach identity/portrait and complete paginated shared request/booking-history shortcuts, including unsuccessful/cancelled entries. Fresh accepted reconnection restores all retained history with original context/status and no duplicate accepted-request thread; request-another-session honors existing discovery/approval rules.
-- [ ] AC3: Removal, cancellation invalidation, duplicate/crossed requests, hidden/suspended coaches and unavailable/missing-image states preserve history and truthful actions.
-- [ ] AC4: Coach-as-athlete, unrelated-account denial, mobile/desktop and keyboard flows plus meaningful browser/regression tests, lint, type-check, formatting and build pass.
+- [x] AC1: An athlete sees only its own incoming/outgoing connection requests and accepted My coaches, with explicit recipient acceptance and current eligibility enforcement.
+- [x] AC2: Accepted relationships show truthful coach identity/portrait and complete paginated shared request/booking-history shortcuts, including unsuccessful/cancelled entries. Fresh accepted reconnection restores all retained history with original context/status and no duplicate accepted-request thread; request-another-session honors existing discovery/approval rules.
+- [x] AC3: Removal, cancellation invalidation, duplicate/crossed requests, hidden/suspended coaches and unavailable/missing-image states preserve history and truthful actions.
+- [x] AC4: Coach-as-athlete, unrelated-account denial, mobile/desktop and keyboard flows plus meaningful browser/regression tests, lint, type-check, formatting and build pass.
 
 ## Validation plan
 
@@ -109,7 +109,7 @@ All original shared booking/request history is available through older pages. Th
 
 2026-10-14 shared-fixture refinement: the first type check exceeded the compiler stack while inferring the returned Postgres/Supabase helper object. Declare an explicit typed fixture API at the factory boundary instead of relying on recursive structural inference. No runtime authority or dependency change is needed.
 
-2026-10-14: [DEV0230](../../archive/organisatory/DEV0230-adopt-reconnection-history-recovery.md) records full shared-history recovery after reconnection. This interface owns history navigation; COR0015 owns request/session conversation rendering and original status/author permissions.
+2026-10-14: [DEV0230](../organisatory/DEV0230-adopt-reconnection-history-recovery.md) records full shared-history recovery after reconnection. This interface owns history navigation; COR0015 owns request/session conversation rendering and original status/author permissions.
 
 ### Contracts, configuration, and operations
 
@@ -121,17 +121,17 @@ The optional CONNECTION_TEST_SITE_URL is a test-only loopback preview selector, 
 
 ## Validation results
 
-Validation performed on 2026-10-14 with Node.js 24, Next.js 16.3.8, local Supabase/PostgreSQL/Auth/Storage and Chrome. All identities/images/bookings are temporary ticket-tagged local fixtures; existing accounts/images and migration history were preserved.
+Validation started on 2026-10-14 and final acceptance/archive review completed on 2026-10-15 with Node.js 24, Next.js 16.3.8, local Supabase/PostgreSQL/Auth/Storage and Chrome. All identities/images/bookings are temporary ticket-tagged local fixtures; existing accounts/images and migration history were preserved.
 
 - CONNECTION_TEST_SITE_URL=http://localhost:3113 npm run test:athlete-connections: passed the real athlete and coach browser Server Actions in both initiation directions, explicit recipient acceptance/decline/withdraw, both-participant disconnect/fresh reconnection, reload and all 30 original shared history references across older pages. The selected request/session appears once; unsuccessful/expired/not-selected/closed/cancelled/completed records retain IDs/statuses. Also passed ambiguous network UUID retry, crossed requests staying pending, actual coach cancellation followed by stale athlete acceptance/conflict/safe decline, accepted cancellation survival, 22 unique accepted coaches across 20-row pages, failed read/retry, current public portrait/profile navigation, cold-load initials fallback, hidden/suspended safe controls, suspended coach-as-athlete completed-only qualification, pending/cancelled-only denial and guest/unrelated isolation. Desktop 1440 × 1040 and mobile 375 × 812 include keyboard Enter, confirmation/feedback/paging focus and overflow checks. The final full rehearsal passed after actor-bound read versions, fresh-range pagination and the cancellation-role copy correction.
-- CONNECTION_TEST_SITE_URL=http://localhost:3113 npm run test:coach-connections: the existing coach rehearsal passed after the shared extraction. The final fresh-read regression is underway; record its result before completion.
+- CONNECTION_TEST_SITE_URL=http://localhost:3113 npm run test:coach-connections: the existing coach rehearsal passed after the shared extraction. The final run also passed with actor-bound fresh-read versions and fully rechecked pagination, preserving all 30 history entries and the existing coach permission/media/focus behavior.
 - npm test: passed 141 general/model/render plus 15 server checks, zero failures. New cases verify athlete recipient direction, private-media exclusion/public shortcut gating, original athlete session/history continuity, server-derived safe controls, invalid batch perspective rejected before identity work, and account/run/role/perspective isolation, distinct fresh authoritative reads of identical empty data, and fresh-range pagination that excludes revoked cached rows, updates statuses and discards partial data when a later page is denied.
 - DATABASE_TEST_URL=postgresql://postgres:postgres@127.0.0.1:55322/postgres npx --no-install tsx --conditions=react-server --test --test-concurrency=1 tests/database/coach-athlete-connections.test.ts: all 12 existing connection tests passed, including consent, eligibility, race ordering, directed coach-as-athlete pairs, complete history and media revocation. No schema/functions/migrations changed, so migration/constraint replay is not applicable; the completed backend record owns its full 59-database/206-pgTAP baseline.
 - npx --no-install playwright test tests/browser/public-story.spec.ts tests/browser/auth.spec.ts: 16 production-preview desktop/mobile regressions passed; two existing desktop-only checks intentionally skip the mobile project. This verifies discovery/sign-in/private access without claiming independent DEV0201 validation.
 - npm run lint, npm run typecheck, npm run format:check and configuration-free production npm run build: passed after the final cache/copy refinements. Build overrides DATABASE_URL, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_SITE_URL and NEXT_PUBLIC_GEOAPIFY_API_KEY with empty values. No hosted service is contacted and no environment values are printed.
 - Visual evidence: ignored desktop-viewport.png/desktop-history.png and mobile-history-viewport.png/mobile-history.png under test-results/athlete-connections-rehearsal/. Viewed the actual athlete identity, hidden-coach safe controls, retained history, original session links and responsive layout. The focused /tmp/dev0223-visual.mts check also passed native My coaches navigation and seven retained mobile history references against actor-bound sources; the final full rehearsal covers the subsequent fresh-read correction; it removed its own temporary fixtures.
 - Earlier failures were recorded and resolved: recursive fixture factory type inference (explicit API), cold compilation and asynchronous cancellation refresh (separate bounded assertions), live preview refresh interference (separate fixed source preview), temporary outside-project compiler setup (inside-project ignored preview), and an old coach off the first 20-row reload page (explicit older-page reveal). The first mobile viewport captured smooth scrolling mid-animation; the visible history viewport and visibility wait provide actual feature evidence. A first sandboxed npm test could not create tsx's local IPC socket; its authorised rerun passed. No failure is counted as passed or deferred to an unrelated ticket.
-- python3 /tmp/dev0223-check-docs.py and git diff --check: current link/anchor/index/ID/ownership/consent/recovery/privacy checks passed. Final formatting, archive consistency and tagged cleanup counts remain pending.
+- python3 /tmp/dev0223-check-docs.py and git diff --check: current link/anchor/index/ID/ownership/consent/recovery/privacy checks passed. Final formatting and archive consistency checks passed. An independent owner query found zero remaining DEV0222/DEV0223-tagged temporary Auth accounts. The owned localhost:3113 preview and its environment-free source snapshots were stopped/removed; the shared localhost:3100 server was preserved.
 
 ### User-requested commit checkpoint — 2026-10-14
 
@@ -143,22 +143,26 @@ During the checkpoint review, the active implementation session saved a read-fre
 
 This resolves the pending final static/unit/build recheck for the checkpoint. No additional database/consent rehearsal, cleanup, deployment or completion claim is made here. The final actor-bound coach rehearsal, required remaining browser/integration evidence, tagged cleanup verification and archive/coordination completion remain pending. Existing earlier rehearsal evidence is retained above. The active application and local fixtures were not restarted or mutated for this checkpoint.
 
-| Criterion | Evidence                                                                                                              | Result             |
-| --------- | --------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| AC1       | Both-web consent evidence and actor-scope regression recorded above; final actor-bound integration review pending.    | Partially verified |
-| AC2       | Original/reconnected history, paging and safe profile-link evidence above; final completion review pending.           | Partially verified |
-| AC3       | Earlier removal/conflict/visibility/media recovery rehearsals above; final actor-bound rehearsal and cleanup pending. | Partially verified |
-| AC4       | Fresh 141 + 15 tests, lint/type/format/build pass; final required browser/integration evidence and archival pending.  | Partially verified |
+### Final acceptance review — 2026-10-15
+
+After checkpoint 99ee061, both final browser commands passed against the exact checkpointed fresh-read code. The athlete run verified both real web interfaces, all thirty retained history entries, actor/cancellation/visibility and coach-as-athlete cases; the coach regression also passed. All remaining checkpoint validation items are resolved by those results, the final 141 + 15 application/server tests, twelve database tests, static/production build checks and archive/link/index review above. Cleanup independently returned DEV0222 = 0 and DEV0223 = 0 temporary Auth accounts. No deployment or external review was performed.
+
+| Criterion | Evidence                                                                                                                                                                                                                                 | Result |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| AC1       | Both-web send/withdraw/accept/decline, explicit recipient consent, actor/cursor checks and account/run/read-bound cache regressions.                                                                                                     | Passed |
+| AC2       | Both-side disconnect/reconnect, all 30 original paged references/statuses, selected-request continuity once and current public-profile shortcut rules.                                                                                   | Passed |
+| AC3       | Cancelled-only/pending-only denial, stale acceptance, crossed requests, accepted cancellation survival, hidden/suspended controls and network/image recovery.                                                                            | Passed |
+| AC4       | Coach-as-athlete completed-only flow, guest/unrelated isolation, keyboard/375/1440-pixel evidence, 156 app/server tests, 12 database checks, both real browser rehearsals, 16 public/auth regressions, static/build and document checks. | Passed |
 
 ## Risks, limitations, and follow-ups
 
 Connections now have both private web interfaces; COR0015 still owns conversation bodies/shared plans/shared notes and coach-private notes. Its future combined content-recovery rehearsal is a separate dependency/follow-up, not delivered here. No instant rebooking, messaging, notifications, public athlete profile or native runtime is added.
 
-DEV0232 still owns the existing local startup/missing-version ledger issue. Validation reused loopback services without repair/reset and an isolated ignored source preview to preserve concurrent DEV0201 work. Supporting temporary files/preview credentials were not committed; the source snapshot contains no environment files. No hosted deployment, external review or release was performed. Next action: finish the coach regression and archive consistency, then record COR0020 connection-only completion.
+DEV0232 still owns the existing local startup/missing-version ledger issue. Validation reused loopback services without repair/reset and an isolated ignored source preview to preserve concurrent DEV0201 work. Supporting temporary files/preview credentials were not committed; the source snapshot contains no environment files. No hosted deployment, external review or release was performed. No required work remains for this connection interface. COR0015 owns the next shared-content integration.
 
 ## Completion and review references
 
-- Completed: Not completed.
-- Commit: User-authorized checkpoint `[DEV0223] Checkpoint athlete My coaches implementation` includes all pending implementation/documentation and this validation record; its hash is available in Git history. The ticket remains In progress.
+- Completed: 2026-10-15; all applicable criteria and required local validation passed.
+- Commit: `99ee061` — `[DEV0223] Checkpoint athlete My coaches implementation`, created during validation. Final completion/archive records accompany `[DEV0223] Finalize connection interface records`; Git history supplies that commit's hash. The checkpoint history remains intact.
 - Review: No independent review created.
 - Deployment or release: Not deployed or released.

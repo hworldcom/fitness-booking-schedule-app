@@ -9,7 +9,7 @@
 
 ## Objective and context
 
-The web target now uses athlete vocabulary and adds private mutually accepted coach–athlete connections under [COR0020](COR0020-athlete-terminology-and-connections.md). Athlete maps to the same account/capability and existing technical `client` identifiers. DEV0159 must explicitly settle native connection release membership before runtime work; web contract adoption does not add connection screens to native scope.
+The web target now uses athlete vocabulary and adds private mutually accepted coach–athlete connections under [COR0020](../../archive/organisatory/COR0020-athlete-terminology-and-connections.md). Athlete maps to the same account/capability and existing technical `client` identifiers. DEV0159 must explicitly settle native connection release membership before runtime work; web contract adoption does not add connection screens to native scope.
 
 The current product contract names native Next.js on Vercel as the hosted target and defines browser behavior only. Adopt one native iOS client for the same MovX scheduling product before adding runtime code. Record the user's requirement that the app have its own native presentation rather than look like or embed the website, while preserving the same email-backed identity, scheduling authority, data and backend services.
 

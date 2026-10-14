@@ -10,7 +10,7 @@
 
 ## Objective and boundaries
 
-The web target now uses athlete vocabulary and adds private mutually accepted coach–athlete connections under [COR0020](COR0020-athlete-terminology-and-connections.md). Athlete maps to the same account/capability and existing technical `client` identifiers. DEV0159 must explicitly settle native connection release membership before runtime work; web contract adoption does not add connection screens to native scope.
+The web target now uses athlete vocabulary and adds private mutually accepted coach–athlete connections under [COR0020](../../archive/organisatory/COR0020-athlete-terminology-and-connections.md). Athlete maps to the same account/capability and existing technical `client` identifiers. DEV0159 must explicitly settle native connection release membership before runtime work; web contract adoption does not add connection screens to native scope.
 
 Coordinate one native iOS application for MovX that uses a deliberately app-specific interface rather than reproducing or embedding the website. The iOS application shares the existing email-backed accounts, scheduling authority, PostgreSQL data and Vercel/Supabase backend with the Next.js website. It is a second frontend for the same product, not a separate product, Supabase project, database or pair of client/coach binaries.
 
