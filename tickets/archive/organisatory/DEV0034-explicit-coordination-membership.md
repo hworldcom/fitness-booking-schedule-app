@@ -5,7 +5,7 @@
 - Last updated: 2026-09-20
 - Milestone: Repository workflow
 - Coordination: None — independent development ticket
-- Related records: extends [DEV0032 — Flat coordination record workflow](DEV0032-flat-coordination-record-workflow.md) and [DEV0033 — Prefixed work-record identifiers](DEV0033-prefixed-work-record-identifiers.md); updates membership in [COR0001 — Project structure](../../current/organisatory/COR0001-project-structure.md)
+- Related records: extends [DEV0032 — Flat coordination record workflow](DEV0032-flat-coordination-record-workflow.md) and [DEV0033 — Prefixed work-record identifiers](DEV0033-prefixed-work-record-identifiers.md); updates membership in [COR0001 — Project structure](COR0001-project-structure.md)
 
 ## Objective and context
 

@@ -5,7 +5,7 @@
 - Last updated: 2026-09-20
 - Milestone: Repository workflow
 - Coordination: None — independent development ticket
-- Related records: prompted by [Coordination COR0001 — Project structure](../../current/organisatory/COR0001-project-structure.md); updates the workflow established by [DEV0001 — Ticket workflow](DEV0001-ticket-workflow-and-agent-instructions.md) and [DEV0002 — Commit subjects](DEV0002-ticket-number-in-commit-subjects.md)
+- Related records: prompted by [Coordination COR0001 — Project structure](COR0001-project-structure.md); updates the workflow established by [DEV0001 — Ticket workflow](DEV0001-ticket-workflow-and-agent-instructions.md) and [DEV0002 — Commit subjects](DEV0002-ticket-number-in-commit-subjects.md)
 
 Identifier migration note, 2026-09-20: [DEV0033](DEV0033-prefixed-work-record-identifiers.md) later added DEV/COR prefixes. The body below retains the then-current bare IDs and filenames where they are implementation history; live links and this record's heading/path use the new identifiers.
 
@@ -62,7 +62,7 @@ Extend the existing repository Markdown validator to accept and distinguish `Tic
 - The hierarchy defaults to one optional coordination-to-development level. Development tickets are peers; broad work splits into more peers under the same coordination record. Dependencies and follow-ups remain ordinary links rather than a deeper hierarchy. An exception requires a concrete reason recorded before implementation.
 - [The development-ticket template](../../TEMPLATE.md) now states its commit-bearing purpose and flat-split rule. The new [coordination template](../../COORDINATION_TEMPLATE.md) provides a direct-development-work map, separate other relationships, delivery/completion conditions and progress/integration evidence without an implementation record.
 - The [work-record guide](../../README.md), current/archive guides and category guides now describe both record types. The development and coordination records stay in the existing lifecycle/category directories and share one stable numeric namespace, avoiding another folder level.
-- `tickets/current/organisatory/0028-project-structure-organisation.md` became `tickets/current/organisatory/0028-project-structure-coordination.md`, headed `Coordination 0028` and indexed as coordination. [DEV0033](DEV0033-prefixed-work-record-identifiers.md) later migrated it to [COR0001-project-structure.md](../../current/organisatory/COR0001-project-structure.md). Its direct work map treats 0015/0025, 0027, 0030 and 0031 as peer development tickets; downstream tickets and the missing Anchor ticket remain visibly separate.
+- `tickets/current/organisatory/0028-project-structure-organisation.md` became `tickets/current/organisatory/0028-project-structure-coordination.md`, headed `Coordination 0028` and indexed as coordination. [DEV0033](DEV0033-prefixed-work-record-identifiers.md) later migrated it to [COR0001-project-structure.md](COR0001-project-structure.md). Its direct work map treats 0015/0025, 0027, 0030 and 0031 as peer development tickets; downstream tickets and the missing Anchor ticket remain visibly separate.
 - [Tickets DEV0030](../frontend/DEV0030-frontend-screen-module-boundaries.md) and [DEV0031](../frontend/DEV0031-preview-data-and-domain-boundaries.md) now link to Coordination 0028 as direct peer development tickets. The [repository README](../../../README.md), [MVP specification](../../../docs/mvp-spec.md) and affected historical 0029 links use the renamed path and record type.
 
 ### Decisions and compatibility

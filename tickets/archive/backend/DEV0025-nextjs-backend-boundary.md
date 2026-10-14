@@ -4,7 +4,7 @@
 - Created: 2026-09-20
 - Last updated: 2026-09-20
 - Milestone: M0 backend foundation
-- Coordination: [COR0001 — Project structure](../../current/organisatory/COR0001-project-structure.md)
+- Coordination: [COR0001 — Project structure](../organisatory/COR0001-project-structure.md)
 - Related tickets: DEV0014 — Database and backend plan; implemented with [DEV0015 — Supabase database foundation](DEV0015-supabase-database-foundation.md); establishes the boundary used by COR0002, converted from retired DEV0016, COR0006, converted from retired DEV0017, later-cancelled DEV0018, DEV0023, and later Solana integration tickets
 
 ## Objective and context

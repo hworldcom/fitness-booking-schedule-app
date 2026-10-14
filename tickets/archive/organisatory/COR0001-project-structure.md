@@ -1,14 +1,16 @@
 # Coordination COR0001: Project structure organisation
 
-- Status: In progress
+- Status: Cancelled
 - Created: 2026-09-20
-- Last updated: 2026-10-07
+- Last updated: 2026-10-14
 - Milestone: Cross-cutting application foundation
 - Converted from: Not applicable — created as a coordination record
-- Tracked development tickets: completed [DEV0030 — Frontend screen module boundaries](../../archive/frontend/DEV0030-frontend-screen-module-boundaries.md), completed [DEV0031 — Preview data and domain boundaries](../../archive/frontend/DEV0031-preview-data-and-domain-boundaries.md), completed [DEV0015 — Database foundation](../../archive/backend/DEV0015-supabase-database-foundation.md), completed [DEV0025 — Next.js backend boundary](../../archive/backend/DEV0025-nextjs-backend-boundary.md), and completed [DEV0027 — Phantom wallet connection foundation](../../archive/blockchain/DEV0027-phantom-wallet-connection-foundation.md); dedicated server-Solana verification and Anchor/program-client foundation tickets are still required
+- Tracked development tickets: completed [DEV0030 — Frontend screen module boundaries](../frontend/DEV0030-frontend-screen-module-boundaries.md), completed [DEV0031 — Preview data and domain boundaries](../frontend/DEV0031-preview-data-and-domain-boundaries.md), completed [DEV0015 — Database foundation](../backend/DEV0015-supabase-database-foundation.md), completed [DEV0025 — Next.js backend boundary](../backend/DEV0025-nextjs-backend-boundary.md), and completed [DEV0027 — Phantom wallet connection foundation](../blockchain/DEV0027-phantom-wallet-connection-foundation.md); unticketed server-Solana/Anchor deliverables cancelled as obsolete on 2026-10-14
 - Related records: completed structural peers are listed below; cancelled identity/wallet coordination is preserved by [COR0003](../../archive/organisatory/COR0003-account-first-identity-and-wallet-linking.md), completed Vercel readiness is recorded by [DEV0138](../../archive/backend/DEV0138-prepare-vercel-deployment.md), retired Cloudflare delivery is preserved by [COR0004](../../archive/organisatory/COR0004-hosted-staging-deployment.md), cancelled marketplace delivery is preserved by [COR0010](../../archive/organisatory/COR0010-group-funded-coach-marketplace-mvp.md), and completed scheduling-only delivery is recorded by [COR0011](../../archive/organisatory/COR0011-scheduling-only-product.md)
 
 ## Objective and context
+
+Cancelled on 2026-10-14 under [DEV0224 — Refresh the scheduling ticket backlog](DEV0224-refresh-scheduling-ticket-backlog.md). The scheduling product no longer requires the remaining server-Solana or Anchor/program-client work. The five delivered development records retain their original evidence and membership; unfinished integration criteria are not claimed complete. The architecture inventory and progress below describe their historical state, not the current application tree or work to start. Separate [DEV0225 — Remove blockchain historical evidence](../../current/organisatory/DEV0225-remove-blockchain-historical-evidence.md) owns subsequent documentary pruning.
 
 Coordinate the repository's gradual move from a frontend-preview layout into the agreed modular structure for frontend, Next.js backend, database, and Solana program work. Keep one Next.js/TypeScript package for the MVP, introduce boundaries only when real modules need them, and make file ownership and dependency direction clear enough that future developers can locate behavior without reconstructing prior conversations.
 
@@ -106,8 +108,8 @@ The records below are flat peers. Each structural deliverable has one owner even
 | Database schema and access foundation         | Completed [DEV0015 — Supabase database foundation](../../archive/backend/DEV0015-supabase-database-foundation.md)                    | Owns database dependencies, `supabase` configuration/migrations/policies/seeds, server database environment/client modules, Drizzle table mappings and database integration evidence.     | Delivered with DEV0025 but creates no feature repository; DEV0039–DEV0040 and later capability tickets own those consumers. |
 | Next.js server boundary enforcement           | Completed [DEV0025 — Next.js backend boundary](../../archive/backend/DEV0025-nextjs-backend-boundary.md)                             | Owns server-only/import enforcement, the service/repository dependency contract, boundary checks and documented thin-adapter rules applied to real server modules.                        | Delivered with DEV0015; validates placement without owning schema, connection, mappings or feature repositories.            |
 | Browser wallet/Solana client foundation       | Completed [DEV0027 — Phantom wallet connection foundation](../../archive/blockchain/DEV0027-phantom-wallet-connection-foundation.md) | Delivered the first `src/solana/client` Devnet Wallet Standard connection-state slice and Phantom UI integration.                                                                         | Completed independently of database work; DEV0038 can consume the normalized wallet account.                                |
-| Trusted server Solana verification            | Future dedicated server-Solana ticket                                                                                                | Will own `src/server/solana`, finality/account verification, projection and reconciliation boundaries.                                                                                    | **Not yet ticketed.** Create it before the first trusted server chain module.                                               |
-| Anchor program and generated-client contract  | Future dedicated Anchor foundation ticket                                                                                            | Will own `programs`, Anchor workspace configuration/tests and the reproducible `src/solana/generated` contract.                                                                           | **Not yet ticketed.** Create it before program or generated-client work.                                                    |
+| Trusted server Solana verification            | Cancelled unticketed deliverable                                                                                                     | Formerly planned `src/server/solana` verification and reconciliation.                                                                                                                     | Cancelled 2026-10-14; outside scheduling scope, with no implementation required.                                            |
+| Anchor program and generated-client contract  | Cancelled unticketed deliverable                                                                                                     | Formerly planned `programs` and generated-client boundaries.                                                                                                                              | Cancelled 2026-10-14; outside scheduling scope, with no implementation required.                                            |
 
 The following records are downstream consumers. They implement product behavior inside established boundaries and are not direct owners of COR0001's structural foundation:
 
@@ -166,6 +168,8 @@ Each development ticket validates its own moves and behavior. This coordination 
 
 ## Progress and integration record
 
+- 2026-10-14: Cancelled the unfinished umbrella through DEV0224 because its outstanding chain/program boundaries no longer belong to the scheduling product. All five existing direct DEV records are Completed and keep their historical membership. AC1, AC4 and AC5 were unfinished; cancellation preserves that distinction instead of reporting integration success. No source or live service operation occurred. DEV0225 separately owns historical deletion.
+
 Created on 2026-09-20 to make the previously discussed project-structure plan durable before backend, wallet and program modules are added. The target modular-monolith map, dependency direction, flat development-ticket work map, non-goals and final-review expectations are now recorded here. The [MVP specification](../../../docs/mvp-spec.md), [repository README](../../../README.md), and [ticket index](../../README.md) link this coordination record.
 
 Coordination started on 2026-09-20. The source and test inventory now assigns every existing module to its intended boundary. Completed [DEV0030](../../archive/frontend/DEV0030-frontend-screen-module-boundaries.md) owns screen/route moves, and completed [DEV0031](../../archive/frontend/DEV0031-preview-data-and-domain-boundaries.md) owns the former mixed `src/lib` separation. The related ticket-area work was delivered separately by [DEV0029](../../archive/organisatory/DEV0029-ticket-area-archive-organisation.md).
@@ -215,11 +219,14 @@ DEV0027 is completed. Its implementation started with the wallet toolchain's Nod
 
 ## Risks, limitations, and follow-ups
 
+This is a cancelled historical record with no active structural implementation or integration work. The following paragraph preserves the prior handoff; its obsolete chain/program next steps are cancelled. DEV0225 owns any subsequent historical pruning.
+
 A large mechanical move would create conflicts and obscure behavioral changes, so remaining implementation must stay incremental after completed DEV0030. The exact Anchor/generated-client layout depends on the selected current toolchain, and a separate worker/package depends on demonstrated runtime needs. Create the server-Solana and Anchor/program-client tickets before their respective paths.
 
 ## Completion and review references
 
 - Completed: Not completed.
+- Cancelled: 2026-10-14 — remaining chain/program deliverables are outside the scheduling product; completed peer history retained under DEV0224.
 - Commit: Not applicable — coordination-record IDs are not used in commit subjects. Relevant commits will reference their owning development tickets.
 - Review: Planning self-review only; no independent implementation review.
 - Deployment: None.

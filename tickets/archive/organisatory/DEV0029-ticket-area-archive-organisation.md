@@ -5,7 +5,7 @@
 - Last updated: 2026-09-20
 - Milestone: Repository workflow
 - Coordination: None — independent development ticket
-- Related tickets: follows [DEV0026 — Ticket directory structure](DEV0026-ticket-directory-structure.md); creates the area for the record now named [Coordination COR0001 — Project structure](../../current/organisatory/COR0001-project-structure.md); affects every archived ticket path
+- Related tickets: follows [DEV0026 — Ticket directory structure](DEV0026-ticket-directory-structure.md); creates the area for the record now named [Coordination COR0001 — Project structure](COR0001-project-structure.md); affects every archived ticket path
 
 ## Objective and context
 
@@ -59,7 +59,7 @@ Completed the four-area lifecycle structure and created the missing project-stru
 
 ### Changes and rationale
 
-- Added `tickets/current/organisatory/` and the record now named [Coordination COR0001 — Project structure](../../current/organisatory/COR0001-project-structure.md). Ticket 0028 originally recorded the target modular-monolith layout, incremental migration rule, dependency direction, child-ticket requirement and validation expectations without creating empty application directories; ticket 0032 later renamed its record type without changing this historical delivery.
+- Added `tickets/current/organisatory/` and the record now named [Coordination COR0001 — Project structure](COR0001-project-structure.md). Ticket 0028 originally recorded the target modular-monolith layout, incremental migration rule, dependency direction, child-ticket requirement and validation expectations without creating empty application directories; ticket 0032 later renamed its record type without changing this historical delivery.
 - Added frontend/backend/blockchain/organisatory subdirectories and guidance under `tickets/archive/`.
 - Moved archived tickets without renumbering: frontend 0008/0019/0020/0021; backend 0014/0022; blockchain 0006/0007; organisatory 0001–0005/0009/0026. This ticket moves to archive/organisatory after its record is complete.
 - Updated every affected repository-local Markdown target after the moves, including current/archived ticket dependencies, historical records, README, the MVP specification and the root ticket index.

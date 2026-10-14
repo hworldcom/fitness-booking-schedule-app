@@ -6,7 +6,7 @@
 - Milestone: Scheduling-only product split
 - Converted from: Not applicable — created as a coordination record
 - Tracked development tickets: DEV0140–DEV0143
-- Related records: supersedes the branch's marketplace delivery under [COR0010 — Coach-pass and group-funded marketplace MVP](COR0010-group-funded-coach-marketplace-mvp.md); retains completed identity, coach-profile, discovery and availability foundations recorded by [COR0001 — Project structure](../../current/organisatory/COR0001-project-structure.md)
+- Related records: supersedes the branch's marketplace delivery under [COR0010 — Coach-pass and group-funded marketplace MVP](COR0010-group-funded-coach-marketplace-mvp.md); retains completed identity, coach-profile, discovery and availability foundations recorded by [COR0001 — Project structure](COR0001-project-structure.md)
 
 ## Objective and boundaries
 

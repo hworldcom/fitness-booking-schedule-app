@@ -2,13 +2,15 @@
 
 - Status: Ready
 - Created: 2026-10-08
-- Last updated: 2026-10-11
+- Last updated: 2026-10-14
 - Milestone: Native iOS application
 - Converted from: Not applicable — created as a coordination record
 - Tracked development tickets: [DEV0159 — Adopt the native iOS contract](DEV0159-adopt-native-ios-contract.md), [DEV0160 — Expose the mobile scheduling API](../backend/DEV0160-expose-mobile-scheduling-api.md), [DEV0161 — Establish the Expo iOS foundation](../frontend/DEV0161-establish-expo-ios-foundation.md), [DEV0162 — Deliver native client scheduling](../frontend/DEV0162-deliver-native-client-scheduling.md), [DEV0163 — Deliver the native coach schedule](../frontend/DEV0163-deliver-native-coach-schedule.md), [DEV0164 — Deliver the native coach profile](../frontend/DEV0164-deliver-native-coach-profile.md), [DEV0165 — Implement the account-deletion lifecycle](../backend/DEV0165-implement-account-deletion-lifecycle.md), [DEV0166 — Prepare iOS distribution](../frontend/DEV0166-prepare-ios-distribution.md)
 - Related records: hosted runtime dependency [DEV0055 — Hosted Supabase staging environment](../backend/DEV0055-hosted-supabase-staging-environment.md); provider-neutral location baseline [DEV0174 — Decouple location services](../../archive/frontend/DEV0174-decouple-location-services.md); downstream shared multi-location contract and web runtime [COR0014 — Multi-location coach scheduling](../../archive/organisatory/COR0014-multi-location-coach-scheduling.md); completed approval-only request contract and runtime [COR0016 — Coach-confirmed booking requests](../../archive/organisatory/COR0016-coach-confirmed-booking-requests.md); identity baseline [DEV0147 — Separate client onboarding and verified coach access](../../archive/backend/DEV0147-separate-client-onboarding-and-verified-coach-access.md); client/coach navigation baselines [DEV0149 — Replace the user Coach tab with My sessions](../../archive/frontend/DEV0149-replace-user-coach-tab-with-my-sessions.md) and [DEV0150 — Hide My sessions from signed-out navigation](../../archive/frontend/DEV0150-hide-my-sessions-from-signed-out-navigation.md)
 
 ## Objective and boundaries
+
+The web target now uses athlete vocabulary and adds private mutually accepted coach–athlete connections under [COR0020](COR0020-athlete-terminology-and-connections.md). Athlete maps to the same account/capability and existing technical `client` identifiers. DEV0159 must explicitly settle native connection release membership before runtime work; web contract adoption does not add connection screens to native scope.
 
 Coordinate one native iOS application for MovX that uses a deliberately app-specific interface rather than reproducing or embedding the website. The iOS application shares the existing email-backed accounts, scheduling authority, PostgreSQL data and Vercel/Supabase backend with the Next.js website. It is a second frontend for the same product, not a separate product, Supabase project, database or pair of client/coach binaries.
 

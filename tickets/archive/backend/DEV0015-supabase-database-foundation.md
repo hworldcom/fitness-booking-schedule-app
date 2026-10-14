@@ -4,7 +4,7 @@
 - Created: 2026-09-19
 - Last updated: 2026-09-20
 - Milestone: M0 database foundation
-- Coordination: [COR0001 — Project structure](../../current/organisatory/COR0001-project-structure.md)
+- Coordination: [COR0001 — Project structure](../organisatory/COR0001-project-structure.md)
 - Related tickets: DEV0014 — Planning record, DEV0008 — Frontend; implemented the server boundary with [DEV0025](DEV0025-nextjs-backend-boundary.md); next COR0002, converted from retired DEV0016
 
 ## Objective and context

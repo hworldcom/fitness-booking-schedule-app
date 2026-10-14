@@ -5,7 +5,7 @@
 - Last updated: 2026-10-07
 - Milestone: Scheduling-only product split
 - Coordination: [COR0011 — Scheduling-only product branch](COR0011-scheduling-only-product.md)
-- Related records: supersedes the branch contract historically coordinated by [COR0010](COR0010-group-funded-coach-marketplace-mvp.md); retains the identity, coach-profile, discovery and availability foundations indexed by [COR0001](../../current/organisatory/COR0001-project-structure.md)
+- Related records: supersedes the branch contract historically coordinated by [COR0010](COR0010-group-funded-coach-marketplace-mvp.md); retains the identity, coach-profile, discovery and availability foundations indexed by [COR0001](COR0001-project-structure.md)
 
 ## Objective and context
 

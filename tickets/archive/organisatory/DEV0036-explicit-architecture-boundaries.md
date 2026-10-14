@@ -5,7 +5,7 @@
 - Last updated: 2026-09-20
 - Milestone: Cross-cutting application foundation
 - Coordination: None — independent development ticket
-- Related records: refines [COR0001 — Project structure](../../current/organisatory/COR0001-project-structure.md); preserves completed [DEV0030 — Frontend screen module boundaries](../frontend/DEV0030-frontend-screen-module-boundaries.md); aligns direct draft tickets [DEV0031](../frontend/DEV0031-preview-data-and-domain-boundaries.md), [DEV0015](../backend/DEV0015-supabase-database-foundation.md), [DEV0025](../backend/DEV0025-nextjs-backend-boundary.md), and [DEV0027](../blockchain/DEV0027-phantom-wallet-connection-foundation.md)
+- Related records: refines [COR0001 — Project structure](COR0001-project-structure.md); preserves completed [DEV0030 — Frontend screen module boundaries](../frontend/DEV0030-frontend-screen-module-boundaries.md); aligns direct draft tickets [DEV0031](../frontend/DEV0031-preview-data-and-domain-boundaries.md), [DEV0015](../backend/DEV0015-supabase-database-foundation.md), [DEV0025](../backend/DEV0025-nextjs-backend-boundary.md), and [DEV0027](../blockchain/DEV0027-phantom-wallet-connection-foundation.md)
 
 ## Objective and context
 

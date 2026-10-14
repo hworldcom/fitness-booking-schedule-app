@@ -5,7 +5,7 @@
 - Last updated: 2026-09-20
 - Milestone: Repository workflow
 - Coordination: None — independent development ticket
-- Related records: follows [DEV0032 — Flat coordination record workflow](DEV0032-flat-coordination-record-workflow.md); renames [Coordination COR0001 — Project structure](../../current/organisatory/COR0001-project-structure.md)
+- Related records: follows [DEV0032 — Flat coordination record workflow](DEV0032-flat-coordination-record-workflow.md); renames [Coordination COR0001 — Project structure](COR0001-project-structure.md)
 
 ## Objective and context
 
@@ -55,7 +55,7 @@ Use a deterministic migration map and verify every source file has exactly one r
 ### Identifier and file migration
 
 - Created this development ticket and indexed it before changing the repository convention, so the migration itself has a reviewable owner.
-- Renamed 28 development-record files and headings from their legacy four-digit form to `DEVNNNN`, retaining each numeric portion. For example, legacy ticket 0015 is now `DEV0015`. Renamed legacy Coordination 0028 to [COR0001](../../current/organisatory/COR0001-project-structure.md), the first record in the new independent coordination sequence.
+- Renamed 28 development-record files and headings from their legacy four-digit form to `DEVNNNN`, retaining each numeric portion. For example, legacy ticket 0015 is now `DEV0015`. Renamed legacy Coordination 0028 to [COR0001](COR0001-project-structure.md), the first record in the new independent coordination sequence.
 - Updated the [work-record index](../../README.md), current project documentation and record relationships to use the prefixed labels and paths. Repaired links into renamed archived records as well as links among current records.
 - Preserved `DEV0010`–`DEV0013` as unavailable because those former records were consolidated into `DEV0008`. The next available identifiers are `DEV0034` and `COR0002`.
 

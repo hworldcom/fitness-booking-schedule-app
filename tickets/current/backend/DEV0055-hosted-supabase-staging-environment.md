@@ -2,90 +2,81 @@
 
 - Status: In progress
 - Created: 2026-09-23
-- Last updated: 2026-10-07
-- Milestone: M0 hosted integration environment
+- Last updated: 2026-10-14
+- Milestone: M4 — Hosted rehearsal
 - Coordination: None — independent development ticket
-- Related records: [DEV0015 — Supabase database foundation](../../archive/backend/DEV0015-supabase-database-foundation.md), [DEV0040 — Protected access and database context](../../archive/backend/DEV0040-protected-access-and-database-context.md), [DEV0046 — Email OTP registration and application profiles](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md), cancelled [DEV0047 — Personal wallet linking and replacement](../../archive/backend/DEV0047-personal-wallet-linking-and-replacement.md), [DEV0138 — Prepare Vercel deployment](../../archive/backend/DEV0138-prepare-vercel-deployment.md), and historical coordination under [COR0004 — Hosted staging deployment](../../archive/organisatory/COR0004-hosted-staging-deployment.md)
+- Related records: completed foundations [DEV0015](../../archive/backend/DEV0015-supabase-database-foundation.md), [DEV0040](../../archive/backend/DEV0040-protected-access-and-database-context.md) and [DEV0046](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md); Vercel build preparation [DEV0138](../../archive/backend/DEV0138-prepare-vercel-deployment.md); current scheduling baseline [COR0016](../../archive/organisatory/COR0016-coach-confirmed-booking-requests.md); documentation refresh [DEV0224](../../archive/organisatory/DEV0224-refresh-scheduling-ticket-backlog.md); separate historical pruning [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md)
 
 ## Objective and context
 
-Create a dedicated, non-production Supabase staging environment that can support the current MovX Club email-account, application-profile and protected-database flows from `https://staging.movx.club`. The current repository proves these boundaries locally, but no hosted project is linked, migrated or accepted.
+Finish accepting the non-production Supabase staging database/Auth environment for the native Next.js application hosted through Vercel. Earlier work provisioned a dedicated Frankfurt project, restricted runtime login and working email-code sender; it did not complete the current hosted identity/scheduling rehearsal. Dated provisioning results below describe the revision tested at that time and do not prove current migration, grant, browser-bundle or scheduling state.
 
-This ticket applies the specification's [architecture boundary](../../../docs/mvp-spec.md#6-architecture-and-delivery-boundaries) and [identity, wallet and demo-integrity rules](../../../docs/mvp-spec.md#9-asset-wallet-and-demo-integrity) without treating a hosted service dashboard as a substitute for recorded migration and authorization evidence.
+Apply the specification's [application and infrastructure boundaries](../../../docs/mvp-spec.md#6-application-and-infrastructure-boundaries), [identity/data integrity](../../../docs/mvp-spec.md#8-identity-data-and-demo-integrity), [security invariants](../../../docs/mvp-spec.md#10-security-and-failure-invariants) and [M4 hosted rehearsal](../../../docs/mvp-spec.md#12-delivery-milestones). DEV0138 delivered build preparation; DEV0055 retains ownership of hosted environment evidence. Cancelled marketplace-release tickets do not own this handoff.
 
 ## Scope and non-goals
 
 - In scope:
-  - Select or confirm one EU-region Supabase project used only for staging.
-  - Link the Supabase command-line interface (CLI) safely and dry-run/apply the checked-in migration history without resetting hosted data.
-  - Seed the blank staging dataset only after confirming the seed is intended and idempotent.
-  - Provision a generated-password login outside migrations and grant only the checked-in `app_runtime` role.
-  - Use the Supabase transaction pooler with TLS, prepared statements disabled and the application's bounded pool.
-  - Keep the `app` schema outside browser-facing data APIs and ensure no service-role or database secret reaches client code.
-  - Configure email OTP site/redirect URLs, the checked-in token template, custom SMTP, bounded rate limits and a reviewed staging abuse boundary.
-  - Record the public URL/publishable-key and private runtime/migration variable names and storage locations without recording their values.
-  - Verify migration state, role restrictions, Auth email delivery and two distinct account/profile enrollments.
+  - Compare the current reviewed migration/seed revision with hosted state, apply only reviewed non-destructive changes where needed and record exact versions and replay/idempotency evidence.
+  - Verify the restricted application login, transaction-pooler/TLS configuration, schema exposure, current grants and actor-scoped authorization without revealing secrets.
+  - Verify code-only email Auth, custom sender, exact stable Vercel origin/redirects and the adopted bounded email/request limits.
+  - Validate the four hosted application settings defined in README, with no private value in Git, browser assets or evidence.
+  - Complete two-account first/returning-login/isolation/sign-out checks and the current two-athlete/coach scheduling rehearsal on one stable origin.
+  - Record current runbook, recovery/rotation steps, tested revision, prerequisites and cleanup for disposable accounts.
 - Out of scope:
-  - Application-host adaptation or deployment.
-  - Domain Name System (DNS) provider changes and custom-domain binding.
-  - Production Supabase, production users, production backups or production billing commitments.
-  - Service-role use by the application, browser access to business tables, password login, social login or passkeys.
-  - Fabricating club membership or granting organization roles through open signup.
+  - Framework-host adaptation, domain purchase/binding, production billing/backups or general administration.
+  - Runtime feature changes, native app implementation, new notification delivery, public signup roles or historical-document deletion.
+  - Remote database resets, destructive seed replacement or use of the database owner as the application login.
 
 ## Expected behavior and edge cases
 
-- A first email OTP login creates exactly one ordinary profile and active dataset participation; retrying enrollment returns the same identity without duplicates.
-- A second email account remains isolated from the first account's profile and protected data.
-- Browser clients receive only the project URL and publishable key. The runtime database password and any administrative/migration credential remain server-side and outside Git.
-- The runtime login cannot own/create schemas, bypass row-level security or obtain migration privileges.
-- Hosted migration uses dry-run/review before apply and never uses `supabase db reset` against the linked project.
-- OTP messages use the MovX Club template and a selected custom SMTP sender. Supabase's demonstration sender is not accepted for the public staging hostname.
-- Site and allowed redirect values match `https://staging.movx.club` and the exact sign-in path; unexpected redirects are rejected.
-- Staging uses the adopted bounded Supabase Auth email/request limits as its low-volume abuse boundary. CAPTCHA remains disabled until the browser flow supplies the selected provider's client token.
-- Reapplying migrations/seed/runtime-role provisioning is either idempotent or fails safely with a documented recovery path.
+- Verified email identity creates or recovers the same ordinary application profile; first/returning sign-in and sign-out do not leak another account's data or grant coach authority.
+- Runtime database access uses the dedicated `app_runtime` login through the port-6543 transaction pooler with TLS and prepared statements disabled; browser roles cannot read private `app` data directly.
+- `DATABASE_URL` is server-only. Browser configuration contains only public Supabase URL/publishable values and the exact approved site origin; deployment/bundle evidence never prints secrets.
+- `https://staging.movx.club` remains the historically adopted stable origin. Confirm its actual Vercel assignment and matching Auth redirect entries before rehearsal; no current assignment is assumed by this refresh.
+- The code-only Auth template, SMTP sender and adopted resend/project/IP limits are checked for the current environment. Historical Cloudflare/Workers access proof does not establish the current Vercel exposure boundary.
+- The scheduling rehearsal proves guest discovery, two independent athlete requests, one coach acceptance, neutral non-selection, cancellation/new-request recovery and coach availability/completion with stored actual venues and no manual database repair.
+- Empty/unavailable/provider/conflict outcomes stay truthful. Hosted disposable-account cleanup targets exact test records and never resets unrelated data.
 
 ## Assumptions, decisions, and dependencies
 
-- The user has or will create the Supabase project and provide access through local authenticated tooling; credentials are never pasted into this record.
-- Adopt a separate staging project rather than reusing local or future production data.
-- Use the transaction pooler on port 6543 for the hosted serverless runtime and an appropriate migration/session connection for schema work.
-- The existing `.env.example` contract remains authoritative unless validation finds a necessary new variable.
-- Custom SMTP may use Porkbun only if its current service terms and sending limits support transactional OTP delivery; otherwise select a transactional mail provider. Purchasing an address alone is not assumed to establish a suitable Auth sender.
-- External references: [Supabase environment management](https://supabase.com/docs/guides/deployment/managing-environments), [database connections](https://supabase.com/docs/guides/database/connecting-to-postgres), [custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp), and [redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls).
+- The initial staging project and least-privilege login were provisioned; the current accepted state still requires fresh evidence. Do not describe the project as absent or a dated migration journal as current.
+- Native Next.js/Vercel is the current hosting path. DEV0138 is the build/configuration baseline, while retired Workers evidence is historical context only.
+- Read [README deployment guidance](../../../README.md#vercel-deployment) and [the database runbook](../../../supabase/README.md) before live operations. The documentation refresh itself performs none.
+- Existing `.env.example` names remain the setup contract; secrets stay in approved ignored/operator or encrypted host settings and never enter tickets.
+- Use ordinary athlete accounts and approved/demo coach capability according to the specification; an athlete cannot self-approve as coach.
+- Earlier supplied access remains subject to the current operator environment; missing credentials/origin assignment is a specific handoff dependency to record when rehearsal starts.
 
 ## Implementation plan
 
-1. Confirm the staging project, EU region and non-production label; record project identifiers only where they are safe and operationally useful.
-2. Link the CLI, compare local/remote migration state, run a dry run and apply reviewed migrations. Include the deterministic demonstration seed only for the confirmed blank staging dataset.
-3. Provision the least-privilege runtime login with a user-controlled generated secret, grant `app_runtime`, and form the TLS transaction-pooler `DATABASE_URL` in the deployment secret manager. Keep creation manual in the Supabase SQL editor so neither the secret nor a privileged connection is embedded in a migration, repository command, or agent transcript; use the user's macOS Keychain as the local source of truth.
-4. Add and run a secret-safe hosted-runtime verification command that reads the staging password from Keychain (with `DATABASE_URL` as a non-macOS/CI fallback) and checks transaction-pooler configuration, role attributes, membership and selected privilege boundaries without printing the connection URL or password.
-5. Verify schema exposure and row-level-security boundaries with the runtime role.
-6. Configure email signup, exact site/redirect URLs, token-based OTP template, custom SMTP and bounded rate limits.
-7. Select and record the staging access/abuse boundary before public use. Do not enable CAPTCHA until the application supplies the required client token.
-8. Exercise first/returning login, a second isolated account, profile enrollment and sign-out against staging, recording only redacted evidence.
-9. Document migration, rollback/recovery and credential-rotation operations for later maintainers.
-10. Reconcile the 2026-09-28 staging drift found during the first persistent-catalogue release: apply the reviewed idempotent fictional seed to the still-empty hosted dataset, change only the hosted email OTP length from eight to the six-digit application contract, and verify both states without pushing unrelated local configuration.
+1. Record the exact application commit, stable origin, reviewed local migration versions and intended seed; compare remote state safely before any apply.
+2. Apply only reviewed pending migrations/seed or narrow Auth corrections when needed; retain dated preflight, repeatability and recovery evidence without resetting hosted data.
+3. Run `npm run db:verify:hosted-runtime`, current exposed-schema/grant checks and safe actor-scope probes without printing connection values.
+4. Confirm the exact Vercel settings and matching Auth origin/redirect/code-template/sender/rate-limit contract; inspect current browser assets for private configuration.
+5. Rehearse two real test-email accounts through enrollment, returning login, isolation and sign-out; then use two athletes and one authorized coach for the specification's scheduling flow.
+6. Record current results by criterion, clean only exact disposable fixtures and finish the runbook/recovery evidence. Keep the ticket open until current acceptance, not just historical provisioning, passes.
 
 ## Acceptance criteria
 
-- [x] AC1: One dedicated EU staging project has the repository's complete reviewed migration history and intended idempotent demonstration seed, with no destructive remote reset.
-- [x] AC2: A distinct generated-secret runtime login connects through the transaction pooler and has only the `app_runtime` capabilities required by the application.
-- [ ] AC3: Browser-facing keys cannot access private `app` data directly, and no administrative/service-role/database secret is present in Git or a browser bundle.
-- [x] AC4: Hosted Auth uses the exact staging origin/redirect contract, MovX Club OTP template and working custom SMTP rather than Supabase's demonstration sender.
-- [ ] AC5: The adopted staging access/abuse boundary is implemented and documented before the custom hostname is considered publicly usable.
-- [ ] AC6: Two real staging email accounts can enroll independently, return to the same profiles and sign out without cross-account data access.
-- [ ] AC7: Migration state, runtime restrictions, Auth configuration, recovery/rotation steps and redacted validation evidence are durable in repository documentation and this ticket.
+- [x] AC1: Initial dedicated EU staging provisioning, reviewed migration baseline and intended idempotent seed were recorded without a destructive remote reset. This historical baseline requires current-revision verification under AC8.
+- [x] AC2: A distinct generated-secret runtime login was provisioned and passed its recorded least-privilege pooler checks. Current grants/configuration are rechecked under AC8.
+- [ ] AC3: Browser-facing keys cannot access private `app` data directly, and the current Git/browser build contains no administrative/service-role/database secret.
+- [x] AC4: The recorded initial hosted Auth setup established matching origin/code template and working custom SMTP. Current Auth/account behavior is rechecked under AC6/AC8.
+- [ ] AC5: The current stable Vercel origin and adopted exposure/abuse boundary are verified and documented; historical Worker access proof is insufficient.
+- [ ] AC6: Two real staging email accounts enroll independently, return to the same profiles and sign out without cross-account data access on the current origin.
+- [ ] AC7: Current migration/grant/Auth state, tested revision, recovery/rotation and exact disposable-account cleanup evidence are durable in the runbook and ticket.
+- [ ] AC8: The current reviewed Vercel/Supabase revision passes migration/seed/grant/Auth checks and the specification's two-athlete/coach request, selection, cancellation/retry, availability and completion rehearsal without manual database repair.
 
 ## Validation plan
 
-- Run `supabase migration list --linked`, a reviewed `supabase db push --dry-run`, the non-destructive apply command, and a second migration/seed idempotency check where supported.
-- Connect using the runtime pooler URL and run the repository database/authorization checks that do not mutate unrelated hosted state.
-- Inspect grants, role attributes, exposed schemas and row-level-security enforcement with safe catalogue queries.
-- Send and redeem real staging OTPs through custom SMTP for two test addresses; verify first enrollment, returning login, isolation and sign-out.
-- Inspect the built browser assets or deployment configuration to ensure private credentials are absent.
-- Record checks that cannot run before a Vercel application deployment as explicit handoff items rather than marking them passed.
+- Use `supabase migration list --linked`, a reviewed `supabase db push --dry-run` and non-destructive apply only if required; check repeatability against the exact intended current migration/seed revision.
+- Run `npm run db:verify:hosted-runtime`, safe current grant/exposed-schema queries and actor-isolation probes through the restricted login; redact evidence.
+- Rehearse code-only email delivery, first/returning identity, account separation/sign-out and the [current target demo](../../../docs/mvp-spec.md#14-demo) on the stable Vercel origin.
+- Inspect current browser build/configuration for private values; record code revision, operator prerequisites, expected-state mutations, exact fixture cleanup and failures/not-run checks.
+- Separate dated historical evidence below from current acceptance. No hosted check was run merely by refreshing this ticket.
 
 ## Implementation record
+
+The foundation results in this section were recorded in September 2026 and the hosting handoff changed on 2026-10-07. Their migration counts, provider observations and test totals describe those dated revisions. The 2026-10-14 DEV0224 refresh changes current requirements only; it performs no fresh hosted operation and leaves AC3/AC5–AC8 unfinished.
 
 Implementation started by reviewing the checked-in hosted-environment contract, then linking the repository to the dedicated `movx-club-staging` project in Frankfurt. The complete checked-in migration history has now been applied without a remote reset, the restricted runtime login has passed the hosted transaction-pooler and privilege checks, and a real custom-SMTP email sign-in has succeeded with the reviewed MovX Club six-digit-code template. Two-account validation remains in progress.
 
@@ -115,6 +106,8 @@ A hosted-runtime verifier and runbook now define the secret-safe provisioning an
 
 ### Decisions and deviations
 
+- 2026-10-14: DEV0224 refreshed this active record to the current M4 Vercel/Supabase identity and coach-confirmed scheduling target, corrected specification links, separated initial provisioning from current acceptance and removed cancelled marketplace release ownership from the current handoff. Historical evidence is preserved for separate DEV0225 pruning; no hosted state was read or changed.
+
 - 2026-09-23: Prepared this as a separate peer from Cloudflare runtime work because hosted database/Auth operations have independent credentials, rollback and security evidence.
 - 2026-09-23: Proposed Cloudflare Access as the initial staging exposure control. It was temporarily adopted for all Worker traffic during the controlled domain rehearsal, then superseded by the public-staging decision recorded below.
 - 2026-09-23: Implementation began with a secret-safe audit of the checked-in migrations, private `app` schema, public Auth variables and server-only transaction-pooler requirement before creating or linking any hosted project.
@@ -137,30 +130,33 @@ The environment continues to use the existing variable names and schema contract
 
 ## Validation results
 
+The entries and table below are historical foundation evidence. AC1/AC2/AC4 remain proven as initial setup only; AC5's earlier Worker result does not satisfy the current Vercel criterion. Current AC8 has not run. Documentation checks for the 2026-10-14 refresh are recorded in DEV0224, not reported as hosted acceptance.
+
 - 2026-09-28 `npx supabase db push --linked --include-seed --dry-run` listed only `supabase/seed.sql`; the apply passed without a reset, and the immediate repeat returned `Remote database is up to date`.
 - 2026-09-28 restricted runtime counts passed with one visible demo run, two products, two versions, seven participating gyms and twelve eligibility rows. Class sessions remain hidden without actor context by design.
 - 2026-09-28 a minimal-config `supabase config diff` showed exactly one declared update (`auth.email.otp_length`, remote eight/local six). The narrow push updated only that property; the follow-up diff showed zero declared updates and retained nineteen remote-only properties.
 
-| Criterion | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Result                                          |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
-| AC1       | Initial setup applied seven migrations without reset. On 2026-09-28 the local/remote journals matched all sixteen versions through `20260928000200`; an include-seed dry run listed only the current idempotent seed, the apply populated the fictional dataset, and the immediate repeat reported the remote database up to date.                                                                                                                                                                                             | Passed for current migrations and intended seed |
-| AC2       | The user created `movx_staging_runtime_login` with a generated secret. `npm run db:verify:hosted-runtime` loaded the ignored fallback, connected through the port-6543 transaction pooler and passed all role checks: login plus `app_runtime` inheritance, no superuser/database-create/role-create/replication/RLS-bypass/schema-create/`app_owner` capability, the intended bounded functions, and no direct wallet-binding access.                                                                                         | Passed                                          |
-| AC3       | The hosted verifier confirmed that `anon`, `authenticated` and `service_role` lack `app` schema usage. Data API settings and the later browser bundle still require inspection.                                                                                                                                                                                                                                                                                                                                                | Partial                                         |
-| AC4       | A read-only request to `/auth/v1/settings` returned `200` with the email provider enabled, signup allowed and mailer autoconfirm enabled. The first requests timed out while the SMTP port was incorrectly set to `570`; correction to `587` restored delivery. After applying the reviewed Magic Link/OTP template, a fresh `signInWithOtp` request completed in 2.8 seconds. The user confirmed the received message had the correct MovX Club sender, subject, styled design and six-digit code rather than a sign-in link. | Passed                                          |
-| AC5       | DEV0056 first verified Worker-level Access, then narrowed it to temporary previews after the user selected public staging. The stable origin returned `200` without a Cloudflare redirect. The hosted Auth configuration retains a 10-email-per-hour project cap, 60-second same-address resend interval and default IP-based sign-in/verification limits.                                                                                                                                                                     | Passed                                          |
-| AC6       | Two-account hosted rehearsal not yet run.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Not run                                         |
-| AC7       | `npx supabase db lint --linked` connected to the hosted project, linted `app`, `extensions` and `public`, and reported `No schema errors found`. A final `npm run db:verify:hosted-runtime` passed all 20 configuration and permission checks; `npm test` passed 49 tests, and `git diff --check`, `npm run lint` and `npm run format:check` also passed. The runbook now covers connection verification and credential rotation/retirement; final Auth and recovery evidence remain pending.                                  | Partial                                         |
+| Criterion | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Result                                               |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| AC1       | Initial setup applied seven migrations without reset. On 2026-09-28 the local/remote journals matched all sixteen versions through `20260928000200`; an include-seed dry run listed only the current idempotent seed, the apply populated the fictional dataset, and the immediate repeat reported the remote database up to date.                                                                                                                                                                                             | Passed historical baseline; AC8 pending              |
+| AC2       | The user created `movx_staging_runtime_login` with a generated secret. `npm run db:verify:hosted-runtime` loaded the ignored fallback, connected through the port-6543 transaction pooler and passed all role checks: login plus `app_runtime` inheritance, no superuser/database-create/role-create/replication/RLS-bypass/schema-create/`app_owner` capability, the intended bounded functions, and no direct wallet-binding access.                                                                                         | Passed historical setup; current checks pending      |
+| AC3       | The hosted verifier confirmed that `anon`, `authenticated` and `service_role` lack `app` schema usage. Data API settings and the later browser bundle still require inspection.                                                                                                                                                                                                                                                                                                                                                | Partial                                              |
+| AC4       | A read-only request to `/auth/v1/settings` returned `200` with the email provider enabled, signup allowed and mailer autoconfirm enabled. The first requests timed out while the SMTP port was incorrectly set to `570`; correction to `587` restored delivery. After applying the reviewed Magic Link/OTP template, a fresh `signInWithOtp` request completed in 2.8 seconds. The user confirmed the received message had the correct MovX Club sender, subject, styled design and six-digit code rather than a sign-in link. | Passed historical setup; current checks pending      |
+| AC5       | DEV0056 first verified Worker-level Access, then narrowed it to temporary previews after the user selected public staging. The stable origin returned `200` without a Cloudflare redirect. The hosted Auth configuration retains a 10-email-per-hour project cap, 60-second same-address resend interval and default IP-based sign-in/verification limits.                                                                                                                                                                     | Historical Worker pass; current Vercel check not run |
+| AC6       | Two-account hosted rehearsal not yet run.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Not run                                              |
+| AC7       | `npx supabase db lint --linked` connected to the hosted project, linted `app`, `extensions` and `public`, and reported `No schema errors found`. A final `npm run db:verify:hosted-runtime` passed all 20 configuration and permission checks; `npm test` passed 49 tests, and `git diff --check`, `npm run lint` and `npm run format:check` also passed. The runbook now covers connection verification and credential rotation/retirement; final Auth and recovery evidence remain pending.                                  | Partial                                              |
+| AC8       | No current-revision hosted migration/grant/Auth and full coach-confirmed scheduling rehearsal recorded.                                                                                                                                                                                                                                                                                                                                                                                                                        | Not run                                              |
 
 ## Risks, limitations, and follow-ups
 
 - SMTP sending limits, sender verification and DNS propagation can delay Auth validation.
 - Supabase's free project availability/backups are insufficient evidence for production readiness.
 - Hosted tests create real non-production Auth/profile rows and require a documented cleanup policy that does not use remote reset.
-- Next action: deploy the reviewed native Next.js revision through Vercel, inspect its browser bundle for secrets and complete the two-account enrollment, returning-login, isolation and sign-out rehearsal on the exact stable origin.
+- Next action: compare current reviewed migration/seed state with hosted state, prepare the exact stable Vercel revision/origin, verify current grants/Auth/browser configuration and run AC6/AC8 with isolated test accounts. Record actual access/deployment blockers when encountered; historical provisioning does not establish present acceptance.
 
 ## Completion and review references
 
 - Completed: Not completed.
 - Commit: `6f42206` records the initial hosted staging foundation; the hosted template update is committed separately under DEV0055.
 - Review: No pull request or independent review exists.
-- Deployment or release: Database migrations are present on Supabase staging, but the environment is not yet accepted; DEV0125 owns the integrated Vercel release evidence after this ticket completes.
+- Deployment or release: The historically provisioned Supabase staging environment is not accepted for the current revision. DEV0055 owns the remaining current environment/rehearsal evidence after the Vercel path is available; DEV0138 records build preparation, not a hosted release. This documentation refresh performed no deployment.

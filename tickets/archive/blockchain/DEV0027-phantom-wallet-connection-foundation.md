@@ -4,7 +4,7 @@
 - Created: 2026-09-20
 - Last updated: 2026-09-20
 - Milestone: M0 wallet foundation / M2 prerequisite
-- Coordination: [COR0001 — Project structure](../../current/organisatory/COR0001-project-structure.md)
+- Coordination: [COR0001 — Project structure](../organisatory/COR0001-project-structure.md)
 - Related tickets: supersedes the implementation choice from DEV0006 — Simple devnet demo wallet while retaining the EURC and personal/company separation from DEV0007 — EURC-only wallet contract; enables COR0002 — Phantom authentication and demo access, converted from retired DEV0016; DEV0037 — Phantom embedded-wallet onboarding was later cancelled as optional post-MVP work
 
 ## Objective and context
