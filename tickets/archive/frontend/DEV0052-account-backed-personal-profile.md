@@ -2,10 +2,12 @@
 
 - Status: Completed
 - Created: 2026-09-22
-- Last updated: 2026-09-22
+- Last updated: 2026-10-14
 - Milestone: M0 identity and interface integrity
 - Coordination: None — independent development ticket
 - Related records: consumes completed [DEV0046 — Email OTP registration and application profiles](../backend/DEV0046-email-otp-registration-and-application-profiles.md) and [DEV0040 — Protected access and database context](../backend/DEV0040-protected-access-and-database-context.md); completes before COR0006 — Persistent access catalogue, converted from retired DEV0017, which coordinates richer persistent profile, draft, follow and bookmark data
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
@@ -18,13 +20,12 @@ This ticket is intentionally smaller than DEV0017. It fixes current-person ident
 ## Scope and non-goals
 
 - In scope: use the current actor snapshot for the shared shell and owner profile; remove Anna's current-user card/name/avatar and fabricated personal history; remove the unclaimed Anna row and dataset membership from the deterministic seed; replace the Anna registration placeholder with a neutral example; keep `/profile` protected in configured database mode with its safe sign-in return; render an honest non-personal state in configuration-free preview mode; add responsive, keyboard and actor-transition tests.
-- Out of scope: editable profile fields or avatar uploads; public people-directory persistence; shared activity, visits, balances, passes, receipts, drafts, follows or bookmarks; changing other clearly labelled catalogue/community fixtures; club workspaces; wallet linking or payments; DEV0017's repository/service work.
 
 ## Expected behavior and edge cases
 
 A signed-out visitor may browse public discovery without being assigned a name, avatar or demo profile. The primary Profile navigation may remain as the access point, but it cannot display a current-user identity before authorization. In configured database mode, opening `/profile` while signed out redirects to the shared sign-in route with `/profile` as the safe return destination. In configuration-free preview mode, `/profile` shows an honest explanation that a personal profile appears after account creation rather than inventing a user.
 
-After email verification and successful profile enrollment, the shared shell and `/profile` show the server-derived display name from that actor's current session. A returning sign-in restores the same identity. Sign-out immediately removes personal identity from the shell and prevents stale profile content from remaining visible. Wallet connection, wallet linking and club authority do not create or select the personal profile.
+After email verification and successful profile enrollment, the shared shell and `/profile` show the server-derived display name from that actor's current session. A returning sign-in restores the same identity. Sign-out immediately removes personal identity from the shell and prevents stale profile content from remaining visible.
 
 The minimal profile must not claim visits, balances, upcoming sessions, biography text, follows or other personal history that has not been delivered by its owning backend ticket. Existing public community/catalogue fixtures may remain only where visibly labelled as examples and must never be presented as the current person.
 
@@ -36,7 +37,7 @@ Confirmed with the user on 2026-09-22:
 - show a personal profile only after sign-up;
 - deliver this cleanup as a separate ticket before DEV0017.
 
-DEV0046 and DEV0040 already provide the required email session, enrollment, protected route and bounded actor snapshot. No new profile endpoint, authentication provider or database table is needed. The public term is `profile`; internal demo-run participation remains implementation detail and grants no club, staff or wallet authority.
+DEV0046 and DEV0040 already provide the required email session, enrollment, protected route and bounded actor snapshot. No new profile endpoint, authentication provider or database table is needed.
 
 Removing Anna from `supabase/seed.sql` is safe because she is an unclaimed fixture with only a dataset-membership row and is not required by the current organization, staff, trainer or catalogue fixtures. Existing disposable local databases require a reset to remove the old seeded row. No hosted cleanup is authorized or expected because the project has not applied this seed as production user data.
 
@@ -52,7 +53,6 @@ Removing Anna from `supabase/seed.sql` is safe because she is an unclaimed fixtu
 - [x] AC1: No current runtime source or deterministic seed presents Anna Klein as a current or prepared application user; historical archived records may retain their accurate history.
 - [x] AC2: Signed-out and configuration-free preview visitors see no fabricated current-user name, avatar, profile card or personal history. `/profile` preserves a safe sign-in return in configured database mode and an honest unavailable/registration explanation in preview mode.
 - [x] AC3: After enrollment, the shell and owner profile show the exact server-derived display name for the current actor; returning sign-in restores it and sign-out removes it without stale-user leakage.
-- [x] AC4: The minimal owner profile claims no undelivered visits, balances, sessions, follows, biography, receipts or wallet/club authority. Clearly labelled public catalogue/community fixtures remain separate from current-user identity.
 - [x] AC5: Clean database replay, focused actor/profile tests, lint, typecheck, formatting, production build and desktop/mobile keyboard/browser checks pass with exact evidence recorded.
 
 ## Validation plan
@@ -100,7 +100,6 @@ All acceptance criteria passed locally. The first sandboxed `npm test` attempt w
 | AC1       | `rg` found no `Anna Klein`, `anna-klein`, `AK`, `Your demo profile` or fabricated owner-history labels in current `src` or `supabase/seed.sql`. Clean seed replay left five required public fixture profiles and no prepared current user.                                                                                                                                                           | Passed |
 | AC2       | Configured desktop/mobile browser coverage preserved `/sign-in?returnTo=/profile`; a separate configuration-free build rendered the honest account-creation state at 1440×1040 and 393×852 with no identity/avatar/history or horizontal overflow. Screenshots were visually reviewed.                                                                                                               | Passed |
 | AC3       | `npm run test:auth` passed with two independent local email accounts (`Riley Morgan` and `Morgan Lee`), exact server-derived shell/profile names, different slugs, returning login and immediate name/avatar removal on sign-out.                                                                                                                                                                    | Passed |
-| AC4       | The account profile renders only display name and derived initials. Source review and browser assertions confirmed there is no biography, visit, balance, session, follow, receipt, wallet or club-authority claim. Public demo people remain visibly labelled.                                                                                                                                      | Passed |
 | AC5       | `npm test` passed 46/46; `npm run typecheck`, `npm run lint`, `npm run format:check`, `git diff --check` and `npx --no-install next build --webpack` passed. The focused configured browser set passed 12/12 and the configuration-free profile set passed 2/2. `npm run db:reset`, `npm run db:runtime`, `npm run db:test` (86 assertions), `npm run test:db` (13/13) and `npm run db:lint` passed. | Passed |
 
 The repository Markdown validator passed across 70 Markdown files, 796 local links and 49 unique work records after the completed ticket was archived and all affected links were updated.

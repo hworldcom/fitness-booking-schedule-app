@@ -2,10 +2,12 @@
 
 - Status: Completed
 - Created: 2026-09-20
-- Last updated: 2026-09-20
+- Last updated: 2026-10-14
 - Milestone: Repository workflow
 - Coordination: None — independent development ticket
-- Related records: follows [DEV0032 — Flat coordination record workflow](DEV0032-flat-coordination-record-workflow.md); renames [Coordination COR0001 — Project structure](COR0001-project-structure.md)
+- Related records: follows [DEV0032 — Flat coordination record workflow](DEV0032-flat-coordination-record-workflow.md)
+
+> Documentary pruning — 2026-10-14, [DEV0225](DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
@@ -15,32 +17,30 @@ The flat workflow in ticket DEV0032 distinguishes record types, but both still u
 
 ## Scope and non-goals
 
-- In scope: migrate development record headings/files/links/index labels to `DEVNNNN` while preserving their existing numeric portions; migrate legacy Coordination 0028 to `COR0001`; update contributor policy, templates, guides, live documentation and current records; repair archived links/headings while preserving historical evidence; update validation for two prefix namespaces.
 - Out of scope: changing ticket content unrelated to identifiers, changing lifecycle status or category ownership, creating another folder layer, changing product/runtime behavior, rewriting exact historical command/commit evidence, or creating additional coordination records.
 
 ## Expected behavior and edge cases
 
 Development records use `# Ticket DEVNNNN: Title` and `DEVNNNN-slug.md`. Their commits use `[DEVNNNN]`. Coordination records use `# Coordination CORNNNN: Title` and `CORNNNN-slug.md`; their IDs never appear in commit subjects.
 
-The DEV and COR sequences are independent. Existing development records preserve their legacy numeric portions to keep migration traceable: ticket 0015 becomes DEV0015, for example. The existing non-implementation Coordination 0028 becomes COR0001 because it is the first coordination record. Legacy bare numeric references inside preserved historical prose or literal past commands may remain when rewriting them would falsify evidence; all current policy, navigation, filenames and live links use prefixed IDs.
+The DEV and COR sequences are independent. Existing development records preserve their legacy numeric portions to keep migration traceable: ticket 0015 becomes DEV0015, for example. Legacy bare numeric references inside preserved historical prose or literal past commands may remain when rewriting them would falsify evidence; all current policy, navigation, filenames and live links use prefixed IDs.
 
 ## Assumptions, decisions, and dependencies
 
 Reserve DEV0010–DEV0013 because their prior numeric records were consolidated into DEV0008. DEV0033 owns this migration and becomes the next development record. The next new development record is DEV0034; the next coordination record is COR0002.
 
-No Git commit exists for this migration. If requested later, its subject uses `[DEV0033]`; COR0001 is excluded.
+No Git commit exists for this migration.
 
 ## Implementation plan
 
 1. Add this development ticket and index entry under the pre-migration convention before renaming any existing record.
-2. Rename every development record file/heading to `DEVNNNN`, rename Coordination 0028 to `COR0001`, and repair all Markdown link targets and labels.
+2.
 3. Update `AGENTS.md`, both templates, work-record guides, README/specification navigation, current ticket relationships and commit examples for the prefixed namespaces.
 4. Preserve exact historical command/commit evidence while documenting the legacy-to-prefixed mapping and searching for stale live paths or ambiguous current identifiers.
 5. Extend validation for DEV/COR headings, filenames, namespace uniqueness, lifecycle/category placement and index coverage; format changed documents, complete this ticket and archive it under its DEV ID.
 
 ## Acceptance criteria
 
-- [x] AC1: Every development record file/heading/index entry uses the matching `DEVNNNN` ID, preserving its old numeric portion; legacy Coordination 0028 is consistently migrated to `COR0001`.
 - [x] AC2: Contributor policy/templates define independent DEV/COR namespaces, allocation, filenames and flat relationships; commits accept only `[DEVNNNN]` IDs.
 - [x] AC3: Current documentation and record relationships use prefixed IDs, every live local link resolves, and legacy unprefixed text remains only where preserving historical evidence is intentional.
 - [x] AC4: The validator detects type/filename/index/namespace mismatches and passes after final self-archive; formatting passes for changed documents.
@@ -52,10 +52,12 @@ Use a deterministic migration map and verify every source file has exactly one r
 
 ## Implementation record
 
+Not applicable to the retained excerpt — superseded detail in this section was pruned under DEV0225.
+
 ### Identifier and file migration
 
 - Created this development ticket and indexed it before changing the repository convention, so the migration itself has a reviewable owner.
-- Renamed 28 development-record files and headings from their legacy four-digit form to `DEVNNNN`, retaining each numeric portion. For example, legacy ticket 0015 is now `DEV0015`. Renamed legacy Coordination 0028 to [COR0001](COR0001-project-structure.md), the first record in the new independent coordination sequence.
+- Renamed 28 development-record files and headings from their legacy four-digit form to `DEVNNNN`, retaining each numeric portion. For example, legacy ticket 0015 is now `DEV0015`.
 - Updated the [work-record index](../../README.md), current project documentation and record relationships to use the prefixed labels and paths. Repaired links into renamed archived records as well as links among current records.
 - Preserved `DEV0010`–`DEV0013` as unavailable because those former records were consolidated into `DEV0008`. The next available identifiers are `DEV0034` and `COR0002`.
 
@@ -82,11 +84,12 @@ The migration changes only repository documentation and work-record paths. No so
 
 ## Risks, limitations, and follow-ups
 
-Renaming archived files produces a large documentation-only path change. Preserve the numeric portion for DEV records and record COR0001's former 0028 identity so future readers can map old external references. Do not rewrite past commands or claimed commit subjects as though the new convention existed earlier.
+Renaming archived files produces a large documentation-only path change. Do not rewrite past commands or claimed commit subjects as though the new convention existed earlier.
 
 ## Completion and review references
 
-- Completed: 2026-09-20 — all development records use DEV IDs, the project-structure coordination record uses COR0001, and policy, templates, navigation, links and validation enforce the new convention.
+- Completed: 2026-09-20 — original completion date; superseded details pruned under DEV0225.
+
 - Commit: Not created.
 - Review: Self-reviewed against AC1–AC5; no independent review or pull request.
 - Deployment or release: Not applicable — documentation workflow only.

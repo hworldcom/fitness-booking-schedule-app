@@ -2,10 +2,12 @@
 
 - Status: Completed
 - Created: 2026-09-20
-- Last updated: 2026-09-20
+- Last updated: 2026-10-14
 - Milestone: M0 local frontend maintenance
 - Coordination: None — independent development ticket
 - Related tickets: DEV0020, DEV0008
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
@@ -22,7 +24,6 @@ The review/demo server serves the optimized build without compiling routes on de
 
 ## Assumptions, decisions, and dependencies
 
-- Confirmed observation: Next.js 16.3.5 development trace includes an Explore request lasting 4,963 ms and route compilation lasting 4,844 ms. Other initial navigations include 3–4 second compilations. This strongly identifies compilation as the principal observed delay, not a measured database or wallet issue.
 - Adopted engineering choice: use the existing `build` and `start` scripts for local review; preserve development mode for active editing. No new dependency is needed.
 - Requires Node, installed Chrome for browser measurement, and local process/port access. Read the installed Next.js local-development and CLI documentation before changing the workflow.
 
@@ -44,6 +45,8 @@ The review/demo server serves the optimized build without compiling routes on de
 Capture browser timings in a separate fresh Playwright context before/after the server change. Confirm expected destination headings, successful responses, no browser errors, no development client in the optimized build, a keyboard navigation path, challenge filtering and mobile layout. Run a production build. Check documentation links and review the diff. No application source changes are planned, so new permanent logic tests and repeated domain/lint/type suites are unnecessary; the build includes type validation.
 
 ## Implementation record
+
+Not applicable to the retained excerpt — superseded detail in this section was pruned under DEV0225.
 
 ### Changes and rationale
 
@@ -77,7 +80,6 @@ No product/data/API/schema/dependency/environment-variable changes. No migration
 - `node /private/tmp/repx-0021-nav.cjs production` — the same desktop/mobile checks passed after switching, without development scripts, page errors or HTTP failures. Filter updates took 50/45 ms. Keyboard navigation to the guide took 84/85 ms. No UI layout was changed.
 - Inline Python local-link check over `README.md`, `tickets/README.md` and this ticket — all 44 file links resolved. Self-review confirmed the only maintained file changes are setup guidance and ticket records; the product contract is unchanged.
 - Diagnostic script/output JSON live under `/private/tmp/repx-0021-*` and are disposable, not repository dependencies. Measurements are recorded below so the ticket does not depend on their retention.
-- No failed checks. Domain tests, lint, format checks and the full browser regression suite were not repeated because no application/configuration/dependency files changed; ticket 0020 records their previous passing results. The current build and focused browser checks directly validate this operational change. This is not a hosted load test or proof of future database/wallet performance.
 
 | Measured flow                         | Warm development desktop / mobile | Optimized preview desktop / mobile |
 | ------------------------------------- | --------------------------------- | ---------------------------------- |

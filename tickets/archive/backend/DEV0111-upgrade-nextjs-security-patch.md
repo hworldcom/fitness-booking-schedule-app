@@ -2,10 +2,12 @@
 
 - Status: Completed
 - Created: 2026-10-03
-- Last updated: 2026-10-03
+- Last updated: 2026-10-14
 - Milestone: Project maintenance and staging security
 - Coordination: None — independent development ticket
 - Related records: staging runtime baseline in [DEV0054 — Cloudflare Workers runtime foundation](DEV0054-cloudflare-workers-runtime-foundation.md), hosted release work in [DEV0056 — Staging release and domain rehearsal](DEV0056-staging-release-and-domain-rehearsal.md), and runtime follow-up [DEV0093 — Reduce Cloudflare authentication and render CPU](DEV0093-reduce-cloudflare-auth-render-cpu.md)
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
@@ -14,7 +16,6 @@ Upgrade the pinned Next.js 16.3.5 runtime and matching ESLint configuration to t
 ## Scope and non-goals
 
 - In scope: update `next` and `eslint-config-next` from 16.3.5 to exactly 16.3.8; refresh the npm lockfile; verify the standard Next.js build, vinext build and current application checks; record the remaining audit state.
-- Out of scope: application behavior changes, React or Solana dependency changes, automatic `npm audit fix --force`, and the larger vinext/@vinext Cloudflare adapter transition from pinned beta versions to 1.0.1.
 
 ## Expected behavior and edge cases
 
@@ -41,7 +42,7 @@ The scope review found one small implementation ticket sufficient: both direct p
 
 ## Validation plan
 
-Run `npm test`, `npm run lint`, `npm run typecheck`, `npm run format:check`, `npm run build`, `npm run build:vinext`, `npm audit --omit=dev` and `git diff --check`. Database, Solana program and live browser rehearsals are not required unless the dependency patch changes their source or the static/build checks expose a relevant regression.
+Run `npm test`, `npm run lint`, `npm run typecheck`, `npm run format:check`, `npm run build`, `npm run build:vinext`, `npm audit --omit=dev` and `git diff --check`.
 
 ## Implementation record
 
@@ -65,7 +66,7 @@ Updated the exact `next` and `eslint-config-next` versions from 16.3.5 to 16.3.8
 
 ### Contracts, configuration, and operations
 
-No product, data, environment-variable, database, Solana or external API contract changed. Next.js route generation and both production build paths retain their existing commands. Rollback is the exact package/lockfile reversal to 16.3.5, but that would restore the critical audit finding and is therefore not a safe staging-release state.
+Next.js route generation and both production build paths retain their existing commands. Rollback is the exact package/lockfile reversal to 16.3.5, but that would restore the critical audit finding and is therefore not a safe staging-release state.
 
 ## Validation results
 
@@ -77,7 +78,6 @@ Validated on macOS with Node.js 24.21.0 and npm 11.19.0.
 - `npm run lint`, `npm run typecheck`, `npm run format:check` and `git diff --check` passed.
 - `npm run build` passed with Next.js 16.3.8 and generated the complete application/API route table without an error.
 - `npm run build:vinext` passed all five Vite/vinext build stages and emitted the existing static-analysis notice that some dynamic routes cannot yet be classified automatically.
-- Database, Solana and live browser rehearsals were not rerun for this dependency-only patch because no application, schema, program or browser-flow source changed. The immediately preceding integrated-main validation passed 24/24 database integration tests, 129/129 pgTAP assertions and 9/9 Rust tests.
 
 | Criterion | Evidence                                                                                                  | Result |
 | --------- | --------------------------------------------------------------------------------------------------------- | ------ |

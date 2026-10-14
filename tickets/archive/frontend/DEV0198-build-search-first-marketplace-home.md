@@ -2,10 +2,12 @@
 
 - Status: Completed
 - Created: 2026-10-12
-- Last updated: 2026-10-12
+- Last updated: 2026-10-14
 - Milestone: Scheduling interface public-marketplace follow-up
 - Coordination: [COR0017 — Public marketplace redesign](../../current/organisatory/COR0017-public-marketplace-redesign.md)
-- Related records: completed contract dependency [DEV0195 — Adopt the public marketplace redesign contract](../organisatory/DEV0195-adopt-public-marketplace-redesign-contract.md), completed shell dependency [DEV0196 — Introduce the public marketplace shell](DEV0196-introduce-public-marketplace-shell.md), completed search dependency [DEV0197 — Share public marketplace search](DEV0197-share-public-marketplace-search.md), public-story baseline [DEV0095 — Present the coach-first public story](DEV0095-present-coach-first-public-story.md) and completed Explore consumer [DEV0199 — Redesign desktop coach Explore](DEV0199-redesign-desktop-coach-explore.md)
+- Related records: Independent retained outcome; superseded dependencies pruned under DEV0225.
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 

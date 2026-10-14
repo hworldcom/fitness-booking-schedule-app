@@ -2,10 +2,12 @@
 
 - Status: Completed
 - Created: 2026-10-02
-- Last updated: 2026-10-03
+- Last updated: 2026-10-14
 - Milestone: Coach-first M6 network loop
-- Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on persistent coaches from [DEV0096](DEV0096-persist-coach-profiles-and-discovery.md) and integrates with self-service activation from [DEV0110](DEV0110-activate-coaching-during-account-onboarding.md); replaces the unimplemented member-check-in feed in DEV0023 after DEV0094 reconciles that record
+- Coordination: None — independent development ticket
+- Related records: Independent retained outcome; superseded handoffs removed under DEV0225.
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
@@ -24,7 +26,7 @@ A new guest discovers coaches and open weekly slots through DEV0096/DEV0104 rath
 
 ## Assumptions, decisions, and dependencies
 
-Text is the required hackathon format. Image upload is not an acceptance requirement. Posts and follows are authoritative offchain and have no Solana transaction. Existing browser-only preview follows cannot be treated as shared persistent state.
+Text is the required hackathon format. Image upload is not an acceptance requirement. Existing browser-only preview follows cannot be treated as shared persistent state.
 
 The reviewed first slice is text-only: images are deferred because the repository has no existing approved upload/moderation boundary. Post text is normalized and limited to 1–500 characters. Public coach posts and the authenticated Following feed use cursor pagination ordered by `(published_at desc, id desc)` with a bounded page size of 20. A hidden post retains its durable record but is absent from public and follower projections.
 
@@ -47,7 +49,7 @@ Public recent posts remain integrated with `/coaches/[slug]`; authenticated feed
 
 ## Validation plan
 
-Run additive migration/constraint/RLS tests, two-user/anonymous service integration, pagination/idempotency tests and mobile/desktop keyboard browser flows. Run relevant unit, lint, typecheck and production build commands. No Devnet transaction is applicable because the social graph/content is offchain.
+Run additive migration/constraint/RLS tests, two-user/anonymous service integration, pagination/idempotency tests and mobile/desktop keyboard browser flows. Run relevant unit, lint, typecheck and production build commands.
 
 ## Implementation record
 
@@ -63,11 +65,11 @@ Implementation completed on 2026-10-03 in a separate `dev0100` Git worktree so t
 ### Affected files
 
 - [`supabase/migrations/20261003000500_create_coach_social.sql`](../../../supabase/migrations/20261003000500_create_coach_social.sql) creates the follow/post tables, constraints, indexes, forced RLS policies and actor-derived mutation functions.
-- [`supabase/seed.sql`](../../../supabase/seed.sql) adds deterministic text posts for three fictional coaches; [`src/server/db/schema/social.ts`](../../../src/server/db/schema/social.ts) and the schema barrel expose matching Drizzle mappings.
-- [`src/domain/coach-social.ts`](../../../src/domain/coach-social.ts), [`src/server/db/coaches/social-repository.ts`](../../../src/server/db/coaches/social-repository.ts) and [`src/server/coaches/social-service.ts`](../../../src/server/coaches/social-service.ts) define the bounded input/cursor contracts, authoritative database operations and signed-in/public service states.
-- [`src/app/coaches/[slug]/actions.ts`](../../../src/app/coaches/[slug]/actions.ts), [`src/app/coach/posts/actions.ts`](../../../src/app/coach/posts/actions.ts), [`src/app/following/page.tsx`](../../../src/app/following/page.tsx) and [`src/app/coach/posts/page.tsx`](../../../src/app/coach/posts/page.tsx) add the mutation and route boundary.
-- [`src/features/coaches/coach-social.tsx`](../../../src/features/coaches/coach-social.tsx), [`src/features/coaches/coach-discovery.tsx`](../../../src/features/coaches/coach-discovery.tsx), [`src/app/coach-discovery.css`](../../../src/app/coach-discovery.css), [`src/app/globals.css`](../../../src/app/globals.css) and [`src/components/shell.tsx`](../../../src/components/shell.tsx) provide the responsive profile/feed/editor controls and navigation.
-- [`tests/coach-social.test.ts`](../../../tests/coach-social.test.ts), [`tests/database/coach-social.test.ts`](../../../tests/database/coach-social.test.ts), [`tests/browser/coach-discovery.spec.ts`](../../../tests/browser/coach-discovery.spec.ts), [`tests/boundaries.test.ts`](../../../tests/boundaries.test.ts) and [`scripts/rehearse-local-coach-social.mjs`](../../../scripts/rehearse-local-coach-social.mjs) cover validation, authorization, deterministic ordering and real browser behavior.
+- [`supabase/seed.sql`](../../../supabase/seed.sql) adds deterministic text posts for three fictional coaches; `src/server/db/schema/social.ts` (historical path; absent from this checkout) and the schema barrel expose matching Drizzle mappings.
+- `src/domain/coach-social.ts` (historical path; absent from this checkout), `src/server/db/coaches/social-repository.ts` (historical path; absent from this checkout) and `src/server/coaches/social-service.ts` (historical path; absent from this checkout) define the bounded input/cursor contracts, authoritative database operations and signed-in/public service states.
+- `src/app/coaches/[slug]/actions.ts` (historical path; absent from this checkout), `src/app/coach/posts/actions.ts` (historical path; absent from this checkout), `src/app/following/page.tsx` (historical path; absent from this checkout) and `src/app/coach/posts/page.tsx` (historical path; absent from this checkout) add the mutation and route boundary.
+- `src/features/coaches/coach-social.tsx` (historical path; absent from this checkout), [`src/features/coaches/coach-discovery.tsx`](../../../src/features/coaches/coach-discovery.tsx), [`src/app/coach-discovery.css`](../../../src/app/coach-discovery.css), [`src/app/globals.css`](../../../src/app/globals.css) and [`src/components/shell.tsx`](../../../src/components/shell.tsx) provide the responsive profile/feed/editor controls and navigation.
+- `tests/coach-social.test.ts` (historical path; absent from this checkout), `tests/database/coach-social.test.ts` (historical path; absent from this checkout), [`tests/browser/coach-discovery.spec.ts`](../../../tests/browser/coach-discovery.spec.ts), [`tests/boundaries.test.ts`](../../../tests/boundaries.test.ts) and `scripts/rehearse-local-coach-social.mjs` (historical path; absent from this checkout) cover validation, authorization, deterministic ordering and real browser behavior.
 
 ### Decisions and deviations
 
@@ -82,7 +84,7 @@ Implementation completed on 2026-10-03 in a separate `dev0100` Git worktree so t
 
 Migration `20261003000500` adds `app.coach_follows`, `app.coach_posts`, `app.set_owned_coach_follow(uuid, boolean)`, `app.create_owned_coach_post(text)` and `app.set_owned_coach_post_visibility(uuid, text)`. Runtime table writes remain revoked. Existing environments must apply the migration and seed update before serving the new routes.
 
-The browser gains `/following` and `/coach/posts`; coach profiles gain follow state and a three-post public preview. No public API, Solana transaction, environment variable, image-storage dependency or external service contract was added. Posts and follows remain authoritative offchain state.
+The browser gains `/following` and `/coach/posts`; coach profiles gain follow state and a three-post public preview. Posts and follows remain authoritative offchain state.
 
 ## Validation results
 
@@ -99,7 +101,7 @@ The browser gains `/following` and `/coach/posts`; coach profiles gain follow st
 - `npm run test:e2e -- tests/browser/coach-discovery.spec.ts` — passed, 10/10 desktop and mobile checks. This covers public recent posts, sign-in-gated social workspaces, follow call-to-action, keyboard filter use and no horizontal overflow.
 - `npm run test:coach-social` — passed against local Supabase and Chrome with two isolated email-auth accounts. It verified coach preparation, publish, follow, feed visibility, idempotent unfollow/re-follow, hide removal and mobile overflow, with no page errors.
 
-The first post-reset `npm run test:db` attempt failed because the clean database no longer had the disposable loopback runtime login prepared. Running the documented `npm run db:runtime` prerequisite restored that local-only role, after which all 24 tests passed. This was an environment-preparation failure rather than an application or migration failure. No Devnet check applies because this ticket adds offchain social state only.
+The first post-reset `npm run test:db` attempt failed because the clean database no longer had the disposable loopback runtime login prepared. Running the documented `npm run db:runtime` prerequisite restored that local-only role, after which all 24 tests passed. This was an environment-preparation failure rather than an application or migration failure.
 
 A configuration-free browser rerun correctly showed the honest unavailable catalogue state and therefore failed four fixture expectations. Rebuilding and rerunning with the repository's existing ignored local environment loaded passed all 10 focused desktop/mobile checks; no credential was copied into this worktree or recorded in the ticket.
 

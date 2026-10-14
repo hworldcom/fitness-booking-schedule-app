@@ -6,7 +6,7 @@
 - This `AGENTS.md` is the authoritative contributor/workflow policy. The ticket guide links to these rules; the template supplies record fields, not a separate policy.
 - The [ticket index](tickets/README.md) tracks development tickets and coordination records. Development tickets record the scope and evidence for individual changes; coordination records group peer development tickets without authorizing implementation. Neither is an alternative product contract. Update the specification in the same change when a development ticket changes overall product behavior or design.
 - Keep confirmed user constraints distinct from proposed implementation defaults as described in the specification. Record adopted choices and reasons in the relevant ticket; do not silently treat proposals as user decisions.
-- The [document archive](docs/archive/2026-09-18/) and [completed ticket archive](tickets/archive/) are historical context. They may describe superseded decisions and do not override the current specification or workflow. Preserve completed records; use a new current ticket for changes.
+- The [completed ticket archive](tickets/archive/) is historical context and does not override the current specification or workflow. Preserve completed records; use a new current ticket for changes. The user-authorized documentary pruning in [DEV0225](tickets/archive/organisatory/DEV0225-remove-blockchain-historical-evidence.md) is a specific exception for its recorded removal manifest; removed IDs remain permanently unavailable.
 - README is navigation and future setup instructions. Link to current requirements instead of copying them into README, agent instructions, or a new plan.
 
 ## Ticket before implementation
@@ -68,7 +68,7 @@ Use the development ticket's implementation record and validation results as the
 
 ## Product requirements
 
-Implement against the specification's [scheduling state model](docs/mvp-spec.md#5-scheduling-state-model), [booking and recovery](docs/mvp-spec.md#7-booking-and-recovery), [identity, data and demo integrity](docs/mvp-spec.md#8-identity-data-and-demo-integrity), and [scheduling behavior and permissions](docs/mvp-spec.md#9-scheduling-behavior-and-permissions). Use its [confirmed decision register](docs/mvp-spec.md#2-confirmed-target-and-decisions), [definition of done](docs/mvp-spec.md#11-definition-of-done) and [acceptance matrix](docs/mvp-spec.md#13-acceptance-matrix) to select checks. Keep the requirements in that document rather than restating them here.
+Implement against the specification's [scheduling state model](docs/mvp-spec.md#5-scheduling-state-model), [booking and recovery](docs/mvp-spec.md#7-requests-booking-and-recovery), [identity, data and demo integrity](docs/mvp-spec.md#8-identity-data-and-demo-integrity), and [scheduling behavior and permissions](docs/mvp-spec.md#9-scheduling-behavior-and-permissions). Use its [confirmed decision register](docs/mvp-spec.md#2-confirmed-target-and-decisions), [definition of done](docs/mvp-spec.md#11-definition-of-done) and [acceptance matrix](docs/mvp-spec.md#13-acceptance-matrix) to select checks. Keep the requirements in that document rather than restating them here.
 
 ## Validation and definition of done
 

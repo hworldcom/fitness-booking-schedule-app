@@ -2,10 +2,12 @@
 
 - Status: Completed
 - Created: 2026-09-20
-- Last updated: 2026-09-20
+- Last updated: 2026-10-14
 - Milestone: Cross-cutting application foundation
-- Coordination: [COR0001 — Project structure](../organisatory/COR0001-project-structure.md)
-- Related records: direct peer development ticket tracked by [Coordination COR0001 — Project structure](../organisatory/COR0001-project-structure.md); follows completed peer [DEV0030 — Frontend screen module boundaries](DEV0030-frontend-screen-module-boundaries.md); prepares clean contracts for [DEV0015 — Database foundation](../backend/DEV0015-supabase-database-foundation.md) and COR0006 — Persistent access catalogue, converted from retired DEV0017
+- Coordination: None — independent development ticket
+- Related records: follows completed peer [DEV0030 — Frontend screen module boundaries](DEV0030-frontend-screen-module-boundaries.md); prepares clean contracts for [DEV0015 — Database foundation](../backend/DEV0015-supabase-database-foundation.md) and COR0006 — Persistent access catalogue, converted from retired DEV0017
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
@@ -40,7 +42,6 @@ DEV0030 is the only prerequisite and is completed. DEV0015 and DEV0017 consume t
 | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/lib/fixtures.ts`: `Discipline`, `ChallengeMode`, `ClubChallenge`, `ClubClass`, `ClubStudio`                                   | `src/domain/catalogue.ts`                                        | Preserve the existing record shapes and literal unions. Preview records and persistence rows depend on these contracts rather than defining replacements.                                |
 | `src/lib/fixtures.ts`: `challenges`, `classes`, `studios`, `people`; `src/lib/events.ts`: `events`                                 | `src/features/preview/catalogue.ts`                              | Preserve every seeded value, identifier, date, amount, label, order and relationship. These records remain explicitly non-authoritative preview data.                                    |
-| `src/lib/fixtures.ts`: `formatEurc`; `src/lib/discovery.ts`: `challengeDate`; `src/lib/events.ts`: `eventDate`                     | `src/components/format.ts`                                       | Keep the current locale, currency, timezone and rendered output. These are shared presentation helpers and perform no data acquisition.                                                  |
 | `src/lib/events.ts`: `ClubEvent`, `EventDraftInput`, `EventDraft`, `validateEventDraft`, `isEventDraft`, `eventFromDraft`          | `src/domain/events.ts`                                           | Preserve all input/output shapes, validation messages, limits and mapping behavior.                                                                                                      |
 | `src/lib/demo.ts`: `Draft`, `DraftInput`, `validateDraft`; `src/lib/discovery.ts`: `ChallengeSort`, `discoverChallenges`           | `src/domain/challenges.ts`                                       | Keep challenge draft validation and deterministic challenge selection/sorting reusable by later adapters. `discoverChallenges` continues accepting the candidate collection explicitly.  |
 | `src/lib/explore.ts`: `ActivityFilter`, `TimeFilter`, `ClassFilters`; `src/lib/discovery.ts`: `DiscoveryItem`, `relatedActivities` | `src/domain/discovery.ts`                                        | Keep shared discovery contracts and the reusable related-item selector pure. Change `relatedActivities` to `(catalogue, activity, excludeHref, venueId?)`; it must not acquire fixtures. |
@@ -69,7 +70,7 @@ After every importer moves, delete all six former modules under `src/lib`; do no
 3. Create the preview catalogue, derived discovery catalogue, state, store and root-shell adapter. Preserve fixture data and the complete localStorage/state contract.
 4. Move discovery filters and search into their planned feature modules. Update them to receive record collections explicitly and keep preview acquisition outside discovery operations.
 5. Move presentation formatters and refactor `ChallengeCard`, `Shell`, `RelatedActivities` and discovery-filter imports as described above. Update feature callers and thin route adapters without moving completed screens or changing rendered behavior.
-6. Update unit tests to import the owning modules and add `tests/boundaries.test.ts`. The boundary test must resolve relative and `@/` imports and reject: imports from outside `src/domain` by domain modules; `src/components` imports from `src/features` or `src/server`; and feature imports from `src/server` or a sibling feature, with `src/features/preview` as COR0001's explicit adapter exception. Add an ESLint `src/domain` override that rejects `window`, `document`, `navigator`, `localStorage`, `sessionStorage` and `fetch` so browser/network access cannot enter through globals.
+6. Update unit tests to import the owning modules and add `tests/boundaries.test.ts`. Add an ESLint `src/domain` override that rejects `window`, `document`, `navigator`, `localStorage`, `sessionStorage` and `fetch` so browser/network access cannot enter through globals.
 7. Delete `src/lib`, prove that no source/test import still references it, run the complete validation plan and replace the planning record with exact implementation and acceptance evidence.
 
 ## Acceptance criteria
@@ -87,11 +88,11 @@ Run the current `npm test` before source edits and record its result as the beha
 
 After the move, verify the file/export map with `rg --files src/domain src/features/preview src/features/discovery src/components`, confirm `src/lib` no longer exists, and confirm `rg -n '@/lib/|src/lib' src tests` returns no stale source/test reference. Review the fixture move with Git's rename/diff output and compare the seeded counts, IDs, order and representative serialized preview state before and after.
 
-Run `npm test`, `npm run lint`, `npm run typecheck`, `npm run format:check`, `npm run build` and `npm run test:e2e`. Exercise malformed/unavailable storage and reset behavior through the existing browser suite and review representative desktop/mobile routes for unchanged content and interactions. Run the standard build first; if the already-observed restricted-environment Turbopack IPC error recurs, record that exact failure and also run `npm run build -- --webpack` as the production-build check rather than describing the standard command as passed. Database, wallet, program and devnet checks do not apply because no external authority is introduced.
+Run `npm test`, `npm run lint`, `npm run typecheck`, `npm run format:check`, `npm run build` and `npm run test:e2e`. Exercise malformed/unavailable storage and reset behavior through the existing browser suite and review representative desktop/mobile routes for unchanged content and interactions. Run the standard build first; if the already-observed restricted-environment Turbopack IPC error recurs, record that exact failure and also run `npm run build -- --webpack` as the production-build check rather than describing the standard command as passed.
 
 ## Implementation record
 
-Planning created from COR0001's reviewed inventory. [DEV0036](../organisatory/DEV0036-explicit-architecture-boundaries.md) clarified that this ticket owns the exact `src/lib` move while `src/domain` becomes a shared authority-free dependency rather than a frontend runtime layer. Completed DEV0030 remains unchanged.
+[DEV0036](../organisatory/DEV0036-explicit-architecture-boundaries.md) clarified that this ticket owns the exact `src/lib` move while `src/domain` becomes a shared authority-free dependency rather than a frontend runtime layer. Completed DEV0030 remains unchanged.
 
 Implementation started on 2026-09-20 after DEV0036 was committed as `0ba2fa3`. The ticket moved from Ready to In progress with the planned file/export map, shared-component integration and boundary rules unchanged. The required pre-edit unit baseline passed before the first source move.
 
@@ -102,7 +103,7 @@ Implementation started on 2026-09-20 after DEV0036 was committed as `0ba2fa3`. T
 - `src/features/discovery/filters.ts` now owns class/studio/event filtering and `queries.ts` owns normalized public search. Both consume explicit collections. `src/components/format.ts` owns the unchanged currency/challenge/event presentation formatters. Discovery filter labels remain beside their controls.
 - `ChallengeCard`, `Shell` and `RelatedActivities` remain shared components but no longer acquire preview or feature state. Their feature/adapter owners pass saved state and callbacks, storage availability, and selected discovery records. Feed, Profile, Challenge, Event and root-layout composition were updated without moving any DEV0030 screen or changing public routes.
 - `tests/boundaries.test.ts` resolves relative and `@/` imports and rejects domain imports outside `src/domain`, shared-component imports from features/server, and feature imports from server or sibling capabilities other than the explicit Preview adapter. ESLint additionally rejects `window`, `document`, `navigator`, `localStorage`, `sessionStorage` and `fetch` globals in `src/domain`.
-- All six former `src/lib` files were removed after every source and test importer moved. The README and COR0001 now describe the delivered tree instead of the obsolete mixed boundary.
+- All six former `src/lib` files were removed after every source and test importer moved.
 
 ### Contract changes and rationale
 
@@ -121,7 +122,6 @@ The implementation followed the planned map without a material change of approac
 - **Formatting and diff hygiene — passed:** after formatting the moved modules and tests, `npm run format:check` passed and `git diff --check` reported no whitespace errors.
 - **Production build — passed with environment note:** the standard `npm run build` reached Turbopack but its CSS worker was denied permission to bind an internal local port (`EPERM`). The planned fallback `npm run build -- --webpack` compiled successfully, completed TypeScript and page-data collection, and generated all 14 application routes. The restricted Turbopack command is not reported as passing.
 - **Browser regression — passed:** `npm run test:e2e` passed all 28 Playwright scenarios in installed Chrome across desktop and mobile. It exercised primary/dynamic routes, saving/following, search and filters, related navigation, private challenge/event drafts, membership booking/cancellation/hiding, reset, keyboard dialogs, malformed and unavailable storage, responsive overflow checks and console-error checks.
-- **Record/tree consistency — passed:** README and COR0001 describe the delivered domain/discovery/preview split; the index contains 32 unique records—9 current and 23 archived—and lists DEV0031 once as Completed; all local Markdown targets resolve across 51 Markdown files after self-archive.
 
 ## Risks, limitations, and follow-ups
 

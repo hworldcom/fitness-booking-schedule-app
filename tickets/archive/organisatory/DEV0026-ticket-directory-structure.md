@@ -4,10 +4,12 @@
 
 - Status: Completed
 - Created: 2026-09-20
-- Last updated: 2026-09-20
+- Last updated: 2026-10-14
 - Milestone: Repository workflow
 - Coordination: None — independent development ticket
 - Related tickets: [DEV0001 — Ticket workflow and agent instructions](DEV0001-ticket-workflow-and-agent-instructions.md), [DEV0002 — Ticket number in commit subjects](DEV0002-ticket-number-in-commit-subjects.md), and all ticket records moved by this change
+
+> Documentary pruning — 2026-10-14, [DEV0225](DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
@@ -32,9 +34,8 @@ Use these primary categories:
 
 - `frontend`: Next.js routes, browser behavior, presentation, accessibility, and client-side interaction whose main change is the interface.
 - `backend`: Next.js server code, authentication, PostgreSQL/Supabase, application services, persistence, jobs, and repository workflow or infrastructure.
-- `blockchain`: Solana programs, program clients, wallet transaction flows, RPC verification, on-chain projections, settlement, and other chain-specific integration.
 
-The archive is flat because ticket IDs already provide stable ordering and completed work no longer needs an active implementation queue. Tickets 0015–0018, 0023, and 0025 are current backend work. Ticket 0024 is current blockchain work because verified on-chain events are its defining dependency. No current frontend ticket exists after completed frontend work moves to the archive; its category README preserves the intended structure.
+The archive is flat because ticket IDs already provide stable ordering and completed work no longer needs an active implementation queue. Tickets 0015–0018, 0023, and 0025 are current backend work. No current frontend ticket exists after completed frontend work moves to the archive; its category README preserves the intended structure.
 
 This ticket starts under `current/backend` because it changes contributor infrastructure and active-ticket workflow. After its acceptance criteria pass and its record is complete, move 0026 itself to `tickets/archive` in the same change.
 
@@ -67,7 +68,6 @@ Completed the lifecycle and area structure requested by the user. Before this ch
 
 - Moved completed tickets 0001–0009, 0014, and 0019–0022 to `tickets/archive/`. Their implementation and validation history is preserved; only links and a few displayed paths were adjusted for their new location.
 - Moved Draft tickets 0015–0018, 0023, and 0025 to `tickets/current/backend/`. These tickets primarily own server, authentication, persistence, data, or application-service work.
-- Moved Draft ticket 0024 to `tickets/current/blockchain/` because verified on-chain source events are its defining dependency. Kept one ticket and linked its backend dependency rather than duplicating it.
 - Added current, frontend, backend, blockchain, and archive README files so each category is explicit and the currently empty frontend directory remains represented in Git.
 - Split the root index into current and archived sections with actual paths and an area column for current work. Preserved the `#ticket-index` heading used by existing navigation.
 - Updated every repository-local Markdown link affected by the moves, including links in the MVP specification, repository README, archived source documents, current/archived tickets, and ticket index.

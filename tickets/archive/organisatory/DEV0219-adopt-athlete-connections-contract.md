@@ -7,6 +7,8 @@
 - Coordination: [COR0020 — Athlete terminology and coach–athlete connections](../../current/organisatory/COR0020-athlete-terminology-and-connections.md)
 - Related records: completed booking dependency [COR0016 — Coach-confirmed booking requests](COR0016-coach-confirmed-booking-requests.md); independent session collaboration [COR0015 — Session notes and training plans](../../current/organisatory/COR0015-session-notes-and-training-plans.md)
 
+> Documentary pruning — 2026-10-14, [DEV0225](DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
+
 ## Objective and context
 
 Record the user's agreed website vocabulary and mutual coach–athlete connection behavior in the [current specification](../../../docs/mvp-spec.md). An athlete is an account acting as the training participant, currently called a client; a coach retains this capability. A connection is a private, accepted relationship between one coach and one athlete that lasts across sessions.
@@ -79,11 +81,10 @@ Documentation implementation started and completed on 2026-10-14 after the user 
 
 ### Decisions and deviations
 
-- Checked `git ls-tree -r --name-only hackathon/solana-group-events tickets/current tickets/archive` after the IDE referenced COR0019. DEV0210–DEV0218 and COR0019 already exist there; the reservation prevents reuse without importing those records or product scope.
 - Explicitly counted completed bookings as qualifying confirmation history while excluding cancelled-only history for new sends/acceptance. Accepted connections survive later cancellations.
 - Kept pending withdrawal, terminal attempts, crossed-request handling, new-action coach status and list placement labelled as implementation defaults rather than additional confirmed user constraints. DEV0221 must record precise schema/retry bounds before implementation.
 - Added native consumer notes to prevent a web contract from silently expanding native release scope; no native implementation changed.
-- The user's subsequent backlog review is read-only and separate from this contract: COR0001 is a candidate for cancellation/archive and DEV0055 needs a requirements refresh. No existing backlog record was deleted or claimed complete here.
+  No existing backlog record was deleted or claimed complete here.
 
 ### Contracts, configuration, and operations
 

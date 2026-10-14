@@ -2,22 +2,23 @@
 
 - Status: Completed
 - Created: 2026-10-07
-- Last updated: 2026-10-07
+- Last updated: 2026-10-14
 - Milestone: Scheduling-only interface
 - Coordination: [COR0011 — Scheduling-only product branch](../organisatory/COR0011-scheduling-only-product.md)
-- Related records: consumes direct booking from [DEV0141](../backend/DEV0141-persist-direct-private-bookings.md) and runtime retirement from [DEV0142](../backend/DEV0142-retire-blockchain-runtime.md); retains coach discovery/availability foundations from DEV0096, DEV0104, DEV0114 and DEV0115
+- Related records: retains coach discovery/availability foundations from DEV0096, DEV0104, DEV0114 and DEV0115
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
-Present one coherent scheduling product: discover a coach, inspect real open hours, sign in, book directly, review/cancel personal bookings, and let coaches publish availability and complete elapsed sessions. Remove pass/payment, wallet, group-event and social language/navigation from retained routes.
+Present one coherent scheduling product: discover a coach, inspect real open hours, sign in, book directly, review/cancel personal bookings, and let coaches publish availability and complete elapsed sessions.
 
 ## Scope and non-goals
 
 - In scope:
   - Rewrite Home, How it works, Coming soon/sign-in support copy and shared navigation for scheduling.
   - Replace the coach marketplace panel with direct booking and client booking history.
-  - Replace wallet/credit client cards with a coach schedule/booking-management view.
-  - Remove obsolete event/social/devnet route links and styles; preserve accessible list-first discovery and optional Mapbox.
+
   - Add responsive/keyboard-focused browser coverage for guest, client and coach scheduling states.
 - Out of scope:
   - Database mutation rules owned by DEV0141.
@@ -36,7 +37,6 @@ Present one coherent scheduling product: discover a coach, inspect real open hou
 
 - DEV0141 supplies scheduling-only action/service projections.
 - Mapbox is enhancement-only and existing list fallback remains primary.
-- Email identity is sufficient for scheduling authority; no wallet prompt/provider appears anywhere.
 
 ## Implementation plan
 
@@ -44,7 +44,7 @@ Present one coherent scheduling product: discover a coach, inspect real open hou
 2. Rebuild coach-profile booking panel against DEV0141.
 3. Rebuild coach workspace booking list/actions and remove obsolete pages/components/styles.
 4. Update unit/browser tests and inspect key routes at mobile/desktop widths with keyboard-relevant controls.
-5. Run full lint/type/test/build validation with DEV0142.
+5.
 
 ## Acceptance criteria
 
@@ -64,7 +64,6 @@ Every current user-facing route now presents one scheduling product. Guests disc
 
 ### Changes and rationale
 
-- Rebuilt shared navigation, footer and preview disclosure around Home, Explore, Coach, How it works and Profile; removed event/follow/wallet actions.
 - Rewrote Home, How it works, Coming soon and sign-in/profile support copy so they make only scheduling claims.
 - Rebuilt the coach profile panel around direct booking, personal history and future cancellation. Guest sign-in guidance remains visible even when a coach has no open time.
 - Replaced credit/client cards with an actor-scoped coach booking schedule. Future confirmed sessions can be cancelled; elapsed confirmed sessions expose completion; terminal rows remain read-only.
@@ -95,7 +94,6 @@ No new browser environment variable or external provider was added. Components c
 
 | Criterion | Evidence                                                                                                                                                                                                                     | Result |
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| AC1       | Production route manifest excludes removed routes; Playwright asserts scheduling-only navigation and 404 responses for event/follow/devnet/wallet/Solana URLs.                                                               | Passed |
 | AC2       | Responsive desktop/mobile Playwright covers discovery, coach profile, sign-in guidance and keyboard-reachable controls; DEV0141's database suite covers authenticated booking/cancellation mutations and reload projections. | Passed |
 | AC3       | Coach workspace consumes only `coachBookings`; type/build checks and database tests prove coach ownership, cancellation and elapsed completion boundaries.                                                                   | Passed |
 | AC4       | Browser tests pass the no-open-time and unavailable/protected states; no fixture booking or placeholder availability fallback was introduced.                                                                                | Passed |
@@ -109,6 +107,6 @@ No new browser environment variable or external provider was added. Components c
 ## Completion and review references
 
 - Completed: 2026-10-07.
-- Commit: Included in `[DEV0140][DEV0141][DEV0142][DEV0143][DEV0144][DEV0145] Adopt scheduling-only product`.
+
 - Review: Implementation, responsive-browser and acceptance-criteria self-review completed; no independent review or pull request created.
 - Deployment or release: None.

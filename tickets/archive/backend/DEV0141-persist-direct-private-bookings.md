@@ -2,14 +2,16 @@
 
 - Status: Completed
 - Created: 2026-10-07
-- Last updated: 2026-10-07
+- Last updated: 2026-10-14
 - Milestone: Scheduling-only booking core
 - Coordination: [COR0011 — Scheduling-only product branch](../organisatory/COR0011-scheduling-only-product.md)
-- Related records: replaces the chain-coupled booking behavior implemented historically by [DEV0128](DEV0128-persist-credit-backed-private-bookings.md); consumes recurring availability from [DEV0114](DEV0114-persist-recurring-coach-availability.md)
+- Related records: consumes recurring availability from [DEV0114](DEV0114-persist-recurring-coach-availability.md)
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
-Make private scheduling authoritative in PostgreSQL so an email-authenticated client can reserve one future open coach occurrence without a pass, wallet, credit projection or blockchain transaction. Preserve capacity-one concurrency, actor authorization and durable cancellation/completion state.
+Preserve capacity-one concurrency, actor authorization and durable cancellation/completion state.
 
 ## Scope and non-goals
 
@@ -20,7 +22,7 @@ Make private scheduling authoritative in PostgreSQL so an email-authenticated cl
   - Add focused unit and database tests for authorization, self-booking rejection, concurrency, idempotency and terminal transitions.
 - Out of scope:
   - Payment, credits, cancellation fees, waitlists, group sessions, attendance disputes or calendar-provider sync.
-  - Destructive removal of historical wallet/credit/event tables from existing databases.
+
   - Public route/component redesign owned by DEV0143.
 
 ## Expected behavior and edge cases
@@ -50,7 +52,6 @@ Make private scheduling authoritative in PostgreSQL so an email-authenticated cl
 - [x] AC1: Direct booking requires an authorized non-owner client and atomically enforces one active booking per open future slot.
 - [x] AC2: Repeated same-client booking is idempotent while competing/invalid requests fail without partial state.
 - [x] AC3: Client/coach cancellation and coach completion enforce ownership, time and lifecycle rules and survive reload.
-- [x] AC4: Runtime booking projections contain no wallet, credit, token, transaction or chain reference.
 - [x] AC5: Focused unit/database validation and repository static/build checks pass.
 
 ## Validation plan
@@ -63,7 +64,6 @@ Direct private scheduling is now authoritative in PostgreSQL. An authorized clie
 
 ### Changes and rationale
 
-- Added an additive migration that leaves historical credit-backed rows intact while permitting direct rows with a null historical credit reference.
 - Added security-definer book, cancel and complete functions. They validate transaction-local actor context, lock the relevant state, preserve capacity one, reject self/cross-run/hidden/elapsed input and make retries idempotent.
 - Added a bounded actor-scoped projection function because ordinary row-level policies intentionally hide booked availability from clients and unrelated client profiles from coaches.
 - Replaced the runtime booking domain, repository, service and server actions with scheduling-only contracts. New projections contain only booking identities, participant display context, time, location and lifecycle evidence.
@@ -107,6 +107,6 @@ Hosted databases must apply the new forward migration before deploying this bran
 ## Completion and review references
 
 - Completed: 2026-10-07.
-- Commit: Included in `[DEV0140][DEV0141][DEV0142][DEV0143][DEV0144][DEV0145] Adopt scheduling-only product`.
+
 - Review: Implementation and acceptance-criteria self-review completed; no independent review or pull request created.
 - Deployment or release: None.

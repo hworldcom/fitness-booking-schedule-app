@@ -2,14 +2,14 @@
 
 - Status: Completed
 - Created: 2026-09-19
-- Last updated: 2026-09-19
+- Last updated: 2026-10-14
 - Milestone: M0 repository hygiene
 - Coordination: None — independent development ticket
 - Related tickets: DEV0008 — RepX Club frontend foundation
 
-## Objective and context
+> Documentary pruning — 2026-10-14, [DEV0225](DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
-Expand the root `.gitignore` so generated, machine-local, sensitive, and transient files used by the Next.js application and anticipated Solana development are not added to GitHub.
+## Objective and context
 
 The existing file covers the largest current directories (`node_modules`, `.next`, test output, environment files, and TypeScript build metadata), but omits package-manager state, deployment output, debug logs, editor files, caches, local databases, and local blockchain tooling state.
 
@@ -25,12 +25,10 @@ A repository-boundary inspection also found that `git rev-parse --show-toplevel`
 - Ignore dependency directories and package-manager machine state while retaining dependency lockfiles.
 - Ignore Next.js/deployment output, coverage, browser-test artifacts, caches, logs, local databases, operating-system metadata, and editor state.
 - Ignore `.env` variants and common private key/certificate files while explicitly allowing documented environment example files.
-- Ignore local Solana/Anchor build and validator state plus explicitly named keypair files; do not ignore program source or general JSON fixtures.
 - Keep `public/`, `src/`, `tests/`, `tickets/`, documentation, configuration, and lockfiles eligible for version control.
 
 ## Assumptions, decisions, and dependencies
 
-- The active application uses npm, Next.js, TypeScript, and Playwright. Future implementation is expected to use Solana tooling.
 - Use anchored directory patterns where repository-root scope matters and narrow secret patterns to reduce accidental hiding of valid source files.
 - Do not initialize a nested repository without an explicit request because that changes repository ownership and commit behavior beyond this ignore-file update.
 
@@ -45,7 +43,6 @@ A repository-boundary inspection also found that `git rev-parse --show-toplevel`
 
 - [x] AC1: Current dependency, Next.js, TypeScript, coverage, and browser-test artifacts are ignored.
 - [x] AC2: Environment secrets, private key material, logs, local databases, caches, operating-system files, and editor state are ignored while example environment files remain eligible for tracking.
-- [x] AC3: Local Solana/Anchor build, ledger, and keypair artifacts are ignored without hiding program source or ordinary JSON files.
 - [x] AC4: Source, documentation, tickets, public assets, configuration, and `package-lock.json` remain eligible for version control.
 - [x] AC5: The ticket records that the detected Git root is the user's home directory and that changing this boundary is outside the task.
 
@@ -56,6 +53,8 @@ A repository-boundary inspection also found that `git rev-parse --show-toplevel`
 - Review the diff and run a local Markdown-link check. Application lint, typecheck, tests, and build are not needed because runtime behavior is unchanged.
 
 ## Implementation record
+
+Not applicable to the retained excerpt — superseded detail in this section was pruned under DEV0225.
 
 ### Changes and rationale
 
@@ -69,7 +68,6 @@ The file now groups rules by purpose and covers:
 - TypeScript and common tool caches;
 - all environment variants except `.env.example` and `.env.*.example`, plus common private key and certificate formats;
 - local database files;
-- Anchor/Solana build, validator, and keypair artifacts;
 - logs, temporary files, editor settings, and operating-system metadata.
 
 Root-relative directory patterns reduce accidental matches inside source packages. The secret/key rules are deliberately narrower than ignoring all JSON, so normal fixtures and future program source remain trackable.
@@ -84,7 +82,6 @@ Root-relative directory patterns reduce accidental matches inside source package
 
 ### Decisions and deviations
 
-- Used the bracketed categories and conventional paths recognized by Next.js, TypeScript, Playwright, npm/Yarn/pnpm, common editors, and Anchor/Solana tooling.
 - Kept `package-lock.json`, source, normal JSON, configuration, public assets, documentation, and tickets trackable.
 - Did not initialize a nested Git repository or edit the home-level repository. There was no scope deviation.
 
@@ -97,7 +94,7 @@ No runtime contract, dependency, environment variable, schema, migration, or dep
 Validated locally on 2026-09-19:
 
 - `git check-ignore -q --no-index` matrix passed for 14 paths expected to be ignored and 12 expected to remain trackable: `PASS ignored=14 trackable=12`.
-- Positive matcher evidence identified the exact `.gitignore` rules for current `node_modules`, `.next`, and `test-results` content and representative environment, keypair, Anchor target, test-ledger, editor, database, and log paths.
+- Positive matcher evidence identified the exact `.gitignore` rules for current `node_modules`, `.next`, and `test-results` content and representative environment, keypair, editor, database, and log paths.
 - `git status --short --ignored --untracked-files=normal -- .` reports `.next/`, `next-env.d.ts`, `node_modules/`, `test-results/`, and `tsconfig.tsbuildinfo` as ignored. The project itself appears as untracked because Git resolves to the parent home repository.
 - `find` found no nested `.git` directory inside this project. `git rev-parse --show-toplevel` returned `/Users/hoangdeveloper`.
 - Markdown validation passed: `PASS: 116 local Markdown links resolve.`

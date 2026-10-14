@@ -2,14 +2,16 @@
 
 - Status: Completed
 - Created: 2026-09-22
-- Last updated: 2026-09-22
+- Last updated: 2026-10-14
 - Milestone: Product branding maintenance
 - Coordination: None — independent development ticket
 - Related records: follows completed DEV0049 — Rename platform to MovX Club
 
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
+
 ## Objective and context
 
-Make the confirmed MovX Club contact address, `hello@movx.club`, easy to find from every website route. The shared footer currently contains the product name, tagline and Devnet status but no contact method.
+Make the confirmed MovX Club contact address, `hello@movx.club`, easy to find from every website route.
 
 ## Scope and non-goals
 
@@ -38,7 +40,7 @@ The user supplied and confirmed `hello@movx.club` on 2026-09-22. The shared foot
 
 ## Validation plan
 
-Extend the existing responsive layout browser test to assert visible link text, exact `href`, keyboard focus and viewport containment at 320, 600, 820 and 1100 pixels. Run the focused desktop/mobile browser test plus lint, type checking and formatting. No database, authentication, wallet or mailbox delivery check applies because this ticket changes only a static public link.
+Extend the existing responsive layout browser test to assert visible link text, exact `href`, keyboard focus and viewport containment at 320, 600, 820 and 1100 pixels. Run the focused desktop/mobile browser test plus lint, type checking and formatting.
 
 ## Implementation record
 
@@ -48,7 +50,7 @@ Implementation and validation are complete.
 
 The shared application footer now presents `hello@movx.club` beside the MovX Club copyright. It is an ordinary underlined email link with the exact `mailto:hello@movx.club` target, so it remains visible and copyable even when a visitor has no local email application configured.
 
-The existing footer layout was extended with a small wrapping contact group rather than adding a route or navigation item. This keeps the address present on every page using the shell while preserving the tagline and Devnet disclosure.
+The existing footer layout was extended with a small wrapping contact group rather than adding a route or navigation item.
 
 ### Affected files
 
@@ -72,12 +74,11 @@ Validation ran on 2026-09-22 against the configured local production build.
 
 The first sandboxed `npm test` attempt could not create the `tsx` IPC socket and stopped with `listen EPERM`; the same unchanged command was rerun with permission to create the local socket and all 38 tests passed. This was an execution-environment restriction rather than a test failure.
 
-| Criterion | Evidence                                                                                                                                                                                                                                                         | Result |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| AC1–AC2   | `npm run test:e2e -- --grep "club layout remains usable"` passed 2 desktop/mobile browser-project checks. Each project verified the exact link and `href`, keyboard focus, viewport presence and no horizontal overflow at 320, 600, 820 and 1100 pixels.        | Passed |
-| AC1–AC2   | `npm run test:e2e -- --grep "home discovery links preserve"` passed 2 desktop/mobile browser-project checks. Full-page screenshots were inspected at 1440×1040 and 393×852; the footer address remained readable and balanced with the tagline and Devnet badge. | Passed |
-| AC3       | `npm run format:check`, `npm run lint` and `npm run typecheck` passed. `npm test` passed all 38 tests after the sandbox-only IPC retry.                                                                                                                          | Passed |
-| AC3       | `npx next build --webpack` completed successfully with all 12 static pages generated and dynamic routes compiled. Webpack was used because it is the established build validation in this restricted environment.                                                | Passed |
+| Criterion | Evidence                                                                                                                                                                                                                                                  | Result |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| AC1–AC2   | `npm run test:e2e -- --grep "club layout remains usable"` passed 2 desktop/mobile browser-project checks. Each project verified the exact link and `href`, keyboard focus, viewport presence and no horizontal overflow at 320, 600, 820 and 1100 pixels. | Passed |
+| AC3       | `npm run format:check`, `npm run lint` and `npm run typecheck` passed. `npm test` passed all 38 tests after the sandbox-only IPC retry.                                                                                                                   | Passed |
+| AC3       | `npx next build --webpack` completed successfully with all 12 static pages generated and dynamic routes compiled. Webpack was used because it is the established build validation in this restricted environment.                                         | Passed |
 
 ## Risks, limitations, and follow-ups
 

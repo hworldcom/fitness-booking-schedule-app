@@ -2,16 +2,18 @@
 
 - Status: Cancelled
 - Created: 2026-09-30
-- Last updated: 2026-10-07
+- Last updated: 2026-10-14
 - Milestone: Staging runtime reliability
 - Coordination: None — independent development ticket
-- Related records: staging runtime baseline in [DEV0054 — Cloudflare Workers runtime foundation](DEV0054-cloudflare-workers-runtime-foundation.md), hosted release history in [DEV0056 — Staging release and domain rehearsal](DEV0056-staging-release-and-domain-rehearsal.md), current marketplace delivery in [COR0010 — Group-funded coach marketplace MVP](../../archive/organisatory/COR0010-group-funded-coach-marketplace-mvp.md), and replacement hosting readiness in [DEV0138 — Prepare Vercel deployment](DEV0138-prepare-vercel-deployment.md)
+- Related records: Independent retained outcome; superseded dependencies pruned under DEV0225.
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
 Reduce avoidable Cloudflare Worker CPU use in authenticated server rendering and browser hydration without weakening session verification, actor isolation or fail-closed behavior.
 
-During a legacy staging rehearsal, Cloudflare returned Error 1102 (`Worker exceeded resource limits`) after an authenticated mutation. A live trace of deployed version `818861bf-f738-4fae-9f68-445a30ad35b8` later measured 214 ms CPU for `GET /membership/setup` and 159 ms CPU for `GET /my-access`; the same retries returned HTTP 200 because Cloudflare permits occasional bursts above a configured CPU limit. Hydration then issued separate session, actor, organization-wallet, personal-wallet and product requests, with individual authenticated API invocations consuming 19–87 ms CPU. Those routes are no longer current, so the ticket must rebaseline coach-first authenticated routes before selecting an optimization.
+During a legacy staging rehearsal, Cloudflare returned Error 1102 (`Worker exceeded resource limits`) after an authenticated mutation. A live trace of deployed version `818861bf-f738-4fae-9f68-445a30ad35b8` later measured 214 ms CPU for `GET /membership/setup` and 159 ms CPU for `GET /my-access`; the same retries returned HTTP 200 because Cloudflare permits occasional bursts above a configured CPU limit. Those routes are no longer current, so the ticket must rebaseline coach-first authenticated routes before selecting an optimization.
 
 Read-only code review found repeated work rather than one isolated expensive computation. A server render can verify the same Supabase session and resolve the same application identity in the root layout, protected-page guard and multiple feature services. The My Membership page also loads membership state directly and again through its class-schedule service. After hydration, the session and actor providers immediately refetch state already supplied by server rendering. This makes the staging application sensitive to strict Worker CPU limits and increases database/Auth traffic even when requests happen to succeed.
 
@@ -22,7 +24,6 @@ On 2026-10-07 this ticket was cancelled before implementation because the user r
 ## Scope and non-goals
 
 - In scope: request-scoped reuse of verified session and application-identity reads; removal of duplicate membership loading from the My Membership server render; suppression of initial browser session/actor refetches when the server-supplied state still matches the current browser session; focused tests for cache isolation, auth-state changes and feature results; local production-build validation; staging CPU traces and repeated hard-reload evidence.
-- Out of scope: changing Cloudflare account plans or billing; increasing a Worker CPU limit; cross-request or cross-user caching; trusting browser identity; weakening or removing the existing `getClaims`/`getUser` session checks; changing row-level security or actor-scoped database transactions; combining every authenticated API into one endpoint; database migrations; membership/payment/check-in behavior changes; Solana RPC or transaction changes.
 
 ## Expected behavior and edge cases
 
@@ -38,11 +39,9 @@ The staging trace is a baseline and diagnostic, not a promise that code optimiza
 
 ## Assumptions, decisions, and dependencies
 
-- The captured Error 1102 is treated as a Worker resource-limit incident. The observed 159–214 ms page CPU and repeated 19–87 ms authenticated API CPU make CPU exhaustion the leading cause; no evidence currently points to Solana settlement failure, PostgreSQL corruption or loss of the active membership.
 - Reuse must be request scoped. A module-global promise, process cache, time-based cache or user-keyed shared cache is prohibited because a Worker isolate serves multiple users and requests.
 - Preserve the current authoritative session checks and database actor context. Performance work should first remove duplicate invocations and duplicated reads rather than reduce verification strength.
 - The implementation must inspect the installed React 19.3, Next.js 16.3 and vinext 1.0 beta behavior before selecting a request-memoization primitive. If framework request memoization cannot be shown to remain request scoped in the deployed runtime, pass the verified context explicitly through a bounded aggregate service instead.
-- Staging measurements require the user's existing authenticated browser session and Cloudflare tail access. They must not log cookies, private RPC endpoints, provider credentials, database credentials or wallet key material.
 - A Workers Paid plan would provide substantially more CPU headroom, but changing the plan is an external operational decision and does not replace this ticket's removal of demonstrably redundant work.
 
 ## Implementation plan
@@ -60,7 +59,6 @@ The staging trace is a baseline and diagnostic, not a promise that code optimiza
 - [ ] AC2: My Membership loads membership state once and produces the same active/pending/empty, reservation and check-in presentation without a nested membership reload from the class-schedule service.
 - [ ] AC3: Initial hydration with matching server-supplied session/actor state does not call `/api/auth/session` or `/api/auth/actor`; genuine sign-in, sign-out, token-refresh, user-update and session-key changes still refresh or clear authority correctly.
 - [ ] AC4: Preview, signed-out, forbidden, unavailable, no-active-membership and database/Auth failure paths remain fail closed, and mutation/API requests continue to authenticate independently.
-- [ ] AC5: Unit, browser, lint, type, formatting and Cloudflare production-build checks pass for the affected boundaries with no membership, reservation, check-in or wallet-payment behavior regression.
 - [ ] AC6: A post-deployment authenticated staging trace records setup and My Membership CPU against the 214 ms/159 ms baselines, and repeated hard reloads record whether Error 1102 remains. The result must distinguish completed code optimization from any remaining account-plan limit.
 
 ## Validation plan
@@ -69,7 +67,7 @@ Add deterministic tests that count underlying session/identity reads within one 
 
 Run the focused tests first, followed by `npm test`, `npm run typecheck`, `npm run lint`, `npm run format:check`, `git diff --check` and `npm run build:vinext`. Run the relevant membership/authorization Playwright cases at desktop and mobile widths. A local Worker can validate behavior but cannot prove hosted CPU enforcement, so final performance evidence requires `wrangler tail` around the signed-in staging setup/My Membership hard-reload flow.
 
-No database migration or Solana transaction is expected. The staging rehearsal is read-only and must not prepare, sign, send or retry a membership payment.
+The staging rehearsal is read-only and must not prepare, sign, send or retry a membership payment.
 
 ## Implementation record
 
@@ -117,6 +115,6 @@ Even a correct optimization may not make authenticated Next.js server rendering 
 ## Completion and review references
 
 - Completed: Cancelled on 2026-10-07 before implementation; the Cloudflare-specific runtime and validation target were retired.
-- Commit: This commit — `[DEV0093][DEV0094][DEV0095][DEV0101][DEV0103] Adopt coach-first pivot` (DEV0093 planning/rebaseline only; implementation remains Draft).
+
 - Review: Scope reviewed against the captured staging trace, current auth/membership call graph and ticket-splitting rules; no split is required before implementation.
 - Deployment or release: Not deployed; this record contains only planning and the pre-change historical Worker diagnostic baseline.

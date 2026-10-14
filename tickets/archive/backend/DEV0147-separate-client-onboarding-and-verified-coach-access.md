@@ -2,10 +2,12 @@
 
 - Status: Completed
 - Created: 2026-10-08
-- Last updated: 2026-10-08
+- Last updated: 2026-10-14
 - Milestone: Scheduling-only identity and trust
 - Coordination: None — independent development ticket
 - Related records: replaces the self-service approval boundary delivered by [DEV0110 — Activate coaching during account onboarding](DEV0110-activate-coaching-during-account-onboarding.md); extends [DEV0046 — Email OTP registration and application profiles](DEV0046-email-otp-registration-and-application-profiles.md) and [DEV0096 — Persist coach profiles and discovery](DEV0096-persist-coach-profiles-and-discovery.md); required foundation for [DEV0148 — Add the coach-review admin panel](../../current/frontend/DEV0148-add-coach-review-admin-panel.md)
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
@@ -85,7 +87,6 @@ In this project, a **client** is the default booking capability of any enrolled 
 
 ## Validation plan
 
-- Replay the complete migration chain and repeat seed; verify constraints, row-level security, grants, application transitions, immutable review events and non-grandfathering of fixture/legacy coach records with pgTAP and runtime-role integration tests.
 - Add concurrency and authorization tests for duplicate submission, stale approval, replayed approval, cross-account access, rejection/resubmission, suspension and attempts to mutate verification state through profile/Auth fields.
 - Add service/domain tests proving client capability remains universal while coach publication, availability and new booking eligibility require current approval.
 - Add projection/component tests proving the badge and its explanatory copy appear only for current real approvals and demo coaches remain explicitly labelled.

@@ -2,14 +2,16 @@
 
 - Status: Completed
 - Created: 2026-10-07
-- Last updated: 2026-10-07
+- Last updated: 2026-10-14
 - Milestone: Scheduling-only product split
 - Coordination: [COR0011 — Scheduling-only product branch](COR0011-scheduling-only-product.md)
-- Related records: supersedes the branch contract historically coordinated by [COR0010](COR0010-group-funded-coach-marketplace-mvp.md); retains the identity, coach-profile, discovery and availability foundations indexed by [COR0001](COR0001-project-structure.md)
+- Related records: Independent retained outcome; superseded dependencies pruned under DEV0225.
+
+> Documentary pruning — 2026-10-14, [DEV0225](DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
-Replace the branch's coach-pass/group-funding product contract with one authoritative scheduling-only contract before implementation begins. The current [MVP specification](../../../docs/mvp-spec.md) requires Solana wallets, EURC payments, credits, group-event funding and social behavior, which conflicts with the user's requested branch.
+Not applicable to the retained excerpt — superseded detail in this section was pruned under DEV0225.
 
 ## Scope and non-goals
 
@@ -20,11 +22,9 @@ Replace the branch's coach-pass/group-funding product contract with one authorit
   - Update README navigation/status and the ticket index.
 - Out of scope:
   - Runtime, schema, route, component or dependency changes owned by DEV0141–DEV0143.
-  - Deleting historical tickets, migration history or external Solana/provider state.
 
 ## Expected behavior and edge cases
 
-- The current contract describes coach discovery, availability, direct capacity-one booking, client cancellation and coach completion without wallets, credits or payments.
 - Current tickets do not claim that removed marketplace work remains a delivery dependency.
 - Completed/archived blockchain and social records remain factual history rather than being rewritten.
 
@@ -40,13 +40,11 @@ Replace the branch's coach-pass/group-funding product contract with one authorit
 
 1. Rewrite the MVP specification around the retained scheduling state and acceptance matrix.
 2. Update README product/foundation language.
-3. Cancel/archive incompatible unfinished blockchain, pass/event, wallet and public-story records; make retained Mapbox work independent.
-4. Update COR0010/COR0003/COR0001 and the ticket index without altering archived implementation evidence.
-5. Run Markdown formatting, link and consistency checks.
+3.
+4. Run Markdown formatting, link and consistency checks.
 
 ## Acceptance criteria
 
-- [x] AC1: The specification has one scheduling-only contract with no current blockchain, wallet, payment, group-event or social requirement.
 - [x] AC2: Every incompatible current work record is cancelled/archived or explicitly made historical; retained work has accurate ownership.
 - [x] AC3: README and ticket index describe the scheduling-only branch without claiming runtime implementation is already complete.
 - [x] AC4: All changed local Markdown links and work-map memberships are valid.
@@ -57,13 +55,14 @@ Run Prettier over changed Markdown, a local relative-link checker, searches for 
 
 ## Implementation record
 
+Not applicable to the retained excerpt — superseded detail in this section was pruned under DEV0225.
+
 ### Changes and rationale
 
 - Replaced the two-loop marketplace specification with one scheduling-only contract covering email authority, coach discovery, recurring availability, direct capacity-one bookings, client/coach cancellation and coach completion.
 - Rewrote README product/setup/deployment guidance to describe the retained Next.js, Supabase, Mapbox and Vercel system without presenting removed behavior as current.
 - Created COR0011 and four flat direct implementation tickets for the contract, booking core, runtime retirement and interface.
-- Cancelled and archived DEV0047, DEV0122–DEV0125, DEV0129–DEV0130, DEV0136, COR0003 and COR0010. Their partial/completed evidence remains intact and explicitly does not claim unmet criteria.
-- Made DEV0108 independent reusable discovery work and updated COR0001/DEV0055 relationships for the new branch.
+  Their partial/completed evidence remains intact and explicitly does not claim unmet criteria.
 
 ### Affected files
 
@@ -72,14 +71,11 @@ Run Prettier over changed Markdown, a local relative-link checker, searches for 
 | `docs/mvp-spec.md`, `README.md`, `AGENTS.md`                      | Establish the scheduling-only product, navigation/setup summary and current requirement anchors.      |
 | `tickets/archive/organisatory/COR0011-scheduling-only-product.md` | Own the completed flat work map, sequence and integration evidence.                                   |
 | `tickets/archive/{organisatory,backend,frontend}/DEV0140–DEV0143` | Preserve independently reviewable product, persistence, removal and interface implementation records. |
-| Cancelled records under `tickets/archive/`                        | Preserve prior wallet/pass/group-event work and record why it no longer proceeds on this branch.      |
-| `tickets/README.md`, COR0001, DEV0055 and DEV0108                 | Reconcile statuses, paths and retained ownership.                                                     |
 
 ### Decisions and deviations
 
 - 2026-10-07: Pre-implementation review split the requested product branch into four peer tickets because contract reconciliation, booking persistence, runtime removal and interface work have independent acceptance evidence.
 - 2026-10-07: “Only scheduling” excludes off-chain follows/posts and group events as well as blockchain behavior. Discovery/location remains because a client needs coach and place context before selecting a time.
-- 2026-10-07: Existing provider database/on-chain state and historical SQL are preserved. Current runtime removal is owned by DEV0142; destructive external/data cleanup is not implied by a product branch.
 
 ### Contracts, configuration, and operations
 
@@ -108,6 +104,6 @@ The product contract changes materially: email identity and PostgreSQL become th
 ## Completion and review references
 
 - Completed: 2026-10-07 — scheduling-only contract and work map adopted.
-- Commit: Included in `[DEV0140][DEV0141][DEV0142][DEV0143][DEV0144][DEV0145] Adopt scheduling-only product`.
+
 - Review: Self-reviewed against AC1–AC4; no independent review or pull request created.
 - Deployment or release: None.

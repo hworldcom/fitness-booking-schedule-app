@@ -2,25 +2,26 @@
 
 - Status: Cancelled
 - Created: 2026-09-23
-- Last updated: 2026-10-07
+- Last updated: 2026-10-14
 - Milestone: M0 hosted integration environment
 - Converted from: Not applicable — created as a coordination record
 - Tracked development tickets: historical direct members are completed [DEV0054 — Cloudflare Workers runtime foundation](../backend/DEV0054-cloudflare-workers-runtime-foundation.md) and cancelled [DEV0056 — Staging release and domain rehearsal](../backend/DEV0056-staging-release-and-domain-rehearsal.md); [DEV0055 — Hosted Supabase staging environment](../../current/backend/DEV0055-hosted-supabase-staging-environment.md) was transferred to independent ownership when this Cloudflare coordination was cancelled
-- Related records: [DEV0015 — Supabase database foundation](../backend/DEV0015-supabase-database-foundation.md), [DEV0046 — Email OTP registration and application profiles](../backend/DEV0046-email-otp-registration-and-application-profiles.md), [DEV0047 — Personal wallet linking and replacement](../../archive/backend/DEV0047-personal-wallet-linking-and-replacement.md), replacement hosting readiness in [DEV0138 — Prepare Vercel deployment](../backend/DEV0138-prepare-vercel-deployment.md), and current marketplace release ownership in [COR0010](../../archive/organisatory/COR0010-group-funded-coach-marketplace-mvp.md)
+- Related records: Independent retained outcome; superseded dependencies pruned under DEV0225.
+
+> Documentary pruning — 2026-10-14, [DEV0225](DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and boundaries
 
 Coordinate the first reproducible hosted staging environment for MovX Club at `https://staging.movx.club`: a Cloudflare Worker capable of running the current Next.js application, a dedicated non-production Supabase project, and an end-to-end deployment and smoke-test record.
 
-This coordination record does not implement runtime behavior. It separates repository/runtime compatibility, hosted database and authentication setup, and release/domain operations so that each has its own security boundary and validation evidence. It does not authorize production deployment, production data, real funds, Solana mainnet use, or completion claims for unfinished product features.
+This coordination record does not implement runtime behavior. It separates repository/runtime compatibility, hosted database and authentication setup, and release/domain operations so that each has its own security boundary and validation evidence.
 
 ## Direct development work
 
-| Implementation part                  | Development ticket                                                                                                    | Owned deliverable                                                                                                       | Start condition or dependency                                                                        |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Cloudflare runtime compatibility     | [DEV0054 — Cloudflare Workers runtime foundation](../backend/DEV0054-cloudflare-workers-runtime-foundation.md)        | Reviewed vinext/Workers dependencies, configuration, scripts and local compatibility validation without deploying       | Completed historically; runtime later retired by DEV0139                                             |
-| Hosted data and identity environment | [DEV0055 — Hosted Supabase staging environment](../../current/backend/DEV0055-hosted-supabase-staging-environment.md) | Dedicated staging project, reviewed schema/runtime role, Auth/SMTP/origin controls and secret-safe operating record     | Transferred to independent ownership for the Vercel path on cancellation                             |
-| Integrated staging release           | [DEV0056 — Staging release and domain rehearsal](../backend/DEV0056-staging-release-and-domain-rehearsal.md)          | Staging Worker, runtime/build variables, `staging.movx.club`, preserved Porkbun mail DNS and hosted smoke-test evidence | Cancelled with partial historical deployment evidence; Vercel replacement belongs to DEV0138/DEV0125 |
+| Implementation part                  | Development ticket                                                                                                    | Owned deliverable                                                                                                   | Start condition or dependency                                            |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Cloudflare runtime compatibility     | [DEV0054 — Cloudflare Workers runtime foundation](../backend/DEV0054-cloudflare-workers-runtime-foundation.md)        | Reviewed vinext/Workers dependencies, configuration, scripts and local compatibility validation without deploying   | Completed historically; runtime later retired by DEV0139                 |
+| Hosted data and identity environment | [DEV0055 — Hosted Supabase staging environment](../../current/backend/DEV0055-hosted-supabase-staging-environment.md) | Dedicated staging project, reviewed schema/runtime role, Auth/SMTP/origin controls and secret-safe operating record | Transferred to independent ownership for the Vercel path on cancellation |
 
 All required implementation parts have a direct development ticket. These tickets are peers; DEV0056 depends on the outputs of DEV0054 and DEV0055 rather than nesting under either ticket.
 
@@ -28,7 +29,6 @@ All required implementation parts have a direct development ticket. These ticket
 
 - DEV0015 is the historical schema, migration and least-privilege runtime-role baseline. DEV0055 deploys that contract to a hosted non-production project; it does not rewrite DEV0015.
 - DEV0046 supplies the email one-time-passcode (OTP) application flow that hosted Auth must support.
-- DEV0047 is a downstream hosted wallet-linking rehearsal when completed. It does not block deploying and testing the currently committed account flow.
 - The preceding interface baseline is separately committed at `7038f2e`. Deployment tickets must preserve it and keep their implementation/commit evidence separate.
 - Cloudflare, Supabase, Porkbun DNS/email and the chosen Simple Mail Transfer Protocol (SMTP) service are external dependencies. Their credentials and private values must never be recorded in tickets or committed files.
 
@@ -55,7 +55,6 @@ COR0004 completes only when all three direct tickets are Completed or explicitly
 - 2026-09-23: After account email verification, DEV0056 deployed clean commit `60e2cfe` to the temporary `workers.dev` hostname. Representative public and signed-out server-boundary HTTP checks passed; responsive browser, access, DNS/mail and exact-origin rehearsals remain.
 - 2026-09-23: DEV0056 enabled Worker-level Cloudflare Access for all traffic. Unauthenticated website and API requests now redirect to Access before reaching the Worker; authorized-browser confirmation and DNS/mail cutover remain.
 - 2026-09-23: Cloudflare became authoritative for the imported `movx.club` zone with the Porkbun website and mail records preserved. DEV0056 added `staging.movx.club` as a Worker Custom Domain; DNS resolution, TLS verification and its unauthenticated Access redirect pass. Authorized exact-origin browser rehearsal remains.
-- 2026-09-23: The user completed the allowlisted Cloudflare Access flow and confirmed that MovX Club loads at `https://staging.movx.club`. Hosted Supabase account isolation and Phantom rehearsals remain.
 - 2026-09-24: The user selected public access for the stable staging site. Worker-level Access was narrowed to temporary previews, while DEV0055's bounded Supabase Auth email and request limits remain the low-volume abuse boundary. A fresh unauthenticated request to `https://staging.movx.club` returned the application directly with valid TLS.
 - 2026-10-07: The user selected Vercel as the immediate hosting target and requested removal of Cloudflare settings/deployment support. DEV0139 removes the repository path, DEV0056 is cancelled with its partial evidence preserved, and DEV0055 becomes independent for reuse by Vercel. This coordination record is cancelled rather than marked complete because its authenticated integration criteria did not finish.
 

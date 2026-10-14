@@ -2,10 +2,12 @@
 
 - Status: Completed
 - Created: 2026-09-20
-- Last updated: 2026-09-20
+- Last updated: 2026-10-14
 - Milestone: Repository workflow
 - Coordination: None — independent development ticket
-- Related records: extends [DEV0032 — Flat coordination record workflow](DEV0032-flat-coordination-record-workflow.md) and [DEV0033 — Prefixed work-record identifiers](DEV0033-prefixed-work-record-identifiers.md); updates membership in [COR0001 — Project structure](COR0001-project-structure.md)
+- Related records: extends [DEV0032 — Flat coordination record workflow](DEV0032-flat-coordination-record-workflow.md) and [DEV0033 — Prefixed work-record identifiers](DEV0033-prefixed-work-record-identifiers.md)
+
+> Documentary pruning — 2026-10-14, [DEV0225](DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
@@ -15,8 +17,8 @@ The current workflow distinguishes DEV and COR records and keeps their relations
 
 ## Scope and non-goals
 
-- In scope: add a required `Coordination` metadata field to the development-ticket contract and every DEV record; identify the five current direct members of COR0001; mark all other DEV records as independent; define pre-implementation DEV-to-COR conversion, identifier retirement, child-ticket replacement and commit behavior; align AGENTS.md, templates, guides and validation.
-- Out of scope: changing runtime or product behavior, creating a second coordination record, changing COR0001's direct work, introducing deeper ticket hierarchies, retroactively changing historical commits, or converting a DEV record that already owns implementation evidence.
+- Retained scope: explicit single direct coordination membership in development records, reciprocal work-map validation, clear independent/dependency relationships, templates and contributor guidance.
+- Non-goals: runtime implementation, new hierarchy levels or implicit implementation authorization.
 
 ## Expected behavior and edge cases
 
@@ -26,7 +28,7 @@ If review before implementation divides one DEV proposal into multiple implement
 
 ## Assumptions, decisions, and dependencies
 
-The current direct members of COR0001 are DEV0015, DEV0025, DEV0027, DEV0030 and DEV0031, matching its `Direct development work` table. DEV0016–DEV0018 and DEV0023–DEV0024 are downstream consumers, so their explicit membership is `None`.
+DEV0016–DEV0018 and DEV0023–DEV0024 are downstream consumers, so their explicit membership is `None`.
 
 DEV and COR sequences remain independent. Conversion uses the next free COR ID instead of copying the DEV numeric portion; the former DEV ID stays retired and cannot be reused or referenced by a later commit.
 
@@ -35,28 +37,29 @@ DEV and COR sequences remain independent. Conversion uses the next free COR ID i
 1. Add this ticket and index entry before changing workflow policy.
 2. Add the required coordination-membership rule and pre-implementation conversion procedure to AGENTS.md.
 3. Update the development and coordination templates and work-record guide with the same field, membership limit and split behavior.
-4. Add explicit coordination metadata to every current and archived DEV record, using COR0001 only for its five direct members.
+4.
 5. Extend local record validation for required metadata, valid COR targets and reciprocal direct membership; format documents, record results and archive this ticket.
 
 ## Acceptance criteria
 
 - [x] AC1: Every DEV record has a `Coordination` field in its opening metadata with exactly one linked COR or an explicit `None` value.
-- [x] AC2: COR0001 and its five direct DEV records agree reciprocally; dependencies and downstream consumers are not represented as direct membership.
+
 - [x] AC3: AGENTS.md clearly defines membership, the one-COR limit, DEV-to-COR conversion before implementation, retired DEV IDs and the history-preserving rule after implementation starts.
 - [x] AC4: Templates and guides match AGENTS.md, all local links resolve, validation detects missing/invalid membership and formatting passes.
 - [x] AC5: No application source, runtime configuration, package, product behavior, deployment or historical commit changes.
 
 ## Validation plan
 
-Validate every DEV file for one opening `Coordination` field and ensure linked membership targets a current or archived COR record. Compare COR0001's direct-development table with reciprocal DEV fields. Run the complete record/link validator and Prettier across repository Markdown. Search active policy/templates for contradictory split, child or membership instructions. Application checks do not apply.
+Validate every DEV file for one opening `Coordination` field and ensure linked membership targets a current or archived COR record. Run the complete record/link validator and Prettier across repository Markdown. Search active policy/templates for contradictory split, child or membership instructions. Application checks do not apply.
 
 ## Implementation record
 
+Not applicable to the retained excerpt — superseded detail in this section was pruned under DEV0225.
+
 ### Coordination membership
 
-- Added a required `Coordination` field directly after `Milestone` in all 29 development records. Five current structural tickets—DEV0015, DEV0025, DEV0027, DEV0030 and DEV0031—link to COR0001 because they appear in its direct-work map. The other 24 records explicitly state `None — independent development ticket`.
+- Added a required `Coordination` field directly after `Milestone` in all 29 development records. The other 24 records explicitly state `None — independent development ticket`.
 - Membership now means direct implementation ownership under one COR. Dependencies, downstream consumers, follow-ups and historical baselines remain in `Related records` and do not grant membership. A DEV can have at most one direct COR, and the COR's tracked-development metadata must name the same DEV.
-- Added `Converted from` metadata to the coordination template and COR0001. COR0001 states that it was created as coordination rather than converted from a DEV.
 
 ### DEV-to-COR conversion
 
@@ -70,12 +73,12 @@ Validate every DEV file for one opening `Coordination` field and ensure linked m
 - Added a structured retired-development-ID register to the work-record guide. DEV0010–DEV0013 remain retired because their records were consolidated into DEV0008; future conversions add rows there.
 - The local structural validator now requires exactly one opening coordination field for every DEV, validates a linked COR target, requires `Converted from` on COR records, checks reciprocal tracked membership and rejects reuse of an ID in the retired table.
 
-This change affects contributor documentation and work-record metadata only. It changes no source, dependency, runtime configuration, environment variable, product contract, database, wallet, smart contract, deployment or historical Git commit.
+This change affects contributor documentation and work-record metadata only.
 
 ## Validation results
 
-- **Metadata coverage — passed:** all 29 DEV files have exactly one opening `Coordination` field; five link to COR0001 and 24 explicitly identify themselves as independent.
-- **Reciprocal membership — passed:** COR0001 tracks DEV0015, DEV0025, DEV0027, DEV0030 and DEV0031, and each of those records links back to COR0001. Its downstream DEV0016–DEV0018 and DEV0023–DEV0024 records remain independent.
+Its downstream DEV0016–DEV0018 and DEV0023–DEV0024 records remain independent.
+
 - **Policy review — passed:** AGENTS.md, both templates and the work-record guides consistently define direct membership, the one-COR limit, pre-implementation conversion, fresh peer DEV tickets, retired identifiers and the history-preserving rule after implementation begins. The active policy contains no instruction to keep a split DEV as a parent ticket.
 - **Record/link validator before self-archive — passed:** validation found 30 unique records—29 DEV and one COR—with 12 current and 18 archived records. It checked record type/path/status/index consistency, retired IDs, coordination metadata, reciprocal membership and local links across 49 Markdown files.
 - **Formatting — passed:** Prettier accepted AGENTS.md and every Markdown file under `tickets/`.

@@ -2,10 +2,12 @@
 
 - Status: Completed
 - Created: 2026-10-02
-- Last updated: 2026-10-03
+- Last updated: 2026-10-14
 - Milestone: Coach-first M1 identity and discovery
-- Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on the simplified gym/location boundary from [DEV0109 — Retire membership schema and preserve gyms](DEV0109-retire-membership-schema-and-preserve-gyms.md), follows [DEV0094](../organisatory/DEV0094-adopt-coach-first-training-package-mvp.md) and reuses completed email identity plus in-progress [DEV0047 — Personal wallet linking](DEV0047-personal-wallet-linking-and-replacement.md); supplies coach identity/location to DEV0097, DEV0100, [DEV0104 — Publish weekly coach availability](DEV0104-publish-weekly-coach-availability.md) and [DEV0108 — Add the Mapbox coach Explore map](../frontend/DEV0108-add-mapbox-coach-explore-map.md); [DEV0110 — Activate coaching during account onboarding](DEV0110-activate-coaching-during-account-onboarding.md) later separates self-service activation from public-profile existence
+- Coordination: None — independent development ticket
+- Related records: Independent retained outcome; superseded handoffs removed under DEV0225.
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
@@ -14,7 +16,6 @@ Add the persistent application boundary that lets an email-backed user become a 
 ## Scope and non-goals
 
 - In scope: coach role/profile schema and authorization; public display name, disciplines, bio, optional affiliation with one fictional gym supplied by DEV0109 or an independent location, one explicitly selected public discovery location with provider-neutral label/longitude/latitude/source/confirmation fields, private-training service mode, reviewed timezone and visibility; original fictional martial-arts coach seed data; restricted public coach search/filter/detail projections including optional gym name; profile editing by the owning authenticated coach; stable integration points for active offer metadata, weekly availability and the Mapbox UI owned by later peers; responsive list-based coach directory/profile screens with honest empty/error states.
-- Out of scope: Mapbox dependency/provider UI owned by DEV0108, gym accounts/administration/classes/memberships/check-ins/wallet authority, credentials/verification claims, ratings, slot persistence or calendar mutation, messaging, client/device geolocation, live tracking, distance-from-me sorting, multiple simultaneous public gym/venue locations, coach payments, onchain offer creation, pass purchase, booking, session redemption, posts/follows or real-coach/gym data without permission.
 
 ## Expected behavior and edge cases
 
@@ -24,7 +25,7 @@ Public offer summaries appear only when a later indexed active offer has matchin
 
 ## Assumptions, decisions, and dependencies
 
-Application identity remains email-first. Wallet linking is separate and required only before chain-backed offer actions. Coach status is self-declared for the hackathon and must not be labelled verified. Fictional coach identities, images and selected locations must be original/demo-safe and must not imply a real person or partnership.
+Application identity remains email-first. Coach status is self-declared for the hackathon and must not be labelled verified. Fictional coach identities, images and selected locations must be original/demo-safe and must not imply a real person or partnership.
 
 PostgreSQL stores a provider-neutral location snapshot and never depends on a Mapbox feature identifier to render the list. DEV0108 owns selection/geocoding UI and must supply only a storage-permitted confirmed result. This ticket validates coordinate bounds, bounded labels, owner authority, optional same-dataset gym affiliation and confirmation metadata before persistence. Selecting a gym copies or references only its reviewed public location data; the gym gains no authority over the coach. P0 supports zero or one selected public gym affiliation and exactly one public location per coach; multiple simultaneous venues and service areas are deferred.
 
@@ -51,7 +52,7 @@ Run clean/repeat migration and seed checks, database constraint/RLS tests, serve
 
 ## Implementation record
 
-Implementation started after DEV0109 completed the simplified gym boundary. Route, authority and role semantics were reviewed before the first runtime edit. The feature implementation and focused validation completed first; final repository-wide static validation was rerun successfully on 2026-10-03 after the concurrent DEV0097 issues were resolved.
+Implementation started after DEV0109 completed the simplified gym boundary. Route, authority and role semantics were reviewed before the first runtime edit.
 
 ### Changes and rationale
 
@@ -83,17 +84,16 @@ The additive database contract permits zero or one selected fictional gym affili
 
 ## Validation results
 
-- Passed twice: `npm run db:reset` rebuilt the complete migration chain through `20261003000200_create_coach_profiles.sql` and reapplied the deterministic seed without conflict.
 - Passed: `npm run db:test` — 4 pgTAP files and 101 assertions, including 27 coach-profile schema/RLS/seed assertions.
 - Passed: `npm run db:runtime && npm run test:db` — 14 integration tests; coach cases proved the verified owner-only mutation, public filtering, hidden-profile isolation and inactive-gym rollback.
-- Passed: `npm test` — 47 unit/boundary tests in the isolated DEV0096 state; a later shared-tree run also passed 51 tests after concurrent DEV0097 tests appeared. Focused coach validation and server-only boundary checks passed in both runs.
+  Focused coach validation and server-only boundary checks passed in both runs.
 - Passed: `npm run test:e2e` — 24 desktop/mobile scenarios. The coach directory, discipline filtering, profile detail, truthful empty downstream sections and protected editor boundary passed without horizontal overflow. Captured desktop/mobile directory and profile screenshots were visually reviewed.
 - Passed: `npm run db:lint` — no schema errors. `npm run format:check`, focused ESLint for every DEV0096 TypeScript/TSX file and `git diff --check` also passed.
-- Passed on the final shared tree on 2026-10-03: `npm run lint`, `npm run typecheck` and `npm run build`. Next.js 16.3.5 generated route types, completed TypeScript, compiled the production application and included dynamic `/explore`, `/coaches/[slug]` and `/profile/coach` routes. This clears the temporary concurrent DEV0097 blocker and completes AC5.
+- Passed on the final shared tree on 2026-10-03: `npm run lint`, `npm run typecheck` and `npm run build`. Next.js 16.3.5 generated route types, completed TypeScript, compiled the production application and included dynamic `/explore`, `/coaches/[slug]` and `/profile/coach` routes.
 
 ## Risks, limitations, and follow-ups
 
-Self-declared coach profiles prove neither credentials nor quality. Verification, ratings, moderation and real partner onboarding require later tickets. The manual coordinate form is an interim provider-neutral editor; DEV0108 owns Mapbox-assisted selection and compliance. Weekly times, offers and posts remain truthful empty states until DEV0104, DEV0097/DEV0098 and DEV0100 supply authoritative data. Hosted migration is sequenced after DEV0109's unresolved staging-history disposition.
+Self-declared coach profiles prove neither credentials nor quality. Verification, ratings, moderation and real partner onboarding require later tickets. The manual coordinate form is an interim provider-neutral editor; DEV0108 owns Mapbox-assisted selection and compliance. Hosted migration is sequenced after DEV0109's unresolved staging-history disposition.
 
 ## Completion and review references
 

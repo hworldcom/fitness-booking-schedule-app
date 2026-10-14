@@ -2,14 +2,16 @@
 
 - Status: Completed
 - Created: 2026-09-24
-- Last updated: 2026-09-24
+- Last updated: 2026-10-14
 - Milestone: M0 identity and schema clarity
 - Coordination: None — independent development ticket
 - Related records: follows the database foundation in [DEV0015](DEV0015-supabase-database-foundation.md), protected actor context in [DEV0040](DEV0040-protected-access-and-database-context.md), email identity in [DEV0046](DEV0046-email-otp-registration-and-application-profiles.md), and the consumer-membership removal in DEV0048
 
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
+
 ## Objective and context
 
-Rename the internal `app.demo_run_memberships` relation to `app.demo_run_participants` so application dataset participation is not confused with customer fitness memberships. Preserve every identity, authorization, wallet and organization-role behavior while making the database, server mapping, operational scripts and current tests use participant terminology.
+Rename the internal `app.demo_run_memberships` relation to `app.demo_run_participants` so application dataset participation is not confused with customer fitness memberships.
 
 The relation records that an application profile participates in one isolated demonstration dataset with a base application role. It is not a gym membership product, purchased entitlement or organization role. Consumer memberships will return later through a separate reviewed contract.
 
@@ -20,7 +22,7 @@ The relation records that an application profile participates in one isolated de
 
 ## Expected behavior and edge cases
 
-Existing participant rows, foreign keys, ownership, grants and row-level-security behavior survive the rename. Identity enrollment inserts one participant, returning login reuses it, actor validation still fails closed, and personal/club wallet flows retain their existing participant dependency. A clean database replay creates the historical relation first and renames it in the new forward migration; an already-migrated database applies the same rename without data copy or deletion.
+Existing participant rows, foreign keys, ownership, grants and row-level-security behavior survive the rename. A clean database replay creates the historical relation first and renames it in the new forward migration; an already-migrated database applies the same rename without data copy or deletion.
 
 The old `app.demo_run_memberships` name must not remain as a compatibility view or alias because that would preserve the ambiguity. Historical migration files and archived tickets retain the old name as an accurate record of what was previously applied.
 
@@ -44,13 +46,12 @@ The old `app.demo_run_memberships` name must not remain as a compatibility view 
 
 - [x] AC1: A clean database exposes `app.demo_run_participants` with all existing rows/columns, constraints, ownership, grants, row-level security and participant-owned object names, and exposes no `app.demo_run_memberships` relation.
 - [x] AC2: Email enrollment/current-identity and protected actor validation use the renamed relation and retain their existing authorization, idempotency and isolation behavior.
-- [x] AC3: Personal-wallet, club-wallet, organization-role, venue-staff and trainer foreign-key behavior remains intact without data loss or broadened authority.
 - [x] AC4: Active application mappings, seed, scripts, tests and current planning use dataset-participant terminology; historical migrations and archived tickets remain unchanged.
 - [x] AC5: Local migration replay, SQL/database checks, focused driver tests, unit tests, lint, typecheck and formatting pass, with any environment-blocked checks recorded precisely.
 
 ## Validation plan
 
-Reset the disposable local database through the complete migration chain and run the Supabase SQL suite plus the identity, authorization, personal-wallet and club-wallet driver tests. Inspect the final catalogue for the new table, renamed participant-owned objects, preserved foreign keys and absence of the old relation. Run `npm test`, `npm run lint`, `npm run typecheck`, `npm run format:check` and `git diff --check`.
+Inspect the final catalogue for the new table, renamed participant-owned objects, preserved foreign keys and absence of the old relation. Run `npm test`, `npm run lint`, `npm run typecheck`, `npm run format:check` and `git diff --check`.
 
 ## Implementation record
 
@@ -58,11 +59,11 @@ Implementation started after confirming that the old name appears in stored iden
 
 ### Changes and rationale
 
-Added a forward-only migration that renames `app.demo_run_memberships` to `app.demo_run_participants` without copying or deleting data. The migration also renames the relation-owned constraints, lookup index, update trigger and row-level-security policies so schema inspection uses participant terminology consistently. PostgreSQL preserves the identity of the renamed relation, so existing foreign keys from organization roles, venue staff, trainer affiliations, wallet bindings and authentication challenges remain attached without recreation.
+Added a forward-only migration that renames `app.demo_run_memberships` to `app.demo_run_participants` without copying or deleting data. The migration also renames the relation-owned constraints, lookup index, update trigger and row-level-security policies so schema inspection uses participant terminology consistently.
 
 Three stored identity/authorization functions contained the old qualified relation name in their stored source. The migration refreshes exactly those checked-in functions through `pg_get_functiondef`, asserts that each contains the expected old reference, and replaces only that qualified relation reference. Their ownership, signatures and grants remain unchanged. A table comment now states explicitly that these rows are application-dataset participants rather than customer fitness memberships.
 
-The final Drizzle mapping exports `demoRunParticipants`; authorization queries, identity/wallet foreign-key mappings, the deterministic seed, club-wallet scripts and SQL/driver tests now query `app.demo_run_participants`. Current DEV0018 planning uses the new terminology. Historical migrations and archived tickets retain the old name because they record the schema that was actually applied at that point in time.
+Current DEV0018 planning uses the new terminology. Historical migrations and archived tickets retain the old name because they record the schema that was actually applied at that point in time.
 
 ### Affected files
 
@@ -70,8 +71,6 @@ The final Drizzle mapping exports `demoRunParticipants`; authorization queries, 
 | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `supabase/migrations/20260924000100_rename_demo_run_participants.sql`                                                 | Renames the relation and its owned object names, refreshes stored function references and documents the final meaning without rewriting prior migrations. |
 | `src/server/db/schema/foundation.ts`, `src/server/db/schema/identity.ts`, `src/server/db/authorization/repository.ts` | Map and query the final database relation through the `demoRunParticipants` export while preserving every existing foreign key and actor rule.            |
-| `supabase/seed.sql`, `scripts/prepare-local-club-wallet.mjs`, `scripts/rehearse-local-club-wallet.mjs`                | Seed and operate on participant rows using unambiguous table and query aliases.                                                                           |
-| `supabase/tests/database/*.test.sql`, `tests/database/*.test.ts`                                                      | Verify the new table/object names, absence of the legacy relation, refreshed function source and unchanged identity/wallet behavior.                      |
 | `tickets/current/backend/DEV0018-class-pass-reservations-and-confirmed-visits.md`, `tickets/README.md`                | Use participant terminology in current planning and register this development ticket.                                                                     |
 
 ### Decisions and deviations
@@ -90,7 +89,6 @@ Validated on 2026-09-24 against the disposable local Supabase PostgreSQL 17 stac
 - `npm run db:reset` — passed after the syntax correction; replayed all eight migrations in order, seeded `app.demo_run_participants` and restarted the local stack.
 - `npm run db:test` — passed 89 PostgreSQL assertions across four files. Durable checks prove the old relation and old participant-owned object names are absent, stored identity/actor functions contain no legacy relation reference, and all authorization behavior still passes.
 - `npm run db:lint` — passed with no schema errors.
-- `npm run db:runtime` followed by `npm run test:db` — passed all 13 driver/integration tests, including identity concurrency/isolation, RLS, personal-wallet ownership and club-wallet authority. The first driver attempt correctly failed because a reset removes the generated local runtime-login password; provisioning the documented disposable login resolved the prerequisite without a code change.
 - `npm test` — passed all 51 unit/boundary tests.
 - `npm run lint`, `npm run typecheck`, `npm run format:check`, and `git diff --check` — passed.
 - `npm run build` — the standard Turbopack build remained blocked by the host environment while its CSS loader attempted to create an internal process and bind a port (`Operation not permitted`). `npx --no-install next build --webpack`, the established repository fallback for this host restriction, compiled successfully, completed TypeScript and generated all 13 static pages.
@@ -100,7 +98,6 @@ Validated on 2026-09-24 against the disposable local Supabase PostgreSQL 17 stac
 | --------- | ------------------------------------------------------------------- | ------ |
 | AC1       | Clean eight-migration replay plus foundation catalogue assertions   | Passed |
 | AC2       | Identity/authorization SQL tests and driver integration tests       | Passed |
-| AC3       | Personal-wallet, club-wallet and foundation foreign-key suites      | Passed |
 | AC4       | Active-file terminology audit and reviewed historical exclusions    | Passed |
 | AC5       | SQL 89/89, driver 13/13, unit 51/51, lint/type/format/schema checks | Passed |
 

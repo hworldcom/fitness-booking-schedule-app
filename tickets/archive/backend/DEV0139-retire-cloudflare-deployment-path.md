@@ -2,10 +2,12 @@
 
 - Status: Completed
 - Created: 2026-10-07
-- Last updated: 2026-10-07
+- Last updated: 2026-10-14
 - Milestone: Hosted runtime consolidation
 - Coordination: None — independent development ticket
 - Related records: [DEV0138 — Prepare Vercel deployment](../../archive/backend/DEV0138-prepare-vercel-deployment.md), [DEV0054 — Cloudflare Workers runtime foundation](../../archive/backend/DEV0054-cloudflare-workers-runtime-foundation.md), [DEV0056 — Staging release and domain rehearsal](../../archive/backend/DEV0056-staging-release-and-domain-rehearsal.md), [DEV0093 — Reduce Cloudflare authentication and render CPU](../../archive/backend/DEV0093-reduce-cloudflare-auth-render-cpu.md), [COR0004 — Hosted staging deployment](../../archive/organisatory/COR0004-hosted-staging-deployment.md)
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
@@ -28,7 +30,6 @@ This ticket consolidates the repository on standard Next.js plus the Vercel read
   - Deleting or modifying the live Cloudflare Worker, Cloudflare account, zone, DNS records, Access policies, Hyperdrive object or stored secrets.
   - Deploying to Vercel, changing `staging.movx.club`, or migrating external credentials.
   - Rewriting archived Cloudflare ticket history or erasing prior deployment evidence.
-  - Changing application routes, user behavior, database schema, authentication rules or Solana contracts.
 
 ## Expected behavior and edge cases
 
@@ -74,6 +75,8 @@ This ticket consolidates the repository on standard Next.js plus the Vercel read
 
 ## Implementation record
 
+Not applicable to the retained excerpt — superseded detail in this section was pruned under DEV0225.
+
 ### Changes and rationale
 
 - Removed the alternative Cloudflare delivery toolchain from `package.json` and the lockfile: vinext, the vinext Cloudflare adapter, Vite and its React/RSC plugins, Wrangler, the Cloudflare Vite plugin and the direct React Server Components webpack package are no longer direct dependencies. The Cloudflare build, preview, validation and deployment commands were removed while the native Next.js and guarded Vercel commands remain.
@@ -115,8 +118,8 @@ This ticket consolidates the repository on standard Next.js plus the Vercel read
 - `npm test` — passed 129 root tests and 28 server tests, 157 total, with zero failures/skips/cancellations.
 - `npm run lint`, `npm run typecheck`, `npm run format:check` and `git diff --check` — passed. Route type generation and TypeScript completed without errors.
 - `npm run build` — passed the configured native Next.js 16.3.8 production build and generated all 34 listed application/API routes.
-- Configuration-free `npm run build:vercel` with all application variables explicitly empty and `VERCEL_ENV=preview` — validator reported `public-preview` with Mapbox and Devnet transactions disabled, then the Next.js build passed.
-- Guarded `npm run build:vercel` after parsing the ignored `.env.staging.local` through `@next/env` and setting `VERCEL_ENV=preview` — validator reported `hosted-runtime` with Mapbox and Devnet transactions configured without printing values, then the build passed.
+- Configuration-free `npm run build:vercel` with all application variables explicitly empty and `VERCEL_ENV=preview` — validator reported `public-preview` with optional map configuration disabled, then the Next.js build passed.
+- Guarded `npm run build:vercel` after parsing the ignored `.env.staging.local` through `@next/env` and setting `VERCEL_ENV=preview` — validator reported `hosted-runtime` with optional map configuration present without printing values, then the build passed.
 - `npm ls vinext @vinext/cloudflare wrangler @cloudflare/vite-plugin @vitejs/plugin-react @vitejs/plugin-rsc react-server-dom-webpack --depth=0` — returned an empty dependency tree. A source/config search found no live Cloudflare, vinext, Wrangler, Hyperdrive or `MOVX_DATABASE` integration; only an intentional negative test assertion remains outside historical records.
 - `npm audit --omit=dev` — completed with two retained high advisories: `sharp <0.35.5` and `source-map-js <=1.2.1`. No removed Cloudflare/vinext package appears in the result; remediation is outside this ticket's hosting-path scope.
 - A local checker validated 385 relative Markdown link targets across the 20 changed documentation/work-record files; all targets exist.
@@ -134,7 +137,7 @@ This ticket consolidates the repository on standard Next.js plus the Vercel read
 ## Risks, limitations, and follow-ups
 
 - The last deployed Worker and Cloudflare-managed DNS can continue serving until an operator intentionally tears them down or repoints the hostname. Repository cleanup must not be mistaken for external undeployment.
-- Vercel readiness is locally proven but no Vercel project/domain/hosted rehearsal exists yet; DEV0125 continues to own the integrated M7 proof.
+
 - Two unrelated high-severity transitive dependency advisories remain in `sharp` and `source-map-js`; a focused dependency-maintenance ticket should update them without forcing the audit's proposed Next.js ESLint downgrade.
 
 ## Completion and review references

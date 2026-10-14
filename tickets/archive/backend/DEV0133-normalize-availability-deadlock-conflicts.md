@@ -2,16 +2,18 @@
 
 - Status: Completed
 - Created: 2026-10-04
-- Last updated: 2026-10-04
+- Last updated: 2026-10-14
 - Milestone: Project maintenance
 - Coordination: None — independent development ticket
-- Related records: discovered while validating [DEV0128](DEV0128-persist-credit-backed-private-bookings.md); preserves the completed availability contract from [DEV0114](DEV0114-persist-recurring-coach-availability.md)
+- Related records: preserves the completed availability contract from [DEV0114](DEV0114-persist-recurring-coach-availability.md)
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
 The existing concurrent-availability database test proves that two requests cannot publish the same capacity-one slot. PostgreSQL may reject the losing request with exclusion-constraint code `23P01` or, when two exclusion checks wait on each other's transactions, deadlock code `40P01`. The repository currently normalizes only the first outcome, leaking a raw database error for the second and making the established test nondeterministic.
 
-Normalize the bounded deadlock outcome into the existing `CoachAvailabilityConflictError` so callers receive one stable domain conflict for either database race result. This is repository error handling only and does not change the availability product contract in [the MVP specification](../../../docs/mvp-spec.md#core-coach-packages).
+Normalize the bounded deadlock outcome into the existing `CoachAvailabilityConflictError` so callers receive one stable domain conflict for either database race result. This is repository error handling only and does not change the availability product contract in [the MVP specification](../../../docs/mvp-spec.md#5-scheduling-state-model).
 
 ## Scope and non-goals
 
@@ -21,7 +23,7 @@ Normalize the bounded deadlock outcome into the existing `CoachAvailabilityConfl
   - validate the existing concurrent-publication scenario in the full database suite.
 - Out of scope:
   - changing availability capacity, scheduling, locking or retry policy;
-  - changing booking persistence or Solana behavior;
+
   - converting unrelated database deadlocks outside the availability repository.
 
 ## Expected behavior and edge cases
@@ -49,7 +51,7 @@ Run the focused `concurrent overlapping publication` database test against the c
 
 ## Implementation record
 
-Implementation started after a clean DEV0128 migration rehearsal exposed the established availability race as PostgreSQL `40P01` in the full database suite.
+Implementation completed on 2026-10-04. The retained changes and validation below describe that original outcome; documentary pruning runs no new application checks.
 
 ### Changes and rationale
 

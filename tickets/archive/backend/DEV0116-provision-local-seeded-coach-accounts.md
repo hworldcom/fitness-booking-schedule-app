@@ -2,10 +2,12 @@
 
 - Status: Completed
 - Created: 2026-10-04
-- Last updated: 2026-10-04
+- Last updated: 2026-10-14
 - Milestone: Coach-first local integration support
-- Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
+- Coordination: None — independent development ticket
 - Related records: builds on the email-code identity boundary from [DEV0046 — Email OTP registration and application profiles](DEV0046-email-otp-registration-and-application-profiles.md), converts the five fictional profiles delivered by [DEV0096 — Persist coach profiles and discovery](DEV0096-persist-coach-profiles-and-discovery.md) only in the disposable local environment, and supplies stable coach identities for [DEV0114 — Persist recurring coach availability](DEV0114-persist-recurring-coach-availability.md) and [DEV0115 — Add the coach schedule calendar](../frontend/DEV0115-add-coach-schedule-calendar.md) validation
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
@@ -25,7 +27,6 @@ The command must refuse any non-loopback Auth or database endpoint. It fails bef
 ## Assumptions, decisions, and dependencies
 
 - The user requested accounts for the existing coaches on 2026-10-04 while choosing DEV0114 as the next product implementation. Reusable local coach identities improve authenticated recurrence/calendar validation, but they are integration support rather than production customer provisioning.
-- Email OTP remains the only login mechanism. The command supplies or exposes no password and creates no session, wallet or authority metadata consumed by the application; Supabase may keep an inaccessible generated credential hash internally.
 - Fixed aliases use the reserved `.test` top-level domain and are documented because they are identifiers, not secrets. Supabase's local Mailpit captures requested codes.
 - Conversion is deliberately allowlisted by exact profile ID, slug and email. A generic claim procedure would contradict DEV0046's no-automatic-merging decision and DEV0096's immutable-fixture boundary.
 - The seeded coach participants currently mix historical `member` and `operator` dataset roles. Provisioning normalizes them to the ordinary `member` role used by self-service coach accounts; coaching authority continues to come from the claimed profile plus `coaching_activated_at`, not a special login role.
@@ -48,7 +49,7 @@ The command must refuse any non-loopback Auth or database endpoint. It fails bef
 
 ## Validation plan
 
-Add unit tests for the allowlist shape, loopback URL/database validation, safe environment parsing and collision decisions. Against the Auth-enabled disposable local stack, run the command twice, query the five subject/profile/membership/coach mappings and call `app.current_application_identity` for every subject. Confirm coach slugs and public records are preserved, the provisioner supplies no password, and the command output contains aliases but no service-role value. Run relevant lint and formatting checks. A hosted rehearsal, Solana check, Mapbox request and production build are not required because this ticket changes local tooling/data only.
+Add unit tests for the allowlist shape, loopback URL/database validation, safe environment parsing and collision decisions. Against the Auth-enabled disposable local stack, run the command twice, query the five subject/profile/membership/coach mappings and call `app.current_application_identity` for every subject. Confirm coach slugs and public records are preserved, the provisioner supplies no password, and the command output contains aliases but no service-role value. Run relevant lint and formatting checks.
 
 ## Implementation record
 
@@ -66,14 +67,13 @@ Final review tightened the reuse and seed preconditions: a tagged Auth user must
 
 ### Affected files
 
-| File or component                                                                | Change and purpose                                                                                                                                    |
-| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `scripts/lib/local-coach-accounts.ts`                                            | Defines the exact five-account allowlist and pure validation for local status, endpoints, Auth identity reuse and fixture/provisioned database state. |
-| `scripts/provision-local-coach-accounts.ts`                                      | Orchestrates guarded Auth creation, atomic database binding, compensation, identity verification and credential-safe output.                          |
-| `tests/local-coach-accounts.test.ts`                                             | Covers stable identity uniqueness, `.test` aliases, parsing, loopback enforcement, metadata collision rejection and complete-state checks.            |
-| `package.json`                                                                   | Adds `auth:provision:coaches` through the existing local `tsx` development dependency.                                                                |
-| `README.md`                                                                      | Documents provisioning, all five aliases, Mailpit login, idempotence, local-only scope and reset rollback.                                            |
-| `tickets/README.md`, `tickets/current/organisatory/COR0009-…md`, and this record | Track DEV0116 ownership, delivery state, relationships and validation evidence.                                                                       |
+| File or component                           | Change and purpose                                                                                                                                    |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scripts/lib/local-coach-accounts.ts`       | Defines the exact five-account allowlist and pure validation for local status, endpoints, Auth identity reuse and fixture/provisioned database state. |
+| `scripts/provision-local-coach-accounts.ts` | Orchestrates guarded Auth creation, atomic database binding, compensation, identity verification and credential-safe output.                          |
+| `tests/local-coach-accounts.test.ts`        | Covers stable identity uniqueness, `.test` aliases, parsing, loopback enforcement, metadata collision rejection and complete-state checks.            |
+| `package.json`                              | Adds `auth:provision:coaches` through the existing local `tsx` development dependency.                                                                |
+| `README.md`                                 | Documents provisioning, all five aliases, Mailpit login, idempotence, local-only scope and reset rollback.                                            |
 
 ### Decisions and deviations
 

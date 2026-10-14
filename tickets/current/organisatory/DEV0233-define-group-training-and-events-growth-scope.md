@@ -5,7 +5,7 @@
 - Last updated: 2026-10-14
 - Milestone: Proposed growth extension — not an adopted MVP milestone
 - Coordination: None — independent development ticket
-- Related records: historical baseline [DEV0120 — Group-event catalogue](../../archive/backend/DEV0120-persist-group-event-catalogue-and-projections.md); cancelled historical interface [DEV0123 — Group-event creation and funding](../../archive/frontend/DEV0123-present-group-event-creation-and-funding.md); separate-branch reference `COR0019` and completed interface `DEV0216` on `hackathon/solana-group-events` (not files on this branch and not dependencies)
+- Related records: earlier excluded-product baselines were pruned under [DEV0225](../../archive/organisatory/DEV0225-remove-blockchain-historical-evidence.md); separate-branch references `COR0019` and `DEV0216` on `hackathon/solana-group-events` remain identifier context, not files or dependencies on this branch.
 
 ## Objective and context
 

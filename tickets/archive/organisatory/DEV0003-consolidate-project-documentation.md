@@ -2,10 +2,12 @@
 
 - Status: Completed
 - Created: 2026-09-18
-- Last updated: 2026-09-18
+- Last updated: 2026-10-14
 - Milestone: Project maintenance, before M0
 - Coordination: None — independent development ticket
 - Related tickets: [DEV0001](DEV0001-ticket-workflow-and-agent-instructions.md), [DEV0002](DEV0002-ticket-number-in-commit-subjects.md)
+
+> Documentary pruning — 2026-10-14, [DEV0225](DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
@@ -73,17 +75,14 @@ The earlier summary, review, and implementation plan were moved to a dated archi
 
 ### Affected files
 
-| File or component                                                                                     | Change and purpose                                                                                                                              |
-| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| [README.md](../../../README.md)                                                                       | Replaced overlapping summaries and reading lists with concise document ownership/navigation.                                                    |
-| [docs/mvp-spec.md](../../../docs/mvp-spec.md)                                                         | Became the sole active product contract; added navigation, authority/update rules, business context, M0–M4, acceptance matrix, and demo script. |
-| [Archived original summary](../../../docs/archive/2026-09-18/fitness_social_hackathon_mvp_summary.md) | Moved the root summary out of the active reading path and added historical provenance.                                                          |
-| [Archived review](../../../docs/archive/2026-09-18/mvp-review.md)                                     | Preserved the dated findings, marked them superseded, and repaired moved relative links.                                                        |
-| [Archived implementation plan](../../../docs/archive/2026-09-18/implementation-plan.md)               | Preserved the former standalone plan after merging its actionable content into the specification.                                               |
-| [AGENTS.md](../../../AGENTS.md)                                                                       | Centralized workflow/status rules and replaced duplicated product rules with specification links.                                               |
-| [tickets/README.md](../../README.md)                                                                  | Reduced the guide to policy references and the ticket index; recorded this completed task.                                                      |
-| [tickets/TEMPLATE.md](../../TEMPLATE.md)                                                              | Clarified that the template is a record form and linked to the authoritative commit rule.                                                       |
-| [Ticket DEV0003](DEV0003-consolidate-project-documentation.md)                                        | Recorded the cleanup plan before edits and retained the implementation/validation trail.                                                        |
+| File or component                                              | Change and purpose                                                                                                                              |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| [README.md](../../../README.md)                                | Replaced overlapping summaries and reading lists with concise document ownership/navigation.                                                    |
+| [docs/mvp-spec.md](../../../docs/mvp-spec.md)                  | Became the sole active product contract; added navigation, authority/update rules, business context, M0–M4, acceptance matrix, and demo script. |
+| [AGENTS.md](../../../AGENTS.md)                                | Centralized workflow/status rules and replaced duplicated product rules with specification links.                                               |
+| [tickets/README.md](../../README.md)                           | Reduced the guide to policy references and the ticket index; recorded this completed task.                                                      |
+| [tickets/TEMPLATE.md](../../TEMPLATE.md)                       | Clarified that the template is a record form and linked to the authoritative commit rule.                                                       |
+| [Ticket DEV0003](DEV0003-consolidate-project-documentation.md) | Recorded the cleanup plan before edits and retained the implementation/validation trail.                                                        |
 
 ### Decisions and deviations
 

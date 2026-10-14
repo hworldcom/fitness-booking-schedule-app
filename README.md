@@ -4,19 +4,18 @@
 
 MovX Club is a focused scheduling application for martial-arts athletes and coaches. Guests discover fictional coaches and real published availability. Email-authenticated athletes request one capacity-one private session, and the coach confirms one athlete before a booking exists. Coaches manage their public profile, training locations, location-aware recurring one-hour availability, request queue and booked schedule.
 
-This standalone scheduling repository intentionally excludes blockchain, wallets, passes, credits, token payments, group events and social/feed behavior. Historical records and migrations may describe those superseded features, but they do not define the current product or runtime. The separate [fitness-booking-social-app](https://github.com/hworldcom/fitness-booking-social-app) repository preserves the Solana hackathon product.
+This standalone scheduling repository intentionally excludes blockchain, wallets, passes, credits, token payments, group events and social/feed behavior. Historical SQL migrations remain additive compatibility history. Dedicated excluded-product documents and evidence were pruned under [DEV0225](tickets/archive/organisatory/DEV0225-remove-blockchain-historical-evidence.md); retained scheduling and contributor records remain historical context. The separate [fitness-booking-social-app](https://github.com/hworldcom/fitness-booking-social-app) repository preserves the Solana hackathon product.
 
 Start with the [MVP specification](docs/mvp-spec.md), the single current product contract. The scheduling-product split is recorded by completed [COR0011](tickets/archive/organisatory/COR0011-scheduling-only-product.md); hosted deployment and rehearsal remain separate operational work.
 
 ## Repository guide
 
-| Location                                             | Responsibility                                             |
-| ---------------------------------------------------- | ---------------------------------------------------------- |
-| [docs/mvp-spec.md](docs/mvp-spec.md)                 | Current scheduling behavior and delivery contract.         |
-| [AGENTS.md](AGENTS.md)                               | Contributor workflow, ticket, validation and commit rules. |
-| [tickets/README.md](tickets/README.md)               | Current and archived development/coordination records.     |
-| [docs/archive/2026-09-18/](docs/archive/2026-09-18/) | Superseded product drafts retained for context only.       |
-| [supabase/README.md](supabase/README.md)             | Local database and hosted migration operations.            |
+| Location                                 | Responsibility                                             |
+| ---------------------------------------- | ---------------------------------------------------------- |
+| [docs/mvp-spec.md](docs/mvp-spec.md)     | Current scheduling behavior and delivery contract.         |
+| [AGENTS.md](AGENTS.md)                   | Contributor workflow, ticket, validation and commit rules. |
+| [tickets/README.md](tickets/README.md)   | Current and archived development/coordination records.     |
+| [supabase/README.md](supabase/README.md) | Local database and hosted migration operations.            |
 
 ## Current foundation
 

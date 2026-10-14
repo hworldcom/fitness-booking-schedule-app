@@ -2,14 +2,16 @@
 
 - Status: Completed
 - Created: 2026-10-03
-- Last updated: 2026-10-03
+- Last updated: 2026-10-14
 - Milestone: Coach-marketplace repository consolidation
 - Coordination: None — independent development ticket
-- Related records: coach-first delivery was coordinated by [COR0009 — Coach-first private-class booking MVP](COR0009-coach-first-training-package-mvp.md); [DEV0094 — Adopt the coach-first training-package MVP](DEV0094-adopt-coach-first-training-package-mvp.md) established that historical replacement contract
+- Related records: Independent retained outcome; superseded dependencies pruned under DEV0225.
+
+> Documentary pruning — 2026-10-14, [DEV0225](DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
-Remove ticket files that belong only to the superseded challenge/community-fitness, club/access, and multi-gym/membership product directions. Keep the current user-and-coach marketplace queue, its coach-first delivery history, and reusable database, authentication, wallet, runtime, frontend-boundary, staging, and contributor-workflow foundations that the current product still uses.
+Remove ticket files that belong only to the superseded challenge/community-fitness, club/access, and multi-gym/membership product directions.
 
 The user explicitly requested this cleanup on 2026-10-03. It is a deliberate exception to the repository's normal instruction to retain archived records. Git history remains the recovery path; deleted identifiers remain permanently reserved so no future ticket or commit can reuse them.
 
@@ -35,7 +37,7 @@ Current records may retain short factual statements that the coach-first product
 
 - A ticket is product-specific when its objective and acceptance criteria deliver the superseded challenge, gym/club-access, multi-gym membership, check-in, reservation, or membership-card product rather than a reusable capability consumed by the current marketplace.
 - Coach-first cleanup tickets DEV0101 and DEV0109 remain because they delivered the current runtime/database baseline, even though their titles name the legacy capability they removed.
-- DEV0015, DEV0021, DEV0025, DEV0027, DEV0030–DEV0040, DEV0042, DEV0046, DEV0050, DEV0052, DEV0054, DEV0065 and the workflow records remain because current marketplace work still uses their delivered boundaries or repository policy.
+
 - The current uncommitted DEV0111 dependency update and record are unrelated and must be preserved.
 
 ## Implementation plan
@@ -49,7 +51,7 @@ Current records may retain short factual statements that the coach-first product
 ## Acceptance criteria
 
 - [x] AC1: The 61 selected legacy product records are absent while every current coach-marketplace record and identified reusable foundation remains present.
-- [x] AC2: Every removed DEV/COR identifier remains explicitly reserved, existing retired IDs remain reserved, and the next available identifiers are DEV0113 and COR0010.
+
 - [x] AC3: Retained Markdown contains no broken local links or live dependency on a removed record; current record statuses and index rows agree.
 - [x] AC4: No application, test, schema, migration, dependency, environment, or deployment file changes as part of DEV0112; the unrelated DEV0111 changes remain intact.
 
@@ -63,7 +65,7 @@ Resolved all 113 pre-existing record files into a 61-record legacy product set a
 
 ### Changes and rationale
 
-Removed the challenge/community-fitness, club/access and multi-gym/membership ticket lineages. Preserved the coach-marketplace work map, coach-first delivery evidence, current runtime/database cleanup records and reusable database, authentication, authorization, wallet, runtime, frontend-boundary, staging and workflow foundations.
+Removed the challenge/community-fitness, club/access and multi-gym/membership ticket lineages.
 
 Replaced 61 verbose archive rows with a compact permanent identifier register. Reconciled retained inbound links, removed legacy ticket references from every active record, changed three reusable authentication/identity foundations whose former coordination record was pruned to explicit independent-foundation status, and corrected retained specification anchors to the current coach-first sections. The application and retained design assets were not changed.
 
@@ -72,14 +74,12 @@ Replaced 61 verbose archive rows with a compact permanent identifier register. R
 | File or component                                             | Change and purpose                                                                                                                       |
 | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `tickets/archive/**`                                          | Removed only the explicitly listed 61 superseded product records and retained current/foundation history.                                |
-| [Work-record index](../../README.md)                          | Removed deleted rows, reserved every pruned identifier, set DEV0113/COR0010 as next, and kept current/archive navigation accurate.       |
 | Retained work records and current documentation               | Removed broken historical links, legacy active-queue dependencies and obsolete specification anchors while retaining factual provenance. |
 | [Contributor policy](../../../AGENTS.md#product-requirements) | Corrected product-contract anchors to the current specification's stable explicit anchors; no workflow rule changed.                     |
 
 ### Decisions and deviations
 
 - 2026-10-03: The user explicitly authorized removal of old-project tickets. This overrides normal archive retention for the listed legacy product records only; Git history provides recovery.
-- 2026-10-03: Retained reusable foundations even when their implementation history predates the coach pivot, because current coach, identity, wallet, database, staging and contributor records still consume those boundaries.
 - 2026-10-03: Preserved DEV0101 and DEV0109 because removing legacy runtime/schema is part of the current coach-marketplace baseline, not an active legacy-product plan.
 
 ### Contracts, configuration, and operations
@@ -103,7 +103,6 @@ Validated locally on 2026-10-03.
 | Criterion | Evidence                                                                                                                                | Result |
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | AC1       | Exact inventory found all 61 selected paths absent and 53 retained records before archival: 14 original current, 38 archived, DEV0112.  | Passed |
-| AC2       | Index validator matched 56 pruned DEV IDs, five pruned COR IDs, six older retired DEV IDs and next IDs DEV0113/COR0010.                 | Passed |
 | AC3       | All 53 records were indexed once with matching status; local path and anchor audits found zero failures; active legacy references zero. | Passed |
 | AC4       | Scoped diff, format and whitespace checks passed; only work-record/current-document edits belong to DEV0112.                            | Passed |
 

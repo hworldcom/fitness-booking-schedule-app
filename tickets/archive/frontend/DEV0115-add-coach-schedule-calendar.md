@@ -2,10 +2,12 @@
 
 - Status: Completed
 - Created: 2026-10-04
-- Last updated: 2026-10-04
+- Last updated: 2026-10-14
 - Milestone: Coach-first M2 recurring availability
-- Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on recurring rules and dated occurrences from [DEV0114 — Persist recurring coach availability](../backend/DEV0114-persist-recurring-coach-availability.md), replaces the form/list presentation delivered by [DEV0104 — Publish weekly coach availability](../backend/DEV0104-publish-weekly-coach-availability.md), and historically supplied client slot selection context to cancelled [DEV0105 — Book private classes with pass credits](../backend/DEV0105-book-private-classes-with-pass-credits.md)
+- Coordination: None — independent development ticket
+- Related records: Independent retained outcome; superseded dependencies pruned under DEV0225.
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
@@ -14,13 +16,12 @@ Give a coach an accessible normal weekly calendar for selecting exact repeating 
 ## Scope and non-goals
 
 - In scope: protected coach calendar navigation; responsive weekly grid/editor for adding and removing exact one-hour recurring cells; timezone and location-snapshot explanations; loading/empty/error/conflict states; public-profile dated availability calendar for guests and signed-in clients; clear sign-in/booking boundary; keyboard and screen-reader-oriented interaction; desktop/mobile browser tests.
-- Out of scope: recurrence persistence or occurrence generation owned by DEV0114; variable durations, broad windows, pause/resume and one-date exceptions; holding or booking a time owned by DEV0105; offer purchase owned by DEV0097/DEV0098; held/booked cancellation; drag-and-drop as the only editing path; external calendar sync; month-scale scheduling; group classes, buffers, travel time, reminders, waitlists or client identity exposure.
 
 ## Expected behavior and edge cases
 
 An activated coach opens the protected workspace and sees one reusable working-week grid in the schedule timezone. Weekday columns and whole-hour rows represent the coach's normal week; choosing a cell toggles that repeating one-hour slot without entering a future date. Selecting adjacent cells creates adjacent one-hour rules rather than one variable-length window. Multiple entries on one day remain understandable, and overlap/stale-write failures return bounded inline feedback. Removing a rule explains that future open occurrences change and never implies that held/booked classes moved.
 
-Each visible coach profile presents actual dated open occurrences for the coming seven days, not abstract weekday promises or fabricated fixtures. Signed-in clients can inspect them; guests retain the current read-only discovery view unless a later confirmed privacy decision changes it. Booking controls remain absent or clearly unavailable until DEV0105 supplies authoritative hold/pass behavior. Empty, database-unavailable and signed-out states remain honest.
+Each visible coach profile presents actual dated open occurrences for the coming seven days, not abstract weekday promises or fabricated fixtures. Signed-in clients can inspect them; guests retain the current read-only discovery view unless a later confirmed privacy decision changes it. Empty, database-unavailable and signed-out states remain honest.
 
 The calendar must remain usable without pointer drag-and-drop. Desktop may use a seven-day grid, while narrow screens use ordered day sections or another equivalent responsive presentation without horizontal overflow. Focus order, labels and error association must expose the same operations.
 
@@ -29,7 +30,7 @@ The calendar must remain usable without pointer drag-and-drop. Desktop may use a
 - Confirmed by the user on 2026-10-04: coaches manage a normal repeating weekly calendar of one-hour slots in their panel, signed-in clients can see the schedule, and advanced edge cases can wait for later versions.
 - Existing guest access remains a compatibility requirement because the current MVP uses public availability for cold-start discovery; sign-in is required only for later hold/booking actions.
 - The calendar displays DEV0114's server-derived rule and occurrence state. Browser time or timezone calculations cannot become scheduling authority.
-- Proposed presentation default: retain `/coach` as the Availability entry point and enhance it rather than creating an empty dashboard. Keep reciprocal `/profile/coach` navigation; DEV0097 and DEV0105 add Offers and Bookings only when their behavior exists.
+- Proposed presentation default: retain `/coach` as the Availability entry point and enhance it rather than creating an empty dashboard.
 - The calendar creates/removes exact one-hour weekday/start-time rules. Drag-and-drop may be progressive enhancement but cannot be required; every cell has a labelled keyboard-operable control.
 
 ## Implementation plan
@@ -50,7 +51,7 @@ The calendar must remain usable without pointer drag-and-drop. Desktop may use a
 
 ## Validation plan
 
-Use deterministic component/domain fixtures only for visual logic; authoritative browser scenarios must use database-backed DEV0114 rules and occurrences. Test coach add/remove of individual and adjacent one-hour cells, overlap/stale conflict, signed-out and unauthorized access, signed-in client/public profile visibility, honest empty/unavailable states, timezone labels and protected held/booked copy. Run desktop/mobile Playwright checks with keyboard traversal and overflow assertions plus relevant unit, lint, typecheck, formatting and production builds. Booking and Solana transactions are not applicable to this ticket.
+Use deterministic component/domain fixtures only for visual logic; authoritative browser scenarios must use database-backed DEV0114 rules and occurrences. Test coach add/remove of individual and adjacent one-hour cells, overlap/stale conflict, signed-out and unauthorized access, signed-in client/public profile visibility, honest empty/unavailable states, timezone labels and protected held/booked copy. Run desktop/mobile Playwright checks with keyboard traversal and overflow assertions plus relevant unit, lint, typecheck, formatting and production builds.
 
 ## Implementation record
 
@@ -62,7 +63,7 @@ The `/coach` workspace now presents one week-shaped schedule instead of a date/t
 
 One form and one server action serve the complete grid. Each submitted cell contains a bounded create/remove intent, ISO weekday, whole-hour time and, for removal, the durable rule identifier. The action reuses DEV0114's validation and owner-authorized services, maps stale/overlap failures to bounded feedback, revalidates the workspace and public profile, and explains that removing a rule changes only future open occurrences. A first render duplicated all desktop/mobile controls; review identified the unnecessary markup, so the implementation was consolidated into one 161-button control set with responsive layout rather than parallel forms.
 
-The old editable one-off cards were removed from the primary workflow. A separate read-only “Dated class times” section shows authoritative occurrences for the next seven days, their status, timezone and snapshotted location, and distinguishes working-week occurrences from retained earlier one-offs. Public coach profiles group actual open occurrences into dated day sections with one-hour ranges, timezone/location context and truthful copy that viewing is public while pass-backed booking remains pending DEV0105.
+The old editable one-off cards were removed from the primary workflow. A separate read-only “Dated class times” section shows authoritative occurrences for the next seven days, their status, timezone and snapshotted location, and distinguishes working-week occurrences from retained earlier one-offs.
 
 ### Affected files
 
@@ -82,7 +83,6 @@ The old editable one-off cards were removed from the primary workflow. A separat
 - 2026-10-04: The user clarified that this is the coach's reusable working week: the coach chooses cells once across one week-shaped schedule instead of repeatedly adding slots day by day.
 - All DEV0114-supported start hours (`00:00`–`22:00`) remain selectable. The desktop calendar scrolls vertically inside its panel; narrow screens choose one weekday at a time and list its hours without horizontal overflow.
 - The initial separate desktop/mobile control trees were replaced during self-review with one responsive control tree. This reduces markup and prevents two simultaneously rendered mutation forms from representing the same rule.
-- The dated owner and public sections remain read-only because DEV0105, not this ticket, owns holds, bookings and booking lifecycle controls.
 
 ### Contracts, configuration, and operations
 
@@ -116,7 +116,7 @@ The public availability contract remains guest-readable for discovery compatibil
 
 ## Risks, limitations, and follow-ups
 
-The editor intentionally exposes 23 possible start hours per weekday, so a coach with an unusual overnight schedule can use the same contract; on mobile this makes each selected day a long but linear list. Rule changes are saved per cell rather than as one batch, preserving simple conflict handling at the cost of one round trip per toggle. The next hosted rehearsal should observe action latency and request-driven synchronization under production-like conditions. Variable durations, broad windows, one-date exceptions, cross-midnight slots, month views, client rescheduling and external calendar synchronization remain deferred. DEV0105 must add atomic hold/booking controls against dated occurrences rather than turning the recurrence rule into bookable inventory.
+The editor intentionally exposes 23 possible start hours per weekday, so a coach with an unusual overnight schedule can use the same contract; on mobile this makes each selected day a long but linear list. Rule changes are saved per cell rather than as one batch, preserving simple conflict handling at the cost of one round trip per toggle. The next hosted rehearsal should observe action latency and request-driven synchronization under production-like conditions. Variable durations, broad windows, one-date exceptions, cross-midnight slots, month views, client rescheduling and external calendar synchronization remain deferred.
 
 ## Completion and review references
 

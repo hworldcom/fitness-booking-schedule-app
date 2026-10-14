@@ -2,10 +2,12 @@
 
 - Status: Completed
 - Created: 2026-10-03
-- Last updated: 2026-10-03
+- Last updated: 2026-10-14
 - Milestone: Coach-first M2 private availability
-- Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: depends on persistent coach identity, optional gym affiliation and confirmed public location from [DEV0096 — Persist coach profiles and discovery](DEV0096-persist-coach-profiles-and-discovery.md), which consumes the simplified gyms from [DEV0109 — Retire membership schema and preserve gyms](DEV0109-retire-membership-schema-and-preserve-gyms.md); supplied capacity-one slots/location snapshots to cancelled [DEV0105 — Book private classes with pass credits](DEV0105-book-private-classes-with-pass-credits.md) and public projections to [DEV0108 — Add the Mapbox coach Explore map](../frontend/DEV0108-add-mapbox-coach-explore-map.md)
+- Coordination: None — independent development ticket
+- Related records: depends on persistent coach identity, optional gym affiliation and confirmed public location from [DEV0096 — Persist coach profiles and discovery](DEV0096-persist-coach-profiles-and-discovery.md), which consumes the simplified gyms from [DEV0109 — Retire membership schema and preserve gyms](DEV0109-retire-membership-schema-and-preserve-gyms.md)
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
@@ -20,13 +22,13 @@ Let a coach publish explicit private-class availability for the coming seven day
 
 An authenticated visible coach creates discrete future start/end intervals in the coach profile's reviewed timezone. Intervals must have positive bounded duration, fall within the supported publication horizon and not overlap another active slot for that coach. Guests see only open slots in the coming seven days. Internal holds or confirmed bookings make a slot unavailable without exposing the client's identity.
 
-A coach may edit or withdraw an open future slot, including explicitly updating its location snapshot to the coach's current confirmed public location. When that location comes from a gym affiliation, the snapshot retains the gym identifier/name plus public label and coordinates; later gym or profile edits never rewrite existing slots. A held or confirmed slot cannot be silently moved, relocated or deleted; DEV0105 owns hold expiry and booking cancellation so the client keeps a consistent reservation, place and credit. Concurrent creation of overlapping slots fails atomically. Database failure produces an unavailable state rather than fixture availability.
+A coach may edit or withdraw an open future slot, including explicitly updating its location snapshot to the coach's current confirmed public location. When that location comes from a gym affiliation, the snapshot retains the gym identifier/name plus public label and coordinates; later gym or profile edits never rewrite existing slots. Concurrent creation of overlapping slots fails atomically. Database failure produces an unavailable state rather than fixture availability.
 
 ## Assumptions, decisions, and dependencies
 
-Availability and bookings are authoritative off-chain because calendar queries and concurrency are application concerns. The MVP uses explicit slots instead of recurring-rule expansion. Each slot represents one private class with capacity one. Store timestamps as instants and retain the coach's IANA timezone for entry and presentation; initial demonstration coaches use `Europe/Berlin`.
+Availability and bookings are authoritative in PostgreSQL because calendar queries and concurrency are application concerns. The MVP uses explicit slots instead of recurring-rule expansion. Each slot represents one private class with capacity one. Store timestamps as instants and retain the coach's IANA timezone for entry and presentation; initial demonstration coaches use `Europe/Berlin`.
 
-DEV0096 must provide the visible coach profile, one confirmed public location, optional eligible gym affiliation and owner authorization. A slot copies the bounded public label and coordinates plus optional gym identity/name so Mapbox/provider, gym or profile changes cannot alter a booked class. The gym is descriptive location data only and has no slot authority. DEV0105 owns client-facing holds and booking state; this ticket must expose a narrow concurrency-safe slot boundary rather than implementing partial booking behavior.
+DEV0096 must provide the visible coach profile, one confirmed public location, optional eligible gym affiliation and owner authorization. A slot copies the bounded public label and coordinates plus optional gym identity/name so Mapbox/provider, gym or profile changes cannot alter a booked class. The gym is descriptive location data only and has no slot authority.
 
 The coach workspace uses `/coach` as the durable protected entry point. Its initial navigation exposes only Profile, which links to the existing `/profile/coach` editor, and Availability, owned here; later tickets may add Offers and Bookings when those capabilities are real. Availability remains explicit rather than recurring: slots start on 15-minute boundaries, last 30–180 minutes in 15-minute increments, default to 60 minutes in the interface, start in the future and end within the rolling seven-day publication horizon.
 
@@ -47,7 +49,7 @@ The coach workspace uses `/coach` as the durable protected entry point. Its init
 
 ## Validation plan
 
-Run clean/repeat migration and seed checks, database constraint/RLS/concurrency tests, owner/other/anonymous service integration, timezone and rolling-window unit tests, and desktop/mobile keyboard browser scenarios. Run relevant unit, lint, typecheck, formatting and production-build commands. No Solana or Devnet transaction is applicable.
+Run clean/repeat migration and seed checks, database constraint/RLS/concurrency tests, owner/other/anonymous service integration, timezone and rolling-window unit tests, and desktop/mobile keyboard browser scenarios. Run relevant unit, lint, typecheck, formatting and production-build commands.
 
 ## Implementation record
 
@@ -59,7 +61,7 @@ The adopted P0 panel is intentionally small: Profile and Availability only. `/co
 
 The additive availability table stores instants, the reviewed coach timezone, lifecycle status and a complete provider-neutral public-location snapshot. Restricted security-definer functions interpret local wall time in the coach profile timezone, reject nonexistent or ambiguous daylight-saving times, enforce the rolling horizon and copy the current profile/gym location only at creation or when the owner explicitly requests a refresh. A GiST exclusion constraint serializes overlapping active-slot writes for one coach. Direct runtime writes remain prohibited by forced row-level security.
 
-The owner can create, move or withdraw only their own future `open` slots. `held` and `booked` are reserved lifecycle values for DEV0105 and are visible to the coach without client data but cannot be altered by availability controls. Public coach profiles query a separate projection that returns only open slots inside the exact seven-day horizon and omits internal status. Database or mapping failure produces the existing unavailable profile state; no fixture time is substituted.
+The owner can create, move or withdraw only their own future `open` slots. Public coach profiles query a separate projection that returns only open slots inside the exact seven-day horizon and omits internal status. Database or mapping failure produces the existing unavailable profile state; no fixture time is substituted.
 
 ### Affected files
 
@@ -78,9 +80,9 @@ The authenticated rehearsal exposed that the existing coach-profile client impor
 
 ### Contracts, configuration, and operations
 
-`app.coach_availability_slots` is the new authoritative off-chain capacity-one inventory. Active statuses are `open`, `held` and `booked`; `withdrawn` records remain for audit and no delete mutation is exposed. The callable runtime contracts are `app.create_owned_coach_availability(timestamp, integer)`, `app.update_owned_coach_availability(uuid, timestamp, integer, boolean)` and `app.withdraw_owned_coach_availability(uuid)`. Application runtime receives policy-filtered `select` plus execute on those functions, never direct insert/update/delete.
+`app.coach_availability_slots` is the new authoritative in PostgreSQL capacity-one inventory. Active statuses are `open`, `held` and `booked`; `withdrawn` records remain for audit and no delete mutation is exposed. The callable runtime contracts are `app.create_owned_coach_availability(timestamp, integer)`, `app.update_owned_coach_availability(uuid, timestamp, integer, boolean)` and `app.withdraw_owned_coach_availability(uuid)`. Application runtime receives policy-filtered `select` plus execute on those functions, never direct insert/update/delete.
 
-No dependency, Mapbox credential, public environment variable or secret was added. `npm run test:coach-availability` is a new local-only rehearsal command and requires the documented Auth-enabled stack, current local Supabase public values and an application on port 3100. The migration is additive and was applied only to the disposable local database; no hosted schema was changed. Before a hosted apply, use the repository's normal reviewed migration/backup process. A rollback before DEV0105 references slots can remove the three functions and table; after downstream booking references exist, recovery must use a reviewed forward migration instead of dropping inventory.
+No dependency, Mapbox credential, public environment variable or secret was added. `npm run test:coach-availability` is a new local-only rehearsal command and requires the documented Auth-enabled stack, current local Supabase public values and an application on port 3100. The migration is additive and was applied only to the disposable local database; no hosted schema was changed. Before a hosted apply, use the repository's normal reviewed migration/backup process.
 
 ## Validation results
 
@@ -97,11 +99,10 @@ No dependency, Mapbox credential, public environment variable or secret was adde
 - `npm run test:e2e` — passed all 26 Playwright cases at desktop and mobile widths, including public profile availability and the protected coach-workspace boundary.
 - `npm run test:coach-availability` — passed against the local Auth-enabled stack with a new account: created a visible gym-backed coach profile, published one slot, observed the same public slot, edited it, withdrew it, observed the public empty state, focused workspace navigation by keyboard and verified no mobile horizontal overflow. Desktop/mobile screenshots were inspected; the final contrast correction made the public-profile action readable.
 - `git diff --check` — passed before record completion.
-- Solana/Devnet transaction — not applicable; DEV0104 owns off-chain calendar inventory only.
 
 ## Risks, limitations, and follow-ups
 
-Recurring calendars, external calendar synchronization, per-slot locations, client booking, pass/payment eligibility and cancellation remain deferred. DEV0105 may transition slots to `held` or `booked` only through its own reviewed operations; the availability functions deliberately cannot do so. No fixture availability is seeded, so a coach with no published rows shows an honest empty state rather than a staged schedule.
+Recurring calendars, external calendar synchronization, per-slot locations, client booking, pass/payment eligibility and cancellation remain deferred. No fixture availability is seeded, so a coach with no published rows shows an honest empty state rather than a staged schedule.
 
 The local `.env.local` public key predated the restarted Supabase Auth stack during validation. The authenticated rehearsal used the current local publishable key returned by `npm run auth:status` without changing or recording the user's ignored environment file. Hosted deployment and independent review were not performed.
 

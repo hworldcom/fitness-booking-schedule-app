@@ -2,10 +2,12 @@
 
 - Status: Completed
 - Created: 2026-10-03
-- Last updated: 2026-10-03
+- Last updated: 2026-10-14
 - Milestone: Coach-first location-discovery correction
-- Coordination: [COR0009 — Coach-first private-class booking MVP](COR0009-coach-first-training-package-mvp.md)
-- Related records: refines coach discovery in [DEV0096](../backend/DEV0096-persist-coach-profiles-and-discovery.md), weekly slot location in [DEV0104](../backend/DEV0104-publish-weekly-coach-availability.md), historical booking presentation in cancelled [DEV0105](../backend/DEV0105-book-private-classes-with-pass-credits.md), and creates [DEV0108 — Add the Mapbox coach Explore map](../frontend/DEV0108-add-mapbox-coach-explore-map.md)
+- Coordination: None — independent development ticket
+- Related records: Independent retained outcome; superseded dependencies pruned under DEV0225.
+
+> Documentary pruning — 2026-10-14, [DEV0225](DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
@@ -15,7 +17,6 @@ This ticket owns the product/work-record correction before map integration begin
 
 ## Scope and non-goals
 
-- In scope: define one coach-selected public discovery point for P0; choose Mapbox GL JS and Mapbox-hosted maps/geocoding; retain provider-neutral stored location fields; distinguish a discovery pin from live presence and weekly availability; bind slots/bookings to stable location snapshots; define persistent-geocoding, public-token, attribution, cost-guard and list-fallback requirements; revise affected COR0009 peers; create a focused frontend implementation ticket; update the specification, README, COR0009 and ticket index.
 - Out of scope: installing Mapbox packages, creating tokens, editing environment files, schema/runtime implementation, browser geolocation, live tracking, proximity sorting from a client's location, directions/navigation, multiple coach venues, travel-radius polygons, per-slot venue selection, production launch or Mapbox account/billing changes.
 
 ## Expected behavior and edge cases
@@ -39,9 +40,9 @@ Mapbox Search Box `/suggest` and `/retrieve` responses are temporary-use data un
 ## Implementation plan
 
 1. Update the MVP specification's decisions, discovery flow, data/authority model, definition of done, milestone and acceptance scenarios for coach-selected Mapbox locations.
-2. Correct DEV0095, DEV0096, DEV0104, DEV0105 and DEV0106 so public navigation, persistence, slot snapshots, booking display and hosted evidence have explicit non-overlapping ownership.
+2.
 3. Create a focused frontend ticket for the Mapbox location picker and accessible list/map Explore experience, including token/configuration, permanent-result and fallback boundaries.
-4. Add the new peers and delivery order to COR0009 and the root ticket index; update README's target-status summary without claiming implementation.
+4.
 5. Run Markdown formatting, local-link, unique-ID/index, reciprocal coordination, terminology and whitespace checks.
 
 ## Acceptance criteria
@@ -49,12 +50,12 @@ Mapbox Search Box `/suggest` and `/retrieve` responses are temporary-use data un
 - [x] AC1: The current specification distinguishes a coach-chosen public location from live location and slot availability, adopts Mapbox for P0, and keeps list discovery functional without the map.
 - [x] AC2: Current work records assign location persistence, stable slot/booking snapshots and Mapbox interface/provider work to exactly one owner each.
 - [x] AC3: The implementation ticket prohibits storage of temporary Search Box results, requires storage-permitted permanent geocoding for persisted provider results, and defines least-scope URL-restricted public-token handling.
-- [x] AC4: COR0009 and the ticket index include the Mapbox Explore deliverable with explicit dependencies, and repository-local links, IDs, statuses, formatting and terminology checks pass.
+
 - [x] AC5: No application, schema, dependency, token, account, environment or deployment change occurs under this documentation ticket.
 
 ## Validation plan
 
-Review official Mapbox access-token, Search Box and Geocoding API documentation; search the specification and current work records for live/current location, exact distance, map, geocoding, Explore and slot-location claims. Run Prettier, `git diff --check`, repository-local Markdown target validation, unique record/index validation, current/archive status validation and reciprocal COR0009 membership validation. Runtime and Mapbox account tests are not applicable because this ticket changes documentation and planning only.
+Review official Mapbox access-token, Search Box and Geocoding API documentation; search the specification and current work records for live/current location, exact distance, map, geocoding, Explore and slot-location claims. Runtime and Mapbox account tests are not applicable because this ticket changes documentation and planning only.
 
 ## Implementation record
 
@@ -66,16 +67,13 @@ Completed the Mapbox location-discovery contract and work-map correction without
 - Defined one coach-selected public location without device geolocation or live/current-presence claims, plus provider-neutral stored fields and stable slot/booking location snapshots.
 - Recorded the current Mapbox storage boundary: Search Box results are temporary-use data; a persisted Mapbox-derived result requires a storage-permitted permanent Geocoding API flow.
 - Defined non-default least-scope URL-restricted public tokens, visible attribution, singular lazy map initialization, graceful provider failure and usage monitoring as implementation requirements.
-- Revised DEV0095, DEV0096 and DEV0104–DEV0106 and created DEV0108 so public story, persistence, slots, booking, Mapbox interface and hosted evidence have explicit owners.
 
 ### Affected files
 
 - `docs/mvp-spec.md` owns the Mapbox/location decisions, Explore flow, data/authority model, definition of done, milestone, acceptance matrix and judge path.
 - `README.md` names coach-selected locations and the planned list/Mapbox Explore view without claiming delivery.
-- DEV0095 and DEV0096 separate truthful public navigation from provider-neutral coach/location persistence.
-- DEV0104 and DEV0105 preserve location through slot snapshots and booking presentation; DEV0106 owns hosted provider/fallback evidence.
+
 - `tickets/archive/frontend/DEV0108-add-mapbox-coach-explore-map.md` owns the historical Mapbox GL JS, picker, Explore list/map UI, provider rules and operational validation record.
-- COR0009 and `tickets/README.md` record the new work boundary, dependency order and next identifiers.
 
 ### Decisions and deviations
 
@@ -94,7 +92,7 @@ Product and delivery contracts changed. No runtime dependency, environment value
 - Passed Prettier write/check across every changed Markdown file and `git diff --check` with no whitespace errors.
 - Passed repository-local link validation across 132 Markdown files with zero missing targets.
 - Passed work-record validation with 110 unique DEV/COR identifiers and every record indexed once.
-- Passed post-archive lifecycle validation across 18 current and 92 archived records; all 14 direct COR0009 DEV records have reciprocal membership.
+
 - Confirmed the diff contains only README, the specification and work records. Application, database, browser, Mapbox account and deployment checks were not run because this ticket changes documentation/planning only.
 
 ## Risks, limitations, and follow-ups

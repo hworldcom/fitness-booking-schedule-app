@@ -2,21 +2,22 @@
 
 - Status: Completed
 - Created: 2026-09-20
-- Last updated: 2026-09-20
+- Last updated: 2026-10-14
 - Milestone: Cross-cutting application foundation
-- Coordination: [COR0001 — Project structure](../organisatory/COR0001-project-structure.md)
-- Related records: direct peer development ticket tracked by [Coordination COR0001 — Project structure](../organisatory/COR0001-project-structure.md); preserves the delivered behavior recorded by DEV0008 — Frontend foundation; precedes feature work that would otherwise expand the current shared component files
+- Coordination: None — independent development ticket
+- Related records: preserves the delivered behavior recorded by DEV0008 — Frontend foundation; precedes feature work that would otherwise expand the current shared component files
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
 Move the existing user-facing screen modules from the shared component directory into capability-owned `src/features` modules while keeping reusable interface and layout primitives under `src/components`. Thin the substantial Search and How-it-works route files so `src/app` remains the Next.js routing boundary. Preserve every current URL, interaction, accessibility behavior and local-preview result.
 
-The current routes are mostly thin, but `src/components` mixes application-wide primitives with complete Challenges, Events, Explore, Classes, Feed and Profile screens. Search and How it works contain substantial presentation directly in their route files. This structure makes ownership less clear before wallet, authentication and persistence work add more modules.
+The current routes are mostly thin, but `src/components` mixes application-wide primitives with complete Challenges, Events, Explore, Classes, Feed and Profile screens. Search and How it works contain substantial presentation directly in their route files.
 
 ## Scope and non-goals
 
 - In scope: move complete feature screens into named `src/features/<capability>/` modules; move Search and How-it-works presentation behind thin route adapters; update imports and affected tests; keep shared shell/UI and genuinely shared discovery controls under `src/components`; document the exact final move map.
-- Out of scope: splitting preview fixture/domain/storage modules from `src/lib` (owned by DEV0031), redesigning components, changing routes or copy, adding server/database/wallet/program code, replacing local preview behavior, introducing a workspace or adding placeholder directories.
 
 ## Expected behavior and edge cases
 
@@ -26,9 +27,9 @@ Moves should preserve client/server boundaries and avoid broad barrel exports th
 
 ## Assumptions, decisions, and dependencies
 
-The target ownership is recorded in COR0001. `shell.tsx` and `ui.tsx` already represent shared application UI and remain under `src/components`. The discovery filters/extras are reused by several capabilities; they remain shared unless implementation proves a clearer shared subdirectory without introducing feature-to-feature dependencies. Existing global CSS remains under `src/app/globals.css` in this slice.
+`shell.tsx` and `ui.tsx` already represent shared application UI and remain under `src/components`. The discovery filters/extras are reused by several capabilities; they remain shared unless implementation proves a clearer shared subdirectory without introducing feature-to-feature dependencies. Existing global CSS remains under `src/app/globals.css` in this slice.
 
-This ticket can be implemented independently of backend and wallet work. Complete or coordinate it before modifying the same screen modules for a feature ticket to avoid conflicting moves.
+Complete or coordinate it before modifying the same screen modules for a feature ticket to avoid conflicting moves.
 
 ## Implementation plan
 
@@ -47,7 +48,7 @@ This ticket can be implemented independently of backend and wallet work. Complet
 
 ## Validation plan
 
-Use import searches to verify route/shared/feature dependency direction and confirm every old path is gone. Run `npm test`, `npm run lint`, `npm run typecheck`, `npm run format:check`, `npm run build` and `npm run test:e2e`. Inspect representative desktop/mobile screenshots for all primary surfaces, Search and How it works. No database, wallet, program or devnet validation applies because their runtime behavior is outside this structural slice.
+Use import searches to verify route/shared/feature dependency direction and confirm every old path is gone. Run `npm test`, `npm run lint`, `npm run typecheck`, `npm run format:check`, `npm run build` and `npm run test:e2e`. Inspect representative desktop/mobile screenshots for all primary surfaces, Search and How it works.
 
 ## Implementation record
 

@@ -2,19 +2,21 @@
 
 - Status: Completed
 - Created: 2026-10-04
-- Last updated: 2026-10-04
+- Last updated: 2026-10-14
 - Milestone: Coach-first M2 recurring availability
-- Coordination: [COR0009 — Coach-first private-class booking MVP](../organisatory/COR0009-coach-first-training-package-mvp.md)
-- Related records: extends the explicit-slot foundation from [DEV0104 — Publish weekly coach availability](DEV0104-publish-weekly-coach-availability.md); supplies recurring rules and dated occurrences to [DEV0115 — Add the coach schedule calendar](../frontend/DEV0115-add-coach-schedule-calendar.md) and historically supplied booking inventory to cancelled [DEV0105 — Book private classes with pass credits](DEV0105-book-private-classes-with-pass-credits.md)
+- Coordination: None — independent development ticket
+- Related records: extends the explicit-slot foundation from [DEV0104 — Publish weekly coach availability](DEV0104-publish-weekly-coach-availability.md)
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
-Replace one-week-at-a-time availability entry with an owner-managed repeating weekly schedule of exact one-hour slots while retaining DEV0104's authoritative capacity-one dated slots. A coach selects the weekday/start-time cells they normally offer once; MovX projects concrete upcoming one-hour occurrences that clients can see and later book. This adopts the user's 2026-10-04 decision that repeating weekly availability is part of P0 and that variable durations/advanced recurrence should wait for later versions, and updates the [weekly-availability contract](../../../docs/mvp-spec.md#42-coach-publishes-weekly-availability).
+Replace one-week-at-a-time availability entry with an owner-managed repeating weekly schedule of exact one-hour slots while retaining DEV0104's authoritative capacity-one dated slots. A coach selects the weekday/start-time cells they normally offer once; MovX projects concrete upcoming one-hour occurrences that clients can see and later book. This adopts the user's 2026-10-04 decision that repeating weekly availability is part of P0 and that variable durations/advanced recurrence should wait for later versions, and updates the [weekly-availability contract](../../../docs/mvp-spec.md#47-manage-locations-and-publish-availability).
 
 ## Scope and non-goals
 
-- In scope: owner-scoped exact one-hour recurring weekly slots in the coach profile timezone; multiple non-overlapping entries per weekday; deterministic rolling-horizon occurrence generation; durable capacity-one dated occurrences compatible with DEV0104 and DEV0105; stable public-location snapshots; add/remove rule behavior; migration of or compatibility with existing explicit slots; row-level security; idempotent synchronization after mutations and before reads; daylight-saving, overlap, concurrency and authorization tests; specification and service-contract updates.
-- Out of scope: the visual calendar/editor and member presentation owned by DEV0115; pass purchase, holds, booking and cancellation owned by DEV0098/DEV0105; variable duration, broad availability windows, automatic window splitting, rule pause/resume, one-occurrence exceptions, cross-midnight slots or advanced recurrence; coach offer controls; external calendar sync; group capacity; several venues per rule; automatic buffers, travel time, waitlists, reminders or production scheduling operations.
+- Retained scope: recurring coach availability rules, deterministic dated occurrences, atomic rule save, booked-slot protection, authorization/concurrency tests and original local validation.
+- Non-goals: changes to independent booking decisions, hosted data destruction or unrelated UI.
 
 ## Expected behavior and edge cases
 
@@ -32,14 +34,14 @@ Local-time expansion must handle week boundaries and daylight-saving transitions
 - One rule represents one exact weekday/start-time slot, such as Monday 18:00–19:00; a coach may add multiple rules on one day. A broad period such as 18:00–21:00 is represented by three adjacent one-hour rules rather than browser/server auto-splitting.
 - Materialize idempotent dated occurrences into the existing slot boundary and identify each by rule plus local occurrence date. Invoke bounded synchronization after owner rule mutations and before owner/public schedule reads, using database locking/uniqueness to handle concurrent requests. This avoids an undeclared background job or best-effort browser-only generation.
 - A rule snapshots its IANA timezone. Later profile-timezone changes do not silently shift existing rules or generated occurrences; the coach removes/recreates rules in the new timezone. Generated occurrences snapshot the current confirmed location when first created and never move after later profile/gym edits.
-- DEV0115 starts after these read/mutation contracts and responsive occurrence shapes are stable. DEV0105 must book concrete occurrences, never an abstract weekly rule.
+- DEV0115 starts after these read/mutation contracts and responsive occurrence shapes are stable.
 
 ## Implementation plan
 
 1. Freeze the exact one-hour recurring-rule, occurrence identity, timezone and rolling-horizon contracts in the specification and domain types.
-2. Add an additive weekly-rule table and nullable rule/date identity on existing dated slots, preserving DEV0104 rows, location snapshots and future DEV0105 booking foreign keys.
+2.
 3. Implement actor-scoped create/remove mutations plus bounded idempotent occurrence synchronization after mutations and before reads. Preserve existing explicit slots and prevent rule removal from mutating held/booked instances.
-4. Add schema, row-level-security, service, migration, overlap, race, daylight-saving, compatibility and failure tests. Supply stable contracts to DEV0115 and update DEV0105's dependency record.
+4. Add schema, row-level-security, service, migration, overlap, race, daylight-saving, compatibility and failure tests.
 
 ## Acceptance criteria
 
@@ -47,12 +49,12 @@ Local-time expansion must handle week boundaries and daylight-saving transitions
 - [x] AC2: Active rules deterministically produce exactly one concrete capacity-one occurrence per applicable date in the rolling public horizon, with a stable coach/gym location snapshot and no duplicate after retries or concurrent synchronization.
 - [x] AC3: Removing a rule withdraws only its eligible future open occurrences; held/booked occurrences and their time/location remain unchanged, and changing a weekly time uses remove-plus-create rather than mutating history.
 - [x] AC4: Malformed, cross-coach, overlapping, daylight-saving-invalid and unauthorized rules or mutations fail without corrupting existing explicit or generated slots.
-- [x] AC5: Existing DEV0104 slots remain readable and valid through the additive migration, and DEV0105 receives one durable dated-slot identity rather than an abstract recurrence rule.
+
 - [x] AC6: Migration, row-level-security, database/service integration, concurrency, timezone, unit, lint, typecheck, formatting and production-build checks pass.
 
 ## Validation plan
 
-Run clean/repeat and representative-upgrade migrations over the DEV0104 schema. Add pgTAP and database integration coverage for owner isolation, exact 60-minute rules, rule/occurrence uniqueness, overlapping rules, concurrent synchronization, rule removal, held/booked immutability, explicit-slot compatibility and daylight-saving omission. Exercise service failure/unavailable mappings. Run relevant unit, lint, typecheck, formatting and Next.js/Cloudflare production builds. No Solana or Mapbox provider request is required for this backend ticket.
+Run clean/repeat and representative-upgrade migrations over the DEV0104 schema. Add pgTAP and database integration coverage for owner isolation, exact 60-minute rules, rule/occurrence uniqueness, overlapping rules, concurrent synchronization, rule removal, held/booked immutability, explicit-slot compatibility and daylight-saving omission. Exercise service failure/unavailable mappings. Run relevant unit, lint, typecheck, formatting and Next.js/Cloudflare production builds.
 
 ## Implementation record
 
@@ -66,7 +68,7 @@ Owner create/remove functions derive run/profile/timezone from the verified acto
 
 Synchronization runs after rule creation and before owner/public availability reads. It uses a per-coach transaction advisory lock, stable rule/local-date identity and `ON CONFLICT DO NOTHING`, so retries and concurrent reads cannot duplicate slots. Each new occurrence copies the current confirmed coach/gym location once. Existing occurrences are never refreshed after location edits. Existing rules retain their timezone after profile edits. Local starts and ends must both map to one unambiguous instant and remain exactly one absolute hour, so daylight-saving gaps/overlaps are omitted rather than silently shifted.
 
-Domain, Drizzle, repository and service contracts now expose active weekly rules plus recurrence identity on owned slots. Public projections still expose only the durable dated slot, which is the boundary DEV0105 will hold/book. DEV0115 can consume the new owner rule mutations and schedule data without owning recurrence expansion.
+Domain, Drizzle, repository and service contracts now expose active weekly rules plus recurrence identity on owned slots. DEV0115 can consume the new owner rule mutations and schedule data without owning recurrence expansion.
 
 ### Affected files
 
@@ -77,7 +79,6 @@ Domain, Drizzle, repository and service contracts now expose active weekly rules
 | `src/domain/coaches.ts`                                                                                  | Defines one-hour weekly-rule input/output contracts, validation and recurrence metadata on owned occurrences.                                    |
 | `src/server/db/coaches/availability-repository.ts` and `src/server/coaches/service.ts`                   | Synchronize before reads, map rules/occurrences, expose owner create/remove operations and preserve unavailable/conflict behavior.               |
 | `supabase/tests/database/*.sql`, `tests/database/coach-availability.test.ts` and `tests/coaches.test.ts` | Cover schema authority, rules, retries, concurrency, overlap, lifecycle protection, compatibility, timezone/location snapshots and DST handling. |
-| `README.md`, `docs/mvp-spec.md`, `tickets/README.md`, COR0009 and dependent tickets                      | Keep current delivery status, product behavior and downstream ownership accurate.                                                                |
 
 ### Decisions and deviations
 
@@ -85,7 +86,7 @@ Domain, Drizzle, repository and service contracts now expose active weekly rules
 - 2026-10-04: The user narrowed P0 to exact one-hour calendar slots. Broad windows, variable duration and advanced exceptions are deferred. Request-time/mutation-time idempotent materialization is adopted to avoid new scheduler infrastructure.
 - 2026-10-04: ISO weekdays use Monday `1` through Sunday `7`; starts are whole hours from `00:00` through `22:00`. `23:00` is rejected because cross-midnight rules were explicitly deferred.
 - 2026-10-04: Public and owner reads invoke bounded synchronization. This creates at most one occurrence per active rule/date and avoids an undeclared Cron dependency; a database/synchronization failure returns the existing unavailable state.
-- 2026-10-04: Generated occurrence identity, time, timezone and location are immutable. A narrow trigger reserves status changes for rule removal or future DEV0105 booking management, preventing legacy one-off controls from becoming undeclared occurrence exceptions.
+- 2026-10-04: Generated occurrence identity, time, timezone and location are immutable.
 - 2026-10-04: The first clean migration attempt failed on invalid schema qualification of PostgreSQL's `extract` syntax and was corrected before any successful reset. The first protection test then showed that a missing custom setting compares as `NULL`; the trigger was changed to `coalesce(..., '')` so it fails closed. Both corrected paths passed clean/repeat validation.
 
 ### Contracts, configuration, and operations
@@ -94,7 +95,7 @@ The migration adds `app.coach_availability_rules`, nullable `recurrence_rule_id`
 
 Server contracts add `CoachAvailabilityRuleInput`, `OwnedCoachAvailabilityRule`, rule validation, active-rule reads and create/remove service functions. Owner slots now disclose nullable recurrence source/date to the forthcoming calendar; public/client slots retain their existing dated-slot shape. Public availability reads may perform a bounded idempotent database write before selecting the seven-day projection.
 
-No environment variable, dependency, credential, provider call, scheduler, data backfill or Solana contract changed. Rollback before downstream bookings may drop the new functions/table/indexes/triggers and recurrence columns; after DEV0105 references occurrences, forward correction is required instead of deleting durable slot history.
+No environment variable, dependency, credential, provider call, scheduler, data backfill or Solana contract changed.
 
 ## Validation results
 
@@ -112,7 +113,6 @@ No environment variable, dependency, credential, provider call, scheduler, data 
 - `npm run build` — passed the optimized Next.js production build and generated all routes.
 - `npm run build:vinext` — passed the Cloudflare-targeted production build. Its existing large-client-chunk and static route-classification notices remained warnings, not failures.
 - Live local integration: after the final clean validation reset, `npm run auth:provision:coaches` restored all five DEV0116 accounts. A transaction-rolled-back Daniel Park actor rehearsal created exactly one one-hour occurrence at the original Tempelhofer Feld snapshot.
-- No browser calendar check was run because DEV0115 owns the new interface. No Mapbox request, Solana transaction, hosted migration or deployment was required or performed.
 
 | Criterion | Evidence                                                                                                                                           | Result |
 | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
@@ -125,7 +125,7 @@ No environment variable, dependency, credential, provider call, scheduler, data 
 
 ## Risks, limitations, and follow-ups
 
-Request-driven synchronization adds a bounded serialized write before owner/public schedule reads; its production latency and lock behavior still need hosted observation under DEV0106. A collision with retained explicit capacity fails the rule transaction rather than silently choosing one source. Rules omit a daylight-saving date when either local endpoint is nonexistent/ambiguous or the absolute duration would not remain one hour. Variable durations, broad windows, pause/resume, one-date exceptions, cross-midnight rules and external calendars remain deferred. DEV0115 must replace the explicit form/card interface with the weekly calendar and client presentation; DEV0105 must use only durable dated occurrences and the reserved booking-management lifecycle boundary.
+A collision with retained explicit capacity fails the rule transaction rather than silently choosing one source. Rules omit a daylight-saving date when either local endpoint is nonexistent/ambiguous or the absolute duration would not remain one hour. Variable durations, broad windows, pause/resume, one-date exceptions, cross-midnight rules and external calendars remain deferred.
 
 ## Completion and review references
 

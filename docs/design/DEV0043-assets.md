@@ -1,10 +1,10 @@
 # DEV0043 visual assets
 
-The [current MVP decisions](../mvp-spec.md#confirmed-target-and-decisions) remain the product contract. This file preserves source provenance for the retained visual assets after the superseded delivery ticket was pruned.
+The [current MVP decisions](../mvp-spec.md#2-confirmed-target-and-decisions) remain the product contract. This file preserves source provenance for the retained visual assets after the superseded delivery ticket was pruned.
 
 The platform was renamed to MovX Club without regenerating these assets. The verbatim historical prompt below retains the former product name as generation provenance; none of the generated images contains branding or text.
 
-- [Preferred concept](DEV0043-preferred-concept.png): first generated homepage mockup accepted by the user. This is a design reference, never rendered as the application UI. Features pictured in it do not override the specification.
+- the original design reference, removed under DEV0225: first generated homepage mockup accepted by the user. This is a design reference, never rendered as the application UI. Features pictured in it do not override the specification.
 - Existing [running-club image](../../public/images/run-club.webp): generated 19 September 2026 for the original preview; reused without changing the original file. CSS crops it responsively.
 - [Strength studio](../../public/images/strength-studio.webp) and [Muay Thai studio](../../public/images/muay-thai-studio.webp): generated 21 September 2026 using the built-in image-generation tool. Fictional illustrative interiors, not photographs of the named example businesses. Exported as 1000-pixel-wide WebP at quality 82 using Sharp for local delivery. Original generated PNGs remain in the generation output directory.
 - Small hero spark: inline decorative SVG; underline and sticker treatment use CSS. No rasterized text or interactive controls.
@@ -19,3 +19,5 @@ Create a photorealistic editorial photograph for a fictional Berlin neighborhood
 ### Muay Thai studio
 
 Photorealistic editorial architectural photo only for an illustrative fictional neighborhood Muay Thai studio in Berlin. Landscape 3:2 frame. Welcoming airy renovated warehouse with tall windows, warm cream walls and some brick, two charcoal heavy punching bags on the right, tidy dark training mats, small wooden bench and a large green plant near the left window. Natural soft daytime light, warm neutral colours, lived-in but clean, professional accessible local gym rather than luxurious resort. No people, no words, no logos or signs, no watermarks, no UI. Compose for a small website studio thumbnail; clear recognizable bags and inviting daylight, restrained contrast. Not a photograph of any real named business.
+
+> Documentary pruning — 2026-10-14: obsolete interface screenshots and the original design-reference PNG were removed under [DEV0225](../../tickets/archive/organisatory/DEV0225-remove-blockchain-historical-evidence.md). The independent photo-generation prompts, delivered photo files and truthful fictional-image provenance remain unchanged.

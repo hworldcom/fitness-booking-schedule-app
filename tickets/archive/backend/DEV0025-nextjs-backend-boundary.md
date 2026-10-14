@@ -2,37 +2,38 @@
 
 - Status: Completed
 - Created: 2026-09-20
-- Last updated: 2026-09-20
+- Last updated: 2026-10-14
 - Milestone: M0 backend foundation
-- Coordination: [COR0001 — Project structure](../organisatory/COR0001-project-structure.md)
-- Related tickets: DEV0014 — Database and backend plan; implemented with [DEV0015 — Supabase database foundation](DEV0015-supabase-database-foundation.md); establishes the boundary used by COR0002, converted from retired DEV0016, COR0006, converted from retired DEV0017, later-cancelled DEV0018, DEV0023, and later Solana integration tickets
+- Coordination: None — independent development ticket
+- Related tickets: DEV0014 — Database and backend plan; implemented with [DEV0015 — Supabase database foundation](DEV0015-supabase-database-foundation.md)
+
+> Documentary pruning — 2026-10-14, [DEV0225](../organisatory/DEV0225-remove-blockchain-historical-evidence.md): superseded feature evidence and deleted-reference details were removed at the user’s request. Retained text records the independent outcome at its original date. Code/data fragments are historical excerpts, not complete current contracts; aggregate test totals remain totals of the original runs, not new retained-only validation. Original completion dates remain unchanged. Earlier revisions remain in Git history.
 
 ## Objective and context
 
-Keep the MVP application backend in the existing Next.js package while establishing a strict boundary between request adapters, application workflows, database access, and Solana verification. The current repository has a frontend preview and browser-local state but no server application layer. Define and enforce the boundary when the first real backend code is introduced so later authentication, persistence, booking, social, and chain work do not accumulate business logic in route files or client components.
+Keep the MVP application backend in the existing Next.js package while establishing a strict boundary between request adapters, application workflows and database access. The current repository has a frontend preview and browser-local state but no server application layer. Define and enforce the boundary when the first real backend code is introduced so later authentication, persistence and booking work do not accumulate business logic in route files or client components.
 
-This ticket implements the single-web-package [architecture and delivery boundary](../../../docs/mvp-spec.md#6-architecture-and-delivery-boundaries). It is deliberately paired with ticket DEV0015: start it as the first part of that database foundation, when `src/server` has real configuration and database modules to contain. Do not create an unused directory tree earlier, and do not postpone the boundary until feature endpoints have already been implemented.
+This ticket implements the single-web-package [architecture and delivery boundary](../../../docs/mvp-spec.md#6-application-and-infrastructure-boundaries). It is deliberately paired with ticket DEV0015: start it as the first part of that database foundation, when `src/server` has real configuration and database modules to contain. Do not create an unused directory tree earlier, and do not postpone the boundary until feature endpoints have already been implemented.
 
 ## Scope and non-goals
 
 - In scope: establish and enforce the server-only boundary around real `src/server` modules; own client/server import protection and boundary checks; define dependency direction for request adapters, services, repositories, shared domain contracts and external adapters; keep Next.js pages, Route Handlers and Server Actions thin; document where background reconciliation will run and the conditions that justify a separate worker.
-- Out of scope: implementing or owning DEV0015's `supabase` schema/migrations/seeds, database configuration or Drizzle table mappings; implementing feature repositories owned by the then-current DEV0016 onward; authentication then owned by DEV0016 and now split under COR0002; persistent product flows owned by later tickets; creating placeholder modules for every future feature; introducing a separate API framework/service; selecting a hosting vendor; running continuous chain listeners; or implementing/deploying a Solana program.
 
 ## Expected behavior and edge cases
 
 Server Components, Route Handlers, and Server Actions may adapt Next.js requests and responses, but authorization and business workflows call reusable application services. Database access occurs through server-only repositories; client components cannot import database drivers, privileged configuration, migration credentials, or reconciliation code. Public catalogue reads and protected mutations use explicit service entry points rather than direct browser database access. The existing local preview remains a clearly separate browser-only mode.
 
-Wallet prompts and RPC calls never hold a SQL transaction open. User-controlled wallets continue to sign financial transactions. Browser-safe transaction construction and generated program clients may later live outside `src/server`, while finality checks, financial verification, projections, and reconciliation stay server-only. A lost response, retry, or background invocation must be able to call the same application workflow without duplicating business rules in an HTTP handler.
+Browser-safe transaction construction and generated program clients may later live outside `src/server`, while finality checks, financial verification, projections, and reconciliation stay server-only. A lost response, retry, or background invocation must be able to call the same application workflow without duplicating business rules in an HTTP handler.
 
 Short request/response work stays in Next.js. A server command or scheduled invocation may reuse the same services for bounded reconciliation. Create a separately deployed worker only when continuous polling, execution duration, independent scaling, or another runtime requirement is demonstrated and recorded in a follow-up ticket.
 
 ## Assumptions, decisions, and dependencies
 
-The adopted MVP decision is one Next.js/TypeScript web package, Supabase PostgreSQL and Auth, and a separate Anchor/Rust program directory. “Backend in Next.js” means the HTTP and application-service layer shares the web package; PostgreSQL and Solana remain independent systems with their own authority. Business database operations go through the Next.js server layer. Browser Supabase usage is limited to the planned Auth integration.
+The retained architecture decision is one Next.js/TypeScript web package with Supabase PostgreSQL and Auth. “Backend in Next.js” means the HTTP and application-service layer shares the web package; PostgreSQL remains independently authoritative. Business database operations go through the Next.js server layer. Browser Supabase usage is limited to the planned Auth integration.
 
 Use `src/server` for modules that must never enter browser bundles. Keep shared, framework-independent value objects and response contracts outside that directory only when both browser and server need them. Do not expose Drizzle rows as the public UI contract. Inspect the installed Next.js version and its bundled/current documentation before choosing exact Server Action, Route Handler, caching, and server-only APIs.
 
-Implementation was authorized on 2026-09-20 and begins together with DEV0015, before its first server configuration or Drizzle module is added. Starting DEV0025 later than DEV0015 would defeat its purpose; starting it without DEV0015 would produce scaffolding without executable behavior. Parallel timing does not create joint ownership: DEV0015 owns database artifacts, connection modules and table mappings, while this ticket owns the guards and dependency contract applied to them. The then-current DEV0016 and later feature tickets own the repositories/services that consume those mappings; COR0002 later split DEV0016's work among DEV0038–DEV0041 without changing this boundary.
+Implementation was authorized on 2026-09-20 and begins together with DEV0015, before its first server configuration or Drizzle module is added. Starting DEV0025 later than DEV0015 would defeat its purpose; starting it without DEV0015 would produce scaffolding without executable behavior. Parallel timing does not create joint ownership: DEV0015 owns database artifacts, connection modules and table mappings, while this ticket owns the guards and dependency contract applied to them.
 
 ## Implementation plan
 
@@ -61,7 +62,7 @@ Planning created on 2026-09-20 after reviewing the current frontend, specificati
 
 Planning refinement, 2026-09-20 ([DEV0036](../organisatory/DEV0036-explicit-architecture-boundaries.md)): this ticket owns server-only/import enforcement, dependency-direction checks and thin-adapter rules. DEV0015 remains the sole owner of `supabase` artifacts and its concrete `src/server/db` foundation modules. The tickets start together but do not duplicate files or implementation evidence.
 
-Planning refinement, 2026-09-20: DEV0015 now owns only database dependencies, migrations/seeds/roles, server environment/client modules, Drizzle table mappings and database tests. The then-current DEV0016 and later feature tickets own repositories/services for their capabilities. COR0002 later assigned DEV0016's planned authentication/access work to DEV0038–DEV0041. This ticket enforces the direction for all of them but implements none of those database files or repositories.
+Planning refinement, 2026-09-20: DEV0015 now owns only database dependencies, migrations/seeds/roles, server environment/client modules, Drizzle table mappings and database tests. The then-current DEV0016 and later feature tickets own repositories/services for their capabilities. This ticket enforces the direction for all of them but implements none of those database files or repositories.
 
 Implementation started on 2026-09-20 around DEV0015's real database modules. `src/server/db/env.ts`, `client.ts` and `schema/index.ts` carry Next.js's `server-only` marker; the environment parser remains separately testable and does not evaluate `DATABASE_URL` until database initialization is requested. No feature repository, request adapter, job or placeholder service was created.
 
@@ -76,7 +77,7 @@ Implementation started on 2026-09-20 around DEV0015's real database modules. `sr
 
 ## Risks, limitations, and follow-ups
 
-The exact hosting runtime and Supabase project remain unselected. Next.js request execution may not suit future continuous or long-running reconciliation; introduce a linked worker ticket when real duration, scheduling, or scaling evidence requires it. Solana program organization and generated client bindings require their own bounded M1 ticket before implementation.
+The exact hosting runtime and Supabase project remain unselected. Next.js request execution may not suit future continuous or long-running reconciliation; introduce a linked worker ticket when real duration, scheduling, or scaling evidence requires it.
 
 ## Completion and review references
 
