@@ -12,9 +12,9 @@ select has_table(
 );
 
 select is(
-  (select count(*)::integer from app.coach_training_locations),
+  (select count(distinct (run_id,profile_id))::integer from app.coach_training_locations),
   (select count(*)::integer from app.coach_profiles),
-  'the migration backfills one location per existing coach'
+  'every existing coach retains owned location lineage'
 );
 
 select ok(
@@ -321,7 +321,10 @@ select throws_ok(
       statement_timestamp(),
       'active',
       false,
-      2,
+      (select candidate from generate_series(1,32767) candidate where not exists(
+        select 1 from app.coach_training_locations existing
+        where existing.run_id='20000000-0000-4000-8000-000000000001' and existing.profile_id='10000000-0000-4000-8000-000000000002' and existing.sort_order=candidate
+      ) order by candidate limit 1),
       'user'
     )
   $$,
@@ -329,6 +332,25 @@ select throws_ok(
   null,
   'a location cannot reference an unavailable same-run gym'
 );
+
+select set_config('app.test_expected_public_training_location_count', (
+  select count(*)::text from app.coach_training_locations location
+  join app.coach_profiles coach on coach.run_id=location.run_id and coach.profile_id=location.profile_id
+  join app.demo_runs dataset on dataset.id=coach.run_id
+  left join app.coach_applications application on application.profile_id=coach.profile_id
+  left join app.gyms gym on gym.run_id=location.run_id and gym.id=location.selected_gym_id
+  where location.status='active' and location.location_confirmed_at is not null
+    and (location.selected_gym_id is null or (gym.status='active'))
+    and coach.visibility='visible' and (coach.is_demo or application.status='approved')
+  and dataset.status='active' and dataset.catalogue_visibility='public'
+  and exists (
+    select 1 from app.coach_training_locations primary_location
+    left join app.gyms primary_gym on primary_gym.run_id=primary_location.run_id and primary_gym.id=primary_location.selected_gym_id
+    where primary_location.run_id=coach.run_id and primary_location.profile_id=coach.profile_id
+      and primary_location.status='active' and primary_location.is_primary and primary_location.location_confirmed_at is not null
+      and (primary_location.selected_gym_id is null or (primary_gym.status='active'))
+  )
+), true);
 
 set local role app_runtime;
 
@@ -342,8 +364,8 @@ reset role;
 
 select is(
   current_setting('app.test_public_training_location_count')::integer,
-  5,
-  'public runtime sees the five active confirmed fixture locations'
+  current_setting('app.test_expected_public_training_location_count')::integer,
+  'public runtime sees exactly eligible active confirmed locations'
 );
 
 select is(

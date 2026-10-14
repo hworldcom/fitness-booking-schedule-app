@@ -288,15 +288,22 @@ values
 set local role app_runtime;
 select set_config(
   'app.test_public_availability_count',
-  (select count(*)::text from app.coach_availability_slots),
+  (select string_agg(id::text, ',' order by id) from app.coach_availability_slots where id in (
+    '96000000-0000-4000-8000-000000000001',
+    '96000000-0000-4000-8000-000000000002',
+    '96000000-0000-4000-8000-000000000003',
+    '96000000-0000-4000-8000-000000000004',
+    '96000000-0000-4000-8000-000000000005',
+    '96000000-0000-4000-8000-000000000006'
+  )),
   true
 );
 reset role;
 
 select is(
-  current_setting('app.test_public_availability_count')::integer,
-  1,
-  'public runtime sees only open slots inside the rolling horizon'
+  current_setting('app.test_public_availability_count'),
+  '96000000-0000-4000-8000-000000000001,96000000-0000-4000-8000-000000000005',
+  'public runtime sees exact eligible capacity states inside the rolling horizon'
 );
 
 do $runtime_update_constraint$

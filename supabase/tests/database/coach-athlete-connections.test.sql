@@ -1,0 +1,16 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+set local search_path = extensions, public, pg_catalog;
+select plan(10);
+select has_table('app','coach_athlete_connection_pairs','stable connection pairs exist');
+select has_table('app','coach_athlete_connection_attempts','retained consent attempts exist');
+select ok((select bool_and(relrowsecurity and relforcerowsecurity) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='app' and c.relname in ('coach_athlete_connection_pairs','coach_athlete_connection_attempts')),'both tables force RLS');
+select ok(not has_table_privilege('app_runtime','app.coach_athlete_connection_pairs','select') and not has_table_privilege('app_runtime','app.coach_athlete_connection_attempts','select'),'runtime cannot read raw pairs/attempts');
+select ok(not has_table_privilege('app_runtime','app.coach_athlete_connection_attempts','insert,update,delete'),'runtime cannot mutate raw attempts');
+select ok(has_function_privilege('app_runtime','app.send_coach_athlete_connection(uuid,uuid,uuid)','execute') and has_function_privilege('app_runtime','app.decide_coach_athlete_connection(uuid,text)','execute'),'actor-checked mutations are runtime entry points');
+select ok(not has_function_privilege('app_runtime','app.connection_access_flags(boolean)','execute') and not has_function_privilege('app_runtime','app.connection_attempt_projection(uuid)','execute'),'internal flags/projections cannot be invoked by runtime');
+select ok(not has_function_privilege('anon','app.send_coach_athlete_connection(uuid,uuid,uuid)','execute') and not has_function_privilege('authenticated','app.current_connection_shared_history(uuid,integer,timestamp with time zone,uuid)','execute'),'Data API callers cannot execute application operations');
+select ok(exists(select 1 from pg_indexes where schemaname='app' and indexname='coach_athlete_connections_one_active_pair' and indexdef like '%UNIQUE%' and indexdef like '%pending%' and indexdef like '%accepted%'),'database enforces one active pair');
+select ok(exists(select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='account_avatars_connected_coach_select'),'connection-scoped Storage access policy exists');
+select * from finish();
+rollback;

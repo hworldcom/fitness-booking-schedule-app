@@ -5,7 +5,7 @@
 - Last updated: 2026-10-14
 - Milestone: M6 — Athlete terminology and coach–athlete connections
 - Converted from: Not applicable — created as a coordination record
-- Tracked development tickets: [DEV0219 — Adopt athlete terminology and connection contract](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md), [DEV0220 — Use athlete terminology on the website](../../archive/frontend/DEV0220-use-athlete-website-terminology.md), [DEV0221 — Persist coach–athlete connections](../backend/DEV0221-persist-coach-athlete-connections.md), [DEV0222 — Add coach My athletes](../frontend/DEV0222-add-coach-my-athletes.md), [DEV0223 — Add athlete My coaches](../frontend/DEV0223-add-athlete-my-coaches.md) and [DEV0230 — Adopt reconnection history recovery](../../archive/organisatory/DEV0230-adopt-reconnection-history-recovery.md)
+- Tracked development tickets: [DEV0219 — Adopt athlete terminology and connection contract](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md), [DEV0220 — Use athlete terminology on the website](../../archive/frontend/DEV0220-use-athlete-website-terminology.md), [DEV0221 — Persist coach–athlete connections](../../archive/backend/DEV0221-persist-coach-athlete-connections.md), [DEV0222 — Add coach My athletes](../frontend/DEV0222-add-coach-my-athletes.md), [DEV0223 — Add athlete My coaches](../frontend/DEV0223-add-athlete-my-coaches.md) and [DEV0230 — Adopt reconnection history recovery](../../archive/organisatory/DEV0230-adopt-reconnection-history-recovery.md)
 - Related records: completed scheduling dependency [COR0016](../../archive/organisatory/COR0016-coach-confirmed-booking-requests.md); independent session collaboration [COR0015](COR0015-session-notes-and-training-plans.md); downstream native planning [COR0013](COR0013-native-ios-application.md); downstream account retention [DEV0165](../backend/DEV0165-implement-account-deletion-lifecycle.md)
 
 ## Objective and boundaries
@@ -21,7 +21,7 @@ Runtime scope excludes general messaging, notifications, public athlete profiles
 | Product vocabulary and consent/privacy contract | [DEV0219](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md)  | Adopt the agreed target, lifecycle, media access, acceptance checks and this work map.                                                                                                                            | Completed 2026-10-14.                                        |
 | Disconnect/reconnect history contract           | [DEV0230](../../archive/organisatory/DEV0230-adopt-reconnection-history-recovery.md) | Adopt complete retained shared-history continuity and reconcile connection/conversation ownership without runtime edits.                                                                                          | Completed 2026-10-14; before final DEV0221 design.           |
 | Existing website terminology                    | [DEV0220](../../archive/frontend/DEV0220-use-athlete-website-terminology.md)         | Replace participant-facing vocabulary without changing internal identifiers or capabilities.                                                                                                                      | Completed 2026-10-14; independent of connection persistence. |
-| Persistence, authority and private media        | [DEV0221](../backend/DEV0221-persist-coach-athlete-connections.md)                   | Own pair identity, qualifying-booking checks, requests/acceptance/removal, complete paginated shared request/booking references across reconnection, concurrency and revocable connection-scoped avatar delivery. | After DEV0219; independent of terminology implementation.    |
+| Persistence, authority and private media        | [DEV0221](../../archive/backend/DEV0221-persist-coach-athlete-connections.md)        | Own pair identity, qualifying-booking checks, requests/acceptance/removal, complete paginated shared request/booking references across reconnection, concurrency and revocable connection-scoped avatar delivery. | Completed 2026-10-14; interface dependencies may now start.  |
 | Coach connection interface                      | [DEV0222](../frontend/DEV0222-add-coach-my-athletes.md)                              | Own coach request controls, accepted My athletes and complete retained shared-history navigation after reconnection.                                                                                              | After DEV0220 and DEV0221.                                   |
 | Athlete connection interface                    | [DEV0223](../frontend/DEV0223-add-athlete-my-coaches.md)                             | Own athlete request controls, accepted My coaches and complete retained shared-history navigation with safe profile/request/session shortcuts.                                                                    | After DEV0220 and DEV0221.                                   |
 
@@ -45,6 +45,10 @@ All six direct records are flat peers, each with reciprocal membership. Every re
 
 ## Progress and integration record
 
+- 2026-10-14: DEV0221 completed the backend: mutual consent and exact-attempt retries, ordered cancellation races, either-side disconnect/reconnect, every retained shared request/booking page and revocable athlete media. Its 59 database/206 pgTAP/141 app-server checks, fresh/upgrade replay, real Auth/Storage HTTP rehearsal and static/build checks passed. Independent DEV0231 corrected older SQL test assumptions. DEV0222/DEV0223 interfaces and COR0015 conversation content/rehearsal remain pending; local startup drift is independently tracked by DEV0232.
+
+- 2026-10-14: DEV0221 implementation started after DEV0230 was committed as `09033f5`. Its recorded design covers stable pair/attempt identity, explicit consent/retry authority, booking-row qualification locks, complete retained history references and revocable athlete media. Interfaces and conversation runtime remain separate work.
+
 - 2026-10-14: DEV0230 completed the contract amendment and documentation validation for the user-confirmed complete shared-history recovery rule. Either participant may disconnect; fresh mutual reconnection restores retained requests/bookings and, after COR0015 delivery, all their shared conversations/plans/notes, including unsuccessful/cancelled history. Content keeps original IDs, statuses and permissions. No runtime history recovery is delivered by the amendment.
 
 - 2026-10-14: DEV0220 completed athlete website vocabulary, compatible technical identifiers and truthful request/acceptance wording. Application/static/build, real Auth/request, readonly desktop/mobile and 44-pass browser validation completed. Independent DEV0229 corrected existing browser expectations; connection persistence and both interfaces remain Draft.
@@ -57,6 +61,8 @@ All six direct records are flat peers, each with reciprocal membership. Every re
 
 ## Validation results
 
+DEV0221 backend acceptance and private media/history authority passed on 2026-10-14; see its implementation record for exact commands and results. Two-account mobile/desktop/keyboard interface integration remains pending DEV0222/DEV0223, and conversation-body recovery remains pending COR0015.
+
 DEV0219 completed on 2026-10-14: fifteen-document formatting, local link/anchor/identifier/index/contract checks and diff review passed. Runtime integration is not run and cannot be claimed from contract completion.
 
 ## Risks, limitations, and follow-ups
@@ -68,7 +74,7 @@ DEV0219 completed on 2026-10-14: fifteen-document formatting, local link/anchor/
 ## Completion and review references
 
 - Completed: Not completed.
-- Direct development tickets: DEV0219 and DEV0220 Completed; DEV0230 Completed; DEV0221–DEV0223 Draft.
+- Direct development tickets: DEV0219 and DEV0220 Completed; DEV0230 and DEV0221 Completed; DEV0222/DEV0223 Draft.
 - Commit: Not applicable — coordination IDs are not commit subjects.
 - Review: No independent review created.
-- Deployment or release: Not implemented, deployed or released.
+- Deployment or release: Backend implemented and locally validated; interfaces remain planned. No hosted deployment or release.

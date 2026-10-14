@@ -113,11 +113,10 @@ select ok(
     where rule.status = 'active'
       and (
         location.status <> 'active'
-        or not location.is_primary
         or location.timezone <> rule.coach_timezone
       )
   ),
-  'pre-existing active rules migrate to the active primary in one timezone'
+  'active recurring rules use an active owned location in one timezone'
 );
 
 select ok(

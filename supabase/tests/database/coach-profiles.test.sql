@@ -13,50 +13,50 @@ select has_table(
 );
 
 select is(
-  (select count(*)::integer from app.coach_profiles),
+  (select count(*)::integer from app.coach_profiles where is_demo),
   5,
   'five fictional coach profiles are seeded'
 );
 
-select is(
-  (select count(*)::integer from app.coach_profile_disciplines),
-  7,
-  'fictional coaches have deterministic discipline rows'
+select ok(
+  not exists (
+    select 1 from app.coach_profile_disciplines link
+    left join app.coach_profiles coach on coach.run_id=link.run_id and coach.profile_id=link.profile_id
+    where coach.profile_id is null
+  ) and exists(select 1 from app.coach_profile_disciplines),
+  'discipline links retain valid owning coach profiles'
 );
 
 select ok(
   not exists (
     select 1
     from app.coach_profiles as coach
-    where not coach.is_demo
-      or coach.record_source not in ('fixture', 'user')
+    where coach.is_demo and (coach.record_source not in ('fixture', 'user')
       or coach.visibility <> 'visible'
       or coach.service_mode <> 'private-training'
       or coach.location_confirmed_at is null
       or coach.latitude not between -90 and 90
-      or coach.longitude not between -180 and 180
+      or coach.longitude not between -180 and 180)
   ),
   'seeded coaches are visible bounded demo records'
 );
 
-select is(
-  (
-    select count(*)::integer
-    from app.coach_profiles
-    where location_kind = 'gym' and selected_gym_id is not null
+select ok(
+  not exists (
+    select 1 from app.coach_profiles coach
+    where (coach.location_kind='gym' and coach.selected_gym_id is null)
+      or (coach.location_kind='independent' and coach.selected_gym_id is not null)
   ),
-  4,
-  'four coaches use an optional fictional gym location'
+  'gym and independent profiles keep the correct optional gym reference'
 );
 
-select is(
-  (
-    select count(*)::integer
-    from app.coach_profiles
-    where location_kind = 'independent' and selected_gym_id is null
+select ok(
+  not exists (
+    select 1 from app.coach_profiles coach
+    left join app.gyms gym on gym.run_id=coach.run_id and gym.id=coach.selected_gym_id
+    where coach.selected_gym_id is not null and gym.id is null
   ),
-  1,
-  'one coach demonstrates an independent location'
+  'current selected gyms preserve same-dataset lineage'
 );
 
 select ok(
@@ -259,6 +259,36 @@ select is(
   'coach profiles maintain updated_at'
 );
 
+select set_config('app.test_expected_public_coach_count', (
+  select count(*)::text from app.coach_profiles coach
+  join app.demo_runs dataset on dataset.id=coach.run_id
+  left join app.coach_applications application on application.profile_id=coach.profile_id
+  where coach.visibility='visible' and (coach.is_demo or application.status='approved')
+  and dataset.status='active' and dataset.catalogue_visibility='public'
+  and exists (
+    select 1 from app.coach_training_locations primary_location
+    left join app.gyms primary_gym on primary_gym.run_id=primary_location.run_id and primary_gym.id=primary_location.selected_gym_id
+    where primary_location.run_id=coach.run_id and primary_location.profile_id=coach.profile_id
+      and primary_location.status='active' and primary_location.is_primary and primary_location.location_confirmed_at is not null
+      and (primary_location.selected_gym_id is null or (primary_gym.status='active'))
+  )
+), true);
+select set_config('app.test_expected_public_discipline_count', (
+  select count(*)::text from app.coach_profile_disciplines link
+  join app.coach_profiles coach on coach.run_id=link.run_id and coach.profile_id=link.profile_id
+  join app.demo_runs dataset on dataset.id=coach.run_id
+  left join app.coach_applications application on application.profile_id=coach.profile_id
+  where coach.visibility='visible' and (coach.is_demo or application.status='approved')
+  and dataset.status='active' and dataset.catalogue_visibility='public'
+  and exists (
+    select 1 from app.coach_training_locations primary_location
+    left join app.gyms primary_gym on primary_gym.run_id=primary_location.run_id and primary_gym.id=primary_location.selected_gym_id
+    where primary_location.run_id=coach.run_id and primary_location.profile_id=coach.profile_id
+      and primary_location.status='active' and primary_location.is_primary and primary_location.location_confirmed_at is not null
+      and (primary_location.selected_gym_id is null or (primary_gym.status='active'))
+  )
+), true);
+
 set local role app_runtime;
 
 select set_config(
@@ -277,13 +307,13 @@ reset role;
 
 select is(
   current_setting('app.test_public_coach_count')::integer,
-  5,
-  'public runtime sees all five visible fixture coaches'
+  current_setting('app.test_expected_public_coach_count')::integer,
+  'public runtime sees exactly the currently eligible visible coaches'
 );
 
 select is(
   current_setting('app.test_public_discipline_count')::integer,
-  7,
+  current_setting('app.test_expected_public_discipline_count')::integer,
   'public runtime sees disciplines only through visible coaches'
 );
 

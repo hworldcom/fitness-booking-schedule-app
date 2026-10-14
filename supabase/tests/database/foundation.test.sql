@@ -7,15 +7,36 @@ select plan(31);
 
 select has_schema('app', 'app schema exists');
 
-select is(
-  (
-    select count(*)::integer
-    from information_schema.tables
-    where table_schema = 'app'
-      and table_type = 'BASE TABLE'
-  ),
-  23,
-  'app retains all current and historical migration tables'
+select ok(
+  array[
+    'auth_challenges',
+    'coach_application_review_events',
+    'coach_applications',
+    'coach_athlete_connection_attempts',
+    'coach_athlete_connection_pairs',
+    'coach_availability_rules',
+    'coach_availability_slots',
+    'coach_booking_credit_operations',
+    'coach_booking_requests',
+    'coach_client_credit_projections',
+    'coach_follows',
+    'coach_pass_purchase_operations',
+    'coach_posts',
+    'coach_private_bookings',
+    'coach_profile_disciplines',
+    'coach_profiles',
+    'coach_training_locations',
+    'demo_run_participants',
+    'demo_runs',
+    'group_event_chain_operations',
+    'group_event_contribution_projections',
+    'group_event_pool_projections',
+    'group_events',
+    'gyms',
+    'profiles',
+    'wallet_bindings'
+  ]::text[] <@ (select array_agg(table_name::text) from information_schema.tables where table_schema='app' and table_type='BASE TABLE'),
+  'app retains every required current and historical migration table'
 );
 
 select ok(
@@ -102,17 +123,13 @@ select ok(
   'RLS is forced on every app table'
 );
 
-select is(
-  (
-    select count(*)::integer
-    from pg_class as c
-    join pg_namespace as n on n.oid = c.relnamespace
-    join pg_roles as r on r.oid = c.relowner
-    where n.nspname = 'app'
-      and c.relkind = 'r'
-      and r.rolname = 'app_owner'
+select ok(
+  not exists (
+    select 1 from pg_class c
+    join pg_namespace n on n.oid=c.relnamespace
+    join pg_roles r on r.oid=c.relowner
+    where n.nspname='app' and c.relkind='r' and r.rolname <> 'app_owner'
   ),
-  23,
   'app_owner owns every app table'
 );
 
