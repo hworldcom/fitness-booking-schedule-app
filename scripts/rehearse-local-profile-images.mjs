@@ -163,7 +163,7 @@ try {
       .waitFor();
     const accountRole = accountPage.locator(".account-profile-summary > p");
     await accountRole.waitFor();
-    assert.equal((await accountRole.textContent())?.trim(), "Client account");
+    assert.equal((await accountRole.textContent())?.trim(), "Athlete account");
     await accountPage
       .getByText("Your account image stays private.", { exact: true })
       .waitFor();
@@ -247,7 +247,7 @@ try {
     await coachAccountRole.waitFor();
     assert.equal(
       (await coachAccountRole.textContent())?.trim(),
-      "Client and coach account",
+      "Athlete and coach account",
     );
     await coachPage
       .getByAltText("Daniel Park public coach portrait")

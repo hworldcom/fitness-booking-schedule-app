@@ -97,7 +97,7 @@ export function coachBookingRequestStatusLabel(
     case "declined":
       return "Declined";
     case "withdrawn":
-      return "Withdrawn by client";
+      return "Withdrawn by athlete";
     case "expired":
       return "Expired";
     case "not-selected":

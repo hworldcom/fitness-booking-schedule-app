@@ -5,7 +5,7 @@
 - Last updated: 2026-10-14
 - Milestone: M6 — Athlete terminology and coach–athlete connections
 - Converted from: Not applicable — created as a coordination record
-- Tracked development tickets: [DEV0219 — Adopt athlete terminology and connection contract](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md), [DEV0220 — Use athlete terminology on the website](../frontend/DEV0220-use-athlete-website-terminology.md), [DEV0221 — Persist coach–athlete connections](../backend/DEV0221-persist-coach-athlete-connections.md), [DEV0222 — Add coach My athletes](../frontend/DEV0222-add-coach-my-athletes.md) and [DEV0223 — Add athlete My coaches](../frontend/DEV0223-add-athlete-my-coaches.md)
+- Tracked development tickets: [DEV0219 — Adopt athlete terminology and connection contract](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md), [DEV0220 — Use athlete terminology on the website](../../archive/frontend/DEV0220-use-athlete-website-terminology.md), [DEV0221 — Persist coach–athlete connections](../backend/DEV0221-persist-coach-athlete-connections.md), [DEV0222 — Add coach My athletes](../frontend/DEV0222-add-coach-my-athletes.md) and [DEV0223 — Add athlete My coaches](../frontend/DEV0223-add-athlete-my-coaches.md)
 - Related records: completed scheduling dependency [COR0016](../../archive/organisatory/COR0016-coach-confirmed-booking-requests.md); independent session collaboration [COR0015](COR0015-session-notes-and-training-plans.md); downstream native planning [COR0013](COR0013-native-ios-application.md); downstream account retention [DEV0165](../backend/DEV0165-implement-account-deletion-lifecycle.md)
 
 ## Objective and boundaries
@@ -16,13 +16,13 @@ Runtime scope excludes general messaging, notifications, public athlete profiles
 
 ## Direct development work
 
-| Implementation part                             | Development ticket                                                                  | Owned deliverable                                                                                                                                                    | Start condition or dependency                             |
-| ----------------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| Product vocabulary and consent/privacy contract | [DEV0219](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md) | Adopt the agreed target, lifecycle, media access, acceptance checks and this work map.                                                                               | Completed 2026-10-14.                                     |
-| Existing website terminology                    | [DEV0220](../frontend/DEV0220-use-athlete-website-terminology.md)                   | Replace participant-facing vocabulary without changing internal identifiers or capabilities.                                                                         | After DEV0219; independent of connection persistence.     |
-| Persistence, authority and private media        | [DEV0221](../backend/DEV0221-persist-coach-athlete-connections.md)                  | Own pair identity, qualifying-booking checks, requests/acceptance/removal, bounded projections, concurrency and revocable connection-scoped athlete-avatar delivery. | After DEV0219; independent of terminology implementation. |
-| Coach connection interface                      | [DEV0222](../frontend/DEV0222-add-coach-my-athletes.md)                             | Own coach request controls and accepted My athletes list with shared-session links.                                                                                  | After DEV0220 and DEV0221.                                |
-| Athlete connection interface                    | [DEV0223](../frontend/DEV0223-add-athlete-my-coaches.md)                            | Own athlete request controls and accepted My coaches list with safe coach/profile/session shortcuts.                                                                 | After DEV0220 and DEV0221.                                |
+| Implementation part                             | Development ticket                                                                  | Owned deliverable                                                                                                                                                    | Start condition or dependency                                |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Product vocabulary and consent/privacy contract | [DEV0219](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md) | Adopt the agreed target, lifecycle, media access, acceptance checks and this work map.                                                                               | Completed 2026-10-14.                                        |
+| Existing website terminology                    | [DEV0220](../../archive/frontend/DEV0220-use-athlete-website-terminology.md)        | Replace participant-facing vocabulary without changing internal identifiers or capabilities.                                                                         | Completed 2026-10-14; independent of connection persistence. |
+| Persistence, authority and private media        | [DEV0221](../backend/DEV0221-persist-coach-athlete-connections.md)                  | Own pair identity, qualifying-booking checks, requests/acceptance/removal, bounded projections, concurrency and revocable connection-scoped athlete-avatar delivery. | After DEV0219; independent of terminology implementation.    |
+| Coach connection interface                      | [DEV0222](../frontend/DEV0222-add-coach-my-athletes.md)                             | Own coach request controls and accepted My athletes list with shared-session links.                                                                                  | After DEV0220 and DEV0221.                                   |
+| Athlete connection interface                    | [DEV0223](../frontend/DEV0223-add-athlete-my-coaches.md)                            | Own athlete request controls and accepted My coaches list with safe coach/profile/session shortcuts.                                                                 | After DEV0220 and DEV0221.                                   |
 
 All five direct records are flat peers, each with reciprocal membership. Every required part has exactly one owner; no required ticket is missing.
 
@@ -44,6 +44,10 @@ All five direct records are flat peers, each with reciprocal membership. Every r
 
 ## Progress and integration record
 
+- 2026-10-14: DEV0220 completed athlete website vocabulary, compatible technical identifiers and truthful request/acceptance wording. Application/static/build, real Auth/request, readonly desktop/mobile and 44-pass browser validation completed. Independent DEV0229 corrected existing browser expectations; connection persistence and both interfaces remain Draft.
+
+- 2026-10-14: DEV0220 started website vocabulary implementation after the user reviewed its scope. Connection persistence/interfaces remain separate planned work.
+
 - 2026-10-14: The user chose mutual acceptance and adopted athlete website terminology, either-participant initiation/removal, one pair relationship, accepted-connection survival and bounded name/photo/shared-session visibility.
 - 2026-10-14: The user confirmed at least confirmed sessions are required. The contract counts confirmed/completed sessions at both sending and acceptance; cancelled-only history does not qualify.
 - 2026-10-14: DEV0219 completed the target contract and documentation checks. Created the flat DEV0219–DEV0223 plan. No connection or terminology runtime code is delivered by this planning change.
@@ -61,7 +65,7 @@ DEV0219 completed on 2026-10-14: fifteen-document formatting, local link/anchor/
 ## Completion and review references
 
 - Completed: Not completed.
-- Direct development tickets: DEV0219 Completed; DEV0220–DEV0223 Draft.
+- Direct development tickets: DEV0219 and DEV0220 Completed; DEV0221–DEV0223 Draft.
 - Commit: Not applicable — coordination IDs are not commit subjects.
 - Review: No independent review created.
 - Deployment or release: Not implemented, deployed or released.

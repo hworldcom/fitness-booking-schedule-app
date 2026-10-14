@@ -220,7 +220,7 @@ export function CoachBookingRequestQueue({
           <span className="eyebrow">BOOKING REQUESTS</span>
           <h2>Booking requests</h2>
           <p>
-            Choose a client to confirm. Requests do not reserve the time;
+            Choose an athlete to confirm. Requests do not reserve the time;
             accepting one creates the booking and closes the other pending
             requests for that occurrence.
           </p>
@@ -252,7 +252,7 @@ export function CoachBookingRequestQueue({
             <p>
               {nextCursor
                 ? "Load more to check older request attempts."
-                : "New client requests will appear here without holding the time."}
+                : "New athlete requests will appear here without holding the time."}
             </p>
           </div>
         </div>

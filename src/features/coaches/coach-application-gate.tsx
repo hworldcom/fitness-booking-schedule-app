@@ -118,7 +118,7 @@ export function CoachApplicationGate({
               : isRejected
                 ? (access.decisionReason ??
                   "Review your private draft, make the requested changes and resubmit it for platform review.")
-                : "Client booking is already available on this account. Coach publication and scheduling require a separate MovX review."}
+                : "Requesting sessions as an athlete is already available on this account. Coach publication and scheduling require a separate MovX review."}
         </p>
         <div className="coach-activation-actions">
           {access.status === "not-applied" && <ApplicationButton />}

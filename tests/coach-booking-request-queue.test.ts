@@ -105,7 +105,7 @@ test("terminal request labels describe ended attempts, not completed training", 
   assert.equal(coachBookingRequestStatusLabel("accepted"), "Accepted");
   assert.equal(
     coachBookingRequestStatusLabel("withdrawn"),
-    "Withdrawn by client",
+    "Withdrawn by athlete",
   );
   assert.equal(coachBookingRequestStatusLabel("expired"), "Expired");
   assert.equal(coachBookingRequestStatusLabel("not-selected"), "Not selected");

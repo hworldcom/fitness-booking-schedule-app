@@ -617,7 +617,7 @@ function UpcomingOccurrences({
           <span className="eyebrow">NEXT SEVEN DAYS</span>
           <h2>Dated class times</h2>
           <p>
-            These are the concrete capacity-one times clients can see. Your
+            These are the concrete capacity-one times athletes can see. Your
             working week creates them automatically, and every row names the
             actual saved venue for that occurrence.
           </p>

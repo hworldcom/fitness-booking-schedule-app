@@ -73,7 +73,7 @@ export function CoachProfileEditor({
           </h2>
           <p>
             {publicationAllowed
-              ? "Choose what clients may see. MovX approval is separate from profile visibility and gives no gym control over your profile."
+              ? "Choose what athletes may see. MovX approval is separate from profile visibility and gives no gym control over your profile."
               : "Prepare the profile MovX will review. It remains private until the application is approved."}
           </p>
         </div>

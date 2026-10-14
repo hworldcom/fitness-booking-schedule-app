@@ -78,7 +78,7 @@ export function CoachClientCards({
           <span className="eyebrow">BOOKED SCHEDULE</span>
           <h2>Booked sessions</h2>
           <p>
-            Review the clients you confirmed and manage the actions available
+            Review the athletes you confirmed and manage the actions available
             for each session&apos;s current status.
           </p>
         </div>
@@ -94,7 +94,7 @@ export function CoachClientCards({
           <ShieldAlert size={23} aria-hidden="true" />
           <div>
             <strong>Your booking schedule cannot be verified right now.</strong>
-            <p>No client or booking history is shown.</p>
+            <p>No athlete or booking history is shown.</p>
           </div>
         </div>
       ) : bookings.length === 0 ? (
@@ -103,7 +103,8 @@ export function CoachClientCards({
           <div>
             <strong>No private sessions booked yet.</strong>
             <p>
-              Confirmed bookings appear after a client reserves an open hour.
+              Confirmed bookings appear after you accept an athlete&apos;s
+              request.
             </p>
           </div>
         </div>

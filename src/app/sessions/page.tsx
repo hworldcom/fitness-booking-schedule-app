@@ -74,7 +74,7 @@ export default async function Page() {
         <aside className="client-session-coach-context">
           <BriefcaseBusiness size={20} aria-hidden="true" />
           <div>
-            <strong>These are sessions you requested as a client.</strong>
+            <strong>These are sessions you requested as an athlete.</strong>
             <span>
               Sessions you teach and incoming requests stay in Coach workspace.
             </span>

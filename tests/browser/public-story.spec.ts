@@ -237,7 +237,7 @@ test("public routes use the compact marketplace header", async ({
   }
 });
 
-test("private routes retain the workspace chrome", async ({
+test("private routes enforce identity before showing workspace chrome", async ({
   page,
 }, testInfo) => {
   const projectViewport = page.viewportSize();
@@ -249,6 +249,13 @@ test("private routes retain the workspace chrome", async ({
       await page.setViewportSize({ width, height: projectViewport.height });
     }
     await page.goto("/profile");
+    const destination = new URL(page.url());
+    if (destination.pathname === "/sign-in") {
+      expect(destination.searchParams.get("returnTo")).toBe("/profile");
+      await expect(page.locator(".public-header")).toBeVisible();
+      await expect(page.locator(".authenticated-app-main")).toHaveCount(0);
+      continue;
+    }
     await expect(page.locator(".public-header")).toHaveCount(0);
     await expect(page.locator(".authenticated-app-main")).toBeVisible();
     await expect(page.locator(".authenticated-topbar")).toBeVisible();

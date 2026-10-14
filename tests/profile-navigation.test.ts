@@ -6,21 +6,21 @@ import {
 } from "@/features/profile/profile";
 
 test("account summary copy reflects capability without merging identities", () => {
-  assert.equal(accountProfileRole("not-applied"), "Client account");
+  assert.equal(accountProfileRole("not-applied"), "Athlete account");
   assert.equal(
     accountProfileRole("pending"),
-    "Client account · coach application pending",
+    "Athlete account · coach application pending",
   );
   assert.equal(
     accountProfileRole("rejected"),
-    "Client account · coach application needs changes",
+    "Athlete account · coach application needs changes",
   );
   assert.equal(
     accountProfileRole("suspended"),
-    "Client account · coach access suspended",
+    "Athlete account · coach access suspended",
   );
-  assert.equal(accountProfileRole("approved"), "Client and coach account");
-  assert.equal(accountProfileRole("demo"), "Client and coach account");
+  assert.equal(accountProfileRole("approved"), "Athlete and coach account");
+  assert.equal(accountProfileRole("demo"), "Athlete and coach account");
 });
 
 test("ordinary accounts have no coach entry on Profile", () => {
@@ -56,7 +56,7 @@ test("approved and demo coaches receive the coach workspace entry", () => {
     assert.deepEqual(coachAccountEntry(status), {
       title: "Coach workspace",
       description:
-        "Manage your approved coach profile, client sessions and published availability.",
+        "Manage your approved coach profile, athlete sessions and published availability.",
       href: "/coach",
       action: "Open coach workspace",
     });

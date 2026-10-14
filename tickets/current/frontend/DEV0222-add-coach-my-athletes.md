@@ -5,7 +5,7 @@
 - Last updated: 2026-10-14
 - Milestone: M6 — Athlete terminology and coach–athlete connections
 - Coordination: [COR0020 — Athlete terminology and coach–athlete connections](../organisatory/COR0020-athlete-terminology-and-connections.md)
-- Related records: contract dependency [DEV0219 — Adopt athlete terminology and connection contract](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md); backend dependency [DEV0221](../backend/DEV0221-persist-coach-athlete-connections.md); terminology dependency [DEV0220](DEV0220-use-athlete-website-terminology.md); athlete peer [DEV0223](DEV0223-add-athlete-my-coaches.md)
+- Related records: contract dependency [DEV0219 — Adopt athlete terminology and connection contract](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md); backend dependency [DEV0221](../backend/DEV0221-persist-coach-athlete-connections.md); terminology dependency [DEV0220](../../archive/frontend/DEV0220-use-athlete-website-terminology.md); athlete peer [DEV0223](DEV0223-add-athlete-my-coaches.md)
 
 ## Objective and context
 

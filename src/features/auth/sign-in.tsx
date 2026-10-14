@@ -554,8 +554,8 @@ export function SignInScreen({
                   </strong>
                   <p>
                     {intent === "coach"
-                      ? "Your client account is ready. Submit the separate coach application to prepare a private draft."
-                      : "Your account is ready. Choose a starting path; approved coaches can still book as clients."}
+                      ? "Your athlete account is ready. Submit the separate coach application to prepare a private draft."
+                      : "Your account is ready. Choose a starting path; approved coaches can still request sessions as athletes."}
                   </p>
                 </div>
                 <h3>

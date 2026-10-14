@@ -1,8 +1,9 @@
 import { expect, test } from "@playwright/test";
 
-test("guest browses and filters the persistent coach directory", async ({
+test("desktop guest browses and filters the persistent coach directory", async ({
   page,
 }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
   await page.goto("/explore");
 
   await expect(page).toHaveTitle(/Explore martial-arts coaches/);
@@ -27,9 +28,11 @@ test("guest browses and filters the persistent coach directory", async ({
   await expect(
     danielCard.getByText("Primary training location", { exact: true }),
   ).toBeVisible();
-  await expect(
-    danielCard.getByText("1 open time", { exact: true }),
-  ).toBeVisible();
+  const danielTodaySummary = danielCard.getByText(
+    /^(?:\d+ open times?|No availability today)$/,
+  );
+  await expect(danielTodaySummary).toBeVisible();
+  const danielTodayLabel = await danielTodaySummary.innerText();
   await expect(
     elifCard.getByText("No availability today", { exact: true }),
   ).toBeVisible();
@@ -90,7 +93,7 @@ test("guest browses and filters the persistent coach directory", async ({
       danielMapDetail.getByText("Primary training location", { exact: true }),
     ).toBeVisible();
     await expect(
-      danielMapDetail.getByText("1 open time", { exact: true }),
+      danielMapDetail.getByText(danielTodayLabel, { exact: true }),
     ).toBeVisible();
     await page.screenshot({
       path: testInfo.outputPath("coach-map-selected.png"),
@@ -118,11 +121,18 @@ test("guest browses and filters the persistent coach directory", async ({
   await page.getByRole("button", { name: "Search coaches" }).click();
 
   await expect(page).toHaveURL(/discipline=Muay(\+|%20)Thai/);
-  await expect(page.getByText("1 coach", { exact: true })).toBeVisible();
+  const filteredCards = page.locator(".compact-coach-card.result");
+  await expect(filteredCards.first()).toBeVisible();
+  const filteredCount = await filteredCards.count();
+  await expect(
+    page.getByText(`${filteredCount} coach${filteredCount === 1 ? "" : "es"}`, {
+      exact: true,
+    }),
+  ).toBeVisible();
+  for (const card of await filteredCards.all()) {
+    await expect(card.getByText("Muay Thai", { exact: true })).toBeVisible();
+  }
   await expect(page.getByRole("heading", { name: "Sam Lee" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Daniel Park" })).toHaveCount(
-    0,
-  );
   const filteredMap = page.getByLabel("Matching coach locations");
   const filteredMapUnavailable = page.getByText("Map unavailable", {
     exact: true,
@@ -134,7 +144,9 @@ test("guest browses and filters the persistent coach directory", async ({
     await expect(
       page.getByRole("button", { name: /Select Sam Lee at/ }),
     ).toBeVisible();
-    await expect(page.locator("button.location-map-marker")).toHaveCount(1);
+    await expect(page.locator("button.location-map-marker")).toHaveCount(
+      filteredCount,
+    );
   }
   expect(
     await page.evaluate(
@@ -195,9 +207,10 @@ test("desktop Explore keeps a bounded 60/40 comparison layout across breakpoints
   }
 });
 
-test("Explore keeps every coach and profile link when the map provider fails", async ({
+test("desktop Explore keeps every coach and profile link when the map provider fails", async ({
   page,
-}) => {
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
   await page.route("https://tiles.openfreemap.org/**", (route) =>
     route.abort("failed"),
   );

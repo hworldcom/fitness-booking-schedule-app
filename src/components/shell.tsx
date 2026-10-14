@@ -110,7 +110,7 @@ export function workspaceRoleLabel(actor: ActorSnapshot) {
   switch (actor.coachAccessStatus) {
     case "approved":
     case "demo":
-      return "Coach and client";
+      return "Coach and athlete";
     case "suspended":
       return "Coach access limited";
     case "pending":
@@ -118,7 +118,7 @@ export function workspaceRoleLabel(actor: ActorSnapshot) {
     case "rejected":
       return "Coach application needs changes";
     case "not-applied":
-      return "Client account";
+      return "Athlete account";
   }
 }
 
@@ -402,7 +402,7 @@ export function Shell({ children }: { children: ReactNode }) {
         >
           <p className="dialog-copy">
             MovX Club is a focused scheduling preview: discover a coach, inspect
-            their real published availability and reserve one private hour.
+            their real published availability and request one private hour.
           </p>
           <div className="notice">
             <strong>Everything here is demonstration data.</strong>

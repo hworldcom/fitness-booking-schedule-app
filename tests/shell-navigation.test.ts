@@ -191,11 +191,11 @@ test("authenticated workspace role copy reflects capability without granting it"
   assert.equal(workspaceRoleLabel({ status: "signed-out" }), "MovX preview");
   assert.equal(
     workspaceRoleLabel(authorizedActor("not-applied")),
-    "Client account",
+    "Athlete account",
   );
   assert.equal(
     workspaceRoleLabel(authorizedActor("approved")),
-    "Coach and client",
+    "Coach and athlete",
   );
   assert.equal(
     workspaceRoleLabel(authorizedActor("suspended")),

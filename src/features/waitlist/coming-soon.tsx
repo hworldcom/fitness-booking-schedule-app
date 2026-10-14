@@ -12,7 +12,7 @@ const previewSteps = [
   "Discover coaches and confirmed public training places",
   "Compare real published one-hour availability",
   "Request one capacity-one private session by email",
-  "Manage client and coach schedules from the same database",
+  "Manage athlete and coach schedules from the same database",
 ];
 
 export function ComingSoonScreen() {

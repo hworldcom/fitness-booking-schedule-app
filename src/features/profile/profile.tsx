@@ -160,15 +160,15 @@ export function accountProfileRole(status: CoachAccessProjection["status"]) {
   switch (status) {
     case "approved":
     case "demo":
-      return "Client and coach account";
+      return "Athlete and coach account";
     case "suspended":
-      return "Client account · coach access suspended";
+      return "Athlete account · coach access suspended";
     case "pending":
-      return "Client account · coach application pending";
+      return "Athlete account · coach application pending";
     case "rejected":
-      return "Client account · coach application needs changes";
+      return "Athlete account · coach application needs changes";
     case "not-applied":
-      return "Client account";
+      return "Athlete account";
   }
 }
 
@@ -188,7 +188,7 @@ export function coachAccountEntry(
       return Object.freeze({
         title: "Coach workspace",
         description:
-          "Manage your approved coach profile, client sessions and published availability.",
+          "Manage your approved coach profile, athlete sessions and published availability.",
         href: "/coach",
         action: "Open coach workspace",
       });

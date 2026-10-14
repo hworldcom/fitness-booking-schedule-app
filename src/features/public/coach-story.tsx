@@ -50,7 +50,7 @@ const schedulingSteps = [
     number: "04",
     title: "Keep the schedule clear",
     description:
-      "Clients or coaches can cancel future sessions, and coaches complete elapsed sessions.",
+      "Athletes or coaches can cancel future sessions, and coaches complete elapsed sessions.",
     Icon: Clock3,
   },
 ] as const satisfies readonly StoryStep[];
@@ -194,9 +194,9 @@ export function HowItWorksStory() {
           <span className="eyebrow">HOW MOVX SCHEDULING WORKS</span>
           <h1>Published time in. Coach-confirmed session out.</h1>
           <p>
-            Approved coaches own their profiles and recurring schedules. Clients
-            request eligible future occurrences, and the coach chooses whether
-            to confirm one client.
+            Approved coaches own their profiles and recurring schedules.
+            Athletes request eligible future occurrences, and the coach chooses
+            whether to confirm one athlete.
           </p>
         </div>
         <StoryStepGrid />
@@ -217,7 +217,7 @@ export function HowItWorksStory() {
             <span>1×</span>
             <div>
               <h3>Confirmed</h3>
-              <p>The exact hour is reserved for one client.</p>
+              <p>The exact hour is confirmed for one athlete.</p>
             </div>
           </article>
           <article>

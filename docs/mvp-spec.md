@@ -14,7 +14,7 @@ The repository contains reusable Next.js, Supabase/PostgreSQL, email identity, c
 
 Tickets record implementation scope and evidence; they do not override this specification.
 
-Athlete website terminology and mutual coach–athlete connections are adopted targets under [COR0020](../tickets/current/organisatory/COR0020-athlete-terminology-and-connections.md); their runtime tickets are not delivered yet. An athlete is an account acting as the training participant, previously called a client. Existing internal `client` identifiers, database fields and compatible sign-in values keep their technical meaning; this vocabulary change adds no new role or authority. A coach may also participate as an athlete through the same account.
+Athlete website terminology is delivered under [DEV0220](../tickets/archive/frontend/DEV0220-use-athlete-website-terminology.md). Mutual coach–athlete connections remain an adopted target under [COR0020](../tickets/current/organisatory/COR0020-athlete-terminology-and-connections.md); connection persistence and interfaces are not delivered yet. An athlete is an account acting as the training participant, previously called a client. Existing internal `client` identifiers, database fields and compatible sign-in values keep their technical meaning; this vocabulary change adds no new role or authority. A coach may also participate as an athlete through the same account.
 Archived tickets remain immutable history. [DEV0140](../tickets/archive/organisatory/DEV0140-adopt-scheduling-only-contract.md) records the decision to create this focused product split.
 
 ## 2. Confirmed target and decisions

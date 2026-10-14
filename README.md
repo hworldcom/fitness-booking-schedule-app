@@ -2,7 +2,7 @@
 
 **Find a coach. Pick a time. Request your session.**
 
-MovX Club is a focused scheduling application for martial-arts clients and coaches. Guests discover fictional coaches and real published availability. Email-authenticated clients request one capacity-one private session, and the coach confirms one client before a booking exists. Coaches manage their public profile, training locations, location-aware recurring one-hour availability, request queue and booked schedule.
+MovX Club is a focused scheduling application for martial-arts athletes and coaches. Guests discover fictional coaches and real published availability. Email-authenticated athletes request one capacity-one private session, and the coach confirms one athlete before a booking exists. Coaches manage their public profile, training locations, location-aware recurring one-hour availability, request queue and booked schedule.
 
 This standalone scheduling repository intentionally excludes blockchain, wallets, passes, credits, token payments, group events and social/feed behavior. Historical records and migrations may describe those superseded features, but they do not define the current product or runtime. The separate [fitness-booking-social-app](https://github.com/hworldcom/fitness-booking-social-app) repository preserves the Solana hackathon product.
 
@@ -24,13 +24,13 @@ Delivered reusable foundations include:
 
 - a responsive Next.js application shell and native Vercel build;
 - local/hosted Supabase PostgreSQL with a server-only database boundary;
-- email-code accounts, protected profiles and separate client/coach onboarding;
+- email-code accounts, protected profiles and separate athlete/coach onboarding;
 - platform-reviewed coach applications with verified or demo trust labels;
 - owner-scoped coach profiles with multiple provider-neutral training locations, one active primary base and safe deactivation;
 - list-first coach discovery with an OpenFreeMap-backed interactive map;
 - location-bound recurring one-hour availability, deterministic dated occurrences and a responsive compatibility calendar pending its location selector.
 
-Direct scheduling-only booking and runtime cleanup were delivered under COR0011. The approval-only request lifecycle, separate coach/client interfaces and atomic conversion of one accepted request into the confirmed booking are delivered under completed [COR0016](tickets/archive/organisatory/COR0016-coach-confirmed-booking-requests.md). The former membership, wallet, payment, group-event and social features are not current product surfaces.
+Direct scheduling-only booking and runtime cleanup were delivered under COR0011. The approval-only request lifecycle, separate coach/athlete interfaces and atomic conversion of one accepted request into the confirmed booking are delivered under completed [COR0016](tickets/archive/organisatory/COR0016-coach-confirmed-booking-requests.md). The former membership, wallet, payment, group-event and social features are not current product surfaces.
 
 The delivered contract permits multiple coach training locations, one coach-selected primary Explore marker and actual-location availability assignments. Profile location management, the location-aware calendar and primary-marker discovery are integrated under completed [COR0014](tickets/archive/organisatory/COR0014-multi-location-coach-scheduling.md).
 
@@ -79,9 +79,9 @@ npm run dev
 
 The one-command workflow reads the local public `API_URL` and `PUBLISHABLE_KEY` (or legacy `ANON_KEY`) internally and does not print or persist private CLI status values. For a manual workflow, copy only those public values to their matching `NEXT_PUBLIC_*` names in `.env.local`, keep `NEXT_PUBLIC_SITE_URL=http://localhost:3100`, and never expose the service-role/secret key.
 
-Open `/sign-in`, request a code and read it from local Mailpit at [127.0.0.1:55324](http://127.0.0.1:55324). The first verified login creates one application profile. `Find a coach` continues as a client; `Become a coach` submits a coach application on the same account. Applicants may prepare a hidden coach profile, but only platform-approved coaches may publish or manage availability.
+Open `/sign-in`, request a code and read it from local Mailpit at [127.0.0.1:55324](http://127.0.0.1:55324). The first verified login creates one application profile. `Find a coach` continues as an athlete; `Become a coach` submits a coach application on the same account. Applicants may prepare a hidden coach profile, but only platform-approved coaches may publish or manage availability.
 
-For ordinary-client testing, sign in with `hoang@users.movx.test`. `npm run dev:local` creates this exact local-only account automatically and preserves its profile and private avatar on later starts. It has no password and no coach authority: request a one-time code on `/sign-in`, then open the message in Mailpit. You can also repair/provision it explicitly with `npm run auth:provision:test-user`. A deliberate `npm run db:reset` recreates the identity on the next start but cannot restore a deleted uploaded image.
+For athlete account testing, sign in with `hoang@users.movx.test`. `npm run dev:local` creates this exact local-only account automatically and preserves its profile and private avatar on later starts. It has no password and no coach authority: request a one-time code on `/sign-in`, then open the message in Mailpit. You can also repair/provision it explicitly with `npm run auth:provision:test-user`. A deliberate `npm run db:reset` recreates the identity on the next start but cannot restore a deleted uploaded image.
 
 To exercise owner flows as the five fictional coaches:
 
@@ -195,7 +195,7 @@ npm run build
 npm run test:e2e
 ```
 
-`test:auth`, `test:coach-availability`, `test:coach-locations`, `test:coach-requests` and `test:client-requests` require the configured Auth-enabled local stack and a running application on port 3100. The availability rehearsal creates an approved local coach with two reviewed gyms; verifies local assignment, explicit keep/move/remove, one request per save, inactive-location conflict recovery, actual occurrence venues and responsive keyboard use; then removes only its exact `dev0104-coach-*` local accounts. The location rehearsal requires the provisioned Daniel Park coach account; it exercises add/edit/conflict/primary/public/deactivation flows, captures responsive evidence and removes only its unreferenced `DEV0178 …` local locations afterward. The coach-request rehearsal also uses the provisioned Daniel account, creates isolated `dev0189-client-*` local identities and authorized requests, validates pagination, decisions, closure, history, keyboard and responsive behavior, then removes those identities and their exact scheduling records. The client-request rehearsal uses the provisioned Hoang and Daniel accounts plus one isolated competitor; it validates request persistence, withdrawal and retry, coach decline and retry, acceptance, closure, expiry, candidate privacy, confirmed-session continuity, keyboard use and responsive layout, then removes only its three fixed occurrences, related records and isolated competitor. Database checks require isolated local PostgreSQL. Playwright starts a production server on port 3101 and writes ignored evidence to `test-results/`.
+`test:auth`, `test:coach-availability`, `test:coach-locations`, `test:coach-requests` and `test:client-requests` require the configured Auth-enabled local stack and a running application on port 3100. The availability rehearsal creates an approved local coach with two reviewed gyms; verifies local assignment, explicit keep/move/remove, one request per save, inactive-location conflict recovery, actual occurrence venues and responsive keyboard use; then removes only its exact `dev0104-coach-*` local accounts. The location rehearsal requires the provisioned Daniel Park coach account; it exercises add/edit/conflict/primary/public/deactivation flows, captures responsive evidence and removes only its unreferenced `DEV0178 …` local locations afterward. The coach-request rehearsal also uses the provisioned Daniel account, creates isolated `dev0189-client-*` local identities and authorized requests, validates pagination, decisions, closure, history, keyboard and responsive behavior, then removes those identities and their exact scheduling records. The athlete-request rehearsal uses the provisioned Hoang and Daniel accounts plus one isolated competitor; it validates request persistence, withdrawal and retry, coach decline and retry, acceptance, closure, expiry, candidate privacy, confirmed-session continuity, keyboard use and responsive layout, then removes only its three fixed occurrences, related records and isolated competitor. Database checks require isolated local PostgreSQL. Playwright starts a production server on port 3101 and writes ignored evidence to `test-results/`.
 
 ## Application structure
 
