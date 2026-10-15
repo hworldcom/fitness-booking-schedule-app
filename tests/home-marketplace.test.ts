@@ -184,7 +184,8 @@ test("compact result card exposes truthful comparison and selection boundaries",
   assert.match(markup, /data-selected="true"/);
   assert.match(markup, /tabindex="-1"/);
   assert.match(markup, />BB<\/span>/);
-  assert.match(markup, /Bao Bui teaches focused private training/);
+  assert.doesNotMatch(markup, /Bao Bui teaches focused private training/);
+  assert.match(markup, /<h3>Bao Bui<\/h3>/);
   assert.match(markup, /Primary training location/);
   assert.match(markup, /No availability today/);
   assert.match(markup, /aria-label="Show Bao Bui on the map"/);
@@ -212,7 +213,7 @@ test("Explore keeps explicit empty and unavailable directory states", () => {
     }),
   );
   assert.match(unavailable, /Coach discovery is temporarily unavailable/);
-  assert.match(unavailable, /No fixture fallback or invented availability/);
+  assert.match(unavailable, /Coach profiles could not be loaded/);
   assert.doesNotMatch(unavailable, /coach-map-panel|compact-coach-card result/);
 });
 
@@ -262,4 +263,30 @@ test("home orders working discovery before the concise confirmation flow", () =>
   assert.match(markup, /name="location"/);
   assert.doesNotMatch(markup, /name="q"|Search coach or focus|by name, focus/);
   assert.doesNotMatch(markup, /name="when"|near you|rating|price/i);
+});
+
+test("Explore distinguishes today's actual venue from the primary training place", () => {
+  const original = entries[0]!;
+  const slot = original.todaySlots[0]!;
+  const entry = {
+    ...original,
+    todaySlots: [
+      {
+        ...slot,
+        location: {
+          ...slot.location,
+          name: "Another dojo",
+          label: "24 Actual Venue Street, Berlin",
+        },
+      },
+    ],
+  };
+  const html = renderToStaticMarkup(
+    createElement(CompactCoachCard, { entry, variant: "result" }),
+  );
+  assert.match(html, /Amina Ali training base/);
+  assert.match(html, /Another dojo/);
+  assert.match(html, /24 Actual Venue Street, Berlin/);
+  assert.match(html, /1 open time/);
+  assert.doesNotMatch(html, /Amina Ali teaches focused private training/);
 });

@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { normalizeCoachDirectoryFilters } from "@/domain/coaches";
 import { CoachDirectory } from "@/features/coaches/coach-discovery";
 import {
   canonicalCoachExploreView,
   coachDirectoryHref,
   isCanonicalCoachDirectorySearch,
   normalizeCoachExploreView,
+  normalizeCoachExploreFilters,
 } from "@/features/coaches/marketplace-search-contract";
 import { publicCoachDirectory } from "@/server/coaches/service";
 
@@ -22,7 +22,7 @@ export default async function Page({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const rawSearchParams = await searchParams;
-  const filters = normalizeCoachDirectoryFilters(rawSearchParams);
+  const filters = normalizeCoachExploreFilters(rawSearchParams);
   const explicitView = canonicalCoachExploreView(rawSearchParams);
   if (
     !isCanonicalCoachDirectorySearch(rawSearchParams, filters, explicitView)
@@ -33,6 +33,7 @@ export default async function Page({
     <CoachDirectory
       state={await publicCoachDirectory(filters)}
       view={normalizeCoachExploreView(rawSearchParams)}
+      searchView={explicitView}
     />
   );
 }

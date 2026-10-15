@@ -170,7 +170,7 @@ test("reduced motion uses instant map-selection scrolling and keeps profile acce
     "Map selection requires a configured directory; covered by the isolated public fixtures.",
   );
   const card = cards.first();
-  const name = await card.locator("h2").innerText();
+  const name = await card.locator("h3").innerText();
   await card.getByRole("button", { name: `Show ${name} on the map` }).click();
   if (testInfo.project.name === "mobile") {
     await expect(page).toHaveURL(/view=map/);

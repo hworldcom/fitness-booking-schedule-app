@@ -9,7 +9,7 @@ test("desktop guest browses and filters the persistent coach directory", async (
   await expect(page).toHaveTitle(/Explore martial-arts coaches/);
   await expect(
     page.getByRole("heading", {
-      name: "Find a coach and a time that fits.",
+      name: "Explore coaches in Berlin.",
     }),
   ).toBeVisible();
   await expect(page.getByText("5 coaches", { exact: true })).toBeVisible();
@@ -36,7 +36,7 @@ test("desktop guest browses and filters the persistent coach directory", async (
   await expect(
     elifCard.getByText("No availability today", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByText(/Fictional coaches and places/)).toBeVisible();
+  await expect(page.locator(".demo-strip")).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Map of matching coaches" }),
   ).toBeVisible();
@@ -99,6 +99,9 @@ test("desktop guest browses and filters the persistent coach directory", async (
       path: testInfo.outputPath("coach-map-selected.png"),
       fullPage: true,
     });
+    await page.screenshot({
+      path: testInfo.outputPath("coach-map-selected-viewport.png"),
+    });
     await danielMarker.locator("img").evaluate((image) => {
       image.dispatchEvent(new Event("error"));
     });
@@ -117,7 +120,7 @@ test("desktop guest browses and filters the persistent coach directory", async (
   });
   await discipline.focus();
   await expect(discipline).toBeFocused();
-  await discipline.selectOption("Muay Thai");
+  await discipline.fill("Muay Thai");
   await page.getByRole("button", { name: "Search coaches" }).click();
 
   await expect(page).toHaveURL(/discipline=Muay(\+|%20)Thai/);
@@ -130,7 +133,11 @@ test("desktop guest browses and filters the persistent coach directory", async (
     }),
   ).toBeVisible();
   for (const card of await filteredCards.all()) {
-    await expect(card.getByText("Muay Thai", { exact: true })).toBeVisible();
+    await expect(
+      card
+        .locator(".compact-coach-disciplines span")
+        .filter({ hasText: /^Muay Thai(?:\s*·)?$/ }),
+    ).toBeVisible();
   }
   await expect(page.getByRole("heading", { name: "Sam Lee" })).toBeVisible();
   const filteredMap = page.getByLabel("Matching coach locations");

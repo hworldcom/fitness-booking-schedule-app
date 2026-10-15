@@ -4,6 +4,20 @@ import {
   type CoachDiscipline,
 } from "@/domain/coaches";
 
+import { marketplaceDiscipline } from "./discipline-search-contract";
+
+export function normalizeCoachExploreFilters(
+  searchParams: Readonly<Record<string, string | string[] | undefined>>,
+) {
+  const value = Array.isArray(searchParams.discipline)
+    ? searchParams.discipline[0]
+    : searchParams.discipline;
+  return normalizeCoachDirectoryFilters({
+    ...searchParams,
+    discipline: marketplaceDiscipline(value ?? "") ?? undefined,
+  });
+}
+
 export type CoachDirectoryFilterOverrides = Readonly<{
   query?: string;
   discipline?: CoachDiscipline | null;

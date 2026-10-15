@@ -1,50 +1,19 @@
 import {
-  COACH_DISCIPLINES,
   normalizeCoachDirectoryFilters,
   type CoachDirectoryEntry,
   type CoachDirectoryFilters,
-  type CoachDiscipline,
 } from "@/domain/coaches";
+
+import { marketplaceDiscipline as homeDiscipline } from "./discipline-search-contract";
+export {
+  marketplaceDiscipline as homeDiscipline,
+  DISCIPLINE_SEARCH_PATTERN as HOME_DISCIPLINE_PATTERN,
+} from "./discipline-search-contract";
 
 export const HOME_COACH_PAGE_SIZE = 15;
 export type HomeSearchParams = Readonly<
   Record<string, string | string[] | undefined>
 >;
-const disciplineAliases: Readonly<Record<string, CoachDiscipline>> = {
-  bjj: "Brazilian Jiu-Jitsu",
-  "jiu jitsu": "Brazilian Jiu-Jitsu",
-  "jiu-jitsu": "Brazilian Jiu-Jitsu",
-  "thai boxing": "Muay Thai",
-  "mixed martial arts": "MMA",
-};
-
-export function homeDiscipline(value: string): CoachDiscipline | null {
-  const normalized = value.trim().replace(/\s+/g, " ").toLowerCase();
-  return (
-    COACH_DISCIPLINES.find(
-      (discipline) => discipline.toLowerCase() === normalized,
-    ) ??
-    (Object.hasOwn(disciplineAliases, normalized)
-      ? disciplineAliases[normalized]
-      : null) ??
-    null
-  );
-}
-
-export const HOME_DISCIPLINE_PATTERN =
-  "\\s*(?:" +
-  [...COACH_DISCIPLINES, ...Object.keys(disciplineAliases), "All disciplines"]
-    .map((value) =>
-      value
-        .replace(
-          /[a-z]/gi,
-          (letter) => "[" + letter.toLowerCase() + letter.toUpperCase() + "]",
-        )
-        .replaceAll(" ", "\\s+"),
-    )
-    .join("|") +
-  ")\\s*";
-
 export function normalizeHomeSearch(searchParams: HomeSearchParams) {
   const disciplineValue = Array.isArray(searchParams.discipline)
     ? searchParams.discipline[0]

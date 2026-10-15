@@ -1,111 +1,93 @@
+import Form from "next/form";
 import Link from "next/link";
 import { Search, X } from "lucide-react";
+import type { CoachDirectoryFilters } from "@/domain/coaches";
 import {
-  COACH_DISCIPLINES,
-  type CoachDirectoryFilters,
-} from "@/domain/coaches";
-import { coachDirectoryHref } from "./marketplace-search-contract";
+  coachDirectoryHref,
+  type CoachExploreView,
+} from "./marketplace-search-contract";
+import { MarketplaceDisciplineInput } from "./marketplace-discipline-input";
+import { MarketplaceDisciplineNavigation } from "./marketplace-discipline-navigation";
 
 export function PublicMarketplaceSearch({
   filters,
   includeQuery = true,
+  view = null,
 }: {
   filters: CoachDirectoryFilters;
   includeQuery?: boolean;
+  view?: CoachExploreView | null;
 }) {
   const searchFilters = includeQuery ? filters : { ...filters, query: "" };
   const hasActiveFilters = Boolean(
     searchFilters.query || searchFilters.discipline || searchFilters.location,
   );
-
+  const clearHref = coachDirectoryHref(
+    searchFilters,
+    { query: "", discipline: null, location: "" },
+    view,
+  );
   return (
-    <div className="marketplace-search" key={coachDirectoryHref(searchFilters)}>
-      <form
-        className="coach-filters"
+    <div
+      className="marketplace-search explore-marketplace-search"
+      key={coachDirectoryHref(searchFilters, {}, view)}
+    >
+      <Form
         action="/explore"
-        method="get"
+        className={`home-coach-search explore-coach-search${includeQuery ? " has-query" : ""}`}
         aria-label="Search coaches"
+        scroll={false}
       >
         {includeQuery && (
-          <label>
+          <label htmlFor="explore-query">
             <span>Search coach or focus</span>
             <input
+              id="explore-query"
               type="search"
               name="q"
               defaultValue={searchFilters.query}
-              placeholder="Try fundamentals or footwork"
+              placeholder="Name, fundamentals, footwork…"
               maxLength={80}
             />
           </label>
         )}
-        <label>
+        <label htmlFor="explore-discipline">
           <span>Discipline</span>
-          <select
-            name="discipline"
-            defaultValue={searchFilters.discipline ?? ""}
-          >
-            <option value="">All disciplines</option>
-            {COACH_DISCIPLINES.map((discipline) => (
-              <option key={discipline} value={discipline}>
-                {discipline}
-              </option>
-            ))}
-          </select>
+          <MarketplaceDisciplineInput
+            discipline={searchFilters.discipline}
+            prefix="explore"
+          />
         </label>
-        <label>
-          <span>Location</span>
+        <label htmlFor="explore-location">
+          <span>Where in Berlin?</span>
           <input
+            id="explore-location"
             type="search"
             name="location"
             defaultValue={searchFilters.location}
-            placeholder="Gym or public place"
+            placeholder="Area, gym or public place"
             maxLength={120}
           />
         </label>
+        {view && <input type="hidden" name="view" value={view} />}
         <button className="button dark" type="submit">
-          <Search size={16} aria-hidden="true" /> Search coaches
+          <Search size={17} aria-hidden="true" /> Search coaches
         </button>
-      </form>
-
-      <nav
-        className="marketplace-discipline-navigation"
-        aria-label="Browse coaches by discipline"
-      >
-        <span>Browse by discipline</span>
-        <div className="marketplace-discipline-chips">
-          <Link
-            className={`marketplace-discipline-chip ${
-              searchFilters.discipline === null ? "active" : ""
-            }`}
-            href={coachDirectoryHref(searchFilters, { discipline: null })}
-            aria-current={
-              searchFilters.discipline === null ? "page" : undefined
-            }
-          >
-            All
-          </Link>
-          {COACH_DISCIPLINES.map((discipline) => {
-            const selected = searchFilters.discipline === discipline;
-            return (
-              <Link
-                className={`marketplace-discipline-chip ${
-                  selected ? "active" : ""
-                }`}
-                href={coachDirectoryHref(searchFilters, { discipline })}
-                aria-current={selected ? "page" : undefined}
-                key={discipline}
-              >
-                {discipline}
-              </Link>
-            );
-          })}
-        </div>
-        {hasActiveFilters && (
-          <Link className="marketplace-clear-search" href="/explore">
-            <X size={14} aria-hidden="true" /> Clear search
-          </Link>
-        )}
-      </nav>
+      </Form>
+      <MarketplaceDisciplineNavigation
+        filters={searchFilters}
+        destination="explore"
+        view={view}
+      />
+      {hasActiveFilters && (
+        <Link
+          className="marketplace-clear-search explore-clear-search"
+          href={clearHref}
+          scroll={false}
+        >
+          <X size={14} aria-hidden="true" /> Clear search
+        </Link>
+      )}
     </div>
   );
 }

@@ -17,49 +17,47 @@ import {
 import { CoachExploreResults } from "./coach-explore-results";
 import { CoachProfileLocations } from "./coach-profile-locations";
 import { PublicMarketplaceSearch } from "./public-marketplace-search";
-import type { CoachExploreView } from "./marketplace-search-contract";
+import {
+  coachDirectoryHref,
+  type CoachExploreView,
+} from "./marketplace-search-contract";
 
 export function CoachDirectory({
   state,
   view = "list",
+  searchView = null,
 }: {
   state: CoachDirectoryState;
   view?: CoachExploreView;
+  searchView?: CoachExploreView | null;
 }) {
   return (
     <div className="coach-discovery">
-      <header className="coach-directory-hero">
+      <header className="coach-directory-heading">
         <div>
-          <span className="eyebrow">APPROVED + DEMO COACHES · BERLIN</span>
-          <h1>
-            Find a coach and a time that fits
-            <span className="lime-text">.</span>
-          </h1>
+          <span className="eyebrow">PRIVATE MARTIAL-ARTS COACHING</span>
+          <h1>Explore coaches in Berlin.</h1>
           <p>
-            Compare disciplines, coach-confirmed places and real published
-            availability. The list remains usable when the optional map is
-            unavailable.
+            Find your discipline. Discover a training place. Meet your coach.
           </p>
         </div>
-        <div className="coach-directory-disclosure">
-          <ShieldCheck size={23} aria-hidden="true" />
-          <div>
-            <strong>Scheduling preview</strong>
-            <span>
-              Fictional coaches and places; database-backed open times.
-            </span>
-          </div>
-        </div>
+        <Link className="coach-back-link" href="/">
+          <ArrowLeft size={16} aria-hidden="true" /> Back to Home
+        </Link>
       </header>
-
-      <PublicMarketplaceSearch filters={state.filters} />
+      <PublicMarketplaceSearch filters={state.filters} view={searchView} />
 
       {state.status === "unavailable" ? (
         <section className="coach-directory-state" role="alert">
           <UserRoundSearch size={29} aria-hidden="true" />
           <h2>Coach discovery is temporarily unavailable.</h2>
-          <p>No fixture fallback or invented availability was shown.</p>
-          <Link className="button secondary" href="/explore">
+          <p>
+            Coach profiles could not be loaded. Please try your search again.
+          </p>
+          <Link
+            className="button secondary"
+            href={coachDirectoryHref(state.filters, {}, searchView)}
+          >
             Try again
           </Link>
         </section>
@@ -67,8 +65,17 @@ export function CoachDirectory({
         <section className="coach-directory-state">
           <Search size={29} aria-hidden="true" />
           <h2>No coaches match these filters.</h2>
-          <p>Clear the filters to see every visible demonstration profile.</p>
-          <Link className="button secondary" href="/explore">
+          <p>
+            Try another discipline or clear your filters to see all coaches.
+          </p>
+          <Link
+            className="button secondary"
+            href={coachDirectoryHref(
+              state.filters,
+              { query: "", discipline: null, location: "" },
+              searchView,
+            )}
+          >
             Clear filters
           </Link>
         </section>

@@ -25,7 +25,7 @@ export function CompactCoachCard({
 }: CompactCoachCardProps) {
   const { coach, primaryLocation } = entry;
   const profileHref = `/coaches/${coach.slug}`;
-  const Heading = variant === "result" ? "h2" : "h3";
+  const Heading = "h3";
   const trustLabel =
     coach.trustKind === "verified"
       ? "Verified coach"
@@ -53,7 +53,7 @@ export function CompactCoachCard({
             alt=""
           />
           <span>
-            {variant !== "marketplace" && <small>PRIVATE COACHING</small>}
+            {variant === "preview" && <small>PRIVATE COACHING</small>}
             <Heading>{coach.displayName}</Heading>
           </span>
         </Link>
@@ -69,14 +69,12 @@ export function CompactCoachCard({
         {coach.disciplines.map((discipline, index) => (
           <span key={discipline}>
             {discipline}
-            {variant === "marketplace" && index < coach.disciplines.length - 1
+            {variant !== "preview" && index < coach.disciplines.length - 1
               ? " ·"
               : ""}
           </span>
         ))}
       </div>
-
-      {variant === "result" && <p className="compact-coach-bio">{coach.bio}</p>}
 
       <div className="compact-coach-location">
         <MapPin size={17} aria-hidden="true" />
@@ -87,9 +85,10 @@ export function CompactCoachCard({
               : "Primary training location"}
           </small>
           <strong>{primaryLocation.publicName}</strong>
-          {variant !== "marketplace" && (
-            <em>{primaryLocation.location.label}</em>
-          )}
+          {variant !== "marketplace" &&
+            primaryLocation.publicName !== primaryLocation.location.label && (
+              <em>{primaryLocation.location.label}</em>
+            )}
         </span>
       </div>
 

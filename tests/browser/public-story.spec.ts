@@ -440,8 +440,8 @@ test("Home typed discipline and Explore query search submit without JavaScript",
     await expect(search.getByLabel("Discipline")).toHaveValue("");
     await page.goto("/explore");
     await search.getByLabel("Search coach or focus").fill("boxing basics");
-    await search.getByLabel("Discipline").selectOption("Boxing");
-    await search.getByLabel("Location").fill(" Kreuzberg ");
+    await search.getByLabel("Discipline").fill("boxing");
+    await search.getByLabel("Where in Berlin?").fill(" Kreuzberg ");
     await search
       .getByRole("button", { name: "Search coaches" })
       .click({ force: true });

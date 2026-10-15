@@ -1,0 +1,420 @@
+/* Explore shares Home's discovery controls; all overrides are route-scoped. */
+.coach-discovery {
+  padding: 14px 0 48px;
+}
+.coach-directory-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0 0 24px;
+}
+.coach-directory-heading h1 {
+  margin: 8px 0 10px;
+  color: var(--coach-forest);
+  font-size: clamp(30px, 3.4vw, 40px);
+  line-height: 1.12;
+  letter-spacing: -1.5px;
+}
+.coach-directory-heading p {
+  color: var(--muted);
+  font-size: 13px;
+}
+.coach-directory-heading .coach-back-link {
+  margin: 0;
+  flex: none;
+  min-height: 44px;
+}
+.explore-marketplace-search {
+  position: relative;
+  margin-bottom: 25px;
+}
+.explore-coach-search.has-query {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr) minmax(0, 1.1fr) auto;
+}
+.explore-coach-search input[type="hidden"] {
+  display: none;
+}
+.coach-discovery .home-discipline-navigation {
+  margin-top: 18px;
+}
+.coach-discovery .home-discipline-shortcut {
+  flex-basis: 118px;
+  min-height: 76px;
+}
+.explore-clear-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  min-height: 44px;
+  color: var(--coach-forest);
+  font-size: 11px;
+}
+.coach-discovery .coach-results-summary {
+  align-items: center;
+  margin-bottom: 21px;
+}
+.coach-results-summary > div {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.coach-results-summary h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+.coach-discovery .coach-results-summary span {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.coach-discovery .coach-results-summary small {
+  font-size: 11px;
+}
+.coach-discovery .coach-explore-layout {
+  gap: 28px;
+}
+.coach-discovery .coach-card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 30px 20px;
+}
+.coach-discovery .compact-coach-card.result {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  min-height: 0;
+}
+.coach-discovery .compact-coach-card.result.selected {
+  outline: 2px solid #91ad61;
+  outline-offset: 7px;
+  border-radius: 12px;
+  box-shadow: none;
+}
+.coach-discovery .compact-coach-card.result:focus {
+  outline: 3px solid #46611b;
+  outline-offset: 7px;
+}
+.coach-discovery .compact-coach-card.result > header {
+  display: block;
+  position: relative;
+}
+.coach-discovery .compact-coach-card.result .compact-coach-identity {
+  display: block;
+}
+.coach-discovery .compact-coach-card.result .compact-coach-identity > .avatar {
+  display: grid;
+  width: 100%;
+  height: 172px;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  background: #edf2e8;
+  color: #66765b;
+  font-size: 40px;
+  place-items: center;
+}
+.coach-discovery .compact-coach-identity img {
+  object-position: center 30%;
+}
+.coach-discovery .compact-coach-identity h3 {
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+  font-size: 16px;
+  letter-spacing: -0.2px;
+  line-height: 1.35;
+}
+.coach-discovery .compact-coach-card > header > .pill {
+  position: absolute;
+  top: 9px;
+  left: 9px;
+  background: var(--white);
+  color: var(--coach-forest);
+  font-size: 10px;
+}
+.coach-discovery .compact-coach-disciplines {
+  gap: 4px;
+}
+.coach-discovery .compact-coach-disciplines span {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+.coach-discovery .compact-coach-location {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  gap: 7px;
+}
+.coach-discovery .compact-coach-location > svg {
+  display: none;
+}
+.coach-discovery .compact-coach-location small {
+  font-size: 9px;
+  letter-spacing: 0;
+}
+.coach-discovery .compact-coach-location strong {
+  margin: 2px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.coach-discovery .compact-coach-location em {
+  font-size: 10px;
+  margin-top: 2px;
+}
+.coach-discovery .compact-coach-card.result > .coach-today-availability {
+  padding: 10px 0 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+}
+.coach-discovery .coach-today-availability header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.coach-discovery .coach-today-availability header span {
+  font-size: 10px;
+}
+.coach-discovery .coach-today-availability header strong {
+  font-size: 11px;
+  margin-left: 0;
+}
+.coach-discovery .coach-today-availability li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.coach-discovery .coach-today-availability li > span {
+  flex-basis: 100%;
+  padding-left: 18px;
+  min-width: 0;
+}
+.coach-discovery .coach-today-availability time,
+.coach-discovery .coach-today-availability li strong {
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.coach-discovery .coach-today-availability li small,
+.coach-discovery .coach-today-more {
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+.coach-discovery .compact-coach-actions {
+  margin-top: auto;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  flex-wrap: wrap;
+}
+.coach-discovery .compact-coach-link {
+  flex: 1 0 100%;
+  justify-content: flex-start;
+  gap: 6px;
+  min-height: 44px;
+  font-size: 11px;
+}
+.coach-discovery .compact-coach-map-button {
+  min-height: 44px;
+  padding: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.coach-discovery .compact-coach-map-button[aria-pressed="true"] {
+  color: var(--coach-forest);
+  font-weight: 800;
+}
+.coach-discovery .coach-map-panel {
+  border-radius: 18px;
+  box-shadow: none;
+}
+.coach-discovery .coach-map-heading {
+  gap: 8px;
+  padding: 17px 18px;
+}
+.coach-discovery .coach-map-heading h2 {
+  font-size: 19px;
+  margin: 4px 0 0;
+}
+.coach-discovery .coach-map-heading p {
+  font-size: 11px;
+}
+.coach-discovery .coach-map-detail {
+  gap: 10px;
+  background: var(--white);
+}
+.coach-discovery .coach-map-primary small {
+  font-size: 9px;
+}
+.coach-discovery .coach-map-primary strong,
+.coach-discovery .coach-map-primary em,
+.coach-discovery .coach-map-detail > a {
+  font-size: 11px;
+}
+.coach-discovery .coach-map-primary em {
+  overflow-wrap: anywhere;
+}
+.coach-discovery .coach-map-detail > a {
+  min-height: 44px;
+}
+.coach-discovery .coach-directory-state {
+  margin-top: 20px;
+  background: #edf2e8;
+  border-radius: 16px;
+}
+@media (min-width: 981px) and (max-width: 1100px) {
+  .coach-discovery .coach-explore-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 0.9fr);
+    gap: 24px;
+  }
+  .coach-discovery .coach-explore-layout.map-unavailable {
+    grid-template-columns: minmax(0, 1fr) minmax(250px, 0.36fr);
+  }
+  .coach-discovery .coach-card-grid {
+    gap: 25px 16px;
+  }
+  .coach-discovery
+    .compact-coach-card.result
+    .compact-coach-identity
+    > .avatar {
+    height: 150px;
+  }
+  .explore-coach-search label {
+    padding-inline: 12px;
+  }
+}
+@media (max-width: 980px) {
+  .coach-discovery .coach-explore-layout {
+    grid-template-columns: 1fr;
+  }
+  .explore-coach-search.has-query {
+    grid-template-columns: 1fr 1fr;
+    border-radius: 22px;
+  }
+  .explore-coach-search.has-query > label:first-child {
+    grid-column: 1 / -1;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 6px;
+    padding-bottom: 10px;
+  }
+  .explore-coach-search.has-query > label:nth-child(2) {
+    border-left: 0;
+  }
+  .explore-coach-search.has-query > button {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+  }
+  .coach-discovery .coach-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .coach-discovery {
+    padding-top: 5px;
+  }
+  .coach-directory-heading {
+    margin-bottom: 20px;
+  }
+  .coach-directory-heading h1 {
+    font-size: 30px;
+    letter-spacing: -1px;
+  }
+  .coach-directory-heading p {
+    font-size: 12px;
+  }
+  .coach-directory-heading .coach-back-link {
+    display: none;
+  }
+  .explore-coach-search label {
+    padding-inline: 10px;
+  }
+  .coach-discovery .home-discipline-shortcut {
+    flex-basis: 100px;
+    min-height: 70px;
+  }
+  .coach-discovery .coach-results-summary {
+    gap: 8px;
+  }
+  .coach-results-summary > div {
+    gap: 7px;
+  }
+  .coach-results-summary h2 {
+    font-size: 21px;
+  }
+  .coach-discovery .coach-results-summary small {
+    display: none;
+  }
+  .coach-discovery .coach-card-grid {
+    gap: 25px 16px;
+  }
+  .coach-discovery
+    .compact-coach-card.result
+    .compact-coach-identity
+    > .avatar {
+    height: 155px;
+    font-size: 32px;
+  }
+  .coach-discovery .compact-coach-identity h3 {
+    overflow: visible;
+    white-space: normal;
+    text-overflow: clip;
+    font-size: 15px;
+  }
+  .coach-discovery .compact-coach-location small {
+    font-size: 9px;
+  }
+}
+@media (max-width: 370px) {
+  .coach-discovery .coach-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.coach-discovery .coach-today-availability li :is(strong, small) {
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+}
+
+/* Keep actions inside each narrow card; wrapping a column flexbox creates
+   a second horizontal column when a link takes the available height. */
+.coach-discovery .compact-coach-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+.coach-discovery .compact-coach-link {
+  flex: none;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+}
+.coach-discovery .compact-coach-link > svg {
+  flex-shrink: 0;
+}
+.coach-discovery .compact-coach-map-button {
+  width: auto;
+  max-width: 100%;
+  justify-self: start;
+}
+.coach-discovery .compact-coach-location :is(strong, em) {
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+}

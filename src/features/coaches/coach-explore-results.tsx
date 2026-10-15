@@ -137,9 +137,12 @@ export function CoachExploreResults({
       aria-label={`${entries.length} matching coaches`}
     >
       <div className="coach-results-summary">
-        <span>
-          {entries.length} coach{entries.length === 1 ? "" : "es"}
-        </span>
+        <div>
+          <h2>Coaches in Berlin</h2>
+          <span>
+            {entries.length} coach{entries.length === 1 ? "" : "es"}
+          </span>
+        </div>
         <small>Ordered by coach name</small>
       </div>
       <nav
@@ -253,7 +256,10 @@ export function CoachExploreResults({
                 <span>
                   <small>Primary training location</small>
                   <strong>{selectedEntry.primaryLocation.publicName}</strong>
-                  <em>{selectedEntry.primaryLocation.location.label}</em>
+                  {selectedEntry.primaryLocation.publicName !==
+                    selectedEntry.primaryLocation.location.label && (
+                    <em>{selectedEntry.primaryLocation.location.label}</em>
+                  )}
                 </span>
               </div>
               <CoachTodayAvailability entry={selectedEntry} limit={5} />

@@ -47,7 +47,9 @@ export function CoachTodayAvailability({
               </time>
               <span>
                 <strong>{slot.location.name}</strong>
-                <small>{slot.location.label}</small>
+                {slot.location.label !== slot.location.name && (
+                  <small>{slot.location.label}</small>
+                )}
               </span>
             </li>
           ))}
