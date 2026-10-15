@@ -5,93 +5,78 @@
 - Last updated: 2026-10-15
 - Milestone: Scheduling-only session collaboration follow-up
 - Coordination: [COR0015 — Session notes and training plans](../organisatory/COR0015-session-notes-and-training-plans.md)
-- Related records: contract dependency [DEV0182 — Adopt the session-notes contract](../organisatory/DEV0182-adopt-session-notes-contract.md), backend dependency [DEV0183 — Persist authorized session notes](../backend/DEV0183-persist-authorized-session-notes.md), completed request-interface dependency [DEV0190 — Add the client booking-request flow](../../archive/frontend/DEV0190-add-client-booking-request-flow.md), coach peer [DEV0184 — Add the coach session workspace](DEV0184-add-coach-session-workspace.md), athlete-history baseline [DEV0144 — Show client booking history](../../archive/frontend/DEV0144-show-client-booking-history.md); independent messaging-contract dependency [DEV0243](../organisatory/DEV0243-define-ongoing-messages-and-session-note-boundaries.md)
+- Related records: contract dependency [DEV0182 — Adopt the session-notes contract](../organisatory/DEV0182-adopt-session-notes-contract.md), backend dependency [DEV0183 — Persist authorized session notes](../backend/DEV0183-persist-authorized-session-notes.md), completed request-interface dependency [DEV0190 — Add the client booking-request flow](../../archive/frontend/DEV0190-add-client-booking-request-flow.md), coach peer [DEV0184 — Add the coach session workspace](DEV0184-add-coach-session-workspace.md), athlete-history baseline [DEV0144 — Show client booking history](../../archive/frontend/DEV0144-show-client-booking-history.md); independent messaging-contract dependency [DEV0243](../../archive/organisatory/DEV0243-define-ongoing-messages-and-session-note-boundaries.md); independent messaging runtime [COR0022](../../archive/organisatory/COR0022-private-messaging-and-booking-context.md)
 
-## Planning revision pending — 2026-10-15
+## Planning boundary revised — 2026-10-15
 
-The user now wants one ongoing coach–athlete message conversation containing session requests, while individual booking sessions contain coach/athlete notes. [DEV0243](../organisatory/DEV0243-define-ongoing-messages-and-session-note-boundaries.md) owns the new contract and its reconciliation with these earlier Draft plans. The per-request conversation model below is the earlier proposal and must be revised before implementation; it is not an adopted messaging contract. Existing session-note, shared-plan and coach-private-note intentions remain subject to that review rather than being silently removed.
+The user adopted Airbnb-style contact/consent while retaining one ongoing pair conversation and separate booking notes. DEV0243 reconciles this plan; COR0022 owns messages/inquiries/request cards. The earlier proposal for a conversation per pending request is superseded, not an active implementation instruction. The previously accepted shared-plan/shared-note/coach-private intent remains. This revision implements no note runtime.
 
 ## Objective and context
 
-Add the athlete-facing collaboration area to My sessions. Athletes need an isolated conversation after submitting an approval request and, if selected, continuity into the confirmed session's training plan and post-session exchange. The interface must expose only the exact athlete's shared content and must not reveal another candidate or whether the coach stored private notes.
+Add athlete booking-specific shared plan/note reading and author-owned note exchange in My sessions. Ongoing chat and pending request discussion are COR0022 work; [section 16.6](../../../docs/mvp-spec.md#166-interface-and-session-note-boundary) keeps the original booking detail separate.
 
 ## Scope and non-goals
 
-- In scope:
-  - Show and compose the exact athlete's isolated shared thread within a pending request created by DEV0190.
-  - Continue only an accepted request's thread into the confirmed booking; show unsuccessful terminal request threads read-only.
-  - Show a coach-authored shared plan within the athlete's exact booking context.
-  - Show the chronological shared thread with author, timestamp and edited state.
-  - Let the booked athlete add and edit their own shared notes on confirmed/completed sessions.
-  - Present cancelled content read-only and handle empty, stale, validation, authorization and unavailable states.
-  - Prove that athlete projections and rendered output contain no coach-private body, identifier, count, timestamps or existence flag.
-- Out of scope:
-  - Coach interface behavior owned by DEV0184.
-  - Athlete edits to the coach-authored plan or the coach's shared entries.
-  - General coach messaging, attachments, rich text, notifications, read receipts, templates or cross-session history.
+In scope:
+
+- Open original-booking details from My sessions and delivered Messages/history links, keeping coach/time/venue/status visible.
+- Read the coach-authored shared plan and shared notes; add/edit only the athlete's own entries.
+- Handle confirmed/completed/cancelled, active shared-write block restrictions, empty/stale/validation/authorization/unavailable states.
+- Prove athlete responses contain no coach-private bodies, identifiers, counts, timestamps or existence flags.
+
+Out of scope: ongoing Messages/inquiry/general-consent/request-card runtime, attachments, rich text, notification delivery, read receipts, reusable templates, cross-booking athlete records and medical analysis. Preserve independent scheduling and media authority.
 
 ## Expected behavior and edge cases
 
-- Under [DEV0230](../../archive/organisatory/DEV0230-adopt-reconnection-history-recovery.md), disconnection never deletes or resets retained shared conversations/plans/notes. Reconnected history reopens the same original request/booking content, including declined/withdrawn/expired/not-selected request threads and cancelled-session content. Preserve authors, timestamps, edited state and status permissions; terminal/cancelled content stays read-only. Complete pair-history references/navigation belong to DEV0221–DEV0223, and coach-private content never enters shared recovery.
-
-- Athlete is the existing training-participant capability adopted by [DEV0219](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md). Pending/accepted/removed coach–athlete connections neither gate exact request/session participant access nor merge content across sessions.
-
-- The athlete opens request/session details from My sessions and keeps coach, time, venue and request/booking status visible.
-- Pending shared notes belong only to that request. The athlete receives no other candidate identifiers, counts, statuses or content.
-- An absent plan is presented neutrally; the interface does not fabricate starter content or imply the coach failed to act.
-- Shared entries identify coach/athlete authors without exposing private profile fields. The athlete can add a valid note and edit only their own note.
-- Completed bookings remain writable for follow-up; cancelled bookings retain shared content read-only.
-- If a time is cancelled and rebooked, the new booking begins empty even when it uses the same occurrence.
-- Database/auth failure shows an unavailable state and no stale or partial session content.
+- Pending requests have original message cards and ongoing chat under COR0022, with no second request-note thread. Acceptance creates one booking workspace without copying conversation text.
+- An absent plan/note list is presented neutrally. Shared entries identify authors without exposing unrelated profile fields; the athlete cannot edit the coach's plan or entries.
+- Cancelled notes remain readable/read-only. Confirmed/completed writes follow DEV0182 and M8 block-window restrictions; connection removal or general-message consent does not gate reads.
+- Rebooking has a distinct empty workspace. Reconnection/history opens original retained booking content with original permissions.
+- Access failure presents unavailable, clears unauthorized cached content and preserves drafts only while the actor/context remains authorized.
 
 ## Assumptions, decisions, and dependencies
 
-- DEV0182, DEV0183 and DEV0190 must complete before this ticket becomes Ready. It may implement in parallel with DEV0184 afterward.
-- Reuse the existing My sessions grouping and booking cards instead of adding a global inbox.
-- The athlete projection is structurally separate from the coach projection; frontend filtering of a larger object is not an acceptable privacy control.
-- Plain-text content is rendered without Markdown/HTML interpretation.
-- The user previously used `student`; the website target now uses athlete under DEV0219. Existing internal `client` identifiers remain compatible, with no new identity role.
+Start after DEV0182/DEV0183; DEV0190 is complete. May proceed alongside DEV0184 on stable projections. Reuse My sessions details and delivered message links without implementing a global inbox under this ticket.
+
+Athlete is the existing training-participant capability; internal `client` names remain compatible. No arbitrary athlete directory or group-note access is added. Account deletion/retention remains DEV0165 and must not be invented here.
 
 ## Implementation plan
 
-1. Review the delivered DEV0183 athlete projection/actions and relevant bundled Next.js documentation.
-2. Add a disclosed session-detail area to My sessions with the shared plan and chronological shared thread. Reuse the original request/booking detail entry points for reconnected history links without rebuilding/copying conversation content; aggregate history navigation stays DEV0223.
-3. Add bounded athlete note create/edit forms with pending guards, character feedback and recoverable stale/unavailable results.
-4. Add accessible responsive styles and confirmed/completed/cancelled empty/read-only states.
-5. Add component/browser privacy assertions and complete an authenticated two-account desktop/mobile exchange rehearsal.
+1. Review DEV0183 athlete projections/actions and relevant bundled Next.js documentation.
+2. Build original-booking shared-plan/note detail and original-history entry points; preserve scheduling status/actions.
+3. Add bounded author-owned note saves/edits, status/block restrictions and stale/unavailable draft recovery.
+4. Add responsive accessible context, focus and status feedback without private metadata.
+5. Run focused privacy/component/browser/static/build checks and a real two-account booking-note rehearsal.
 
 ## Acceptance criteria
 
-- [ ] AC1: The requesting/booked athlete can read the exact request thread and accepted booking's shared plan/thread without receiving other-candidate or coach-private content/metadata.
-- [ ] AC2: The athlete can add/edit only their own shared notes on confirmed/completed bookings and cannot mutate the plan or coach entries.
-- [ ] AC3: Unsuccessful terminal requests and cancelled sessions remain read-only, only the accepted thread continues, rebooked sessions begin empty and empty/unavailable/conflict states remain truthful and recoverable. Original detail links opened from reconnected history render all retained shared content with original identity/status, no reset/duplicate thread and no coach-private metadata.
-- [ ] AC4: The session detail remains keyboard-usable and responsive while preserving existing coach identity, time, venue, history and cancellation behavior.
-- [ ] AC5: Two-account end-to-end evidence proves that a coach sees the athlete's shared entry, the athlete sees coach-shared content, and the athlete never receives coach-private data.
+- [ ] AC1: The athlete reads only the original booking's shared plan/notes with no coach-private/other-candidate data and no per-request note workspace.
+- [ ] AC2: The athlete adds/edits only their own valid shared notes and cannot mutate the coach plan/entries.
+- [ ] AC3: Cancelled/block-restricted/status, rebooking/history and empty/stale/unavailable cases preserve truthful state, original identities and authorized drafts.
+- [ ] AC4: Keyboard and desktop/mobile detail retain coach/time/venue/status and existing history/cancellation behavior.
+- [ ] AC5: Two-account and serialized-projection evidence proves both participants see shared entries and athletes never receive private metadata.
 
 ## Validation plan
 
-Verify retained original request/booking content and stable identifiers across connection-state changes, unsuccessful request states and cancelled sessions; the recovered shared projection excludes coach-private and unrelated content. When COR0020 runtime is delivered, additionally rehearse either-participant disconnection and fresh mutual reconnection through its complete history navigation. This ticket does not implement pair-history navigation or claim that combined runtime result before both deliveries.
-
-- Add focused component/unit tests for shared-only rendering, author ownership, status behavior, draft preservation and action results.
-- Add Playwright coverage at desktop/mobile widths for plan/thread reading, athlete note create/edit, completed/cancelled behavior, keyboard use and unavailable/conflict states.
-- Perform an authenticated coach/athlete rehearsal on one real booking, including an explicit network/serialized-projection check that private metadata is absent.
-- Run configured test, lint, type-check, format and production-build commands. DEV0183 owns database-level authority evidence.
+Rehearse one real local original booking with two actors, shared plan/note visibility, author edits, status/block restrictions, rebooking/history and unavailable conflicts. Verify serialized athlete payloads contain no private metadata. Exercise desktop/375/430 px and keyboard; run focused component/browser tests, npm run lint, npm run typecheck, npm run format:check and npm run build.
 
 ## Implementation record
 
-Pending implementation.
+Pending implementation. DEV0243 revised the planning boundary only; the acceptance criteria below still require this ticket's own evidence.
 
 ### Changes and rationale
 
-Pending implementation.
+No owned implementation yet. The planning revision removes duplicated request chat and keeps original-booking content separate from the ongoing inbox.
 
 ### Affected files
 
-| File or component | Change and purpose |
-| ----------------- | ------------------ |
-| Pending           | Pending.           |
+Pending implementation; record actual files and roles when work starts.
 
 ### Decisions and deviations
+
+- 2026-10-15: Reconcile the active scope with M8/DEV0243. General conversations/request cards move to independent COR0022; original-booking plans/notes remain here. Shared writes must respect M8 block windows, while retained reads and coach-private authority remain separate.
+
+Dated earlier planning history (superseded where it proposes request chat):
 
 - 2026-10-14: Updated planning vocabulary to athlete and made connection-independent session authorization explicit; existing filenames/IDs and earlier history remain intact. Session-content contract adoption still belongs to DEV0182.
 
@@ -99,34 +84,19 @@ No implementation decisions or deviations recorded yet.
 
 ### Contracts, configuration, and operations
 
-This ticket consumes DEV0183's athlete-only projection/actions. No new environment variable, dependency or migration is planned.
+Consumes DEV0183 athlete-only projections/actions and adopted M8 restrictions. No environment/provider/migration change is planned.
 
 ## Validation results
 
-Pending validation.
-
-- Date and environment: Not run.
-- Exact commands and outcomes: Not run.
-- Manual steps and observed outcomes: Not run.
-- Failed, blocked, or not-run checks: All checks await DEV0183, DEV0190 and implementation.
-
-| Criterion | Evidence | Result  |
-| --------- | -------- | ------- |
-| AC1       | Pending  | Not run |
-| AC2       | Pending  | Not run |
-| AC3       | Pending  | Not run |
-| AC4       | Pending  | Not run |
-| AC5       | Pending  | Not run |
+Runtime acceptance criteria are not run. DEV0243 owns link/status/membership and semantic checks of this planning revision. Do not infer implementation or completed browser/database evidence from the contract amendment.
 
 ## Risks, limitations, and follow-ups
 
-- Privacy must be proved at the projection/authorization boundary; DOM hiding or omitted labels are insufficient.
-- Long histories should keep detail collapsed until requested to avoid rendering every thread and editor.
-- General contact, notifications and cross-session conversation remain separate future work.
+Private data must be excluded by database/server projections, not browser hiding. Notes may be sensitive and must not enter logs, analytics or unrelated responses. Original IDs, author ownership and optimistic versions prevent content transfer/loss. Note/M8 integration needs combined evidence when both are delivered; each coordination retains its own completion boundary.
 
 ## Completion and review references
 
 - Completed: Not completed.
-- Commit: Planning record included in this commit — `[DEV0182][DEV0183][DEV0184][DEV0185][DEV0186][DEV0187][DEV0188][DEV0189][DEV0190] Plan session collaboration and booking requests`; implementation not started.
-- Review: No review created.
-- Deployment or release: Not deployed or released.
+- Commit: Earlier planning record retained in Git history; this boundary revision belongs to DEV0243, with no owned runtime commit yet.
+- Review: Planning self-review only; no independent implementation review.
+- Deployment or release: Not implemented or deployed.

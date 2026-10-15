@@ -13,6 +13,7 @@ import {
   Info,
   ListChecks,
   MapPin,
+  MessageSquare,
   UserRound,
 } from "lucide-react";
 import { AuthStatusLink } from "@/auth/client/auth-status-link";
@@ -20,6 +21,7 @@ import { useActor } from "@/auth/client/actor-provider";
 import type { ActorSnapshot } from "@/auth/actor-contracts";
 import { profileInitials } from "@/auth/profile-presentation";
 import { accountProfileImagePresentation } from "@/profile-images/presentation";
+import { useUnreadMessages } from "@/messages/use-unread-messages";
 import { Avatar, Brand, Modal, Pill } from "./ui";
 
 const publicNavigationBeforeAccount = [
@@ -57,6 +59,12 @@ const coachNavigation = {
   Icon: BriefcaseBusiness,
 };
 
+const messagesNavigation = {
+  label: "Messages",
+  href: "/messages",
+  Icon: MessageSquare,
+};
+
 const publicHeaderNavigation = [
   publicNavigationBeforeAccount[1],
   howItWorksNavigation,
@@ -83,8 +91,8 @@ export function navigationForActor(actor: ActorSnapshot) {
     actor.status !== "authorized"
       ? []
       : hasCoachWorkspaceNavigation(actor)
-        ? [clientNavigation, coachNavigation]
-        : [clientNavigation];
+        ? [clientNavigation, messagesNavigation, coachNavigation]
+        : [clientNavigation, messagesNavigation];
   const profileNavigation =
     actor.status === "authorized" &&
     (actor.coachAccessStatus === "approved" ||
@@ -125,8 +133,8 @@ export function workspaceRoleLabel(actor: ActorSnapshot) {
 export function publicAccountNavigationForActor(actor: ActorSnapshot) {
   if (actor.status !== "authorized") return [];
   return hasCoachWorkspaceNavigation(actor)
-    ? [clientNavigation, coachNavigation]
-    : [clientNavigation];
+    ? [clientNavigation, messagesNavigation, coachNavigation]
+    : [clientNavigation, messagesNavigation];
 }
 
 export function isPublicMarketplacePath(path: string) {
@@ -149,6 +157,29 @@ export function Shell({ children }: { children: ReactNode }) {
   const path = usePathname();
   const { actor } = useActor();
   const [aboutOpen, setAboutOpen] = useState(false);
+  const unreadCount = useUnreadMessages(
+    actor.status === "authorized"
+      ? `${actor.demoRun.slug}:${actor.profile.slug}`
+      : null,
+  );
+  const messageBadge =
+    unreadCount === 0 ? null : (
+      <span
+        className="mailbox-nav-badge"
+        title={
+          unreadCount === null
+            ? "Message count unavailable"
+            : `${unreadCount} unread conversations`
+        }
+        aria-label={
+          unreadCount === null
+            ? "Message count unavailable"
+            : `${unreadCount} unread conversations`
+        }
+      >
+        {unreadCount === null ? "?" : unreadCount || null}
+      </span>
+    );
   const publicShell = isPublicMarketplacePath(path);
   const currentProfile = actor.status === "authorized" ? actor.profile : null;
   const currentProfileImage = currentProfile
@@ -192,6 +223,7 @@ export function Shell({ children }: { children: ReactNode }) {
                   fill={href === "/" && active(href) ? "currentColor" : "none"}
                 />
                 <span>{label}</span>
+                {href === "/messages" && messageBadge}
               </Link>
             ))}
           </nav>
@@ -272,6 +304,7 @@ export function Shell({ children }: { children: ReactNode }) {
                   <Link href={href} key={href} className="public-account-link">
                     <Icon size={16} strokeWidth={1.8} aria-hidden="true" />
                     <span>{label}</span>
+                    {href === "/messages" && messageBadge}
                   </Link>
                 ))}
                 {currentProfile ? (
@@ -393,6 +426,7 @@ export function Shell({ children }: { children: ReactNode }) {
                     ? "Workspace"
                     : label}
               </span>
+              {href === "/messages" && messageBadge}
             </Link>
           ))}
         </nav>

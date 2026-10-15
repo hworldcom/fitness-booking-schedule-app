@@ -193,7 +193,7 @@ async function connectionQuery<T>(work: () => Promise<T>): Promise<T> {
     while (cause && typeof cause === "object") {
       if (
         "code" in cause &&
-        (["23505", "23503", "23514"].includes(String(cause.code)) ||
+        (["40001", "23505", "23503", "23514"].includes(String(cause.code)) ||
           (cause.code === "P0001" &&
             "message" in cause &&
             String(cause.message).startsWith("connection ")))

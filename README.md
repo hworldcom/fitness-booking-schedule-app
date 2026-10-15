@@ -187,6 +187,7 @@ npm run test:coach-locations
 npm run test:coach-requests
 npm run test:coach-connections
 npm run test:athlete-connections
+npm run test:private-messages
 npm run test:client-requests
 npm run test:profile-images
 npm run lint
@@ -195,6 +196,8 @@ npm run format:check
 npm run build
 npm run test:e2e
 ```
+
+`test:private-messages` requires the Auth-enabled local app at `http://localhost:3100` with the M8 migrations applied. It creates only tagged DEV0247 accounts and fixtures, verifies inquiry/reply, polling, consent, request/booking cards, retry/privacy/block behavior and responsive layouts, then removes those accounts and their message/scheduling records. Use `--cleanup` for its own tagged leftovers. Screenshots are ignored under `test-results/private-messages-rehearsal/`; no message drafts or private CLI configuration are saved. The current behavior is defined in [specification section 16](docs/mvp-spec.md#16-private-messages-and-session-notes).
 
 `test:coach-connections` requires the running Auth-enabled local app at `http://localhost:3100`. It creates tagged temporary coach/athlete accounts and private scheduling fixtures, exercises real coach connection actions, reconnect history, pagination, media fallback and responsive keyboard use, then removes only those exact accounts/images/records. This coach-focused check uses actor-checked counterpart operations; `test:athlete-connections` additionally exercises both coach and athlete web interfaces, including full retained history, visibility, coach-as-athlete, retry/conflict, desktop/mobile and keyboard flows. Both commands share tagged loopback-only fixture and cleanup helpers. For an isolated local preview, `CONNECTION_TEST_SITE_URL=http://localhost:3113` is the only alternate target; it changes no deployment setting. `--cleanup` removes only their own ticket-tagged leftovers. Screenshots are ignored under `test-results/coach-connections-rehearsal/`; no private CLI configuration is printed or saved.
 

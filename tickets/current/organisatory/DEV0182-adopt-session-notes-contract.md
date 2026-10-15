@@ -1,95 +1,80 @@
 # Ticket DEV0182: Adopt the session-notes contract
 
-- Status: Draft
+- Status: Ready
 - Created: 2026-10-10
 - Last updated: 2026-10-15
 - Milestone: Scheduling-only session collaboration follow-up
 - Coordination: [COR0015 — Session notes and training plans](COR0015-session-notes-and-training-plans.md)
-- Related records: completed booking-request contract dependency [DEV0186 — Adopt booking-request and notice policies](../../archive/organisatory/DEV0186-adopt-booking-request-and-notice-policies.md); implementation peers [DEV0183 — Persist authorized session notes](../backend/DEV0183-persist-authorized-session-notes.md), [DEV0184 — Add the coach session workspace](../frontend/DEV0184-add-coach-session-workspace.md) and [DEV0185 — Add athlete session collaboration](../frontend/DEV0185-add-client-session-collaboration.md); booking baseline [DEV0141 — Persist direct private bookings](../../archive/backend/DEV0141-persist-direct-private-bookings.md); independent messaging-contract dependency [DEV0243](DEV0243-define-ongoing-messages-and-session-note-boundaries.md)
+- Related records: completed booking-request contract dependency [DEV0186 — Adopt booking-request and notice policies](../../archive/organisatory/DEV0186-adopt-booking-request-and-notice-policies.md); implementation peers [DEV0183 — Persist authorized session notes](../backend/DEV0183-persist-authorized-session-notes.md), [DEV0184 — Add the coach session workspace](../frontend/DEV0184-add-coach-session-workspace.md) and [DEV0185 — Add athlete session collaboration](../frontend/DEV0185-add-client-session-collaboration.md); booking baseline [DEV0141 — Persist direct private bookings](../../archive/backend/DEV0141-persist-direct-private-bookings.md); independent messaging-contract dependency [DEV0243](../../archive/organisatory/DEV0243-define-ongoing-messages-and-session-note-boundaries.md); independent messaging runtime [COR0022](../../archive/organisatory/COR0022-private-messaging-and-booking-context.md)
 
-## Planning revision pending — 2026-10-15
+## Planning boundary revised — 2026-10-15
 
-The user now wants one ongoing coach–athlete message conversation containing session requests, while individual booking sessions contain coach/athlete notes. [DEV0243](DEV0243-define-ongoing-messages-and-session-note-boundaries.md) owns the new contract and its reconciliation with these earlier Draft plans. The per-request conversation model below is the earlier proposal and must be revised before implementation; it is not an adopted messaging contract. Existing session-note, shared-plan and coach-private-note intentions remain subject to that review rather than being silently removed.
+The user adopted Airbnb-style contact/consent while retaining one ongoing pair conversation and separate booking notes. DEV0243 reconciles this plan; COR0022 owns messages/inquiries/request cards. The earlier proposal for a conversation per pending request is superseded, not an active implementation instruction. The previously accepted shared-plan/shared-note/coach-private intent remains. This revision implements no note runtime.
 
 ## Objective and context
 
-Adopt an authoritative product and privacy contract for request/session collaboration before adding schema or interface behavior. The current [MVP specification](../../../docs/mvp-spec.md#private-booking) defines booking participants and lifecycle but intentionally lists messaging outside the scheduling MVP. The user now wants coaches and athletes to exchange session-specific notes, share a training plan and retain coach-only comments; COR0016 additionally establishes an isolated participant relationship while a coach-approval request is pending.
-
-This ticket defines the new capability without implementing runtime code. It must distinguish a booking-bound asynchronous workspace from general messaging and give DEV0183-DEV0185 testable visibility and lifecycle rules.
+Adopt detailed booking-bound note/plan permissions and bounds after the M8 boundary amendment. The overall distinction is now authoritative in [section 16.6](../../../docs/mvp-spec.md#166-interface-and-session-note-boundary): ongoing messages and request cards belong to COR0022; each original booking has its own notes. This task owns the remaining detailed note contract, not another messaging contract or runtime.
 
 ## Scope and non-goals
 
-- In scope:
-  - Update the confirmed decision register, product boundary, participant journeys, private-booking state model, authorization rules, definition of done, milestone language and acceptance matrix.
-  - Define one coach-authored shared plan per booking, shared note entries by both participants and coach-private note entries.
-  - Define request/booking ownership, read/write behavior across pending, accepted/confirmed, completed, cancelled, declined, withdrawn, expired and not-selected states, author editing, bounded plain-text content and unavailable-state behavior.
-  - Record that session content belongs to a booking rather than an availability occurrence and cannot cross into a later booking of the same occurrence.
-  - Align downstream native and account-deletion planning links where this new contract materially affects them.
-- Out of scope:
-  - Database migrations, server actions, interface implementation or runtime tests.
-  - Attachments, rich text, real-time chat, notifications, read receipts, reusable templates, longitudinal athlete files, medical analysis or automated advice.
+In scope:
+
+- Adopt one coach-authored shared plan, two-way shared notes and a separately authorized coach-private area per original booking.
+- Specify exact participant/author reads/edits, optimistic versions, confirmed/completed/cancelled rules, text/entry/byte bounds and recoverable failures.
+- Carry M8 block integration into shared writes while preserving participant history reads and independent coach-private ownership.
+- Update applicable specification journeys, note acceptance cases and DEV0183–DEV0185 before runtime.
+
+Out of scope: ongoing Messages/inquiry/general-consent/request-card runtime, attachments, rich text, notification delivery, read receipts, reusable templates, cross-booking athlete records and medical analysis. Preserve independent scheduling and media authority.
 
 ## Expected behavior and edge cases
 
-- Under [DEV0230](../../archive/organisatory/DEV0230-adopt-reconnection-history-recovery.md), disconnection never deletes or resets retained shared conversations/plans/notes. Reconnected history reopens the same original request/booking content, including declined/withdrawn/expired/not-selected request threads and cancelled-session content. Preserve authors, timestamps, edited state and status permissions; terminal/cancelled content stays read-only. Complete pair-history references/navigation belong to DEV0221–DEV0223, and coach-private content never enters shared recovery.
-
-- Athlete is the existing training-participant capability adopted by [DEV0219](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md). Pending/accepted/removed coach–athlete connections neither gate exact request/session participant access nor merge content across sessions.
-
-- The coach owns one shared training plan per booking; the athlete reads it and responds through shared notes rather than overwriting it.
-- A requesting athlete and coach can create shared plain-text notes only inside their exact pending request. Candidates cannot discover or read another request/thread.
-- If the coach accepts a request, that exact shared thread continues into the confirmed/completed booking. The author may revise their own entry with visible edited state; one participant cannot edit the other's content.
-- The coach can create and revise private entries in a separately labelled area. The athlete and all unrelated actors receive neither private content nor metadata revealing its presence or count.
-- Declined, withdrawn, expired and not-selected requests plus cancelled bookings retain existing shared content for their exact participants but become read-only. Completed bookings remain writable for post-session feedback.
-- A newly created booking for an occurrence that was reopened after cancellation has a separate empty workspace.
-- Database or authorization failure presents an unavailable result and must not fall back to cached, fabricated or partially authorized content.
+- A pending or unsuccessful request has an original message card in the ongoing conversation, with no separate request-note workspace. Acceptance starts one booking workspace; no chat body is copied into notes.
+- The coach owns the shared plan; the athlete reads it and responds through shared notes. Both participants edit only their own shared notes. Only the coach receives private entries or their metadata.
+- Cancelled booking content remains readable and read-only. Confirmed/completed bookings permit their authorized note work; blocked shared writes also require the M8 captured-booking window. Disconnection/general-message consent does not gate participant note access.
+- A rebooking has a separate empty workspace even for the same occurrence or pair. Reconnection opens original retained booking notes with original authors/timestamps/permissions; request cards route to COR0022 rather than inventing a past note thread.
+- Choose enforceable plain-text bounds and edit conflict/error behavior before persistence. Earlier proposed limits (8,000 Unicode characters per plan, 2,000 per note and 100 non-deleted entries per booking) remain proposals for this ticket to finalize, including byte/envelope/paging constraints.
 
 ## Assumptions, decisions, and dependencies
 
-- On 2026-10-10 the user accepted the proposed first-version structure after discussing training-plan sharing, post-session feedback and personal coach comments.
-- Target website terminology now uses athlete under DEV0219; the user's earlier word `student` refers to the same training participant. Existing internal `client` identifiers remain compatible, with no new identity role.
-- A session workspace is asynchronous request/booking content, not general coach/athlete messaging. There is no inbox or ability to contact a coach without a persisted pending request or confirmed booking.
-- Plain text with preserved line breaks is sufficient. Proposed implementation bounds are 8,000 Unicode characters for the shared plan, 2,000 per note, and at most 100 non-deleted note entries returned per booking; DEV0183 must confirm enforceable byte/request bounds before implementation.
-- DEV0186 must complete before this ticket becomes Ready. DEV0141 remains the confirmed-booking authority baseline, and DEV0188 must persist request identities before DEV0183 implements request-bound conversations.
+DEV0243 supplies the M8 boundary; DEV0186/DEV0188 request authority is already completed. DEV0182 can proceed independently of message runtime; coordinate the shared block/context contract with COR0022 before note runtime integration.
+
+Athlete is the existing training-participant capability; internal `client` names remain compatible. No arbitrary athlete directory or group-note access is added. Account deletion/retention remains DEV0165 and must not be invented here.
 
 ## Implementation plan
 
-1. Add the confirmed session-collaboration decision and remove only the now-superseded blanket statement that all messaging is future scope.
-2. Extend participant journeys and the request/private-booking model with isolated pending conversations plus shared-plan, shared-note and coach-private-note boundaries.
-3. Define request/session status transitions, participant authorization, accepted-thread continuity, editing, content bounds and fail-closed behavior.
-4. Add definition-of-done and acceptance scenarios for isolated candidates, accepted continuity, terminal requests, cancelled/completed sessions, rebooking isolation and unrelated actors.
-5. Preserve the DEV0230 reconnection rule in the contract and reconcile COR0015/downstream ownership. Pair-history navigation belongs to DEV0221–DEV0223; original conversation persistence/rendering remains DEV0183–DEV0185. Run formatting, link and consistency checks.
+1. Review M8 section 16.6 and original booking/connection authority; record adopted note lifecycle and bounds as defaults, distinct from user constraints.
+2. Extend the specification with the remaining detailed note permissions, status/author/edit conflicts and acceptance cases without restoring per-request chat.
+3. Reconcile downstream note projections/interfaces, retention links and M8 block integration; preserve archived history.
+4. Validate all changed Markdown links, reciprocal ownership, formatting and semantic consistency, then finish the record.
 
 ## Acceptance criteria
 
-- [ ] AC1: The specification defines isolated pending-request conversations plus one coach-authored shared plan, two-way session notes and coach-private notes with no public/cross-candidate access.
-- [ ] AC2: Pending/accepted/confirmed/completed/cancelled/declined/withdrawn/expired/not-selected behavior, accepted-thread continuity, author-edit ownership, rebooking isolation and unavailable-state behavior are explicit and testable. Disconnection preserves all retained shared content; reconnection reopens original contexts with unchanged author/status permissions, including unsuccessful/cancelled history.
-- [ ] AC3: First-version text/entry bounds and non-goals prevent the feature from silently becoming chat, file storage or a longitudinal health record.
-- [ ] AC4: COR0015, its four direct DEV records and all affected specification/ticket links agree on ownership, sequence and terminology.
+- [ ] AC1: The specification explicitly defines booking-only shared plans/notes and coach-private notes, without a second request or booking chat.
+- [ ] AC2: Confirmed/completed/cancelled, original-booking rebooking isolation, participant/author/privacy rules and block-window shared writes are testable and consistent with M8.
+- [ ] AC3: Plain-text, byte/envelope/entry/paging limits and stale-edit/failure recovery are concrete; no attachment, medical-record or general-message scope is implied.
+- [ ] AC4: COR0015 and DEV0183–DEV0185 agree on ownership/sequence and all affected documentation checks pass.
 
 ## Validation plan
 
-Verify retained original request/booking content and stable identifiers across connection-state changes, unsuccessful request states and cancelled sessions; the recovered shared projection excludes coach-private and unrelated content. When COR0020 runtime is delivered, additionally rehearse either-participant disconnection and fresh mutual reconnection through its complete history navigation. This ticket does not implement pair-history navigation or claim that combined runtime result before both deliveries.
-
-- Run Prettier against every changed Markdown file and `git diff --check`.
-- Check every affected relative Markdown link and verify reciprocal COR0015 membership for DEV0182-DEV0185.
-- Use targeted text assertions to confirm the decision register, state model, permissions, definition of done and acceptance matrix each contain the adopted behavior and no remaining blanket messaging exclusion contradicts it.
-- Application/database tests are not applicable because this ticket changes only the authoritative contract and work records.
+Documentation-only: check adopted note rules in the specification, all affected links/anchors, unique identifiers, reciprocal COR0015 ownership, Prettier and git diff --check. Runtime/database/browser checks are not applicable to this contract ticket.
 
 ## Implementation record
 
-Pending implementation.
+Pending implementation. DEV0243 revised the planning boundary only; the acceptance criteria below still require this ticket's own evidence.
 
 ### Changes and rationale
 
-Pending implementation.
+No owned implementation yet. The planning revision removes duplicated request chat and keeps original-booking content separate from the ongoing inbox.
 
 ### Affected files
 
-| File or component | Change and purpose |
-| ----------------- | ------------------ |
-| Pending           | Pending.           |
+Pending implementation; record actual files and roles when work starts.
 
 ### Decisions and deviations
+
+- 2026-10-15: Reconcile the active scope with M8/DEV0243. General conversations/request cards move to independent COR0022; original-booking plans/notes remain here. Shared writes must respect M8 block windows, while retained reads and coach-private authority remain separate.
+
+Dated earlier planning history (superseded where it proposes request chat):
 
 - 2026-10-14: Updated planning vocabulary to athlete and made connection-independent session authorization explicit; existing filenames/IDs and earlier history remain intact. Session-content contract adoption still belongs to DEV0182.
 
@@ -98,33 +83,19 @@ Pending implementation.
 
 ### Contracts, configuration, and operations
 
-This ticket will change the product contract but adds no runtime interface, environment variable, dependency or migration.
+Planned detailed product contract only; no schema, environment variable, provider, setup or runtime migration is implemented here.
 
 ## Validation results
 
-Pending validation.
-
-- Date and environment: Not run.
-- Exact commands and outcomes: Not run.
-- Manual steps and observed outcomes: Not run.
-- Failed, blocked, or not-run checks: Runtime checks are not applicable to this documentation-only ticket.
-
-| Criterion | Evidence | Result  |
-| --------- | -------- | ------- |
-| AC1       | Pending  | Not run |
-| AC2       | Pending  | Not run |
-| AC3       | Pending  | Not run |
-| AC4       | Pending  | Not run |
+Runtime acceptance criteria are not run. DEV0243 owns link/status/membership and semantic checks of this planning revision. Do not infer implementation or completed browser/database evidence from the contract amendment.
 
 ## Risks, limitations, and follow-ups
 
-- The contract must avoid implying that private coach notes are professional medical records or that MovX provides medical advice.
-- DEV0183 owns enforceable storage and request-size details; any material change to the proposed bounds must be recorded here before backend implementation.
-- Account-deletion retention remains a linked DEV0165 decision and must not be invented in this ticket.
+Private data must be excluded by database/server projections, not browser hiding. Notes may be sensitive and must not enter logs, analytics or unrelated responses. Original IDs, author ownership and optimistic versions prevent content transfer/loss. Note/M8 integration needs combined evidence when both are delivered; each coordination retains its own completion boundary.
 
 ## Completion and review references
 
 - Completed: Not completed.
-- Commit: Planning record included in this commit — `[DEV0182][DEV0183][DEV0184][DEV0185][DEV0186][DEV0187][DEV0188][DEV0189][DEV0190] Plan session collaboration and booking requests`; implementation not started.
-- Review: No review created.
-- Deployment or release: Documentation only; not deployed or released.
+- Commit: Earlier planning record retained in Git history; this boundary revision belongs to DEV0243, with no owned runtime commit yet.
+- Review: Planning self-review only; no independent implementation review.
+- Deployment or release: Not implemented or deployed.

@@ -261,12 +261,14 @@ function isPostgresBookingRequestError(error: unknown) {
     if (
       "code" in current &&
       (current.code === "23505" ||
+        current.code === "40001" ||
         current.code === "23514" ||
         current.code === "23503" ||
         (current.code === "P0001" &&
           "message" in current &&
           typeof current.message === "string" &&
-          current.message.includes("coach booking request")))
+          (current.message.includes("message unavailable: blocked") ||
+            current.message.includes("coach booking request"))))
     ) {
       return true;
     }

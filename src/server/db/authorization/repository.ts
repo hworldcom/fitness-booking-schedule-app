@@ -61,13 +61,35 @@ function isoTimestamp(value: string | Date | null) {
   return value ? new Date(value).toISOString() : null;
 }
 
+// Only this known, aborted source-trigger conflict is safe to retry. Do not
+// retry unknown outcomes, ordinary product conflicts or arbitrary callback errors.
+function isMessagePairContention(error: unknown) {
+  let current = error;
+  for (let depth = 0; depth < 8; depth++) {
+    if (!current || typeof current !== "object") return false;
+    const value = current as {
+      code?: string;
+      message?: string;
+      cause?: unknown;
+    };
+    if (
+      value.code === "40001" &&
+      value.message?.startsWith("message pair changed;")
+    )
+      return true;
+    current = value.cause;
+  }
+  return false;
+}
 export async function withActorDatabaseContext<T>(
   actor: AuthorizedActor,
   work: (transaction: ActorDatabaseTransaction) => Promise<T>,
 ) {
-  return withDatabaseConnection(({ db }) =>
-    db.transaction(async (transaction) => {
-      await transaction.execute(sql`
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await withDatabaseConnection(({ db }) =>
+        db.transaction(async (transaction) => {
+          await transaction.execute(sql`
         select
           set_config('app.current_auth_user_id', ${actor.authUserId}, true),
           set_config('app.current_profile_id', ${actor.profileId}, true),
@@ -75,20 +97,27 @@ export async function withActorDatabaseContext<T>(
           set_config('app.current_run_role', ${actor.runRole}, true)
       `);
 
-      const validation = await transaction.execute<{ is_valid: boolean }>(sql`
+          const validation = await transaction.execute<{
+            is_valid: boolean;
+          }>(sql`
         select app.authorized_actor_context_valid(
           ${actor.profileId}::uuid,
           ${actor.runId}::uuid,
           ${actor.runRole}::text
         ) as is_valid
       `);
-      if (validation[0]?.is_valid !== true) {
-        throw new ActorContextRejectedError();
-      }
+          if (validation[0]?.is_valid !== true) {
+            throw new ActorContextRejectedError();
+          }
 
-      return work(transaction);
-    }),
-  );
+          return work(transaction);
+        }),
+      );
+    } catch (error) {
+      if (attempt >= 3 || !isMessagePairContention(error)) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 10 * 2 ** attempt));
+    }
+  }
 }
 
 export async function currentActorProjection(

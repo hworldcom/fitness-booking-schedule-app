@@ -149,6 +149,14 @@ export function ConnectionLists({
                         </p>
                       )}
                     <div className="coach-connection-actions">
+                      {row.status === "accepted" && (
+                        <Link
+                          className="button secondary"
+                          href={`/messages?pair=${row.pairId}`}
+                        >
+                          Message {role === "coach" ? "athlete" : "coach"}
+                        </Link>
+                      )}
                       {role === "athlete" &&
                         row.status === "accepted" &&
                         row.coachPublic && (

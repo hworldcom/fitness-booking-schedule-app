@@ -5,93 +5,78 @@
 - Last updated: 2026-10-15
 - Milestone: Scheduling-only session collaboration follow-up
 - Coordination: [COR0015 — Session notes and training plans](../organisatory/COR0015-session-notes-and-training-plans.md)
-- Related records: contract dependency [DEV0182 — Adopt the session-notes contract](../organisatory/DEV0182-adopt-session-notes-contract.md), completed booking-request dependency [DEV0188 — Persist multi-candidate booking requests](../../archive/backend/DEV0188-persist-multi-candidate-booking-requests.md), interface consumers [DEV0184 — Add the coach session workspace](../frontend/DEV0184-add-coach-session-workspace.md) and [DEV0185 — Add athlete session collaboration](../frontend/DEV0185-add-client-session-collaboration.md), booking baseline [DEV0141 — Persist direct private bookings](../../archive/backend/DEV0141-persist-direct-private-bookings.md), account-deletion follow-up [DEV0165 — Implement the account-deletion lifecycle](DEV0165-implement-account-deletion-lifecycle.md); independent messaging-contract dependency [DEV0243](../organisatory/DEV0243-define-ongoing-messages-and-session-note-boundaries.md)
+- Related records: contract dependency [DEV0182 — Adopt the session-notes contract](../organisatory/DEV0182-adopt-session-notes-contract.md), completed booking-request dependency [DEV0188 — Persist multi-candidate booking requests](../../archive/backend/DEV0188-persist-multi-candidate-booking-requests.md), interface consumers [DEV0184 — Add the coach session workspace](../frontend/DEV0184-add-coach-session-workspace.md) and [DEV0185 — Add athlete session collaboration](../frontend/DEV0185-add-client-session-collaboration.md), booking baseline [DEV0141 — Persist direct private bookings](../../archive/backend/DEV0141-persist-direct-private-bookings.md), account-deletion follow-up [DEV0165 — Implement the account-deletion lifecycle](DEV0165-implement-account-deletion-lifecycle.md); independent messaging-contract dependency [DEV0243](../../archive/organisatory/DEV0243-define-ongoing-messages-and-session-note-boundaries.md); independent messaging runtime [COR0022](../../archive/organisatory/COR0022-private-messaging-and-booking-context.md)
 
-## Planning revision pending — 2026-10-15
+## Planning boundary revised — 2026-10-15
 
-The user now wants one ongoing coach–athlete message conversation containing session requests, while individual booking sessions contain coach/athlete notes. [DEV0243](../organisatory/DEV0243-define-ongoing-messages-and-session-note-boundaries.md) owns the new contract and its reconciliation with these earlier Draft plans. The per-request conversation model below is the earlier proposal and must be revised before implementation; it is not an adopted messaging contract. Existing session-note, shared-plan and coach-private-note intentions remain subject to that review rather than being silently removed.
+The user adopted Airbnb-style contact/consent while retaining one ongoing pair conversation and separate booking notes. DEV0243 reconciles this plan; COR0022 owns messages/inquiries/request cards. The earlier proposal for a conversation per pending request is superseded, not an active implementation instruction. The previously accepted shared-plan/shared-note/coach-private intent remains. This revision implements no note runtime.
 
 ## Objective and context
 
-Persist the request/session-workspace contract adopted by DEV0182 with actor-scoped PostgreSQL authority and bounded server projections. Pending booking requests and confirmed bookings expose schedule/participant context but have no isolated conversation that can continue for the selected athlete or support later shared/private session content. This ticket adds that data boundary without creating a public messaging system.
+Persist the booking-note contract adopted by DEV0182 with actor-scoped PostgreSQL authority and bounded coach/athlete projections. Ongoing messages, inquiries and request cards are independently owned by COR0022 under [section 16](../../../docs/mvp-spec.md#16-private-messages-and-session-notes). This slice adds only original-booking plans and notes.
 
 ## Scope and non-goals
 
-- In scope:
-  - Add an additive migration for request/booking-bound shared notes plus booking-bound shared plans and coach-private notes with stable identifiers, author identity, timestamps and optimistic versions.
-  - Enforce isolated request threads, accepted-request continuity, one active shared plan per booking, participant-only shared reads, coach-only private reads/writes, author-owned edits, status-aware mutations and rebooking isolation.
-  - Add bounded domain projections, repository/service mutations and server-action results needed by both participant interfaces.
-  - Add fresh/upgrade migration, PostgreSQL authorization/concurrency and application integration tests.
-- Out of scope:
-  - Coach/athlete presentation owned by DEV0184/DEV0185.
-  - Attachments, rich text, live subscriptions, notification delivery, read receipts, templates, cross-booking records or automated analysis.
-  - Resolving the future account-deletion retention policy owned by DEV0165.
+In scope:
+
+- Add additive booking-bound shared-plan, shared-note and coach-private-note data with stable IDs, authors, timestamps and optimistic versions.
+- Enforce one active shared plan per booking, exact participant reads, coach-only private metadata, author-owned edits, status/block-aware shared writes, bounds and rebooking isolation.
+- Add typed bounded domain/repository/service/action projections and fresh/upgrade/privilege/concurrency/integration tests.
+
+Out of scope: ongoing Messages/inquiry/general-consent/request-card runtime, attachments, rich text, notification delivery, read receipts, reusable templates, cross-booking athlete records and medical analysis. Preserve independent scheduling and media authority.
 
 ## Expected behavior and edge cases
 
-- Under [DEV0230](../../archive/organisatory/DEV0230-adopt-reconnection-history-recovery.md), disconnection never deletes or resets retained shared conversations/plans/notes. Reconnected history reopens the same original request/booking content, including declined/withdrawn/expired/not-selected request threads and cancelled-session content. Preserve authors, timestamps, edited state and status permissions; terminal/cancelled content stays read-only. Complete pair-history references/navigation belong to DEV0221–DEV0223, and coach-private content never enters shared recovery.
-
-- Athlete is the existing training-participant capability adopted by [DEV0219](../../archive/organisatory/DEV0219-adopt-athlete-connections-contract.md). Pending/accepted/removed coach–athlete connections neither gate exact request/session participant access nor merge content across sessions.
-
-- Content always resolves through the exact request or booking UUID and current actor context. Slot or occurrence identity alone never grants access.
-- Pending request participants can exchange shared notes only inside that request. Other candidates for the same occurrence receive no content or metadata.
-- Acceptance links the selected request workspace to the confirmed booking without copying/merging another candidate's thread. Declined, withdrawn, expired and not-selected request threads become read-only.
-- The coach can upsert the shared plan with optimistic conflict detection. The athlete cannot mutate the plan.
-- Either participant can add a bounded shared note and edit only their own note. Only the owning coach can add/edit coach-private notes.
-- Confirmed and completed bookings accept valid mutations; cancelled bookings return a conflict and preserve existing content read-only.
-- A different athlete, unrelated coach, guest, cross-run actor, malformed identifier, oversized body, empty body, stale version or excessive entry count fails without partial mutation or private metadata leakage.
-- Queries return a bounded deterministic order and exclude private rows entirely from athlete projections.
+- Resolve through the exact original booking UUID and current actor/dataset, never occurrence identity alone. Pending requests have no note rows; their cards/messages remain COR0022.
+- Coach upserts the shared plan with conflict detection. Participants add/edit only their own shared entries; only the coach accesses private entries and metadata. Queries exclude private rows structurally from athlete results.
+- Cancelled bookings retain read-only notes; confirmed/completed work follows DEV0182 rules. For blocked pairs, shared writes also require the M8 booking-window permission; coach-private entries remain separately authorized.
+- Rebooking starts empty and never transfers another athlete's or prior booking's notes. Connection removal/reconnection preserves original content and author/status rules.
+- Malformed, empty, oversized, stale, excessive, unrelated and cross-dataset operations fail without partial writes or private metadata leakage.
 
 ## Assumptions, decisions, and dependencies
 
-- DEV0182 and DEV0188 must complete before this ticket becomes Ready.
-- Prefer one normalized session-content table with constrained `plan`, `shared_note` and `coach_private_note` kinds if database constraints can express the uniqueness and visibility rules clearly; otherwise split the single plan from note entries and record the reason before implementation.
-- Store plain text in PostgreSQL. React renders it as text; no HTML or Markdown interpretation is needed.
-- The migration is additive. Existing bookings begin with an empty workspace, and cancelled/history bookings receive no fabricated rows.
-- Raw tables remain inaccessible to browser roles. Actor-aware database functions and transaction-local authorization remain the mutation/query authority.
+Start after DEV0182 finalizes the detailed note contract. DEV0188 is complete. Consume a stable COR0022 booking-window/block authority when integrating shared writes; no requirement to copy message storage into notes.
+
+Athlete is the existing training-participant capability; internal `client` names remain compatible. No arbitrary athlete directory or group-note access is added. Account deletion/retention remains DEV0165 and must not be invented here.
 
 ## Implementation plan
 
-1. Review the completed DEV0182 contract, DEV0188 request identity/lifecycle, installed PostgreSQL/Drizzle patterns and current booking functions.
-2. Add schema, constraints, indexes, grants and actor-aware functions for bounded projection and mutation.
-3. Extend domain, repository and service contracts with separate coach and athlete projections so private metadata cannot be accidentally serialized to athletes.
-4. Add server actions with canonical identifier/body/version validation and precise saved/conflict/forbidden/unavailable results.
-5. Test fresh/upgrade migrations, cross-candidate isolation, accepted-request continuity, booking-state behavior, plan uniqueness, note limits, stale edits and rebooking separation. Verify that connection changes never delete/reset shared content and original IDs reopen retained history without private-data leakage; pair-history cursor/navigation testing remains DEV0221–DEV0223.
+1. Review the completed note contract, installed PostgreSQL/Drizzle/Next.js documentation and current actor/booking patterns; confirm M8 block integration.
+2. Implement additive constrained schema, grants/functions, original-booking authorization and optimistic/bounded mutations.
+3. Expose separate typed coach/athlete projections and recoverable server results; exclude coach-private metadata at the source.
+4. Test safe fresh/upgrade migrations, isolation, status/block/author permissions, plan uniqueness, bounds, retries/conflicts and rebooking separation.
+5. Run relevant test/static/build checks and record exact changed paths, migration/rollback and acceptance evidence.
 
 ## Acceptance criteria
 
-- [ ] AC1: Pending requests and existing bookings gain additive isolated workspaces, and each booking can hold at most one active coach-authored shared plan.
-- [ ] AC2: Shared content is readable only by the exact request/booking participants; private content and its metadata are returned only to the owning coach.
-- [ ] AC3: Pending request exchange, accepted-thread continuity, terminal-request/cancelled read-only behavior, confirmed/completed mutations, author-owned editing and optimistic conflicts are enforced atomically in PostgreSQL. Connection-state changes never delete/reset content; reopening original IDs after reconnection returns all retained shared plan/note entries with unchanged authors, timestamps and permissions, including unsuccessful/cancelled history.
-- [ ] AC4: Cross-booking, cross-run, unrelated, malformed, empty, oversized, stale and over-limit requests fail closed without partial writes.
-- [ ] AC5: Bounded repository/service/server-action projections support DEV0184/DEV0185 without exposing raw table access or private content through the athlete contract.
-- [ ] AC6: Fresh/upgrade migration, pgTAP, database integration, unit, lint, type and production-build validation pass for the affected boundary.
+- [ ] AC1: Existing bookings gain additive bounded workspaces with at most one active coach-authored plan; pending requests gain no note workspace.
+- [ ] AC2: Shared reads are exact-booking-participant only and private content/metadata is coach-only in PostgreSQL and serialized projections.
+- [ ] AC3: Status/block/author mutations and optimistic conflicts are atomic; removal/reconnection preserves original retained notes and permissions.
+- [ ] AC4: Cross-booking/cross-dataset/unrelated/malformed/empty/oversized/stale/over-limit operations fail closed without partial writes.
+- [ ] AC5: Bounded typed repository/service/action projections support both note interfaces without raw table access or private-data leakage.
+- [ ] AC6: Fresh/upgrade migration, pgTAP/database integration, relevant unit, lint/type/format/build checks pass.
 
 ## Validation plan
 
-Verify retained original request/booking content and stable identifiers across connection-state changes, unsuccessful request states and cancelled sessions; the recovered shared projection excludes coach-private and unrelated content. When COR0020 runtime is delivered, additionally rehearse either-participant disconnection and fresh mutual reconnection through its complete history navigation. This ticket does not implement pair-history navigation or claim that combined runtime result before both deliveries.
-
-- Run fresh and upgrade Supabase migration paths plus database lint.
-- Add pgTAP assertions for constraints, grants, participant reads, private-note isolation, status transitions, edit ownership and concurrency/version behavior.
-- Add database integration tests proving pending/accepted/removed connection state cannot widen or remove exact session participant permissions, and for coach/athlete projections, rebooking isolation, bounds and rollback on failure.
-- Add domain/server-action unit tests and run the configured test, lint, type-check, format and production-build commands.
-- Interface browser validation is owned by DEV0184 and DEV0185.
+Use safe isolated fresh/upgrade databases, npm run db:test, npm run db:lint and affected npm run test:db coverage. Prove role grants, exact participant/private projection, shared block-window rules, original-booking history, edit races and bounds. Run relevant unit/server tests, npm run lint, npm run typecheck, npm run format:check and npm run build. UI evidence belongs to DEV0184/DEV0185.
 
 ## Implementation record
 
-Pending implementation.
+Pending implementation. DEV0243 revised the planning boundary only; the acceptance criteria below still require this ticket's own evidence.
 
 ### Changes and rationale
 
-Pending implementation.
+No owned implementation yet. The planning revision removes duplicated request chat and keeps original-booking content separate from the ongoing inbox.
 
 ### Affected files
 
-| File or component | Change and purpose |
-| ----------------- | ------------------ |
-| Pending           | Pending.           |
+Pending implementation; record actual files and roles when work starts.
 
 ### Decisions and deviations
+
+- 2026-10-15: Reconcile the active scope with M8/DEV0243. General conversations/request cards move to independent COR0022; original-booking plans/notes remain here. Shared writes must respect M8 block windows, while retained reads and coach-private authority remain separate.
+
+Dated earlier planning history (superseded where it proposes request chat):
 
 - 2026-10-14: Updated planning vocabulary to athlete and made connection-independent session authorization explicit; existing filenames/IDs and earlier history remain intact. Session-content contract adoption still belongs to DEV0182.
 
@@ -99,36 +84,19 @@ No implementation decisions or deviations recorded yet.
 
 ### Contracts, configuration, and operations
 
-Expected contract changes are one additive database migration and new bounded domain/server interfaces. No environment-variable or external-service change is planned.
+Planned additive note schema and typed server interfaces; no environment/provider change is required. Record actual migration/rollback details before applying migrations.
 
 ## Validation results
 
-Pending validation.
-
-- Date and environment: Not run.
-- Exact commands and outcomes: Not run.
-- Manual steps and observed outcomes: Not run.
-- Failed, blocked, or not-run checks: All implementation checks await DEV0182, DEV0188 and implementation.
-
-| Criterion | Evidence | Result  |
-| --------- | -------- | ------- |
-| AC1       | Pending  | Not run |
-| AC2       | Pending  | Not run |
-| AC3       | Pending  | Not run |
-| AC4       | Pending  | Not run |
-| AC5       | Pending  | Not run |
-| AC6       | Pending  | Not run |
+Runtime acceptance criteria are not run. DEV0243 owns link/status/membership and semantic checks of this planning revision. Do not infer implementation or completed browser/database evidence from the contract amendment.
 
 ## Risks, limitations, and follow-ups
 
-- A projection mistake could leak coach-private content. Separate return types and negative authorization tests are required rather than relying on UI filtering.
-- Concurrent plan/note edits need explicit versions; last-write-wins would silently discard participant content.
-- Text may contain sensitive information. Do not include bodies in structured logs, thrown errors, analytics or test snapshots containing personal fixtures.
-- DEV0165 must later integrate the new authorship/content tables into account deletion and retention behavior.
+Private data must be excluded by database/server projections, not browser hiding. Notes may be sensitive and must not enter logs, analytics or unrelated responses. Original IDs, author ownership and optimistic versions prevent content transfer/loss. Note/M8 integration needs combined evidence when both are delivered; each coordination retains its own completion boundary.
 
 ## Completion and review references
 
 - Completed: Not completed.
-- Commit: Planning record included in this commit — `[DEV0182][DEV0183][DEV0184][DEV0185][DEV0186][DEV0187][DEV0188][DEV0189][DEV0190] Plan session collaboration and booking requests`; implementation not started.
-- Review: No review created.
-- Deployment or release: Not deployed or released.
+- Commit: Earlier planning record retained in Git history; this boundary revision belongs to DEV0243, with no owned runtime commit yet.
+- Review: Planning self-review only; no independent implementation review.
+- Deployment or release: Not implemented or deployed.

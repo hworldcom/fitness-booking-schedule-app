@@ -157,6 +157,13 @@ async function cleanup() {
   const ids = people.map((p) => p.id);
   if (ids.length) {
     await admin`update app.coach_profiles set visibility='hidden' where profile_id in ${admin(ids)} and visibility='visible'`;
+    if (
+      (await admin`select to_regclass('app.message_conversations') present`)[0]
+        .present
+    ) {
+      await admin`delete from app.message_blocks where low_profile_id in ${admin(ids)} or high_profile_id in ${admin(ids)}`;
+      await admin`delete from app.message_conversations where coach_profile_id in ${admin(ids)} or athlete_profile_id in ${admin(ids)}`;
+    }
     await admin`delete from app.coach_athlete_connection_attempts where pair_id in (select id from app.coach_athlete_connection_pairs where coach_profile_id in ${admin(ids)} or athlete_profile_id in ${admin(ids)})`;
     await admin`delete from app.coach_athlete_connection_pairs where coach_profile_id in ${admin(ids)} or athlete_profile_id in ${admin(ids)}`;
     await admin`delete from app.coach_booking_requests where coach_profile_id in ${admin(ids)} or client_profile_id in ${admin(ids)}`;

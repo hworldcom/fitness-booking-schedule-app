@@ -3,6 +3,7 @@ import "@fontsource-variable/manrope";
 import "@fontsource-variable/bricolage-grotesque";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
+import "@/features/messages/messages.css";
 import "./club-theme.css";
 import "./authenticated-workspace.css";
 import "./client-sessions-workspace.css";

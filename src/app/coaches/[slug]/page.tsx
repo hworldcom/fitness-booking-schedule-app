@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   CoachProfileUnavailable,
@@ -45,14 +46,33 @@ export default async function Page({
     <CoachProfileView
       state={state}
       marketplace={
-        <CoachMarketplace
-          coachProfileId={state.coach.profileId}
-          coachDisplayName={state.coach.displayName}
-          coachSlug={state.coach.slug}
-          slots={state.slots}
-          actor={actor}
-          referenceTime={new Date().toISOString()}
-        />
+        <>
+          {!(
+            actor.status === "authorized" &&
+            actor.actorProfileId === state.coach.profileId
+          ) && (
+            <section className="coach-contact-action">
+              <div>
+                <strong>Have a question first?</strong>
+                <p>Message the coach before choosing a session.</p>
+              </div>
+              <Link
+                className="button dark"
+                href={`/messages?coach=${state.coach.profileId}`}
+              >
+                Message coach
+              </Link>
+            </section>
+          )}
+          <CoachMarketplace
+            coachProfileId={state.coach.profileId}
+            coachDisplayName={state.coach.displayName}
+            coachSlug={state.coach.slug}
+            slots={state.slots}
+            actor={actor}
+            referenceTime={new Date().toISOString()}
+          />
+        </>
       }
     />
   );

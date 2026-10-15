@@ -214,6 +214,13 @@ async function removeFixtures() {
     secondClientAuthUserId,
     ...additionalClientAuthUserIds,
   ];
+  if (
+    (await admin`select to_regclass('app.message_conversations') present`)[0]
+      .present
+  ) {
+    await admin`delete from app.message_blocks where low_profile_id in (select id from app.profiles where auth_user_id in ${admin(authIds)}) or high_profile_id in (select id from app.profiles where auth_user_id in ${admin(authIds)})`;
+    await admin`delete from app.message_conversations where coach_profile_id in (select id from app.profiles where auth_user_id in ${admin(authIds)}) or athlete_profile_id in (select id from app.profiles where auth_user_id in ${admin(authIds)})`;
+  }
   await admin`
     delete from app.coach_booking_requests
     where client_profile_id in (

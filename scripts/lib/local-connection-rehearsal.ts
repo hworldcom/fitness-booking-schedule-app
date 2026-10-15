@@ -60,9 +60,9 @@ type LocalConnectionRehearsal = {
 };
 
 export async function localConnectionRehearsal(
-  ticket: "DEV0222" | "DEV0223",
+  ticket: "DEV0222" | "DEV0223" | "DEV0247",
 ): Promise<LocalConnectionRehearsal> {
-  if (ticket !== "DEV0222" && ticket !== "DEV0223")
+  if (ticket !== "DEV0222" && ticket !== "DEV0223" && ticket !== "DEV0247")
     throw new Error("Unsupported local connection rehearsal marker.");
   // Private CLI values stay in memory; this script can only use the repository's
   // loopback Auth/Storage/PostgreSQL and newly tagged local .test identities.
@@ -257,6 +257,13 @@ export async function localConnectionRehearsal(
     if (ids.length)
       await database.begin(async (tx) => {
         await tx`update app.coach_profiles set visibility='hidden' where profile_id=any(${ids}::uuid[]) and visibility='visible'`;
+        if (
+          (await tx`select to_regclass('app.message_conversations') present`)[0]
+            .present
+        ) {
+          await tx`delete from app.message_blocks where low_profile_id=any(${ids}::uuid[]) or high_profile_id=any(${ids}::uuid[])`;
+          await tx`delete from app.message_conversations where coach_profile_id=any(${ids}::uuid[]) or athlete_profile_id=any(${ids}::uuid[])`;
+        }
         await tx`delete from app.coach_athlete_connection_attempts where pair_id in(select id from app.coach_athlete_connection_pairs where coach_profile_id=any(${ids}::uuid[]) or athlete_profile_id=any(${ids}::uuid[]))`;
         await tx`delete from app.coach_athlete_connection_pairs where coach_profile_id=any(${ids}::uuid[]) or athlete_profile_id=any(${ids}::uuid[])`;
         await tx`delete from app.coach_booking_requests where coach_profile_id=any(${ids}::uuid[]) or client_profile_id=any(${ids}::uuid[])`;

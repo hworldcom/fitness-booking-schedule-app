@@ -52,6 +52,7 @@ test("client and unapproved applicant navigation includes personal sessions", ()
         { label: "Home", href: "/" },
         { label: "Explore", href: "/explore" },
         { label: "My sessions", href: "/sessions" },
+        { label: "Messages", href: "/messages" },
         { label: "How it works", href: "/how-it-works" },
         { label: "Profile", href: "/profile" },
       ],
@@ -70,6 +71,7 @@ test("approved and demo navigation defaults Profile to the coach editor", () => 
         { label: "Home", href: "/" },
         { label: "Explore", href: "/explore" },
         { label: "My sessions", href: "/sessions" },
+        { label: "Messages", href: "/messages" },
         { label: "Coach workspace", href: "/coach" },
         { label: "How it works", href: "/how-it-works" },
         { label: "Profile", href: "/profile/coach" },
@@ -88,6 +90,7 @@ test("suspended coach navigation keeps workspace and personal Profile", () => {
       { label: "Home", href: "/" },
       { label: "Explore", href: "/explore" },
       { label: "My sessions", href: "/sessions" },
+      { label: "Messages", href: "/messages" },
       { label: "Coach workspace", href: "/coach" },
       { label: "How it works", href: "/how-it-works" },
       { label: "Profile", href: "/profile" },
@@ -137,25 +140,25 @@ test("public account controls expose only authorized private destinations", () =
     publicAccountNavigationForActor(authorizedActor("not-applied")).map(
       ({ href }) => href,
     ),
-    ["/sessions"],
+    ["/sessions", "/messages"],
   );
   assert.deepEqual(
     publicAccountNavigationForActor(authorizedActor("approved")).map(
       ({ href }) => href,
     ),
-    ["/sessions", "/coach"],
+    ["/sessions", "/messages", "/coach"],
   );
   assert.deepEqual(
     publicAccountNavigationForActor(authorizedActor("demo")).map(
       ({ href }) => href,
     ),
-    ["/sessions", "/coach"],
+    ["/sessions", "/messages", "/coach"],
   );
   assert.deepEqual(
     publicAccountNavigationForActor(authorizedActor("suspended")).map(
       ({ href }) => href,
     ),
-    ["/sessions", "/coach"],
+    ["/sessions", "/messages", "/coach"],
   );
 });
 
@@ -171,6 +174,7 @@ test("mobile workspace navigation stays bounded to primary private destinations"
     [
       { label: "Explore", href: "/explore" },
       { label: "My sessions", href: "/sessions" },
+      { label: "Messages", href: "/messages" },
       { label: "Profile", href: "/profile" },
     ],
   );
@@ -181,6 +185,7 @@ test("mobile workspace navigation stays bounded to primary private destinations"
     [
       { label: "Explore", href: "/explore" },
       { label: "My sessions", href: "/sessions" },
+      { label: "Messages", href: "/messages" },
       { label: "Coach workspace", href: "/coach" },
       { label: "Profile", href: "/profile/coach" },
     ],
