@@ -6,7 +6,7 @@
 - Milestone: M8 private messages
 - Converted from: Not applicable — independent contract DEV0243 already has commit history
 - Tracked development tickets: [DEV0244](../backend/DEV0244-persist-private-message-authority.md), [DEV0245](../backend/DEV0245-integrate-messages-with-scheduling-and-connections.md), [DEV0246](../frontend/DEV0246-add-private-mailbox-and-coach-contact.md), [DEV0247](../backend/DEV0247-rehearse-private-messaging-loop.md)
-- Related records: upstream contract [DEV0243](DEV0243-define-ongoing-messages-and-session-note-boundaries.md); independent session-note consumer [COR0015](../../current/organisatory/COR0015-session-notes-and-training-plans.md); completed request baseline [COR0016](COR0016-coach-confirmed-booking-requests.md); connection baseline [COR0020](COR0020-athlete-terminology-and-connections.md); independent group work COR0021 (separate group-training work); local migration environment dependency [DEV0232](../../current/organisatory/DEV0232-restore-local-migration-continuity.md)
+- Related records: upstream contract [DEV0243](DEV0243-define-ongoing-messages-and-session-note-boundaries.md); independent session-note consumer [COR0015](../../current/organisatory/COR0015-session-notes-and-training-plans.md); completed request baseline [COR0016](COR0016-coach-confirmed-booking-requests.md); connection baseline [COR0020](COR0020-athlete-terminology-and-connections.md); independent group work [COR0021](../../current/organisatory/COR0021-group-training-and-events.md); local migration environment dependency [DEV0232](../../current/organisatory/DEV0232-restore-local-migration-continuity.md)
 
 ## Objective and boundaries
 
