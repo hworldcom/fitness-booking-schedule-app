@@ -2,11 +2,15 @@
 
 - Status: Draft
 - Created: 2026-10-10
-- Last updated: 2026-10-14
+- Last updated: 2026-10-15
 - Milestone: Scheduling-only session collaboration follow-up
 - Converted from: Not applicable — created as a coordination record
 - Tracked development tickets: draft [DEV0182 — Adopt the session-notes contract](DEV0182-adopt-session-notes-contract.md), [DEV0183 — Persist authorized session notes](../backend/DEV0183-persist-authorized-session-notes.md), [DEV0184 — Add the coach session workspace](../frontend/DEV0184-add-coach-session-workspace.md) and [DEV0185 — Add athlete session collaboration](../frontend/DEV0185-add-client-session-collaboration.md)
-- Related records: completed booking-request dependency [COR0016 — Coach-confirmed booking requests](../../archive/organisatory/COR0016-coach-confirmed-booking-requests.md) and completed [DEV0188 — Persist multi-candidate booking requests](../../archive/backend/DEV0188-persist-multi-candidate-booking-requests.md); booking baseline [DEV0141 — Persist direct private bookings](../../archive/backend/DEV0141-persist-direct-private-bookings.md), athlete-history baseline [DEV0144 — Show client booking history](../../archive/frontend/DEV0144-show-client-booking-history.md), coach-bookings baseline [DEV0170 — Separate coach Schedule and Bookings tabs](../../archive/frontend/DEV0170-separate-coach-schedule-and-bookings-tabs.md), account-deletion follow-up [DEV0165 — Implement the account-deletion lifecycle](../backend/DEV0165-implement-account-deletion-lifecycle.md)
+- Related records: completed booking-request dependency [COR0016 — Coach-confirmed booking requests](../../archive/organisatory/COR0016-coach-confirmed-booking-requests.md) and completed [DEV0188 — Persist multi-candidate booking requests](../../archive/backend/DEV0188-persist-multi-candidate-booking-requests.md); booking baseline [DEV0141 — Persist direct private bookings](../../archive/backend/DEV0141-persist-direct-private-bookings.md), athlete-history baseline [DEV0144 — Show client booking history](../../archive/frontend/DEV0144-show-client-booking-history.md), coach-bookings baseline [DEV0170 — Separate coach Schedule and Bookings tabs](../../archive/frontend/DEV0170-separate-coach-schedule-and-bookings-tabs.md), account-deletion follow-up [DEV0165 — Implement the account-deletion lifecycle](../backend/DEV0165-implement-account-deletion-lifecycle.md); independent messaging-contract dependency [DEV0243](DEV0243-define-ongoing-messages-and-session-note-boundaries.md)
+
+## Planning revision pending — 2026-10-15
+
+The user now wants one ongoing coach–athlete message conversation containing session requests, while individual booking sessions contain coach/athlete notes. [DEV0243](DEV0243-define-ongoing-messages-and-session-note-boundaries.md) owns the new contract and its reconciliation with these earlier Draft plans. The per-request conversation model below is the earlier proposal and must be revised before implementation; it is not an adopted messaging contract. Existing session-note, shared-plan and coach-private-note intentions remain subject to that review rather than being silently removed.
 
 ## Objective and boundaries
 
@@ -35,6 +39,8 @@ All required implementation parts have direct development tickets. The tickets a
 - DEV0165 is a downstream account-lifecycle consumer. It must later decide whether session-content authorship is deleted, anonymized or retained when an account is removed; that future decision does not permit the current feature to expose content beyond booking participants.
 
 ## Delivery sequence and completion conditions
+
+New start condition: finish the independent DEV0243 messaging/notes boundary review and reconcile this work map plus DEV0182–DEV0185 before any runtime work begins. DEV0243 is an upstream contract dependency, not a direct member or substitute implementation owner. These records remain Draft while the revision is pending.
 
 1. Complete COR0016's DEV0186 contract first so pending-request identity, statuses and selection semantics are authoritative; then complete DEV0182 for conversation/privacy behavior.
 2. Complete COR0016's DEV0188 request persistence before DEV0183 binds notes to requests and accepted bookings.

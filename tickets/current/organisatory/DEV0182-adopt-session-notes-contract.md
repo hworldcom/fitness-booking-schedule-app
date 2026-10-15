@@ -2,10 +2,14 @@
 
 - Status: Draft
 - Created: 2026-10-10
-- Last updated: 2026-10-14
+- Last updated: 2026-10-15
 - Milestone: Scheduling-only session collaboration follow-up
 - Coordination: [COR0015 — Session notes and training plans](COR0015-session-notes-and-training-plans.md)
-- Related records: completed booking-request contract dependency [DEV0186 — Adopt booking-request and notice policies](../../archive/organisatory/DEV0186-adopt-booking-request-and-notice-policies.md); implementation peers [DEV0183 — Persist authorized session notes](../backend/DEV0183-persist-authorized-session-notes.md), [DEV0184 — Add the coach session workspace](../frontend/DEV0184-add-coach-session-workspace.md) and [DEV0185 — Add athlete session collaboration](../frontend/DEV0185-add-client-session-collaboration.md); booking baseline [DEV0141 — Persist direct private bookings](../../archive/backend/DEV0141-persist-direct-private-bookings.md)
+- Related records: completed booking-request contract dependency [DEV0186 — Adopt booking-request and notice policies](../../archive/organisatory/DEV0186-adopt-booking-request-and-notice-policies.md); implementation peers [DEV0183 — Persist authorized session notes](../backend/DEV0183-persist-authorized-session-notes.md), [DEV0184 — Add the coach session workspace](../frontend/DEV0184-add-coach-session-workspace.md) and [DEV0185 — Add athlete session collaboration](../frontend/DEV0185-add-client-session-collaboration.md); booking baseline [DEV0141 — Persist direct private bookings](../../archive/backend/DEV0141-persist-direct-private-bookings.md); independent messaging-contract dependency [DEV0243](DEV0243-define-ongoing-messages-and-session-note-boundaries.md)
+
+## Planning revision pending — 2026-10-15
+
+The user now wants one ongoing coach–athlete message conversation containing session requests, while individual booking sessions contain coach/athlete notes. [DEV0243](DEV0243-define-ongoing-messages-and-session-note-boundaries.md) owns the new contract and its reconciliation with these earlier Draft plans. The per-request conversation model below is the earlier proposal and must be revised before implementation; it is not an adopted messaging contract. Existing session-note, shared-plan and coach-private-note intentions remain subject to that review rather than being silently removed.
 
 ## Objective and context
 
