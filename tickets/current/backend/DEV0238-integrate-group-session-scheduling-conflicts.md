@@ -22,9 +22,11 @@ Publication rejects overlap with nonwithdrawn private occurrences/bookings or an
 
 ## Assumptions, decisions, and dependencies
 
-DEV0237's stable group records/lifecycle. It may be investigated now but implementation starts after those contracts exist. No coach/public event UI may publish before this boundary passes.
+[DEV0237](../../archive/backend/DEV0237-persist-group-session-registration.md) completed the stable group records/lifecycle on 2026-10-15; that dependency is satisfied. No coach/public event UI may publish before this boundary passes.
 
 This is one peer implementation boundary, not a parent of other development tickets. No runtime implementation has started under this record. Significant implementation choices and deviations must be recorded before they are implemented.
+
+DEV0237 handoff: the new `coach_group_sessions`/`coach_group_registrations` tables and `group_session_command`/`public_group_sessions` entry points are implemented. `guard_group_session` deliberately rejects application-owner publication; replace that denial with the shared scheduling boundary, retaining frozen terms, actor checks, history and the database-time-after-lock behavior. No active group time reservation or private-schedule integration is implied by DEV0237. Its migration was validated in disposable databases and was not applied to the shared local stack.
 
 ## Implementation plan
 
@@ -74,7 +76,7 @@ Ticket-format/link/ownership planning checks are recorded under DEV0233 and COR0
 
 ## Risks, limitations, and follow-ups
 
-DEV0237's stable group records/lifecycle. It may be investigated now but implementation starts after those contracts exist. No coach/public event UI may publish before this boundary passes. Free/pay-at-session registration proves neither payment nor attendance. No unrelated scope or unmet criterion may be delegated to a follow-up to claim completion.
+[DEV0237](../../archive/backend/DEV0237-persist-group-session-registration.md) completed the stable group records/lifecycle on 2026-10-15; that dependency is satisfied. No coach/public event UI may publish before this boundary passes. Free/pay-at-session registration proves neither payment nor attendance. No unrelated scope or unmet criterion may be delegated to a follow-up to claim completion.
 
 ## Completion and review references
 

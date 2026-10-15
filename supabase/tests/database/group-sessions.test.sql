@@ -1,0 +1,17 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+set local search_path = extensions, public, pg_catalog;
+select plan(11);
+select has_table('app','coach_group_sessions','nonfinancial group sessions exist');
+select has_table('app','coach_group_registrations','registration attempts are retained separately');
+select ok((select bool_and(relrowsecurity and relforcerowsecurity) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='app' and c.relname in ('coach_group_sessions','coach_group_registrations')),'both group tables force RLS');
+select ok(not has_table_privilege('app_runtime','app.coach_group_sessions','select,insert,update,delete'),'runtime cannot read or write raw sessions');
+select ok(not has_table_privilege('app_runtime','app.coach_group_registrations','select,insert,update,delete'),'runtime cannot read or write raw participant attempts');
+select ok(has_function_privilege('app_runtime','app.group_session_command(text,jsonb)','execute') and has_function_privilege('app_runtime','app.public_group_sessions(text,jsonb)','execute'),'only bounded group entry points are available');
+select ok(not has_function_privilege('app_runtime','app.group_session_flags(boolean)','execute') and not has_function_privilege('app_runtime','app.group_session_projection(uuid,uuid)','execute') and not has_function_privilege('app_runtime','app.group_reconcile_session(uuid)','execute'),'management/projection/reconciliation helpers are internal');
+select ok(not has_function_privilege('anon','app.group_session_command(text,jsonb)','execute') and not has_function_privilege('authenticated','app.public_group_sessions(text,jsonb)','execute') and not has_function_privilege('service_role','app.group_session_command(text,jsonb)','execute'),'browser/Data API roles cannot call group entry points');
+select ok(exists(select 1 from pg_indexes where schemaname='app' and indexname='coach_group_one_active_registration' and indexdef like '%UNIQUE%' and indexdef like '%active%'),'one active registration per session/account is a database constraint');
+select ok(not exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='app' and p.proname like '%group%publish%' and has_function_privilege('app_runtime',p.oid,'execute')),'no runtime group publication function exists before DEV0238');
+select ok((select count(*)=2 from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='app' and t.tgname in ('guard_group_session','guard_group_registration') and not t.tgisinternal),'database guards preserve terms/attempts and capacity');
+select * from finish();
+rollback;

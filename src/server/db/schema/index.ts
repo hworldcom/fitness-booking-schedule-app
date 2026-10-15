@@ -6,3 +6,4 @@ export * from "./coaches";
 export * from "./bookings";
 
 export * from "./connections";
+export * from "./group-sessions";

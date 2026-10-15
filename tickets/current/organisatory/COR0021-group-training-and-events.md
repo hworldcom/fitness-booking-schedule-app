@@ -5,7 +5,7 @@
 - Last updated: 2026-10-15
 - Milestone: M7 — Group training and events
 - Converted from: Not applicable — DEV0233 already has committed planning evidence and retains its identity/scope
-- Tracked development tickets: [DEV0233](../../archive/organisatory/DEV0233-define-group-training-and-events-growth-scope.md), [DEV0237](../backend/DEV0237-persist-group-session-registration.md), [DEV0238](../backend/DEV0238-integrate-group-session-scheduling-conflicts.md), [DEV0239](../frontend/DEV0239-add-coach-group-session-management.md), [DEV0240](../frontend/DEV0240-add-group-event-discovery-and-joining.md), [DEV0241](../backend/DEV0241-rehearse-group-training-and-event-loop.md)
+- Tracked development tickets: [DEV0233](../../archive/organisatory/DEV0233-define-group-training-and-events-growth-scope.md), [DEV0237](../../archive/backend/DEV0237-persist-group-session-registration.md), [DEV0238](../backend/DEV0238-integrate-group-session-scheduling-conflicts.md), [DEV0239](../frontend/DEV0239-add-coach-group-session-management.md), [DEV0240](../frontend/DEV0240-add-group-event-discovery-and-joining.md), [DEV0241](../backend/DEV0241-rehearse-group-training-and-event-loop.md)
 - Related records: independent Explore preview [DEV0235](../frontend/DEV0235-preview-home-aligned-explore.md), independent Explore implementation [DEV0236](../../archive/frontend/DEV0236-align-explore-with-home-discovery.md); existing private scheduling and connection contracts are compatibility baselines, not group implementation
 
 ## Objective and boundaries
@@ -19,7 +19,7 @@ This record implements no runtime behavior. The contract owner distinguishes the
 | Implementation part                | Development ticket                                                                             | Owned deliverable                                                                                                                                                          | Start condition or dependency                                            |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | Product contract and work map      | [DEV0233](../../archive/organisatory/DEV0233-define-group-training-and-events-growth-scope.md) | Scope, confirmed/default decisions, lifecycle/privacy/conflict contract, M7 and acceptance scenarios, README navigation and flat ticket ownership                          | Finish before runtime work                                               |
-| Group domain and registration      | [DEV0237](../backend/DEV0237-persist-group-session-registration.md)                            | New nonfinancial data, owner drafts, direct one-seat joining/withdrawal, manual confirmation/cancellation, deadline reconciliation and bounded projections/tests           | Completed DEV0233 contract; publication unavailable until DEV0238        |
+| Group domain and registration      | [DEV0237](../../archive/backend/DEV0237-persist-group-session-registration.md)                 | New nonfinancial data, owner drafts, direct one-seat joining/withdrawal, manual confirmation/cancellation, deadline reconciliation and bounded projections/tests           | Completed DEV0233 contract; publication unavailable until DEV0238        |
 | Cross-product time authority       | [DEV0238](../backend/DEV0238-integrate-group-session-scheduling-conflicts.md)                  | Guarded publication, coach-wide time reservations, private occurrence/materialization/reopen compatibility and real concurrency tests                                      | Stable DEV0237 records/lifecycle                                         |
 | Coach event interface              | [DEV0239](../frontend/DEV0239-add-coach-group-session-management.md)                           | Coach Events navigation, draft/review/publish, private roster and explicit confirmation/cancellation/conflict recovery                                                     | DEV0237 and DEV0238 completed                                            |
 | Public and athlete event interface | [DEV0240](../frontend/DEV0240-add-group-event-discovery-and-joining.md)                        | Public Events navigation/list/detail, filters/share links, direct join/withdraw and own Group sessions destination                                                         | DEV0237 and DEV0238 completed; sequence shared visual edits with DEV0236 |
@@ -46,13 +46,15 @@ All required implementation tickets exist and are peers. Detailed evidence belon
 
 - 2026-10-15: Compared DEV0233 with DEV0235/DEV0236 and found separate owned outcomes. Created a flat work map while preserving the existing committed DEV0233. The user selected direct joining with manual coach confirmation/cancellation after having selected free/pay-at-session pricing.
 - 2026-10-15: Adopted implementation defaults for explicit decision deadlines, no implicit confirmation, missed-decision expiry, withdrawal, immutable published terms, privacy and coach scheduling conflicts. Exact behavior is in the specification, not duplicated as a second product contract here.
-- Runtime implementation has not started. No group capability is claimed delivered from ticket creation or the existing Explore work.
+- 2026-10-15: DEV0237 completed the backend data/registration/lifecycle slice with forced row-level security, bounded public/private projections, immutable terms and real capacity/decision/deadline races. It exposes no application publication path or Events interface. DEV0238 is the next implementation peer; DEV0239/DEV0240 still require both backend peers and DEV0241 remains the integrated proof gate.
 
 ## Validation results
 
 2026-10-15: DEV0233 completed the adopted contract and work map. `python3 /tmp/dev0233-check-growth-contract.py` passed 257 relative links, 33 anchors, 147 unique records, six reciprocal direct DEV members, unique work-map rows and metadata/index/retained-Explore checks. Targeted Prettier and `git diff --check` passed; the checks are repeated after contract archival. Integrated runtime evidence remains DEV0241 and is not run.
 
 After archival, the same checker passed 270 links and 34 anchors across all eleven affected Markdown files, including the DEV0225 link repair; record/member/ownership checks and formatting/whitespace checks also passed. DEV0233 is Completed, DEV0237 is Ready and all later runtime peers retain their dependency gates.
+
+2026-10-15 backend integration checkpoint: DEV0237 records 98 driver tests (including current private scheduling/mail), 217 pgTAP assertions, 168 application/server tests, clean and preserved-row migration rehearsals, SQL lint and static/build checks. Group/private time integration and browser proof are still pending. The pre-existing legacy seed incompatibility is separately tracked by independent DEV0249 and is not claimed repaired by these checks.
 
 ## Risks, limitations, and follow-ups
 
@@ -61,7 +63,7 @@ Manual decisions and status are in-app only; no email/push delivery is promised.
 ## Completion and review references
 
 - Completed: Not completed — runtime delivery and integration pending.
-- Direct development tickets: DEV0233 Completed; DEV0237 Ready; DEV0238–DEV0241 Draft pending dependencies.
+- Direct development tickets: DEV0233 and DEV0237 Completed; DEV0238 Draft with its data dependency now satisfied; DEV0239–DEV0241 Draft pending dependencies.
 - Commit: Not applicable — coordination IDs are not used in commit subjects.
 - Review: Planning self-review only; no independent or runtime review.
 - Deployment or release: None.
