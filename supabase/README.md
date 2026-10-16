@@ -52,9 +52,9 @@ Maintainer reproduction of the frozen artifact is `node scripts/database-baselin
 
 Rollback before any database transition is a repository revision rollback; no retained data/ledger changes need undoing. Once a new database uses this baseline, continue with forward fixes rather than replaying the archived chain over it. This maintenance scope does not authorize destructive rollback or old-ledger repair.
 
-## Local workflow
+## Explicit Docker database workflow
 
-Prerequisites are Node.js 24.21.x, the locked npm dependencies and a running Docker-compatible container runtime. This repository uses PostgreSQL port `55322`.
+Normal local app development uses [hosted dev](#separate-hosted-environments) and needs no Docker database. The following explicit database/test workflow requires Node.js 24.21.x, the locked npm dependencies and a running Docker-compatible container runtime. Its PostgreSQL port is `55322`; `npm run dev:docker` starts the application against that stack when deliberately selected.
 
 ```sh
 npm ci
@@ -115,10 +115,38 @@ Hosted environments use a dedicated generated login that inherits only `app_runt
 Use the Supabase transaction pooler on port `6543`. The username must include the project-reference suffix required by the shared pooler. Verify the assembled URL without printing it:
 
 ```sh
-npm run db:verify:hosted-runtime
+node --env-file=.env.development.local scripts/verify-hosted-runtime-database.mjs --environment dev
 ```
 
-The verifier checks pooler use, role attributes, `app_runtime` membership, absence of `app_owner` membership, direct-write restrictions, direct-booking function access and browser-role isolation. It loads an ignored `.env.staging.local` when present and otherwise supports the project's existing macOS Keychain item.
+The verifier requires an explicit `--environment dev|prod` plus `DATABASE_URL` and `NEXT_PUBLIC_SUPABASE_URL`. It checks the selected project/runtime-role pair before connecting, then role attributes, `app_runtime` membership, absence of `app_owner` membership, direct-write restrictions, current booking-request/acceptance function access and browser-role isolation. It never loads the old staging file or reads a default Keychain credential. `npm run db:verify:hosted-runtime -- --environment dev` works when the required values are already exported into the process.
+
+## Separate hosted environments
+
+The user confirmed these independent Supabase projects on 16 October 2026; [public environment metadata](../config/supabase-environments.json) is shared by the startup, verifier and Vercel guards. Actual target setup and remaining evidence belong to [DEV0267 dev](../tickets/archive/backend/DEV0267-connect-new-hosted-dev-environment.md) and [DEV0268 prod](../tickets/current/backend/DEV0268-prepare-isolated-production-environment.md).
+
+| Use                    | Application origin                                           | Project reference                    | Dedicated runtime login   |
+| ---------------------- | ------------------------------------------------------------ | ------------------------------------ | ------------------------- |
+| Local app and UAT/test | `http://localhost:3100` and planned `https://test.movx.club` | `mdzidiqosxbghmfyxphb` (`movx-dev`)  | `movx_dev_runtime_login`  |
+| Production             | Planned `https://movx.club`                                  | `yltijwebedkraypgkqmc` (`movx-prod`) | `movx_prod_runtime_login` |
+
+Both projects are in Frankfurt (`eu-central-1`). They have separate Auth users, Storage and database state. Local and UAT intentionally share dev data; production receives no development demonstration seed or copied test accounts. New authentication providers and old-data transfer are separate work. Keep the old staging and retained Docker environments unchanged during new dev setup.
+
+The local hosted mode reads the ignored `.env.development.local`; its [checked-in example](../.env.development.local.example) contains placeholders only. Use the provider's actual shared transaction-pooler host from the Connect dialog, with username `<runtime-login>.<project-reference>`, URL-encoded password and port `6543`, database `postgres`, without query options. Do not infer the pooler index from the region. The application uses TLS and disables prepared statements. Only the restricted runtime password belongs in this file; migration-owner and CLI credentials do not.
+
+```sh
+node --env-file=.env.development.local scripts/start-hosted-development.mjs --check
+npm run dev
+```
+
+`dev`, `dev:local` and `dev:hosted` all use guarded hosted startup. It validates the dev target, a public `sb_publishable_` key and an exact `http://localhost:<unprivileged-port>` origin (normally `http://localhost:3100`) before launching Next.js. It starts/creates no Docker database and runs no migrations, seeds or automatic test-account provisioning. Missing or wrong settings stop startup without a local fallback. Only explicit `dev:docker` selects the retained Docker app stack; DEV0232 still owns its old-history transition. Existing app processes must be restarted by their owner to adopt changed settings; this command change does not stop containers or delete retained data.
+
+Vercel Development and Preview/UAT use the dev project's four application settings; Vercel Production uses prod's. Each deployment's `NEXT_PUBLIC_SITE_URL` must be that application's exact HTTPS origin and match its Supabase Auth URL configuration. Hosted Vercel builds reject swapped projects, owner roles or mismatched runtime suffixes. Environment-free public-preview builds remain available. Public Auth values are embedded at build time, so changing projects requires a fresh build with the right values. Domain assignment and live publishing remain separate operator work.
+
+New-project setup first inspects actual schema/history/Auth/Storage state and reviews a dry-run of the accepted baseline/forward files. It never runs the baseline over an existing application schema. UAT's exact origin and SMTP/provider configuration need actual verification; project existence and local configuration checks do not imply working email delivery or deployment. The current email-code sign-in contract remains unchanged.
+
+Dev's accepted baseline and effective-availability migrations through `20261016000200`, complete fictional seed, private-image buckets and restricted login are applied and verified under DEV0267. The concurrent in-progress owner-calendar migration `20261016000300` requires its separate validated hosted rollout; its presence in the working tree does not mean it is applied. Ignored mode-0600 `.env.development.local` contains the working local application connection. Dev Auth has site URL `https://test.movx.club` and exact redirects `http://localhost:3100/sign-in` and `https://test.movx.club/sign-in`, with six-digit, one-hour codes and a 60-second resend interval. Neither domain is deployed by this setup, and production remains unmodified.
+
+Dev uses the existing Porkbun SMTP service (`smtp.porkbun.com`, STARTTLS port 587, sender `MovX Club <hello@movx.club>`), a 10-email-per-hour project cap and the checked-in code-only body for both signup-confirmation and returning-user magic-link templates. Hosted email confirmation and other security defaults remain enabled. The ignored mode-0600 `.env.supabase-smtp.local` is an operator input only, never an application/Vercel setting. The user authorized one sign-in test: the email arrived, its code verified, and the actual local app recognized the session while correctly requiring profile onboarding. The test session was signed out and temporary code removed. This verifies one new-account email/session path; returning-user browser onboarding, real-user scheduling and deployed UAT remain separate evidence. DEV0267 records the commands, settings and limits.
 
 The guarded Vercel build requires the complete database/Auth group whenever hosted runtime mode is enabled. Keep the Vercel function region close to the Supabase project and measure hosted connection behavior before changing the request-owned connection model in `src/server/db/client.ts`.
 

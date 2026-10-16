@@ -1,0 +1,10 @@
+{
+  "dev": {
+    "projectRef": "mdzidiqosxbghmfyxphb",
+    "runtimeUser": "movx_dev_runtime_login"
+  },
+  "prod": {
+    "projectRef": "yltijwebedkraypgkqmc",
+    "runtimeUser": "movx_prod_runtime_login"
+  }
+}

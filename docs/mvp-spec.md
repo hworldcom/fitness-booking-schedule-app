@@ -285,6 +285,10 @@ M8 adds one dataset/coach-profile/athlete-profile conversation, stable message a
 - Historical blockchain/social tables may remain in migration history but are not current runtime dependencies.
 - M8 message persistence, consent, read state, blocking and scheduling integration are PostgreSQL/server authority; client context selectors and unread badges grant no access.
 
+Confirmed hosted environment arrangement (16 October 2026): the locally running application and deployed UAT/test application share the hosted dev Supabase project; production uses a separate hosted prod project, including separate Auth users and Storage. [COR0026](../tickets/current/organisatory/COR0026-separate-hosted-dev-and-production.md) maps target guards and actual provisioning/verification. The retained Docker workflow and its migration continuity remain separate. This operational choice does not adopt new authentication providers, transfer old accounts/files or claim a completed production release.
+
+Normal app development commands (`dev`, `dev:local`, `dev:hosted`) select the guarded hosted-dev connection and never start/create a Docker database, migrate, seed or provision test accounts. Missing or incorrect dev settings fail without a local fallback. Docker application startup is an explicit `dev:docker` opt-in for retained/isolated workflows; database test/operator commands remain separate, and existing containers/data are preserved.
+
 ## 7. Requests, booking and recovery
 
 Request creation, withdrawal, decline, expiry, acceptance, occurrence closure, booking cancellation and completion are atomic database operations with stable UUID identity and explicit actor context. Start/deadline checks use database instants, not the browser clock. The active-booking uniqueness rule prevents double confirmation even when several requests exist or coach actions race.

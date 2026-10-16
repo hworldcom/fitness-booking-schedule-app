@@ -1,75 +1,24 @@
-import { execFileSync } from "node:child_process";
 import postgres from "postgres";
+import {
+  hostedEnvironmentArgument,
+  hostedRuntimeConfiguration,
+  redactHostedError,
+} from "./lib/hosted-environment.mjs";
 
-const expectedUser =
-  process.env.EXPECTED_DATABASE_USER?.trim() || "movx_staging_runtime_login";
-const projectRef = "qaluvzwudsqrchdwxcsb";
-const poolerHost = "aws-0-eu-central-1.pooler.supabase.com";
-const keychainService = "movx-club-staging-database";
-
-function databaseUrlFromKeychain() {
-  if (process.platform !== "darwin") return undefined;
-
-  try {
-    const password = execFileSync(
-      "/usr/bin/security",
-      [
-        "find-generic-password",
-        "-a",
-        expectedUser,
-        "-s",
-        keychainService,
-        "-w",
-      ],
-      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
-    ).trim();
-
-    if (!password) return undefined;
-
-    const url = new URL(
-      `postgresql://${expectedUser}.${projectRef}@${poolerHost}:6543/postgres`,
-    );
-    url.password = password;
-    return url.toString();
-  } catch {
-    return undefined;
-  }
-}
-
-const databaseUrl =
-  process.env.DATABASE_URL?.trim() || databaseUrlFromKeychain();
-
-if (!databaseUrl) {
+let configuration;
+try {
+  configuration = hostedRuntimeConfiguration(
+    process.env,
+    hostedEnvironmentArgument(process.argv.slice(2)),
+  );
+} catch (error) {
   console.error(
-    `Hosted runtime verification requires either DATABASE_URL or the macOS Keychain item ${keychainService} for account ${expectedUser}. See supabase/README.md.`,
+    error instanceof Error ? error.message : "Hosted configuration is invalid.",
   );
   process.exit(1);
 }
-
-let parsedUrl;
-try {
-  parsedUrl = new URL(databaseUrl);
-} catch {
-  console.error("DATABASE_URL is not a valid URL.");
-  process.exit(1);
-}
-
-const configuredUser = decodeURIComponent(parsedUrl.username).split(".")[0];
-const configurationChecks = [
-  {
-    name: "the transaction-pooler port is 6543",
-    passed: parsedUrl.port === "6543",
-  },
-  {
-    name: "the connection username identifies the expected runtime login",
-    passed: configuredUser === expectedUser,
-  },
-  {
-    name: "the connection is not pointed at a loopback host",
-    passed: !["127.0.0.1", "localhost", "::1"].includes(parsedUrl.hostname),
-  },
-];
-
+const databaseUrl = configuration.connectionString;
+const expectedUser = configuration.runtimeUser;
 const connection = postgres(databaseUrl, {
   max: 1,
   prepare: false,
@@ -77,25 +26,6 @@ const connection = postgres(databaseUrl, {
   connect_timeout: 10,
   idle_timeout: 5,
 });
-
-function redactError(error) {
-  if (!(error instanceof Error)) return "Unknown database error";
-
-  let message = error.message.replaceAll(databaseUrl, "[redacted]");
-  const encodedPassword = parsedUrl.password;
-  if (encodedPassword) {
-    message = message.replaceAll(encodedPassword, "[redacted]");
-    try {
-      message = message.replaceAll(
-        decodeURIComponent(encodedPassword),
-        "[redacted]",
-      );
-    } catch {
-      // The URL parser already accepted the value. Keep the encoded redaction.
-    }
-  }
-  return message;
-}
 
 try {
   const [role] = await connection`
@@ -127,9 +57,10 @@ try {
       ) as can_enroll_identity,
       has_function_privilege(
         current_user,
-        'app.book_direct_private_session(uuid)',
+        'app.create_coach_booking_request(uuid)',
         'execute'
-      ) as can_book_private_session,
+      ) as can_create_request,
+      has_function_privilege(current_user,'app.accept_coach_booking_request(uuid)','execute') as can_accept_request,
       has_schema_privilege('anon', 'app', 'usage') as anon_has_app_usage,
       has_schema_privilege('authenticated', 'app', 'usage') as authenticated_has_app_usage,
       has_schema_privilege('service_role', 'app', 'usage') as service_role_has_app_usage
@@ -205,8 +136,8 @@ try {
       passed: role.can_enroll_identity === true,
     },
     {
-      name: "the role may execute bounded direct booking",
-      passed: role.can_book_private_session === true,
+      name: "the role may execute bounded booking requests",
+      passed: role.can_create_request === true,
     },
     {
       name: "browser-facing database roles cannot use the app schema",
@@ -217,7 +148,13 @@ try {
     },
   ];
 
-  const checks = [...configurationChecks, ...permissionChecks];
+  const checks = [
+    ...permissionChecks,
+    {
+      name: "the role may execute bounded request acceptance",
+      passed: role.can_accept_request === true,
+    },
+  ];
   for (const check of checks) {
     console.log(`${check.passed ? "PASS" : "FAIL"}: ${check.name}`);
   }
@@ -229,10 +166,12 @@ try {
     );
   }
 
-  console.log("Hosted runtime database access is correctly restricted.");
+  console.log(
+    `Hosted ${configuration.environment} runtime database access is correctly restricted.`,
+  );
 } catch (error) {
   console.error(
-    `Hosted runtime database verification failed: ${redactError(error)}`,
+    `Hosted runtime database verification failed: ${redactHostedError(error, databaseUrl)}`,
   );
   process.exitCode = 1;
 } finally {

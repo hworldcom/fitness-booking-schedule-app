@@ -1,3 +1,5 @@
+import { hostedRuntimeConfiguration } from "./lib/hosted-environment.mjs";
+
 const CORE_VARIABLES = [
   "DATABASE_URL",
   "NEXT_PUBLIC_SUPABASE_URL",
@@ -34,7 +36,7 @@ function isLoopback(hostname) {
   return ["127.0.0.1", "localhost", "::1"].includes(hostname);
 }
 
-function validateCoreEnvironment() {
+function validateCoreEnvironment(vercelEnvironment) {
   if (
     !validateCompleteGroup(CORE_VARIABLES, "Hosted database/Auth configuration")
   ) {
@@ -113,6 +115,10 @@ function validateCoreEnvironment() {
   ) {
     fail("NEXT_PUBLIC_SITE_URL must be an exact root HTTPS origin.");
   }
+  hostedRuntimeConfiguration(
+    process.env,
+    vercelEnvironment === "production" ? "prod" : "dev",
+  );
   return "hosted-runtime";
 }
 
@@ -141,7 +147,7 @@ function main() {
   ) {
     fail("VERCEL_ENV must be production, preview or development when set.");
   }
-  const runtimeMode = validateCoreEnvironment();
+  const runtimeMode = validateCoreEnvironment(vercelEnvironment);
   const geoapifyEnabled = validateGeoapifyEnvironment();
   console.log(
     `Validated ${vercelEnvironment} Vercel build in ${runtimeMode} mode (OpenFreeMap enabled; Geoapify search ${geoapifyEnabled ? "configured" : "disabled"}) without printing environment values.`,

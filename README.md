@@ -37,15 +37,32 @@ The delivered contract permits multiple coach training locations, one coach-sele
 
 ## Run locally
 
-Prerequisites are Node.js 24.21.0 LTS, npm 11 and a running Docker engine. The supported Node range is recorded in `package.json` and `.nvmrc`.
+Prerequisites are Node.js 24.21.0 LTS and npm 11. The supported Node range is recorded in `package.json` and `.nvmrc`.
+
+### Hosted dev (default)
+
+The local application and UAT/test share the confirmed hosted dev project; production uses a separate project. Follow [hosted environment setup](supabase/README.md#separate-hosted-environments) for the dedicated runtime connection and public Auth settings. If setup has not already created the ignored file, copy the placeholder example without replacing existing credentials:
+
+```sh
+cp -n .env.development.local.example .env.development.local
+nvm use
+npm ci
+npm run dev
+```
+
+Fill the example's placeholders before startup. `npm run dev`, `npm run dev:local` and `npm run dev:hosted` all use the same guarded hosted-dev launcher. They validate the dev project, dedicated runtime login and localhost origin before starting Next.js, with no Docker startup or database creation. Missing or wrong settings fail without falling back to local services. Schema migrations, seeding and account provisioning remain explicit setup operations. An already running server keeps its original settings until its owner restarts it with one of these commands. Dev database connectivity, one real sign-in email and server session verification passed. See the [environment rollout](tickets/current/organisatory/COR0026-separate-hosted-dev-and-production.md) for provisioning status and limits of that check. Planned UAT is `https://test.movx.club`; planned production is `https://movx.club`.
+
+### Explicit Docker test workflow
+
+The separate Docker workflow requires a running Docker engine. Retained databases with older migration history need the [DEV0232 continuity work](tickets/current/organisatory/DEV0232-restore-local-migration-continuity.md); the baseline cleanup does not repair that history automatically.
 
 ```sh
 nvm use
 npm ci
-npm run dev:local
+npm run dev:docker
 ```
 
-`npm run dev:local` is the complete local-development command. It:
+`npm run dev:docker` explicitly selects the retained Docker workflow for local integration testing. It:
 
 - starts or reuses the repository's Supabase PostgreSQL, Auth, Storage and Mailpit services;
 - applies pending local migrations without resetting existing local data;
@@ -56,7 +73,7 @@ npm run dev:local
 
 Captured local sign-in emails appear in [Mailpit at 127.0.0.1:55324](http://127.0.0.1:55324). Press `Ctrl-C` to stop Next.js. The reusable Supabase containers stay running; stop them explicitly with `npm run db:stop`.
 
-No `.env.local` is required for the core local application or the OpenFreeMap-backed Explore map. Create an ignored one from [`.env.example`](.env.example) only for optional settings such as the Geoapify public search key. The local command overrides database/Auth/site values with the repository's loopback configuration, so it cannot accidentally start against hosted services.
+No `.env.local` is required for the core Docker application or the OpenFreeMap-backed Explore map. Create an ignored one from [`.env.example`](.env.example) only for optional settings such as the Geoapify public search key. The Docker command overrides database/Auth/site values with the repository's loopback configuration, so it cannot accidentally start against hosted services.
 
 For a configuration-free production-mode public preview:
 
@@ -69,20 +86,17 @@ Both modes use [localhost:3100](http://localhost:3100). Development compiles rou
 
 ## Local email sign-in
 
-Public browsing does not require sign-in. `npm run dev:local` already starts the Auth-enabled stack required for identity and booking. The individual component commands remain available for troubleshooting or custom workflows:
+Public browsing does not require sign-in. Normal development uses the hosted dev project's configured email Auth. The Docker-specific test instructions below use local Mailpit and require the explicit Docker workflow:
 
 ```sh
-npm run auth:start
-npm run auth:status
-npm run db:runtime
-npm run dev
+npm run dev:docker
 ```
 
-The one-command workflow reads the local public `API_URL` and `PUBLISHABLE_KEY` (or legacy `ANON_KEY`) internally and does not print or persist private CLI status values. For a manual workflow, copy only those public values to their matching `NEXT_PUBLIC_*` names in `.env.local`, keep `NEXT_PUBLIC_SITE_URL=http://localhost:3100`, and never expose the service-role/secret key.
+The explicit Docker command reads the local public `API_URL` and `PUBLISHABLE_KEY` (or legacy `ANON_KEY`) internally, injects loopback settings for that process and does not print or persist private CLI status values. Keep the shared hosted-dev file unchanged; never copy local test or service-role/secret keys into it.
 
 Open `/sign-in`, request a code and read it from local Mailpit at [127.0.0.1:55324](http://127.0.0.1:55324). The first verified login creates one application profile. `Find a coach` continues as an athlete; `Become a coach` submits a coach application on the same account. Applicants may prepare a hidden coach profile, but only platform-approved coaches may publish or manage availability.
 
-For athlete account testing, sign in with `hoang@users.movx.test`. `npm run dev:local` creates this exact local-only account automatically and preserves its profile and private avatar on later starts. It has no password and no coach authority: request a one-time code on `/sign-in`, then open the message in Mailpit. You can also repair/provision it explicitly with `npm run auth:provision:test-user`. A deliberate `npm run db:reset` recreates the identity on the next start but cannot restore a deleted uploaded image.
+For Docker athlete-account testing, sign in with `hoang@users.movx.test`. Only `npm run dev:docker` creates this exact local-only account automatically and preserves its profile and private avatar on later starts. It has no password and no coach authority: request a one-time code on `/sign-in`, then open the message in Mailpit. You can also repair/provision it explicitly with `npm run auth:provision:test-user`. A deliberate `npm run db:reset` recreates the identity on the next Docker start but cannot restore a deleted uploaded image. These reserved `.test` accounts are not provisioned on hosted dev.
 
 To exercise owner flows as the five fictional coaches:
 
