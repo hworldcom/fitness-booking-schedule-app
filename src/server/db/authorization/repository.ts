@@ -61,9 +61,9 @@ function isoTimestamp(value: string | Date | null) {
   return value ? new Date(value).toISOString() : null;
 }
 
-// Only this known, aborted source-trigger conflict is safe to retry. Do not
+// Only these known, aborted trigger conflicts are safe to retry. Do not
 // retry unknown outcomes, ordinary product conflicts or arbitrary callback errors.
-function isMessagePairContention(error: unknown) {
+function isRetryableSchedulingContention(error: unknown) {
   let current = error;
   for (let depth = 0; depth < 8; depth++) {
     if (!current || typeof current !== "object") return false;
@@ -74,7 +74,8 @@ function isMessagePairContention(error: unknown) {
     };
     if (
       value.code === "40001" &&
-      value.message?.startsWith("message pair changed;")
+      (value.message?.startsWith("message pair changed;") ||
+        value.message === "coach schedule changed; retry operation")
     )
       return true;
     current = value.cause;
@@ -114,7 +115,7 @@ export async function withActorDatabaseContext<T>(
         }),
       );
     } catch (error) {
-      if (attempt >= 3 || !isMessagePairContention(error)) throw error;
+      if (attempt >= 3 || !isRetryableSchedulingContention(error)) throw error;
       await new Promise((resolve) => setTimeout(resolve, 10 * 2 ** attempt));
     }
   }

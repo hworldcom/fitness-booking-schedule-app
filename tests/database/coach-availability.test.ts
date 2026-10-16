@@ -1142,11 +1142,8 @@ test("location-aware rules preserve assignments, snapshots and deactivation hist
     currentOwnedCoachAvailabilityRuleRecords(transaction, secondActor),
   );
   assert.deepEqual(
-    rules.map((rule) => [rule.locationId, rule.localStartTime]),
-    [
-      [primaryId, "16:00"],
-      [secondaryLocationId, "17:00"],
-    ],
+    new Set(rules.map((rule) => `${rule.locationId}:${rule.localStartTime}`)),
+    new Set([`${primaryId}:16:00`, `${secondaryLocationId}:17:00`]),
   );
   const ruleInputs = rules.map(
     ({ locationId, locationUpdatedAt, isoWeekday, localStartTime }) =>

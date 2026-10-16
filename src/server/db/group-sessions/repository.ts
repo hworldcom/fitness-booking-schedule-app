@@ -10,15 +10,20 @@ import type { ActorDatabaseTransaction } from "../authorization/repository";
 import { withDatabaseConnection } from "../client";
 
 export class GroupSessionConflictError extends Error {
-  constructor() {
-    super("The group session changed or is unavailable.");
+  constructor(options?: ErrorOptions) {
+    super("The group session changed or is unavailable.", options);
   }
 }
 function translateConflict(error: unknown): never {
   let current = error;
   for (let depth = 0; depth < 8; depth++) {
     if (!current || typeof current !== "object") break;
-    const e = current as { code?: string; cause?: unknown };
+    const e = current as { code?: string; cause?: unknown; message?: string };
+    if (
+      e.code === "40001" &&
+      e.message === "coach schedule changed; retry operation"
+    )
+      throw new GroupSessionConflictError({ cause: error });
     if (
       [
         "P0001",
@@ -43,7 +48,9 @@ export async function groupSessionCommandRecord<C extends GroupSessionCommand>(
 ): Promise<GroupResultMap[C["action"]]> {
   try {
     const rows = await tx.execute<{ result: unknown }>(
-      sql`select app.group_session_command(${command.action}::text,${JSON.stringify(command.args)}::jsonb) result`,
+      command.action === "publish"
+        ? sql`select app.publish_group_session(${command.args.id}::uuid,${command.args.expectedRevision}::integer) result`
+        : sql`select app.group_session_command(${command.action}::text,${JSON.stringify(command.args)}::jsonb) result`,
     );
     if (rows.length !== 1) throw new GroupSessionConflictError();
     return parseGroupSessionResult<C["action"]>(command.action, rows[0].result);

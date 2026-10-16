@@ -1,0 +1,69 @@
+# Coordination COR0023: Coach calendar and availability
+
+- Status: In progress
+- Created: 2026-10-16
+- Last updated: 2026-10-16
+- Milestone: M9 — Coach calendar and effective availability
+- Converted from: Not applicable — created as a coordination record; DEV0251 owns contract documentation only.
+- Tracked development tickets: [DEV0251 contract](../../archive/organisatory/DEV0251-define-coach-calendar-and-availability.md), [DEV0252 effective availability](../backend/DEV0252-persist-effective-coach-availability.md), [DEV0253 coach editor](../frontend/DEV0253-edit-weekly-hours-and-date-overrides.md), [DEV0254 mixed calendar](../frontend/DEV0254-add-private-and-group-coach-calendar.md), [DEV0255 public dates](../frontend/DEV0255-browse-thirty-day-private-availability.md), [DEV0256 integrated rehearsal](../backend/DEV0256-rehearse-calendar-and-availability.md).
+- Related records: external M7 prerequisite [DEV0238](../../archive/backend/DEV0238-integrate-group-session-scheduling-conflicts.md) and group owner UI [DEV0239](../frontend/DEV0239-add-coach-group-session-management.md) under [COR0021](COR0021-group-training-and-events.md); historical Schedule presentation [DEV0205](../../archive/frontend/DEV0205-redesign-coach-schedule.md); independent workspace accessibility [DEV0208](../frontend/DEV0208-polish-authenticated-workspace-accessibility.md).
+
+## Objective and boundaries
+
+Coordinate the adopted [section 18 calendar and effective availability target](../../../docs/mvp-spec.md#18-coach-calendar-and-effective-availability): mixed private/group Day/Week/Month coach calendar, Week default, easier location-bound weekly editing, whole-date overrides, retained booked-session warnings and 30-day private publication/public navigation. This coordination maps peer delivery and does not implement runtime behavior. The current seven-day/weekly-cell runtime remains the baseline until the runtime peers pass their checks.
+
+Confirmed feature choices are separate from adopted implementation defaults in the specification and DEV0251. Existing one-hour approval-only private sessions, group lifecycle, actual venue snapshots, manual closures, private detail authority and Messages/notes permissions remain independently authoritative. No external calendar connection, payment, variable-duration service, booking drag/reschedule or athlete-wide conflict guarantee is included.
+
+## Direct development work
+
+| Implementation part               | Development ticket                                                                      | Owned deliverable                                                                                                                                                                                 | Start condition or dependency                                                                                              |
+| --------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Product contract and delivery map | [DEV0251](../../archive/organisatory/DEV0251-define-coach-calendar-and-availability.md) | Adopt the six user choices and labelled defaults, reconcile specification/milestone/scenarios and create this flat map and peers.                                                                 | Completed 2026-10-16; no runtime changes.                                                                                  |
+| Effective availability authority  | [DEV0252](../backend/DEV0252-persist-effective-coach-availability.md)                   | Override/revision/provenance/retry persistence, weekly/date mutations and services, 30-day publication/request eligibility, atomic closure/restoration/cancellation and shared-guard integration. | DEV0238 completed isolated validation; inspect its lock order/migration and prepare the test target before M9 integration. |
+| Coach weekly/date editor          | [DEV0253](../frontend/DEV0253-edit-weekly-hours-and-date-overrides.md)                  | Range/day/copy and whole-date edit/remove UI/actions, explicit local saves, retained-session warnings, closure/restoration preview and draft/error recovery.                                      | Stable validated DEV0252 save/result contract; agree view/date/deep links with DEV0254.                                    |
+| Mixed coach calendar              | [DEV0254](../frontend/DEV0254-add-private-and-group-coach-calendar.md)                  | Read-only owner period projection/paging, Day/Week/Month/agenda, filters/navigation/overflow and original private/group detail links; secondary Schedule navigation.                              | DEV0252 dated inventory and external M7 group data; final actionable group link requires DEV0239's owner destination.      |
+| Public 30-day schedule            | [DEV0255](../frontend/DEV0255-browse-thirty-day-private-availability.md)                | Public coach date navigation and eligible request selection/recovery through the complete horizon, preserving venue/privacy and existing request lifecycle.                                       | DEV0252 public projection and horizon checks; independent of coach calendar/editor UI.                                     |
+| Integrated local proof            | [DEV0256](../backend/DEV0256-rehearse-calendar-and-availability.md)                     | Reproducible tagged local rehearsal/cleanup, real coach/athlete mixed flow, privacy/race/recovery/responsive evidence and actual README command.                                                  | DEV0252–DEV0255 checks complete and required M7 guard/group-detail dependencies delivered.                                 |
+
+All required development records exist. These six direct peers each declare COR0023 membership. Backend authority, editor mutations, calendar reads, public navigation and integrated proof have separate owners; a development dependency does not make one DEV the parent of another.
+
+## Other relationships
+
+- [DEV0257 — Define reusable session types](DEV0257-define-reusable-session-types.md) is an independent proposed contract amendment, not a direct member or a required deliverable of the current work map. The user requested documenting the addition after reviewing Everfit. Its template-first preference is tentative; private duration and athlete selection remain undecided. Review its potential impacts before changing affected peer scope; adoption must update the specification and assign any new runtime parts explicitly, with reciprocal membership where applicable. Existing one-hour authority remains the current contract until then.
+- DEV0238/COR0021 is an external prerequisite, not a member: it owns group publication, lifecycle-derived reservations and the original shared coach-time boundary. DEV0252 extends that boundary for effective availability; it does not repeat M7 publication implementation or claim its existing evidence.
+- DEV0239 is the external owner group-management/detail destination used by calendar links. DEV0240 retains public group discovery/joining. Missing actionable owner group details blocks final mixed-calendar/rehearsal completion, not independent public private-date work.
+- DEV0205 and location-aware availability history explain the existing frame/draft behavior. They do not own new M9 implementation. DEV0208 remains an independent workspace accessibility effort; M9 peers still prove their own changed flows.
+- COR0015 notes and delivered M8 Messages remain separate capabilities. Original detail links preserve their authority; M9 never copies note content, grants athlete identity access or creates a second message thread.
+
+## Delivery sequence and completion conditions
+
+1. DEV0251 finishes documentation adoption and work-map validation. Runtime peers remain Draft with their actual prerequisites; planning completion does not claim feature delivery.
+2. DEV0252 follows the completed DEV0238 guard. Its isolated validation passed; shared-stack rollout remains pending and is not performed by this planning work. Inspect its migration/lock order and prepare the appropriate test target before M9 integration; no intermediate unguarded override/group publication boundary may ship.
+3. Once DEV0252 contracts pass, DEV0253 editor and DEV0255 public dates may proceed independently. DEV0254 can develop against that same stable inventory/read boundary; sequence or coordinate its shared `/coach`/style edits with DEV0253 and independent M7 owner UI work.
+4. DEV0254 completes only when original private/group detail destinations work; an inert group link is not an acceptable substitute. DEV0253 and DEV0254 jointly review dirty-draft view/date transitions, with each retaining its owned implementation evidence.
+5. DEV0256 begins the final real local rehearsal after all runtime peers meet their own checks and the external M7 dependencies needed by the flow exist. Fix missing behavior in its owning peer rather than hiding implementation under the proof ticket.
+6. Complete this COR only when every direct peer is Completed or explicitly cancelled/replaced and section 18's integrated criteria pass: exact 30-local-date public/request behavior without coach visits; whole-date venue replacement; retained bookings/groups with warnings; atomic pending/card closure; fresh policy restoration without manual/history revival; truthful complete mixed calendar; no overlap or privacy regressions; mobile/desktop/keyboard/error recovery; exact fixture cleanup. Hosted deployment is separate.
+
+## Progress and integration record
+
+- 2026-10-16: The user requested a session-type ticket/update after the calendar contract completed. Updated existing Draft DEV0257 with a working template proposal and potential-consumer map, and linked it above as an independent proposed amendment. No adopted M9 scope, direct membership, runtime implementation or completed DEV0251 history changed.
+- 2026-10-16: Everfit reference inspection and six user choices recorded under DEV0251. Adopted remaining operating defaults separately in specification section 18 and split the extension into five small runtime peers plus the documentation owner. No application/migration/dependency change was made by this planning work.
+- 2026-10-16: DEV0251 completed contract/work-map documentation checks and moved to the archive; COR0023 stays open for runtime delivery. External DEV0238 was In progress at the initial planning checkpoint and completed isolated validation during final handoff; its shared-stack migration rollout remains pending. This status update does not claim its implementation evidence for M9. No M9 runtime work has started, and no independent M7/notes edits are included in this coordination's implementation evidence.
+
+## Validation results
+
+Planning links, namespaces, reciprocal membership, exclusive work-map ownership and specification consistency passed under completed DEV0251; its archived validation record contains exact commands/results. Runtime/integration evidence is pending; no coordination-only check substitutes for a peer's acceptance criteria or DEV0256's real local proof.
+
+The 16 October 2026 DEV0257 documentary update passed affected links/anchors, namespace/index/status, unchanged six-peer direct ownership, formatting and whitespace checks. Its ticket records exact commands/results. The proposed-amendment link does not adopt service templates or variable durations into the current scope.
+
+## Risks, limitations, and follow-ups
+
+Closure provenance and explicit successor identities must preserve manual closures, original request cards, booked venues and terminal history through restoration, group release and cancellation. The 30-day horizon must change both backend eligibility and public reachability. A month view must not drop paged results or turn pending requests/Open groups into confirmed sessions. Calendar permission remains owner-scoped. Shared-file changes need sequencing with DEV0238/DEV0239 and active notes work.
+
+## Completion and review references
+
+- Completed: Not completed — runtime and integrated acceptance evidence pending.
+- Direct development tickets: DEV0251 documentation Completed; DEV0252–DEV0256 Draft.
+- Commit: Not applicable — COR identifiers are never commit subjects; the user-authorized planning checkpoint is owned by DEV0251.
+- Review: Planning self-review; no independent/runtime integration review.
+- Deployment or release: None.

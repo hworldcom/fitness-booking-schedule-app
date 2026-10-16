@@ -6,6 +6,8 @@ MovX Club is a focused scheduling application for martial-arts athletes and coac
 
 The delivered application is the private scheduling foundation. A group-training extension is adopted in the [MVP specification](docs/mvp-spec.md#15-group-training-and-events) and planned under [COR0021](tickets/current/organisatory/COR0021-group-training-and-events.md); its runtime is not delivered yet. This repository excludes blockchain, wallets, passes, credits, in-app payments, group funding and social/feed behavior. Historical SQL migrations remain additive compatibility history. Dedicated excluded-product documents and evidence were pruned under [DEV0225](tickets/archive/organisatory/DEV0225-remove-blockchain-historical-evidence.md); retained scheduling and contributor records remain historical context. The separate [fitness-booking-social-app](https://github.com/hworldcom/fitness-booking-social-app) repository preserves the Solana hackathon product.
 
+The adopted [calendar and effective-availability extension](docs/mvp-spec.md#18-coach-calendar-and-effective-availability) is planned under [COR0023](tickets/current/organisatory/COR0023-coach-calendar-and-availability.md); its runtime is not delivered yet.
+
 Start with the [MVP specification](docs/mvp-spec.md), the single current product contract. The scheduling-product split is recorded by completed [COR0011](tickets/archive/organisatory/COR0011-scheduling-only-product.md); hosted deployment and rehearsal remain separate operational work.
 
 ## Repository guide

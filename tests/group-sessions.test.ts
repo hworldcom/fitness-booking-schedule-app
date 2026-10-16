@@ -65,7 +65,7 @@ const session = {
   canEdit: false,
 };
 
-test("group commands accept Free and fixed euro cents without exposing publication or actor identity", () => {
+test("group commands accept Free and fixed euro cents without actor injection or payment tracking", () => {
   for (const priceCents of [0, 1500, 2147483647])
     assert.ok(
       parseGroupSessionCommand({
@@ -73,7 +73,7 @@ test("group commands accept Free and fixed euro cents without exposing publicati
         args: { ...draft, priceCents },
       }),
     );
-  for (const action of ["publish", "settle", "refund", "mark-paid"])
+  for (const action of ["settle", "refund", "mark-paid"])
     assert.equal(parseGroupSessionCommand({ action, args: { id } }), null);
   for (const extra of [
     { coachId: id },
@@ -94,6 +94,33 @@ test("group commands accept Free and fixed euro cents without exposing publicati
       args: { id, registrationId: locationId, athleteId: id },
     }),
     null,
+  );
+});
+test("publication requires an exact draft revision and bounded owner-only results", () => {
+  assert.deepEqual(
+    parseGroupSessionCommand({
+      action: "publish",
+      args: { id, expectedRevision: 1 },
+    }),
+    { action: "publish", args: { id, expectedRevision: 1 } },
+  );
+  for (const args of [
+    { id },
+    { id, expectedRevision: 0 },
+    { id, expectedRevision: 1, coachId: id },
+    { id, expectedRevision: 1, status: "open" },
+  ])
+    assert.equal(parseGroupSessionCommand({ action: "publish", args }), null);
+  const result = { outcome: "published", reason: null, session };
+  assert.equal(parseGroupSessionResult("publish", result).outcome, "published");
+  assert.throws(() =>
+    parseGroupSessionResult("publish", {
+      ...result,
+      reason: "schedule-conflict",
+    }),
+  );
+  assert.throws(() =>
+    parseGroupSessionResult("publish", { ...result, athleteIds: [id] }),
   );
 });
 test("group command validation rejects ambiguous numeric shapes, forged pages and invalid intervals before auth", () => {

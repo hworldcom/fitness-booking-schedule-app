@@ -100,7 +100,7 @@ export type GroupDraftInput = Readonly<{
 export type GroupSessionCommand =
   | Readonly<{ action: "save-draft"; args: GroupDraftInput }>
   | Readonly<{
-      action: "delete-draft";
+      action: "delete-draft" | "publish";
       args: { id: string; expectedRevision: number };
     }>
   | Readonly<{
@@ -139,6 +139,16 @@ export type GroupMutationResult = Readonly<{
   registration?: GroupRegistration | null;
 }>;
 export type GroupResultMap = {
+  publish: Readonly<{
+    outcome: "published" | "changed" | "conflict" | "unavailable";
+    reason:
+      | "draft-changed"
+      | "venue-changed"
+      | "schedule-conflict"
+      | "unavailable"
+      | null;
+    session: GroupSession;
+  }>;
   "save-draft": GroupMutationResult;
   "delete-draft": GroupMutationResult;
   join: GroupMutationResult;
@@ -329,7 +339,7 @@ export function parseGroupSessionCommand(
       const r = object(command.args, ["id"]);
       return { action: command.action, args: { id: uuid(r.id) } };
     }
-    if (command.action === "delete-draft") {
+    if (command.action === "delete-draft" || command.action === "publish") {
       const r = object(command.args, ["id", "expectedRevision"]);
       return {
         action: command.action,
@@ -554,7 +564,38 @@ export function parseGroupSessionResult<A extends keyof GroupResultMap>(
   value: unknown,
 ): GroupResultMap[A] {
   let result: GroupResultMap[keyof GroupResultMap];
-  if (action === "public-list" || action === "owner-list")
+  if (action === "publish") {
+    const r = object(value, ["outcome", "reason", "session"]);
+    const outcome = enumeration(r.outcome, [
+      "published",
+      "changed",
+      "conflict",
+      "unavailable",
+    ] as const);
+    const reason =
+      r.reason === null
+        ? null
+        : enumeration(r.reason, [
+            "draft-changed",
+            "venue-changed",
+            "schedule-conflict",
+            "unavailable",
+          ] as const);
+    if (
+      (outcome === "published" && reason !== null) ||
+      (outcome === "changed" &&
+        reason !== "draft-changed" &&
+        reason !== "venue-changed") ||
+      (outcome === "conflict" && reason !== "schedule-conflict") ||
+      (outcome === "unavailable" && reason !== "unavailable")
+    )
+      throw new GroupSessionResultError();
+    result = Object.freeze({
+      outcome,
+      reason,
+      session: parseGroupSession(r.session),
+    });
+  } else if (action === "public-list" || action === "owner-list")
     result = page(value, 20, parseGroupSession);
   else if (action === "registrations") result = page(value, 20, participation);
   else if (action === "roster") result = page(value, 50, roster);

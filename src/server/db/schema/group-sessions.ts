@@ -54,6 +54,7 @@ export const coachGroupSessions = app.table(
       .default(sql`clock_timestamp()`)
       .notNull(),
     publishedAt: instant("published_at"),
+    publishedFromRevision: integer("published_from_revision"),
     confirmedAt: instant("confirmed_at"),
     confirmedByProfileId: uuid("confirmed_by_profile_id"),
     closedAt: instant("closed_at"),
