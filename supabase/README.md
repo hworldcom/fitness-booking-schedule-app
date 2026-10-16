@@ -152,7 +152,15 @@ The calendar SQL rollout passed eight permission assertions and 21 successful/ne
 ./node_modules/.bin/supabase db query --linked --project-ref mdzidiqosxbghmfyxphb --file scripts/sql/verify-coach-calendar-rollout.sql --output json
 ```
 
-This is an explicit operator test, never part of app startup. It requires owner/role-switch authority and the dev fixture catalogue, sends no email and leaves no fixture accounts/rows behind. The original supplied pgTAP assertions were additionally enforced in the rollout's rollback transaction; pgTAP was not left installed. Real Auth/browser and original-detail integration remain with [DEV0254](../tickets/current/frontend/DEV0254-add-private-and-group-coach-calendar.md) and its peers; the SQL assertions do not complete that frontend proof.
+This is an explicit operator test, never part of app startup. It requires owner/role-switch authority and the dev fixture catalogue, sends no email and leaves no fixture accounts/rows behind. The original supplied pgTAP assertions were additionally enforced in the rollout's rollback transaction; pgTAP was not left installed. [DEV0254](../tickets/archive/frontend/DEV0254-add-private-and-group-coach-calendar.md) subsequently completed real Auth/browser and original-detail integration against this hosted target; that frontend proof is separate from the SQL assertions.
+
+The explicit [hosted calendar browser rehearsal](../scripts/rehearse-hosted-coach-calendar.mjs) requires the existing dev app settings, an authorized Supabase CLI login and Chrome:
+
+```sh
+node --env-file=.env.development.local scripts/rehearse-hosted-coach-calendar.mjs
+```
+
+It creates only uniquely tagged temporary Auth/application fixtures, generates test OTPs without email delivery, and runs unchanged routes/services with the restricted application login in an owned temporary source copy. Its operator Auth key stays in process memory and is excluded from Next.js. It removes exact fixtures and verifies baseline non-temporary records while preserving concurrent peer fixtures. If interrupted, rerun the same command with `--cleanup` to use its ignored exact-ID manifest; a normal run refuses an existing manifest. It never runs on app startup and does not reset, seed, migrate or start Docker.
 
 Dev uses the existing Porkbun SMTP service (`smtp.porkbun.com`, STARTTLS port 587, sender `MovX Club <hello@movx.club>`), a 10-email-per-hour project cap and the checked-in code-only body for both signup-confirmation and returning-user magic-link templates. Hosted email confirmation and other security defaults remain enabled. The ignored mode-0600 `.env.supabase-smtp.local` is an operator input only, never an application/Vercel setting. The user authorized one sign-in test: the email arrived, its code verified, and the actual local app recognized the session while correctly requiring profile onboarding. The test session was signed out and temporary code removed. This verifies one new-account email/session path; returning-user browser onboarding, real-user scheduling and deployed UAT remain separate evidence. DEV0267 records the commands, settings and limits.
 

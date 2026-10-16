@@ -5,7 +5,7 @@
 - Last updated: 2026-10-16
 - Milestone: Hosted M9 calendar rollout
 - Coordination: None — independent development ticket
-- Related records: source/runtime owner [DEV0254](../../current/frontend/DEV0254-add-private-and-group-coach-calendar.md), external calendar coordination [COR0023](../../current/organisatory/COR0023-coach-calendar-and-availability.md); completed dev setup [DEV0267](../../archive/backend/DEV0267-connect-new-hosted-dev-environment.md), startup [DEV0269](../../archive/backend/DEV0269-default-local-startup-to-hosted-dev.md) and local cleanup [DEV0270](../../archive/backend/DEV0270-remove-retired-local-supabase-containers.md).
+- Related records: source/runtime owner [DEV0254](../frontend/DEV0254-add-private-and-group-coach-calendar.md), external calendar coordination [COR0023](../../current/organisatory/COR0023-coach-calendar-and-availability.md); completed dev setup [DEV0267](../../archive/backend/DEV0267-connect-new-hosted-dev-environment.md), startup [DEV0269](../../archive/backend/DEV0269-default-local-startup-to-hosted-dev.md) and local cleanup [DEV0270](../../archive/backend/DEV0270-remove-retired-local-supabase-containers.md).
 
 ## Objective and context
 
@@ -61,7 +61,7 @@ Added a reproducible rollback-only SQL validator to exercise the successful quer
 - [`scripts/sql/verify-coach-calendar-rollout.sql`](../../../scripts/sql/verify-coach-calendar-rollout.sql): explicit owner-operated BEGIN/ROLLBACK validator with bounded timeouts, temporary assertion/actor helpers, real runtime-role queries, tagged fixtures, 21 enforced assertions and a bounded final result. It is not part of normal app startup or a broad shared-data test suite.
 - Source [`20261016000300_owner_coach_calendar.sql`](../../../supabase/migrations/20261016000300_owner_coach_calendar.sql) and [`coach-calendar.test.sql`](../../../supabase/tests/database/coach-calendar.test.sql): DEV0254's unchanged committed candidate and eight permission assertions; no SQL correction was needed. Their original deferred/prepared headers describe the earlier checkpoint, not an ongoing prohibition after the user's new authorization.
 - [`supabase/README.md`](../../../supabase/README.md#separate-hosted-environments): current applied revision, forward-file prerequisite for the current complete SQL suite and an explicit installed-function verification command, with role/rollback/feature-validation boundaries. [Specification status](../../../docs/mvp-spec.md#1-product-status-and-document-authority) now distinguishes actual hosted SQL proof from still-pending interface integration without changing adopted product behavior.
-- Current [DEV0254](../../current/frontend/DEV0254-add-private-and-group-coach-calendar.md) and [COR0023](../../current/organisatory/COR0023-coach-calendar-and-availability.md): precise external hosted SQL evidence and removal of the stale missing-function blocker; their remaining Auth/browser/detail criteria and status remain open.
+- Current [DEV0254](../frontend/DEV0254-add-private-and-group-coach-calendar.md) and [COR0023](../../current/organisatory/COR0023-coach-calendar-and-availability.md): precise external hosted SQL evidence and removal of the stale missing-function blocker; their remaining Auth/browser/detail criteria and status remain open.
 - This ticket and [`tickets/README.md`](../../README.md): reviewed operations, source identity, results and lifecycle/index handoff. Private temporary CLI/config/query files are cleaned separately; no credential was added to the repository.
 
 ### Decisions and deviations
