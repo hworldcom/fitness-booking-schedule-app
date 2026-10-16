@@ -64,7 +64,7 @@ Implementation completed on 2026-10-03 in a separate `dev0100` Git worktree so t
 
 ### Affected files
 
-- [`supabase/migrations/20261003000500_create_coach_social.sql`](../../../supabase/migrations/20261003000500_create_coach_social.sql) creates the follow/post tables, constraints, indexes, forced RLS policies and actor-derived mutation functions.
+- [`supabase/migration-history/20261016000100/20261003000500_create_coach_social.sql`](../../../supabase/migration-history/20261016000100/20261003000500_create_coach_social.sql) creates the follow/post tables, constraints, indexes, forced RLS policies and actor-derived mutation functions.
 - [`supabase/seed.sql`](../../../supabase/seed.sql) adds deterministic text posts for three fictional coaches; `src/server/db/schema/social.ts` (historical path; absent from this checkout) and the schema barrel expose matching Drizzle mappings.
 - `src/domain/coach-social.ts` (historical path; absent from this checkout), `src/server/db/coaches/social-repository.ts` (historical path; absent from this checkout) and `src/server/coaches/social-service.ts` (historical path; absent from this checkout) define the bounded input/cursor contracts, authoritative database operations and signed-in/public service states.
 - `src/app/coaches/[slug]/actions.ts` (historical path; absent from this checkout), `src/app/coach/posts/actions.ts` (historical path; absent from this checkout), `src/app/following/page.tsx` (historical path; absent from this checkout) and `src/app/coach/posts/page.tsx` (historical path; absent from this checkout) add the mutation and route boundary.

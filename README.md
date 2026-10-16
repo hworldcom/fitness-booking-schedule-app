@@ -4,7 +4,7 @@
 
 MovX Club is a focused scheduling application for martial-arts athletes and coaches. Guests discover fictional coaches and real published availability. Email-authenticated athletes request one capacity-one private session, and the coach confirms one athlete before a booking exists. Coaches manage their public profile, training locations, location-aware recurring one-hour availability, request queue and booked schedule.
 
-The delivered application is the private scheduling foundation. A group-training extension is adopted in the [MVP specification](docs/mvp-spec.md#15-group-training-and-events) and planned under [COR0021](tickets/current/organisatory/COR0021-group-training-and-events.md); its runtime is not delivered yet. This repository excludes blockchain, wallets, passes, credits, in-app payments, group funding and social/feed behavior. Historical SQL migrations remain additive compatibility history. Dedicated excluded-product documents and evidence were pruned under [DEV0225](tickets/archive/organisatory/DEV0225-remove-blockchain-historical-evidence.md); retained scheduling and contributor records remain historical context. The separate [fitness-booking-social-app](https://github.com/hworldcom/fitness-booking-social-app) repository preserves the Solana hackathon product.
+The delivered application is the private scheduling foundation. A group-training extension is adopted in the [MVP specification](docs/mvp-spec.md#15-group-training-and-events) and planned under [COR0021](tickets/current/organisatory/COR0021-group-training-and-events.md); its runtime is not delivered yet. This repository excludes blockchain, wallets, passes, credits, in-app payments, group funding and social/feed behavior. Completed SQL history is preserved in an immutable archive with an equivalent baseline for fresh databases; see [database baseline and existing-environment guidance](supabase/README.md#migration-baseline-and-history). Dedicated excluded-product documents and evidence were pruned under [DEV0225](tickets/archive/organisatory/DEV0225-remove-blockchain-historical-evidence.md); retained scheduling and contributor records remain historical context. The separate [fitness-booking-social-app](https://github.com/hworldcom/fitness-booking-social-app) repository preserves the Solana hackathon product.
 
 The adopted [calendar and effective-availability extension](docs/mvp-spec.md#18-coach-calendar-and-effective-availability) is planned under [COR0023](tickets/current/organisatory/COR0023-coach-calendar-and-availability.md); its runtime is not delivered yet.
 
@@ -177,7 +177,7 @@ npm run db:lint
 npm run coach:review -- --help
 ```
 
-The local stack uses port `55322`. `db:reset` recreates only the disposable local database from checked-in migrations/seeds; never run a linked reset against hosted data. Historical tables remain in additive migration history until a separate retention ticket reviews data and rollback requirements.
+The local stack uses port `55322`. `db:reset` recreates only an explicitly disposable local database from the active baseline/forward migrations and complete seed; never run a linked reset against hosted data. Retained databases with old migration ledgers require the [documented transition review](supabase/README.md#existing-databases). Historical tables remain compatible schema objects until a separate retention ticket reviews data and rollback requirements. `node scripts/rehearse-database-baseline.mjs` validates the frozen baseline and full seed in its own disposable databases.
 
 ## Checks
 

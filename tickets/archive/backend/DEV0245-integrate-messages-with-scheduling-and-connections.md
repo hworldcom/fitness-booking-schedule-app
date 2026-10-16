@@ -58,8 +58,8 @@ New requests and their original-ID inbox cards now commit together. Acceptance u
 
 ### Affected files
 
-- [Integration migration](../../../supabase/migrations/20261015000200_integrate_private_messages.sql): additive request/booking/connection triggers, source events, block/unblock and history bootstrap. Existing scheduling function bodies/signatures/grants stay intact.
-- [Hardening migration](../../../supabase/migrations/20261015000300_harden_private_message_integration.sql) supplies owner-trigger membership reads; [final hardening](../../../supabase/migrations/20261015000400_reserve_message_consent_submissions.sql) makes the internal flag helper's JSON cast explicit for SQL lint.
+- [Integration migration](../../../supabase/migration-history/20261016000100/20261015000200_integrate_private_messages.sql): additive request/booking/connection triggers, source events, block/unblock and history bootstrap. Existing scheduling function bodies/signatures/grants stay intact.
+- [Hardening migration](../../../supabase/migration-history/20261016000100/20261015000300_harden_private_message_integration.sql) supplies owner-trigger membership reads; [final hardening](../../../supabase/migration-history/20261016000100/20261015000400_reserve_message_consent_submissions.sql) makes the internal flag helper's JSON cast explicit for SQL lint.
 - [Actor transaction](../../../src/server/db/authorization/repository.ts): at most three retries of the exact aborted `40001` message-pair-contention error, with actor validation on every new transaction. Booking [request](../../../src/server/db/coaches/booking-request-repository.ts), [booking](../../../src/server/db/coaches/booking-repository.ts) and [connection](../../../src/server/db/connections/repository.ts) repositories preserve safe conflict results and causes.
 - Existing [booking](../../../tests/database/coach-bookings.test.ts) and [connection](../../../tests/database/coach-athlete-connections.test.ts) tests, plus the [local fixture helper](../../../scripts/lib/local-connection-rehearsal.ts), remove message/block rows only for their exact disposable profiles.
 

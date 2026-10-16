@@ -69,7 +69,7 @@ Current DEV0018 planning uses the new terminology. Historical migrations and arc
 
 | File or component                                                                                                     | Change and purpose                                                                                                                                        |
 | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `supabase/migrations/20260924000100_rename_demo_run_participants.sql`                                                 | Renames the relation and its owned object names, refreshes stored function references and documents the final meaning without rewriting prior migrations. |
+| `supabase/migration-history/20261016000100/20260924000100_rename_demo_run_participants.sql`                           | Renames the relation and its owned object names, refreshes stored function references and documents the final meaning without rewriting prior migrations. |
 | `src/server/db/schema/foundation.ts`, `src/server/db/schema/identity.ts`, `src/server/db/authorization/repository.ts` | Map and query the final database relation through the `demoRunParticipants` export while preserving every existing foreign key and actor rule.            |
 | `tickets/current/backend/DEV0018-class-pass-reservations-and-confirmed-visits.md`, `tickets/README.md`                | Use participant terminology in current planning and register this development ticket.                                                                     |
 

@@ -18,7 +18,7 @@ test("private message database authority, retries, limits and read isolation", a
       )
         await tx.unsafe(
           readFileSync(
-            "supabase/migrations/20261015000100_private_message_authority.sql",
+            "supabase/migration-history/20261016000100/20261015000100_private_message_authority.sql",
             "utf8",
           ),
         );
@@ -29,7 +29,7 @@ test("private message database authority, retries, limits and read isolation", a
       )
         await tx.unsafe(
           readFileSync(
-            "supabase/migrations/20261015000200_integrate_private_messages.sql",
+            "supabase/migration-history/20261016000100/20261015000200_integrate_private_messages.sql",
             "utf8",
           ),
         );
@@ -40,7 +40,7 @@ test("private message database authority, retries, limits and read isolation", a
       )
         await tx.unsafe(
           readFileSync(
-            "supabase/migrations/20261015000300_harden_private_message_integration.sql",
+            "supabase/migration-history/20261016000100/20261015000300_harden_private_message_integration.sql",
             "utf8",
           ),
         );
@@ -51,7 +51,7 @@ test("private message database authority, retries, limits and read isolation", a
       )
         await tx.unsafe(
           readFileSync(
-            "supabase/migrations/20261015000400_reserve_message_consent_submissions.sql",
+            "supabase/migration-history/20261016000100/20261015000400_reserve_message_consent_submissions.sql",
             "utf8",
           ),
         );

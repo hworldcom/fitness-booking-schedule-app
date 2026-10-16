@@ -71,14 +71,14 @@ Direct private scheduling is now authoritative in PostgreSQL. An authorized clie
 
 ### Affected files
 
-| File or component                                                                  | Change and purpose                                                                                               |
-| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `supabase/migrations/20261007000100_adopt_scheduling_only_bookings.sql`            | Adds direct booking, cancellation, completion and bounded projection functions while preserving historical rows. |
-| `src/domain/coach-bookings.ts`                                                     | Defines the three-state scheduling lifecycle and financial-reference-free projection.                            |
-| `src/server/db/schema/bookings.ts`                                                 | Mirrors the additive nullable historical link and cancellation actor evidence.                                   |
-| `src/server/db/coaches/booking-repository.ts`                                      | Owns validated direct mutations and actor-scoped projections.                                                    |
-| `src/server/coaches/booking-service.ts` and `src/app/coach-marketplace-actions.ts` | Expose bounded authorization/conflict/unavailable outcomes to the interface.                                     |
-| `tests/coach-bookings.test.ts` and `tests/database/coach-bookings.test.ts`         | Cover the scheduling contract and real database lifecycle/concurrency rules.                                     |
+| File or component                                                                             | Change and purpose                                                                                               |
+| --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `supabase/migration-history/20261016000100/20261007000100_adopt_scheduling_only_bookings.sql` | Adds direct booking, cancellation, completion and bounded projection functions while preserving historical rows. |
+| `src/domain/coach-bookings.ts`                                                                | Defines the three-state scheduling lifecycle and financial-reference-free projection.                            |
+| `src/server/db/schema/bookings.ts`                                                            | Mirrors the additive nullable historical link and cancellation actor evidence.                                   |
+| `src/server/db/coaches/booking-repository.ts`                                                 | Owns validated direct mutations and actor-scoped projections.                                                    |
+| `src/server/coaches/booking-service.ts` and `src/app/coach-marketplace-actions.ts`            | Expose bounded authorization/conflict/unavailable outcomes to the interface.                                     |
+| `tests/coach-bookings.test.ts` and `tests/database/coach-bookings.test.ts`                    | Cover the scheduling contract and real database lifecycle/concurrency rules.                                     |
 
 ### Decisions and deviations
 

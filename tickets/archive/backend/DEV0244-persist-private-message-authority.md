@@ -57,8 +57,8 @@ Implemented server-managed, append-only PostgreSQL text storage with no five-yea
 
 ### Affected files
 
-- [Authority migration](../../../supabase/migrations/20261015000100_private_message_authority.sql): conversations, contexts, entries, reads, consent attempts and block snapshots; restrictive row-level security, pair/rate guards and bounded command projections.
-- [Owner/Unicode hardening](../../../supabase/migrations/20261015000300_harden_private_message_integration.sql): explicit owner-only membership reads and nonblank Unicode checks. [Consent reservation](../../../supabase/migrations/20261015000400_reserve_message_consent_submissions.sql): prevents an ordinary service send from consuming an opening-consent submission ID before acceptance.
+- [Authority migration](../../../supabase/migration-history/20261016000100/20261015000100_private_message_authority.sql): conversations, contexts, entries, reads, consent attempts and block snapshots; restrictive row-level security, pair/rate guards and bounded command projections.
+- [Owner/Unicode hardening](../../../supabase/migration-history/20261016000100/20261015000300_harden_private_message_integration.sql): explicit owner-only membership reads and nonblank Unicode checks. [Consent reservation](../../../supabase/migration-history/20261016000100/20261015000400_reserve_message_consent_submissions.sql): prevents an ordinary service send from consuming an opening-consent submission ID before acceptance.
 - [Message domain](../../../src/domain/private-messages.ts): command/body limits and allowlisted data-transfer objects. [Repository](../../../src/server/db/messages/repository.ts) and [service](../../../src/server/messages/service.ts): verified actor transactions, bounded conflict/rate results and no raw database errors/body logging.
 - [Database checks](../../../tests/database/private-messages.test.ts) and [domain checks](../../../tests/private-messages.test.ts): permission, recovery, Unicode, rate and projection evidence.
 

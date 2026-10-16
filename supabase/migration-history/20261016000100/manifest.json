@@ -1,0 +1,221 @@
+{
+  "format": 1,
+  "cutoff": "20261016000100",
+  "sourceRevision": "3890d243225badb5f0de91a8a654429b72915a03",
+  "baseline": "../../migrations/20261016000100_baseline.sql",
+  "migrations": [
+    {
+      "file": "20260920000100_create_database_foundation.sql",
+      "sha256": "5e5c5dcbbf35a5e4e458fe74d9218496e8b249f628da4e13f8351e58acd92491"
+    },
+    {
+      "file": "20260921000100_create_wallet_bindings.sql",
+      "sha256": "c99885d17e853c61f1f150956151539edf7844afbbc3bfe1b3672074713d2402"
+    },
+    {
+      "file": "20260921000200_protect_actor_context.sql",
+      "sha256": "9f9d75e22851d4b1af20a1f34abf1c842ea8869e9d640bc3067544272b7f0662"
+    },
+    {
+      "file": "20260921000300_remove_gym_membership_access.sql",
+      "sha256": "738ee2ebbdd5758f7076d840c3e80b3c3a32c61d90a4a26e13856e1f3dd72d48"
+    },
+    {
+      "file": "20260921000400_create_email_application_identity.sql",
+      "sha256": "f9b577aebbd6f427eeab67db17bcaa823fe79f1adf6f3b0f190aaa7ebbbd2725"
+    },
+    {
+      "file": "20260922000100_create_personal_wallet_linking.sql",
+      "sha256": "35829b47a5c0e97b4f2c37bb3c9cbeff4a9c0edf46eacb86357dc1770c2537dd"
+    },
+    {
+      "file": "20260922000200_create_club_wallet_authority.sql",
+      "sha256": "9073d5a487600ff1fe2d9a29d3bd24e56dd5d95f1414d88fa5bbda133bea92f3"
+    },
+    {
+      "file": "20260924000100_rename_demo_run_participants.sql",
+      "sha256": "5ef84750ec22449c478e8bc9fe2d2f18b2e5e373a771e0692c6eb1a551ffa803"
+    },
+    {
+      "file": "20260924000200_create_membership_catalogue.sql",
+      "sha256": "86f7e5a3b98fe1fcb60a9a1a434f4e7731357f49e54c90727c4330697ad12293"
+    },
+    {
+      "file": "20260926000100_revise_multigym_catalogue.sql",
+      "sha256": "3b4b72f4cbaf01c168e4f85b90d2c7212be199855d64cbe903b676c1c067894e"
+    },
+    {
+      "file": "20260926000200_serve_public_membership_catalogue.sql",
+      "sha256": "54b29a155fd9040db540e653509461f1527f3a32610bbafb62974d8236730c6f"
+    },
+    {
+      "file": "20260926000300_create_membership_activation_foundation.sql",
+      "sha256": "f80c9f348089015e643a13f64efb1f18e605184078f299bee0267ba56bb81914"
+    },
+    {
+      "file": "20260926000400_add_membership_payment_evidence.sql",
+      "sha256": "10e272a81a013adfe425493463816d800f3c92b733fbc86affa007340b19ef38"
+    },
+    {
+      "file": "20260927000100_recover_verified_membership_activation.sql",
+      "sha256": "0b70369b8d5fa98d5c9d03e6b1e6c42244ac9532d11ffdc50b75e72142aa26cb"
+    },
+    {
+      "file": "20260928000100_expand_demo_schedule_activities.sql",
+      "sha256": "e8fe12a2b70ad00b20b101b2fa2b30469d45f8f2620a99fd6fb703e798bce583"
+    },
+    {
+      "file": "20260928000200_create_class_reservations.sql",
+      "sha256": "18d15505d60f753dfc52de2762a0c0b98b0e9e4aad4711c3f0febd67b13d5298"
+    },
+    {
+      "file": "20260928000300_create_membership_checkins.sql",
+      "sha256": "d00e6517fba3773b5a2d6fb2bed06135f3fd92e8966dca6893de0611f096ea55"
+    },
+    {
+      "file": "20260928000400_allow_class_rereservation.sql",
+      "sha256": "8c279ec3bb440a4cf8b2d426adbfebe9160034345608904fb09101957d7024a6"
+    },
+    {
+      "file": "20261003000100_retire_membership_schema_preserve_gyms.sql",
+      "sha256": "23a2d591b659ae664a5570052a8d40bd948bf0f99881bc958f20f5f8998adc0f"
+    },
+    {
+      "file": "20261003000200_create_coach_profiles.sql",
+      "sha256": "517efbcfdc524666d73030cdec0ded0d3dc00923258ad7d25d9f20ae702f3ec9"
+    },
+    {
+      "file": "20261003000300_create_coach_availability.sql",
+      "sha256": "492ad211241a3c378d30df181d73ceaeee1ac7ed725aef62b5a7c4b773344bee"
+    },
+    {
+      "file": "20261003000400_activate_self_service_coaching.sql",
+      "sha256": "437ffba3b7d1278828cc6d7611f01b722b5fc1909ebb479b37d53e2abcba9fad"
+    },
+    {
+      "file": "20261003000500_create_coach_social.sql",
+      "sha256": "8d759341dbfc9c7177447c0e1e89885cef4c32add9d722a698936264318c7717"
+    },
+    {
+      "file": "20261004000100_create_recurring_coach_availability.sql",
+      "sha256": "f371c608f6f89c76b03d24a1d9d0e4dfbd47b725593e7fbe3e8978985191d3a8"
+    },
+    {
+      "file": "20261004000200_create_credit_backed_private_bookings.sql",
+      "sha256": "cefa836507b0b764af86454a010eefd8d3174b5cd8ffe4539b40898aaccc3b50"
+    },
+    {
+      "file": "20261004000300_create_group_event_catalogue.sql",
+      "sha256": "0b96bb53d8f888cb8ebe44569be2095fdd70b2839db7666ebc117ddb82a23c77"
+    },
+    {
+      "file": "20261004000400_adopt_marketplace_eurc.sql",
+      "sha256": "0f75e282b9c9150d4576c6dbd5c2e1a7b540ef99fd3b87e09c997d5007f0ec5c"
+    },
+    {
+      "file": "20261004000500_update_group_event_eurc_verifier.sql",
+      "sha256": "6e2e459645e8b8c4edf872952b0e1968dde5e9b26b4a0903fee757eb7adde615"
+    },
+    {
+      "file": "20261005000100_integrate_coach_pass_operations.sql",
+      "sha256": "b31defc301832777d621a9c4a668642829c610f585a789d1d9beef4dbc99defc"
+    },
+    {
+      "file": "20261005000200_correct_group_event_authority_verifier.sql",
+      "sha256": "cb184812827b24834e05534a478a51c7654f322845ac948a8f8ccc55f9d8445d"
+    },
+    {
+      "file": "20261005000300_integrate_group_event_operations.sql",
+      "sha256": "26224882bb7173d361e796eeeca7daad6f2c4429361d29dedf11c87134d41da2"
+    },
+    {
+      "file": "20261007000100_adopt_scheduling_only_bookings.sql",
+      "sha256": "772c8fc888db62c5f737aafc1d308e14fac06a35eb90c680f698af173a2a21ad"
+    },
+    {
+      "file": "20261008000100_replace_recurring_coach_availability.sql",
+      "sha256": "e28b068ac65dda2d101fcb169a89dd392e0148b6480c54b0e573ed7ab5eb5e01"
+    },
+    {
+      "file": "20261008000200_fix_weekly_schedule_coalesce.sql",
+      "sha256": "dd0fb20fbe7b582148e5bf22f88c6f263c8a6921888ef7e1ca024b759bb1172d"
+    },
+    {
+      "file": "20261008000300_require_verified_coach_access.sql",
+      "sha256": "61e2d909d3ebb09c089d4906cb6b62d2274cdd3821e4909a9d816e37cdf5ea0b"
+    },
+    {
+      "file": "20261008000400_add_profile_images.sql",
+      "sha256": "48e0bf0166cc4ca2c77e1239cb2b53e08fb4d9807efd54f9c3dafc975290114d"
+    },
+    {
+      "file": "20261008000500_fix_profile_image_coach_authority.sql",
+      "sha256": "f44c6efafbf3f6c5680cf5ac4c2dfdd55f3e07004d6590a722ed5de4278c723d"
+    },
+    {
+      "file": "20261008000600_allow_claimed_demo_fixture_portrait.sql",
+      "sha256": "981befe963aad9787ab7028b4397a4bf06e984c4eeb5e3cd08b1817277d4f4bb"
+    },
+    {
+      "file": "20261008000700_authorize_booking_client_avatars.sql",
+      "sha256": "49486b0500aa6fbd5a8e8d0a538ab477203595507ace70c95242ef7f4507908a"
+    },
+    {
+      "file": "20261009000100_create_coach_training_locations.sql",
+      "sha256": "ff0633db41c40884c976e5cc7e6afacc485b776043f4bf67b8e7b2b82808b1e1"
+    },
+    {
+      "file": "20261010000100_bind_availability_to_training_locations.sql",
+      "sha256": "3bdc618bb00a48dfbf18121bad1ad62fc7adc924ee657130e57092f05f177988"
+    },
+    {
+      "file": "20261011000100_enforce_booking_request_eligibility.sql",
+      "sha256": "62e67e88062ef92fb41db4421a0d65bac9e016c2f823db7789bf4059cc36cb8a"
+    },
+    {
+      "file": "20261011000200_persist_coach_booking_requests.sql",
+      "sha256": "f16bfbcd3415cbe4c73a43a2794ab4afe8a3a01089e94072fe70982850279ca9"
+    },
+    {
+      "file": "20261011000300_add_client_booking_request_projections.sql",
+      "sha256": "241c1fe1128cd414170b40e28999e8b9dae178f063db5174fd0e456a595705ca"
+    },
+    {
+      "file": "20261011000400_authorize_booking_request_client_avatars.sql",
+      "sha256": "7bcd560e196318679f7ed97edbb20cdffe487c2bd29ae46d7239c09ca725cad6"
+    },
+    {
+      "file": "20261014000100_create_coach_athlete_connections.sql",
+      "sha256": "33221e33010f34d16aa150efc0cfcab63d68ba53c3d2cb17d3aded965ead4fcc"
+    },
+    {
+      "file": "20261015000100_private_message_authority.sql",
+      "sha256": "86a6f735df2019f0a196410a16cacb6b69af9981b8fd418ca199b32685cbec17"
+    },
+    {
+      "file": "20261015000200_integrate_private_messages.sql",
+      "sha256": "f1ada4924d4d3936c82acc2efbafbbb14aeadddf9bd78773251f6e330fd0ea4d"
+    },
+    {
+      "file": "20261015000300_harden_private_message_integration.sql",
+      "sha256": "15ce2d8c1ae3ef9e664a473a4ab347e4555c7357ae64bf8e6f2c50a9135d26d7"
+    },
+    {
+      "file": "20261015000400_reserve_message_consent_submissions.sql",
+      "sha256": "37358a62c7212bb4bd362a40541b60df09f093635050081602c673f59d4c0309"
+    },
+    {
+      "file": "20261015000500_create_group_session_registration.sql",
+      "sha256": "156139223cac7f6abf33898fa20c5768168dadd1cc9a3b08fe2e0d961fede38e"
+    },
+    {
+      "file": "20261015000600_session_titles_and_message_filter.sql",
+      "sha256": "fc521696669134ab736d57439a4b7316e582a17da7aa014ad1830963cdd694f0"
+    },
+    {
+      "file": "20261016000100_integrate_group_schedule_authority.sql",
+      "sha256": "d2c68196faffe6ef7057b95b294fd34c75e1f8f7e550b9ba6c831c88db98047a"
+    }
+  ],
+  "baselineSha256": "e54fdfedbd429309cc08463f6ee37bb0bc01a671e304d91068a3fb8254392709"
+}

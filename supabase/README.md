@@ -1,8 +1,56 @@
 # Scheduling database operations
 
-This directory contains MovX Club's checked-in Supabase PostgreSQL history. Files under `migrations/` are the only applied migration source of truth. Drizzle mirrors current runtime tables for typed server queries and does not own a second migration journal.
+This directory contains MovX Club's checked-in Supabase PostgreSQL history. Files under `migrations/` are the active migration source of truth for new databases. Drizzle mirrors current runtime tables for typed server queries and does not own a second migration journal.
 
-Historical migrations intentionally remain replayable even when they create wallet, payment, social or event tables that the scheduling-only runtime no longer reads. Do not remove or rewrite an applied migration. Use a new reviewed forward migration for corrections.
+## Migration baseline and history
+
+The user-authorized [DEV0265](../tickets/archive/backend/DEV0265-baseline-completed-database-migrations.md) transition replaces 53 completed active files through `20261016000100` with [`20261016000100_baseline.sql`](migrations/20261016000100_baseline.sql). Their immutable originals and checksums remain in [migration-history](migration-history/README.md). The baseline preserves their final tables/functions/constraints, comments, owners, row-level security, grants/default privileges and project Storage policies; it explicitly creates the required avatar/portrait buckets and application roles/extensions. It retains historical wallet/payment/social/event tables as compatibility objects without exposing new runtime features. Demo rows remain in `seed.sql`, separately from required bootstrap configuration.
+
+New forward migrations retain later versions in `migrations/`. The calendar migration `20261016000200` is independent work beyond this cutoff, locally validated under [DEV0252](../tickets/archive/backend/DEV0252-persist-effective-coach-availability.md); shared/hosted rollout remains separate. Do not alter archived originals or regenerate this frozen baseline to absorb later changes. Use reviewed forward migrations for subsequent corrections.
+
+### Fresh databases
+
+Only a new/empty application schema consumes the baseline. It refuses an existing `app` schema before applying bootstrap changes. Apply active migrations, then the complete seed where demonstration data is intended, and provision the environment-specific restricted runtime login. Production seed/data selection and new hosted setup remain separate operational work; this cleanup creates no hosted project and copies no users or files.
+
+The local `db:reset` command below is for an explicitly disposable stack. A retained database with old history entries must use the existing-environment handoff instead.
+
+### Existing databases
+
+Existing local and hosted databases keep their schemas, accounts, files and old migration ledger untouched by this repository change. The CLI compares recorded migration versions with active files, so it may reject an old ledger after the packaging transition. Do not run the baseline over existing data or clear/mark old history entries merely to suppress that mismatch.
+
+Keep the prior repository revision or archived original chain for the retained environment while its transition is reviewed. [DEV0232](../tickets/current/organisatory/DEV0232-restore-local-migration-continuity.md) still owns branch-only versions and local continuity; this baseline does not resolve their provenance. A retained environment needs schema/history comparison, a restorable data/file backup and a specific transition plan before changing its ledger or importing into a new project. Schema baseline files do not transfer Auth identities, passwords, Storage objects, SMTP/provider settings or redirect URLs.
+
+### Reproduce baseline validation
+
+Use the installed Node.js dependencies, Docker and the local Supabase database container. From the repository root:
+
+```sh
+node scripts/database-baseline.mjs verify
+node scripts/rehearse-database-baseline.mjs
+```
+
+The rehearsal reads only the shared database's schema infrastructure, creates `dev0265_replay` and `dev0265_fresh`, replays the immutable originals versus the active baseline, runs the complete seed and compares definitions/security/Storage setup. It proves existing-schema refusal and deliberately altered CHECK/function-grant detection, then verifies repeated seeding preserves ordinary/claimed accounts. It refuses pre-existing scratch database names and normally removes only the databases it created. No source account/application/file rows are copied.
+
+`BASELINE_DATABASE_CONTAINER` overrides the local container name. `BASELINE_KEEP_DATABASES=1` retains only the owned rehearsal databases for further checks; the documented local database port is `55322`. To run the current full suite after that frozen-baseline rehearsal, apply completed forward migrations in version order to the owned `dev0265_fresh` database first. At this revision the additional migration is DEV0252:
+
+```sh
+docker exec -i supabase_db_fitness-booking-social-app psql -X -U postgres -d dev0265_fresh -v ON_ERROR_STOP=1 --single-transaction < supabase/migrations/20261016000200_effective_coach_availability.sql
+docker exec -i supabase_db_fitness-booking-social-app psql -X -U postgres -d dev0265_fresh -v ON_ERROR_STOP=1 --single-transaction < supabase/seed.sql
+```
+
+Run driver fixtures before data-sensitive pgTAP checks:
+
+```sh
+DATABASE_TEST_URL=postgresql://postgres:postgres@127.0.0.1:55322/dev0265_fresh node --import tsx --conditions=react-server --test --test-concurrency=1 tests/database/*.test.ts
+./node_modules/.bin/supabase test db --db-url postgresql://postgres:postgres@127.0.0.1:55322/dev0265_fresh
+./node_modules/.bin/supabase db lint --db-url postgresql://postgres:postgres@127.0.0.1:55322/dev0265_fresh --schema app --fail-on warning
+```
+
+Those complete-suite commands must match the source revision represented by the target schema. Future forward work requires its separately validated migrations and tests; the baseline rehearsal intentionally excludes post-cutoff migrations. Compare the two frozen rehearsal databases before applying any forward migration, since a later schema should differ from the original cutoff. Remove retained scratch databases explicitly afterward using `docker exec <local-container> dropdb -U supabase_admin <exact-owned-name>`.
+
+Maintainer reproduction of the frozen artifact is `node scripts/database-baseline.mjs generate dev0265_replay`, followed by `verify` and `compare dev0265_replay dev0265_fresh`. Generation reads an explicit `dev0265_*` reference and writes only the baseline/checksum; it must use the original replay with `postgres` as migration owner. Managed infrastructure restore uses `supabase_admin`. PostgreSQL normalizes associative CHECK expressions when parsing a restored dump: the comparer checks them through temporary empty tables in rolled-back transactions while comparing other definitions, comments/ACLs/owners and enforcement flags exactly. Supabase's generic squash omits DML; explicit Storage bootstrap here closes that gap.
+
+Rollback before any database transition is a repository revision rollback; no retained data/ledger changes need undoing. Once a new database uses this baseline, continue with forward fixes rather than replaying the archived chain over it. This maintenance scope does not authorize destructive rollback or old-ledger repair.
 
 ## Local workflow
 
@@ -18,7 +66,7 @@ npm run test:db
 npm run db:lint
 ```
 
-`db:reset` is destructive only to this repository's disposable local database. It replays every migration and then runs `seed.sql`. `db:runtime` provisions the loopback-only `repx_runtime_login`, which inherits the restricted `app_runtime` role. Local application routes use:
+`db:reset` recreates an explicitly disposable local database from the active baseline/forward migrations and then runs the complete `seed.sql`. The seed omits the unused incompatible funding-event fixture and preserves claimed coach disciplines and cleared portraits. `db:runtime` provisions the loopback-only `repx_runtime_login`, which inherits the restricted `app_runtime` role. Local application routes use:
 
 ```dotenv
 DATABASE_URL=postgresql://repx_runtime_login:postgres@127.0.0.1:55322/postgres

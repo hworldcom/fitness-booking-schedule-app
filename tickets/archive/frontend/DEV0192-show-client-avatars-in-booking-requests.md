@@ -76,17 +76,17 @@ The coach-owned booking-request projection now includes only the client's avatar
 
 ### Affected files
 
-| File or component | Change and purpose |
-| ----------------- | ------------------ |
-| `docs/mvp-spec.md` | Records request-scoped owning-coach avatar access in the identity/privacy contract, definition of done and acceptance matrix. |
-| `supabase/migrations/20261011000400_authorize_booking_request_client_avatars.sql` | Adds avatar version metadata to the bounded owned-request projection, an exact coach-owned avatar reference function and the matching private Storage read policy. |
-| `src/domain/coach-booking-requests.ts` | Adds the nullable opaque `clientAvatarUrl` field to coach-owned request projections. |
-| `src/profile-images/contracts.ts` | Constructs and validates versioned request-scoped avatar URLs. |
-| `src/server/db/coaches/booking-request-repository.ts` | Selects the avatar update timestamp and maps it to an opaque URL without exposing a Storage path. |
-| `src/server/db/profile-images/repository.ts` and `src/server/profile-images/service.ts` | Resolve and stream request-client avatar bytes through the owning-coach authorization boundary. |
-| `src/app/api/coach/requests/[requestId]/client-avatar/route.ts` | Serves private, no-store image responses and preserves the existing missing/unauthorized fallback behavior. |
-| `src/features/coaches/coach-booking-request-queue.tsx` | Supplies the request avatar URL to the shared identity renderer for pending and terminal rows. |
-| `tests/profile-images.test.ts`, `tests/coach-booking-request-queue.test.ts` and `tests/database/coach-bookings.test.ts` | Cover URL construction, presentation input, bounded projection, exact authorization, Storage policy and terminal-history continuity. |
+| File or component                                                                                                       | Change and purpose                                                                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `docs/mvp-spec.md`                                                                                                      | Records request-scoped owning-coach avatar access in the identity/privacy contract, definition of done and acceptance matrix.                                      |
+| `supabase/migration-history/20261016000100/20261011000400_authorize_booking_request_client_avatars.sql`                 | Adds avatar version metadata to the bounded owned-request projection, an exact coach-owned avatar reference function and the matching private Storage read policy. |
+| `src/domain/coach-booking-requests.ts`                                                                                  | Adds the nullable opaque `clientAvatarUrl` field to coach-owned request projections.                                                                               |
+| `src/profile-images/contracts.ts`                                                                                       | Constructs and validates versioned request-scoped avatar URLs.                                                                                                     |
+| `src/server/db/coaches/booking-request-repository.ts`                                                                   | Selects the avatar update timestamp and maps it to an opaque URL without exposing a Storage path.                                                                  |
+| `src/server/db/profile-images/repository.ts` and `src/server/profile-images/service.ts`                                 | Resolve and stream request-client avatar bytes through the owning-coach authorization boundary.                                                                    |
+| `src/app/api/coach/requests/[requestId]/client-avatar/route.ts`                                                         | Serves private, no-store image responses and preserves the existing missing/unauthorized fallback behavior.                                                        |
+| `src/features/coaches/coach-booking-request-queue.tsx`                                                                  | Supplies the request avatar URL to the shared identity renderer for pending and terminal rows.                                                                     |
+| `tests/profile-images.test.ts`, `tests/coach-booking-request-queue.test.ts` and `tests/database/coach-bookings.test.ts` | Cover URL construction, presentation input, bounded projection, exact authorization, Storage policy and terminal-history continuity.                               |
 
 ### Decisions and deviations
 
@@ -113,13 +113,13 @@ The coach-owned request data contract gains nullable `clientAvatarUrl`, containi
 - Manual browser rehearsal: as Daniel Park, opened Coach workspace > Bookings, expanded `Recent request history`, and observed Hoang's picture in both accepted and declined history rows at desktop and narrow mobile widths. Status text and row layout remained readable.
 - Failed, blocked, or not-run checks: none remain. The initial database-test failure was resolved and rerun successfully; earlier checks accidentally invoked Node.js 20 and were repeated under the required Node.js 24 runtime for the evidence above.
 
-| Criterion | Evidence | Result |
-| --------- | -------- | ------ |
-| AC1 | Automated projection/presentation coverage plus desktop and mobile history rehearsal showed pictures with initials fallback retained. | Passed |
-| AC2 | Exact-reference and Storage-policy integration tests denied clients and unrelated actors while allowing the owning coach. | Passed |
-| AC3 | Database projection assertions verified the bounded page exposes the opaque URL and no private object path. | Passed |
-| AC4 | Full application, server and database suites passed, including request decisions and confirmed-booking avatar behavior. | Passed |
-| AC5 | Test, database lint, lint, type-check, formatting, production build and diff checks all passed under Node.js 24. | Passed |
+| Criterion | Evidence                                                                                                                              | Result |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| AC1       | Automated projection/presentation coverage plus desktop and mobile history rehearsal showed pictures with initials fallback retained. | Passed |
+| AC2       | Exact-reference and Storage-policy integration tests denied clients and unrelated actors while allowing the owning coach.             | Passed |
+| AC3       | Database projection assertions verified the bounded page exposes the opaque URL and no private object path.                           | Passed |
+| AC4       | Full application, server and database suites passed, including request decisions and confirmed-booking avatar behavior.               | Passed |
+| AC5       | Test, database lint, lint, type-check, formatting, production build and diff checks all passed under Node.js 24.                      | Passed |
 
 ## Risks, limitations, and follow-ups
 

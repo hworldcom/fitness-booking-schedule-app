@@ -361,93 +361,20 @@ where run_id = '20000000-0000-4000-8000-000000000001'
   and profile_id = '10000000-0000-4000-8000-000000000002'
   and public_slug = 'daniel-park'
   and is_demo
+  and record_source = 'fixture'
+  and exists (select 1 from app.profiles profile where profile.id = coach_profiles.profile_id and profile.record_source = 'fixture' and profile.auth_user_id is null and profile.claimed_at is null)
   and portrait_source is null
   and portrait_path is null
   and portrait_updated_at is null;
 
-insert into app.group_events (
-  id,
-  run_id,
-  coach_profile_id,
-  public_slug,
-  title,
-  discipline,
-  description,
-  coach_slug_snapshot,
-  coach_display_name_snapshot,
-  location_kind_snapshot,
-  location_label_snapshot,
-  location_timezone_snapshot,
-  latitude_snapshot,
-  longitude_snapshot,
-  starts_at,
-  ends_at,
-  media_url,
-  source_proposal_id,
-  publication_status,
-  published_at,
-  withdrawn_at,
-  projection_availability,
-  projection_status_updated_at,
-  record_source,
-  created_at,
-  updated_at
-)
-values (
-  '83000000-0000-4000-8000-000000000001',
-  '20000000-0000-4000-8000-000000000001',
-  '10000000-0000-4000-8000-000000000005',
-  'muay-thai-fundamentals-workshop-830000000000',
-  'Muay Thai Fundamentals Workshop',
-  'Muay Thai',
-  'A coach-owned draft for a small technical workshop. Funding remains unavailable until a matching EventPool is verified.',
-  'sam-lee',
-  'Sam Lee',
-  'gym',
-  'Near Amerika-Gedenkbibliothek — Blücherplatz 1, 10961 Berlin',
-  'Europe/Berlin',
-  52.496568,
-  13.392365,
-  '2026-10-18T09:00:00Z',
-  '2026-10-18T11:00:00Z',
-  null,
-  null,
-  'draft',
-  null,
-  null,
-  'unbound',
-  null,
-  'fixture',
-  '2026-10-04T00:00:00Z',
-  '2026-10-04T00:00:00Z'
-)
-on conflict (id) do update
-set title = excluded.title,
-    discipline = excluded.discipline,
-    description = excluded.description,
-    coach_slug_snapshot = excluded.coach_slug_snapshot,
-    coach_display_name_snapshot = excluded.coach_display_name_snapshot,
-    location_kind_snapshot = excluded.location_kind_snapshot,
-    location_label_snapshot = excluded.location_label_snapshot,
-    location_timezone_snapshot = excluded.location_timezone_snapshot,
-    latitude_snapshot = excluded.latitude_snapshot,
-    longitude_snapshot = excluded.longitude_snapshot,
-    starts_at = excluded.starts_at,
-    ends_at = excluded.ends_at,
-    media_url = excluded.media_url,
-    updated_at = excluded.updated_at
-where group_events.record_source = 'fixture'
-  and group_events.publication_status = 'draft'
-  and group_events.projection_availability = 'unbound';
+-- Historical funding-event fixtures are not current scheduling inventory.
 
 insert into app.coach_profile_disciplines (
-  run_id,
-  profile_id,
-  discipline,
-  sort_order,
-  created_at
+  run_id, profile_id, discipline, sort_order, created_at
 )
-values
+select seed.run_id::uuid, seed.profile_id::uuid, seed.discipline,
+  seed.sort_order, seed.created_at::timestamptz
+from (values
   ('20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000002', 'Boxing', 1, '2026-10-03T00:00:00Z'),
   ('20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000005', 'Muay Thai', 1, '2026-10-03T00:00:00Z'),
   ('20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000005', 'Boxing', 2, '2026-10-03T00:00:00Z'),
@@ -455,6 +382,16 @@ values
   ('20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000007', 'Wrestling', 2, '2026-10-03T00:00:00Z'),
   ('20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000008', 'Brazilian Jiu-Jitsu', 1, '2026-10-03T00:00:00Z'),
   ('20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000009', 'Kickboxing', 1, '2026-10-03T00:00:00Z')
+) as seed(run_id,profile_id,discipline,sort_order,created_at)
+join app.coach_profiles coach
+  on coach.run_id = seed.run_id::uuid
+  and coach.profile_id = seed.profile_id::uuid
+  and coach.record_source = 'fixture'
+join app.profiles profile
+  on profile.id = coach.profile_id
+  and profile.record_source = 'fixture'
+  and profile.auth_user_id is null
+  and profile.claimed_at is null
 on conflict (run_id, profile_id, discipline) do update
 set sort_order = excluded.sort_order
 where coach_profile_disciplines.sort_order is distinct from excluded.sort_order;

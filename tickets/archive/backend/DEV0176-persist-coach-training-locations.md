@@ -75,15 +75,15 @@ The application now persists a bounded collection of confirmed training location
 
 ### Affected files
 
-| File or component                                                           | Change and purpose                                                                                                                                      |
-| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `supabase/migrations/20261009000100_create_coach_training_locations.sql`    | Creates/backfills the location entity, RLS and lifecycle functions; enforces primary, timezone and legacy-snapshot compatibility.                       |
-| `src/server/db/schema/coaches.ts`                                           | Mirrors the complete table, foreign keys, checks, unique indexes and lookup indexes in Drizzle.                                                         |
-| `src/domain/coaches.ts`                                                     | Adds provider-neutral location inputs, validation, owner/public location projections and primary identity.                                              |
-| `src/server/db/coaches/repository.ts` and `src/server/coaches/service.ts`   | Maps RLS-filtered location sets, derives legacy aliases from primary and exposes bounded owner lifecycle operations.                                    |
-| `supabase/tests/database/coach-training-locations.test.sql`                 | Proves the backfill, schema, RLS, grants, constraints, indexes and public visibility boundary with pgTAP.                                               |
-| `tests/database/coaches.test.ts` and coach domain/presentation fixtures     | Proves owner/cross-owner/stale mutation behavior, atomic primary/deactivation flows, public versus owner projections and the additive TypeScript shape. |
-| `supabase/tests/database/coach-profiles.test.sql` and `foundation.test.sql` | Updates the authoritative table count and profile source-of-truth description for the additive schema.                                                  |
+| File or component                                                                              | Change and purpose                                                                                                                                      |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supabase/migration-history/20261016000100/20261009000100_create_coach_training_locations.sql` | Creates/backfills the location entity, RLS and lifecycle functions; enforces primary, timezone and legacy-snapshot compatibility.                       |
+| `src/server/db/schema/coaches.ts`                                                              | Mirrors the complete table, foreign keys, checks, unique indexes and lookup indexes in Drizzle.                                                         |
+| `src/domain/coaches.ts`                                                                        | Adds provider-neutral location inputs, validation, owner/public location projections and primary identity.                                              |
+| `src/server/db/coaches/repository.ts` and `src/server/coaches/service.ts`                      | Maps RLS-filtered location sets, derives legacy aliases from primary and exposes bounded owner lifecycle operations.                                    |
+| `supabase/tests/database/coach-training-locations.test.sql`                                    | Proves the backfill, schema, RLS, grants, constraints, indexes and public visibility boundary with pgTAP.                                               |
+| `tests/database/coaches.test.ts` and coach domain/presentation fixtures                        | Proves owner/cross-owner/stale mutation behavior, atomic primary/deactivation flows, public versus owner projections and the additive TypeScript shape. |
+| `supabase/tests/database/coach-profiles.test.sql` and `foundation.test.sql`                    | Updates the authoritative table count and profile source-of-truth description for the additive schema.                                                  |
 
 ### Decisions and deviations
 

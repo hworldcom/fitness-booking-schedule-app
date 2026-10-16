@@ -64,7 +64,7 @@ Updated global navigation, Home/How-it-works calls to action, profile navigation
 
 ### Affected files
 
-- `supabase/migrations/20261003000200_create_coach_profiles.sql` defines coach profiles, disciplines, constraints, indexes, row-level security and the owner-scoped upsert contract.
+- `supabase/migration-history/20261016000100/20261003000200_create_coach_profiles.sql` defines coach profiles, disciplines, constraints, indexes, row-level security and the owner-scoped upsert contract.
 - `supabase/seed.sql` adds five deterministic fictional coaches and their disciplines on the simplified fictional-gym dataset.
 - `src/domain/coaches.ts` owns bounded public/editor types, filter normalization and form validation; `src/server/db/schema/coaches.ts` exposes the Drizzle mappings.
 - `src/server/db/coaches/repository.ts` owns policy-filtered public/owner queries and the bounded mutation call; `src/server/coaches/service.ts` maps database failures to explicit unavailable states.

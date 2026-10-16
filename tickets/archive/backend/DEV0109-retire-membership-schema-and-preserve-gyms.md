@@ -63,7 +63,7 @@ The local implementation and review are complete. The forward migration, simplif
 
 ### Affected files
 
-- [`supabase/migrations/20261003000100_retire_membership_schema_preserve_gyms.sql`](../../../supabase/migrations/20261003000100_retire_membership_schema_preserve_gyms.sql) owns the guarded data transformation and explicit legacy teardown.
+- [`supabase/migration-history/20261016000100/20261003000100_retire_membership_schema_preserve_gyms.sql`](../../../supabase/migration-history/20261016000100/20261003000100_retire_membership_schema_preserve_gyms.sql) owns the guarded data transformation and explicit legacy teardown.
 - [`supabase/seed.sql`](../../../supabase/seed.sql) supplies the deterministic coach-first foundation fixtures.
 - `scripts/preflight-coach-schema-cleanup.mjs` (historical path; absent from this checkout) and [`package.json`](../../../package.json) provide local and hosted read-only inventory commands.
 - [`supabase/README.md`](../../../supabase/README.md) documents the retained foundation and safe hosted workflow. DEV0096 still owns coach profiles and the optional coach-to-gym association.
