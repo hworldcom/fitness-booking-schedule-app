@@ -33,3 +33,23 @@ export function localDevelopmentEnvironment(status: LocalSupabaseStatus) {
     NEXT_PUBLIC_SITE_URL: LOCAL_APP_URL,
   });
 }
+
+export function localDevelopmentProcessEnvironment(
+  status: LocalSupabaseStatus,
+  inherited: NodeJS.ProcessEnv = process.env,
+): NodeJS.ProcessEnv {
+  const environment: NodeJS.ProcessEnv = {
+    ...inherited,
+    ...localDevelopmentEnvironment(status),
+  };
+  for (const name of [
+    "COACH_REVIEW_DATABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "SUPABASE_SECRET_KEY",
+    "SUPABASE_ACCESS_TOKEN",
+    "SUPABASE_DB_PASSWORD",
+    "SMTP_PASSWORD",
+  ])
+    delete environment[name];
+  return environment;
+}

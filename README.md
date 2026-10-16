@@ -39,41 +39,39 @@ The delivered contract permits multiple coach training locations, one coach-sele
 
 Prerequisites are Node.js 24.21.0 LTS and npm 11. The supported Node range is recorded in `package.json` and `.nvmrc`.
 
-### Hosted dev (default)
+### Local Supabase (default)
 
-The local application and UAT/test share the confirmed hosted dev project; production uses a separate project. Follow [hosted environment setup](supabase/README.md#separate-hosted-environments) for the dedicated runtime connection and public Auth settings. If setup has not already created the ignored file, copy the placeholder example without replacing existing credentials:
+Start Docker, then run:
 
 ```sh
-cp -n .env.development.local.example .env.development.local
 nvm use
 npm ci
 npm run dev
 ```
 
-Fill the example's placeholders before startup. `npm run dev`, `npm run dev:local` and `npm run dev:hosted` all use the same guarded hosted-dev launcher. They validate the dev project, dedicated runtime login and localhost origin before starting Next.js, with no Docker startup or database creation. Missing or wrong settings fail without falling back to local services. Schema migrations, seeding and account provisioning remain explicit setup operations. An already running server keeps its original settings until its owner restarts it with one of these commands. Dev database connectivity, one real sign-in email and server session verification passed. See the [environment rollout](tickets/current/organisatory/COR0026-separate-hosted-dev-and-production.md) for provisioning status and limits of that check. Planned UAT is `https://test.movx.club`; planned production is `https://movx.club`.
+`npm run dev`, `dev:local` and `dev:docker` start the local Supabase PostgreSQL, Auth, Storage and Mailpit services, apply pending local migrations, prepare the restricted application login and preserve/provision `hoang@users.movx.test`. The app opens at [localhost:3100](http://localhost:3100); captured sign-in email is available in [Mailpit](http://127.0.0.1:55324).
 
-### Explicit Docker test workflow
+The fresh Docker project is `movx-club-local`. Initial image downloads and database initialization can take several minutes. First startup builds its database from the accepted baseline/forward migrations and seed; later startups preserve its data and apply only pending migrations. The older `fitness-booking-social-app` database/upload volumes remain separate and untouched. Their optional historical transition remains [DEV0232](tickets/current/organisatory/DEV0232-restore-local-migration-continuity.md).
 
-The separate Docker workflow requires a running Docker engine. Retained databases with older migration history need the [DEV0232 continuity work](tickets/current/organisatory/DEV0232-restore-local-migration-continuity.md); the baseline cleanup does not repair that history automatically.
+No environment file is required for local database/Auth access. The launcher injects loopback settings before Next.js reads dotenv files, so the existing hosted `.env.development.local` does not select the local application's database. Optional map search settings may still come from ignored environment files. Local startup never falls back to hosted dev.
 
 ```sh
-nvm use
-npm ci
-npm run dev:docker
+npm run dev -- --check
+npm run dev -- --setup-only
 ```
 
-`npm run dev:docker` explicitly selects the retained Docker workflow for local integration testing. It:
+`--check` validates the local project/ports without starting services. `--setup-only` prepares local services/accounts without starting Next.js. Press `Ctrl-C` to stop Next.js; the local services remain available until `npm run db:stop`. Database integration commands and explicit disposable resets are described in [the database guide](supabase/README.md#local-development-and-database-tests).
 
-- starts or reuses the repository's Supabase PostgreSQL, Auth, Storage and Mailpit services;
-- applies pending local migrations without resetting existing local data;
-- prepares the restricted application database login;
-- idempotently provisions the ordinary local test account `hoang@users.movx.test` without changing its saved avatar;
-- derives and injects the loopback database/Auth configuration without writing it to a file;
-- starts Next.js at [localhost:3100](http://localhost:3100).
+### Hosted dev (explicit)
 
-Captured local sign-in emails appear in [Mailpit at 127.0.0.1:55324](http://127.0.0.1:55324). Press `Ctrl-C` to stop Next.js. The reusable Supabase containers stay running; stop them explicitly with `npm run db:stop`.
+UAT/test uses the hosted dev project; production uses its separate hosted project. For deliberate local integration checks against hosted dev, follow [hosted environment setup](supabase/README.md#separate-hosted-environments). If needed, create the ignored settings file without replacing existing credentials:
 
-No `.env.local` is required for the core Docker application or the OpenFreeMap-backed Explore map. Create an ignored one from [`.env.example`](.env.example) only for optional settings such as the Geoapify public search key. The Docker command overrides database/Auth/site values with the repository's loopback configuration, so it cannot accidentally start against hosted services.
+```sh
+cp -n .env.development.local.example .env.development.local
+npm run dev:hosted
+```
+
+Fill the placeholder values before startup. `dev:hosted` validates the dev project, dedicated runtime login and localhost origin. It starts no Docker services and performs no migration, seed or account provisioning. Missing or wrong hosted settings fail without a fallback. An existing app process keeps its target until restarted. Planned UAT is `https://test.movx.club`; planned production is `https://movx.club`. Provisioning status remains in [COR0026](tickets/current/organisatory/COR0026-separate-hosted-dev-and-production.md).
 
 For a configuration-free production-mode public preview:
 
@@ -82,21 +80,21 @@ npm run build
 npm run start
 ```
 
-Both modes use [localhost:3100](http://localhost:3100). Development compiles routes on demand; the production preview is better for performance review. A separately started production preview needs the documented `.env.local` values to enable Auth/database behavior because the one-command development values are intentionally not persisted. `npm run db:reset` remains a separate, intentionally destructive command for recreating disposable local data.
+The preview uses [localhost:3100](http://localhost:3100). Development compiles routes on demand; a production build is appropriate for performance review. An independently started production server needs explicit database/Auth settings for signed-in behavior; the local launcher's settings exist only in its child process.
 
 ## Local email sign-in
 
-Public browsing does not require sign-in. Normal development uses the hosted dev project's configured email Auth. The Docker-specific test instructions below use local Mailpit and require the explicit Docker workflow:
+Public browsing does not require sign-in. Normal development uses local Supabase Auth and captures email in Mailpit:
 
 ```sh
-npm run dev:docker
+npm run dev
 ```
 
-The explicit Docker command reads the local public `API_URL` and `PUBLISHABLE_KEY` (or legacy `ANON_KEY`) internally, injects loopback settings for that process and does not print or persist private CLI status values. Keep the shared hosted-dev file unchanged; never copy local test or service-role/secret keys into it.
+The local launcher reads the local public `API_URL` and `PUBLISHABLE_KEY` (or legacy `ANON_KEY`) internally, injects loopback settings for that process and does not print or persist private CLI status values. Keep the shared hosted-dev file unchanged; never copy local test or service-role/secret keys into it.
 
 Open `/sign-in`, request a code and read it from local Mailpit at [127.0.0.1:55324](http://127.0.0.1:55324). The first verified login creates one application profile. `Find a coach` continues as an athlete; `Become a coach` submits a coach application on the same account. Applicants may prepare a hidden coach profile, but only platform-approved coaches may publish or manage availability.
 
-For Docker athlete-account testing, sign in with `hoang@users.movx.test`. Only `npm run dev:docker` creates this exact local-only account automatically and preserves its profile and private avatar on later starts. It has no password and no coach authority: request a one-time code on `/sign-in`, then open the message in Mailpit. You can also repair/provision it explicitly with `npm run auth:provision:test-user`. A deliberate `npm run db:reset` recreates the identity on the next Docker start but cannot restore a deleted uploaded image. These reserved `.test` accounts are not provisioned on hosted dev.
+For Docker athlete-account testing, sign in with `hoang@users.movx.test`. `npm run dev`, `dev:local` and `dev:docker` create this exact local-only account automatically and preserve its profile and private avatar on later starts. It has no password and no coach authority: request a one-time code on `/sign-in`, then open the message in Mailpit. You can also repair/provision it explicitly with `npm run auth:provision:test-user`. A deliberate `npm run db:reset` recreates the identity on the next Docker start but cannot restore a deleted uploaded image. These reserved `.test` accounts are not provisioned on hosted dev.
 
 To exercise owner flows as the five fictional coaches:
 

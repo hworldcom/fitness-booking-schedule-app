@@ -10,7 +10,7 @@
 
 ## Objective and boundaries
 
-Coordinate the confirmed local app and deployed UAT/test → hosted dev, production → separate hosted prod arrangement. The user created both projects and confirmed dev `mdzidiqosxbghmfyxphb` and prod `yltijwebedkraypgkqmc`; CLI project names are `movx-dev` and `movx-prod`, both healthy in `eu-central-1`. This record performs no implementation.
+Coordinate hosted dev/UAT and separate hosted production. The original local-app → hosted-dev startup choice was superseded by independent [DEV0272](../../archive/backend/DEV0272-restore-isolated-local-supabase-development.md), restoring a fresh local Docker development/test stack while retaining explicit hosted integration. The user created both projects and confirmed dev `mdzidiqosxbghmfyxphb` and prod `yltijwebedkraypgkqmc`; CLI project names are `movx-dev` and `movx-prod`, both healthy in `eu-central-1`. This record performs no implementation.
 
 Keep existing retained Docker data and the old staging project unchanged. Current email-code authentication remains the contract; social/password authentication, invitations, account/file transfer, DNS, live production publication and unrelated calendar/Events work are outside this rollout.
 
@@ -52,9 +52,11 @@ All four required direct peers exist and belong only to this COR. No development
 
 DEV0266 records 25 focused and 179 complete application/server tests, type/lint/format checks and a configuration-free Vercel build. DEV0267 records exact dev ledger/bootstrap, 20 real runtime grant checks, actor-unbound row/write denial, actual hosted directory/profile/sign-in-page reads and one real new-account email/session verification without granting application authority. This remains partial rollout evidence: full browser onboarding/scheduling, deployed UAT and all DEV0268 production criteria remain unverified. DEV0266's namespace, link/index and reciprocal membership checks passed.
 
+- 2026-10-16: User adopted local Supabase for development/tests, hosted dev for UAT/integration and separate prod. Independent DEV0272 owns the fresh local project, startup defaults, retained-volume preservation and local verification. This revises DEV0269's default without reopening its completed history or changing this coordination's four direct hosted-work peers. Existing hosted settings remain available through `dev:hosted`.
+
 ## Risks, limitations, and follow-ups
 
-Local and UAT intentionally share dev data/Auth users. Migration-owner credentials must remain distinct from the restricted app runtime connection. Production has independent settings and receives no demo seed. Auth provider replacement and old data migration remain separate decisions.
+UAT and explicit `dev:hosted` checks share hosted dev data/Auth users. Ordinary local development now has independent Docker data/Auth/Storage under DEV0272; the original shared-local default remains recorded historically above. Migration-owner credentials must remain distinct from the restricted app runtime connection. Production has independent settings and receives no demo seed. Auth provider replacement and old data migration remain separate decisions.
 
 ## Completion and review references
 

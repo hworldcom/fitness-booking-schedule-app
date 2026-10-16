@@ -34,8 +34,8 @@ The rehearsal reads only the shared database's schema infrastructure, creates `d
 `BASELINE_DATABASE_CONTAINER` overrides the local container name. `BASELINE_KEEP_DATABASES=1` retains only the owned rehearsal databases for further checks; the documented local database port is `55322`. To run the current full suite after that frozen-baseline rehearsal, apply completed forward migrations in version order to the owned `dev0265_fresh` database first. At this revision the additional migration is DEV0252:
 
 ```sh
-docker exec -i supabase_db_fitness-booking-social-app psql -X -U postgres -d dev0265_fresh -v ON_ERROR_STOP=1 --single-transaction < supabase/migrations/20261016000200_effective_coach_availability.sql
-docker exec -i supabase_db_fitness-booking-social-app psql -X -U postgres -d dev0265_fresh -v ON_ERROR_STOP=1 --single-transaction < supabase/seed.sql
+docker exec -i supabase_db_movx-club-local psql -X -U postgres -d dev0265_fresh -v ON_ERROR_STOP=1 --single-transaction < supabase/migrations/20261016000200_effective_coach_availability.sql
+docker exec -i supabase_db_movx-club-local psql -X -U postgres -d dev0265_fresh -v ON_ERROR_STOP=1 --single-transaction < supabase/seed.sql
 ```
 
 Run driver fixtures before data-sensitive pgTAP checks:
@@ -52,9 +52,9 @@ Maintainer reproduction of the frozen artifact is `node scripts/database-baselin
 
 Rollback before any database transition is a repository revision rollback; no retained data/ledger changes need undoing. Once a new database uses this baseline, continue with forward fixes rather than replaying the archived chain over it. This maintenance scope does not authorize destructive rollback or old-ledger repair.
 
-## Explicit Docker database workflow
+## Local development and database tests
 
-Normal local app development uses [hosted dev](#separate-hosted-environments) and needs no Docker database. The following explicit database/test workflow requires Node.js 24.21.x, the locked npm dependencies and a running Docker-compatible container runtime. Its PostgreSQL port is `55322`; `npm run dev:docker` starts the application against that stack when deliberately selected.
+Normal local application development uses Docker-backed Supabase through `npm run dev` (aliases `dev:local` and `dev:docker`). It requires Node.js 24.21.x, the locked npm dependencies and a running Docker-compatible container runtime. The fresh project `movx-club-local` uses PostgreSQL port `55322`, Auth/API port `55321` and Mailpit port `55324`. Initial startup applies the accepted baseline/forward migrations and seed; subsequent startup preserves data and applies pending migrations. The retired `fitness-booking-social-app` volumes are never mounted by this project. Their legacy transition remains DEV0232. [Hosted dev](#separate-hosted-environments) is explicit `npm run dev:hosted` and remains UAT's database.
 
 ```sh
 npm ci
@@ -76,7 +76,7 @@ The local integration suite connects as the disposable PostgreSQL administrator 
 
 ## Local email Auth
 
-Switch from the database-only profile to the Auth-enabled profile before rehearsing sign-in:
+Normal `npm run dev` already prepares the Auth-enabled services and restricted login. If you previously selected the database-only profile, switch to the Auth-enabled profile before rehearsing sign-in:
 
 ```sh
 npm run db:stop
@@ -138,7 +138,9 @@ node --env-file=.env.development.local scripts/start-hosted-development.mjs --ch
 npm run dev
 ```
 
-`dev`, `dev:local` and `dev:hosted` all use guarded hosted startup. It validates the dev target, a public `sb_publishable_` key and an exact `http://localhost:<unprivileged-port>` origin (normally `http://localhost:3100`) before launching Next.js. It starts/creates no Docker database and runs no migrations, seeds or automatic test-account provisioning. Missing or wrong settings stop startup without a local fallback. Only explicit `dev:docker` selects the retained Docker app stack; DEV0232 still owns its old-history transition. Existing app processes must be restarted by their owner to adopt changed settings; this command change does not stop containers or delete retained data.
+`dev:hosted` uses guarded hosted startup. It validates the dev target, a public `sb_publishable_` key and an exact `http://localhost:<unprivileged-port>` origin (normally `http://localhost:3100`) before launching Next.js. It starts/creates no Docker database and runs no migrations, seeds or automatic test-account provisioning. Missing or wrong hosted settings stop startup without a local fallback.
+
+Ordinary `dev`, `dev:local` and the `dev:docker` alias use the isolated local stack. The local launcher overrides the four database/Auth/site settings in its child environment, including when the hosted settings file exists, and removes privileged operator variables. DEV0232 still owns the retired stack's old-history transition. Existing app processes must be restarted to adopt a different target. No existing hosted configuration or retained volume is changed by switching commands.
 
 Vercel Development and Preview/UAT use the dev project's four application settings; Vercel Production uses prod's. Each deployment's `NEXT_PUBLIC_SITE_URL` must be that application's exact HTTPS origin and match its Supabase Auth URL configuration. Hosted Vercel builds reject swapped projects, owner roles or mismatched runtime suffixes. Environment-free public-preview builds remain available. Public Auth values are embedded at build time, so changing projects requires a fresh build with the right values. Domain assignment and live publishing remain separate operator work.
 
@@ -167,6 +169,12 @@ Dev uses the existing Porkbun SMTP service (`smtp.porkbun.com`, STARTTLS port 58
 The guarded Vercel build requires the complete database/Auth group whenever hosted runtime mode is enabled. Keep the Vercel function region close to the Supabase project and measure hosted connection behavior before changing the request-owned connection model in `src/server/db/client.ts`.
 
 ## Hosted changes and recovery
+
+### Established coach conversations (DEV0276)
+
+The forward migration `20261017000100_normal_coach_conversations.sql` allows ordinary messages in an existing inquiry/request/booking conversation while the coach is enabled and the pair unblocked. It replaces one private permission function and preserves message/consent records, ownership and privileges. Install it before deploying the simplified composer; its legacy `canSendGeneral` response field now includes this conversation grant. The frozen baseline/history remains unchanged. Rollback requires a reviewed forward correction restoring the earlier function and compatible composer; do not delete or rewrite retained messages.
+
+On 17 October 2026, the isolated local stack advanced from the exact three-version baseline/availability/calendar ledger to include this fourth version. The migration and its ledger entry were installed in one transaction after rollback-only permission tests passed. Fingerprints for all 39 application tables, Auth users and both Storage tables (42 total) and function owner/ACL/security/search-path metadata were identical before and after. Hosted dev/production remain unchanged and still require their separately reviewed rollout.
 
 Review `npx supabase db push --linked --dry-run` before applying a hosted migration. Never run a linked reset against a project with user or booking data. Confirm a restorable provider backup before a risky forward migration, apply it in a bounded maintenance window, and rerun database/runtime verification afterward.
 

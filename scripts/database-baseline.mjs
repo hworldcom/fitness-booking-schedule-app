@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { LOCAL_SUPABASE_DATABASE_CONTAINER } from "./lib/local-supabase-project.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const archive = resolve(root, "supabase/migration-history/20261016000100");
@@ -12,8 +13,7 @@ const baselinePath = resolve(
   "supabase/migrations/20261016000100_baseline.sql",
 );
 const container =
-  process.env.BASELINE_DATABASE_CONTAINER ??
-  "supabase_db_fitness-booking-social-app";
+  process.env.BASELINE_DATABASE_CONTAINER ?? LOCAL_SUPABASE_DATABASE_CONTAINER;
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
 function verifyArchive(checkBaseline = true) {

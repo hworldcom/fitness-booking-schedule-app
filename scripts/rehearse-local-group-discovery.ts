@@ -16,6 +16,7 @@ import { chromium, expect as baseExpect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import postgres from "postgres";
+import { LOCAL_SUPABASE_DATABASE_CONTAINER } from "./lib/local-supabase-project.mjs";
 import {
   assertLoopbackSupabaseTargets,
   parseLocalSupabaseStatus,
@@ -29,7 +30,7 @@ import type {
 // receives only this run's exact tagged temporary users; no other user is read.
 const root = process.cwd();
 const base = "http://localhost:3113";
-const container = "supabase_db_fitness-booking-social-app";
+const container = LOCAL_SUPABASE_DATABASE_CONTAINER;
 const databaseName = "dev0240_ui_" + randomUUID().replaceAll("-", "");
 assert.match(databaseName, /^dev0240_ui_[a-f0-9]{32}$/);
 const evidence = resolve(root, "test-results/group-discovery-rehearsal");

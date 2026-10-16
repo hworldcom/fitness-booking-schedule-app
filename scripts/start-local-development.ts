@@ -1,5 +1,6 @@
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
+import { readFileSync } from "node:fs";
 import {
   parseLocalSupabaseStatus,
   type LocalSupabaseStatus,
@@ -8,8 +9,9 @@ import {
   LOCAL_APP_URL,
   LOCAL_MAILPIT_URL,
   assertLocalDevelopmentNodeVersion,
-  localDevelopmentEnvironment,
+  localDevelopmentProcessEnvironment,
 } from "./lib/local-development";
+import { assertLocalSupabaseConfiguration } from "./lib/local-supabase-project.mjs";
 
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 const executable = (name: string) =>
@@ -86,7 +88,22 @@ async function runApplication(environment: NodeJS.ProcessEnv) {
 }
 
 async function main() {
+  const args = process.argv.slice(2);
+  if (
+    args.length > 1 ||
+    args.some((argument) => !["--check", "--setup-only"].includes(argument))
+  )
+    throw new Error("Local development accepts only --check or --setup-only.");
   assertLocalDevelopmentNodeVersion(process.versions.node);
+  assertLocalSupabaseConfiguration(
+    readFileSync("supabase/config.toml", "utf8"),
+  );
+  if (args.includes("--check")) {
+    console.log(
+      "Validated local Supabase project and ports without starting services.",
+    );
+    return;
+  }
   runStep(
     "Starting the local Supabase Auth, PostgreSQL and Mailpit services.",
     npmCommand,
@@ -109,14 +126,14 @@ async function main() {
     "auth:provision:test-user",
   ]);
 
-  const localEnvironment = localDevelopmentEnvironment(readLocalStatus());
-  const applicationEnvironment: NodeJS.ProcessEnv = {
-    ...process.env,
-    ...localEnvironment,
-  };
-  delete applicationEnvironment.COACH_REVIEW_DATABASE_URL;
-  delete applicationEnvironment.SUPABASE_SERVICE_ROLE_KEY;
-  delete applicationEnvironment.SUPABASE_SECRET_KEY;
+  const applicationEnvironment =
+    localDevelopmentProcessEnvironment(readLocalStatus());
+  if (args.includes("--setup-only")) {
+    console.log(
+      "Local Supabase setup is ready; no application server started.",
+    );
+    return;
+  }
   await runApplication(applicationEnvironment);
 }
 

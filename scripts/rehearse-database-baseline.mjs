@@ -3,11 +3,11 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { LOCAL_SUPABASE_DATABASE_CONTAINER } from "./lib/local-supabase-project.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const container =
-  process.env.BASELINE_DATABASE_CONTAINER ??
-  "supabase_db_fitness-booking-social-app";
+  process.env.BASELINE_DATABASE_CONTAINER ?? LOCAL_SUPABASE_DATABASE_CONTAINER;
 if (!/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/.test(container))
   throw new Error("Invalid local database container name.");
 const history = resolve(root, "supabase/migration-history/20261016000100");

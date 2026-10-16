@@ -66,6 +66,8 @@ Not run — Draft, no implementation.
 
 ## Risks, limitations, and follow-ups
 
+2026-10-16 subsequent operating decision: [DEV0272](../../archive/backend/DEV0272-restore-isolated-local-supabase-development.md) restores ordinary development in a fresh independent `movx-club-local` stack. The old database/upload volumes remain untouched. This Draft continues to own only their optional retained-history transition and does not block the new default workflow.
+
 The existing normal startup/migration command is currently stopped by missing local branch versions. Next action: inspect provenance and design a data-preserving local strategy; do not delete migration evidence or accounts as a shortcut.
 
 ## Completion and review references
