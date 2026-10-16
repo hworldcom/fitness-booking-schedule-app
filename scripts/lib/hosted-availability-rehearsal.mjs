@@ -27,6 +27,10 @@ export async function availabilityRehearsal(args) {
   );
   assert.ok(
     (args.length === 3 && ["--check", "--run"].includes(args[2])) ||
+      (args.length === 5 &&
+        args[2] === "--run" &&
+        args[3] === "--scenario" &&
+        args[4] === "inactive-venue") ||
       (args.length === 4 && args[2] === "--cleanup"),
     "Use --environment dev --check|--run or --cleanup <private manifest>.",
   );
@@ -189,10 +193,24 @@ export async function availabilityRehearsal(args) {
   }
   async function asActor(p, fn) {
     assert.ok(people.includes(p) && p.profileId && p.dataset);
-    return runtime.begin(async (tx) => {
-      await tx`select set_config('app.current_auth_user_id',${p.id},true),set_config('app.current_profile_id',${p.profileId},true),set_config('app.current_run_id',${p.dataset},true),set_config('app.current_run_role','member',true)`;
-      return fn(tx);
-    });
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await runtime.begin(async (tx) => {
+          await tx`select set_config('app.current_auth_user_id',${p.id},true),set_config('app.current_profile_id',${p.profileId},true),set_config('app.current_run_id',${p.dataset},true),set_config('app.current_run_role','member',true)`;
+          return fn(tx);
+        });
+      } catch (error) {
+        if (
+          attempt >= 8 ||
+          error.code !== "40001" ||
+          error.message !== "coach schedule changed; retry operation"
+        )
+          throw error;
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.min(500 * 2 ** attempt, 5000)),
+        );
+      }
+    }
   }
   async function person(label, coach = false) {
     assert.ok(people.length < 5);
@@ -290,6 +308,54 @@ export async function availabilityRehearsal(args) {
     secrets.add(verified.data.session.refresh_token);
     p.client = client;
     return p;
+  }
+  async function probePublicBoundaries(coach, athlete) {
+    assert.ok(
+      people.includes(coach) && people.includes(athlete) && coach !== athlete,
+    );
+    const [clock] =
+      await runtime`select ((clock_timestamp() at time zone 'Europe/Berlin')::date-1)::text past,((clock_timestamp() at time zone 'Europe/Berlin')::date+30)::text outside`;
+    const [sourceSlot] = await ownerQuery(
+      `select id from app.coach_availability_slots where profile_id=${uuid(coach.profileId)} and coach_training_location_id=${uuid(coach.venue)} and status='open' and starts_at>clock_timestamp() order by starts_at limit 1;`,
+    );
+    assert.ok(sourceSlot);
+    const ids = [];
+    for (const date of [clock.past, clock.outside]) {
+      const id = randomUUID();
+      ids.push(id);
+      const starts = `(${literal(date + " 09:00")}::timestamp at time zone 'Europe/Berlin')`;
+      await ownerQuery(`begin;set local statement_timeout='60s';select pg_advisory_xact_lock(hashtextextended(concat(${literal(coach.dataset)}::uuid::text,':',${uuid(coach.profileId)}::text),0));
+        insert into app.coach_availability_slots(id,run_id,profile_id,starts_at,ends_at,coach_timezone,status,location_kind,selected_gym_id,gym_name,public_location_label,latitude,longitude,location_source,location_provider,location_confirmed_at,coach_training_location_id,training_location_name)
+        select ${uuid(id)},run_id,profile_id,${starts},${starts}+interval '1 hour',coach_timezone,'open',location_kind,selected_gym_id,gym_name,public_location_label,latitude,longitude,location_source,location_provider,location_confirmed_at,coach_training_location_id,training_location_name from app.coach_availability_slots where id=${uuid(sourceSlot.id)} and profile_id=${uuid(coach.profileId)};
+        commit;select true prepared;`);
+    }
+    const list = ids.map(uuid).join(",");
+    const seeded = await ownerQuery(
+      `select status,app.availability_in_horizon(starts_at,ends_at,clock_timestamp()) eligible from app.coach_availability_slots where id in(${list});`,
+    );
+    assert.equal(seeded.length, 2);
+    assert.ok(seeded.every((row) => row.status === "open" && !row.eligible));
+    const publicRows =
+      await runtime`select id from app.coach_availability_slots where id in(${ids[0]}::uuid,${ids[1]}::uuid)`;
+    assert.equal(publicRows.length, 0);
+    for (const id of ids)
+      await assert.rejects(
+        asActor(
+          athlete,
+          (tx) => tx`select app.create_coach_booking_request(${id}::uuid)`,
+        ),
+      );
+    assert.equal(
+      (
+        await ownerQuery(
+          `select count(*)::int n from app.coach_booking_requests where slot_id in(${list});`,
+        )
+      )[0].n,
+      0,
+    );
+    record(
+      "DEV0255: persisted elapsed/outside-horizon UUIDs are nonpublic and reject real athlete requests",
+    );
   }
   async function start() {
     const checkout = path.join(work, "app");
@@ -601,6 +667,7 @@ export async function availabilityRehearsal(args) {
           runId,
           project: target.projectRef,
           mode: args[2],
+          scenario: args[3] === "--scenario" ? args[4] : "full",
           source,
           checks,
           success: success && !cleanupFailed,
@@ -627,6 +694,7 @@ export async function availabilityRehearsal(args) {
     ownerQuery,
     asActor,
     person,
+    probePublicBoundaries,
     start,
     open,
     record,

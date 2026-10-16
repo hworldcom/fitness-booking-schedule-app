@@ -12,6 +12,7 @@ let success = false,
 try {
   await h.preflight();
   if (["--check", "--cleanup"].includes(h.args[2])) success = true;
+  else if (h.args[3] === "--scenario") await inactiveVenueScenario();
   else await run();
 } catch (error) {
   console.error(
@@ -19,6 +20,19 @@ try {
       phase +
       ": " +
       h.redact(error.message),
+  );
+  console.error(
+    h.redact(
+      error.stack
+        ?.split("\n")
+        .filter(
+          (line) =>
+            line.includes("scripts/rehearse-hosted-coach-availability") ||
+            line.includes("scripts/lib/hosted-availability-rehearsal"),
+        )
+        .slice(0, 4)
+        .join("\n") ?? "",
+    ),
   );
   process.exitCode = 1;
 } finally {
@@ -59,7 +73,7 @@ async function run() {
     );
   const byDate = async (date) =>
     h.ownerQuery(
-      `select id,status,to_char(starts_at at time zone 'Europe/Berlin','HH24:MI') hour,coach_training_location_id venue from app.coach_availability_slots where profile_id=${h.uuid(owner.profileId)} and (starts_at at time zone 'Europe/Berlin')::date=${h.literal(date)}::date order by starts_at,id;`,
+      `select id,status,to_char(starts_at at time zone 'Europe/Berlin','HH24:MI') as "hour",coach_training_location_id venue from app.coach_availability_slots where profile_id=${h.uuid(owner.profileId)} and (starts_at at time zone 'Europe/Berlin')::date=${h.literal(date)}::date order by starts_at,id;`,
     );
   const availability = (date) =>
     h.base +
@@ -113,8 +127,18 @@ async function run() {
     ).toBeVisible({ timeout: 90000 });
   }
   async function publicDate(date, p = client) {
-    await p.goto(profile(date), { waitUntil: "domcontentloaded" });
+    await p.goto(profile(date).split("#")[0], {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
     await expect(p.locator("#private-schedule")).toBeVisible();
+    await p.waitForFunction(() => {
+      const button = document.querySelector("#private-schedule button");
+      return (
+        button &&
+        Object.keys(button).some((key) => key.startsWith("__reactProps$"))
+      );
+    });
   }
   const rows = (p) => p.locator("li[data-slot-id]");
   async function request(p, id) {
@@ -193,14 +217,374 @@ async function run() {
   const weekly = await getPolicy();
   assert.equal(weekly.revision, 1);
   assert.equal(weekly.weeklyHours.length, 56);
-  await page.reload();
+  await page.reload({ waitUntil: "domcontentloaded", timeout: 90000 });
   await expect(
     page.getByLabel("Monday range 2 venue", { exact: true }),
   ).toHaveValue(venueB);
   h.record(
     "DEV0253: complete two-venue week copied deliberately, saved once and reloaded from SQL",
   );
+  phase = "retained booking, group and competing pending requests";
+  const initial = await byDate(target),
+    find = (hour) =>
+      initial.find((s) => s.status === "open" && s.hour === hour);
+  const booked = find("10:00"),
+    pending = find("11:00");
+  assert.ok(booked && pending);
+  await publicDate(target);
+  await request(client, booked.id);
+  const [bookReq] = await h.ownerQuery(
+    `select id from app.coach_booking_requests where slot_id=${h.uuid(booked.id)} and client_profile_id=${h.uuid(athlete.profileId)};`,
+  );
+  const booking = await h.asActor(
+    owner,
+    async (tx) =>
+      (
+        await tx`select * from app.accept_coach_booking_request(${bookReq.id}::uuid)`
+      )[0].booking_id,
+  );
+  assert.ok(booking);
+  await assert.rejects(
+    h.asActor(
+      competitor,
+      (tx) => tx`select app.create_coach_booking_request(${booked.id}::uuid)`,
+    ),
+  );
+  await publicDate(target);
+  await request(client, pending.id);
+  const competitorBrowser = await h.open(competitor);
+  await publicDate(target, competitorBrowser.page);
+  await request(competitorBrowser.page, pending.id);
+  const groupId = randomUUID();
+  const [groupTime] =
+    await h.runtime`select (${target + " 15:00"}::text::timestamp at time zone 'Europe/Berlin')::text starts`;
+  const starts = Date.parse(groupTime.starts);
+  assert.equal(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Berlin",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(starts)),
+    "15:00",
+  );
+  const publication = await h.asActor(owner, async (tx) => {
+    const [draft] =
+      await tx`select app.group_session_command('save-draft',${tx.json({ id: groupId, expectedRevision: null, title: "DEV0253 retained group", description: "Exact temporary availability rehearsal.", discipline: "Boxing", intendedLevel: "All levels", locationId: venueB, startsAt: new Date(starts).toISOString(), endsAt: new Date(starts + 3600000).toISOString(), decisionDeadlineAt: new Date(starts - 3600000).toISOString(), minimumParticipants: 1, maximumParticipants: 5, priceCents: 0 })}) result`;
+    assert.equal(draft.result.outcome, "saved");
+    return (
+      await tx`select app.publish_group_session(${groupId}::uuid,1) result`
+    )[0].result;
+  });
+  assert.equal(
+    publication.outcome,
+    "published",
+    publication.reason ?? publication.outcome,
+  );
+  await dateEditor(target);
+  await page.getByRole("radio", { name: /Custom hours/ }).check();
+  await page
+    .getByRole("button", { name: "Remove Date override range 2", exact: true })
+    .click();
+  await page
+    .getByLabel("Date override range 1 start", { exact: true })
+    .selectOption("09:00");
+  await page
+    .getByLabel("Date override range 1 end", { exact: true })
+    .selectOption("18:00");
+  await page
+    .getByLabel("Date override range 1 venue", { exact: true })
+    .selectOption(venueB);
+  await review();
+  await expect(
+    dialog().getByText("2 pending requests", { exact: true }),
+  ).toBeVisible();
+  const warning = dialog().getByRole("link", {
+    name: "View group session in a new tab",
+    exact: true,
+  });
+  await expect(warning).toHaveAttribute("href", "/coach/events/" + groupId);
+  const popupPromise = ownerBrowser.context.waitForEvent("page");
+  await warning.click();
+  const popup = await popupPromise;
+  await expect(
+    popup.getByRole("heading", { name: "DEV0253 retained group", exact: true }),
+  ).toBeVisible();
+  assert.equal(await popup.evaluate(() => window.opener), null);
+  await popup.close();
+  const [before] = await h.ownerQuery(
+    `select count(*)::int n from app.coach_booking_requests where slot_id=${h.uuid(pending.id)} and status='pending';`,
+  );
+  assert.equal(before.n, 2, "Preview does not close requests.");
+  await expect(
+    dialog().getByRole("link", {
+      name: "View private session in a new tab",
+      exact: true,
+    }),
+  ).toHaveAttribute("href", `/coach?view=bookings#coach-booking-${booking}`);
+  await dialog()
+    .getByRole("button", { name: "Save availability", exact: true })
+    .click();
+  await expect(
+    page.getByText("Availability saved.", { exact: false }),
+  ).toBeVisible();
+  const closed = await h.ownerQuery(
+    `select r.id,r.status,(select count(*)::int from app.message_entries m where m.event_key='request:'||r.id||':occurrence-closed') cards from app.coach_booking_requests r where slot_id=${h.uuid(pending.id)};`,
+  );
+  assert.equal(closed.length, 2);
+  assert.ok(
+    closed.every((r) => r.status === "occurrence-closed" && r.cards === 1),
+  );
+  await page.reload({ waitUntil: "domcontentloaded", timeout: 90000 });
+  await expect(page.getByRole("radio", { name: /Custom hours/ })).toBeChecked();
+  await expect(
+    page.getByLabel("Date override range 1 venue", { exact: true }),
+  ).toHaveValue(venueB);
+  const custom = await byDate(target);
+  assert.ok(
+    custom
+      .filter((s) => s.status === "open")
+      .every((s) => s.venue === venueB && !["10:00", "15:00"].includes(s.hour)),
+  );
+  await publicDate(target);
+  const publicHtml = await client.content();
+  for (const person of [competitor, other]) {
+    assert.ok(!publicHtml.includes(person.email));
+    assert.ok(!publicHtml.includes(person.profileId));
+    assert.ok(
+      !publicHtml.includes(
+        "DEV0253 " + h.runId.slice(0, 8) + " " + person.label,
+      ),
+    );
+  }
+  assert.equal(
+    await client.locator(`li[data-slot-id="${pending.id}"]`).count(),
+    0,
+  );
+  await assert.rejects(
+    h.asActor(
+      athlete,
+      (tx) => tx`select app.create_coach_booking_request(${pending.id}::uuid)`,
+    ),
+    {
+      code: "P0001",
+      message: "coach booking request occurrence is unavailable",
+    },
+  );
+  h.record(
+    "DEV0253/DEV0255: real whole-date venue replacement retains original booking/group, closes two pending requests/cards atomically and removes stale public IDs",
+  );
+  phase = "day off, cancellation and fresh restoration";
+  await dateEditor(target);
+  await page.getByRole("radio", { name: /All day unavailable/ }).check();
+  await save();
+  await publicDate(target);
+  await expect(client.getByText(/No open hours on this date/)).toBeVisible();
+  await client
+    .getByRole("button", { name: "Cancel booking", exact: true })
+    .click();
+  await expect(
+    client.getByText("Booking cancelled.", { exact: true }),
+  ).toBeVisible({ timeout: 90000 });
+  assert.equal(
+    (await byDate(target)).filter((s) => s.status === "open").length,
+    0,
+    "Cancellation cannot reopen day-off capacity.",
+  );
+  await dateEditor(target);
+  await page.getByRole("radio", { name: /Use normal week/ }).check();
+  await save();
+  await page.reload({ waitUntil: "domcontentloaded", timeout: 90000 });
+  await expect(
+    page.getByText("No exceptions this month", { exact: true }),
+  ).toBeVisible();
+  const restored = (await byDate(target)).find(
+    (s) => s.status === "open" && s.hour === "11:00",
+  );
+  assert.ok(restored && restored.id !== pending.id);
+  await publicDate(target);
+  await request(client, restored.id);
+  const [attempts] = await h.ownerQuery(
+    `select count(*)::int n from app.coach_booking_requests where client_profile_id=${h.uuid(athlete.profileId)} and slot_id in(${h.uuid(pending.id)},${h.uuid(restored.id)});`,
+  );
+  assert.equal(attempts.n, 2);
+  h.record(
+    "DEV0253/DEV0255: day off survives reload/cancellation, restoration uses a fresh occurrence and leaves original request history terminal",
+  );
+  phase = "manual closure survives override restoration";
+  const manuallyClosed = (await byDate(plus(4))).find(
+    (s) => s.hour === "12:00" && s.status === "open",
+  );
+  assert.ok(manuallyClosed);
+  await h.asActor(
+    owner,
+    (tx) =>
+      tx`select app.close_coach_booking_request_occurrence(${manuallyClosed.id}::uuid)`,
+  );
+  await dateEditor(plus(4));
+  await page.getByRole("radio", { name: /All day unavailable/ }).check();
+  await save();
+  await page.getByRole("radio", { name: /Use normal week/ }).check();
+  await save();
+  assert.equal(
+    (await byDate(plus(4))).filter(
+      (s) => s.hour === "12:00" && s.status === "open",
+    ).length,
+    0,
+  );
+  await publicDate(plus(4));
+  assert.equal(
+    await client.locator(`li[data-slot-id="${manuallyClosed.id}"]`).count(),
+    0,
+  );
+  h.record(
+    "DEV0253/DEV0255: manually closed time stays closed after day-off removal and public synchronization",
+  );
+  phase = "uncertain save, stale revision and unavailable transport";
+  await dateEditor(plus(6));
+  await page.getByRole("radio", { name: /All day unavailable/ }).check();
+  let captured,
+    intercepted = false;
+  await page.route("**/coach?**", async (route) => {
+    let payload;
+    try {
+      payload = JSON.parse(route.request().postData() ?? "null");
+    } catch {}
+    if (
+      !intercepted &&
+      route.request().method() === "POST" &&
+      Array.isArray(payload) &&
+      payload[2] === false &&
+      payload[0]?.kind === "dates"
+    ) {
+      captured = payload[0];
+      intercepted = true;
+      await route.fetch();
+      await route.abort("failed");
+    } else await route.continue();
+  });
+  await review();
+  await dialog()
+    .getByRole("button", { name: "Save availability", exact: true })
+    .click();
+  await expect(dialog().getByRole("alert")).toHaveText(
+    /The save response was interrupted/,
+  );
+  assert.ok(
+    intercepted && captured,
+    "Real committed save response was interrupted.",
+  );
+  await page.unroute("**/coach?**");
+  const revision = (await getPolicy()).revision;
+  await dialog()
+    .getByRole("button", { name: "Retry same save", exact: true })
+    .click();
+  await expect(
+    page.getByText("Availability saved.", { exact: false }),
+  ).toBeVisible();
+  assert.equal((await getPolicy()).revision, revision);
+  const receipt = await h.asActor(
+    owner,
+    async (tx) =>
+      (
+        await tx`select app.save_owned_effective_coach_availability(${tx.json(captured)}) result`
+      )[0].result,
+  );
+  assert.equal(receipt.outcome, "saved");
+  const altered = await h.asActor(
+    owner,
+    async (tx) =>
+      (
+        await tx`select app.save_owned_effective_coach_availability(${tx.json({ ...captured, dates: [{ date: plus(7), mode: "unavailable", hours: [] }] })}) result`
+      )[0].result,
+  );
+  assert.equal(altered.outcome, "conflict");
+  await openEditor();
+  await page
+    .getByLabel("Monday range 1 end", { exact: true })
+    .selectOption("14:00");
+  await h.asActor(
+    owner,
+    async (tx) =>
+      tx`select app.save_owned_effective_coach_availability(${tx.json({ operationId: randomUUID(), expectedRevision: revision, kind: "dates", dates: [{ date: plus(8), mode: "unavailable", hours: [] }] })})`,
+  );
+  await page
+    .getByRole("button", { name: "Review changes", exact: true })
+    .click();
+  await expect(
+    page.getByText(/Availability changed elsewhere\. Your draft is unchanged/),
+  ).toBeVisible();
+  await expect(
+    page.getByLabel("Monday range 1 end", { exact: true }),
+  ).toHaveValue("14:00");
+  h.record(
+    "DEV0253: real committed-but-interrupted save recovers one receipt/revision; altered replay and stale baseline preserve the draft",
+  );
+  phase = "inactive venue and unavailable preview preserve draft";
+  const venueC = await h.asActor(
+    owner,
+    async (tx) =>
+      (
+        await tx`select app.create_owned_coach_training_location('DEV0253 temporary removable venue',null,'Temporary Berlin venue',52.51,13.41,'manual',null) id`
+      )[0].id,
+  );
+  await openEditor();
+  await page
+    .getByLabel("Monday range 1 venue", { exact: true })
+    .selectOption(venueC);
+  const [venueCState] = await h.ownerQuery(
+    `select to_jsonb(updated_at)#>>'{}' stamp from app.coach_training_locations where id=${h.uuid(venueC)};`,
+  );
+  await h.asActor(
+    owner,
+    (tx) =>
+      tx`select app.deactivate_owned_coach_training_location(${venueC}::uuid,${venueCState.stamp}::text::timestamptz,null,null)`,
+  );
+  const beforeInvalid = (await getPolicy()).revision;
+  await page
+    .getByRole("button", { name: "Review changes", exact: true })
+    .click();
+  await expect(
+    page.getByText(
+      "These hours could not be saved. Review the dates and current venues; your draft is still here.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByLabel("Monday range 1 venue", { exact: true }),
+  ).toHaveValue(venueC);
+  assert.equal((await getPolicy()).revision, beforeInvalid);
+  await exerciseInactiveVenueRace(owner, page, await raceVenue(owner));
+  await openEditor();
+  await page
+    .getByLabel("Monday range 1 end", { exact: true })
+    .selectOption("14:00");
+  await page.route("**/coach?**", async (route) => {
+    let payload;
+    try {
+      payload = JSON.parse(route.request().postData() ?? "null");
+    } catch {}
+    if (
+      route.request().method() === "POST" &&
+      Array.isArray(payload) &&
+      payload[2] === true
+    )
+      await route.abort("failed");
+    else await route.continue();
+  });
+  await page
+    .getByRole("button", { name: "Review changes", exact: true })
+    .click();
+  await expect(page.getByText(/The review could not be loaded/)).toBeVisible();
+  await expect(
+    page.getByLabel("Monday range 1 end", { exact: true }),
+  ).toHaveValue("14:00");
+  assert.equal((await getPolicy()).revision, beforeInvalid);
+  await page.unroute("**/coach?**");
+  h.record(
+    "DEV0253: inactive venue and interrupted preview retain the unsaved draft without changing SQL revision",
+  );
   phase = "public thirty dates and sign-in return";
+  await h.probePublicBoundaries(owner, athlete);
   // Remove only unused occurrences of this new coach, then let the public
   // projection recreate the horizon without an intervening coach visit.
   await h.ownerQuery(
@@ -270,7 +654,7 @@ async function run() {
   );
   const lastId = await rows(guest.page).first().getAttribute("data-slot-id");
   await request(guest.page, lastId);
-  await guest.page.reload();
+  await guest.page.reload({ waitUntil: "domcontentloaded", timeout: 90000 });
   await expect(
     guest.page
       .locator(`li[data-slot-id="${lastId}"]`)
@@ -381,341 +765,6 @@ async function run() {
   h.record(
     "DEV0255: all 30 public dates, real final-day request/reload/withdraw, safe sign-in return, native guest navigation and DB DST boundaries",
   );
-  phase = "retained booking, group and competing pending requests";
-  const initial = await byDate(target),
-    find = (hour) =>
-      initial.find((s) => s.status === "open" && s.hour === hour);
-  const booked = find("10:00"),
-    pending = find("11:00");
-  assert.ok(booked && pending);
-  await publicDate(target);
-  await request(client, booked.id);
-  const [bookReq] = await h.ownerQuery(
-    `select id from app.coach_booking_requests where slot_id=${h.uuid(booked.id)} and client_profile_id=${h.uuid(athlete.profileId)};`,
-  );
-  const booking = await h.asActor(
-    owner,
-    async (tx) =>
-      (
-        await tx`select * from app.accept_coach_booking_request(${bookReq.id}::uuid)`
-      )[0].booking_id,
-  );
-  assert.ok(booking);
-  await assert.rejects(
-    h.asActor(
-      competitor,
-      (tx) => tx`select app.create_coach_booking_request(${booked.id}::uuid)`,
-    ),
-  );
-  await publicDate(target);
-  await request(client, pending.id);
-  const competitorBrowser = await h.open(competitor);
-  await publicDate(target, competitorBrowser.page);
-  await request(competitorBrowser.page, pending.id);
-  const groupId = randomUUID();
-  const [groupTime] =
-    await h.runtime`select (${target + " 15:00"}::timestamp at time zone 'Europe/Berlin')::text starts`;
-  const starts = Date.parse(groupTime.starts);
-  await h.asActor(owner, async (tx) => {
-    await tx`select app.group_session_command('save-draft',${tx.json({ id: groupId, expectedRevision: null, title: "DEV0253 retained group", description: "Exact temporary availability rehearsal.", discipline: "Boxing", intendedLevel: "All levels", locationId: venueB, startsAt: new Date(starts).toISOString(), endsAt: new Date(starts + 3600000).toISOString(), decisionDeadlineAt: new Date(starts - 3600000).toISOString(), minimumParticipants: 1, maximumParticipants: 5, priceCents: 0 })})`;
-    await tx`select app.publish_group_session(${groupId}::uuid,1)`;
-  });
-  await dateEditor(target);
-  await page.getByRole("radio", { name: /Custom hours/ }).check();
-  await page
-    .getByRole("button", { name: "Remove Date override range 2", exact: true })
-    .click();
-  await page
-    .getByLabel("Date override range 1 start", { exact: true })
-    .selectOption("09:00");
-  await page
-    .getByLabel("Date override range 1 end", { exact: true })
-    .selectOption("18:00");
-  await page
-    .getByLabel("Date override range 1 venue", { exact: true })
-    .selectOption(venueB);
-  await review();
-  await expect(
-    dialog().getByText("2 pending requests", { exact: true }),
-  ).toBeVisible();
-  const warning = dialog().getByRole("link", {
-    name: "View group session in a new tab",
-    exact: true,
-  });
-  await expect(warning).toHaveAttribute("href", "/coach/events/" + groupId);
-  const popupPromise = ownerBrowser.context.waitForEvent("page");
-  await warning.click();
-  const popup = await popupPromise;
-  await expect(
-    popup.getByRole("heading", { name: "DEV0253 retained group", exact: true }),
-  ).toBeVisible();
-  assert.equal(await popup.evaluate(() => window.opener), null);
-  await popup.close();
-  const [before] = await h.ownerQuery(
-    `select count(*)::int n from app.coach_booking_requests where slot_id=${h.uuid(pending.id)} and status='pending';`,
-  );
-  assert.equal(before.n, 2, "Preview does not close requests.");
-  await expect(
-    dialog().getByRole("link", {
-      name: "View private session in a new tab",
-      exact: true,
-    }),
-  ).toHaveAttribute("href", `/coach?view=bookings#coach-booking-${booking}`);
-  await dialog()
-    .getByRole("button", { name: "Save availability", exact: true })
-    .click();
-  await expect(
-    page.getByText("Availability saved.", { exact: false }),
-  ).toBeVisible();
-  const closed = await h.ownerQuery(
-    `select r.id,r.status,(select count(*)::int from app.message_entries m where m.event_key='request:'||r.id||':occurrence-closed') cards from app.coach_booking_requests r where slot_id=${h.uuid(pending.id)};`,
-  );
-  assert.equal(closed.length, 2);
-  assert.ok(
-    closed.every((r) => r.status === "occurrence-closed" && r.cards === 1),
-  );
-  await page.reload();
-  await expect(page.getByRole("radio", { name: /Custom hours/ })).toBeChecked();
-  await expect(
-    page.getByLabel("Date override range 1 venue", { exact: true }),
-  ).toHaveValue(venueB);
-  const custom = await byDate(target);
-  assert.ok(
-    custom
-      .filter((s) => s.status === "open")
-      .every((s) => s.venue === venueB && !["10:00", "15:00"].includes(s.hour)),
-  );
-  await publicDate(target);
-  const publicHtml = await client.content();
-  for (const person of [competitor, other]) {
-    assert.ok(!publicHtml.includes(person.email));
-    assert.ok(!publicHtml.includes(person.profileId));
-    assert.ok(
-      !publicHtml.includes(
-        "DEV0253 " + h.runId.slice(0, 8) + " " + person.label,
-      ),
-    );
-  }
-  assert.equal(
-    await client.locator(`li[data-slot-id="${pending.id}"]`).count(),
-    0,
-  );
-  const stale = await h.asActor(athlete, async (tx) => {
-    try {
-      await tx`select app.create_coach_booking_request(${pending.id}::uuid)`;
-      return false;
-    } catch {
-      return true;
-    }
-  });
-  assert.equal(stale, true);
-  h.record(
-    "DEV0253/DEV0255: real whole-date venue replacement retains original booking/group, closes two pending requests/cards atomically and removes stale public IDs",
-  );
-  phase = "day off, cancellation and fresh restoration";
-  await dateEditor(target);
-  await page.getByRole("radio", { name: /All day unavailable/ }).check();
-  await save();
-  await publicDate(target);
-  await expect(client.getByText(/No open hours on this date/)).toBeVisible();
-  await client
-    .getByRole("button", { name: "Cancel booking", exact: true })
-    .click();
-  await expect(
-    client.getByText("Booking cancelled.", { exact: true }),
-  ).toBeVisible({ timeout: 90000 });
-  assert.equal(
-    (await byDate(target)).filter((s) => s.status === "open").length,
-    0,
-    "Cancellation cannot reopen day-off capacity.",
-  );
-  await dateEditor(target);
-  await page.getByRole("radio", { name: /Use normal week/ }).check();
-  await save();
-  await page.reload();
-  await expect(
-    page.getByText("No exceptions this month", { exact: true }),
-  ).toBeVisible();
-  const restored = (await byDate(target)).find(
-    (s) => s.status === "open" && s.hour === "11:00",
-  );
-  assert.ok(restored && restored.id !== pending.id);
-  await publicDate(target);
-  await request(client, restored.id);
-  const [attempts] = await h.ownerQuery(
-    `select count(*)::int n from app.coach_booking_requests where client_profile_id=${h.uuid(athlete.profileId)} and slot_id in(${h.uuid(pending.id)},${h.uuid(restored.id)});`,
-  );
-  assert.equal(attempts.n, 2);
-  h.record(
-    "DEV0253/DEV0255: day off survives reload/cancellation, restoration uses a fresh occurrence and leaves original request history terminal",
-  );
-  phase = "manual closure survives override restoration";
-  const manuallyClosed = (await byDate(plus(4))).find(
-    (s) => s.hour === "12:00" && s.status === "open",
-  );
-  assert.ok(manuallyClosed);
-  await h.asActor(
-    owner,
-    (tx) =>
-      tx`select app.close_coach_booking_request_occurrence(${manuallyClosed.id}::uuid)`,
-  );
-  await dateEditor(plus(4));
-  await page.getByRole("radio", { name: /All day unavailable/ }).check();
-  await save();
-  await page.getByRole("radio", { name: /Use normal week/ }).check();
-  await save();
-  assert.equal(
-    (await byDate(plus(4))).filter(
-      (s) => s.hour === "12:00" && s.status === "open",
-    ).length,
-    0,
-  );
-  await publicDate(plus(4));
-  assert.equal(
-    await client.locator(`li[data-slot-id="${manuallyClosed.id}"]`).count(),
-    0,
-  );
-  h.record(
-    "DEV0253/DEV0255: manually closed time stays closed after day-off removal and public synchronization",
-  );
-  phase = "uncertain save, stale revision and unavailable transport";
-  await dateEditor(plus(6));
-  await page.getByRole("radio", { name: /All day unavailable/ }).check();
-  let captured,
-    intercepted = false;
-  await page.route("**/coach?**", async (route) => {
-    let payload;
-    try {
-      payload = JSON.parse(route.request().postData() ?? "null");
-    } catch {}
-    if (
-      !intercepted &&
-      route.request().method() === "POST" &&
-      Array.isArray(payload) &&
-      payload[2] === false &&
-      payload[0]?.kind === "dates"
-    ) {
-      captured = payload[0];
-      intercepted = true;
-      await route.fetch();
-      await route.abort("failed");
-    } else await route.continue();
-  });
-  await review();
-  await dialog()
-    .getByRole("button", { name: "Save availability", exact: true })
-    .click();
-  await expect(
-    page.getByText(/The save response was interrupted/),
-  ).toBeVisible();
-  assert.ok(
-    intercepted && captured,
-    "Real committed save response was interrupted.",
-  );
-  await page.unroute("**/coach?**");
-  const revision = (await getPolicy()).revision;
-  await dialog()
-    .getByRole("button", { name: "Retry same save", exact: true })
-    .click();
-  await expect(
-    page.getByText("Availability saved.", { exact: false }),
-  ).toBeVisible();
-  assert.equal((await getPolicy()).revision, revision);
-  const receipt = await h.asActor(
-    owner,
-    async (tx) =>
-      (
-        await tx`select app.save_owned_effective_coach_availability(${tx.json(captured)}) result`
-      )[0].result,
-  );
-  assert.equal(receipt.outcome, "saved");
-  const altered = await h.asActor(
-    owner,
-    async (tx) =>
-      (
-        await tx`select app.save_owned_effective_coach_availability(${tx.json({ ...captured, dates: [{ date: plus(7), mode: "unavailable", hours: [] }] })}) result`
-      )[0].result,
-  );
-  assert.equal(altered.outcome, "conflict");
-  await openEditor();
-  await page
-    .getByLabel("Monday range 1 end", { exact: true })
-    .selectOption("14:00");
-  await h.asActor(
-    owner,
-    async (tx) =>
-      tx`select app.save_owned_effective_coach_availability(${tx.json({ operationId: randomUUID(), expectedRevision: revision, kind: "dates", dates: [{ date: plus(8), mode: "unavailable", hours: [] }] })})`,
-  );
-  await page
-    .getByRole("button", { name: "Review changes", exact: true })
-    .click();
-  await expect(
-    page.getByText(/Availability changed elsewhere\. Your draft is unchanged/),
-  ).toBeVisible();
-  await expect(
-    page.getByLabel("Monday range 1 end", { exact: true }),
-  ).toHaveValue("14:00");
-  h.record(
-    "DEV0253: real committed-but-interrupted save recovers one receipt/revision; altered replay and stale baseline preserve the draft",
-  );
-  phase = "inactive venue and unavailable preview preserve draft";
-  const venueC = await h.asActor(
-    owner,
-    async (tx) =>
-      (
-        await tx`select app.create_owned_coach_training_location('DEV0253 temporary removable venue',null,'Temporary Berlin venue',52.51,13.41,'manual',null) id`
-      )[0].id,
-  );
-  await openEditor();
-  await page
-    .getByLabel("Monday range 1 venue", { exact: true })
-    .selectOption(venueC);
-  const [venueCState] = await h.ownerQuery(
-    `select to_jsonb(updated_at)#>>'{}' stamp from app.coach_training_locations where id=${h.uuid(venueC)};`,
-  );
-  await h.asActor(
-    owner,
-    (tx) =>
-      tx`select app.deactivate_owned_coach_training_location(${venueC}::uuid,${venueCState.stamp}::timestamptz,null,null)`,
-  );
-  const beforeInvalid = (await getPolicy()).revision;
-  await page
-    .getByRole("button", { name: "Review changes", exact: true })
-    .click();
-  await expect(page.getByRole("alert")).toBeVisible();
-  await expect(
-    page.getByLabel("Monday range 1 venue", { exact: true }),
-  ).toHaveValue(venueC);
-  assert.equal((await getPolicy()).revision, beforeInvalid);
-  await openEditor();
-  await page
-    .getByLabel("Monday range 1 end", { exact: true })
-    .selectOption("14:00");
-  await page.route("**/coach?**", async (route) => {
-    let payload;
-    try {
-      payload = JSON.parse(route.request().postData() ?? "null");
-    } catch {}
-    if (
-      route.request().method() === "POST" &&
-      Array.isArray(payload) &&
-      payload[2] === true
-    )
-      await route.abort("failed");
-    else await route.continue();
-  });
-  await page
-    .getByRole("button", { name: "Review changes", exact: true })
-    .click();
-  await expect(page.getByText(/The review could not be loaded/)).toBeVisible();
-  await expect(
-    page.getByLabel("Monday range 1 end", { exact: true }),
-  ).toHaveValue("14:00");
-  assert.equal((await getPolicy()).revision, beforeInvalid);
-  await page.unroute("**/coach?**");
-  h.record(
-    "DEV0253: inactive venue and interrupted preview retain the unsaved draft without changing SQL revision",
-  );
   phase = "responsive public/editor and access checks";
   for (const width of [1440, 375, 430]) {
     await page.setViewportSize({ width, height: 1000 });
@@ -779,4 +828,93 @@ async function run() {
     "DEV0253/DEV0255: actual desktop/375/430, keyboard and athlete/applicant/suspended editor denial",
   );
   success = true;
+}
+
+async function raceVenue(owner) {
+  return h.asActor(
+    owner,
+    async (tx) =>
+      (
+        await tx`select app.create_owned_coach_training_location('DEV0253 venue race',null,'Temporary Berlin race venue',52.52,13.42,'manual',null) id`
+      )[0].id,
+  );
+}
+async function inactiveVenueScenario() {
+  phase = "inactive venue after review";
+  await h.start();
+  const owner = await h.person("Owner", true),
+    venue = await raceVenue(owner);
+  const { page } = await h.open(owner);
+  const before = await exerciseInactiveVenueRace(owner, page, venue);
+  assert.deepEqual(before, { revision: 0, receipts: 0 });
+  success = true;
+}
+async function exerciseInactiveVenueRace(owner, page, venue) {
+  await page.goto(h.base + "/coach?view=schedule&section=availability", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(
+    page.getByRole("region", { name: "Availability editor", exact: true }),
+  ).toBeVisible();
+  await page.waitForFunction(() =>
+    [...document.querySelectorAll(".availability-editor button")].some((el) =>
+      Object.keys(el).some((key) => key.startsWith("__reactProps$")),
+    ),
+  );
+  await page
+    .getByRole("switch", { name: "Monday available", exact: true })
+    .check();
+  await page
+    .getByLabel("Monday range 1 venue", { exact: true })
+    .selectOption(venue);
+  await page
+    .getByRole("button", { name: "Review changes", exact: true })
+    .click();
+  const dialog = page.getByRole("dialog");
+  await expect(
+    dialog.getByRole("heading", {
+      name: "Review availability changes",
+      exact: true,
+    }),
+  ).toBeVisible({ timeout: 90000 });
+  const [state] = await h.ownerQuery(
+    `select to_jsonb(updated_at)#>>'{}' stamp from app.coach_training_locations where id=${h.uuid(venue)};`,
+  );
+  await h.asActor(
+    owner,
+    (tx) =>
+      tx`select app.deactivate_owned_coach_training_location(${venue}::uuid,${state.stamp}::text::timestamptz,null,null)`,
+  );
+  const [before] = await h.ownerQuery(
+    `select coalesce((select revision from app.coach_availability_policies where profile_id=${h.uuid(owner.profileId)}),0) revision,(select count(*)::int from app.coach_availability_operations where profile_id=${h.uuid(owner.profileId)}) receipts;`,
+  );
+  await dialog
+    .getByRole("button", { name: "Save availability", exact: true })
+    .click();
+  await expect(
+    page.getByText(
+      "These hours could not be saved. Review the dates and current venues; your draft is still here.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByLabel("Monday range 1 venue", { exact: true }),
+  ).toBeEnabled();
+  await expect(
+    page.getByLabel("Monday range 1 venue", { exact: true }),
+  ).toHaveValue(venue);
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Retry same save", exact: true })
+      .count(),
+    0,
+  );
+  const [saved] = await h.ownerQuery(
+    `select coalesce((select revision from app.coach_availability_policies where profile_id=${h.uuid(owner.profileId)}),0) revision,(select count(*)::int from app.coach_availability_operations where profile_id=${h.uuid(owner.profileId)}) receipts;`,
+  );
+  assert.deepEqual(saved, before);
+  h.record(
+    "DEV0253: venue deactivated after review returns invalid, keeps the editable draft and adds no revision or receipt",
+  );
+  return before;
 }

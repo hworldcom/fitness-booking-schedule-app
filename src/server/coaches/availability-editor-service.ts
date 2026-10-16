@@ -62,51 +62,53 @@ export async function changeAvailabilityEditor(
   scope: string,
   preview: boolean,
 ): Promise<AvailabilityActionResult> {
-  const result = await withAuthorizedActor(async (tx, actor) => {
-    if (
-      [actor.authUserId, actor.profileId, actor.runId, actor.runRole].join(
-        ":",
-      ) !== scope
-    )
-      return null;
-    const owner = await currentActorProjection(tx, actor);
-    const coach = await currentOwnedCoachProfileRecord(tx, actor);
-    if (
-      !["approved", "demo"].includes(owner.coachAccess.status) ||
-      coach?.visibility !== "visible"
-    )
-      return null;
-    try {
-      return await saveOwnedEffectiveAvailabilityRecord(tx, command, preview);
-    } catch (error) {
-      if (error instanceof CoachAvailabilityConflictError)
-        return "invalid" as const;
-      throw error;
+  try {
+    const result = await withAuthorizedActor(
+      async (tx, actor) => {
+        if (
+          [actor.authUserId, actor.profileId, actor.runId, actor.runRole].join(
+            ":",
+          ) !== scope
+        )
+          return null;
+        const owner = await currentActorProjection(tx, actor);
+        const coach = await currentOwnedCoachProfileRecord(tx, actor);
+        if (
+          !["approved", "demo"].includes(owner.coachAccess.status) ||
+          coach?.visibility !== "visible"
+        )
+          return null;
+        // Let the typed validation error trigger rollback before translating it.
+        return saveOwnedEffectiveAvailabilityRecord(tx, command, preview);
+      },
+      { rethrow: (error) => error instanceof CoachAvailabilityConflictError },
+    );
+    if (result.status === "authorized") {
+      if (result.value === null)
+        return {
+          status: "denied",
+          message: "The signed-in account changed. Reload before editing.",
+        };
+      return { status: "ready", result: result.value };
     }
-  });
-  if (result.status === "authorized") {
-    if (result.value === null)
-      return {
-        status: "denied",
-        message: "The signed-in account changed. Reload before editing.",
-      };
-    if (result.value === "invalid")
+    return result.status === "unavailable"
+      ? {
+          status: "unavailable",
+          message: preview
+            ? "The availability review could not be loaded. Your draft is unchanged; no availability was saved by this preview."
+            : "The outcome could not be verified. Retry this exact save before assuming it was applied.",
+        }
+      : {
+          status: "denied",
+          message: "Sign in again and review your coach access before editing.",
+        };
+  } catch (error) {
+    if (error instanceof CoachAvailabilityConflictError)
       return {
         status: "invalid",
         message:
           "These hours could not be saved. Review the dates and current venues; your draft is still here.",
       };
-    return { status: "ready", result: result.value };
+    throw error;
   }
-  return result.status === "unavailable"
-    ? {
-        status: "unavailable",
-        message: preview
-          ? "The availability review could not be loaded. Your draft is unchanged; no availability was saved by this preview."
-          : "The outcome could not be verified. Retry this exact save before assuming it was applied.",
-      }
-    : {
-        status: "denied",
-        message: "Sign in again and review your coach access before editing.",
-      };
 }
