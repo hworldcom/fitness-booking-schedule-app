@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { coachEventHref } from "@/features/coach-events/contract";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -122,10 +123,11 @@ function RetainedSessions({
                   href={
                     s.kind === "private"
                       ? `/coach?view=bookings#coach-booking-${s.id}`
-                      : `/events/group-${s.id.replaceAll("-", "")}`
+                      : coachEventHref(s.id)
                   }
                 >
-                  View <span className="sr-only">session in a new tab</span>
+                  View{" "}
+                  <span className="sr-only">{s.kind} session in a new tab</span>
                   <ChevronRight size={14} />
                 </Link>
               </li>

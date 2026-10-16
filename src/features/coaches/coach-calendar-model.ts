@@ -1,6 +1,7 @@
 import type { CoachTrainingLocation } from "@/domain/coaches";
 import type { ActorSnapshot } from "@/auth/actor-contracts";
 import type { AuthSessionSnapshot } from "@/auth/contracts";
+import { coachEventHref } from "@/features/coach-events/contract";
 import type {
   CalendarItem,
   CalendarPage,
@@ -52,7 +53,7 @@ export function calendarDetailHref(item: CalendarItem) {
     ? `/coach?view=bookings#coach-booking-${item.id}`
     : item.source === "availability"
       ? `/coach?view=bookings&occurrence=${item.id}#coach-occurrence-${item.id}`
-      : `/events/group-${item.id.replaceAll("-", "")}`;
+      : coachEventHref(item.id);
 }
 export function calendarItemRange(
   item: Pick<CalendarItem, "startsAt" | "endsAt">,

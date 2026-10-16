@@ -205,6 +205,11 @@ test("history stays terminal, past private confirmations do not auto-complete an
     calendarDetailHref(booking),
     new RegExp(`#coach-booking-${booking.id}$`),
   );
+  for (const item of CALENDAR_FIXTURE_ITEMS.filter(
+    (item) => item.source === "group",
+  )) {
+    assert.equal(calendarDetailHref(item), `/coach/events/${item.id}`);
+  }
 });
 test("overnight groups use half-open local dates and overlapping history gets distinct lanes", () => {
   const item = CALENDAR_FIXTURE_ITEMS.find(

@@ -183,16 +183,44 @@ try {
     .waitFor();
   assert.equal(
     await dialog()
-      .getByRole("link", { name: /View session/ })
+      .getByRole("link", { name: /View (?:private|group) session/ })
       .count(),
     2,
   );
   await dialog().getByText("2 pending requests", { exact: true }).waitFor();
+  const retainedGroup = dialog().getByRole("link", {
+    name: "View group session in a new tab",
+    exact: true,
+  });
+  assert.equal(
+    await retainedGroup.getAttribute("href"),
+    "/coach/events/20000000-0000-4000-8000-000000000001",
+  );
+  assert.equal(await retainedGroup.getAttribute("target"), "_blank");
+  assert.equal(await retainedGroup.getAttribute("rel"), "noopener");
+  assert.equal(
+    await dialog()
+      .getByRole("link", {
+        name: "View private session in a new tab",
+        exact: true,
+      })
+      .getAttribute("href"),
+    "/coach?view=bookings#coach-booking-10000000-0000-4000-8000-000000000001",
+  );
   assert.equal(await page.getByTestId("operation-audit").textContent(), "");
   await dialog()
     .getByRole("button", { name: "Save availability", exact: true })
     .click();
   await page.getByText("Availability saved.", { exact: false }).waitFor();
+  assert.equal(
+    await page
+      .getByRole("link", {
+        name: "View group session in a new tab",
+        exact: true,
+      })
+      .getAttribute("href"),
+    "/coach/events/20000000-0000-4000-8000-000000000001",
+  );
   assert.equal(await review().isDisabled(), true);
   record(
     "weekly ranges, cross-venue overlap, deliberate copy replacement, keyboard trap/restore and one atomic reviewed save",

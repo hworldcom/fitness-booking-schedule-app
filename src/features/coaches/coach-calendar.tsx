@@ -670,7 +670,7 @@ export function CoachCalendar({
               href={calendarDetailHref(selected)}
             >
               {selected.source === "group"
-                ? "View published session"
+                ? "View group details"
                 : selected.source === "booking"
                   ? "View original booking"
                   : "View booking requests"}
