@@ -387,7 +387,7 @@ test("group/private scheduling authority, publication and lock recovery", async 
         assert.equal(
           Number(
             (
-              await db`select count(*) n from app.coach_availability_slots where profile_id=${coach.profileId}::uuid`
+              await db`select count(*) n from app.coach_availability_slots where profile_id=${coach.profileId}::uuid and starts_at=${d.startsAt}::timestamptz`
             )[0].n,
           ),
           0,

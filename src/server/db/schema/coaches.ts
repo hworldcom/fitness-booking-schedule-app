@@ -447,6 +447,9 @@ export const coachAvailabilitySlots = app.table(
     recurrenceRuleId: uuid("recurrence_rule_id"),
     coachTrainingLocationId: uuid("coach_training_location_id"),
     trainingLocationName: text("training_location_name"),
+    policyRevision: integer("policy_revision"),
+    closureReason: text("closure_reason"),
+    closedPolicyRevision: integer("closed_policy_revision"),
     recurrenceLocalDate: date("recurrence_local_date", {
       mode: "string",
     }),
@@ -509,6 +512,14 @@ export const coachAvailabilitySlots = app.table(
     check(
       "coach_availability_slots_recurrence_pair_check",
       sql`(${table.recurrenceRuleId} is null) = (${table.recurrenceLocalDate} is null)`,
+    ),
+    check(
+      "coach_availability_slots_closure_state_check",
+      sql`(${table.status} = 'withdrawn') = (${table.closureReason} is not null)`,
+    ),
+    check(
+      "coach_availability_slots_closure_revision_check",
+      sql`(${table.closureReason} is not distinct from 'policy') = (${table.closedPolicyRevision} is not null)`,
     ),
     check(
       "coach_availability_slots_recurring_duration_check",
@@ -582,7 +593,9 @@ export const coachAvailabilitySlots = app.table(
     ),
     uniqueIndex("coach_availability_slots_rule_occurrence_key")
       .on(table.recurrenceRuleId, table.recurrenceLocalDate)
-      .where(sql`${table.recurrenceRuleId} is not null`),
+      .where(
+        sql`${table.recurrenceRuleId} is not null and ${table.status} <> 'withdrawn'`,
+      ),
     unique("coach_availability_slots_run_id_id_key").on(table.runId, table.id),
     index("coach_availability_slots_rule_status_idx")
       .on(table.recurrenceRuleId, table.status, table.startsAt, table.id)

@@ -147,8 +147,8 @@ select is(
       and table_record.relname = 'coach_availability_slots'
       and constraint_record.contype = 'c'
   ),
-  16,
-  'slot time, lifecycle, location and location-name checks exist'
+  21,
+  'slot time, lifecycle, venue and closure-provenance checks exist'
 );
 
 select is(
@@ -302,7 +302,7 @@ reset role;
 
 select is(
   current_setting('app.test_public_availability_count'),
-  '96000000-0000-4000-8000-000000000001,96000000-0000-4000-8000-000000000005',
+  '96000000-0000-4000-8000-000000000001,96000000-0000-4000-8000-000000000005,96000000-0000-4000-8000-000000000006',
   'public runtime sees exact eligible capacity states inside the rolling horizon'
 );
 

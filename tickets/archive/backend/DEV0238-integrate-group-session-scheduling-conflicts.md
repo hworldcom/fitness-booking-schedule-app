@@ -5,7 +5,7 @@
 - Last updated: 2026-10-16
 - Milestone: M7 — Group training and events
 - Coordination: [COR0021 — Group training and events](../../current/organisatory/COR0021-group-training-and-events.md)
-- Related records: contract owner [DEV0233](../../archive/organisatory/DEV0233-define-group-training-and-events-growth-scope.md); delivered data/lifecycle dependency [DEV0237](../../archive/backend/DEV0237-persist-group-session-registration.md); downstream interfaces DEV0239/DEV0240 and proof DEV0241 are mapped in COR0021; independent workspace profile fixes [DEV0250](../../archive/frontend/DEV0250-unify-coach-athlete-identity-and-private-details.md); independent seed repair [DEV0249](../../current/backend/DEV0249-repair-legacy-seed-location-compatibility.md); downstream calendar authority [DEV0252](../../current/backend/DEV0252-persist-effective-coach-availability.md)
+- Related records: contract owner [DEV0233](../../archive/organisatory/DEV0233-define-group-training-and-events-growth-scope.md); delivered data/lifecycle dependency [DEV0237](../../archive/backend/DEV0237-persist-group-session-registration.md); downstream interfaces DEV0239/DEV0240 and proof DEV0241 are mapped in COR0021; independent workspace profile fixes [DEV0250](../../archive/frontend/DEV0250-unify-coach-athlete-identity-and-private-details.md); independent seed repair [DEV0249](../../current/backend/DEV0249-repair-legacy-seed-location-compatibility.md); downstream calendar authority [DEV0252](DEV0252-persist-effective-coach-availability.md)
 
 ## Objective and context
 

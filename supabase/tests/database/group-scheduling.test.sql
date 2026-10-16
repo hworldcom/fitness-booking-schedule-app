@@ -4,7 +4,7 @@ set local search_path = extensions, public, pg_catalog;
 select plan(8);
 select has_column('app','coach_group_sessions','published_from_revision','publication retains the exact reviewed draft revision');
 select ok(exists(select 1 from pg_indexes where schemaname='app' and indexname='coach_group_reserved_time'),'active group intervals have a scoped lookup index');
-select is((select count(*)::integer from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='app' and t.tgname='aaa_group_schedule_write'),8,'all private/profile/rule lifecycle write paths acquire the shared guard');
+select is((select count(*)::integer from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='app' and t.tgname='aaa_group_schedule_write'),11,'all private/profile/rule and effective-policy write paths acquire the shared guard');
 select ok(has_function_privilege('app_runtime','app.publish_group_session(uuid,integer)','execute'),'restricted runtime can call owner-checked publication');
 select ok(not has_function_privilege('app_runtime','app.group_schedule_lock(uuid,uuid)','execute') and not has_function_privilege('app_runtime','app.guard_coach_schedule_write()','execute'),'internal mutation guards are not callable by runtime');
 select ok(not has_function_privilege('anon','app.publish_group_session(uuid,integer)','execute') and not has_function_privilege('authenticated','app.publish_group_session(uuid,integer)','execute') and not has_function_privilege('service_role','app.publish_group_session(uuid,integer)','execute'),'browser/Data API roles have no publication entry point');

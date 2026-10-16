@@ -390,8 +390,8 @@ test("PostgreSQL keeps open occurrences requestable until their start", async ()
     select
       app.coach_booking_request_eligibility(
         'open',
-        statement_timestamp() + interval '1 microsecond',
-        statement_timestamp() + interval '1 hour 1 microsecond'
+        statement_timestamp() + interval '1 second',
+        statement_timestamp() + interval '1 hour 1 second'
       ) as future,
       app.coach_booking_request_eligibility(
         'open',
@@ -415,8 +415,8 @@ test("PostgreSQL keeps open occurrences requestable until their start", async ()
       ) as held,
       app.coach_booking_request_eligibility(
         'open',
-        statement_timestamp() + interval '7 days',
-        statement_timestamp() + interval '7 days 1 hour'
+        ((statement_timestamp() at time zone 'Europe/Berlin')::date + 30 + time '12:00') at time zone 'Europe/Berlin',
+        ((statement_timestamp() at time zone 'Europe/Berlin')::date + 30 + time '13:00') at time zone 'Europe/Berlin'
       ) as beyond_horizon
   `;
   assert.deepEqual(result, {

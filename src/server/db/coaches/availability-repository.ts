@@ -231,11 +231,16 @@ export async function publicCoachAvailabilityRecords(profileId: string) {
     `);
     const rows = await db.execute<PublicAvailabilityRow>(sql`
       select ${publicAvailabilitySelect()}
-      from app.coach_availability_slots as slot
-      where slot.profile_id = ${profileId}::uuid
-        and slot.starts_at > pg_catalog.statement_timestamp()
-        and slot.ends_at
-          <= pg_catalog.statement_timestamp() + interval '7 days'
+      from (
+        select distinct on (slot.starts_at, slot.ends_at) slot.*
+        from app.coach_availability_slots as slot
+        where slot.profile_id = ${profileId}::uuid
+          and app.availability_in_horizon(
+            slot.starts_at, slot.ends_at, pg_catalog.statement_timestamp()
+          )
+        order by slot.starts_at, slot.ends_at,
+          (slot.status <> 'withdrawn') desc, slot.created_at desc, slot.id desc
+      ) as slot
       order by slot.starts_at, slot.id
     `);
     return Object.freeze(rows.map(mapPublicAvailability));
@@ -256,8 +261,8 @@ export async function currentOwnedCoachAvailabilityRecords(
       and slot.profile_id = ${actor.profileId}::uuid
       and slot.status <> 'withdrawn'
       and slot.ends_at > pg_catalog.statement_timestamp()
-      and slot.starts_at
-        <= pg_catalog.statement_timestamp() + interval '7 days'
+      and (slot.starts_at at time zone 'Europe/Berlin')::date
+        <= (pg_catalog.statement_timestamp() at time zone 'Europe/Berlin')::date + 29
     order by slot.starts_at, slot.id
   `);
   return Object.freeze(rows.map(mapOwnedAvailability));

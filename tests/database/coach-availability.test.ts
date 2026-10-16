@@ -638,11 +638,11 @@ test("weekly rules materialize once, preserve snapshots and remove only open occ
   );
   await publicCoachAvailabilityRecords(secondActor.profileId);
   const generated = firstRead.filter((slot) => slot.recurrenceRuleId !== null);
-  assert.equal(generated.length, 3);
-  assert.equal(secondRead.length, 3);
+  assert.ok(generated.length >= 12 && generated.length <= 15);
+  assert.equal(secondRead.length, generated.length);
   assert.equal(
     new Set(generated.map((slot) => slot.recurrenceLocalDate)).size,
-    1,
+    generated.length / 3,
   );
   assert.ok(
     generated.every(
@@ -666,7 +666,15 @@ test("weekly rules materialize once, preserve snapshots and remove only open occ
     order by recurrence_rule_id
   `;
   assert.equal(occurrenceCounts.length, 3);
-  assert.ok(occurrenceCounts.every((row) => row.occurrence_count === 1));
+  assert.ok(
+    occurrenceCounts.every(
+      (row) => row.occurrence_count >= 4 && row.occurrence_count <= 5,
+    ),
+  );
+  assert.equal(
+    occurrenceCounts.reduce((sum, row) => sum + row.occurrence_count, 0),
+    generated.length,
+  );
 
   await assert.rejects(
     withActorDatabaseContext(firstActor, (transaction) =>
@@ -1062,17 +1070,24 @@ test("a recurring occurrence cannot overlap retained explicit inventory", async 
       }),
   );
 
-  await assert.rejects(
-    withActorDatabaseContext(secondActor, (transaction) =>
-      createOwnedCoachAvailabilityRuleRecord(transaction, ruleInput),
-    ),
-    CoachAvailabilityConflictError,
+  const ruleId = await withActorDatabaseContext(secondActor, (transaction) =>
+    createOwnedCoachAvailabilityRuleRecord(transaction, ruleInput),
   );
-  assert.deepEqual(
-    await withActorDatabaseContext(secondActor, (transaction) =>
-      currentOwnedCoachAvailabilityRuleRecords(transaction, secondActor),
-    ),
-    [],
+  // Retain the valid template while withholding the occupied date.
+  const occurrences = await withActorDatabaseContext(
+    secondActor,
+    (transaction) =>
+      currentOwnedCoachAvailabilityRecords(transaction, secondActor),
+  );
+  const original = occurrences.find((slot) => slot.id === explicitSlotId);
+  assert.ok(original);
+  assert.equal(
+    occurrences.filter((slot) => slot.startsAt === original.startsAt).length,
+    1,
+  );
+  assert.ok(occurrences.some((slot) => slot.recurrenceRuleId === ruleId));
+  await withActorDatabaseContext(secondActor, (transaction) =>
+    removeOwnedCoachAvailabilityRuleRecord(transaction, ruleId),
   );
   await withActorDatabaseContext(secondActor, (transaction) =>
     withdrawOwnedCoachAvailabilityRecord(transaction, explicitSlotId),
