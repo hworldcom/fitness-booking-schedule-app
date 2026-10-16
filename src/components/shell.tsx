@@ -90,7 +90,14 @@ function hasCoachWorkspaceNavigation(actor: ActorSnapshot) {
   );
 }
 
-export function navigationForActor(actor: ActorSnapshot) {
+function isCoachWorkspacePath(path: string) {
+  return (
+    isNavigationHrefActive(path, coachNavigation.href) ||
+    isNavigationHrefActive(path, coachProfileNavigation.href)
+  );
+}
+
+export function navigationForActor(actor: ActorSnapshot, path = "") {
   const accountNavigation =
     actor.status !== "authorized"
       ? []
@@ -108,13 +115,19 @@ export function navigationForActor(actor: ActorSnapshot) {
     ...accountNavigation,
     howItWorksNavigation,
     profileNavigation,
-  ];
+  ].filter(
+    ({ href }) =>
+      !isCoachWorkspacePath(path) ||
+      !["/explore", "/events", howItWorksNavigation.href].includes(href),
+  );
 }
 
-export function mobileNavigationForActor(actor: ActorSnapshot) {
-  return navigationForActor(actor).filter(
+export function mobileNavigationForActor(actor: ActorSnapshot, path = "") {
+  return navigationForActor(actor, path).filter(
     ({ href }) =>
-      href !== "/" && href !== "/how-it-works" && href !== "/events",
+      (href !== "/" || isCoachWorkspacePath(path)) &&
+      href !== "/how-it-works" &&
+      href !== "/events",
   );
 }
 
@@ -190,9 +203,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </span>
     );
   const publicShell = isPublicMarketplacePath(path);
-  const coachWorkspace =
-    isNavigationHrefActive(path, coachNavigation.href) ||
-    isNavigationHrefActive(path, coachProfileNavigation.href);
+  const coachWorkspace = isCoachWorkspacePath(path);
   const currentProfile = actor.status === "authorized" ? actor.profile : null;
   const currentProfileImage = currentProfile
     ? accountProfileImagePresentation(
@@ -200,10 +211,8 @@ export function Shell({ children }: { children: ReactNode }) {
         currentProfile.coachPortraitUrl,
       )
     : null;
-  const visibleNavigation = navigationForActor(actor).filter(
-    ({ href }) => !coachWorkspace || href !== howItWorksNavigation.href,
-  );
-  const mobileNavigation = mobileNavigationForActor(actor);
+  const visibleNavigation = navigationForActor(actor, path);
+  const mobileNavigation = mobileNavigationForActor(actor, path);
   const publicAccountNavigation = publicAccountNavigationForActor(actor);
   const roleLabel = workspaceRoleLabel(actor);
   const active = (href: string) => isNavigationHrefActive(path, href);

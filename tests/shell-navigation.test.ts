@@ -105,6 +105,26 @@ test("coach workspace active state does not match public coach profiles", () => 
   assert.equal(isNavigationHrefActive("/coach", "/coach"), true);
   assert.equal(isNavigationHrefActive("/coach/settings", "/coach"), true);
   assert.equal(isNavigationHrefActive("/coaches/daniel-park", "/coach"), false);
+  const actor = authorizedActor("approved");
+  for (const path of ["/coach", "/coach/events/example", "/profile/coach"]) {
+    assert.deepEqual(
+      navigationForActor(actor, path).map(({ href }) => href),
+      ["/", "/sessions", "/messages", "/coach", "/profile/coach"],
+      path,
+    );
+  }
+  for (const path of ["/coaches/daniel-park", "/profile", "/sessions"]) {
+    assert.deepEqual(
+      navigationForActor(actor, path),
+      navigationForActor(actor),
+    );
+  }
+  assert.deepEqual(
+    navigationForActor({ status: "signed-out" }, "/coach").map(
+      ({ href }) => href,
+    ),
+    ["/", "/profile"],
+  );
 });
 
 test("public shell mode is restricted to the adopted marketplace routes", () => {
@@ -197,6 +217,26 @@ test("mobile workspace navigation stays bounded to primary private destinations"
       { label: "Profile", href: "/profile/coach" },
     ],
   );
+  for (const status of ["approved", "demo", "suspended"] as const) {
+    for (const path of ["/coach", "/coach/events", "/profile/coach"]) {
+      assert.deepEqual(
+        mobileNavigationForActor(authorizedActor(status), path).map(
+          ({ label, href }) => ({ label, href }),
+        ),
+        [
+          { label: "Home", href: "/" },
+          { label: "My sessions", href: "/sessions" },
+          { label: "Messages", href: "/messages" },
+          { label: "Coach workspace", href: "/coach" },
+          {
+            label: "Profile",
+            href: status === "suspended" ? "/profile" : "/profile/coach",
+          },
+        ],
+        `${status}: ${path}`,
+      );
+    }
+  }
 });
 
 test("authenticated workspace role copy reflects capability without granting it", () => {
