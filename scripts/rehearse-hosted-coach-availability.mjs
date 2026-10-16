@@ -2,49 +2,66 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { expect as baseExpect } from "@playwright/test";
 import { availabilityRehearsal } from "./lib/hosted-availability-rehearsal.mjs";
 
-const h = await availabilityRehearsal(process.argv.slice(2));
+let h, stageHook;
 const expect = baseExpect.configure({ timeout: 30000 });
 let success = false,
   phase = "preflight";
-try {
-  await h.preflight();
-  if (["--check", "--cleanup"].includes(h.args[2])) success = true;
-  else if (h.args[4] === "inactive-venue") await inactiveVenueScenario();
-  else if (h.args[4] === "closed-selection") {
-    phase = "closed selection recovery";
-    await h.start();
-    await exerciseClosedSelection(
-      await h.person("Owner", true),
-      await h.person("Athlete"),
+export async function runHostedAvailability(
+  args,
+  { ticket = "DEV0253", onStage } = {},
+) {
+  assert.equal(h, undefined, "One rehearsal invocation per process.");
+  h = await availabilityRehearsal(args, { ticket });
+  stageHook = onStage;
+  try {
+    await h.preflight();
+    if (["--check", "--cleanup"].includes(h.args[2])) success = true;
+    else if (h.args[4] === "inactive-venue") await inactiveVenueScenario();
+    else if (h.args[4] === "closed-selection") {
+      phase = "closed selection recovery";
+      await h.start();
+      await exerciseClosedSelection(
+        await h.person("Owner", true),
+        await h.person("Athlete"),
+      );
+      success = true;
+    } else await run();
+  } catch (error) {
+    console.error(
+      "Hosted availability failed during " +
+        phase +
+        ": " +
+        h.redact(error.message),
     );
-    success = true;
-  } else await run();
-} catch (error) {
-  console.error(
-    "Hosted availability failed during " +
-      phase +
-      ": " +
-      h.redact(error.message),
-  );
-  console.error(
-    h.redact(
-      error.stack
-        ?.split("\n")
-        .filter(
-          (line) =>
-            line.includes("scripts/rehearse-hosted-coach-availability") ||
-            line.includes("scripts/lib/hosted-availability-rehearsal"),
-        )
-        .slice(0, 4)
-        .join("\n") ?? "",
-    ),
-  );
-  process.exitCode = 1;
-} finally {
-  await h.finish(success);
+    console.error(
+      h.redact(
+        error.stack
+          ?.split("\n")
+          .filter(
+            (line) =>
+              line.includes("scripts/rehearse-hosted-coach-availability") ||
+              line.includes("scripts/lib/hosted-availability-rehearsal") ||
+              line.includes("scripts/rehearse-hosted-calendar-integration"),
+          )
+          .slice(0, 4)
+          .join("\n") ?? "",
+      ),
+    );
+    process.exitCode = 1;
+  } finally {
+    await h.finish(success);
+  }
+  return success && process.exitCode !== 1;
+}
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href
+) {
+  await runHostedAvailability(process.argv.slice(2));
 }
 
 async function run() {
@@ -294,6 +311,25 @@ async function run() {
     "published",
     publication.reason ?? publication.outcome,
   );
+  const context = {
+    h,
+    owner,
+    other,
+    athlete,
+    competitor,
+    applicant,
+    target,
+    today,
+    plus,
+    groupId,
+    booking,
+    booked,
+    pending,
+    venueB,
+    byDate,
+    getPolicy,
+  };
+  await stageHook?.("mixed", context);
   await dateEditor(target);
   await page.getByRole("radio", { name: /Custom hours/ }).check();
   await page
@@ -366,7 +402,7 @@ async function run() {
     assert.ok(!publicHtml.includes(person.profileId));
     assert.ok(
       !publicHtml.includes(
-        "DEV0253 " + h.runId.slice(0, 8) + " " + person.label,
+        h.ticket + " " + h.runId.slice(0, 8) + " " + person.label,
       ),
     );
   }
@@ -387,6 +423,7 @@ async function run() {
   h.record(
     "DEV0253/DEV0255: real whole-date venue replacement retains original booking/group, closes two pending requests/cards atomically and removes stale public IDs",
   );
+  await stageHook?.("custom", context);
   phase = "day off, cancellation and fresh restoration";
   await dateEditor(target);
   await page.getByRole("radio", { name: /All day unavailable/ }).check();
@@ -404,6 +441,7 @@ async function run() {
     0,
     "Cancellation cannot reopen day-off capacity.",
   );
+  await stageHook?.("off", context);
   await dateEditor(target);
   await page.getByRole("radio", { name: /Use normal week/ }).check();
   await save();
@@ -424,6 +462,7 @@ async function run() {
   h.record(
     "DEV0253/DEV0255: day off survives reload/cancellation, restoration uses a fresh occurrence and leaves original request history terminal",
   );
+  await stageHook?.("restored", { ...context, restored });
   phase = "manual closure survives override restoration";
   const manuallyClosed = (await byDate(plus(4))).find(
     (s) => s.hour === "12:00" && s.status === "open",
@@ -750,6 +789,7 @@ async function run() {
   h.record(
     "DEV0255: all 30 public dates, real final-day request/reload/withdraw, safe sign-in return, native guest navigation and DB DST boundaries",
   );
+  await stageHook?.("final", context);
   phase = "closed selection recovery";
   await exerciseClosedSelection(other, athlete);
   await presentationAndAccess();

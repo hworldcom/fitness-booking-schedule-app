@@ -68,6 +68,8 @@ All required development records exist. These six direct peers each declare COR0
 
 - 2026-10-16: DEV0253 and DEV0255 completed real hosted-dev production-build criteria, including editor recovery, original retained sessions/cards, actual thirty-date requests, stale-hour conflict correction, native keyboard navigation, responsive/access checks and exact fixture cleanup with original-row preservation. Their archived records distinguish failed full commands, focused passes and scoped cleanup recovery. DEV0256 remains Draft until its concrete integration run starts; no release is claimed.
 
+- 2026-10-16: DEV0256 starts after completed runtime peers (`ed963f8`); its concrete shared-cohort plan and exact-dev safety/cleanup boundaries are recorded before implementation. Final combined proof remains open.
+
 ## Validation results
 
 2026-10-16 independent hosted rollout: the user authorized [DEV0271](../../archive/backend/DEV0271-apply-hosted-dev-calendar-migration.md), an external operation rather than a direct M9 peer, to apply unchanged `20261016000300` on confirmed hosted dev. Eight permission assertions and 21 rolled-back runtime SQL assertions passed before and after installation, covering mixed/paged/filtered reads, owner/dataset isolation, hidden/suspended commitments and redacted fields. Exact ledger/body/owner/ACL, runtime denial and stored-data preservation passed. Docker was not recreated, and production was unchanged. This resolves the missing-function prerequisite on dev; DEV0253–DEV0255's real Auth/browser/detail criteria and DEV0256's integrated rehearsal remain open.
@@ -87,7 +89,7 @@ Closure provenance and explicit successor identities must preserve manual closur
 ## Completion and review references
 
 - Completed: Not completed — runtime and integrated acceptance evidence pending.
-- Direct development tickets: DEV0251 documentation Completed; DEV0252 backend Completed; DEV0253 editor Completed; DEV0254 calendar Completed; DEV0255 Completed; DEV0256 Draft.
+- Direct development tickets: DEV0251 documentation Completed; DEV0252 backend Completed; DEV0253 editor Completed; DEV0254 calendar Completed; DEV0255 Completed; DEV0256 In progress.
 - Commit: Not applicable — COR identifiers are never commit subjects; the user-authorized planning checkpoint is owned by DEV0251.
 - Review: Planning self-review; no independent/runtime integration review.
 - Deployment or release: None.

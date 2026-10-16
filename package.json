@@ -50,7 +50,8 @@
     "db:seed": "node scripts/seed-local-database.mjs",
     "db:test": "supabase test db --local",
     "db:lint": "supabase db lint --local",
-    "format:check": "prettier --check scripts src tests playwright.config.ts package.json tsconfig.json postcss.config.mjs eslint.config.mjs vercel.json"
+    "format:check": "prettier --check scripts src tests playwright.config.ts package.json tsconfig.json postcss.config.mjs eslint.config.mjs vercel.json",
+    "test:calendar-hosted": "node --env-file=.env.development.local scripts/rehearse-hosted-calendar-integration.mjs"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "5.3.0",

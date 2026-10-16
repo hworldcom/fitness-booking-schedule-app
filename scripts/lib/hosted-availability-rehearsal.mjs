@@ -19,7 +19,18 @@ import { createServerClient } from "@supabase/ssr";
 import { chromium } from "@playwright/test";
 import { hostedDevelopmentConfiguration } from "./hosted-environment.mjs";
 
-export async function availabilityRehearsal(args) {
+export async function availabilityRehearsal(args, { ticket = "DEV0253" } = {}) {
+  assert.ok(
+    ["DEV0253", "DEV0256"].includes(ticket),
+    "Unknown rehearsal owner.",
+  );
+  if (ticket === "DEV0256")
+    assert.ok(
+      !args.includes("--scenario"),
+      "Use the complete integration rehearsal.",
+    );
+  const label = ticket.toLowerCase(),
+    port = ticket === "DEV0256" ? 3156 : 3146;
   assert.deepEqual(
     args.slice(0, 2),
     ["--environment", "dev"],
@@ -39,7 +50,7 @@ export async function availabilityRehearsal(args) {
   const target = hostedDevelopmentConfiguration(process.env);
   assert.equal(target.projectRef, "mdzidiqosxbghmfyxphb");
   const root = process.cwd(),
-    base = "http://localhost:3146";
+    base = "http://localhost:" + port;
   const recovering = args[2] === "--cleanup";
   let recovery;
   if (recovering) {
@@ -54,7 +65,7 @@ export async function availabilityRehearsal(args) {
       stat.isFile() && !stat.isSymbolicLink() && (stat.mode & 0o777) === 0o600,
     );
     recovery = JSON.parse(await readFile(file, "utf8"));
-    assert.equal(recovery.ticket, "DEV0253");
+    assert.equal(recovery.ticket, ticket);
     assert.equal(recovery.project, target.projectRef);
     assert.ok(Array.isArray(recovery.people) && recovery.people.length <= 5);
     assert.match(recovery.runId, /^[a-f0-9-]{36}$/);
@@ -70,10 +81,10 @@ export async function availabilityRehearsal(args) {
   await mkdir(path.join(work, "supabase"), { recursive: true });
   await writeFile(
     path.join(work, "supabase/config.toml"),
-    'project_id = "dev0253_live"\n',
+    `project_id = "${label}_live"\n`,
     { mode: 0o600 },
   );
-  const output = path.join(root, "test-results/dev0253-hosted", runId);
+  const output = path.join(root, `test-results/${label}-hosted`, runId);
   await mkdir(output, { recursive: true });
   const people = recovery?.people ?? [],
     pages = [],
@@ -162,7 +173,7 @@ export async function availabilityRehearsal(args) {
       manifest,
       JSON.stringify(
         {
-          ticket: "DEV0253",
+          ticket,
           project: target.projectRef,
           runId,
           people: people.map(({ id, profileId }) => ({ id, profileId })),
@@ -219,7 +230,7 @@ export async function availabilityRehearsal(args) {
     const p = {
       id: randomUUID(),
       label,
-      email: `dev0253-${runId}-${label.toLowerCase()}@users.movx.test`,
+      email: `${ticket.toLowerCase()}-${runId}-${label.toLowerCase()}@users.movx.test`,
       cookies: [],
     };
     people.push(p);
@@ -229,7 +240,7 @@ export async function availabilityRehearsal(args) {
       email: p.email,
       email_confirm: true,
       app_metadata: {
-        movx_test_ticket: "DEV0253",
+        movx_test_ticket: ticket,
         movx_test_run: runId,
         temporary: true,
       },
@@ -245,7 +256,7 @@ export async function availabilityRehearsal(args) {
       "Create exact tagged Auth identity.",
     );
     const [row] =
-      await runtime`select * from app.enroll_application_identity(${p.id}::uuid,${"DEV0253 " + runId.slice(0, 8) + " " + label})`;
+      await runtime`select * from app.enroll_application_identity(${p.id}::uuid,${ticket + " " + runId.slice(0, 8) + " " + label})`;
     Object.assign(p, {
       profileId: row.identity_profile_id,
       dataset: row.identity_run_id,
@@ -254,7 +265,7 @@ export async function availabilityRehearsal(args) {
     if (coach) {
       await asActor(p, async (tx) => {
         await tx`select app.submit_owned_coach_application()`;
-        await tx`select app.upsert_owned_coach_profile(${"DEV0253 " + runId.slice(0, 8) + " " + label},'Temporary explicitly tagged availability rehearsal, removed after validation.',array['Boxing'],'Europe/Berlin','hidden','40000000-0000-4000-8000-000000000001'::uuid,null,null,null,null,null)`;
+        await tx`select app.upsert_owned_coach_profile(${ticket + " " + runId.slice(0, 8) + " " + label},'Temporary explicitly tagged availability rehearsal, removed after validation.',array['Boxing'],'Europe/Berlin','hidden','40000000-0000-4000-8000-000000000001'::uuid,null,null,null,null,null)`;
       });
       if (label !== "Applicant")
         await ownerQuery(
@@ -431,7 +442,7 @@ export async function availabilityRehearsal(args) {
         "--hostname",
         "localhost",
         "--port",
-        "3146",
+        String(port),
       ],
       { cwd: checkout, env, stdio: ["ignore", "pipe", "pipe"] },
     );
@@ -478,10 +489,10 @@ export async function availabilityRehearsal(args) {
       assert.ok(
         !got.error &&
           (recovering
-            ? got.data.user?.email?.startsWith(`dev0253-${runId}-`) &&
+            ? got.data.user?.email?.startsWith(`${label}-${runId}-`) &&
               got.data.user.email.endsWith("@users.movx.test")
             : got.data.user?.email === p.email) &&
-          got.data.user.app_metadata.movx_test_ticket === "DEV0253" &&
+          got.data.user.app_metadata.movx_test_ticket === ticket &&
           got.data.user.app_metadata.movx_test_run === runId &&
           got.data.user.app_metadata.temporary === true,
         "Cleanup ownership changed.",
@@ -491,7 +502,7 @@ export async function availabilityRehearsal(args) {
     if (!verified.length) return;
     const ids = verified.map((p) => uuid(p.id)).join(",");
     await ownerQuery(`begin;set local lock_timeout='5s';set local statement_timeout='60s';
-   create temporary table owned as select p.id from app.profiles p join auth.users u on u.id=p.auth_user_id where u.id in(${ids}) and u.raw_app_meta_data->>'movx_test_run'=${literal(runId)} and u.raw_app_meta_data->>'movx_test_ticket'='DEV0253';
+   create temporary table owned as select p.id from app.profiles p join auth.users u on u.id=p.auth_user_id where u.id in(${ids}) and u.raw_app_meta_data->>'movx_test_run'=${literal(runId)} and u.raw_app_meta_data->>'movx_test_ticket'=${literal(ticket)};
    do $$ begin if exists(select 1 from app.coach_booking_requests where (coach_profile_id in(select id from owned) or client_profile_id in(select id from owned)) and not(coach_profile_id in(select id from owned) and client_profile_id in(select id from owned))) or exists(select 1 from app.coach_private_bookings where (coach_profile_id in(select id from owned) or client_profile_id in(select id from owned)) and not(coach_profile_id in(select id from owned) and client_profile_id in(select id from owned))) or exists(select 1 from app.message_conversations where (coach_profile_id in(select id from owned) or athlete_profile_id in(select id from owned)) and not(coach_profile_id in(select id from owned) and athlete_profile_id in(select id from owned))) or exists(select 1 from app.coach_group_registrations r join app.coach_group_sessions s on s.id=r.session_id where (s.coach_profile_id in(select id from owned) or r.athlete_profile_id in(select id from owned)) and not(s.coach_profile_id in(select id from owned) and r.athlete_profile_id in(select id from owned))) or exists(select 1 from app.coach_athlete_connection_pairs where (coach_profile_id in(select id from owned) or athlete_profile_id in(select id from owned)) and not(coach_profile_id in(select id from owned) and athlete_profile_id in(select id from owned))) then raise exception 'External fixture activity requires review';end if;end $$;
    delete from app.message_conversations where coach_profile_id in(select id from owned) and athlete_profile_id in(select id from owned);
    delete from app.coach_athlete_connection_attempts where pair_id in(select id from app.coach_athlete_connection_pairs where coach_profile_id in(select id from owned) and athlete_profile_id in(select id from owned));
@@ -546,7 +557,7 @@ export async function availabilityRehearsal(args) {
       assert.equal(
         catalog.unsafe_fixtures,
         0,
-        "Another DEV0253 run or an unrecognized temporary rehearsal requires cleanup.",
+        "Another availability/integration run or an unrecognized temporary rehearsal requires cleanup.",
       );
     const [role] =
       await runtime`select current_user name,has_function_privilege(current_user,'app.save_owned_effective_coach_availability(jsonb)','execute') can_save,has_table_privilege(current_user,'app.coach_group_sessions','select') direct_groups`;
@@ -685,6 +696,7 @@ export async function availabilityRehearsal(args) {
   }
   return {
     args,
+    ticket,
     target,
     root,
     base,
