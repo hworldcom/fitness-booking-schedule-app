@@ -258,11 +258,16 @@ export async function bookingConnectionContextRecord(
     const rows = await tx.execute<{ projection: unknown }>(
       sql`select app.current_booking_connection_context(${bookingId}::uuid) as projection`,
     );
-    const r = row(rows[0]?.projection);
-    return Object.freeze({
-      canSend: boolean(r.canSend),
-      connection: r.connection === null ? null : mapConnection(r.connection),
-    });
+    return parseBookingConnectionContext(rows[0]?.projection);
+  });
+}
+export function parseBookingConnectionContext(
+  value: unknown,
+): BookingConnectionContext {
+  const r = row(value);
+  return Object.freeze({
+    canSend: boolean(r.canSend),
+    connection: r.connection === null ? null : mapConnection(r.connection),
   });
 }
 export async function connectionPageRecord(

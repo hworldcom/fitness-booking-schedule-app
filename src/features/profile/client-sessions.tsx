@@ -21,6 +21,7 @@ import {
 } from "@/domain/coach-bookings";
 import { ClientSessionCoachIdentity } from "./client-session-coach-identity";
 import { ClientSessionDateTile } from "./client-session-date-tile";
+import { SessionTitleEditor } from "@/features/messages/session-title-editor";
 
 function bookingTime(booking: PrivateBookingProjection) {
   const day = new Intl.DateTimeFormat("en-GB", {
@@ -107,6 +108,7 @@ export function ClientSessions({
             </span>
           </header>
           <div className="client-session-facts">
+            <SessionTitleEditor bookingId={booking.id} value={booking} />
             <p>
               <Clock3 size={16} aria-hidden="true" />
               <strong>{bookingTime(booking)}</strong>

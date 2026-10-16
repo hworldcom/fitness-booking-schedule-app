@@ -28,6 +28,7 @@ export async function GET(request: Request) {
   for (const k of [
     "conversationId",
     "coachId",
+    "contextId",
     "filter",
     "beforeAt",
     "beforeId",

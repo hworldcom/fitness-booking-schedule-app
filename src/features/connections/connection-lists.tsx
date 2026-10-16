@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { AthleteIdentity } from "@/features/coaches/athlete-identity";
+import { privateAthleteHref } from "@/domain/coach-athlete-connections";
 import { ConnectionAvatar } from "./connection-avatar";
 import type {
   ConnectionDecision,
@@ -132,14 +134,29 @@ export function ConnectionLists({
                     aria-label={`${name(row)} · ${connectionStatusLabel(row.status)}`}
                   >
                     <header>
-                      <ConnectionAvatar
-                        name={name(row)}
-                        imageUrl={connectionPresentation(row, role).imageUrl}
-                      />
-                      <div>
-                        <h4>{name(row)}</h4>
-                        <span>{connectionStatusLabel(row.status)}</span>
-                      </div>
+                      {role === "coach" && row.status === "accepted" ? (
+                        <AthleteIdentity
+                          name={name(row)}
+                          imageUrl={connectionPresentation(row, role).imageUrl}
+                          href={privateAthleteHref(row.pairId)}
+                          heading="h4"
+                        >
+                          <span>{connectionStatusLabel(row.status)}</span>
+                        </AthleteIdentity>
+                      ) : (
+                        <>
+                          <ConnectionAvatar
+                            name={name(row)}
+                            imageUrl={
+                              connectionPresentation(row, role).imageUrl
+                            }
+                          />
+                          <div>
+                            <h4>{name(row)}</h4>
+                            <span>{connectionStatusLabel(row.status)}</span>
+                          </div>
+                        </>
+                      )}
                     </header>
                     {role === "athlete" &&
                       row.status === "accepted" &&

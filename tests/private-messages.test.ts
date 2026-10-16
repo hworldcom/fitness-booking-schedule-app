@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { validSessionTitle, sessionTitle } from "@/domain/session-titles";
 import {
   parseMessageInbox,
   parseMessageThread,
@@ -7,6 +8,49 @@ import {
   validMessageCommand,
 } from "@/domain/private-messages";
 const id = "ac024400-0000-4000-8000-000000000001";
+test("session titles stay optional and bounded; edit and history scope commands validate", () => {
+  for (const title of ["", "  Footwork  ", "🥊".repeat(100)])
+    assert.equal(validSessionTitle(title), true);
+  for (const title of [
+    null,
+    "x".repeat(101),
+    "🥊".repeat(101),
+    "one\ntwo",
+    "one\ttwo",
+    "\ud800",
+    "\u2028",
+  ])
+    assert.equal(validSessionTitle(title), false);
+  assert.equal(sessionTitle(""), "Training session");
+  assert.equal(
+    validMessageCommand({
+      action: "session-title",
+      args: { bookingId: id, title: "Footwork", expectedRevision: 0 },
+    }),
+    true,
+  );
+  assert.equal(
+    validMessageCommand({
+      action: "session-title",
+      args: { bookingId: id, title: "Footwork", expectedRevision: -1 },
+    }),
+    false,
+  );
+  assert.equal(
+    validMessageCommand({
+      action: "thread",
+      args: { conversationId: id, contextId: id, after: 50 },
+    }),
+    true,
+  );
+  assert.equal(
+    validMessageCommand({
+      action: "thread",
+      args: { conversationId: id, contextId: "forged" },
+    }),
+    false,
+  );
+});
 const conversation = {
   id,
   coachProfileId: id,
@@ -102,6 +146,8 @@ test("message DTO whitelist discards private media, identity and note fields", (
     lastSeq: 0,
     readThrough: 0,
     privateNotes: "Hidden",
+    hasOlder: false,
+    hasNewer: false,
   });
   assert.ok(!JSON.stringify(thread).includes("Hidden"));
   assert.throws(() =>

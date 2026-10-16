@@ -284,6 +284,18 @@ test("private message database authority, retries, limits and read isolation", a
             "select * from app.create_coach_booking_request($1::uuid)",
             [slots[0]],
           );
+          const pendingThread = await command(athlete, "thread", {
+            conversationId,
+          });
+          const pendingContext = pendingThread.contexts.find(
+            (v: { requestId: string }) => v.requestId === requests[0],
+          );
+          await command(athlete, "send", {
+            conversationId,
+            contextId: pendingContext.id,
+            body: "Question before acceptance",
+            submissionId: randomUUID(),
+          });
           for (const request of requests) {
             const accepted = await source(
               coach,
@@ -311,6 +323,190 @@ test("private message database authority, retries, limits and read isolation", a
             ).bookingId,
             bookings[0],
           );
+        },
+      );
+      await t.test(
+        "shared session titles are private, revision checked and independent of booking state",
+        async () => {
+          try {
+            await tx.savepoint(async () => {
+              const titleArgs = {
+                bookingId: bookings[0],
+                title: "Footwork and defence",
+                expectedRevision: 0,
+              };
+              const first = await command(athlete, "session-title", titleArgs);
+              assert.deepEqual(first, {
+                title: titleArgs.title,
+                titleRevision: 1,
+                canEditTitle: true,
+              });
+              assert.deepEqual(
+                await command(athlete, "session-title", titleArgs),
+                first,
+              );
+              await assert.rejects(
+                command(coach, "session-title", {
+                  ...titleArgs,
+                  title: "Stale change",
+                }),
+              );
+              await assert.rejects(
+                command(other, "session-title", {
+                  ...titleArgs,
+                  expectedRevision: 1,
+                }),
+              );
+              await assert.rejects(
+                command(outsider, "thread", { conversationId, contextId }),
+              );
+              await assert.rejects(
+                source(
+                  other,
+                  "select app.current_session_title_details($1::uuid)",
+                  [bookings[0]],
+                ),
+              );
+              await assert.rejects(
+                tx.savepoint(async () => {
+                  await act(athlete);
+                  await tx`update app.private_session_titles set title='Raw overwrite'`;
+                }),
+              );
+              for (const title of [
+                "x".repeat(101),
+                "🥊".repeat(101),
+                "Line\nTwo",
+                "Bad\ttext",
+              ]) {
+                await assert.rejects(
+                  command(coach, "session-title", {
+                    ...titleArgs,
+                    title,
+                    expectedRevision: 1,
+                  }),
+                );
+              }
+              const second = await command(coach, "session-title", {
+                ...titleArgs,
+                title: "Defence practice",
+                expectedRevision: 1,
+              });
+              assert.equal(second.titleRevision, 2);
+              const thread = await command(athlete, "thread", {
+                conversationId,
+              });
+              assert.equal(
+                thread.contexts.find(
+                  (v: { bookingId: string }) => v.bookingId === bookings[0],
+                ).title,
+                second.title,
+              );
+              const details = await source(
+                athlete,
+                "select app.current_session_title_details($1::uuid) details",
+                [bookings[0]],
+              );
+              assert.deepEqual(details[0].details, second);
+              await command(athlete, "session-title", {
+                ...titleArgs,
+                title: "",
+                expectedRevision: 2,
+              });
+              await source(
+                athlete,
+                "select app.cancel_direct_private_booking($1::uuid)",
+                [bookings[0]],
+              );
+              await assert.rejects(
+                command(coach, "session-title", {
+                  ...titleArgs,
+                  expectedRevision: 3,
+                }),
+              );
+              throw new RolledBack();
+            });
+          } catch (e) {
+            if (!(e instanceof RolledBack)) throw e;
+          }
+        },
+      );
+      await t.test(
+        "session filtering pages full history, includes original request and never consumes unrelated unread",
+        async () => {
+          try {
+            await tx.savepoint(async () => {
+              const initial = await command(athlete, "thread", {
+                conversationId,
+              });
+              const selected = initial.contexts.find(
+                (v: { bookingId: string }) => v.bookingId === bookings[0],
+              );
+              const unrelated = initial.contexts.find(
+                (v: { bookingId: string }) => v.bookingId === bookings[1],
+              );
+              await tx.unsafe("reset role");
+              await tx`select app.mail_flags(true)`;
+              for (let i = 0; i < 61; i++) {
+                await tx`select app.mail_append(c,${selected.id}::uuid,${coach.id}::uuid,'text',${"Session text " + i},${randomUUID()}::uuid,null,null,statement_timestamp()-interval '3 days') from app.message_conversations c where c.id=${conversationId}::uuid`;
+                await tx`select app.mail_append(c,${unrelated.id}::uuid,${coach.id}::uuid,'text','Other session',${randomUUID()}::uuid,null,null,statement_timestamp()-interval '3 days') from app.message_conversations c where c.id=${conversationId}::uuid`;
+              }
+              const first = await command(athlete, "thread", {
+                conversationId,
+                contextId: selected.id,
+              });
+              assert.equal(first.entries.length, 50);
+              assert.equal(first.hasOlder, false);
+              assert.equal(first.hasNewer, true);
+              assert.ok(
+                first.entries.some(
+                  (e: { kind: string }) => e.kind === "request",
+                ),
+              );
+              assert.ok(
+                first.entries.every(
+                  (e: { contextId: string }) => e.contextId === selected.id,
+                ),
+              );
+              const next = await command(athlete, "thread", {
+                conversationId,
+                contextId: selected.id,
+                after: first.entries.at(-1).seq,
+              });
+              assert.equal(first.entries.length + next.entries.length, 64);
+              assert.ok(
+                first.entries.some(
+                  (e: { body: string }) =>
+                    e.body === "Question before acceptance",
+                ),
+              );
+              assert.equal(next.hasNewer, false);
+              assert.equal(next.hasOlder, true);
+              assert.equal(first.readThrough, next.readThrough);
+              assert.equal(next.conversation.unread, true);
+              const previous = await command(athlete, "thread", {
+                conversationId,
+                contextId: selected.id,
+                before: next.entries[0].seq,
+              });
+              assert.deepEqual(previous.entries, first.entries);
+              await assert.rejects(
+                command(other, "thread", {
+                  conversationId,
+                  contextId: selected.id,
+                }),
+              );
+              await assert.rejects(
+                command(athlete, "thread", {
+                  conversationId,
+                  contextId: randomUUID(),
+                }),
+              );
+              throw new RolledBack();
+            });
+          } catch (e) {
+            if (!(e instanceof RolledBack)) throw e;
+          }
         },
       );
       await t.test(
@@ -555,6 +751,19 @@ test("private message database authority, retries, limits and read isolation", a
           const bookingContext = blocked.contexts.find(
             (c: { bookingId: string }) => c.bookingId === bookings[0],
           );
+          assert.equal(bookingContext.canEditTitle, true);
+          await command(coach, "session-title", {
+            bookingId: bookings[0],
+            title: "Existing booking coordination",
+            expectedRevision: 0,
+          });
+          await assert.rejects(
+            command(coach, "session-title", {
+              bookingId: bookings[2],
+              title: "Expired block exception",
+              expectedRevision: 0,
+            }),
+          );
           await command(coach, "send", {
             conversationId,
             contextId: bookingContext.id,
@@ -588,6 +797,13 @@ test("private message database authority, retries, limits and read isolation", a
             [bookings[0]],
           );
           const after = await command(coach, "thread", { conversationId });
+          await assert.rejects(
+            command(coach, "session-title", {
+              bookingId: bookings[0],
+              title: "Cancelled exception",
+              expectedRevision: 1,
+            }),
+          );
           assert.equal(
             after.contexts.find(
               (c: { bookingId: string }) => c.bookingId === bookings[0],
@@ -736,11 +952,22 @@ test("private message database authority, retries, limits and read isolation", a
         "an authorized other-dataset actor cannot discover or read the conversation",
         async () => {
           await tx.unsafe("reset role");
-          const run = "20000000-0000-4000-8000-000000000001";
+          const run = randomUUID();
+          await tx`insert into app.demo_runs(id,slug,name,status,catalogue_visibility,schedule_anchor_date,starts_at,ends_at) select ${run}::uuid,${"dev0248-dataset-" + run},'Private scope test','active','private',schedule_anchor_date,starts_at,ends_at from app.demo_runs where id=${athlete.run}::uuid`;
+          assert.notEqual(run, athlete.run);
           await tx`insert into app.demo_run_participants(run_id,profile_id,role,status,joined_at) values(${run}::uuid,${outsider.id}::uuid,'member','active',statement_timestamp()) on conflict do nothing`;
           const foreign = { ...outsider, run };
-          assert.equal((await command(foreign, "inbox")).items.length, 0);
+          await assert.rejects(command(foreign, "inbox"));
           await assert.rejects(command(foreign, "thread", { conversationId }));
+          await tx.unsafe("reset role");
+          await tx`insert into app.demo_run_participants(run_id,profile_id,role,status,joined_at) values(${run}::uuid,${athlete.id}::uuid,'member','active',statement_timestamp()) on conflict do nothing`;
+          await assert.rejects(
+            command({ ...athlete, run }, "session-title", {
+              bookingId: bookings[1],
+              title: "Cross-dataset title",
+              expectedRevision: 0,
+            }),
+          );
         },
       );
       await t.test(

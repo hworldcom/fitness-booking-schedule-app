@@ -15,9 +15,9 @@ import {
   completePrivateBookingAction,
   type CoachMarketplaceActionResult,
 } from "@/app/coach-marketplace-actions";
-import { profileInitials } from "@/auth/profile-presentation";
-import { Avatar } from "@/components/ui";
+import { AthleteIdentity } from "./athlete-identity";
 import type { PrivateBookingProjection } from "@/domain/coach-bookings";
+import { SessionTitleEditor } from "@/features/messages/session-title-editor";
 
 function bookingTime(booking: PrivateBookingProjection) {
   const values = Object.fromEntries(
@@ -124,20 +124,18 @@ export function CoachClientCards({
                 id={`coach-booking-${booking.id}`}
               >
                 <header>
-                  <Avatar
-                    initials={profileInitials(booking.clientDisplayName)}
-                    color="blue"
+                  <AthleteIdentity
+                    name={booking.clientDisplayName}
                     imageUrl={booking.clientAvatarUrl}
-                    alt={`${booking.clientDisplayName}'s profile picture`}
-                  />
-                  <div>
-                    <h3>{booking.clientDisplayName}</h3>
+                    href={booking.athleteProfileHref}
+                  >
                     <span>
                       <MapPin size={13} aria-hidden="true" />
                       {booking.location.publicLabel}
                     </span>
-                  </div>
+                  </AthleteIdentity>
                 </header>
+                <SessionTitleEditor bookingId={booking.id} value={booking} />
                 <div className="coach-client-card-main">
                   <span>
                     <small>Session time</small>

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ArrowLeft, MessageSquare, Send, ShieldBan, X } from "lucide-react";
 import { useActor } from "@/auth/client/actor-provider";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
+import { sessionTitle } from "@/domain/session-titles";
+import { SessionTitleEditor } from "./session-title-editor";
 import {
   messageStatusLabel,
   validMessageBody,
@@ -29,7 +31,7 @@ const date = (value: string) =>
 const contextLabel = (context: MessageContext) =>
   context.kind === "inquiry"
     ? "Coach inquiry"
-    : `${context.bookingId ? "Session" : "Session request"} · ${context.startsAt ? date(context.startsAt) : "Details"}`;
+    : `${context.bookingId ? sessionTitle(context.title) : "Session request"} · ${context.startsAt ? date(context.startsAt) : "Details"}`;
 function mergeThread(
   old: MessageThread | null,
   next: MessageThread,
@@ -37,6 +39,15 @@ function mergeThread(
   if (!old || old.conversation.id !== next.conversation.id) return next;
   return {
     ...next,
+    hasOlder:
+      (old.entries[0]?.seq ?? Infinity) < (next.entries[0]?.seq ?? Infinity)
+        ? old.hasOlder
+        : next.hasOlder,
+    hasNewer:
+      next.entries.length &&
+      (old.entries.at(-1)?.seq ?? 0) > (next.entries.at(-1)?.seq ?? 0)
+        ? old.hasNewer
+        : next.hasNewer,
     entries: [
       ...new Map(
         [...old.entries, ...next.entries].map((e) => [e.id, e]),
@@ -416,6 +427,9 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
   const [confirmBlock, setConfirmBlock] = useState(false);
   const [body, setBody] = useState("");
   const [context, setContext] = useState<string>("");
+  const [historyFilter, setHistoryFilter] = useState("");
+  const filterRef = useRef("");
+  const [filterLoading, setFilterLoading] = useState(false);
   const [notice, setNotice] = useState("");
   const inFlight = useRef(false);
   const revision = useRef(0);
@@ -437,9 +451,11 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
       }
       inFlight.current = true;
       const version = revision.current;
+      const scope = filterRef.current;
       try {
         const next = (await messageRead("thread", {
           conversationId: id,
+          ...(scope ? { contextId: scope } : {}),
           ...cursor,
         })) as MessageThread;
         if (mounted.current && version === revision.current) {
@@ -456,6 +472,7 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
             old ? (merged.contexts.find((c) => c.id === old.id) ?? old) : null,
           );
           setError("");
+          setFilterLoading(false);
         }
       } catch (e) {
         if (mounted.current && version === revision.current) {
@@ -467,6 +484,7 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
             mounted.current = false;
           }
           setError(messageError(e));
+          setFilterLoading(false);
         }
       } finally {
         inFlight.current = false;
@@ -501,7 +519,7 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
   // observer also handles keyboard scrolling and long histories loaded above it.
   useEffect(() => {
     const root = listRef.current;
-    if (!root || !thread) return;
+    if (!root || !thread || historyFilter || filterLoading) return;
     let through = thread.readThrough;
     let timer: number | undefined;
     const observer = new IntersectionObserver(
@@ -530,7 +548,28 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
       observer.disconnect();
       clearTimeout(timer);
     };
-  }, [thread, id]);
+  }, [thread, id, historyFilter, filterLoading]);
+  function changeFilter(value: string) {
+    if (busy || pending) return;
+    if (body.trim()) {
+      setError("Send or clear your draft before changing the session filter.");
+      return;
+    }
+    revision.current++;
+    filterRef.current = value;
+    setHistoryFilter(value);
+    if (value) setContext(value);
+    const empty = latest.current && {
+      ...latest.current,
+      entries: [],
+      hasOlder: false,
+      hasNewer: false,
+    };
+    latest.current = empty;
+    setThread(empty);
+    setFilterLoading(true);
+    void refresh();
+  }
   const action = async (
     type: "consent" | "block" | "unblock",
     args: Record<string, unknown> = {},
@@ -574,7 +613,13 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
     c.canRequestGeneral &&
     c.consent?.status !== "pending";
   const send = async () => {
-    if (busy || !validMessageBody(body) || (!canSend && !requestMode)) return;
+    if (
+      busy ||
+      filterLoading ||
+      !validMessageBody(body) ||
+      (!canSend && !requestMode)
+    )
+      return;
     setBusy(true);
     setError("");
     setNotice("");
@@ -722,13 +767,49 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
       <p className="sr-only" role="status">
         {thread.lastSeq} conversation entries.
       </p>
+      <div className="mailbox-history-filter">
+        <label htmlFor="message-history-filter">Show messages</label>
+        <select
+          id="message-history-filter"
+          value={historyFilter}
+          disabled={busy || pending !== null}
+          onChange={(e) => changeFilter(e.target.value)}
+        >
+          <option value="">All messages</option>
+          {thread.contexts
+            .filter((v) => v.kind !== "inquiry")
+            .filter(
+              (v, i, all) =>
+                !v.bookingId ||
+                all.findIndex((other) => other.bookingId === v.bookingId) === i,
+            )
+            .map((v) => (
+              <option key={v.id} value={v.id}>
+                {contextLabel(v)}
+              </option>
+            ))}
+        </select>
+        {historyFilter && (
+          <button
+            onClick={() => changeFilter("")}
+            disabled={busy || pending !== null}
+          >
+            All messages
+          </button>
+        )}
+        <small>
+          {historyFilter
+            ? "Only this session’s messages are shown. Other messages keep their unread status."
+            : "Choose a session to see its messages. Load earlier history to find older sessions."}
+        </small>
+      </div>
       <div
         className="mailbox-entry-list"
         ref={listRef}
         tabIndex={0}
         aria-label="Message history"
       >
-        {(thread.entries[0]?.seq ?? 1) > 1 && (
+        {thread.hasOlder && thread.entries.length > 0 && (
           <button
             className="mailbox-load"
             onClick={() => refresh({ before: thread.entries[0].seq })}
@@ -743,9 +824,10 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
             conversation={c}
             context={thread.contexts.find((x) => x.id === e.contextId)}
             details={setDetails}
+            filter={changeFilter}
           />
         ))}
-        {(thread.entries.at(-1)?.seq ?? 0) < thread.lastSeq && (
+        {thread.hasNewer && thread.entries.length > 0 && (
           <button
             className="mailbox-load"
             onClick={() => refresh({ after: thread.entries.at(-1)?.seq ?? 0 })}
@@ -753,9 +835,12 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
             Load newer messages
           </button>
         )}
-        {!thread.entries.length && (
+        {filterLoading && <p role="status">Loading session messages…</p>}
+        {!error && !filterLoading && !thread.entries.length && (
           <p className="mailbox-empty">
-            Your conversation has no messages yet.
+            {historyFilter
+              ? "No messages for this session yet."
+              : "Your conversation has no messages yet."}
           </p>
         )}
       </div>
@@ -768,6 +853,14 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
             <X size={18} />
           </button>
           <h3>{details.bookingId ? "Session details" : "Request details"}</h3>
+          {details.bookingId && (
+            <SessionTitleEditor
+              key={details.bookingId}
+              bookingId={details.bookingId}
+              value={details}
+              onSaved={() => void refresh()}
+            />
+          )}
           <p>{messageStatusLabel(details.status)}</p>
           {details.startsAt && (
             <p>
@@ -801,7 +894,9 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
         <select
           id="message-context"
           value={activeContext}
-          disabled={busy || pending !== null}
+          disabled={
+            busy || pending !== null || !!historyFilter || filterLoading
+          }
           onChange={(e) => setContext(e.target.value)}
         >
           <option value="general">
@@ -814,6 +909,14 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
             </option>
           ))}
         </select>
+        {historyFilter && (
+          <p className="mailbox-selected-session">
+            Sending about:{" "}
+            {contextLabel(
+              chosen ?? thread.contexts.find((v) => v.id === historyFilter)!,
+            )}
+          </p>
+        )}
         {!canSend && (
           <p>
             {requestMode
@@ -828,7 +931,7 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
           id="message-body"
           value={body}
           readOnly={busy || pending !== null}
-          disabled={!canSend && !requestMode}
+          disabled={filterLoading || (!canSend && !requestMode)}
           rows={3}
           onChange={(e) => setBody(e.target.value)}
           placeholder="Write a message…"
@@ -841,7 +944,10 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
           <button
             className="button dark"
             disabled={
-              busy || !validMessageBody(body) || (!canSend && !requestMode)
+              busy ||
+              filterLoading ||
+              !validMessageBody(body) ||
+              (!canSend && !requestMode)
             }
             onClick={send}
           >
@@ -865,11 +971,13 @@ function Entry({
   conversation: c,
   context,
   details,
+  filter,
 }: {
   entry: MessageEntry;
   conversation: MessageConversation;
   context: MessageContext | undefined;
   details: (c: MessageContext) => void;
+  filter: (contextId: string) => void;
 }) {
   if (e.kind !== "text")
     return (
@@ -878,6 +986,11 @@ function Entry({
           {e.kind === "request" ? "SESSION REQUEST" : "SESSION UPDATE"}
         </span>
         <strong>
+          {context?.bookingId && (
+            <span className="mailbox-session-title">
+              {sessionTitle(context.title)}
+            </span>
+          )}
           {messageStatusLabel(
             e.kind === "request" ? (context?.status ?? e.status) : e.status,
           )}
@@ -885,6 +998,11 @@ function Entry({
         {context?.startsAt && <p>{date(context.startsAt)}</p>}
         {context?.venue && <p>{context.venue}</p>}
         {context && <button onClick={() => details(context)}>Details</button>}
+        {context && (
+          <button onClick={() => filter(context.id)}>
+            Show messages for this session
+          </button>
+        )}
         <small>{date(e.createdAt)}</small>
       </article>
     );

@@ -1,6 +1,9 @@
 import "server-only";
 
 import { sql } from "drizzle-orm";
+import { parseSessionTitleDetails } from "@/domain/private-messages";
+import { privateAthleteHref } from "@/domain/coach-athlete-connections";
+import { parseBookingConnectionContext } from "@/server/db/connections/repository";
 import {
   isCanonicalUuid,
   isCoachBookingStatus,
@@ -22,6 +25,9 @@ import type { AuthorizedActor } from "@/server/authorization/contracts";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
 
 type BookingRow = Readonly<{
+  session_details: unknown;
+  connection_context: unknown;
+  viewer_is_coach: boolean;
   id: string;
   slot_id: string;
   coach_profile_id: string;
@@ -137,6 +143,19 @@ function mapBooking(row: BookingRow): PrivateBookingProjection {
     throw new CoachBookingConflictError();
   }
   const cancelledBy = cancellationActor(row);
+  const relationship = parseBookingConnectionContext(
+    row.connection_context,
+  ).connection;
+  const accepted =
+    row.viewer_is_coach && relationship?.status === "accepted"
+      ? relationship
+      : null;
+  if (
+    relationship &&
+    (relationship.coachProfileId !== row.coach_profile_id ||
+      relationship.athleteProfileId !== row.client_profile_id)
+  )
+    throw new CoachBookingConflictError();
   const cancelledAt = isoTimestamp(row.cancelled_at);
   const completedAt = isoTimestamp(row.completed_at);
   if (
@@ -147,6 +166,7 @@ function mapBooking(row: BookingRow): PrivateBookingProjection {
     throw new CoachBookingConflictError();
   }
   return Object.freeze({
+    ...parseSessionTitleDetails(row.session_details),
     id: row.id,
     slotId: row.slot_id,
     coachProfileId: row.coach_profile_id,
@@ -155,10 +175,13 @@ function mapBooking(row: BookingRow): PrivateBookingProjection {
     coachPortraitUrl: coachPortraitUrl(row),
     clientProfileId: row.client_profile_id,
     clientDisplayName: row.client_display_name,
-    clientAvatarUrl: privateBookingClientAvatarUrl(
-      row.id,
-      isoTimestamp(row.client_avatar_updated_at),
-    ),
+    clientAvatarUrl: accepted
+      ? accepted.athleteAvatarUrl
+      : privateBookingClientAvatarUrl(
+          row.id,
+          isoTimestamp(row.client_avatar_updated_at),
+        ),
+    athleteProfileHref: accepted ? privateAthleteHref(accepted.pairId) : null,
     status: row.status,
     scheduledStartAt,
     scheduledEndAt,
@@ -219,6 +242,9 @@ async function bookingRecords(
 ) {
   const rows = await transaction.execute<BookingRow>(sql`
     select
+      app.current_session_title_details(booking.id) as session_details,
+      connection_context.projection as connection_context,
+      booking.coach_profile_id::text = current_setting('app.current_profile_id', true) as viewer_is_coach,
       booking.id,
       booking.slot_id,
       booking.coach_profile_id,
@@ -244,6 +270,7 @@ async function bookingRecords(
       booking.completed_at,
       booking.created_at
     from app.current_direct_private_bookings() as booking
+    cross join lateral (select app.current_booking_connection_context(booking.id) as projection offset 0) as connection_context
     left join app.coach_profiles as coach
       on coach.run_id = booking.run_id
       and coach.profile_id = booking.coach_profile_id
@@ -337,9 +364,13 @@ export function currentClientPrivateBookingRecords(
 export function currentCoachPrivateBookingRecords(
   transaction: ActorDatabaseTransaction,
   actor: AuthorizedActor,
+  connectedPairId?: string,
 ) {
+  if (connectedPairId !== undefined && !isCanonicalUuid(connectedPairId))
+    throw new CoachBookingConflictError();
   return bookingRecords(
     transaction,
-    sql`booking.run_id = ${actor.runId}::uuid and booking.coach_profile_id = ${actor.profileId}::uuid`,
+    sql`booking.run_id = ${actor.runId}::uuid and booking.coach_profile_id = ${actor.profileId}::uuid
+      and (${connectedPairId ?? null}::text is null or (connection_context.projection->'connection'->>'pairId' = ${connectedPairId ?? null}::text and connection_context.projection->'connection'->>'status'='accepted'))`,
   );
 }

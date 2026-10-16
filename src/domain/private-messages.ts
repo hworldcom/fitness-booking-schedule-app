@@ -1,4 +1,5 @@
 import { isCanonicalUuid } from "./coach-bookings";
+import { validSessionTitle, type SessionTitleDetails } from "./session-titles";
 export type MessageConsent = Readonly<{
   id: string;
   senderProfileId: string;
@@ -21,18 +22,19 @@ export type MessageConversation = Readonly<{
   unread: boolean;
   consent: MessageConsent | null;
 }>;
-export type MessageContext = Readonly<{
-  id: string;
-  kind: "inquiry" | "request" | "booking";
-  requestId: string | null;
-  bookingId: string | null;
-  status: string | null;
-  startsAt: string | null;
-  endsAt: string | null;
-  venue: string | null;
-  deadline: string | null;
-  canSend: boolean;
-}>;
+export type MessageContext = SessionTitleDetails &
+  Readonly<{
+    id: string;
+    kind: "inquiry" | "request" | "booking";
+    requestId: string | null;
+    bookingId: string | null;
+    status: string | null;
+    startsAt: string | null;
+    endsAt: string | null;
+    venue: string | null;
+    deadline: string | null;
+    canSend: boolean;
+  }>;
 export type MessageEntry = Readonly<{
   id: string;
   seq: number;
@@ -49,6 +51,8 @@ export type MessageThread = Readonly<{
   contexts: readonly MessageContext[];
   lastSeq: number;
   readThrough: number;
+  hasOlder: boolean;
+  hasNewer: boolean;
 }>;
 export type MessageInbox = Readonly<{
   items: readonly MessageConversation[];
@@ -65,7 +69,8 @@ export type MessageAction =
   | "consent"
   | "read"
   | "block"
-  | "unblock";
+  | "unblock"
+  | "session-title";
 export type MessageCommand = Readonly<{
   action: MessageAction;
   args: Record<string, unknown>;
@@ -97,6 +102,14 @@ export function validMessageCommand(
     return false;
   const id = (key: string) =>
     typeof args[key] === "string" && isCanonicalUuid(args[key]);
+  if (action === "session-title")
+    return (
+      id("bookingId") &&
+      validSessionTitle(args.title) &&
+      Number.isSafeInteger(args.expectedRevision) &&
+      Number(args.expectedRevision) >= 0 &&
+      Number(args.expectedRevision) < 2147483647
+    );
   if (action === "inbox")
     return (
       (args.filter === undefined ||
@@ -113,13 +126,15 @@ export function validMessageCommand(
   if (!id("conversationId")) return false;
   if (action === "thread")
     return (
+      (args.contextId === undefined || id("contextId")) &&
       [args.before, args.after].every(
         (v) =>
           v === undefined ||
           (Number.isSafeInteger(v) &&
             Number(v) >= 0 &&
             Number(v) <= 2147483647),
-      ) && !(args.before !== undefined && args.after !== undefined)
+      ) &&
+      !(args.before !== undefined && args.after !== undefined)
     );
   if (action === "send")
     return (
@@ -230,6 +245,8 @@ export function parseMessageThread(v: unknown): MessageThread {
     conversation: parseMessageConversation(a.conversation),
     lastSeq: integer(a.lastSeq),
     readThrough: integer(a.readThrough),
+    hasOlder: bool(a.hasOlder),
+    hasNewer: bool(a.hasNewer),
     entries: values(a.entries, 50).map((v) => {
       const e = object(v);
       return {
@@ -256,6 +273,7 @@ export function parseMessageThread(v: unknown): MessageThread {
         venue: nullable(c.venue),
         deadline: nullable(c.deadline),
         canSend: bool(c.canSend),
+        ...parseSessionTitleDetails(c),
       };
     }),
   };
@@ -263,6 +281,7 @@ export function parseMessageThread(v: unknown): MessageThread {
 export function parseMessageResult(action: MessageAction, v: unknown): unknown {
   if (action === "inbox") return parseMessageInbox(v);
   if (action === "thread") return parseMessageThread(v);
+  if (action === "session-title") return parseSessionTitleDetails(v);
   const a = object(v);
   if (action === "contact")
     return { coachId: uuid(a.coachId), name: text(a.name) };
@@ -273,6 +292,16 @@ export function parseMessageResult(action: MessageAction, v: unknown): unknown {
       ...(a.consentId ? { consentId: uuid(a.consentId) } : {}),
     };
   return {};
+}
+export function parseSessionTitleDetails(v: unknown): SessionTitleDetails {
+  const a = object(v);
+  if (!validSessionTitle(a.title))
+    throw Error("Invalid session title response.");
+  return {
+    title: text(a.title),
+    titleRevision: integer(a.titleRevision),
+    canEditTitle: bool(a.canEditTitle),
+  };
 }
 export function messageStatusLabel(status: string | null) {
   return (

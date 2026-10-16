@@ -479,3 +479,50 @@
     padding: 16px;
   }
 }
+.mailbox-history-filter {
+  display: grid;
+  gap: 8px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--line, #e3e6e5);
+}
+.mailbox-history-filter select,
+.session-title-editor input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #cbd3ce;
+  border-radius: 10px;
+  background: white;
+  color: inherit;
+}
+.mailbox-history-filter small,
+.session-title-editor small {
+  color: #56665e;
+}
+.mailbox-selected-session,
+.mailbox-session-title {
+  display: block;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.session-title-editor {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  margin-block: 8px;
+  overflow-wrap: anywhere;
+}
+.session-title-editor form {
+  display: grid;
+  gap: 8px;
+}
+.session-title-editor form > div {
+  display: flex;
+  gap: 12px;
+}
+.session-title-editor button,
+.mailbox-history-filter button {
+  justify-self: start;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

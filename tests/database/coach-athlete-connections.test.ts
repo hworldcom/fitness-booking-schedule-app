@@ -17,6 +17,8 @@ import { createOwnedCoachAvailabilityRecord } from "@/server/db/coaches/availabi
 import {
   cancelDirectPrivateBookingRecord,
   completeDirectPrivateBookingRecord,
+  currentCoachPrivateBookingRecords,
+  currentClientPrivateBookingRecords,
 } from "@/server/db/coaches/booking-repository";
 import {
   acceptCoachBookingRequestRecord,
@@ -537,6 +539,52 @@ test("private avatars require accepted coach scope and removal preserves indepen
     null,
   );
   const accepted = await decide(coach, pending.id, "accept");
+  const upcoming = await booking(athlete, coach, true);
+  const expectedHref = `/coach/athletes/${accepted.pairId}`;
+  const shared = await work(coach, (tx) =>
+    currentCoachPrivateBookingRecords(tx, coach, accepted.pairId),
+  );
+  assert.deepEqual(
+    new Set(shared.map((row) => row.id)),
+    new Set([b.id, upcoming.id]),
+  );
+  assert.deepEqual(
+    new Set(shared.map((row) => row.status)),
+    new Set(["confirmed", "completed"]),
+  );
+  assert.equal(new Set(shared.map((row) => row.clientAvatarUrl)).size, 1);
+  assert.ok(
+    shared.every(
+      (row) =>
+        row.clientAvatarUrl === accepted.athleteAvatarUrl &&
+        row.athleteProfileHref === expectedHref,
+    ),
+  );
+  assert.equal(
+    (
+      await work(athletes[11], (tx) =>
+        currentCoachPrivateBookingRecords(tx, athletes[11], accepted.pairId),
+      )
+    ).length,
+    0,
+  );
+  assert.equal(
+    (
+      await work(athlete, (tx) =>
+        currentCoachPrivateBookingRecords(tx, athlete, accepted.pairId),
+      )
+    ).length,
+    0,
+  );
+  const ownSessions = await work(athlete, (tx) =>
+    currentClientPrivateBookingRecords(tx, athlete),
+  );
+  assert.ok(
+    ownSessions.every(
+      (row) => row.athleteProfileHref === null && row.clientAvatarUrl === null,
+    ),
+  );
+  await work(coach, (tx) => cancelDirectPrivateBookingRecord(tx, upcoming.id));
   assert.equal(
     (await work(coach, (tx) => connectionAvatarReference(tx, accepted.id)))
       ?.path,
@@ -579,11 +627,40 @@ test("private avatars require accepted coach scope and removal preserves indepen
   assert.equal(await storageCount(athletes[11].authUserId), 0);
   await decide(athlete, accepted.id, "disconnect");
   assert.equal(
+    (
+      await work(coach, (tx) =>
+        currentCoachPrivateBookingRecords(tx, coach, accepted.pairId),
+      )
+    ).length,
+    0,
+  );
+  const disconnected = await work(coach, (tx) =>
+    currentCoachPrivateBookingRecords(tx, coach),
+  );
+  assert.ok(
+    disconnected
+      .filter((row) => [b.id, upcoming.id].includes(row.id))
+      .every(
+        (row) =>
+          row.athleteProfileHref === null && row.clientAvatarUrl === null,
+      ),
+  );
+  assert.equal(
     await work(coach, (tx) => connectionAvatarReference(tx, accepted.id)),
     null,
   );
   assert.equal(await storageCount(coach.authUserId), 0);
   const independent = await booking(athlete, coach, true);
+  const independentRows = await work(coach, (tx) =>
+    currentCoachPrivateBookingRecords(tx, coach),
+  );
+  assert.ok(
+    independentRows
+      .find((row) => row.id === independent.id)
+      ?.clientAvatarUrl?.startsWith(
+        `/api/coach/bookings/${independent.id}/client-avatar`,
+      ),
+  );
   assert.equal(
     (
       await work(coach, (tx) =>

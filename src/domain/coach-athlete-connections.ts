@@ -124,3 +124,6 @@ export function connectionAthleteAvatarUrl(id: string, version: string | null) {
     return null;
   return `/api/connections/${id}/athlete-avatar?v=${encodeURIComponent(new Date(version).toISOString())}`;
 }
+export function privateAthleteHref(pairId: string) {
+  return isCanonicalUuid(pairId) ? `/coach/athletes/${pairId}` : null;
+}

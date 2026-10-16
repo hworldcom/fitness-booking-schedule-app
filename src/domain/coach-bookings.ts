@@ -1,3 +1,5 @@
+import type { SessionTitleDetails } from "./session-titles";
+
 export type CoachBookingStatus = "confirmed" | "cancelled" | "completed";
 export type BookingCancellationActor = "client" | "coach";
 
@@ -9,26 +11,28 @@ export type BookingLocationSnapshot = Readonly<{
   publicLabel: string;
 }>;
 
-export type PrivateBookingProjection = Readonly<{
-  id: string;
-  slotId: string;
-  coachProfileId: string;
-  coachDisplayName: string;
-  coachSlug: string;
-  coachPortraitUrl: string | null;
-  clientProfileId: string;
-  clientDisplayName: string;
-  clientAvatarUrl: string | null;
-  status: CoachBookingStatus;
-  scheduledStartAt: string;
-  scheduledEndAt: string;
-  coachTimezone: string;
-  location: BookingLocationSnapshot;
-  cancelledBy: BookingCancellationActor | null;
-  cancelledAt: string | null;
-  completedAt: string | null;
-  createdAt: string;
-}>;
+export type PrivateBookingProjection = SessionTitleDetails &
+  Readonly<{
+    id: string;
+    slotId: string;
+    coachProfileId: string;
+    coachDisplayName: string;
+    coachSlug: string;
+    coachPortraitUrl: string | null;
+    clientProfileId: string;
+    clientDisplayName: string;
+    clientAvatarUrl: string | null;
+    athleteProfileHref: string | null;
+    status: CoachBookingStatus;
+    scheduledStartAt: string;
+    scheduledEndAt: string;
+    coachTimezone: string;
+    location: BookingLocationSnapshot;
+    cancelledBy: BookingCancellationActor | null;
+    cancelledAt: string | null;
+    completedAt: string | null;
+    createdAt: string;
+  }>;
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;

@@ -60,9 +60,15 @@ type LocalConnectionRehearsal = {
 };
 
 export async function localConnectionRehearsal(
-  ticket: "DEV0222" | "DEV0223" | "DEV0247",
+  ticket: "DEV0222" | "DEV0223" | "DEV0247" | "DEV0248" | "DEV0250",
 ): Promise<LocalConnectionRehearsal> {
-  if (ticket !== "DEV0222" && ticket !== "DEV0223" && ticket !== "DEV0247")
+  if (
+    ticket !== "DEV0222" &&
+    ticket !== "DEV0223" &&
+    ticket !== "DEV0247" &&
+    ticket !== "DEV0248" &&
+    ticket !== "DEV0250"
+  )
     throw new Error("Unsupported local connection rehearsal marker.");
   // Private CLI values stay in memory; this script can only use the repository's
   // loopback Auth/Storage/PostgreSQL and newly tagged local .test identities.

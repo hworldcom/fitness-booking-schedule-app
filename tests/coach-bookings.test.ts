@@ -67,8 +67,12 @@ test("booking projections carry schedule state without financial references", ()
     coachPortraitUrl: "/images/coaches/schedule-coach.webp",
     clientProfileId: "44444444-4444-4444-8444-444444444444",
     clientDisplayName: "Schedule Client",
+    athleteProfileHref: null,
     clientAvatarUrl:
       "/api/coach/bookings/11111111-1111-4111-8111-111111111111/client-avatar?v=version",
+    title: "",
+    titleRevision: 0,
+    canEditTitle: true,
     status: "confirmed",
     scheduledStartAt: "2026-10-08T10:00:00.000Z",
     scheduledEndAt: "2026-10-08T11:00:00.000Z",
@@ -87,6 +91,8 @@ test("booking projections carry schedule state without financial references", ()
   });
 
   assert.deepEqual(Object.keys(booking).sort(), [
+    "athleteProfileHref",
+    "canEditTitle",
     "cancelledAt",
     "cancelledBy",
     "clientAvatarUrl",
@@ -105,6 +111,8 @@ test("booking projections carry schedule state without financial references", ()
     "scheduledStartAt",
     "slotId",
     "status",
+    "title",
+    "titleRevision",
   ]);
 });
 
@@ -115,6 +123,9 @@ test("client booking timeline prioritizes future confirmed sessions", () => {
     status: PrivateBookingProjection["status"],
   ): PrivateBookingProjection =>
     Object.freeze({
+      title: "",
+      titleRevision: 0,
+      canEditTitle: true,
       id,
       slotId: "22222222-2222-4222-8222-222222222222",
       coachProfileId: "33333333-3333-4333-8333-333333333333",
@@ -124,6 +135,7 @@ test("client booking timeline prioritizes future confirmed sessions", () => {
       clientProfileId: "44444444-4444-4444-8444-444444444444",
       clientDisplayName: "Schedule Client",
       clientAvatarUrl: null,
+      athleteProfileHref: null,
       status,
       scheduledStartAt,
       scheduledEndAt: new Date(
