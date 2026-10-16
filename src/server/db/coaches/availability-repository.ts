@@ -223,13 +223,23 @@ export function mapPublicAvailability(
 }
 
 export async function publicCoachAvailabilityRecords(profileId: string) {
+  return (await publicCoachAvailabilitySnapshot(profileId)).slots;
+}
+
+export async function publicCoachAvailabilitySnapshot(profileId: string) {
   return withDatabaseConnection(async ({ db }) => {
     await db.execute(sql`
       select app.synchronize_public_coach_availability(
         ${profileId}::uuid
       )
     `);
-    const rows = await db.execute<PublicAvailabilityRow>(sql`
+    const [snapshot] = await db.execute<{
+      database_time: string;
+      slots: PublicAvailabilityRow[];
+    }>(sql`
+      select pg_catalog.statement_timestamp()::text as database_time,
+        coalesce(pg_catalog.jsonb_agg(schedule order by schedule.starts_at, schedule.id), '[]'::jsonb) as slots
+      from (
       select ${publicAvailabilitySelect()}
       from (
         select distinct on (slot.starts_at, slot.ends_at) slot.*
@@ -241,9 +251,18 @@ export async function publicCoachAvailabilityRecords(profileId: string) {
         order by slot.starts_at, slot.ends_at,
           (slot.status <> 'withdrawn') desc, slot.created_at desc, slot.id desc
       ) as slot
-      order by slot.starts_at, slot.id
+      ) as schedule
     `);
-    return Object.freeze(rows.map(mapPublicAvailability));
+    if (
+      !snapshot ||
+      !Array.isArray(snapshot.slots) ||
+      !Number.isFinite(Date.parse(snapshot.database_time))
+    )
+      throw new CoachAvailabilityConflictError();
+    return Object.freeze({
+      slots: Object.freeze(snapshot.slots.map(mapPublicAvailability)),
+      databaseTime: new Date(snapshot.database_time).toISOString(),
+    });
   });
 }
 

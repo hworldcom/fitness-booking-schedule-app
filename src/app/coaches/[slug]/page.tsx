@@ -8,6 +8,11 @@ import {
 import { CoachMarketplace } from "@/features/coaches/coach-marketplace";
 import { currentClientCoachMarketplaceWorkspace } from "@/server/coaches/booking-request-service";
 import { publicCoachProfile } from "@/server/coaches/service";
+import { calendarDate } from "@/domain/coach-calendar";
+import {
+  publicScheduleSelection,
+  publicScheduleSlots,
+} from "@/domain/public-coach-schedule";
 
 export const metadata: Metadata = {
   title: "Coach profile",
@@ -17,8 +22,10 @@ export const metadata: Metadata = {
 
 export default async function Page({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { slug } = await params;
   const state = await publicCoachProfile(slug);
@@ -26,14 +33,21 @@ export default async function Page({
     if (state.status === "not-found") notFound();
     return <CoachProfileUnavailable />;
   }
+  const query = await searchParams;
+  const selection = publicScheduleSelection(query.date, state.databaseTime);
+  const daySlots = publicScheduleSlots(state.slots, state.databaseTime).filter(
+    (slot) => calendarDate(slot.startsAt) === selection.date,
+  );
   const bookingState = await currentClientCoachMarketplaceWorkspace(
-    state.slots.map((slot) => slot.id),
+    daySlots.map((slot) => slot.id),
   );
   const actor =
     bookingState.status === "authorized"
       ? {
           status: "authorized" as const,
           actorProfileId: bookingState.actorProfileId,
+          subject: bookingState.subject,
+          actorIdentity: bookingState.actorIdentity,
           bookings: bookingState.bookings.filter(
             (booking) => booking.coachProfileId === state.coach.profileId,
           ),
@@ -65,12 +79,14 @@ export default async function Page({
             </section>
           )}
           <CoachMarketplace
+            key={`${slug}:${selection.date}:${actor.status === "authorized" ? actor.subject + actor.actorIdentity : actor.status}`}
             coachProfileId={state.coach.profileId}
             coachDisplayName={state.coach.displayName}
             coachSlug={state.coach.slug}
             slots={state.slots}
             actor={actor}
-            referenceTime={new Date().toISOString()}
+            referenceTime={state.databaseTime}
+            selectedDate={query.date}
           />
         </>
       }

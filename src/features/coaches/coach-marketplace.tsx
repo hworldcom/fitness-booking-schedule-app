@@ -16,6 +16,19 @@ import {
   type PrivateBookingProjection,
 } from "@/domain/coach-bookings";
 import type { PublicCoachAvailabilitySlot } from "@/domain/coaches";
+import { useActor } from "@/auth/client/actor-provider";
+import { useAuthSession } from "@/auth/client/session-provider";
+import { publicScheduleActorMatches } from "./public-schedule-model";
+import { calendarDate } from "@/domain/coach-calendar";
+import {
+  publicScheduleHref,
+  publicScheduleSelection,
+  publicScheduleSlots,
+} from "@/domain/public-coach-schedule";
+import {
+  PublicScheduleNavigation,
+  publicScheduleDateLabel,
+} from "./public-schedule-navigation";
 
 const BERLIN_TIMEZONE = "Europe/Berlin";
 
@@ -23,6 +36,8 @@ type MarketplaceActor =
   | Readonly<{
       status: "authorized";
       actorProfileId: string;
+      subject: string;
+      actorIdentity: string;
       bookings: readonly PrivateBookingProjection[];
       pendingRequests: readonly ClientCoachBookingRequestProjection[];
     }>
@@ -37,6 +52,12 @@ type CoachMarketplaceProps = Readonly<{
   slots: readonly PublicCoachAvailabilitySlot[];
   actor: MarketplaceActor;
   referenceTime: string;
+  selectedDate?: string | string[];
+  actions?: Readonly<{
+    request: typeof requestPrivateSessionAction;
+    withdraw: typeof withdrawPrivateSessionRequestAction;
+    cancel: typeof cancelPrivateBookingAction;
+  }>;
 }>;
 
 function dateTimeParts(timestamp: string, timeZone: string) {
@@ -126,7 +147,51 @@ function requestDeadline(request: ClientCoachBookingRequestProjection) {
 }
 
 export function CoachMarketplace(props: CoachMarketplaceProps) {
+  const { session } = useAuthSession();
+  const { actor } = useActor();
+  const allowed =
+    props.actor.status !== "authorized" ||
+    publicScheduleActorMatches(session, actor, props.actor);
+  return (
+    <>
+      {!allowed && (
+        <p role="alert" className="coach-marketplace-message error">
+          Your account changed or could not be verified. Reload to see your
+          current requests and bookings.
+        </p>
+      )}
+      <CoachMarketplaceContent
+        key={allowed ? "current" : "revoked"}
+        {...props}
+        actor={allowed ? props.actor : { status: "unavailable" }}
+      />
+    </>
+  );
+}
+
+function CoachMarketplaceContent(props: CoachMarketplaceProps) {
   const router = useRouter();
+  const selection = publicScheduleSelection(
+    props.selectedDate,
+    props.referenceTime,
+  );
+  const eligible = publicScheduleSlots(props.slots, props.referenceTime);
+  const slots = selection.inHorizon
+    ? eligible.filter((slot) => calendarDate(slot.startsAt) === selection.date)
+    : [];
+  const counts = new Map<string, number>();
+  for (const slot of eligible) {
+    const date = calendarDate(slot.startsAt);
+    counts.set(date, (counts.get(date) ?? 0) + 1);
+  }
+  const signIn =
+    "/sign-in?returnTo=" +
+    encodeURIComponent(publicScheduleHref(props.coachSlug, selection.date));
+  const actions = props.actions ?? {
+    request: requestPrivateSessionAction,
+    withdraw: withdrawPrivateSessionRequestAction,
+    cancel: cancelPrivateBookingAction,
+  };
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [result, setResult] = useState<CoachMarketplaceActionResult | null>(
     null,
@@ -247,13 +312,7 @@ export function CoachMarketplace(props: CoachMarketplaceProps) {
       )}
       {props.actor.status !== "authorized" &&
         props.actor.status !== "unavailable" && (
-          <Link
-            className="button dark"
-            href={
-              "/sign-in?returnTo=" +
-              encodeURIComponent("/coaches/" + props.coachSlug)
-            }
-          >
+          <Link className="button dark" href={signIn}>
             Sign in for session requests
           </Link>
         )}
@@ -294,7 +353,7 @@ export function CoachMarketplace(props: CoachMarketplaceProps) {
                       disabled={busyKey !== null}
                       onClick={() =>
                         void runAction("cancel:" + booking.id, () =>
-                          cancelPrivateBookingAction(booking.id),
+                          actions.cancel(booking.id),
                         )
                       }
                     >
@@ -311,29 +370,42 @@ export function CoachMarketplace(props: CoachMarketplaceProps) {
         </section>
       )}
 
-      <section className="coach-open-slots" aria-labelledby="open-slots-title">
+      <section
+        id="private-schedule"
+        className="coach-open-slots public-schedule"
+        aria-labelledby="open-slots-title"
+      >
+        <PublicScheduleNavigation
+          slug={props.coachSlug}
+          selection={selection}
+          counts={counts}
+        />
+        {selection.invalid && (
+          <p role="status">That date was invalid. Showing today’s schedule.</p>
+        )}
         <div className="coach-section-heading">
           <div>
-            <span className="eyebrow">NEXT 7 DAYS</span>
+            <span className="eyebrow">NEXT 30 DAYS</span>
             <h3 id="open-slots-title">
-              {props.slots.length === 0
-                ? "No scheduled times right now."
-                : props.slots.length +
-                  " scheduled hour" +
-                  (props.slots.length === 1 ? "" : "s") +
-                  "."}
+              {publicScheduleDateLabel(selection.date)}
             </h3>
           </div>
           <Clock3 size={23} aria-hidden="true" />
         </div>
-        {props.slots.length === 0 ? (
-          <p>
-            Only database-backed scheduled times appear. No placeholder
-            inventory is shown.
+        {!selection.inHorizon ? (
+          <p role="status">
+            This date is outside the current 30-day request window. Choose a
+            date between {publicScheduleDateLabel(selection.today, true)} and{" "}
+            {publicScheduleDateLabel(selection.through, true)}.
+          </p>
+        ) : slots.length === 0 ? (
+          <p role="status">
+            No open hours on this date. Choose another date to see available
+            times.
           </p>
         ) : (
           <ol className="coach-bookable-slot-list">
-            {props.slots.map((slot) => {
+            {slots.map((slot) => {
               const pendingRequest = pendingBySlot.get(slot.id);
               return (
                 <li key={slot.id} data-slot-id={slot.id}>
@@ -343,6 +415,7 @@ export function CoachMarketplace(props: CoachMarketplaceProps) {
                     <small>
                       {slotTime(slot)} · {slot.location.name}
                     </small>
+                    <small>{slot.location.label}</small>
                     <small>
                       {pendingRequest
                         ? "Awaiting coach confirmation"
@@ -366,9 +439,7 @@ export function CoachMarketplace(props: CoachMarketplaceProps) {
                         disabled={busyKey !== null}
                         onClick={() =>
                           void runAction("withdraw:" + pendingRequest.id, () =>
-                            withdrawPrivateSessionRequestAction(
-                              pendingRequest.id,
-                            ),
+                            actions.withdraw(pendingRequest.id),
                           )
                         }
                       >
@@ -392,7 +463,7 @@ export function CoachMarketplace(props: CoachMarketplaceProps) {
                       disabled={busyKey !== null}
                       onClick={() =>
                         void runAction("request:" + slot.id, () =>
-                          requestPrivateSessionAction(slot.id),
+                          actions.request(slot.id),
                         )
                       }
                     >
@@ -405,13 +476,7 @@ export function CoachMarketplace(props: CoachMarketplaceProps) {
                       Requests unavailable
                     </button>
                   ) : (
-                    <Link
-                      className="button secondary"
-                      href={
-                        "/sign-in?returnTo=" +
-                        encodeURIComponent("/coaches/" + props.coachSlug)
-                      }
-                    >
+                    <Link className="button secondary" href={signIn}>
                       Sign in to request
                     </Link>
                   )}
@@ -420,6 +485,13 @@ export function CoachMarketplace(props: CoachMarketplaceProps) {
             })}
           </ol>
         )}
+        <Link
+          className="public-schedule-reload"
+          prefetch={false}
+          href={publicScheduleHref(props.coachSlug, selection.date)}
+        >
+          Refresh available times
+        </Link>
       </section>
 
       {props.actor.status === "unavailable" && (

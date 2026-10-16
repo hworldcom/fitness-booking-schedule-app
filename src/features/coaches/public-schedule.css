@@ -1,0 +1,125 @@
+.public-schedule {
+  scroll-margin-top: 100px;
+  min-width: 0;
+}
+
+.public-schedule-navigation {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.public-schedule-window {
+  margin: 0;
+  color: #4c5d45;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.public-schedule-pages {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.public-schedule-pages a,
+.public-schedule-pages > span,
+.public-schedule-reload {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #304329;
+  text-underline-offset: 4px;
+}
+
+.public-schedule-pages > span {
+  color: #747b70;
+}
+
+.public-schedule-dates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 6px;
+}
+
+.public-schedule-dates a {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 64px;
+  border: 1px solid #d7e0d0;
+  border-radius: 9px;
+  padding: 8px 5px;
+  text-align: center;
+  background: #f5f8f1;
+  color: #304329;
+  font-size: 12px;
+  line-height: 1.5;
+  text-decoration: none;
+}
+
+.public-schedule-dates a[aria-current="date"] {
+  border-color: #304329;
+  background: #304329;
+  color: #fff;
+}
+
+.public-schedule-dates small {
+  font-size: 11px;
+}
+
+.public-schedule-date-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.public-schedule-date-form label {
+  flex-basis: 100%;
+  font-weight: 700;
+}
+
+.public-schedule-date-form input {
+  flex: 1 1 140px;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid #9aa78f;
+  border-radius: 8px;
+  padding: 8px;
+  background: white;
+  color: #22351f;
+  font: inherit;
+}
+
+.coach-marketplace .public-schedule-date-form .button {
+  flex: 1 1 100px;
+  width: auto;
+  min-height: 44px;
+  margin: 0;
+}
+
+.public-schedule .coach-bookable-slot-list :is(strong, small) {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.public-schedule .coach-bookable-slot-list strong {
+  font-size: 13px;
+}
+
+.public-schedule > p,
+.public-schedule-reload {
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.public-schedule :is(a, button, input):focus-visible {
+  outline: 3px solid #426c25;
+  outline-offset: 3px;
+}

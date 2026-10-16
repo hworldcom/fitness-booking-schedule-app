@@ -256,6 +256,7 @@ export type PublicCoachProfileState =
       status: "ready";
       coach: CoachProjection;
       slots: readonly PublicCoachAvailabilitySlot[];
+      databaseTime: string;
     }>
   | Readonly<{ status: "not-found" | "unavailable" }>;
 

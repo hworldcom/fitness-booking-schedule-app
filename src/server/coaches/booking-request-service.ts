@@ -2,6 +2,7 @@ import "server-only";
 
 import type { CoachBookingRequestPageCursor } from "@/domain/coach-booking-requests";
 import { withAuthorizedActor } from "@/server/authorization/service";
+import { currentActorProjection } from "@/server/db/authorization/repository";
 import {
   acceptCoachBookingRequestRecord,
   closeCoachBookingRequestOccurrenceRecord,
@@ -96,6 +97,7 @@ export async function currentClientCoachMarketplaceWorkspace(
   slotIds: readonly string[],
 ) {
   const result = await withAuthorizedActor(async (transaction, actor) => {
+    const owner = await currentActorProjection(transaction, actor);
     const bookings = await currentClientPrivateBookingRecords(
       transaction,
       actor,
@@ -109,6 +111,8 @@ export async function currentClientCoachMarketplaceWorkspace(
           );
     return Object.freeze({
       actorProfileId: actor.profileId,
+      subject: actor.authUserId,
+      actorIdentity: [owner.profileSlug, owner.runSlug, owner.role].join(":"),
       bookings,
       pendingRequests,
     });

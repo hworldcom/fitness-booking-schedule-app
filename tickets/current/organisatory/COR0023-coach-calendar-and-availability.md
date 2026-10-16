@@ -62,6 +62,10 @@ All required development records exist. These six direct peers each declare COR0
 
 - 2026-10-16: Group-link implementation now uses DEV0239’s original-ID owner route from calendar dialogs (DEV0254) and before/after-save warnings (DEV0253). Their records own eight calendar/owner and six availability browser checkpoints, unchanged group fixture state and draft/new-tab/access evidence. The owner route is no longer a missing implementation; real authenticated integration and DEV0239’s own live criteria remain pending. No migration or lifecycle authority changed.
 
+- 2026-10-16: DEV0254 checkpoint committed as `e16c06f`. DEV0255 started the independent public 30-day date navigation slice after checking that public route/components do not overlap the calendar or concurrent hosted/notes changes. Migration application and real account/database validation remain deferred.
+
+- 2026-10-16: DEV0255 now has seven-date public pages/native date selection across all 30 local dates, database-clock presentation, original eligible request IDs, selected-day pending reads and account-bound private state. Five isolated browser checkpoints, 210 application/server tests and static/isolated build checks passed. A hosted public read verified database time with empty actual inventory; real athlete/horizon/override/group/restoration proof remains pending in DEV0255, so it stays In progress. No migration was applied.
+
 ## Validation results
 
 Planning links, namespaces, reciprocal membership, exclusive work-map ownership and specification consistency passed under completed DEV0251; its archived validation record contains exact commands/results. DEV0252 completed 123 database driver tests, 239 pgTAP assertions, fresh/preserved-data migrations and application/static/build checks; its archived record owns the details. DEV0253 isolated interface evidence is recorded in its current ticket, while required live UI/integration proof remains pending; no coordination-only check substitutes for another peer's acceptance criteria or DEV0256's real local proof.
@@ -75,7 +79,7 @@ Closure provenance and explicit successor identities must preserve manual closur
 ## Completion and review references
 
 - Completed: Not completed — runtime and integrated acceptance evidence pending.
-- Direct development tickets: DEV0251 documentation Completed; DEV0252 backend Completed; DEV0253 editor In progress; DEV0254 calendar In progress; DEV0255–DEV0256 Draft.
+- Direct development tickets: DEV0251 documentation Completed; DEV0252 backend Completed; DEV0253 editor In progress; DEV0254 calendar In progress; DEV0255 In progress; DEV0256 Draft.
 - Commit: Not applicable — COR identifiers are never commit subjects; the user-authorized planning checkpoint is owned by DEV0251.
 - Review: Planning self-review; no independent/runtime integration review.
 - Deployment or release: None.

@@ -20,7 +20,7 @@ import {
   createOwnedCoachAvailabilityRuleRecord,
   currentOwnedCoachAvailabilityRecords,
   currentOwnedCoachAvailabilityRuleRecords,
-  publicCoachAvailabilityRecords,
+  publicCoachAvailabilitySnapshot,
   removeOwnedCoachAvailabilityRuleRecord,
   replaceOwnedCoachAvailabilityRuleRecords,
   updateOwnedCoachAvailabilityRecord,
@@ -76,8 +76,8 @@ export async function publicCoachProfile(
   try {
     const coach = await publicCoachProfileRecord(slug);
     if (!coach) return Object.freeze({ status: "not-found" });
-    const slots = await publicCoachAvailabilityRecords(coach.profileId);
-    return Object.freeze({ status: "ready", coach, slots });
+    const schedule = await publicCoachAvailabilitySnapshot(coach.profileId);
+    return Object.freeze({ status: "ready", coach, ...schedule });
   } catch {
     return Object.freeze({ status: "unavailable" });
   }

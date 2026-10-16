@@ -1,6 +1,6 @@
 # Ticket DEV0255: Browse thirty-day private availability
 
-- Status: Draft
+- Status: In progress
 - Created: 2026-10-16
 - Last updated: 2026-10-16
 - Milestone: M9 — Coach calendar and effective availability
@@ -26,7 +26,7 @@ Today excludes elapsed starts using server/database authority. The last included
 
 DEV0252 must provide authoritative public effective inventory and horizon/eligibility. Reuse existing private-request actions/cards and the current public coach/location design. This ticket may proceed independently of coach calendar/editor UI once the backend contract passes.
 
-Scope review: this record owns one delivery boundary under a flat coordination. No runtime implementation has started. Keep Draft until the listed dependencies and concrete interface/validation prerequisites permit starting; Ready is not an extra approval gate. Inspect actual versions/bundled documentation before framework or SDK integration changes and update this plan before material deviations.
+Scope review: this record owns one public-profile delivery boundary under a flat coordination. DEV0252 is complete; implementation is authorized by the user after DEV0254 checkpoint `e16c06f`. Next.js 16.3.8 bundled Page/searchParams and Link guidance was read. Migration application remains deferred; isolated interface/model checks may proceed, while required real account/database evidence stays pending.
 
 ## Implementation plan
 
@@ -48,41 +48,73 @@ Extend existing public coach schedule and athlete request tests for first/last/o
 
 ## Implementation record
 
-Runtime implementation has not started. This is a planning record created by DEV0251.
+Implementation started on 16 October 2026 after DEV0254 checkpoint `e16c06f`. This phase does not apply migrations or run the legacy destructive local request rehearsal.
 
 ### Changes and rationale
 
-Allocated one peer with explicit ownership and dependencies so the full extension cannot be implemented under its documentation ticket or overlap existing M7 work.
+The public coach profile now opens one Berlin local date, with seven-date pages, Today, previous/next pages and a native date form across the complete 30-date horizon. The last page contains the final two dates. Every currently requestable hour on the selected date remains visible with its original occurrence ID and actual venue name/address. Open-hour counts never describe requests or other athletes. Closed, occupied, elapsed and outside-window times have no request row.
+
+The URL preserves the selected date through browser navigation, reload and sign-in. A valid outside-window date shows an explicit window message; invalid/repeated input shows today with a notice. An empty date invites choosing another; a failed public read continues to show the existing unavailable profile rather than empty inventory. Guest navigation/form submission work without JavaScript. Requests still require the existing authenticated action and explicit athlete submission after sign-in.
+
+Public reads now include database time in the same SQL result as the existing public schedule projection, including zero-row schedules. The former array-returning repository entry point remains compatible. Only the selected day's occurrence IDs are passed to the existing own-pending-request read, avoiding its 200-ID limit over a dense month. Current Auth subject and actor profile/dataset/role gate personal requests/bookings; stale private action state is removed on account/date context changes.
 
 ### Affected files
 
-Planned: src/app/coaches/[slug]/page.tsx and its capability-owned public schedule/request components and tests. Reuse existing actual-venue grouping and request cards; record exact affected paths during implementation.
+- [Public coach route](../../../src/app/coaches/[slug]/page.tsx) reads canonical date state, selects the day's IDs for authorized pending requests, preserves database time and keys the marketplace to the coach/date/account.
+- [Public schedule domain](../../../src/domain/public-coach-schedule.ts) handles the 30-date window, seven-date paging, malformed/outside-date classification, links and future eligible occurrence selection. It reuses existing Berlin/local-date arithmetic; it grants no scheduling authority.
+- [Marketplace](../../../src/features/coaches/coach-marketplace.tsx), [navigation](../../../src/features/coaches/public-schedule-navigation.tsx), [styles](../../../src/features/coaches/public-schedule.css) and [actor model](../../../src/features/coaches/public-schedule-model.ts) provide public date controls, full daily hours, original action IDs, venue labels, sign-in return and current-account presentation. An optional typed action adapter permits isolated interface rehearsal; production uses the existing server actions.
+- [Availability repository](../../../src/server/db/coaches/availability-repository.ts) adds the timestamped public snapshot and retains the old array wrapper, existing horizon predicate, occurrence preference and synchronization call. [Coach service](../../../src/server/coaches/service.ts) and [public profile type](../../../src/domain/coaches.ts) carry that timestamp. [Profile view](../../../src/features/coaches/coach-discovery.tsx) only needs its former presentation fields. [Request service](../../../src/server/coaches/booking-request-service.ts) returns the current verified subject/actor identity for the client guard, without another athlete or dataset grant.
+- [Model tests](../../../tests/public-coach-schedule.test.ts) cover local-date/DST/horizon, paging, selection, fresh identity/venue and account scope. [Fixture data](../../../tests/fixtures/public-schedule-data.ts), [harness](../../../tests/fixtures/public-schedule-harness.tsx) and [browser runner](../../../scripts/rehearse-public-coach-schedule-ui.mjs) exercise the real public view with explicitly labelled nonpersistent fixtures in a temporary environment-free checkout. The production route contains no fixture authentication bypass.
 
 ### Decisions and deviations
 
-2026-10-16: Created from the confirmed feature scope and section 18 operating defaults. No runtime decisions/deviations or implementation evidence yet.
+2026-10-16: Created from the confirmed feature scope and section 18 operating defaults.
+
+2026-10-16 pre-implementation decisions:
+
+- Use `/coaches/[slug]?date=YYYY-MM-DD#private-schedule`, with today as the default. Show seven date links per page, previous/next pages, Today and a bounded native date form. Each selected date exposes every currently eligible hour. Preserve a valid outside-window URL as an explicit unavailable date with a route back to today; malformed/repeated dates fall back to today with a notice. The date parameter never supplies an occurrence ID or submits a request.
+- Read database time alongside the existing public availability projection so empty days and the 30 local dates use authoritative Berlin dates. Retain `publicCoachAvailabilityRecords`'s existing array contract as a wrapper; the profile consumes a timestamped snapshot. No function/schema/migration/eligibility change is needed.
+- Only future, in-window, `requestable` original occurrences enter day counts and request rows. Closed/occupied predecessors do not appear as open times; restoration uses the current returned identity. Existing own requests/bookings and server request/cancellation/withdrawal actions retain authority. Read own pending requests only for the selected day's IDs, avoiding the existing 200-ID limit over a dense 30-day schedule.
+- Sign-in returns to the selected coach/date without auto-submission. Key local action state by coach/date/verified account and compare the current Auth subject and actor profile/dataset/role before displaying personal requests/bookings; changed access hides stale private state while public date browsing remains available.
+- Reuse the current public profile and actual venue snapshots. Add isolated fixture/browser checks for desktop/375/430 px, keyboard, normal/no-JavaScript navigation, sign-in destinations, empty/outside/unavailable/stale states and actor changes. These do not replace the pending real athlete/database horizon/override/group/restoration checks. The existing local request runner uses legacy fixture cleanup and will not be run unchanged against retained or hosted data.
 
 ### Contracts, configuration, and operations
 
-No runtime contract, dependency, environment variable, schema, migration or deployment changed by creating this record. The planned capability boundary is described above; record concrete data/API/setup/migration/rollback changes during implementation. Never record secrets.
+The public profile's ready result adds `databaseTime: string` from PostgreSQL. `publicCoachAvailabilitySnapshot(profileId)` returns `{ slots, databaseTime }`; `publicCoachAvailabilityRecords(profileId)` still returns its former array. The aggregate selects exactly the previous public fields and no athlete/request/roster columns. The private marketplace workspace additionally returns the current caller's `subject` and `actorIdentity`; these are compared with the existing session/actor providers. No database function, schema, migration, environment variable or dependency changed. No deployment or migration was performed.
+
+Canonical public navigation is `/coaches/[slug]?date=YYYY-MM-DD#private-schedule`. No occurrence ID comes from date navigation, and sign-in does not enqueue a mutation. Existing private request, withdrawal and cancellation actions retain all server authority. Reverting this interface/read adapter requires no data migration. The prepared DEV0254 owner-calendar migration remains separate and unapplied by this work.
 
 ## Validation results
 
-Planning-document validation is recorded by DEV0251; it does not satisfy runtime criteria. Application/database/browser/static/build checks for this peer have not run because its runtime implementation has not started.
+Required real athlete/database evidence remains pending; fixtures and an empty hosted public read do not satisfy it. Acceptance accounting:
 
-| Criterion | Evidence                                                      | Result  |
-| --------- | ------------------------------------------------------------- | ------- |
-| AC1–AC4   | Implementation and required peer-specific validation pending. | Not run |
+| Criterion | Evidence                                                                                                                                                                                                                                                                                              | Result             |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| AC1       | Model/browser checks reach all 30 dates, full final-day hours and venues; URL/back/reload and native guest navigation pass. Hosted public snapshot returns valid database time and zero actual hours. Nonempty real schedule proof remains pending.                                                   | Partially verified |
+| AC2       | Model selection excludes elapsed/closed/occupied/outside times and retains a fresh restored ID; browser sends the displayed original ID and handles a stale conflict. Existing malformed-ID server-action tests pass. Real stale/forged/horizon/override/group/restoration authority remains pending. | Partially verified |
+| AC3       | Selected-date sign-in href, no-JavaScript guest links/form, empty/outside/unavailable states and changed-account clearing pass with fixtures. Real authenticated sign-in return/privacy proof remains pending.                                                                                        | Partially verified |
+| AC4       | Desktop/375/430 px, keyboard, long address, touch-target/overflow, error recovery and source regression/static checks pass as recorded below. Real guest/athlete integrated cases remain pending.                                                                                                     | Partially verified |
+
+- `node --import tsx --test tests/public-coach-schedule.test.ts` — all five cases passed: exactly 30 Berlin dates across both DST transitions/month/year/leap boundaries; all five pages; repeated/invalid/outside dates; dense 200-plus inventory with bounded day selection and actual venues; elapsed/occupied/closed predecessors and fresh identities; date rollover from the next database timestamp; Auth subject/dataset/role changes. Initial fixture generation used a negative remainder for its previous-day example; corrected the fixture's venue index before the passing run.
+- `npm test` — **191 application and 19 server tests passed**. The initial source-boundary check correctly rejected Auth-type imports in the new domain file; moved account matching into the capability-owned presentation model, preserving the domain boundary. A retry was blocked before execution by sandbox `tsx` IPC (`EPERM`); the normal npm command passed with local IPC enabled. Concurrent hosted/startup tests are included in the workspace run and remain independently owned.
+- `PUBLIC_SCHEDULE_UI_KEEP_CHECKOUT=1 node scripts/rehearse-public-coach-schedule-ui.mjs` — **five browser checkpoints passed**, zero page errors: all dates/final day/DST/sign-in URL/Back/reload; empty/outside/repeated/occupied/failed read; original-ID request/pending/withdrawal/stale/unavailable/account change; desktop/375/430 px, ten complete daily rows, long address, no horizontal overflow and 44 px controls/keyboard; no-JavaScript native links/form and explicit guest sign-in. Initial no-JavaScript test filled the date while the preceding document navigation was still settling; waiting for that document's network idle fixed the rehearsal without a product change. Screenshots and JSON results are in `test-results/dev0255-ui/`; manual review checked desktop and 375 px schedule screenshots. Fixture request responses are not persisted bookings or real authentication evidence.
+- Hosted dev public read: `node --env-file=.env.development.local --import tsx --conditions=react-server /tmp/movx-dev0255/read-public-snapshot.mts` called `publicCoachProfileRecord('daniel-park')`, then `publicCoachAvailabilitySnapshot(coach.profileId)` with the existing restricted runtime connection. It returned `{status:'ready', validDatabaseTime:true, slotCount:0, eligibilityStates:[]}`. This proves the aggregate query, empty-array contract and database clock execute on current dev, not nonempty mapping or athlete authorization. The sandboxed attempt returned Unavailable; network-enabled verification passed. It used ordinary public synchronization only; no fixture writes, migrations, seed, Auth signup or email. No credentials or private records were printed.
+
+- `npm run typecheck`, `npm run lint` and `npm run format:check` — final full-workspace checks passed. Next.js route generation and all source/fixture TypeScript checks passed.
+- `npm run build -- --webpack` — passed in the environment-free temporary checkout after restoring the real production public coach route, removing copied test harness modules/dev cache and copying the actual map-worker preparation script. Production compilation, TypeScript, static generation and trace collection passed; this does not prove live booking authority or deployment.
+- Installed Prettier checked the affected ticket, coordination and specification documents. Final Python checks resolved 39 relative ticket/coordination/source links and verified the unique current DEV0255 path plus matching In progress index/coordination status. `git diff --check` passed. The DEV0254 commit contains only its 25 reviewed files/hunks; unrelated notes/invitation/hosted edits were preserved. The final staging area is empty.
 
 ## Risks, limitations, and follow-ups
 
-Expanding backend generation alone leaves late-window dates unreachable. Treat complete public navigation and forged/stale boundary denial as separate observable requirements, while preserving Explore without date filters.
+Keep In progress until the real athlete and database cases pass. Nonempty public snapshot mapping, real first/last/outside dates and date rollover without coach visits, stale/forged request denial, actual override/group occupancy/restored IDs, privacy and authenticated sign-in return still need proof on the agreed safe test target. DEV0256 owns the combined rehearsal, not this ticket's missing acceptance evidence.
 
-Handoff: the planned scope and validation exist; no runtime code or evidence exists under this record. Next action: satisfy the stated dependencies, inspect the affected current implementation and finalize its interface/migration details before marking In progress.
+`npm run test:client-requests` was **not run**: its legacy fixture cleanup deletes scheduling/identity records and assumes the retired Docker target. Do not execute it unchanged against shared dev or retained data. Update its fixture/preflight/cleanup and date-aware entry points before live use, or add a bounded replacement under this ticket. The user-deferred migration work remains separate. No database reset, migration or mail send occurred.
+
+Handoff: DEV0254 was committed as `e16c06f`; the independent DEV0255 interface/read adapter and isolated evidence are included in the user-authorized public-schedule checkpoint. Finish remaining live proof, update the record, then archive only when all criteria pass. No hosted release or independent review is claimed.
 
 ## Completion and review references
 
-- Completed: Not completed.
-- Commit: Not created.
-- Review: Planning self-review only; no independent/runtime review.
+- Completed: Not completed — real athlete/database acceptance evidence remains pending.
+- Commit: User-authorized `[DEV0255] Add thirty-day public schedule navigation` checkpoint; see Git history for its hash. Required real athlete/database evidence remains pending.
+- Review: Implementation/source self-review and recorded local checks; no independent review.
 - Deployment or release: None.

@@ -94,7 +94,10 @@ export function CoachProfileView({
   state,
   marketplace,
 }: {
-  state: Extract<PublicCoachProfileState, { status: "ready" }>;
+  state: Omit<
+    Extract<PublicCoachProfileState, { status: "ready" }>,
+    "databaseTime"
+  >;
   marketplace: ReactNode;
 }) {
   const { coach } = state;
