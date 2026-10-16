@@ -261,7 +261,8 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
     } catch {
       setResult({
         status: "unavailable",
-        message: "MovX could not verify the schedule. Nothing was changed.",
+        message:
+          "MovX could not verify the result. Refresh to check your requests and bookings before trying again.",
       });
     } finally {
       setBusyKey(null);
@@ -485,13 +486,12 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
             })}
           </ol>
         )}
-        <Link
-          className="public-schedule-reload"
-          prefetch={false}
-          href={publicScheduleHref(props.coachSlug, selection.date)}
-        >
-          Refresh available times
-        </Link>
+        <form action={`/coaches/${encodeURIComponent(props.coachSlug)}`}>
+          <input type="hidden" name="date" value={selection.date} />
+          <button type="submit" className="public-schedule-reload">
+            Refresh available times
+          </button>
+        </form>
       </section>
 
       {props.actor.status === "unavailable" && (

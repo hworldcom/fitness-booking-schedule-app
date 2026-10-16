@@ -220,9 +220,12 @@ try {
     .getByRole("button", { name: "Request session", exact: true })
     .click();
   await page
-    .getByText("MovX could not verify the schedule. Nothing was changed.", {
-      exact: true,
-    })
+    .getByText(
+      "MovX could not verify the result. Refresh to check your requests and bookings before trying again.",
+      {
+        exact: true,
+      },
+    )
     .waitFor();
   await browse("changed");
   await page
@@ -303,6 +306,17 @@ try {
   await plain.waitForURL(
     (url) => url.searchParams.get("date") === "2026-11-14",
   );
+  assert.equal(await plain.locator("li[data-slot-id]").count(), 10);
+  const refreshDocument = plain.waitForResponse(
+    (response) =>
+      response.request().isNavigationRequest() &&
+      response.request().method() === "GET",
+  );
+  await plain
+    .getByRole("button", { name: "Refresh available times", exact: true })
+    .click();
+  assert.equal((await refreshDocument).status(), 200);
+  assert.equal(new URL(plain.url()).searchParams.get("date"), "2026-11-14");
   assert.equal(await plain.locator("li[data-slot-id]").count(), 10);
   const plainReturn = await plain
     .locator("li[data-slot-id]")

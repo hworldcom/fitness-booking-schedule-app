@@ -80,7 +80,8 @@ function resultFailure(
   }
   return Object.freeze({
     status: "unavailable",
-    message: "MovX could not verify the booking state. Nothing was changed.",
+    message:
+      "MovX could not verify the result. Refresh to check your requests and bookings before trying again.",
   });
 }
 

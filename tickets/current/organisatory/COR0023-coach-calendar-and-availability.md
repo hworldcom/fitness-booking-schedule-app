@@ -72,6 +72,8 @@ Planning links, namespaces, reciprocal membership, exclusive work-map ownership 
 
 The 16 October 2026 DEV0257 documentary update passed affected links/anchors, namespace/index/status, unchanged six-peer direct ownership, formatting and whitespace checks. Its ticket records exact commands/results. The proposed-amendment link does not adopt service templates or variable durations into the current scope.
 
+- 2026-10-16: Checkpoints `60267d7` (DEV0253/DEV0254 owner links), `c3499b8` (DEV0255 public dates) and `53445ff` (DEV0253/DEV0255 maintained hosted runner and truthful cancellation feedback) are committed. DEV0253 real complete-week copy/save/reload passed against hosted dev; date/recovery completion remains in progress. DEV0255 real 30-date browsing and final-day request/reload passed; its unavailable withdrawal exposed a recovery correction now fixture-verified, with real replay still pending. The runner preserves original non-temporary row hashes and deletes only exact tagged fixtures. DEV0256 remains Draft; its old Docker-only plan now uses the adopted explicit-dev/localhost setup and still requires peer completion. These checkpoints and partial results do not complete M9.
+
 ## Risks, limitations, and follow-ups
 
 Closure provenance and explicit successor identities must preserve manual closures, original request cards, booked venues and terminal history through restoration, group release and cancellation. The 30-day horizon must change both backend eligibility and public reachability. A month view must not drop paged results or turn pending requests/Open groups into confirmed sessions. Calendar permission remains owner-scoped. Shared-file changes need sequencing with DEV0238/DEV0239 and active notes work.

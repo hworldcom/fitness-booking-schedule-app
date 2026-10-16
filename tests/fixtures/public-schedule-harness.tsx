@@ -77,7 +77,8 @@ export function PublicScheduleHarness({
       if (response.current === "unavailable")
         return {
           status: "unavailable",
-          message: "MovX could not verify the schedule. Nothing was changed.",
+          message:
+            "MovX could not verify the result. Refresh to check your requests and bookings before trying again.",
         };
       return {
         status: "saved",

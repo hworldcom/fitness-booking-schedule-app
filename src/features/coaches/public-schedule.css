@@ -123,3 +123,14 @@
   outline: 3px solid #426c25;
   outline-offset: 3px;
 }
+
+.coach-marketplace .public-schedule-reload {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.65;
+  text-decoration: underline;
+  cursor: pointer;
+}

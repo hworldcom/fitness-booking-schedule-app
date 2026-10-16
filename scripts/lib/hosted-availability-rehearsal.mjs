@@ -2,7 +2,15 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { execFileSync, spawn } from "node:child_process";
-import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  lstat,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import postgres from "postgres";
@@ -18,20 +26,42 @@ export async function availabilityRehearsal(args) {
     "Select hosted dev explicitly.",
   );
   assert.ok(
-    args.length === 3 && ["--check", "--run"].includes(args[2]),
-    "Use --environment dev --check|--run.",
+    (args.length === 3 && ["--check", "--run"].includes(args[2])) ||
+      (args.length === 4 && args[2] === "--cleanup"),
+    "Use --environment dev --check|--run or --cleanup <private manifest>.",
   );
   const target = hostedDevelopmentConfiguration(process.env);
   assert.equal(target.projectRef, "mdzidiqosxbghmfyxphb");
   const root = process.cwd(),
-    base = "http://localhost:3146",
-    runId = randomUUID();
+    base = "http://localhost:3146";
+  const recovering = args[2] === "--cleanup";
+  let recovery;
+  if (recovering) {
+    const file = path.resolve(args[3]);
+    assert.equal(path.basename(file), "recovery-ids.json");
+    assert.equal(path.dirname(path.dirname(file)), tmpdir());
+    assert.ok(
+      path.basename(path.dirname(file)).startsWith("movx-availability-live-"),
+    );
+    const stat = await lstat(file);
+    assert.ok(
+      stat.isFile() && !stat.isSymbolicLink() && (stat.mode & 0o777) === 0o600,
+    );
+    recovery = JSON.parse(await readFile(file, "utf8"));
+    assert.equal(recovery.ticket, "DEV0253");
+    assert.equal(recovery.project, target.projectRef);
+    assert.ok(Array.isArray(recovery.people) && recovery.people.length <= 5);
+    assert.match(recovery.runId, /^[a-f0-9-]{36}$/);
+  }
+  const runId = recovery?.runId ?? randomUUID();
   const source = execFileSync("git", ["rev-parse", "HEAD"], {
     cwd: root,
     encoding: "utf8",
   }).trim();
-  const work = await mkdtemp(path.join(tmpdir(), "movx-availability-live-"));
-  await mkdir(path.join(work, "supabase"));
+  const work = recovering
+    ? path.dirname(path.resolve(args[3]))
+    : await mkdtemp(path.join(tmpdir(), "movx-availability-live-"));
+  await mkdir(path.join(work, "supabase"), { recursive: true });
   await writeFile(
     path.join(work, "supabase/config.toml"),
     'project_id = "dev0253_live"\n',
@@ -39,7 +69,7 @@ export async function availabilityRehearsal(args) {
   );
   const output = path.join(root, "test-results/dev0253-hosted", runId);
   await mkdir(output, { recursive: true });
-  const people = [],
+  const people = recovery?.people ?? [],
     pages = [],
     checks = [],
     secrets = new Set([
@@ -107,9 +137,14 @@ export async function availabilityRehearsal(args) {
       );
       assert.ok(Array.isArray(result.rows));
       return result.rows;
-    } catch {
+    } catch (error) {
+      const diagnostic =
+        String(error.stderr ?? "")
+          .split("\n")
+          .find((line) => /error:|ERROR:/.test(line)) ??
+        "No bounded SQL diagnostic.";
       throw new Error(
-        "Explicit-dev fixture SQL failed; the private recovery manifest is retained if cleanup fails.",
+        "Explicit-dev fixture SQL failed: " + redact(diagnostic).slice(0, 500),
       );
     } finally {
       await rm(file, { force: true });
@@ -134,7 +169,21 @@ export async function availabilityRehearsal(args) {
   async function fingerprint() {
     return (
       await ownerQuery(
-        `begin;set local statement_timeout='60s';create temporary table digests(name text,value text) on commit drop;do $$ declare t record; value text;begin for t in select tablename from pg_tables where schemaname='app' order by tablename loop execute format('select count(*)::text||'':''||md5(coalesce(string_agg(to_jsonb(r)::text,chr(10) order by to_jsonb(r)::text),'''')) from app.%I r',t.tablename) into value;insert into digests values(t.tablename,value);end loop;end $$;select jsonb_build_object('app',(select jsonb_object_agg(name,value) from digests),'authCount',(select count(*) from auth.users),'authDigest',(select md5(coalesce(string_agg(to_jsonb(u)::text,chr(10) order by id),'')) from auth.users u),'storageCount',(select count(*) from storage.objects)) value;commit;`,
+        `begin;set local statement_timeout='60s';
+         create temporary table fixture_ids(id text primary key) on commit drop;
+         insert into fixture_ids select id::text from auth.users where raw_app_meta_data->>'temporary'='true';
+         create temporary table all_rows(name text,value jsonb,refs text[]) on commit drop;
+         do $$ declare t record; added integer;begin
+           for t in select schemaname,tablename from pg_tables where schemaname='app' or (schemaname,tablename) in (('auth','users'),('storage','objects')) order by schemaname,tablename loop
+             execute format('insert into all_rows select %L,to_jsonb(r),array(select lower(m[1]) from regexp_matches(to_jsonb(r)::text,''([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})'',''g'') m) from %I.%I r',t.schemaname||'.'||t.tablename,t.schemaname,t.tablename);
+           end loop;
+           loop
+             insert into fixture_ids select distinct lower(value->>'id') from all_rows where value->>'id' ~* '^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$' and refs && array(select id from fixture_ids) on conflict do nothing;
+             get diagnostics added=row_count;exit when added=0;
+           end loop;
+         end $$;
+         select coalesce(jsonb_object_agg(name,hashes),'{}'::jsonb) value from (select name,jsonb_agg(md5(value::text) order by md5(value::text)) hashes from all_rows where not(refs && array(select id from fixture_ids)) group by name) r;
+         commit;`,
       )
     )[0].value;
   }
@@ -272,20 +321,63 @@ export async function availabilityRehearsal(args) {
         process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
       NEXT_PUBLIC_SITE_URL: base,
       NEXT_TELEMETRY_DISABLED: "1",
+      NODE_ENV: "production",
     });
+    let buildLog;
+    try {
+      buildLog = execFileSync(
+        process.execPath,
+        [
+          path.join(root, "node_modules/next/dist/bin/next"),
+          "build",
+          "--webpack",
+        ],
+        {
+          cwd: checkout,
+          env: { ...env, DATABASE_URL: "" },
+          encoding: "utf8",
+          timeout: 180000,
+          maxBuffer: 8 * 1024 * 1024,
+          stdio: ["ignore", "pipe", "pipe"],
+        },
+      );
+    } catch (error) {
+      await writeFile(
+        path.join(output, "build.log"),
+        redact(String(error.stdout ?? "") + String(error.stderr ?? "")),
+        { mode: 0o600 },
+      );
+      throw new Error("Owned production build failed; bounded log retained.");
+    }
+    await writeFile(path.join(output, "build.log"), redact(buildLog), {
+      mode: 0o600,
+    });
+    record(
+      "production build of pinned source passed with no compilation database URL",
+    );
     server = spawn(
       process.execPath,
       [
         path.join(root, "node_modules/next/dist/bin/next"),
-        "dev",
-        "--webpack",
+        "start",
         "--hostname",
         "localhost",
         "--port",
         "3146",
       ],
-      { cwd: checkout, env, stdio: "ignore" },
+      { cwd: checkout, env, stdio: ["ignore", "pipe", "pipe"] },
     );
+    const serverLog = path.join(output, "server.log");
+    await writeFile(serverLog, "", { mode: 0o600 });
+    const logs = [];
+    for (const stream of [server.stdout, server.stderr])
+      stream.on("data", (chunk) => {
+        logs.push(redact(chunk.toString()));
+        if (logs.length > 200) logs.shift();
+      });
+    server.once("exit", () => {
+      void writeFile(serverLog, logs.join(""), { mode: 0o600 });
+    });
     for (let n = 0; n < 120; n++) {
       assert.equal(server.exitCode, null, "Owned app exited.");
       try {
@@ -312,11 +404,15 @@ export async function availabilityRehearsal(args) {
   async function cleanup() {
     const verified = [];
     for (const p of people) {
+      uuid(p.id);
       const got = await admin.auth.admin.getUserById(p.id);
       if (got.error?.status === 404) continue;
       assert.ok(
         !got.error &&
-          got.data.user?.email === p.email &&
+          (recovering
+            ? got.data.user?.email?.startsWith(`dev0253-${runId}-`) &&
+              got.data.user.email.endsWith("@users.movx.test")
+            : got.data.user?.email === p.email) &&
           got.data.user.app_metadata.movx_test_ticket === "DEV0253" &&
           got.data.user.app_metadata.movx_test_run === runId &&
           got.data.user.app_metadata.temporary === true,
@@ -368,7 +464,7 @@ export async function availabilityRehearsal(args) {
   };
   async function preflight() {
     const [catalog] = await ownerQuery(
-      "select current_user executor,(select json_agg(version order by version) from supabase_migrations.schema_migrations) versions,(select count(*)::int from auth.users where raw_app_meta_data->>'temporary'='true') other_fixtures;",
+      "select current_user executor,(select json_agg(version order by version) from supabase_migrations.schema_migrations) versions,(select count(*)::int from auth.users where raw_app_meta_data->>'temporary'='true' and coalesce(raw_app_meta_data->>'movx_test_ticket','') not in ('DEV0254','DEV0239')) unsafe_fixtures;",
     );
     assert.equal(catalog.executor, "postgres");
     assert.deepEqual(catalog.versions, [
@@ -376,20 +472,38 @@ export async function availabilityRehearsal(args) {
       "20261016000200",
       "20261016000300",
     ]);
-    assert.equal(
-      catalog.other_fixtures,
-      0,
-      "Another temporary hosted rehearsal is active or requires cleanup.",
-    );
+    if (!recovering)
+      assert.equal(
+        catalog.unsafe_fixtures,
+        0,
+        "Another DEV0253 run or an unrecognized temporary rehearsal requires cleanup.",
+      );
     const [role] =
       await runtime`select current_user name,has_function_privilege(current_user,'app.save_owned_effective_coach_availability(jsonb)','execute') can_save,has_table_privilege(current_user,'app.coach_group_sessions','select') direct_groups`;
     assert.equal(role.name, target.runtimeUser);
     assert.ok(role.can_save && !role.direct_groups);
     record(
-      "exact dev ledger, no foreign rehearsal accounts and restricted runtime verified",
+      recovering
+        ? "exact dev ledger and restricted runtime verified for manifest recovery"
+        : "exact dev ledger, recognized peer isolation and restricted runtime verified",
     );
-    if (args[2] === "--run") {
-      baseline = await fingerprint();
+    if (args[2] === "--run" || recovering) {
+      if (!recovering) {
+        baseline = await fingerprint();
+        await writeFile(
+          path.join(work, "baseline.json"),
+          JSON.stringify(baseline),
+          { mode: 0o600 },
+        );
+      } else {
+        try {
+          baseline = JSON.parse(
+            await readFile(path.join(work, "baseline.json"), "utf8"),
+          );
+        } catch (error) {
+          if (error.code !== "ENOENT") throw error;
+        }
+      }
       const keys = JSON.parse(
         cli([
           "projects",
@@ -429,18 +543,45 @@ export async function availabilityRehearsal(args) {
         new Promise((r) => setTimeout(r, 5000)),
       ]);
       if (server.exitCode === null) server.kill("SIGKILL");
+      if (server.exitCode === null)
+        await new Promise((resolve) => server.once("exit", resolve));
     }
     try {
-      if (admin) await cleanup();
-      if (baseline)
-        assert.deepEqual(
-          await fingerprint(),
-          baseline,
-          "Existing app/Auth/Storage records changed; no automatic restoration is attempted.",
-        );
+      if (admin)
+        for (let attempt = 0; ; attempt++) {
+          try {
+            await cleanup();
+            break;
+          } catch (error) {
+            // This exact 40001 proves the explicit cleanup transaction aborted.
+            // Unknown outcomes and other SQL errors are never retried here.
+            if (
+              attempt >= 5 ||
+              !error.message.includes(
+                "40001: coach schedule changed; retry operation",
+              )
+            )
+              throw error;
+            await new Promise((resolve) =>
+              setTimeout(resolve, 500 * 2 ** attempt),
+            );
+          }
+        }
+      if (baseline) {
+        const after = await fingerprint();
+        for (const [table, hashes] of Object.entries(baseline)) {
+          const retained = new Set(after[table] ?? []);
+          assert.ok(
+            hashes.every((hash) => retained.has(hash)),
+            `Existing ${table} records changed; no automatic restoration is attempted.`,
+          );
+        }
+      }
       if (people.length)
         record(
-          "exact tagged fixtures removed and existing app/Auth/Storage fingerprints preserved",
+          baseline
+            ? "exact tagged fixtures removed and existing app/Auth/Storage fingerprints preserved"
+            : "exact tagged fixtures removed; original fingerprint was not persisted by the earlier driver",
         );
     } catch (error) {
       cleanupFailed = true;
@@ -454,11 +595,12 @@ export async function availabilityRehearsal(args) {
     }
     await runtime.end({ timeout: 5 });
     await writeFile(
-      path.join(output, "results.json"),
+      path.join(output, recovering ? "cleanup.json" : "results.json"),
       JSON.stringify(
         {
           runId,
           project: target.projectRef,
+          mode: args[2],
           source,
           checks,
           success: success && !cleanupFailed,

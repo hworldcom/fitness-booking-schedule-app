@@ -11,7 +11,7 @@ let success = false,
   phase = "preflight";
 try {
   await h.preflight();
-  if (h.args[2] === "--check") success = true;
+  if (["--check", "--cleanup"].includes(h.args[2])) success = true;
   else await run();
 } catch (error) {
   console.error(
@@ -26,6 +26,7 @@ try {
 }
 
 async function run() {
+  phase = "production build and real Auth fixtures";
   await h.start();
   const owner = await h.person("Owner", true),
     other = await h.person("Other", true),
@@ -70,9 +71,16 @@ async function run() {
     page.getByRole("region", { name: "Availability editor", exact: true });
   const dialog = () => page.getByRole("dialog");
   async function openEditor(date) {
-    await page.goto(availability(date));
+    await page.goto(availability(date), { waitUntil: "domcontentloaded" });
     await expect(editor()).toBeVisible();
     await expect(editor()).toHaveAttribute("aria-busy", "false");
+    await page.waitForFunction(() => {
+      const button = document.querySelector(".availability-editor button");
+      return (
+        button &&
+        Object.keys(button).some((key) => key.startsWith("__reactProps$"))
+      );
+    });
   }
   async function dateEditor(date) {
     await openEditor(date);
@@ -81,6 +89,7 @@ async function run() {
       .click();
   }
   async function review() {
+    const began = Date.now();
     await page
       .getByRole("button", { name: "Review changes", exact: true })
       .click();
@@ -89,7 +98,10 @@ async function run() {
         name: "Review availability changes",
         exact: true,
       }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 90000 });
+    console.log(
+      `Review completed in ${((Date.now() - began) / 1000).toFixed(1)} seconds.`,
+    );
   }
   async function save() {
     await review();
@@ -98,19 +110,32 @@ async function run() {
       .click();
     await expect(
       page.getByText("Availability saved.", { exact: false }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 90000 });
   }
   async function publicDate(date, p = client) {
-    await p.goto(profile(date));
+    await p.goto(profile(date), { waitUntil: "domcontentloaded" });
     await expect(p.locator("#private-schedule")).toBeVisible();
   }
   const rows = (p) => p.locator("li[data-slot-id]");
   async function request(p, id) {
+    const began = Date.now();
+    await p.waitForFunction((id) => {
+      const button = document.querySelector(`li[data-slot-id="${id}"] button`);
+      return (
+        button &&
+        Object.keys(button).some((key) => key.startsWith("__reactProps$"))
+      );
+    }, id);
     await p
       .locator(`li[data-slot-id="${id}"]`)
       .getByRole("button", { name: "Request session", exact: true })
       .click();
-    await expect(p.getByText("Request saved.", { exact: true })).toBeVisible();
+    await expect(p.getByText("Request saved.", { exact: true })).toBeVisible({
+      timeout: 90000,
+    });
+    console.log(
+      `Real request completed in ${((Date.now() - began) / 1000).toFixed(1)} seconds.`,
+    );
   }
   const session = await ownerBrowser.context.request.get(
     h.base + "/api/auth/session",
@@ -190,16 +215,39 @@ async function run() {
       .evaluateAll((nodes) => nodes.map((n) => n.getAttribute("href")));
     for (const url of urls)
       reached.add(new URL(url, h.base).searchParams.get("date"));
-    if (n < 4)
-      await guest.page
-        .getByRole("link", { name: "Next dates", exact: true })
-        .click();
+    if (n < 4) {
+      const next = guest.page.getByRole("link", {
+        name: "Next dates",
+        exact: true,
+      });
+      const href = await next.getAttribute("href");
+      await next.click();
+      await expect(guest.page).toHaveURL(new URL(href, h.base).href, {
+        timeout: 90000,
+      });
+      await expect(
+        guest.page
+          .getByRole("navigation", {
+            name: "Private session dates",
+            exact: true,
+          })
+          .locator('[aria-current="date"]'),
+      ).toHaveAttribute("href", href, { timeout: 90000 });
+    }
   }
   assert.equal(reached.size, 30);
   assert.ok(reached.has(plus(29)));
   assert.ok(!reached.has(plus(30)));
+  h.record(
+    "DEV0255: real public navigation reaches exactly thirty local dates",
+  );
   await publicDate(plus(29), guest.page);
   assert.equal(await rows(guest.page).count(), 8);
+  assert.ok(
+    (await rows(guest.page).allTextContents()).some((text) =>
+      text.includes("DEV0253 Riverside deck — long training venue"),
+    ),
+  );
   const returnLink = guest.page
     .getByRole("link", { name: "Sign in to request", exact: true })
     .first();
@@ -228,13 +276,73 @@ async function run() {
       .locator(`li[data-slot-id="${lastId}"]`)
       .getByText("Requested", { exact: true }),
   ).toBeVisible();
+  h.record(
+    "DEV0255: final-day request saved through the real action and remained requested after reload",
+  );
+  const [lastAttempt] = await h.ownerQuery(
+    `select id from app.coach_booking_requests where slot_id=${h.uuid(lastId)} and client_profile_id=${h.uuid(athlete.profileId)};`,
+  );
   await guest.page
     .locator(`li[data-slot-id="${lastId}"]`)
     .getByRole("button", { name: "Withdraw request", exact: true })
     .click();
-  await expect(
-    guest.page.getByText("Request withdrawn.", { exact: true }),
-  ).toBeVisible();
+  const savedWithdrawal = guest.page.getByText("Request withdrawn.", {
+    exact: true,
+  });
+  const unavailableWithdrawal = guest.page.getByText(
+    "MovX could not verify the result. Refresh to check your requests and bookings before trying again.",
+    { exact: true },
+  );
+  await expect
+    .poll(
+      async () =>
+        (await savedWithdrawal.isVisible())
+          ? "saved"
+          : (await unavailableWithdrawal.isVisible())
+            ? "unverified"
+            : "waiting",
+      { timeout: 90000 },
+    )
+    .not.toBe("waiting");
+  if (await unavailableWithdrawal.isVisible()) {
+    console.log(
+      "OBSERVED unavailable withdrawal; checking authoritative state before one explicit retry.",
+    );
+    const refreshResponse = guest.page.waitForResponse(
+      (response) =>
+        response.request().isNavigationRequest() &&
+        response.request().method() === "GET",
+    );
+    await guest.page
+      .getByRole("button", { name: "Refresh available times", exact: true })
+      .click();
+    assert.equal((await refreshResponse).status(), 200);
+    const [current] = await h.ownerQuery(
+      `select status from app.coach_booking_requests where id=${h.uuid(lastAttempt.id)};`,
+    );
+    if (current.status === "pending") {
+      await guest.page.waitForFunction((id) => {
+        const button = document.querySelector(
+          `li[data-slot-id="${id}"] button`,
+        );
+        return (
+          button &&
+          Object.keys(button).some((key) => key.startsWith("__reactProps$"))
+        );
+      }, lastId);
+      await guest.page
+        .locator(`li[data-slot-id="${lastId}"]`)
+        .getByRole("button", { name: "Withdraw request", exact: true })
+        .click();
+      await expect(savedWithdrawal).toBeVisible({ timeout: 90000 });
+    } else assert.equal(current.status, "withdrawn");
+  }
+  const [withdrawn] = await h.ownerQuery(
+    `select count(*)::int n,min(status) status,min(id::text) id from app.coach_booking_requests where slot_id=${h.uuid(lastId)} and client_profile_id=${h.uuid(athlete.profileId)};`,
+  );
+  assert.equal(withdrawn.n, 1);
+  assert.equal(withdrawn.id, lastAttempt.id);
+  assert.equal(withdrawn.status, "withdrawn");
   await publicDate(plus(30), guest.page);
   await expect(
     guest.page.getByText(/outside the current 30-day request window/),
@@ -314,6 +422,9 @@ async function run() {
   });
   await dateEditor(target);
   await page.getByRole("radio", { name: /Custom hours/ }).check();
+  await page
+    .getByRole("button", { name: "Remove Date override range 2", exact: true })
+    .click();
   await page
     .getByLabel("Date override range 1 start", { exact: true })
     .selectOption("09:00");
@@ -410,7 +521,9 @@ async function run() {
   await client
     .getByRole("button", { name: "Cancel booking", exact: true })
     .click();
-  await expect(client.getByText(/Booking cancelled/)).toBeVisible();
+  await expect(
+    client.getByText("Booking cancelled.", { exact: true }),
+  ).toBeVisible({ timeout: 90000 });
   assert.equal(
     (await byDate(target)).filter((s) => s.status === "open").length,
     0,
@@ -501,9 +614,8 @@ async function run() {
   );
   await page.unroute("**/coach?**");
   const revision = (await getPolicy()).revision;
-  await page
+  await dialog()
     .getByRole("button", { name: "Retry same save", exact: true })
-    .first()
     .click();
   await expect(
     page.getByText("Availability saved.", { exact: false }),
