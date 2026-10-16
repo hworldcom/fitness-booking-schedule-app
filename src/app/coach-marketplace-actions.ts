@@ -302,7 +302,7 @@ export async function cancelPrivateBookingAction(
   refreshScheduling();
   return Object.freeze({
     status: "saved",
-    message: "Booking cancelled. The future time is open again.",
+    message: "Booking cancelled.",
     bookingId: result.value,
   });
 }

@@ -26,6 +26,7 @@
     "test:db": "DATABASE_TEST_URL=postgresql://postgres:postgres@127.0.0.1:55322/postgres tsx --conditions=react-server --test --test-concurrency=1 tests/database/*.test.ts",
     "test:auth": "node scripts/rehearse-local-email-auth.mjs",
     "test:coach-availability": "node scripts/rehearse-local-coach-availability.mjs",
+    "test:coach-availability-hosted": "node --env-file=.env.development.local scripts/rehearse-hosted-coach-availability.mjs",
     "test:coach-locations": "node scripts/rehearse-local-coach-locations.mjs",
     "test:coach-requests": "node scripts/rehearse-local-coach-booking-requests.mjs",
     "test:coach-connections": "tsx --conditions=react-server scripts/rehearse-local-coach-connections.ts",

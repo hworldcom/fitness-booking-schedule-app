@@ -199,6 +199,7 @@ The local stack uses port `55322`. `db:reset` recreates only an explicitly dispo
 npm test
 npm run test:auth
 npm run test:coach-availability
+npm run test:coach-availability-hosted -- --environment dev --check
 npm run test:coach-locations
 npm run test:coach-requests
 npm run test:coach-connections
@@ -214,6 +215,8 @@ npm run format:check
 npm run build
 npm run test:e2e
 ```
+
+`test:coach-availability-hosted -- --environment dev --check` checks the hosted-dev ledger and restricted runtime and refuses another rehearsal's temporary accounts. `--run` verifies the real weekly/date editor and 30-day public request flow using at most five new tagged Auth accounts, admin-generated OTPs without email, Chrome and a private app snapshot on localhost port 3146. It requires the ignored hosted-dev configuration and a logged-in Supabase CLI. It applies no migrations, restores no Docker stack and touches no existing accounts. Success requires exact fixture cleanup and unchanged existing-data fingerprints; cleanup failure retains a private UUID-only recovery manifest. Evidence is written under ignored `test-results/dev0253-hosted/<run-id>/`. This command replaces the retired local availability/request rehearsals for DEV0253/DEV0255 live validation; its current results remain recorded in those tickets.
 
 `test:coach-events-ui` runs the DEV0239 coach Events screens and actual Server Actions in an isolated temporary app snapshot with explicit service/account fixtures. It requires Node.js 24, installed Chrome and free loopback port 3139. It loads no environment files, creates no database, makes no hosted Auth/database calls and runs no migration; its fixture results do not prove real persistence or authorization. Screenshots are ignored under `test-results/dev0239-ui/`. Required live multi-account validation remains recorded in the DEV0239 ticket.
 

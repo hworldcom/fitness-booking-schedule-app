@@ -437,7 +437,7 @@ try {
       .getByRole("button", { name: "Cancel session", exact: true })
       .click();
     await expect(otherCoachPage.locator(".coach-client-message")).toHaveText(
-      "Booking cancelled. The future time is open again.",
+      "Booking cancelled.",
       { timeout: 30_000 },
     );
     await expect(
