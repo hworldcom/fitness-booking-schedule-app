@@ -1,11 +1,11 @@
 # Ticket DEV0256: Rehearse calendar and availability
 
-- Status: In progress
+- Status: Completed
 - Created: 2026-10-16
 - Last updated: 2026-10-16
 - Milestone: M9 — Coach calendar and effective availability
 - Coordination: [COR0023 — Coach calendar and availability](../organisatory/COR0023-coach-calendar-and-availability.md)
-- Related records: contract owner [DEV0251](../../archive/organisatory/DEV0251-define-coach-calendar-and-availability.md); peer dependencies and external M7 relationships are mapped in COR0023.
+- Related records: contract owner [DEV0251](../organisatory/DEV0251-define-coach-calendar-and-availability.md); peer dependencies and external M7 relationships are mapped in COR0023.
 
 ## Objective and context
 
@@ -41,10 +41,10 @@ Concrete integration plan (2026-10-16, before implementation): once DEV0253/DEV0
 
 Use one fixture cohort across weekly save, pending requests/booking/group, custom venue replacement, day off/cancellation and fresh restoration. At those checkpoints read the real coach Day calendar through a separate authenticated owner page and assert exact row counts, actual venues, original booking/group/request destinations, closed IDs/history and withheld capacity. Verify default Week, Month/More and type/venue filters against the same records, including desktop/375/430 and keyboard. Prepare an independent published group beyond the private horizon and prove it appears without fabricated private capacity. Exercise an actual concurrent availability-save/group-publication pair through restricted runtime calls and require no published-group/open-private overlap, using the completed backend race suites for detailed acceptance/cancellation permutations. Reuse peer privacy/card/retry/unavailable evidence explicitly while the full shared run repeats their real stages. Failures remain owned by the appropriate peer. The source archive and production build are pinned to the committed integration checkpoint before live execution. The prerequisite criteria have now passed; this is the reviewed implementation plan.
 
-- [ ] AC1: A documented explicit-dev command serves its own localhost app against the confirmed hosted-dev environment, exercises real integrated flows and cleans up only its exact tagged records/accounts while preserving existing data.
-- [ ] AC2: Combined proof covers 30-day public eligibility, mixed Day/Week/Month calendar, whole-date replacement, retained-session warnings, pending closure, fresh restoration and cancellation without reopening day-off capacity.
-- [ ] AC3: Actor/media/roster/candidate privacy and request-card/history integrity survive stale/retry/concurrent scheduling/group operations without overlapping coach time.
-- [ ] AC4: Desktop/mobile/keyboard/overflow/unavailable checks and required existing regression/static/build results are recorded against scenarios; no missing group/runtime dependency is labelled a pass.
+- [x] AC1: A documented explicit-dev command serves its own localhost app against the confirmed hosted-dev environment, exercises real integrated flows and cleans up only its exact tagged records/accounts while preserving existing data.
+- [x] AC2: Combined proof covers 30-day public eligibility, mixed Day/Week/Month calendar, whole-date replacement, retained-session warnings, pending closure, fresh restoration and cancellation without reopening day-off capacity.
+- [x] AC3: Actor/media/roster/candidate privacy and request-card/history integrity survive stale/retry/concurrent scheduling/group operations without overlapping coach time.
+- [x] AC4: Desktop/mobile/keyboard/overflow/unavailable checks and required existing regression/static/build results are recorded against scenarios; no missing group/runtime dependency is labelled a pass.
 
 ## Validation plan
 
@@ -78,21 +78,44 @@ No application contract, dependency, environment variable, schema, grant, migrat
 
 ## Validation results
 
+Final review: 31 relative links across this record and COR0023 resolved; all six direct peers are uniquely archived/Completed with reciprocal coordination links and one index row each. Full `git diff --check` passed. The final change contains evidence/status/lifecycle links only; the live-tested runtime/runner source remains `526e749`, and unrelated workspace work is preserved.
+
+Final live result (2026-10-16): `npm run test:calendar-hosted -- --environment dev --run` exited 0 for run `a3319062-7e2a-436e-a045-dbafdf42932e`, pinned application source `526e749`, confirmed hosted dev `mdzidiqosxbghmfyxphb`, production localhost app port 3156 and five new genuine OTP identities. All five same-cohort calendar checkpoints, full real editor/public/recovery stages, actual concurrent group/policy operations, desktop/375/430/keyboard and access checks passed with zero recorded page errors. Exact tagged application/Auth fixture cleanup and every original non-temporary application/Auth/Storage row hash passed. The production build had no compilation database URL. No email, reset, migration, Docker operation, existing-account change or deployment was performed.
+
+Acceptance evidence:
+
+| Criterion | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Result |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| AC1       | Exact-dev command, pinned production source, independently tagged real Auth, exact cleanup and all original row hashes preserved.                                                                                                                                                                                                                                                                                                                                      | Passed |
+| AC2       | Same-cohort Mixed/Custom/Off/Restored/Final calendar: original destinations; Week/Day/Month and full paging/exact More; seven replacement-venue hours; retained group/booking; zero private hours after day-off cancellation; eight fresh restored hours and new pending identity; complete public thirty dates/final-day request/reload/withdrawal.                                                                                                                   | Passed |
+| AC3       | Calendar projection excludes actual athlete identifiers; public candidate isolation and atomic neutral closure cards; exact/altered/stale save recovery; genuine concurrent group publication and custom policy save both commit with zero open private overlap; independent group at day +35 with no invented private capacity. DEV0252 owns detailed accept/cancel race permutations; DEV0254/DEV0239 own real unauthorized original-detail/media/roster boundaries. | Passed |
+| AC4       | Production full flow plus visually inspected 1440/375/430 calendar renders, shared editor/public widths/keyboard/access, actual unavailable-read retention/reload, guarded import/selection tests, full pinned regression/lint/type/format/build checks. DEV0254 supplies its previously passed real dirty-navigation/roster scenarios; no simulated Auth/SQL outcome is claimed.                                                                                      | Passed |
+
+Historical progress below records what was pending at each earlier checkpoint; this final result supersedes those pending statuses.
+
+The Restored checkpoint and full shared recovery/public stages subsequently passed in the same run: eight fresh open private items, one pending on the new ID, no old pending/booking in the default calendar; manual closure, exact/altered/stale saves, inactive/unavailable recovery, thirty actual date links, final-day request/reload/withdrawal, explicit sign-in return and native guest/DST/forged checks. Final calendar screenshots at 1440/375/430 were visually inspected: nine readable mixed agenda items, explicit pending/open/group labels, actual long venues, no horizontal overflow and mobile controls. The final unavailable/future-group/concurrency checks and cleanup remain running.
+
+Live continuation in the same run: Day-off passed with no open private items, the retained group, and the original cancelled booking visible through explicit history. The shared real cancellation/restoration flow then passed with a fresh requested occurrence and exactly two original/new athlete attempts; the restored calendar checkpoint is still running. Earlier Mixed/Custom, static and guard evidence remains valid. No completion is claimed before final/concurrency and exact cleanup.
+
+Live progress, run `a3319062-7e2a-436e-a045-dbafdf42932e` against `526e749`: the same-cohort Mixed and Custom checkpoints passed. Mixed rendered nine actual day items, original confirmed booking and two-candidate pending occurrence, original request/booking/group destinations, default Week, complete 42-date Month paging with three summaries/exact nine-item More, and group/venue filters. Custom rendered seven eligible replacement-venue hours with no old pending ID, preserving the original booking/group and excluding athlete identifiers from the calendar projection. The shared runner independently verified the atomic two-request/card closure and persisted custom policy. Day-off/restoration/final/concurrency/cleanup stages remain pending; these partial passes do not complete the ticket.
+
+Pinned-source static check: an environment-free `git archive` of `526e749` at `/private/tmp/movx-calendar-integration-final-_fy__0xb`, with installed dependencies linked and explicit Node 24.21.0, passed `npm run format:check`, `npm run lint`, `npm run typecheck` and `npm test` (201 application plus 20 server tests). The larger workspace count below additionally includes five independently owned uncommitted runner tests; these are not claimed as part of this checkpoint. The live command's production build also passed without a compilation database URL. Real combined checkpoints and cleanup remain pending.
+
 Preparation checks (2026-10-16): `npm run test:calendar-hosted -- --environment dev --check` passed exact project, three-version ledger and restricted runtime without fixtures. Three focused guard/import tests passed, including ten prior DEV0253 selections and seven integrated unsafe/missing-configuration selections. Full workspace `npm test` passed 206 application plus 20 server tests; focused ESLint and `npm run typecheck` passed. Initial typecheck caught a widened test `NODE_ENV` string; annotating its fixture environment as `NodeJS.ProcessEnv` resolved it before the passing rerun. Production/live combined proof has not yet run; acceptance remains open.
 
-| Criterion | Evidence                                                      | Result  |
-| --------- | ------------------------------------------------------------- | ------- |
-| AC1–AC4   | Implementation and required peer-specific validation pending. | Not run |
+| Criterion | Evidence                                                                    | Result |
+| --------- | --------------------------------------------------------------------------- | ------ |
+| AC1–AC4   | Final real combined evidence and preserved-data cleanup are recorded above. | Passed |
 
 ## Risks, limitations, and follow-ups
 
-Static calendar rendering or simulated data cannot establish effective-availability authority. Missing M7 integration, cleanup or real two-account recovery leaves this ticket and COR0023 incomplete.
+Hosted-dev previews/saves took roughly 14–27 seconds and requests roughly 14 seconds in this production-mode run. Performance needs follow-up before rollout; no response-time target or cause is adopted here. Detailed backend migration/lock/acceptance/cancellation permutations remain the completed DEV0252 evidence; the new race proves real publication/policy integration, not every possible interleaving. Real midnight was not awaited: database predicates/model cases prove DST/date boundaries, and real guest lazy materialization proves no coach visit is required. Session-type templates remain the independent Draft DEV0257 proposal; M7's own combined delivery and UAT/production rollout are separate.
 
-Handoff: the planned scope and validation exist; no runtime code or evidence exists under this record. Next action: satisfy the stated dependencies, inspect the affected current implementation and finalize its interface/migration details before marking In progress.
+Handoff: rerun the documented explicit-dev command only with its guarded new-account setup and exact cleanup. No required M9 criterion remains open. Existing data and independent workspace edits were preserved. Completion is local/hosted-dev verification and self-review, with no deployment or independent review claim.
 
 ## Completion and review references
 
-- Completed: Not completed.
-- Commit: Not created.
-- Review: Planning self-review only; no independent/runtime review.
+- Completed: 2026-10-16 — combined calendar/editor/public/recovery/concurrency and exact cleanup criteria passed.
+- Commit: `526e749` prepared the reproducible integration command; the user-authorized DEV0256 completion checkpoint contains this final evidence and lifecycle links.
+- Review: Source/acceptance self-review and recorded real integration validation; no independent review.
 - Deployment or release: None.

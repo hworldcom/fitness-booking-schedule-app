@@ -4,7 +4,7 @@
 - Created: 2026-10-16
 - Last updated: 2026-10-16
 - Milestone: M9 — Coach calendar and effective availability
-- Coordination: [COR0023 — Coach calendar and availability](../../current/organisatory/COR0023-coach-calendar-and-availability.md)
+- Coordination: [COR0023 — Coach calendar and availability](../organisatory/COR0023-coach-calendar-and-availability.md)
 - Related records: contract owner [DEV0251](../organisatory/DEV0251-define-coach-calendar-and-availability.md); peer dependencies and external M7 relationships are mapped in COR0023.
 
 ## Objective and context

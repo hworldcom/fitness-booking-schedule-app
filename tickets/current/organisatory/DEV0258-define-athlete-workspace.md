@@ -5,7 +5,7 @@
 - Last updated: 2026-10-16
 - Milestone: Proposed Athletes workspace extension
 - Coordination: None — independent development ticket
-- Related records: separate invitation dependency [COR0024](COR0024-email-invitations-and-shareable-links.md) and its contract [DEV0259](DEV0259-define-invitation-and-link-consent.md); current connections [COR0020](../../archive/organisatory/COR0020-athlete-terminology-and-connections.md); existing coach list [DEV0222](../../archive/frontend/DEV0222-add-coach-my-athletes.md); private details [DEV0250](../../archive/frontend/DEV0250-unify-coach-athlete-identity-and-private-details.md); independent calendar [COR0023](COR0023-coach-calendar-and-availability.md) and proposed session types [DEV0257](DEV0257-define-reusable-session-types.md).
+- Related records: separate invitation dependency [COR0024](COR0024-email-invitations-and-shareable-links.md) and its contract [DEV0259](DEV0259-define-invitation-and-link-consent.md); current connections [COR0020](../../archive/organisatory/COR0020-athlete-terminology-and-connections.md); existing coach list [DEV0222](../../archive/frontend/DEV0222-add-coach-my-athletes.md); private details [DEV0250](../../archive/frontend/DEV0250-unify-coach-athlete-identity-and-private-details.md); independent calendar [COR0023](../../archive/organisatory/COR0023-coach-calendar-and-availability.md) and proposed session types [DEV0257](DEV0257-define-reusable-session-types.md).
 
 ## Objective and context
 

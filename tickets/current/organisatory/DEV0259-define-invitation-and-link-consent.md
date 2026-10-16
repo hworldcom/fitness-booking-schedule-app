@@ -5,7 +5,7 @@
 - Last updated: 2026-10-16
 - Milestone: Proposed invitation and link onboarding extension
 - Coordination: [COR0024 — Email invitations and shareable links](COR0024-email-invitations-and-shareable-links.md)
-- Related records: external workspace contract [DEV0258](DEV0258-define-athlete-workspace.md); delivered connections [COR0020](../../archive/organisatory/COR0020-athlete-terminology-and-connections.md); existing message consent [DEV0243](../../archive/organisatory/DEV0243-define-ongoing-messages-and-session-note-boundaries.md); independent calendar [COR0023](COR0023-coach-calendar-and-availability.md).
+- Related records: external workspace contract [DEV0258](DEV0258-define-athlete-workspace.md); delivered connections [COR0020](../../archive/organisatory/COR0020-athlete-terminology-and-connections.md); existing message consent [DEV0243](../../archive/organisatory/DEV0243-define-ongoing-messages-and-session-note-boundaries.md); independent calendar [COR0023](../../archive/organisatory/COR0023-coach-calendar-and-availability.md).
 
 ## Objective and context
 

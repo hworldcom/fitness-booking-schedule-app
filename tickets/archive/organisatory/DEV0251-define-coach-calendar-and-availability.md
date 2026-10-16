@@ -4,7 +4,7 @@
 - Created: 2026-10-16
 - Last updated: 2026-10-16
 - Milestone: M9 — Coach calendar and effective availability
-- Coordination: [COR0023 — Coach calendar and availability](../../current/organisatory/COR0023-coach-calendar-and-availability.md)
+- Coordination: [COR0023 — Coach calendar and availability](COR0023-coach-calendar-and-availability.md)
 - Related records: historical Schedule presentation [DEV0205](../frontend/DEV0205-redesign-coach-schedule.md); historical location-aware availability [DEV0177](../backend/DEV0177-bind-availability-to-training-locations.md); external runtime prerequisites [DEV0238](../backend/DEV0238-integrate-group-session-scheduling-conflicts.md) and [DEV0239](../../current/frontend/DEV0239-add-coach-group-session-management.md) under [COR0021](../../current/organisatory/COR0021-group-training-and-events.md); independent workspace accessibility [DEV0208](../../current/frontend/DEV0208-polish-authenticated-workspace-accessibility.md).
 
 ## Objective and context
@@ -94,12 +94,12 @@ Separated five runtime deliverables instead of implementing the broad extension 
 | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | [Specification](../../../docs/mvp-spec.md#18-coach-calendar-and-effective-availability) | Single adopted target, state/recovery/cancellation/horizon/permissions, M9 and acceptance scenarios with explicit runtime status. |
 | [README](../../../README.md)                                                            | Navigation to the target and COR, without duplicating requirements.                                                               |
-| [COR0023](../../current/organisatory/COR0023-coach-calendar-and-availability.md)        | Flat ownership, external M7 dependencies, sequence/independent starts and integrated completion gates.                            |
+| [COR0023](COR0023-coach-calendar-and-availability.md)        | Flat ownership, external M7 dependencies, sequence/independent starts and integrated completion gates.                            |
 | [DEV0252](../backend/DEV0252-persist-effective-coach-availability.md)                   | Effective-policy persistence/mutations, 30-day authority and migration/retry/concurrency proof.                                   |
 | [DEV0253](../frontend/DEV0253-edit-weekly-hours-and-date-overrides.md)       | Coach range/copy/date editing, warning/closure/restoration previews and draft/error recovery.                                     |
 | [DEV0254](../frontend/DEV0254-add-private-and-group-coach-calendar.md)                  | Bounded mixed calendar read/display/navigation, overflow/agenda and authorized detail links.                                      |
 | [DEV0255](../frontend/DEV0255-browse-thirty-day-private-availability.md)     | Complete public 30-day date navigation and eligible request selection/recovery.                                                   |
-| [DEV0256](../../current/backend/DEV0256-rehearse-calendar-and-availability.md)          | Real local integrated command/fixtures/privacy/race/responsive/cleanup evidence.                                                  |
+| [DEV0256](../backend/DEV0256-rehearse-calendar-and-availability.md)          | Real local integrated command/fixtures/privacy/race/responsive/cleanup evidence.                                                  |
 | [Ticket index](../../README.md)                                                         | Tracks every new record/status and reserves next IDs DEV0257/COR0024.                                                             |
 
 ### Decisions and deviations

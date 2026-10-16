@@ -5,7 +5,7 @@
 - Last updated: 2026-10-16
 - Milestone: Proposed M9 calendar and availability amendment
 - Coordination: None — independent development ticket
-- Related records: proposed amendment to [COR0023 — Coach calendar and availability](COR0023-coach-calendar-and-availability.md); historical contract [DEV0251](../../archive/organisatory/DEV0251-define-coach-calendar-and-availability.md); existing shared booking titles [DEV0248](../../archive/frontend/DEV0248-add-shared-session-titles-and-message-filtering.md); existing group lifecycle [COR0021](COR0021-group-training-and-events.md).
+- Related records: proposed amendment to [COR0023 — Coach calendar and availability](../../archive/organisatory/COR0023-coach-calendar-and-availability.md); historical contract [DEV0251](../../archive/organisatory/DEV0251-define-coach-calendar-and-availability.md); existing shared booking titles [DEV0248](../../archive/frontend/DEV0248-add-shared-session-titles-and-message-filtering.md); existing group lifecycle [COR0021](COR0021-group-training-and-events.md).
 
 ## Objective and context
 
@@ -67,7 +67,7 @@ This is an impact review, not an adopted runtime work map or new coordination me
 | Calendar organization                       | [DEV0254](../../archive/frontend/DEV0254-add-private-and-group-coach-calendar.md) is the potential consumer                                                                         | Add type labels/filter and color precedence without losing actual-venue cues, private/group format, lifecycle state or complete paging.                          |
 | Athlete-facing labels or service selection  | [DEV0255](../../archive/frontend/DEV0255-browse-thirty-day-private-availability.md) is a conditional consumer                                                                                  | Decide label visibility separately from service selection; retain the current request flow until a public amendment is adopted.                                  |
 | Group template use                          | [DEV0239](../frontend/DEV0239-add-coach-group-session-management.md) under external COR0021 is a potential consumer                                                                 | Decide group applicability and draft prefilling; preserve publication review, capacity, deadlines, frozen terms and existing group ownership.                    |
-| Integrated proof                            | [DEV0256](../backend/DEV0256-rehearse-calendar-and-availability.md) is the potential consumer                                                                                       | Once adopted, cover assignment, filtering, type edits/archival, old untyped history, permissions and any selected duration/public changes in real flows.         |
+| Integrated proof                            | [DEV0256](../../archive/backend/DEV0256-rehearse-calendar-and-availability.md) is the potential consumer                                                                                       | Once adopted, cover assignment, filtering, type edits/archival, old untyped history, permissions and any selected duration/public changes in real flows.         |
 
 ## Assumptions, decisions, and dependencies
 
@@ -123,7 +123,7 @@ Following the user's explicit ticket/update request, expanded this existing reco
 | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | This ticket                                           | Owns the proposed specification amendment, questions and future delivery planning.                                      |
 | [Ticket index](../../README.md)                       | Reserves DEV0257 and exposes its Draft status.                                                                          |
-| [COR0023](COR0023-coach-calendar-and-availability.md) | Links the proposed amendment separately from direct delivery ownership, with a scope-review note before integrating it. |
+| [COR0023](../../archive/organisatory/COR0023-coach-calendar-and-availability.md) | Links the proposed amendment separately from direct delivery ownership, with a scope-review note before integrating it. |
 
 ### Decisions and deviations
 

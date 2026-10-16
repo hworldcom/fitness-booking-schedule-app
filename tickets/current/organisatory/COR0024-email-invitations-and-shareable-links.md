@@ -6,7 +6,7 @@
 - Milestone: Proposed invitation and link onboarding extension
 - Converted from: Not applicable — created separately at the user's request; existing DEV0258 remains the workspace contract owner.
 - Tracked development tickets: [DEV0259 contract](DEV0259-define-invitation-and-link-consent.md), [DEV0260 authority](../backend/DEV0260-persist-coach-invitations-and-links.md), [DEV0261 email delivery](../backend/DEV0261-deliver-athlete-invitation-emails.md), [DEV0262 coach controls](../frontend/DEV0262-manage-coach-invitations-and-links.md), [DEV0263 recipient acceptance](../frontend/DEV0263-review-and-accept-athlete-invitations.md), [DEV0264 local proof](../backend/DEV0264-rehearse-invitation-onboarding.md).
-- Related records: external Athletes workspace contract [DEV0258](DEV0258-define-athlete-workspace.md); delivered connections [COR0020](../../archive/organisatory/COR0020-athlete-terminology-and-connections.md); independent calendar [COR0023](COR0023-coach-calendar-and-availability.md) and proposed session types [DEV0257](DEV0257-define-reusable-session-types.md).
+- Related records: external Athletes workspace contract [DEV0258](DEV0258-define-athlete-workspace.md); delivered connections [COR0020](../../archive/organisatory/COR0020-athlete-terminology-and-connections.md); independent calendar [COR0023](../../archive/organisatory/COR0023-coach-calendar-and-availability.md) and proposed session types [DEV0257](DEV0257-define-reusable-session-types.md).
 
 ## Objective and boundaries
 
