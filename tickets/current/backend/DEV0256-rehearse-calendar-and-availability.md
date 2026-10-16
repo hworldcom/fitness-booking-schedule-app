@@ -15,7 +15,7 @@ Implement against [specification section 18](../../../docs/mvp-spec.md#18-coach-
 
 ## Scope and non-goals
 
-- In scope: Tagged loopback-only rehearsal fixtures/cleanup and a reproducible command; combined private/group/calendar/editor/public-date/request flows; actual concurrency/recovery/privacy assertions and desktop/mobile/keyboard evidence; README command documentation and durable integration handoff.
+- In scope: A dedicated localhost app using explicitly selected hosted dev, exact tagged rehearsal fixtures/cleanup and a reproducible command; combined private/group/calendar/editor/public-date/request flows; actual concurrency/recovery/privacy assertions and desktop/mobile/keyboard evidence; README command documentation and durable integration handoff.
 - Out of scope: Implementing missing peer features under a test ticket, resetting shared data, hosted deployment, repeating independent M7 lifecycle implementation, external calendar/provider setup or simulating away required real application/database flows.
 
 ## Expected behavior and edge cases
@@ -24,27 +24,27 @@ Use at least one approved coach with two venues, two athletes, pending and confi
 
 ## Assumptions, decisions, and dependencies
 
-DEV0252–DEV0255 must complete their required checks. DEV0238 completed isolated guard/publication validation, but its migration still needs the documented local rollout before the real rehearsal; the group owner detail flow needed by DEV0254 remains a separate delivery prerequisite. Discover current namespace/migration/fixture state before setup. Existing M7 and note/application work remain independent; final rehearsal cannot silently omit group links or overwrite their fixtures.
+DEV0252–DEV0255 must complete their required checks. DEV0271 has applied the unchanged owner-calendar migration to the adopted hosted-dev project, whose expected ledger is baseline/effective-availability/owner-calendar. DEV0239 has completed its real group-owner checks, and DEV0254 has completed actual calendar-to-original-detail Auth/browser evidence; their archived records supply these prerequisites. DEV0253/DEV0255 must still finish their own live criteria before this combined rehearsal. Discover current namespace/migration/fixture state before setup. Existing M7 and note/application work remain independent; final rehearsal cannot silently omit group links or overwrite their fixtures. Do not recreate the retired Docker stack or apply another migration under this proof ticket.
 
 Scope review: this record owns one delivery boundary under a flat coordination. No runtime implementation has started. Keep Draft until the listed dependencies and concrete interface/validation prerequisites permit starting; Ready is not an extra approval gate. Inspect actual versions/bundled documentation before framework or SDK integration changes and update this plan before material deviations.
 
 ## Implementation plan
 
-1. Map the section 18 acceptance scenarios to exact peer evidence and define isolated tagged local fixtures/cleanup, prerequisites and one reproducible command. Record real app/stack versions and forbid non-loopback targets.
+1. Map section 18 scenarios to exact completed peer evidence. Reuse their maintained hosted fixture/guard helpers where appropriate; define one explicit `--environment dev --check|--run` command, private source snapshot and dedicated localhost app. Require the confirmed dev project, restricted runtime, exact migration ledger, real Auth OTP sessions without email, independently tagged accounts and no shared-data reset. Refuse production, existing-account enrollment, foreign cleanup and provider changes.
 2. Exercise weekly copy/range saves, custom/day-off override, retained private/group warnings, pending closure, reload and explicit restoration; follow original request/booking/group links and verify history/new request identities.
 3. Exercise all calendar views/filters/overflow and complete public 30-day navigation/requests with time-boundary and concurrency evidence. Combine relevant existing M7/M8 authorization/card/race suites rather than inventing browser-only authority checks.
-4. Capture desktop/375/430 px and keyboard/error-state outcomes, verify exact fixture cleanup, document the actual command in README and resolve failures in their owning peers. Complete only after all required scenarios pass.
+4. Capture desktop/375/430 px and keyboard/error-state outcomes, stop owned processes and verify exact fixture cleanup plus preservation of pre-existing application/Auth/Storage records. Retain private UUID-only recovery IDs if cleanup fails; do not restore fingerprints by overwriting data. Document the actual command in README and resolve failures in their owning peers. Complete only after all required scenarios pass.
 
 ## Acceptance criteria
 
-- [ ] AC1: A documented loopback-only command creates its own fixtures, exercises the real integrated flows and cleans up only those exact tagged records/accounts.
+- [ ] AC1: A documented explicit-dev command serves its own localhost app against the confirmed hosted-dev environment, exercises real integrated flows and cleans up only its exact tagged records/accounts while preserving existing data.
 - [ ] AC2: Combined proof covers 30-day public eligibility, mixed Day/Week/Month calendar, whole-date replacement, retained-session warnings, pending closure, fresh restoration and cancellation without reopening day-off capacity.
 - [ ] AC3: Actor/media/roster/candidate privacy and request-card/history integrity survive stale/retry/concurrent scheduling/group operations without overlapping coach time.
 - [ ] AC4: Desktop/mobile/keyboard/overflow/unavailable checks and required existing regression/static/build results are recorded against scenarios; no missing group/runtime dependency is labelled a pass.
 
 ## Validation plan
 
-Run the new documented rehearsal command against the real Auth-enabled local stack with exact tagged cleanup. Reuse completed peer database race/migration evidence, run npm test plus relevant availability/request/group/mail/public/browser suites, lint, typecheck, format:check and build where applicable. Inspect final desktop and 375/430 px rendered states and keyboard focus, not just action attempts. Keep failed, blocked and not-run evidence explicit; no hosted rehearsal is implied.
+Run the new documented command against the adopted hosted-dev Auth/PostgreSQL environment, with an owned localhost app and exact tagged cleanup. Do not run legacy destructive Docker rehearsals unchanged. Reuse completed peer database race/migration evidence, and run npm test plus relevant maintained availability/request/group/public/browser suites, lint, typecheck, format:check and build where applicable. Inspect final desktop and 375/430 px rendered states and keyboard focus, not just action attempts. Record failed, blocked and not-run evidence explicitly; hosted dev validation is separate from UAT/production deployment.
 
 ## Implementation record
 
@@ -56,11 +56,13 @@ Allocated one peer with explicit ownership and dependencies so the full extensio
 
 ### Affected files
 
-Planned: a capability-owned scripts/rehearse-local-… command, fixture/cleanup helpers and appropriate tests, README command/prerequisite navigation and this evidence record. Screenshots/logs remain ignored unless specifically approved for durable inclusion.
+Planned: a capability-owned explicit-dev rehearsal command, reusable fixture/cleanup helpers and appropriate tests, README command/prerequisite navigation and this evidence record. Screenshots/logs remain ignored unless specifically approved for durable inclusion.
 
 ### Decisions and deviations
 
 2026-10-16: Created from the confirmed feature scope and section 18 operating defaults. No runtime decisions/deviations or implementation evidence yet.
+
+2026-10-16 planning correction: hosted dev is now the repository's adopted local-app database/Auth target, and DEV0270 removed the old Docker services. Updated this still-Draft plan and AC1 before any runtime edit. DEV0271 supplies the required migration rollout. DEV0253/DEV0255 are currently validating their own live flows, while DEV0254/DEV0239 retain their independent acceptance work. This change authorizes no missing peer implementation and does not mark the combined rehearsal started or passed.
 
 ### Contracts, configuration, and operations
 
