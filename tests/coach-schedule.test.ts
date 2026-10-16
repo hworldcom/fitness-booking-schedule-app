@@ -90,17 +90,19 @@ const SUSPENDED_ACCESS: CoachAccessProjection = Object.freeze({
 });
 
 test("coach views share Profile-first navigation with one selected destination", () => {
-  for (const active of ["profile", "schedule", "bookings"] as const) {
+  for (const active of ["profile", "schedule", "bookings", "events"] as const) {
     const html = renderToStaticMarkup(
       createElement(CoachWorkspaceNavigation, { active }),
     );
     const profileIndex = html.indexOf('href="/profile/coach"');
     const scheduleIndex = html.indexOf('href="/coach"');
     const bookingsIndex = html.indexOf('href="/coach?view=bookings"');
+    const eventsIndex = html.indexOf('href="/coach/events"');
 
     assert.ok(profileIndex >= 0);
     assert.ok(profileIndex < scheduleIndex);
     assert.ok(scheduleIndex < bookingsIndex);
+    assert.ok(bookingsIndex < eventsIndex);
     assert.equal((html.match(/aria-current="page"/g) ?? []).length, 1);
     assert.match(
       html,
@@ -110,7 +112,9 @@ test("coach views share Profile-first navigation with one selected destination",
             ? "/profile/coach"
             : active === "schedule"
               ? "/coach"
-              : "/coach\\?view=bookings"
+              : active === "bookings"
+                ? "/coach\\?view=bookings"
+                : "/coach/events"
         }"`,
       ),
     );

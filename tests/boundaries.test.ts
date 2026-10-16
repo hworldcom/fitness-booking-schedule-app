@@ -154,7 +154,7 @@ test("blockchain, wallet, legacy funding and social runtime surfaces are absent"
     // DEV0240's nonfinancial M7 Events routes use the scheduling backend;
     // the retired group-events funding module remains forbidden below.
     "src/app/following",
-    "src/app/coach/events",
+    // DEV0239 owns the adopted nonfinancial coach Events interface.
     "src/app/coach/posts",
     "src/app/devnet-bootstrap",
   ]) {

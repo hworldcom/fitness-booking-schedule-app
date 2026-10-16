@@ -1,8 +1,13 @@
 import Link from "next/link";
-import { CalendarClock, CalendarDays, UserRound } from "lucide-react";
+import {
+  CalendarClock,
+  CalendarDays,
+  UsersRound,
+  UserRound,
+} from "lucide-react";
 import type { CoachWorkspaceView } from "@/features/coaches/coach-workspace-view";
 
-type CoachWorkspaceDestination = "profile" | CoachWorkspaceView;
+type CoachWorkspaceDestination = "profile" | "events" | CoachWorkspaceView;
 
 const DESTINATIONS = Object.freeze([
   {
@@ -22,6 +27,12 @@ const DESTINATIONS = Object.freeze([
     label: "Bookings",
     href: "/coach?view=bookings",
     Icon: CalendarDays,
+  },
+  {
+    id: "events",
+    label: "Events",
+    href: "/coach/events",
+    Icon: UsersRound,
   },
 ] as const);
 

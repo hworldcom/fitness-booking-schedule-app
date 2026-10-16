@@ -30,6 +30,7 @@
     "test:coach-requests": "node scripts/rehearse-local-coach-booking-requests.mjs",
     "test:coach-connections": "tsx --conditions=react-server scripts/rehearse-local-coach-connections.ts",
     "test:group-discovery": "node --import tsx --conditions=react-server scripts/rehearse-local-group-discovery.ts",
+    "test:coach-events-ui": "node scripts/rehearse-coach-events-ui.mjs",
     "test:private-messages": "node --import tsx --conditions=react-server scripts/rehearse-local-private-messages.ts",
     "test:athlete-connections": "tsx --conditions=react-server scripts/rehearse-local-athlete-connections.ts",
     "test:client-requests": "node scripts/rehearse-local-client-booking-requests.mjs",

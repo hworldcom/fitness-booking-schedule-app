@@ -45,6 +45,10 @@ All required implementation tickets exist and are peers. Detailed evidence belon
 
 ## Progress and integration record
 
+- 2026-10-16: DEV0239 now contains owner list/new/review/edit routes, explicit publication/confirmation/cancellation/deletion, scoped actions and private roster paging. Its isolated fixture/static checkpoint is recorded in the current ticket. Required live SQL/Auth proof remains pending after DEV0270 removed local services, so DEV0239 and COR0021 remain open; no hosted/schema operation was performed. `/coach/events/[id]` is the supplied owner destination for DEV0254 integration.
+
+- 2026-10-16: DEV0239 implementation started with user authorization. Dedicated owner Events routes/actions use existing group authority; preserve checkpointed calendar and active DEV0255 work. DEV0270 retired local Supabase, so no stack recreation or hosted mutation is implied; live SQL/Auth proof remains separately required.
+
 - 2026-10-16: DEV0240 completed public Events and athlete Group sessions, including authoritative registration readback, original-attempt/actor protection, native forms, bounded history and real local four-width/privacy/recovery checks. Its record owns the detailed evidence and isolated static-validation context. DEV0239 coach management and DEV0241 combined proof remain open, so COR0021 is not complete.
 
 - 2026-10-16: DEV0240 public/athlete Events interface implementation started with user authorization. Existing backend prerequisites are delivered; preserve concurrent availability/database/booking work and validate using isolated fixtures. DEV0239 coach event management remains separate.
@@ -73,7 +77,7 @@ Manual decisions and status are in-app only; no email/push delivery is promised.
 ## Completion and review references
 
 - Completed: Not completed — runtime delivery and integration pending.
-- Direct development tickets: DEV0233, DEV0237 and DEV0238 Completed; DEV0239 Draft with backend prerequisites satisfied; DEV0240 Completed; DEV0241 Draft pending the interface peers.
+- Direct development tickets: DEV0233, DEV0237 and DEV0238 Completed; DEV0239 In progress with backend prerequisites satisfied; DEV0240 Completed; DEV0241 Draft pending the interface peers.
 - Commit: Not applicable — coordination IDs are not used in commit subjects.
 - Review: Contract and backend acceptance self-review; no independent review or combined browser rehearsal.
 - Deployment or release: None.

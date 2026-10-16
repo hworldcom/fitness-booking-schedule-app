@@ -58,6 +58,28 @@ const event: GroupSession = {
   canCancel: false,
   canEdit: false,
 };
+test("shared event terms show an overnight end date and no confirmation invitation for a closed session", () => {
+  const html = renderToStaticMarkup(
+    createElement(EventTerms, {
+      session: {
+        ...event,
+        endsAt: "2026-10-18T08:00:00Z",
+        status: "cancelled",
+        displayStatus: "cancelled",
+      },
+    }),
+  );
+  assert.match(html, /18 Oct 2026, 10:00/);
+  assert.doesNotMatch(html, /to enable coach confirmation/);
+  assert.match(html, /does not collect or verify payment/);
+  const draft = renderToStaticMarkup(
+    createElement(EventTerms, {
+      session: { ...event, status: "draft", displayStatus: "draft" },
+    }),
+  );
+  assert.match(draft, /<dt>Capacity<\/dt>/);
+  assert.doesNotMatch(draft, /to enable coach confirmation/);
+});
 test("event GET filters and page links preserve exact cursor precision, literal place text and discipline", () => {
   const filters = parseEventFilters({
     discipline: "Boxing",

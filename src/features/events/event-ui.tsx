@@ -70,7 +70,11 @@ export function EventTerms({ session }: { session: GroupSession }) {
         <dt>Date and time</dt>
         <dd>
           <time dateTime={session.startsAt}>{eventDate(session.startsAt)}</time>{" "}
-          – {eventTime(session.endsAt)}
+          –{" "}
+          {eventDate(session.startsAt, false) ===
+          eventDate(session.endsAt, false)
+            ? eventTime(session.endsAt)
+            : eventDate(session.endsAt)}
           <small>Europe/Berlin</small>
         </dd>
       </div>
@@ -89,11 +93,11 @@ export function EventTerms({ session }: { session: GroupSession }) {
         </dd>
       </div>
       <div>
-        <dt>Reserved seats</dt>
+        <dt>{session.status === "draft" ? "Capacity" : "Reserved seats"}</dt>
         <dd>
           {session.participantCount} of {session.maximumParticipants}
           <small>
-            {`Minimum ${session.minimumParticipants} ${session.minimumParticipants === 1 ? "participant" : "participants"} to enable coach confirmation`}
+            {`Minimum ${session.minimumParticipants} ${session.minimumParticipants === 1 ? "participant" : "participants"}${session.status === "open" ? " to enable coach confirmation" : ""}`}
           </small>
         </dd>
       </div>
@@ -113,7 +117,7 @@ export function EventTerms({ session }: { session: GroupSession }) {
           <small>
             {session.priceCents === 0
               ? "No participation fee."
-              : "Pay at session. Includes required venue and participation costs."}
+              : "Pay at session. Includes required venue and participation costs. MovX does not collect or verify payment."}
           </small>
         </dd>
       </div>

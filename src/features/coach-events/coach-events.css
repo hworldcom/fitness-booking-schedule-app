@@ -1,0 +1,164 @@
+.coach-events-page {
+  max-width: 1180px;
+}
+.coach-events-page .coach-workspace-nav {
+  margin-bottom: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.coach-events-page .coach-workspace-nav a {
+  padding: 12px 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #d3ddd7;
+  border-radius: 24px;
+  min-height: 44px;
+}
+.coach-events-page .coach-workspace-nav a.active {
+  background: #173e30;
+  color: #fff;
+}
+.coach-event-panel,
+.coach-event-form {
+  background: #fff;
+  border: 1px solid #d7e0d9;
+  border-radius: 22px;
+  padding: 28px;
+  min-width: 0;
+  margin-bottom: 24px;
+}
+.coach-event-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.coach-event-form {
+  max-width: 760px;
+}
+.coach-event-form label {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 22px;
+  font-weight: 600;
+}
+.coach-event-form input,
+.coach-event-form select,
+.coach-event-form textarea {
+  font: inherit;
+  border: 1px solid #a9beb0;
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px;
+  min-height: 46px;
+  width: 100%;
+  min-width: 0;
+  color: #1d3027;
+}
+.coach-event-form small,
+.coach-event-hint {
+  font-size: 13px;
+  font-weight: 400;
+  color: #4f6457;
+  line-height: 1.55;
+}
+.coach-event-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.coach-event-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin: 20px 0;
+}
+.coach-event-actions a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.coach-event-description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.coach-event-decision {
+  border-top: 1px solid #dce4df;
+  margin-top: 24px;
+  padding-top: 20px;
+}
+.coach-event-ack {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+  cursor: pointer;
+  padding: 6px 0;
+}
+.coach-event-ack input {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  margin-top: 2px;
+  accent-color: #173e30;
+}
+.coach-event-notice {
+  border: 1px solid #d9b16d;
+  background: #fff6e6;
+  color: #533e1e;
+  border-radius: 14px;
+  padding: 20px;
+  margin: 20px 0;
+}
+.coach-event-roster {
+  list-style: none;
+  padding: 0;
+}
+.coach-event-roster li {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #e2e9e4;
+}
+.coach-event-roster small {
+  display: block;
+  margin-top: 5px;
+  color: #5b6c60;
+}
+.coach-event-initials {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 50%;
+  background: #e9f0eb;
+  display: grid;
+  place-items: center;
+}
+.coach-events-page h1,
+.coach-event-roster strong,
+.coach-event-panel p {
+  overflow-wrap: anywhere;
+}
+.coach-events-page :focus-visible {
+  outline: 3px solid #b46830;
+  outline-offset: 4px;
+}
+@media (max-width: 760px) {
+  .coach-event-detail-grid,
+  .coach-event-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .coach-event-panel,
+  .coach-event-form {
+    padding: 20px;
+  }
+  .coach-event-fields {
+    gap: 0;
+  }
+}

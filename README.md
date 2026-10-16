@@ -205,6 +205,7 @@ npm run test:coach-connections
 npm run test:athlete-connections
 npm run test:private-messages
 npm run test:group-discovery
+npm run test:coach-events-ui
 npm run test:client-requests
 npm run test:profile-images
 npm run lint
@@ -213,6 +214,8 @@ npm run format:check
 npm run build
 npm run test:e2e
 ```
+
+`test:coach-events-ui` runs the DEV0239 coach Events screens and actual Server Actions in an isolated temporary app snapshot with explicit service/account fixtures. It requires Node.js 24, installed Chrome and free loopback port 3139. It loads no environment files, creates no database, makes no hosted Auth/database calls and runs no migration; its fixture results do not prove real persistence or authorization. Screenshots are ignored under `test-results/dev0239-ui/`. Required live multi-account validation remains recorded in the DEV0239 ticket.
 
 `test:group-discovery` requires the running repository Supabase Auth/PostgreSQL containers, the restricted runtime login prepared by `npm run db:runtime`, Node.js 24 and local Chrome; port 3113 must be free. It starts its own temporary app snapshot, creates a uniquely named disposable database and tagged DEV0240 Auth accounts, and checks real Events filtering/paging, reservations/withdrawals, confirmation, privacy, unavailable/retry and responsive/no-JavaScript flows. It never resets, migrates or seeds the shared development database. It removes only its owned database, app snapshot and exact temporary accounts afterward. Screenshots are ignored under `test-results/group-discovery-rehearsal/`.
 
