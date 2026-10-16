@@ -190,6 +190,9 @@ export function Shell({ children }: { children: ReactNode }) {
       </span>
     );
   const publicShell = isPublicMarketplacePath(path);
+  const coachWorkspace =
+    isNavigationHrefActive(path, coachNavigation.href) ||
+    isNavigationHrefActive(path, coachProfileNavigation.href);
   const currentProfile = actor.status === "authorized" ? actor.profile : null;
   const currentProfileImage = currentProfile
     ? accountProfileImagePresentation(
@@ -197,7 +200,9 @@ export function Shell({ children }: { children: ReactNode }) {
         currentProfile.coachPortraitUrl,
       )
     : null;
-  const visibleNavigation = navigationForActor(actor);
+  const visibleNavigation = navigationForActor(actor).filter(
+    ({ href }) => !coachWorkspace || href !== howItWorksNavigation.href,
+  );
   const mobileNavigation = mobileNavigationForActor(actor);
   const publicAccountNavigation = publicAccountNavigationForActor(actor);
   const roleLabel = workspaceRoleLabel(actor);
@@ -349,10 +354,12 @@ export function Shell({ children }: { children: ReactNode }) {
               <span>Berlin, Germany</span>
             </span>
             <div className="header-right">
-              <Link href="/how-it-works" className="how-it-works-link">
-                <CircleHelp size={17} aria-hidden="true" />
-                <span>How it works</span>
-              </Link>
+              {!coachWorkspace && (
+                <Link href="/how-it-works" className="how-it-works-link">
+                  <CircleHelp size={17} aria-hidden="true" />
+                  <span>How it works</span>
+                </Link>
+              )}
               <AuthStatusLink />
               {currentProfile && (
                 <Link

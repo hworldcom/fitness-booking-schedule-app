@@ -7,7 +7,7 @@ This directory records planned changes, task status and implementation evidence.
 - A **development ticket** is a small implementable task named `# Ticket DEVNNNN` with a `DEVNNNN-short-title.md` filename. It owns implementation and validation evidence, and its DEV ID is used in commits. Start one from [TEMPLATE.md](TEMPLATE.md).
 - A **coordination record** is a non-implementation umbrella named `# Coordination CORNNNN` with a `CORNNNN-short-title.md` filename. It maps a flat set of peer development tickets and is never used as a commit reference. Start one from [COORDINATION_TEMPLATE.md](COORDINATION_TEMPLATE.md).
 
-DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0272 and COR0027.
+DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0274 and COR0027.
 
 Every DEV record declares its direct coordination membership near the top: one linked COR, or `None — independent development ticket`. Direct membership is limited to one COR and must match that COR's work map. Dependencies, downstream consumers and historical links remain separate relationships.
 
@@ -70,6 +70,8 @@ DEV0235–DEV0241 and COR0021 are allocated to independently prepared Explore an
 
 DEV0248 is allocated to independent shared session-title and mailbox-filter work. It remains reserved when DEV0237 is committed separately.
 
+DEV0272 is allocated to independent local Supabase restoration work. It remains reserved when the DEV0273/DEV0274 navigation fixes are committed separately.
+
 ## Ticket index
 
 ### Current records
@@ -117,6 +119,7 @@ DEV0248 is allocated to independent shared session-title and mailbox-filter work
 
 | Record                                                                                                                                               | Area         | Milestone                                  | Status    | Outcome                                                                                                                                                                                                                  |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [DEV0273 — Remove coach workspace help links](archive/frontend/DEV0273-remove-coach-workspace-help-links.md) | Frontend | Authenticated workspace refinement | Completed | Removed both help links across coach workspace routes; desktop/mobile, keyboard and navigation checks passed. |
 | [DEV0271 — Apply the hosted dev calendar migration](archive/backend/DEV0271-apply-hosted-dev-calendar-migration.md)                                  | Backend      | Hosted M9 calendar rollout                 | Completed | Validate and apply only the pending owner-calendar function to confirmed hosted dev, preserving existing data and other environments.                                                                                    |
 | [DEV0270 — Remove retired local Supabase containers](archive/backend/DEV0270-remove-retired-local-supabase-containers.md)                            | Backend      | Local infrastructure cleanup               | Completed | Remove this app's stopped containers/exclusive images while preserving named volumes and other projects.                                                                                                                 |
 | [DEV0269 — Default local startup to hosted dev](archive/backend/DEV0269-default-local-startup-to-hosted-dev.md)                                      | Backend      | Hosted environment separation              | Completed | Make usual app development commands select hosted dev without creating or starting Docker databases.                                                                                                                     |
