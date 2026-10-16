@@ -1,11 +1,11 @@
 # Ticket DEV0255: Browse thirty-day private availability
 
-- Status: In progress
+- Status: Completed
 - Created: 2026-10-16
 - Last updated: 2026-10-16
 - Milestone: M9 — Coach calendar and effective availability
-- Coordination: [COR0023 — Coach calendar and availability](../organisatory/COR0023-coach-calendar-and-availability.md)
-- Related records: contract owner [DEV0251](../../archive/organisatory/DEV0251-define-coach-calendar-and-availability.md); peer dependencies and external M7 relationships are mapped in COR0023.
+- Coordination: [COR0023 — Coach calendar and availability](../../current/organisatory/COR0023-coach-calendar-and-availability.md)
+- Related records: contract owner [DEV0251](../organisatory/DEV0251-define-coach-calendar-and-availability.md); peer dependencies and external M7 relationships are mapped in COR0023.
 
 ## Objective and context
 
@@ -63,10 +63,10 @@ Remaining-proof plan (2026-10-16): production run `cc75804d-a51c-42a4-976b-6dc82
 
 Stale-selection recovery investigation (2026-10-16, before implementation): the request mutation service catches its known `CoachBookingRequestConflictError` inside an already-failed PostgreSQL transaction, matching the rollback pattern corrected separately in DEV0253. Add a focused real-account scenario that renders a published hour, closes that exact occurrence through the owner's existing operation while retaining the athlete's old document, then submits its original ID. Require the existing bounded “hour is no longer available” conflict, an authoritative refreshed schedule without that row, and zero inserted requests. Reproduce against committed source first. If confirmed, let that typed error escape the transaction and translate it only after rollback using the authorization wrapper's existing `rethrow` option. Preserve denied/unavailable behavior and all database authority; do not change unrelated booking services. Include this case in the full replay and document failed and passing results. No schema, grant, environment, dependency or lifecycle change is planned.
 
-- [ ] AC1: Guests and athletes can reach all published dates in the 30-local-date window through usable bounded public navigation with actual venues and stable URL/back/reload state.
-- [ ] AC2: Requests use current authoritative occurrence IDs and eligibility; elapsed, outside-horizon, overridden or occupied time cannot be requested through stale/forged selections.
-- [ ] AC3: Sign-in return, closed-time recovery and empty/unavailable states remain usable without candidate/athlete/roster leakage or invented inventory.
-- [ ] AC4: Real guest/athlete mobile/desktop/keyboard and horizon/override/group/restoration scenarios plus relevant public/request/static/build checks pass.
+- [x] AC1: Guests and athletes can reach all published dates in the 30-local-date window through usable bounded public navigation with actual venues and stable URL/back/reload state.
+- [x] AC2: Requests use current authoritative occurrence IDs and eligibility; elapsed, outside-horizon, overridden or occupied time cannot be requested through stale/forged selections.
+- [x] AC3: Sign-in return, closed-time recovery and empty/unavailable states remain usable without candidate/athlete/roster leakage or invented inventory.
+- [x] AC4: Real guest/athlete mobile/desktop/keyboard and horizon/override/group/restoration scenarios plus relevant public/request/static/build checks pass.
 
 ## Validation plan
 
@@ -112,6 +112,12 @@ Canonical public navigation is `/coaches/[slug]?date=YYYY-MM-DD#private-schedule
 
 ## Validation results
 
+Final document/driver checks: 50 relative links across both completed records resolved, statuses and all four acceptance checkboxes matched the index, focused helper lint/format and the ten-selection runner guard test passed. The cleanup correction was verified by exact-manifest recovery before archival.
+
+Final acceptance (2026-10-16): AC1–AC4 passed using real production-build replay `cc75804d-a51c-42a4-976b-6dc82a6aac1c` (thirty actual dates, real final-day save/reload/withdrawal and shared override/group/restoration cases), focused stale-conflict green `8b891eb5-702f-4731-a6e8-21086ea108e7` on `06b39c1`, and focused native/responsive/access run `6e55a334-6c5b-4a73-8317-acdd4dbe4dc9`. Native keyboard navigation/form, actual DST predicates and desktop/375/430 checks passed. The last command initially failed cleanup after intentionally suspending its fixture coach; exact-manifest recovery then removed every tagged fixture and preserved all original application/Auth/Storage row hashes. Failure and recovery are explicit, rather than an all-suite pass. The 375 public and desktop/375/430 editor screenshots were inspected. Existing isolated browser/model checks supply invalid/repeated-date, unavailable/account-change and full Back/reload details. No migration, reset, email or deployment occurred.
+
+Focused stale-selection green proof: the same `--scenario closed-selection` command passed run `8b891eb5-702f-4731-a6e8-21086ea108e7` against committed `06b39c1`. With genuine OTP Auth and a production application build, the original closed hour returned the existing known conflict, authoritative refresh removed its row, and SQL showed the original occurrence Withdrawn with zero request attempts. Production build, exact fixture cleanup and all original application/Auth/Storage row hashes passed. This establishes the rollback correction against the earlier red run; no simulated service response was used.
+
 Request-conflict checkpoint validation (2026-10-16): full workspace `npm test` passed 204 application and 20 server tests, `npm run typecheck` passed, focused ESLint passed, and runner guard coverage passed all ten unsafe/missing-configuration selections. The first sandboxed `npm test` was blocked before tests by tsx's local IPC permission; the ordinary network-enabled command passed. The focused live green replay and remaining presentation/access cases are still pending at this checkpoint; neither is replaced by static checks.
 
 Focused stale-selection red proof (2026-10-16): `npm run test:coach-availability-hosted -- --environment dev --run --scenario closed-selection`, run `3b0b4a04-2f28-41e7-bc4e-2c82a62df576` against `97593de`, rendered a genuine published hour, closed that exact ID through the owner operation, then requested from the athlete's retained document. It failed the expected bounded conflict: the inspected screenshot showed the generic unverified-result message and the closed hour still presented as requestable. Cleanup and original hashes passed. Earlier setup `bd9ad6c5-0b16-4511-95f4-0b29f9b4a8b0` failed before the request because the fixture used PostgreSQL display text instead of the function's exact JSON timestamp token; the helper now reads `to_jsonb(updated_at)#>>'{}'`. That setup failure proves no request behavior.
@@ -134,12 +140,12 @@ Hosted continuation checkpoint (2026-10-16): public cases in [the real-account r
 
 Required real athlete/database evidence remains pending; fixtures and an empty hosted public read do not satisfy it. Acceptance accounting:
 
-| Criterion | Evidence                                                                                                                                                                                                                                                                                              | Result             |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| AC1       | Model/browser checks reach all 30 dates, full final-day hours and venues; URL/back/reload and native guest navigation pass. Hosted public snapshot returns valid database time and zero actual hours. Nonempty real schedule proof remains pending.                                                   | Partially verified |
-| AC2       | Model selection excludes elapsed/closed/occupied/outside times and retains a fresh restored ID; browser sends the displayed original ID and handles a stale conflict. Existing malformed-ID server-action tests pass. Real stale/forged/horizon/override/group/restoration authority remains pending. | Partially verified |
-| AC3       | Selected-date sign-in href, no-JavaScript guest links/form, empty/outside/unavailable states and changed-account clearing pass with fixtures. Real authenticated sign-in return/privacy proof remains pending.                                                                                        | Partially verified |
-| AC4       | Desktop/375/430 px, keyboard, long address, touch-target/overflow, error recovery and source regression/static checks pass as recorded below. Real guest/athlete integrated cases remain pending.                                                                                                     | Partially verified |
+| Criterion | Evidence                                                                                                                                                                             | Result |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
+| AC1       | Real thirty-date links, final-day eight actual two-venue hours, original URLs/reload/sign-in return; native guest keyboard/form and model/Back checks.                               | Passed |
+| AC2       | Real closed-ID conflict/refresh with zero requests; elapsed/outside/forged denial, retained booking/group occupancy, fresh restored IDs and manual closure.                          | Passed |
+| AC3       | Real explicit sign-in return with no submission, withdrawal on the original attempt, bounded closed-hour recovery/privacy; isolated unavailable/account-change/native-refresh cases. | Passed |
+| AC4       | Real desktop/375/430 and keyboard, DB DST bounds, custom/day-off/group/restoration; scoped cleanup/preservation, regression/static/production builds.                                | Passed |
 
 - `node --import tsx --test tests/public-coach-schedule.test.ts` — all five cases passed: exactly 30 Berlin dates across both DST transitions/month/year/leap boundaries; all five pages; repeated/invalid/outside dates; dense 200-plus inventory with bounded day selection and actual venues; elapsed/occupied/closed predecessors and fresh identities; date rollover from the next database timestamp; Auth subject/dataset/role changes. Initial fixture generation used a negative remainder for its previous-day example; corrected the fixture's venue index before the passing run.
 - `npm test` — **191 application and 19 server tests passed**. The initial source-boundary check correctly rejected Auth-type imports in the new domain file; moved account matching into the capability-owned presentation model, preserving the domain boundary. A retry was blocked before execution by sandbox `tsx` IPC (`EPERM`); the normal npm command passed with local IPC enabled. Concurrent hosted/startup tests are included in the workspace run and remain independently owned.
@@ -152,15 +158,11 @@ Required real athlete/database evidence remains pending; fixtures and an empty h
 
 ## Risks, limitations, and follow-ups
 
-Keep In progress until the real athlete and database cases pass. Nonempty public snapshot mapping, real first/last/outside dates and date rollover without coach visits, stale/forged request denial, actual override/group occupancy/restored IDs, privacy and authenticated sign-in return still need proof on the agreed safe test target. DEV0256 owns the combined rehearsal, not this ticket's missing acceptance evidence.
-
-`npm run test:client-requests` was **not run**: its legacy fixture cleanup deletes scheduling/identity records and assumes the retired Docker target. Do not execute it unchanged against shared dev or retained data. Update its fixture/preflight/cleanup and date-aware entry points before live use, or add a bounded replacement under this ticket. The user-deferred migration work remains separate. No database reset, migration or mail send occurred.
-
-Handoff: DEV0254 was committed as `e16c06f`; the independent DEV0255 interface/read adapter and isolated evidence are included in the user-authorized public-schedule checkpoint. Finish remaining live proof, update the record, then archive only when all criteria pass. No hosted release or independent review is claimed.
+Required public-schedule criteria are complete. Hosted-dev requests took about 14 seconds and related schedule operations can take tens of seconds; no new response-time target is adopted here. DEV0256 remains the combined calendar rehearsal. DB predicate/model tests cover date rollover and daylight-saving boundaries without changing a server clock; no real midnight wait is claimed. Legacy destructive Docker request runners remain unsuitable for shared dev, so this maintained exact-fixture runner replaces their required cases. Local completion does not imply deployment or independent review.
 
 ## Completion and review references
 
-- Completed: Not completed — real athlete/database acceptance evidence remains pending.
-- Commit: User-authorized `[DEV0255] Add thirty-day public schedule navigation` checkpoint; see Git history for its hash. Required real athlete/database evidence remains pending.
+- Completed: 2026-10-16 — public horizon, real request/conflict/recovery, privacy, native/responsive and cleanup criteria passed.
+- Commit: User-authorized `[DEV0255] Add thirty-day public schedule navigation` checkpoint; see Git history for its hash. Subsequent real acceptance and recovery evidence is recorded above.
 - Review: Implementation/source self-review and recorded local checks; no independent review.
 - Deployment or release: None.

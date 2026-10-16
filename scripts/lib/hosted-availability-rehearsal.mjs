@@ -502,10 +502,12 @@ export async function availabilityRehearsal(args) {
    delete from app.coach_private_bookings where coach_profile_id in(select id from owned) and client_profile_id in(select id from owned);
    delete from app.coach_availability_slots where profile_id in(select id from owned);
    delete from app.coach_availability_rules where profile_id in(select id from owned);
+   select set_config('app.coach_review_management','on',true);
    update app.coach_profiles set visibility='hidden' where profile_id in(select id from owned);
    delete from app.coach_training_locations where profile_id in(select id from owned);
    delete from app.coach_profile_disciplines where profile_id in(select id from owned);
    delete from app.coach_profiles where profile_id in(select id from owned);
+   select set_config('app.coach_review_management','off',true);
    delete from app.coach_application_review_events where profile_id in(select id from owned);
    delete from app.coach_applications where profile_id in(select id from owned);
    delete from app.demo_run_participants where profile_id in(select id from owned);

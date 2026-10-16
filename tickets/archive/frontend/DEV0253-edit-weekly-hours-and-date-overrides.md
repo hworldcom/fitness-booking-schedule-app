@@ -1,11 +1,11 @@
 # Ticket DEV0253: Edit weekly hours and date overrides
 
-- Status: In progress
+- Status: Completed
 - Created: 2026-10-16
 - Last updated: 2026-10-16
 - Milestone: M9 — Coach calendar and effective availability
-- Coordination: [COR0023 — Coach calendar and availability](../organisatory/COR0023-coach-calendar-and-availability.md)
-- Related records: contract owner [DEV0251](../../archive/organisatory/DEV0251-define-coach-calendar-and-availability.md); peer dependencies and external M7 relationships are mapped in COR0023.
+- Coordination: [COR0023 — Coach calendar and availability](../../current/organisatory/COR0023-coach-calendar-and-availability.md)
+- Related records: contract owner [DEV0251](../organisatory/DEV0251-define-coach-calendar-and-availability.md); peer dependencies and external M7 relationships are mapped in COR0023.
 
 ## Objective and context
 
@@ -74,7 +74,7 @@ Focused remaining-proof plan (2026-10-16): full production run `cc75804d-a51c-42
 - [x] AC1: The owner composes multiple nonoverlapping venue ranges, day switches and deliberate copies locally and persists the complete week through one explicit save.
 - [x] AC2: Whole-date custom/day-off overrides save across venues and survive reload; edit/removal previews correctly describe retained sessions, pending closures and eligible current-week restoration.
 - [x] AC3: Validation, stale revision, inactive venue, unavailable/lost-response and navigation states preserve the proper draft and provide explicit recovery without false save success.
-- [ ] AC4: Real local actions, desktop and 375/430 px layouts, keyboard/focus and relevant regression/static/build checks pass; unauthorised/suspended actors gain no editor authority.
+- [x] AC4: Real local actions, desktop and 375/430 px layouts, keyboard/focus and relevant regression/static/build checks pass; unauthorised/suspended actors gain no editor authority.
 
 ## Validation plan
 
@@ -117,6 +117,12 @@ The new UI requires DEV0252 functions in its target database. If absent, Schedul
 
 ## Validation results
 
+Final document/driver checks: 50 relative links across both completed records resolved, statuses and all four acceptance checkboxes matched the index, focused helper lint/format and the ten-selection runner guard test passed. The cleanup correction was verified by exact-manifest recovery before archival.
+
+Final acceptance (2026-10-16): AC1–AC4 passed across full production editor replay `cc75804d-a51c-42a4-976b-6dc82a6aac1c`, focused venue-race green `fdaaaece-3672-4146-89b4-69b459884a8f`, and focused native/responsive/access run `6e55a334-6c5b-4a73-8317-acdd4dbe4dc9`. The latter passed every browser assertion but initially failed cleanup; exact-manifest recovery with the corrected scoped operator context subsequently passed and preserved every original non-temporary application/Auth/Storage row hash. Both unsuccessful command exits and their corrections remain recorded below. Desktop and 375/430 editor renders and the 375 public render were visually inspected. Full application/server tests, typecheck, lint/format and pinned production builds passed as recorded; no migration, reset, mail send or deployment occurred. DEV0256 remains the separate combined calendar rehearsal.
+
+Remaining live cases passed in `--scenario public-access`, run `6e55a334-6c5b-4a73-8317-acdd4dbe4dc9` on committed `06b39c1`: production build, five real OTP identities, complete two-venue week reload, JavaScript-free keyboard navigation/date form, forged UUID denial, database DST predicates, desktop/375/430 overflow/keyboard and athlete/applicant/other-coach/suspended editor boundaries. Desktop and 375 editor screenshots were inspected. The command nevertheless exited 1 because cleanup's exact-fixture profile-hiding update correctly failed the application guard for the deliberately suspended coach. Its transaction rolled back; the private manifest and baseline remain. Before recovery, allow only that already-privileged cleanup transaction's existing `app.coach_review_management` context around hiding/deleting the Auth-tag/UUID-verified fixture coaches, then clear it. No original account or application grant/schema may change. Run exact-manifest recovery and require original-row preservation before completion; do not repeat or label the failed command as a pass.
+
 Full live replay `cc75804d-a51c-42a4-976b-6dc82a6aac1c` (application `97593de`, maintained production-build runner) passed all editor stages: 56-hour two-venue save/reload; retained original private/group warning and real owner popup; two pending requests and their neutral closure cards committed atomically; whole-date custom replacement; day-off cancellation without capacity reopening; fresh restoration IDs and terminal original attempts; manual closure preservation; committed-but-interrupted save with one receipt/revision on exact retry; changed-payload/stale-baseline rejection with retained draft; venue deactivation after review returning editable invalid state; interrupted preview with no SQL revision. It also passed real public boundary/date/final-day mutation assertions. The full command exited 1 at the subsequent native guest pointer-navigation driver, before responsive/access proof. Cleanup and original application/Auth/Storage row hashes passed. This completes AC3 together with the separately recorded dirty-navigation/focus fixture proof; AC4 remains open for the focused responsive/access replay. No all-suite pass is claimed.
 
 Focused green replay (2026-10-16): `npm run test:coach-availability-hosted -- --environment dev --run --scenario inactive-venue`, run `fdaaaece-3672-4146-89b4-69b459884a8f` on committed `97593de`, passed production compilation without a database URL, the real review/deactivation/save race, editable retained draft with the known invalid result, no extra policy revision/receipt, exact fixture cleanup and original application/Auth/Storage row preservation. A clean archive of that same commit at `/private/tmp/movx-calendar-final-geqrzxs6`, using Node 24.21.0, passed full format, lint, typecheck and environment-free `npm test` (199 application plus 20 server tests). The workspace run also passed 204 application plus 20 server tests, including independently owned uncommitted checks. Full combined editor/public replay remains underway; these focused results do not yet complete AC3/AC4.
@@ -144,12 +150,12 @@ Initial read-only `node --env-file=.env.development.local scripts/rehearse-hoste
 
 The non-database checks below passed on 16 October 2026. Required authenticated persistence/reload/real retained-session and request-card checks are deferred by the user's migration constraint; fixture save results are not evidence of SQL persistence or live authorization.
 
-| Criterion | Evidence                                                                                                                                                                                                             | Result             |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| AC1       | Range/copy/model and isolated checks plus real hosted complete-week save/reload at source `53445ff`: 56 two-venue hours, deliberate copy, one revision and persisted selections.                                     | Passed             |
-| AC2       | Real whole-date venue replacement, retained original private/group warnings and owner link, two atomic request/card closures, day-off reload/cancellation, fresh restoration and manual-closure preservation passed. | Passed             |
-| AC3       | Model/action validation and isolated conflict/unavailable/exact-retry/draft navigation checks; real concurrent/authenticated recovery remains pending.                                                               | Partially verified |
-| AC4       | Static/regression/isolated browser/build checks passed; required real coach/Auth checks remain deferred.                                                                                                             | Partially verified |
+| Criterion | Evidence                                                                                                                                                          | Result |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| AC1       | Real 56-hour, two-venue copy/save/reload plus model/isolated checks.                                                                                              | Passed |
+| AC2       | Real custom/day-off replacement, retained original booking/group and owner link, atomic request/card closure, cancellation, fresh restoration and manual closure. | Passed |
+| AC3       | Real exact retry/altered replay/stale revision/inactive venue/interrupted preview plus isolated dirty-navigation/focus/access recovery.                           | Passed |
+| AC4       | Real desktop/375/430, keyboard, athlete/applicant/other-coach/suspended access, guarded cleanup/preservation; regression/static/production builds.                | Passed |
 
 - `npm test` — final run passed **171 application tests and 18 server tests**. Coverage includes current range/copy/version/override transformations, Berlin month boundaries, account/run/suspension draft guards and malformed action inputs. An intermediate full run failed in the concurrently edited Events test because `next/navigation` loaded React client context under the server-only test condition. After those unrelated files changed independently, a fresh full run passed. No Events source or tests were edited under DEV0253. These workspace-wide runs included concurrent Events/environment work that is excluded from this checkpoint; the focused availability checks and isolated browser record describe this ticket's own validation.
 - `npx tsx --conditions=react-server --test tests/server/availability-editor-actions.test.ts tests/server/coach-availability-actions.test.ts` — **3 passed**, including current and legacy action input regressions. These malformed-input checks reject before database access; they do not claim live authorization coverage.
@@ -159,7 +165,7 @@ The non-database checks below passed on 16 October 2026. Required authenticated 
 - `npm run lint` — passed. `npm run typecheck` — final route generation and TypeScript check passed. `npm run format:check` — final application/script/test formatting check passed.
 - `npm run build -- --webpack` — passed in the environment-free temporary source snapshot after removing its fixture route, copied fixture module and generated dev cache. This ran the real map-worker preparation and production compilation/type/page generation. Availability source matches the final tested implementation; the isolated snapshot avoids the local `.env` and shared development cache. Concurrent Events edits after snapshot creation are not claimed as that build's source. No deployment was performed.
 - Relative-link/status/membership check — **39** links in this DEV and COR0023 resolved; DEV0253 remains current/In progress with reciprocal COR0023 membership. `git diff --check` passed. `npx prettier --check docs/mvp-spec.md tickets/README.md tickets/current/frontend/DEV0253-edit-weekly-hours-and-date-overrides.md tickets/current/organisatory/COR0023-coach-calendar-and-availability.md` passed after normalizing the changed index table.
-- **Not run:** migrations/reset/seeding, database/pgTAP suites, `npm run test:coach-availability`, real authenticated weekly/date save+reload and retained booking/group/request-card proof, real stale/venue/Auth recovery, or the integrated DEV0256 rehearsal. The existing authenticated availability runner still uses legacy cell selectors and historical cleanup; updating it for the current contract is remaining work under this DEV before its live run. Do not execute that legacy runner against current data unchanged.
+- **Initial-phase not-run record (later live replacement evidence above):** migrations/reset/seeding, database/pgTAP suites, `npm run test:coach-availability`, real authenticated weekly/date save+reload and retained booking/group/request-card proof, real stale/venue/Auth recovery, or the integrated DEV0256 rehearsal. The existing authenticated availability runner still uses legacy cell selectors and historical cleanup; updating it for the current contract is remaining work under this DEV before its live run. Do not execute that legacy runner against current data unchanged.
 
 ### Retained-group integration validation — 2026-10-16
 
@@ -170,13 +176,13 @@ The non-database checks below passed on 16 October 2026. Required authenticated 
 
 ## Risks, limitations, and follow-ups
 
-This ticket stays In progress until its required real persistence/authorization evidence passes. Isolated fixtures do not prove saved SQL policy, actual request closure, a retained real booking/group, server concurrency or a real authenticated reload. Owner group links now work in isolated integration checks; their real Auth/SQL authority and lifecycle remain dependent on DEV0239. DEV0254 owns mixed Day/Week/Month views, selected-date calendar transitions and owner feed/paging; this slice does not claim those views. DEV0255 owns public 30-day navigation and DEV0256 the combined two-account flow.
+Required editor criteria are complete. Hosted-dev preview/save operations measured roughly 14–32 seconds, and requests roughly 14 seconds in these runs; performance remains a known limitation without an adopted response-time target. DEV0254 owns the mixed calendar, DEV0255 public date browsing, and DEV0256 the final combined rehearsal. Earlier failures and cleanup recoveries are retained above; completed local proof does not imply deployment or independent review.
 
-Handoff: frontend code exists against the validated DEV0252 contract, with no migrations applied. Once database work permits, update the authenticated runner for the new range/date contract and current fixture cleanup, then run the real approved-coach weekly/date/save/reload/conflict/retained-session rehearsal and verify unauthorized/suspended actors. Do not archive or mark completed while these checks remain missing.
+Handoff: use the maintained explicit-dev runner and its focused scenarios. Do not run legacy destructive availability rehearsals unchanged against retained/shared data.
 
 ## Completion and review references
 
-- Completed: Not completed — required live validation deferred.
-- Commit: Initial editor checkpoint `1db71b8`; group-warning integration included in the user-authorized `[DEV0253][DEV0254] Connect calendar groups to coach management` checkpoint. See Git history for its hash. Required live evidence remains open.
-- Review: Implementation self-review against AC1–AC4 and the recorded partial/deferred evidence completed; no independent review.
+- Completed: 2026-10-16 — weekly/date editor, real persistence, recovery, responsive/access and cleanup criteria passed.
+- Commit: Initial editor checkpoint `1db71b8`; group-warning integration included in the user-authorized `[DEV0253][DEV0254] Connect calendar groups to coach management` checkpoint. See Git history for its hash. Subsequent real proof and recovery checkpoints are recorded above and in Git history.
+- Review: Implementation self-review against completed AC1–AC4 and the recorded passing/failed/recovered evidence completed; no independent review.
 - Deployment or release: None.
