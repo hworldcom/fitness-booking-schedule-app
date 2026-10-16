@@ -54,6 +54,10 @@ All required development records exist. These six direct peers each declare COR0
 
 - 2026-10-16: DEV0253 now contains the weekly-range/copy/date editor, bounded owner actions, retained-session/request-closure review and draft/access/retry protection. Its isolated browser checkpoints at desktop/375/430 px, application/server tests and static/isolated production build checks passed; its own implementation record owns the evidence. It remains In progress: required real persistence/Auth/reload and booking/group/card checks are deferred, and final owner-group action links depend on DEV0239. No migration was run. DEV0254 remains the next mixed calendar slice.
 
+- 2026-10-16: DEV0253 checkpoint committed as `1db71b8`; its required live checks remain pending. DEV0254 started the owner calendar projection and Day/Week/Month UI against that checkpoint. Migration application remains deferred; prepare the bounded read contract and isolated UI proof, retaining DEV0239 owner details as a completion dependency.
+
+- 2026-10-16: DEV0254 now contains the bounded redacted read contract, prepared owner-read migration, default Week/Day/Month/agenda/filter/navigation UI and Calendar/Availability draft integration. Six isolated browser checkpoints and model/action/static checks passed; its ticket owns exact evidence. Migration application, real SQL/Auth/isolation/paging proof and the DEV0239 original owner destination remain pending, so DEV0254 stays In progress.
+
 ## Validation results
 
 Planning links, namespaces, reciprocal membership, exclusive work-map ownership and specification consistency passed under completed DEV0251; its archived validation record contains exact commands/results. DEV0252 completed 123 database driver tests, 239 pgTAP assertions, fresh/preserved-data migrations and application/static/build checks; its archived record owns the details. DEV0253 isolated interface evidence is recorded in its current ticket, while required live UI/integration proof remains pending; no coordination-only check substitutes for another peer's acceptance criteria or DEV0256's real local proof.
@@ -67,7 +71,7 @@ Closure provenance and explicit successor identities must preserve manual closur
 ## Completion and review references
 
 - Completed: Not completed — runtime and integrated acceptance evidence pending.
-- Direct development tickets: DEV0251 documentation Completed; DEV0252 backend Completed; DEV0253 editor In progress; DEV0254–DEV0256 Draft.
+- Direct development tickets: DEV0251 documentation Completed; DEV0252 backend Completed; DEV0253 editor In progress; DEV0254 calendar In progress; DEV0255–DEV0256 Draft.
 - Commit: Not applicable — COR identifiers are never commit subjects; the user-authorized planning checkpoint is owned by DEV0251.
 - Review: Planning self-review; no independent/runtime integration review.
 - Deployment or release: None.

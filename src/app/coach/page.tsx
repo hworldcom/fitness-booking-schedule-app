@@ -25,17 +25,24 @@ import { resolveCoachWorkspaceView } from "@/features/coaches/coach-workspace-vi
 import { currentOwnedCoachBookingRequestPage } from "@/server/coaches/booking-request-service";
 import { currentPrivateBookingWorkspace } from "@/server/coaches/booking-service";
 import { currentCoachAvailabilityWorkspace } from "@/server/coaches/service";
+import {
+  calendarSelection,
+  calendarPeriod,
+  calendarHref,
+  calendarQueryKey,
+} from "@/domain/coach-calendar";
+import { isCanonicalUuid } from "@/domain/coach-bookings";
+import { CoachCalendarWorkspace } from "@/features/coaches/coach-calendar-workspace";
+import { CoachScheduleNavigation } from "@/features/coaches/coach-schedule-navigation";
+import { loadCoachCalendar } from "@/server/coaches/calendar-service";
+import { loadCoachCalendarAction } from "./calendar-actions";
 
 export const metadata: Metadata = { title: "Coach workspace" };
 
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{
-    view?: string | string[];
-    date?: string | string[];
-    section?: string | string[];
-  }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
   const view = resolveCoachWorkspaceView(params.view);
@@ -44,6 +51,35 @@ export default async function Page({
       ? params.date
       : null;
   const date = selectedDate ?? berlinAvailabilityDate(new Date());
+  const section =
+    params.section === "availability" ? "availability" : "calendar";
+  const selection = calendarSelection(params, date);
+  const period = calendarPeriod(selection);
+  const query = {
+    ...period,
+    type: selection.type,
+    venueId: selection.venueId,
+    history: selection.history,
+    after: null,
+  };
+  const calendarQuery = {
+    from: query.from,
+    through: query.through,
+    type: query.type,
+    venueId: query.venueId,
+    history: query.history,
+    after: null,
+  };
+  const returnTo =
+    view === "bookings"
+      ? "/coach?view=bookings"
+      : section === "calendar"
+        ? calendarHref(selection)
+        : `/coach?view=schedule&section=availability${selectedDate ? `&date=${selectedDate}` : ""}`;
+  const occurrence =
+    typeof params.occurrence === "string" && isCanonicalUuid(params.occurrence)
+      ? params.occurrence
+      : undefined;
   const [state, bookingState, requestState] = await Promise.all([
     currentCoachAvailabilityWorkspace(false),
     view === "bookings" ? currentPrivateBookingWorkspace() : null,
@@ -52,9 +88,9 @@ export default async function Page({
       : null,
   ]);
   if (state.status !== "authorized") {
-    if (state.status === "signed-out") redirect(signInHref("/coach"));
+    if (state.status === "signed-out") redirect(signInHref(returnTo));
     if (state.status === "forbidden") {
-      redirect(`${signInHref("/coach")}&reason=forbidden`);
+      redirect(`${signInHref(returnTo)}&reason=forbidden`);
     }
     if (state.status === "preview") {
       return (
@@ -66,7 +102,7 @@ export default async function Page({
             private training times requires a verified MovX identity.
           </p>
           <div className="protected-access-actions">
-            <Link className="button dark" href={signInHref("/coach")}>
+            <Link className="button dark" href={signInHref(returnTo)}>
               Go to sign-in
             </Link>
             <Link className="button secondary" href="/explore">
@@ -110,7 +146,11 @@ export default async function Page({
         <a href="#client-bookings">Booked sessions</a>
         <a href="#my-athletes">My athletes</a>
       </nav>
-      <CoachBookingRequestQueue initialPage={coachRequestPage} />
+      <CoachBookingRequestQueue
+        key={`${state.actorScope}:${occurrence ?? "all"}`}
+        initialPage={coachRequestPage}
+        selectedSlotId={occurrence}
+      />
       <ConnectionWorkspace
         role="coach"
         bookings={coachBookings}
@@ -128,10 +168,11 @@ export default async function Page({
     </div>
   );
 
-  if (
-    state.coachAccess.status !== "approved" &&
-    state.coachAccess.status !== "demo"
-  ) {
+  const suspendedCalendar =
+    state.coachAccess.status === "suspended" &&
+    view === "schedule" &&
+    section === "calendar";
+  if (!mayInitiate && !suspendedCalendar) {
     return (
       <CoachApplicationGate
         access={state.coachAccess}
@@ -146,44 +187,85 @@ export default async function Page({
 
   const month = availabilityMonth(date);
   const availability =
-    view === "schedule" && state.coach?.visibility === "visible"
+    view === "schedule" &&
+    section === "availability" &&
+    state.coach?.visibility === "visible"
       ? await loadAvailabilityEditor(
           month.from,
           month.through,
           state.actorScope,
         )
       : null;
+  const calendar =
+    view === "schedule" && section === "calendar" && state.coach
+      ? await loadCoachCalendar(calendarQuery, state.actorScope)
+      : null;
 
-  return (
+  const workspace = (
     <CoachAvailabilityPanel
       coach={state.coach}
       view={view}
       bookingContent={view === "bookings" ? bookingContent : undefined}
       ownerDisplayName={state.ownerDisplayName}
+      allowScheduleHistory={section === "calendar"}
       scheduleContent={
-        availability?.status === "ready" ? (
-          <AvailabilityWorkspaceEditor
-            key={`${state.actorScope}:${date}`}
-            initial={availability.data}
-            initialDate={date}
-            initialTab={selectedDate ? "dates" : "weekly"}
-            actions={{
-              load: loadAvailabilityEditorAction,
-              change: changeAvailabilityEditorAction,
-            }}
-          />
-        ) : (
-          <section className="coach-workspace-gate" role="alert">
-            <h2>Availability could not be loaded.</h2>
-            <p>
-              {availability?.message ?? "Reload the workspace to try again."}
-            </p>
-            <Link className="button secondary" href="/coach">
-              Try again
-            </Link>
-          </section>
-        )
+        <>
+          <CoachScheduleNavigation active={section} date={date} />
+          {section === "calendar" ? (
+            calendar?.status === "ready" ? (
+              <CoachCalendarWorkspace
+                key={`${state.actorScope}:${calendarQueryKey(calendarQuery)}:${calendar.data.page.version}`}
+                initial={calendar.data}
+                selection={selection}
+                load={loadCoachCalendarAction}
+              />
+            ) : (
+              <section className="coach-calendar-unavailable" role="alert">
+                <h2>Calendar unavailable</h2>
+                <p>
+                  {calendar?.message ??
+                    "The calendar could not be verified. Reload to try again."}
+                </p>
+                <Link
+                  className="button secondary"
+                  href={calendarHref(selection)}
+                >
+                  Try again
+                </Link>
+              </section>
+            )
+          ) : availability?.status === "ready" ? (
+            <AvailabilityWorkspaceEditor
+              key={`${state.actorScope}:${date}`}
+              initial={availability.data}
+              initialDate={date}
+              initialTab={selectedDate ? "dates" : "weekly"}
+              actions={{
+                load: loadAvailabilityEditorAction,
+                change: changeAvailabilityEditorAction,
+              }}
+            />
+          ) : (
+            <section className="coach-workspace-gate" role="alert">
+              <h2>Availability could not be loaded.</h2>
+              <p>
+                {availability?.message ?? "Reload the workspace to try again."}
+              </p>
+              <Link className="button secondary" href="/coach">
+                Try again
+              </Link>
+            </section>
+          )}
+        </>
       }
     />
+  );
+  return suspendedCalendar ? (
+    <CoachApplicationGate
+      access={state.coachAccess}
+      existingBookings={workspace}
+    />
+  ) : (
+    workspace
   );
 }

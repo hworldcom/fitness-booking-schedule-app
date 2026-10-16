@@ -1,0 +1,817 @@
+.coach-schedule-navigation {
+  display: flex;
+  gap: 23px;
+  margin: 24px 0 0;
+  border-bottom: 1px solid #dce3d5;
+}
+.coach-schedule-navigation a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 15px 2px 13px;
+  color: #7b8475;
+  font-size: 13px;
+  font-weight: 650;
+  border-bottom: 2px solid transparent;
+}
+.coach-schedule-navigation a[aria-current="page"] {
+  color: #314f2b;
+  border-color: #5a7c41;
+}
+.coach-calendar {
+  color: #243c2b;
+  padding-bottom: 20px;
+}
+.coach-calendar-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  margin: 30px 0 26px;
+}
+.coach-calendar-heading h2 {
+  font-size: 38px;
+  line-height: 1.1;
+  letter-spacing: -0.045em;
+  margin: 8px 0 10px;
+}
+.coach-calendar-heading p {
+  font-size: 14px;
+  color: #7b8475;
+}
+.coach-calendar-timezone {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #dce3d5;
+  border-radius: 9px;
+  padding: 9px 12px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.coach-calendar-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin: 0 0 21px;
+}
+.coach-calendar-period-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.coach-calendar-period-controls .button {
+  min-height: 38px;
+  padding: 8px 14px;
+  font-size: 12px;
+  border-radius: 9px;
+}
+.coach-calendar-period-controls h3 {
+  font-size: 20px;
+  letter-spacing: -0.03em;
+  margin-left: 10px;
+  line-height: 1.4;
+}
+.coach-calendar-arrow {
+  width: 32px;
+  height: 37px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+}
+.coach-calendar-arrow:hover {
+  background: #e9eedf;
+}
+.coach-calendar-view-controls {
+  display: flex;
+  padding: 4px;
+  background: #e9eddf;
+  border-radius: 10px;
+}
+.coach-calendar-view-controls a {
+  font-size: 12px;
+  font-weight: 650;
+  padding: 9px 16px;
+  border-radius: 7px;
+  color: #78816e;
+}
+.coach-calendar-view-controls a[aria-current="page"] {
+  background: #fff;
+  color: #29442c;
+  box-shadow: 0 1px 4px #223a2410;
+}
+.coach-calendar-filters {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-bottom: 17px;
+}
+.coach-calendar-filters nav {
+  display: flex;
+  gap: 6px;
+}
+.coach-calendar-filters nav a {
+  font-size: 12px;
+  padding: 9px 13px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  color: #7b8472;
+}
+.coach-calendar-filters nav a[aria-current="page"] {
+  color: #38532c;
+  border-color: #d7e3bf;
+  background: #edf3df;
+  font-weight: 650;
+}
+.coach-calendar-filters form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.coach-calendar-venue-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #dbe2d2;
+  padding: 7px 9px;
+  border-radius: 8px;
+  max-width: 230px;
+  background: white;
+}
+.coach-calendar-venue-filter select {
+  width: 100%;
+  min-width: 0;
+  font-size: 12px;
+  color: #485740;
+  outline: none;
+  background: transparent;
+}
+.coach-calendar-history {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #6c795f;
+}
+.coach-calendar-history input {
+  accent-color: #5b7b42;
+}
+.coach-calendar-apply {
+  font-size: 11px;
+  font-weight: 650;
+  color: #486239;
+  background: white;
+  border: 1px solid #dbe2d2;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.coach-calendar-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  font-size: 11px;
+  color: #7b856f;
+}
+.coach-calendar-summary p {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.coach-calendar-summary button {
+  font-size: 11px;
+  font-weight: 650;
+  padding: 8px 0;
+  color: #486438;
+}
+.coach-calendar-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-left: 7px;
+}
+.coach-calendar-dot.available {
+  background: #97bb69;
+}
+.coach-calendar-dot.booking {
+  background: #83a7b7;
+}
+.coach-calendar-dot.group {
+  background: #c59f68;
+}
+.coach-calendar-month,
+.coach-calendar-timed,
+.coach-calendar-agenda {
+  border: 1px solid #dce3d6;
+  border-radius: 15px;
+  background: #fff;
+  overflow: hidden;
+}
+.coach-calendar-month-weekdays,
+.coach-calendar-month-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.coach-calendar-month-weekdays {
+  background: #f3f6ed;
+  border-bottom: 1px solid #e0e6d7;
+}
+.coach-calendar-month-weekdays span {
+  padding: 13px;
+  font-size: 11px;
+  font-weight: 650;
+  color: #7b866e;
+}
+.coach-calendar-month-day {
+  min-height: 161px;
+  border-right: 1px solid #e8edde;
+  border-bottom: 1px solid #e8edde;
+  padding: 9px;
+  min-width: 0;
+}
+.coach-calendar-month-day:nth-child(7n) {
+  border-right: 0;
+}
+.coach-calendar-month-day.adjacent {
+  background: #fafbf7;
+}
+.coach-calendar-month-day.today {
+  background: #f8fbf0;
+}
+.coach-calendar-month-day header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 0 9px;
+}
+.coach-calendar-month-day header a {
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  min-width: 26px;
+  min-height: 26px;
+  border-radius: 50%;
+}
+.coach-calendar-month-day header a + a {
+  color: #8b9a7d;
+}
+.coach-calendar-month-day.today header a:first-child {
+  background: #587c3d;
+  color: white;
+  font-weight: 650;
+}
+.coach-calendar-month-day.adjacent header a {
+  color: #a4ad9b;
+}
+.coach-calendar-month-day > div {
+  display: grid;
+  gap: 4px;
+}
+.coach-calendar-more {
+  display: block;
+  color: #607c4d;
+  font-size: 10px;
+  font-weight: 650;
+  margin: 8px 2px 0;
+}
+.coach-calendar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 5px;
+  width: 100%;
+  min-width: 0;
+  background: #edf4e4;
+  border: 1px solid #d9e7c8;
+  border-left: 3px solid #9bbd78;
+  border-radius: 7px;
+  padding: 12px 14px;
+  color: #38532a;
+  cursor: pointer;
+}
+.coach-calendar-item.booking {
+  background: #eaf2f6;
+  border-color: #d3e3e9;
+  border-left-color: #87abba;
+  color: #345368;
+}
+.coach-calendar-item.group {
+  background: #f8efe2;
+  border-color: #ebdecb;
+  border-left-color: #c4a26a;
+  color: #6b5634;
+}
+.coach-calendar-item.cancelled,
+.coach-calendar-item.withdrawn,
+.coach-calendar-item.not-confirmed {
+  background: #f5f1ef;
+  border-color: #e4d9d3;
+  border-left-color: #b6a397;
+  color: #80716b;
+}
+.coach-calendar-item:hover {
+  filter: brightness(0.98);
+  box-shadow: 0 2px 6px #26372012;
+}
+.coach-calendar-item strong {
+  font-size: 13px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.coach-calendar-item-time {
+  font-size: 11px;
+  font-weight: 700;
+}
+.coach-calendar-item-status {
+  font-size: 10px;
+  line-height: 1.4;
+}
+.coach-calendar-item-venue {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 1.6;
+  flex-wrap: wrap;
+  color: #6a7961;
+}
+.coach-calendar-item-venue em {
+  font-style: normal;
+}
+.coach-calendar-pending {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  margin-top: 2px;
+}
+.coach-calendar-item.compact {
+  padding: 6px;
+  gap: 3px;
+  border-left-width: 2px;
+  height: 100%;
+  overflow: hidden;
+}
+.coach-calendar-item.compact strong {
+  font-size: 10px;
+  line-height: 1.35;
+  max-width: 100%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.coach-calendar-item.compact .coach-calendar-item-time {
+  font-size: 9px;
+  white-space: nowrap;
+}
+.coach-calendar-item.compact .coach-calendar-item-status {
+  font-size: 8px;
+  flex-shrink: 0;
+}
+.coach-calendar-month-day .coach-calendar-item.compact {
+  height: auto;
+}
+.coach-calendar-month-day
+  .coach-calendar-item.compact
+  .coach-calendar-item-status {
+  display: none;
+}
+.coach-calendar-timed-heading {
+  display: grid;
+  border-bottom: 1px solid #e2e8d9;
+  background: #fbfcf7;
+}
+.coach-calendar-timed-heading > span {
+  font-size: 8px;
+  color: #98a38a;
+  align-self: center;
+  text-align: center;
+}
+.coach-calendar-timed-heading a {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 13px 2px;
+  color: #7e8971;
+  border-left: 1px solid #edf0e7;
+}
+.coach-calendar-timed-heading a span {
+  font-size: 10px;
+}
+.coach-calendar-timed-heading a strong {
+  font-size: 17px;
+  font-weight: 650;
+  color: #3f5435;
+}
+.coach-calendar-timed-heading a.today strong {
+  background: #5b7e40;
+  color: #fff;
+  border-radius: 50%;
+  height: 28px;
+  width: 28px;
+  display: grid;
+  place-items: center;
+}
+.coach-calendar-timed-scroll {
+  max-height: 600px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.coach-calendar-timed-body {
+  display: grid;
+  position: relative;
+  height: 1536px;
+}
+.coach-calendar-hours {
+  position: relative;
+  background: #fcfdf9;
+}
+.coach-calendar-hours span {
+  position: absolute;
+  font-size: 9px;
+  color: #95a087;
+  right: 7px;
+  transform: translateY(-50%);
+}
+.coach-calendar-hours span:first-child {
+  transform: none;
+}
+.coach-calendar-day-column {
+  position: relative;
+  border-left: 1px solid #e7ecdf;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 63px,
+    #edf0e6 63px,
+    #edf0e6 64px
+  );
+  min-width: 0;
+}
+.coach-calendar-day-column.today {
+  background-color: #fcfdf7;
+}
+.coach-calendar-empty-date {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.coach-calendar-empty-date:hover {
+  background: #e9f1d625;
+}
+.coach-calendar-timed-event {
+  position: absolute;
+  padding: 1px 3px;
+  z-index: 2;
+}
+.coach-calendar-now {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #9c694f;
+  z-index: 3;
+  pointer-events: none;
+}
+.coach-calendar-now span {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #9c694f;
+  transform: translate(-3px, -2px);
+}
+.coach-calendar-grid-help {
+  font-size: 10px;
+  padding: 10px 16px;
+  color: #88947b;
+  border-top: 1px solid #e7ecdf;
+  line-height: 1.5;
+}
+.coach-calendar-agenda {
+  margin-top: 24px;
+}
+.coach-calendar-agenda > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 23px;
+  border-bottom: 1px solid #e4eadc;
+  color: #6e815e;
+}
+.coach-calendar-agenda h3 {
+  font-size: 16px;
+  font-weight: 650;
+  color: #2c472c;
+  margin-bottom: 5px;
+}
+.coach-calendar-agenda > header p {
+  font-size: 11px;
+  color: #8a957c;
+}
+.coach-calendar-agenda-day {
+  padding: 20px 23px;
+  border-bottom: 1px solid #edf0e7;
+}
+.coach-calendar-agenda-day h4 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 650;
+  margin-bottom: 13px;
+}
+.coach-calendar-agenda-day h4 small {
+  font-size: 9px;
+  color: #65824c;
+  background: #eff5e5;
+  padding: 3px 7px;
+  border-radius: 5px;
+}
+.coach-calendar-agenda-day > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.coach-calendar-empty {
+  display: grid;
+  justify-items: center;
+  gap: 13px;
+  text-align: center;
+  padding: 43px 22px;
+  color: #8b9b79;
+}
+.coach-calendar-empty p {
+  font-size: 12px;
+}
+.coach-calendar-empty .button {
+  font-size: 12px;
+  margin-top: 9px;
+}
+.coach-calendar-page-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 20px 23px;
+}
+.coach-calendar-page-controls p {
+  font-size: 12px;
+  color: #7f8d72;
+}
+.coach-calendar-page-controls .button {
+  font-size: 12px;
+  min-height: 40px;
+}
+.coach-calendar-horizon {
+  font-size: 11px;
+  color: #8a957c;
+  line-height: 1.75;
+  margin: 18px 3px;
+}
+.coach-calendar-feedback,
+.coach-calendar-unavailable {
+  padding: 17px 20px;
+  border: 1px solid #e5d8be;
+  border-radius: 12px;
+  background: #fff9ed;
+  font-size: 13px;
+  line-height: 1.65;
+  margin: 16px 0;
+  color: #7d6945;
+}
+.coach-calendar-unavailable h2 {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+.coach-calendar-unavailable .button {
+  margin-top: 14px;
+}
+.coach-calendar-detail {
+  display: grid;
+  gap: 18px;
+  margin-top: 16px;
+}
+.coach-calendar-detail p {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.coach-calendar-detail p svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.coach-calendar-detail p small {
+  display: block;
+  color: #8d987d;
+  font-size: 11px;
+  margin-top: 4px;
+}
+.coach-calendar-detail-status {
+  font-size: 11px;
+  background: #edf4e3;
+  color: #58713d;
+  border-radius: 6px;
+  padding: 6px 9px;
+  width: fit-content;
+}
+.coach-calendar :is(button, a, input, select):focus-visible,
+.coach-schedule-navigation a:focus-visible {
+  outline: 3px solid #759952;
+  outline-offset: 3px;
+}
+.coach-calendar button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+@media (max-width: 1100px) {
+  .coach-calendar-toolbar {
+    flex-wrap: wrap;
+  }
+  .coach-calendar-period-controls h3 {
+    font-size: 18px;
+  }
+  .coach-calendar-month-day {
+    padding: 6px;
+    min-height: 145px;
+  }
+  .coach-calendar-item.compact {
+    padding: 5px;
+  }
+  .coach-calendar-item.compact .coach-calendar-item-time {
+    font-size: 8px;
+  }
+  .coach-calendar-item.compact strong {
+    font-size: 9px;
+  }
+  .coach-calendar-filters form {
+    gap: 8px;
+  }
+}
+@media (max-width: 760px) {
+  .coach-calendar-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    margin: 25px 0 22px;
+    gap: 15px;
+  }
+  .coach-calendar-heading h2 {
+    font-size: 33px;
+  }
+  .coach-calendar-heading p {
+    font-size: 13px;
+  }
+  .coach-calendar-toolbar {
+    display: grid;
+    gap: 17px;
+  }
+  .coach-calendar-period-controls {
+    flex-wrap: wrap;
+  }
+  .coach-calendar-period-controls h3 {
+    flex-basis: 100%;
+    margin: 8px 0 0;
+    font-size: 19px;
+  }
+  .coach-calendar-view-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .coach-calendar-view-controls a {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+  }
+  .coach-calendar-filters {
+    gap: 12px;
+  }
+  .coach-calendar-filters form {
+    width: 100%;
+    gap: 11px;
+  }
+  .coach-calendar-venue-filter {
+    flex: 1;
+    max-width: none;
+  }
+  .coach-calendar-venue-filter select {
+    font-size: 16px;
+    padding: 4px 0;
+  }
+  .coach-calendar-history {
+    flex-basis: 100%;
+    font-size: 12px;
+    order: 2;
+  }
+  .coach-calendar-apply {
+    padding: 11px;
+    min-height: 43px;
+  }
+  .coach-calendar-summary {
+    font-size: 10px;
+    align-items: flex-start;
+  }
+  .coach-calendar-summary p {
+    gap: 5px;
+    max-width: 210px;
+  }
+  .coach-calendar-summary button {
+    white-space: nowrap;
+  }
+  .coach-calendar-dot {
+    margin-left: 3px;
+  }
+  .coach-calendar-timed {
+    display: none;
+  }
+  .coach-calendar-agenda {
+    margin-top: 14px;
+  }
+  .coach-calendar-agenda > header {
+    padding: 19px 17px;
+  }
+  .coach-calendar-agenda-day {
+    padding: 19px 16px;
+  }
+  .coach-calendar-agenda-day > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .coach-calendar-item {
+    padding: 12px;
+  }
+  .coach-calendar-item-venue {
+    font-size: 12px;
+  }
+  .coach-calendar-page-controls {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 20px 17px;
+  }
+  .coach-calendar-page-controls .button {
+    justify-content: center;
+  }
+  .coach-calendar-month-day {
+    padding: 3px;
+    min-height: 92px;
+  }
+  .coach-calendar-month-day header {
+    margin-bottom: 5px;
+    justify-content: center;
+  }
+  .coach-calendar-month-day header a + a {
+    display: none;
+  }
+  .coach-calendar-month-weekdays span {
+    padding: 11px 0;
+    text-align: center;
+    font-size: 9px;
+  }
+  .coach-calendar-month-day .coach-calendar-item.compact {
+    padding: 3px;
+    border-left-width: 2px;
+    border-radius: 4px;
+    gap: 0;
+    min-height: 16px;
+  }
+  .coach-calendar-month-day .coach-calendar-item.compact strong {
+    display: none;
+  }
+  .coach-calendar-month-day
+    .coach-calendar-item.compact
+    .coach-calendar-item-time {
+    font-size: 7px;
+    overflow: hidden;
+    max-width: 100%;
+    text-overflow: ellipsis;
+  }
+  .coach-calendar-more {
+    font-size: 8px;
+    margin: 5px 1px;
+    white-space: nowrap;
+  }
+  .coach-calendar-month-day > div {
+    gap: 2px;
+  }
+  .coach-calendar-horizon {
+    font-size: 11px;
+  }
+  .coach-schedule-navigation {
+    margin-top: 15px;
+  }
+  .coach-calendar-empty .button {
+    font-size: 11px;
+  }
+}
+.coach-request-queue [data-calendar-selected="true"] {
+  outline: 2px solid #73994d;
+  outline-offset: 4px;
+  scroll-margin-top: 110px;
+}

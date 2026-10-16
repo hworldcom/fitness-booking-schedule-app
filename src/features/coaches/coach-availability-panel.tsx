@@ -12,12 +12,14 @@ export function CoachAvailabilityPanel({
   bookingContent,
   ownerDisplayName,
   scheduleContent,
+  allowScheduleHistory = false,
 }: {
   coach: CoachProjection | null;
   view: CoachWorkspaceView;
   bookingContent?: ReactNode;
   ownerDisplayName: string;
   scheduleContent?: ReactNode;
+  allowScheduleHistory?: boolean;
 }) {
   return (
     <div className="coach-workspace">
@@ -39,7 +41,7 @@ export function CoachAvailabilityPanel({
             Set up coach profile
           </Link>
         </section>
-      ) : coach.visibility !== "visible" ? (
+      ) : coach.visibility !== "visible" && !allowScheduleHistory ? (
         <section className="coach-workspace-gate">
           <Eye size={27} aria-hidden="true" />
           <span className="eyebrow">PROFILE HIDDEN</span>

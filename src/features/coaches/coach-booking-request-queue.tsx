@@ -13,7 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   acceptPrivateSessionRequestAction,
   closePrivateSessionOccurrenceAction,
@@ -87,13 +87,18 @@ function RequestIdentity({
 
 function RequestHistoryGroup({
   group,
+  selected = false,
 }: {
   group: CoachBookingRequestOccurrenceGroup;
+  selected?: boolean;
 }) {
   return (
     <article
       className="coach-request-history-group"
       data-slot-id={group.slotId}
+      id={`coach-occurrence-${group.slotId}`}
+      data-calendar-selected={selected || undefined}
+      tabIndex={selected ? -1 : undefined}
     >
       <header>
         <div>
@@ -119,13 +124,27 @@ function RequestHistoryGroup({
 
 export function CoachBookingRequestQueue({
   initialPage,
+  selectedSlotId,
 }: {
   initialPage: CoachBookingRequestPage<OwnedCoachBookingRequestProjection> | null;
+  selectedSlotId?: string;
 }) {
   const router = useRouter();
   const [requests, setRequests] = useState<
     readonly OwnedCoachBookingRequestProjection[]
   >(initialPage?.items ?? []);
+  useEffect(() => {
+    if (!selectedSlotId) return;
+    const target = document.getElementById(
+      `coach-occurrence-${selectedSlotId}`,
+    );
+    if (target) {
+      const history = target.closest("details");
+      if (history) history.open = true;
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({ block: "center" });
+    }
+  }, [selectedSlotId, requests]);
   const [nextCursor, setNextCursor] =
     useState<CoachBookingRequestPageCursor | null>(
       initialPage?.nextCursor ?? null,
@@ -215,6 +234,13 @@ export function CoachBookingRequestQueue({
 
   return (
     <section className="coach-request-queue" id="booking-requests">
+      {selectedSlotId && (
+        <p className="coach-calendar-feedback" role="status">
+          The time selected in Calendar is highlighted when its requests are
+          loaded. Use Load more for older requests. A time with no request has
+          no request card.
+        </p>
+      )}
       <div className="coach-request-queue-heading">
         <div>
           <span className="eyebrow">BOOKING REQUESTS</span>
@@ -265,6 +291,11 @@ export function CoachBookingRequestQueue({
               <article
                 className="coach-request-group"
                 data-slot-id={group.slotId}
+                id={`coach-occurrence-${group.slotId}`}
+                data-calendar-selected={
+                  group.slotId === selectedSlotId || undefined
+                }
+                tabIndex={group.slotId === selectedSlotId ? -1 : undefined}
                 key={group.slotId}
               >
                 <header>
@@ -410,7 +441,11 @@ export function CoachBookingRequestQueue({
           </p>
           <div>
             {historyGroups.map((group) => (
-              <RequestHistoryGroup group={group} key={group.slotId} />
+              <RequestHistoryGroup
+                group={group}
+                key={group.slotId}
+                selected={group.slotId === selectedSlotId}
+              />
             ))}
           </div>
         </details>

@@ -256,7 +256,7 @@ test("coach workspace view accepts only the single Bookings query value", () => 
   assert.equal(resolveCoachWorkspaceView(["bookings"]), "schedule");
 });
 
-test("suspended coaches reach existing sessions only through Bookings", () => {
+test("suspended gate preserves the Bookings shortcut and bounded existing-history content", () => {
   const scheduleHtml = renderToStaticMarkup(
     createElement(CoachApplicationGate, { access: SUSPENDED_ACCESS }),
   );

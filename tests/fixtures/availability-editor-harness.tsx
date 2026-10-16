@@ -1,6 +1,12 @@
 "use client";
 // Test-only fixture: copy into an isolated Next.js checkout, never a production route.
-import { useMemo, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import { CoachAvailabilityPanel } from "@/features/coaches/coach-availability-panel";
 import { AvailabilityEditor } from "@/features/coaches/availability-editor";
 import {
@@ -44,9 +50,11 @@ const initialData: AvailabilityEditorData = {
 export function AvailabilityEditorHarness({
   date = "2026-10-16",
   tab = "weekly",
+  navigation,
 }: {
   date?: string;
   tab?: "weekly" | "dates";
+  navigation?: ReactNode;
 }) {
   const [initial, setInitial] = useState(initialData);
   const hydrated = useSyncExternalStore(
@@ -195,12 +203,15 @@ export function AvailabilityEditorHarness({
         view="schedule"
         ownerDisplayName="Schedule Coach"
         scheduleContent={
-          <AvailabilityEditor
-            initial={initial}
-            initialDate={date}
-            initialTab={tab}
-            actions={actions}
-          />
+          <>
+            {navigation}
+            <AvailabilityEditor
+              initial={initial}
+              initialDate={date}
+              initialTab={tab}
+              actions={actions}
+            />
+          </>
         }
       />
     </>
