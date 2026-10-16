@@ -32,21 +32,24 @@ type RequestPageOptions = Readonly<{
 async function mutateRequest<T>(
   work: Parameters<typeof withAuthorizedActor<T>>[0],
 ): Promise<BookingRequestMutationResult<T>> {
-  const result = await withAuthorizedActor(async (transaction, actor) => {
-    try {
-      return Object.freeze({
-        outcome: "saved" as const,
-        value: await work(transaction, actor),
-      });
-    } catch (error) {
-      if (error instanceof CoachBookingRequestConflictError) {
-        return Object.freeze({ outcome: "conflict" as const });
-      }
-      throw error;
+  try {
+    const result = await withAuthorizedActor(
+      async (transaction, actor) =>
+        Object.freeze({
+          outcome: "saved" as const,
+          value: await work(transaction, actor),
+        }),
+      // Translate known conflicts only after the failed transaction rolls back.
+      { rethrow: (error) => error instanceof CoachBookingRequestConflictError },
+    );
+    if (result.status !== "authorized") return result;
+    return Object.freeze({ status: "authorized" as const, ...result.value });
+  } catch (error) {
+    if (error instanceof CoachBookingRequestConflictError) {
+      return Object.freeze({ status: "authorized", outcome: "conflict" });
     }
-  });
-  if (result.status !== "authorized") return result;
-  return Object.freeze({ status: "authorized" as const, ...result.value });
+    throw error;
+  }
 }
 
 export async function currentBookingRequestWorkspace(

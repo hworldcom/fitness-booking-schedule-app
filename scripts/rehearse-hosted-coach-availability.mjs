@@ -12,8 +12,16 @@ let success = false,
 try {
   await h.preflight();
   if (["--check", "--cleanup"].includes(h.args[2])) success = true;
-  else if (h.args[3] === "--scenario") await inactiveVenueScenario();
-  else await run();
+  else if (h.args[4] === "inactive-venue") await inactiveVenueScenario();
+  else if (h.args[4] === "closed-selection") {
+    phase = "closed selection recovery";
+    await h.start();
+    await exerciseClosedSelection(
+      await h.person("Owner", true),
+      await h.person("Athlete"),
+    );
+    success = true;
+  } else await run();
 } catch (error) {
   console.error(
     "Hosted availability failed during " +
@@ -224,6 +232,12 @@ async function run() {
   h.record(
     "DEV0253: complete two-venue week copied deliberately, saved once and reloaded from SQL",
   );
+  if (h.args[4] === "public-access") {
+    await nativeDates();
+    await presentationAndAccess();
+    success = true;
+    return;
+  }
   phase = "retained booking, group and competing pending requests";
   const initial = await byDate(target),
     find = (hour) =>
@@ -732,102 +746,132 @@ async function run() {
     guest.page.getByText(/outside the current 30-day request window/),
   ).toBeVisible();
   assert.equal(await rows(guest.page).count(), 0);
-  const native = await h.open(null, false);
-  await native.page.goto(profile(today));
-  await native.page
-    .getByRole("link", { name: "Next dates", exact: true })
-    .click();
-  await native.page.waitForLoadState("networkidle");
-  await native.page.getByLabel("Choose a date", { exact: true }).fill(plus(29));
-  await native.page
-    .getByRole("button", { name: "Show times", exact: true })
-    .click();
-  assert.equal(await rows(native.page).count(), 8);
-  await native.context.close();
-  for (const invalidId of [randomUUID()])
-    await assert.rejects(
-      h.asActor(
-        athlete,
-        (tx) => tx`select app.create_coach_booking_request(${invalidId}::uuid)`,
-      ),
-    );
-  const [edges] =
-    await h.runtime`select app.availability_in_horizon('2026-11-23 22:00+01','2026-11-23 23:00+01','2026-10-25 00:00+02') autumn_last, app.availability_in_horizon('2026-11-24 00:00+01','2026-11-24 01:00+01','2026-10-25 00:00+02') autumn_outside,app.availability_in_horizon('2026-04-26 22:00+02','2026-04-26 23:00+02','2026-03-28 00:00+01') spring_last,app.availability_in_horizon('2026-04-27 00:00+02','2026-04-27 01:00+02','2026-03-28 00:00+01') spring_outside`;
-  assert.deepEqual(
-    { ...edges },
-    {
-      autumn_last: true,
-      autumn_outside: false,
-      spring_last: true,
-      spring_outside: false,
-    },
-  );
+  await nativeDates();
   h.record(
     "DEV0255: all 30 public dates, real final-day request/reload/withdraw, safe sign-in return, native guest navigation and DB DST boundaries",
   );
-  phase = "responsive public/editor and access checks";
-  for (const width of [1440, 375, 430]) {
-    await page.setViewportSize({ width, height: 1000 });
-    await openEditor();
-    await page.screenshot({
-      path: path.join(h.output, "availability-" + width + ".png"),
-      fullPage: true,
-    });
-    assert.ok(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth <= innerWidth + 1,
-      ),
-    );
-    await client.setViewportSize({ width, height: 1000 });
-    await publicDate(plus(29));
-    await client.screenshot({
-      path: path.join(h.output, "public-" + width + ".png"),
-      fullPage: true,
-    });
-    assert.ok(
-      await client.evaluate(
-        () => document.documentElement.scrollWidth <= innerWidth + 1,
-      ),
-    );
-    const dateLink = client.getByRole("link", { name: "Today", exact: true });
-    await dateLink.focus();
-    await client.keyboard.press("Enter");
-    await expect(
-      client
-        .getByRole("navigation", { name: "Private session dates" })
-        .locator('[aria-current="date"]'),
-    ).toBeVisible();
-  }
-  for (const p of [athlete, applicant]) {
-    const denied = await h.open(p);
-    await denied.page.goto(availability());
-    assert.equal(
-      await denied.page
-        .getByRole("region", { name: "Availability editor", exact: true })
-        .count(),
-      0,
-    );
-    await denied.context.close();
-  }
-  const otherBrowser = await h.open(other);
-  await otherBrowser.page.goto(availability());
-  await expect(
-    otherBrowser.page.getByRole("switch", {
-      name: "Monday available",
-      exact: true,
-    }),
-  ).not.toBeChecked();
-  await otherBrowser.context.close();
-  await h.ownerQuery(
-    `begin;select app.review_coach_application(${h.uuid(owner.profileId)},'approved','suspended','Temporary rehearsal account only.','dev0253-live','movx-identity-application-v1');commit;select true changed;`,
-  );
-  await page.goto(availability());
-  assert.equal(await editor().count(), 0);
-  assert.deepEqual(errors, []);
-  h.record(
-    "DEV0253/DEV0255: actual desktop/375/430, keyboard and athlete/applicant/suspended editor denial",
-  );
+  phase = "closed selection recovery";
+  await exerciseClosedSelection(other, athlete);
+  await presentationAndAccess();
   success = true;
+
+  async function nativeDates() {
+    const native = await h.open(null, false);
+    await native.page.goto(profile(today).split("#")[0], {
+      waitUntil: "domcontentloaded",
+      timeout: 90000,
+    });
+    await native.page
+      .getByRole("link", { name: "Next dates", exact: true })
+      .focus();
+    await native.page.keyboard.press("Enter");
+    await native.page.waitForURL(
+      (url) => url.searchParams.get("date") === plus(7),
+      { waitUntil: "domcontentloaded", timeout: 90000 },
+    );
+    await native.page
+      .getByLabel("Choose a date", { exact: true })
+      .fill(plus(29));
+    await native.page
+      .getByRole("button", { name: "Show times", exact: true })
+      .focus();
+    await native.page.keyboard.press("Enter");
+    await native.page.waitForURL(
+      (url) => url.searchParams.get("date") === plus(29),
+      { waitUntil: "domcontentloaded", timeout: 90000 },
+    );
+    assert.equal(await rows(native.page).count(), 8);
+    await native.context.close();
+    for (const invalidId of [randomUUID()])
+      await assert.rejects(
+        h.asActor(
+          athlete,
+          (tx) =>
+            tx`select app.create_coach_booking_request(${invalidId}::uuid)`,
+        ),
+      );
+    const [edges] =
+      await h.runtime`select app.availability_in_horizon('2026-11-23 22:00+01','2026-11-23 23:00+01','2026-10-25 00:00+02') autumn_last, app.availability_in_horizon('2026-11-24 00:00+01','2026-11-24 01:00+01','2026-10-25 00:00+02') autumn_outside,app.availability_in_horizon('2026-04-26 22:00+02','2026-04-26 23:00+02','2026-03-28 00:00+01') spring_last,app.availability_in_horizon('2026-04-27 00:00+02','2026-04-27 01:00+02','2026-03-28 00:00+01') spring_outside`;
+    assert.deepEqual(
+      { ...edges },
+      {
+        autumn_last: true,
+        autumn_outside: false,
+        spring_last: true,
+        spring_outside: false,
+      },
+    );
+    h.record(
+      "DEV0255: native guest keyboard navigation/form, forged request denial and real database DST bounds passed",
+    );
+  }
+  async function presentationAndAccess() {
+    phase = "responsive public/editor and access checks";
+    for (const width of [1440, 375, 430]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await openEditor();
+      await page.screenshot({
+        path: path.join(h.output, "availability-" + width + ".png"),
+        fullPage: true,
+      });
+      assert.ok(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth + 1,
+        ),
+      );
+      await client.setViewportSize({ width, height: 1000 });
+      await publicDate(plus(29));
+      await client.screenshot({
+        path: path.join(h.output, "public-" + width + ".png"),
+        fullPage: true,
+      });
+      assert.ok(
+        await client.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth + 1,
+        ),
+      );
+      const dateLink = client.getByRole("link", { name: "Today", exact: true });
+      await dateLink.focus();
+      await client.keyboard.press("Enter");
+      await expect(
+        client
+          .getByRole("navigation", { name: "Private session dates" })
+          .locator('[aria-current="date"]'),
+      ).toHaveAttribute(
+        "href",
+        `/coaches/${owner.slug}?date=${today}#private-schedule`,
+      );
+    }
+    for (const p of [athlete, applicant]) {
+      const denied = await h.open(p);
+      await denied.page.goto(availability());
+      assert.equal(
+        await denied.page
+          .getByRole("region", { name: "Availability editor", exact: true })
+          .count(),
+        0,
+      );
+      await denied.context.close();
+    }
+    const otherBrowser = await h.open(other);
+    await otherBrowser.page.goto(availability());
+    await expect(
+      otherBrowser.page.getByRole("switch", {
+        name: "Monday available",
+        exact: true,
+      }),
+    ).not.toBeChecked();
+    await otherBrowser.context.close();
+    await h.ownerQuery(
+      `begin;select app.review_coach_application(${h.uuid(owner.profileId)},'approved','suspended','Temporary rehearsal account only.','dev0253-live','movx-identity-application-v1');commit;select true changed;`,
+    );
+    await page.goto(availability());
+    assert.equal(await editor().count(), 0);
+    assert.deepEqual(errors, []);
+    h.record(
+      "DEV0253/DEV0255: actual desktop/375/430, keyboard and athlete/applicant/suspended editor denial",
+    );
+  }
 }
 
 async function raceVenue(owner) {
@@ -837,6 +881,58 @@ async function raceVenue(owner) {
       (
         await tx`select app.create_owned_coach_training_location('DEV0253 venue race',null,'Temporary Berlin race venue',52.52,13.42,'manual',null) id`
       )[0].id,
+  );
+}
+async function exerciseClosedSelection(owner, athlete) {
+  const [clock] =
+    await h.runtime`select ((clock_timestamp() at time zone 'Europe/Berlin')::date+3)::text value`;
+  const date = clock.value;
+  const policy = await h.asActor(
+    owner,
+    async (tx) =>
+      (
+        await tx`select app.save_owned_effective_coach_availability(${tx.json({ operationId: randomUUID(), expectedRevision: 0, kind: "dates", dates: [{ date, mode: "custom", hours: [{ locationId: owner.venue, locationUpdatedAt: owner.venueStamp, localStartTime: "09:00" }] }] })}) result`
+      )[0].result,
+  );
+  assert.equal(policy.outcome, "saved");
+  const { page, context } = await h.open(athlete);
+  await page.goto(h.base + "/coaches/" + owner.slug + "?date=" + date, {
+    waitUntil: "domcontentloaded",
+    timeout: 90000,
+  });
+  const row = page.locator("li[data-slot-id]");
+  await expect(row).toHaveCount(1);
+  const id = await row.getAttribute("data-slot-id");
+  await page.waitForFunction(() => {
+    const button = document.querySelector("li[data-slot-id] button");
+    return (
+      button &&
+      Object.keys(button).some((key) => key.startsWith("__reactProps$"))
+    );
+  });
+  await h.asActor(
+    owner,
+    (tx) => tx`select app.close_coach_booking_request_occurrence(${id}::uuid)`,
+  );
+  await row
+    .getByRole("button", { name: "Request session", exact: true })
+    .click();
+  await expect(
+    page.getByText(
+      "That hour is no longer available. Refresh to see the latest schedule.",
+      { exact: true },
+    ),
+  ).toBeVisible({ timeout: 90000 });
+  await expect(page.locator(`li[data-slot-id="${id}"]`)).toHaveCount(0, {
+    timeout: 90000,
+  });
+  const [state] = await h.ownerQuery(
+    `select (select status from app.coach_availability_slots where id=${h.uuid(id)}) status,(select count(*)::int from app.coach_booking_requests where slot_id=${h.uuid(id)}) requests;`,
+  );
+  assert.deepEqual(state, { status: "withdrawn", requests: 0 });
+  await context.close();
+  h.record(
+    "DEV0255: real stale selection returns the known conflict after rollback, removes the closed original ID and creates no request",
   );
 }
 async function inactiveVenueScenario() {

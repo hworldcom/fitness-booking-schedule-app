@@ -13,6 +13,8 @@ test("hosted availability runner rejects unsafe selections before fixtures and k
     ["--environment", "dev", "--check"],
     ["--environment", "dev", "--run", "--scenario", "production"],
     ["--environment", "dev", "--run", "--scenario", "inactive-venue"],
+    ["--environment", "dev", "--run", "--scenario", "closed-selection"],
+    ["--environment", "dev", "--run", "--scenario", "public-access"],
   ]) {
     const result = spawnSync(
       process.execPath,

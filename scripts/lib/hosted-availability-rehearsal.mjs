@@ -30,7 +30,9 @@ export async function availabilityRehearsal(args) {
       (args.length === 5 &&
         args[2] === "--run" &&
         args[3] === "--scenario" &&
-        args[4] === "inactive-venue") ||
+        ["inactive-venue", "closed-selection", "public-access"].includes(
+          args[4],
+        )) ||
       (args.length === 4 && args[2] === "--cleanup"),
     "Use --environment dev --check|--run or --cleanup <private manifest>.",
   );
@@ -259,7 +261,7 @@ export async function availabilityRehearsal(args) {
           `begin;set local lock_timeout='5s';select app.review_coach_application(${uuid(p.profileId)},'pending','approved','New tagged rehearsal account only.','dev0253-live','movx-identity-application-v1');update app.coach_profiles set visibility='visible' where profile_id=${uuid(p.profileId)};commit;select true prepared;`,
         );
       const [venue] = await ownerQuery(
-        `select l.id,l.updated_at::text stamp,c.public_slug slug from app.coach_training_locations l join app.coach_profiles c using(run_id,profile_id) where l.profile_id=${uuid(p.profileId)} and l.is_primary;`,
+        `select l.id,to_jsonb(l.updated_at)#>>'{}' stamp,c.public_slug slug from app.coach_training_locations l join app.coach_profiles c using(run_id,profile_id) where l.profile_id=${uuid(p.profileId)} and l.is_primary;`,
       );
       Object.assign(p, {
         venue: venue.id,
