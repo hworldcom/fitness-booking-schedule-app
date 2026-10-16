@@ -1,6 +1,6 @@
 # Ticket DEV0253: Edit weekly hours and date overrides
 
-- Status: Draft
+- Status: In progress
 - Created: 2026-10-16
 - Last updated: 2026-10-16
 - Milestone: M9 — Coach calendar and effective availability
@@ -26,7 +26,7 @@ One date off replaces every venue. Retained private bookings and published group
 
 DEV0252 must stabilize and validate revision/save/warning/restoration contracts before live mutation integration. DEV0254 owns Schedule view/date navigation and shared calendar styles; agree the secondary Calendar/Availability selection and deep-link contract first. Reuse the existing coach frame and shared venue controls.
 
-Scope review: this record owns one delivery boundary under a flat coordination. No runtime implementation has started. Keep Draft until the listed dependencies and concrete interface/validation prerequisites permit starting; Ready is not an extra approval gate. Inspect actual versions/bundled documentation before framework or SDK integration changes and update this plan before material deviations.
+Scope review: this record owns one delivery boundary under a flat coordination. Implementation started after DEV0252 completed and the user authorized frontend work while explicitly deferring migrations. Required real persistence checks remain pending until that database work permits them. Inspect actual versions/bundled documentation before framework or SDK integration changes and update this plan before material deviations.
 
 ## Implementation plan
 
@@ -48,41 +48,69 @@ Extend meaningful existing schedule-draft/component coverage and the authenticat
 
 ## Implementation record
 
-Runtime implementation has not started. This is a planning record created by DEV0251.
+Implementation began on 16 October 2026. No shared/disposable migration will be applied under this frontend phase; the user explicitly deferred migrations while separate database work proceeds.
 
 ### Changes and rationale
 
-Allocated one peer with explicit ownership and dependencies so the full extension cannot be implemented under its documentation ticket or overlap existing M7 work.
+Replaced the 161-cell working-week grid and seven-day occurrence list in Schedule with a compact weekly range editor and separate date overrides. Each weekday has an availability switch, multiple venue-bound ranges and a reviewed copy-to-selected-days action. Copy replaces only the deliberately chosen target days in the local draft; the complete week is persisted only after reviewing and confirming Save.
+
+The date editor supports whole-day unavailability, custom venue ranges and removal through “Use normal week”, for up to 31 selected dates. It lists saved overrides by month with canonical selected-date links, marks past dates read-only and previews the current saved week when restoring. Retained private/group sessions and pending-request closure counts appear before and after save. Exact operation IDs and payloads are retained across uncertain save responses; a retry verifies the recorded outcome. Invalid/stale/unavailable responses retain the draft, and no missing policy becomes an empty successful editor.
 
 ### Affected files
 
-Planned: src/features/coaches/coach-availability-panel.tsx, coach-schedule-draft.ts or their capability-owned replacements, src/app/coach/actions.ts, scoped styles and meaningful editor/rehearsal tests. Reuse existing frame/venue components; record exact files during implementation.
+- [Coach route](../../../src/app/coach/page.tsx) loads a bounded month of owner policy, retains the existing approval/profile gates and mounts the editor at the canonical Schedule URL. [Workspace frame](../../../src/features/coaches/coach-availability-panel.tsx) retains the shared heading/navigation and Bookings content while removing the legacy grid/list.
+- [Availability editor](../../../src/features/coaches/availability-editor.tsx), [range/dialog controls](../../../src/features/coaches/availability-editor-controls.tsx) and [scoped styles](../../../src/features/coaches/availability-editor.css) own weekly/date editing, previews, copy/save/navigation dialogs and responsive presentation. Native dialogs include explicit keyboard cycling and restore focus to their triggering control.
+- [Editor model](../../../src/features/coaches/availability-editor-model.ts) owns immutable range/copy/confirmed-policy transformations, Berlin month navigation, bounded untrusted command parsing and client actor-access classification.
+- [Workspace editor boundary](../../../src/features/coaches/availability-workspace-editor.tsx) binds the private draft to the signed-in subject, profile, dataset and current coach capability. Explicit account/access changes unmount the draft; transient unverifiable access hides it pending verification. Server scope checks remain authoritative.
+- [Editor Server Actions](../../../src/app/coach/availability-actions.ts) validate unknown input and bounded date reads; [authorized service](../../../src/server/coaches/availability-editor-service.ts) checks actor scope/current approved or demo coach/visible profile before calling DEV0252 owner policy/preview/save operations. [Existing coach service](../../../src/server/coaches/service.ts) accepts an optional occurrence-read flag so this frame does not unnecessarily materialize the old occurrence list.
+- [Model tests](../../../tests/availability-editor.test.ts), [action-input tests](../../../tests/server/availability-editor-actions.test.ts) and [updated frame regressions](../../../tests/coach-schedule.test.ts) verify changed boundaries. [Isolated browser rehearsal](../../../scripts/rehearse-availability-editor-ui.mjs) copies the source into an environment-free temporary checkout and mounts [explicit client fixtures](../../../tests/fixtures/availability-editor-harness.tsx); that route exists only in the temporary copy. Fixtures exercise presentation/recovery, never real SQL/Auth authority.
 
 ### Decisions and deviations
 
-2026-10-16: Created from the confirmed feature scope and section 18 operating defaults. No runtime decisions/deviations or implementation evidence yet.
+2026-10-16: Created from confirmed feature scope and section 18 operating defaults. Implementation began after DEV0252 completed and the user approved this frontend slice while explicitly deferring migrations.
+
+Use `/coach?view=schedule&section=availability&date=YYYY-MM-DD` for selected-date availability. DEV0254 reserves `section=calendar`. Until that peer delivers, Schedule defaults to Availability without an inert Calendar control. Existing Profile/Schedule/Bookings frame and actual venue names are retained. Section/date/navigation changes review dirty drafts with save/discard/stay; browser unload uses the browser's native confirmation, and supported Navigation API history traversal uses the same custom review. Server refreshes announce a newer revision without replacing a dirty draft.
+
+Group warning links currently open the published group detail by its original identifier, in a new tab that preserves the draft. DEV0239 still owns the separately authorized owner-management destination; final owner-action navigation must be checked alongside DEV0254/DEV0256 once that external interface is delivered. Private warnings retain the existing Bookings anchor. No group lifecycle action or athlete identity is copied into availability.
+
+An early fixture run found keyboard Tab could leave the native dialog's document focus cycle; explicit first/last-control cycling fixed it. Browser test waits were corrected to wait for hydration and asynchronous review results rather than inspecting before the preview resolved. These are UI/rehearsal corrections, not changes to SQL behavior.
 
 ### Contracts, configuration, and operations
 
-No runtime contract, dependency, environment variable, schema, migration or deployment changed by creating this record. The planned capability boundary is described above; record concrete data/API/setup/migration/rollback changes during implementation. Never record secrets.
+New typed, serializable editor data includes the owner policy/revision, active and historical venue projections, authoritative Berlin date, actor scope and a bounded actor identity key. Commands/results reuse DEV0252 unchanged. Actions reject extra keys, invalid IDs/dates/times, duplicate cross-venue hours and oversized payloads before mutation; SQL rechecks current venue/time/owner eligibility. Successful real saves revalidate coach/public-coach paths. No dependency, environment variable, schema or migration is added by this slice.
+
+The new UI requires DEV0252 functions in its target database. If absent, Schedule reports Unavailable instead of fabricating empty hours. No database migration/reset/seed command or auto-migrating `dev:local` was run under this phase. Shared/hosted rollout remains separate. Rolling back this UI change does not remove DEV0252 data or apply a database rollback.
 
 ## Validation results
 
-Planning-document validation is recorded by DEV0251; it does not satisfy runtime criteria. Application/database/browser/static/build checks for this peer have not run because its runtime implementation has not started.
+The non-database checks below passed on 16 October 2026. Required authenticated persistence/reload/real retained-session and request-card checks are deferred by the user's migration constraint; fixture save results are not evidence of SQL persistence or live authorization.
 
-| Criterion | Evidence                                                      | Result  |
-| --------- | ------------------------------------------------------------- | ------- |
-| AC1–AC4   | Implementation and required peer-specific validation pending. | Not run |
+| Criterion | Evidence                                                                                                                                                          | Result             |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| AC1       | Unit range/copy conversion and complete-week payload checks; isolated browser save/copy flow. Real persistence remains deferred.                                  | Partially verified |
+| AC2       | Date custom/day-off/restoration and warning presentation implemented; real retained-session/request-card persistence and owner group-action links remain pending. | Partially verified |
+| AC3       | Model/action validation and isolated conflict/unavailable/exact-retry/draft navigation checks; real concurrent/authenticated recovery remains pending.            | Partially verified |
+| AC4       | Static/regression/isolated browser/build checks passed; required real coach/Auth checks remain deferred.                                                          | Partially verified |
+
+- `npm test` — final run passed **171 application tests and 18 server tests**. Coverage includes current range/copy/version/override transformations, Berlin month boundaries, account/run/suspension draft guards and malformed action inputs. An intermediate full run failed in the concurrently edited Events test because `next/navigation` loaded React client context under the server-only test condition. After those unrelated files changed independently, a fresh full run passed. No Events source or tests were edited under DEV0253. These workspace-wide runs included concurrent Events/environment work that is excluded from this checkpoint; the focused availability checks and isolated browser record describe this ticket's own validation.
+- `npx tsx --conditions=react-server --test tests/server/availability-editor-actions.test.ts tests/server/coach-availability-actions.test.ts` — **3 passed**, including current and legacy action input regressions. These malformed-input checks reject before database access; they do not claim live authorization coverage.
+- `node scripts/rehearse-availability-editor-ui.mjs` — **6 browser checkpoints passed**, no page runtime errors: multi-venue ranges/overlap; reviewed copy replacement and keyboard focus cycling/restoration; one explicit complete-week save; multi-date day-off/custom saves and restoration; retained private/group warnings and pending-count review; save/discard/stay for section changes, workspace links and browser Back; refreshed props/stale/inactive/unavailable draft preservation; identical operation/payload retry after a simulated committed-but-lost response; denied-action draft clearing; 375/430 px layouts with long venues and no horizontal overflow. Fixture modes explicitly simulate these results and never claim SQL outcomes.
+- Manual screenshot review — inspected desktop weekly/review, 375 px weekly/copy and 430 px date views under `test-results/dev0253-ui/`. Corrected dialog centering and kept the mobile save bar in normal flow before changes; the final browser rerun passed after both fixes. These are Chrome desktop and resized phone-width checks, not physical-device coverage.
+- Supplemental blank-page Chrome check (`node --input-type=module`, Playwright): show a native dialog, hide its containing owner element, then `locator('dialog').isVisible()` returned `false`. This verifies temporary access hiding also suppresses an open dialog in the tested browser.
+- `npm run lint` — passed. `npm run typecheck` — final route generation and TypeScript check passed. `npm run format:check` — final application/script/test formatting check passed.
+- `npm run build -- --webpack` — passed in the environment-free temporary source snapshot after removing its fixture route, copied fixture module and generated dev cache. This ran the real map-worker preparation and production compilation/type/page generation. Availability source matches the final tested implementation; the isolated snapshot avoids the local `.env` and shared development cache. Concurrent Events edits after snapshot creation are not claimed as that build's source. No deployment was performed.
+- Relative-link/status/membership check — **39** links in this DEV and COR0023 resolved; DEV0253 remains current/In progress with reciprocal COR0023 membership. `git diff --check` passed. `npx prettier --check docs/mvp-spec.md tickets/README.md tickets/current/frontend/DEV0253-edit-weekly-hours-and-date-overrides.md tickets/current/organisatory/COR0023-coach-calendar-and-availability.md` passed after normalizing the changed index table.
+- **Not run:** migrations/reset/seeding, database/pgTAP suites, `npm run test:coach-availability`, real authenticated weekly/date save+reload and retained booking/group/request-card proof, real stale/venue/Auth recovery, or the integrated DEV0256 rehearsal. The existing authenticated availability runner still uses legacy cell selectors and historical cleanup; updating it for the current contract is remaining work under this DEV before its live run. Do not execute that legacy runner against current data unchanged.
 
 ## Risks, limitations, and follow-ups
 
-Copy and date removal can affect many open hours. The preview/result must distinguish removed availability and closed pending requests from retained booked commitments; drafts must not silently cross actors or dates.
+This ticket stays In progress until its required real persistence/authorization evidence passes. Isolated fixtures do not prove saved SQL policy, actual request closure, a retained real booking/group, server concurrency or a real authenticated reload. Original owner group actions additionally depend on DEV0239. DEV0254 owns mixed Day/Week/Month views, selected-date calendar transitions and owner feed/paging; this slice does not claim those views. DEV0255 owns public 30-day navigation and DEV0256 the combined two-account flow.
 
-Handoff: the planned scope and validation exist; no runtime code or evidence exists under this record. Next action: satisfy the stated dependencies, inspect the affected current implementation and finalize its interface/migration details before marking In progress.
+Handoff: frontend code exists against the validated DEV0252 contract, with no migrations applied. Once database work permits, update the authenticated runner for the new range/date contract and current fixture cleanup, then run the real approved-coach weekly/date/save/reload/conflict/retained-session rehearsal and verify unauthorized/suspended actors. Do not archive or mark completed while these checks remain missing.
 
 ## Completion and review references
 
-- Completed: Not completed.
-- Commit: Not created.
-- Review: Planning self-review only; no independent/runtime review.
+- Completed: Not completed — required live validation deferred.
+- Commit: User-authorized checkpoint with subject `[DEV0253] Build weekly and date availability editor`; ticket remains In progress for the recorded missing evidence.
+- Review: Implementation self-review against AC1–AC4 and the recorded partial/deferred evidence completed; no independent review.
 - Deployment or release: None.

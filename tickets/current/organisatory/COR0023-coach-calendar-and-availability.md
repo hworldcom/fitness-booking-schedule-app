@@ -10,7 +10,7 @@
 
 ## Objective and boundaries
 
-Coordinate the adopted [section 18 calendar and effective availability target](../../../docs/mvp-spec.md#18-coach-calendar-and-effective-availability): mixed private/group Day/Week/Month coach calendar, Week default, easier location-bound weekly editing, whole-date overrides, retained booked-session warnings and 30-day private publication/public navigation. This coordination maps peer delivery and does not implement runtime behavior. DEV0252 has completed the locally validated backend authority; the existing weekly-cell interface remains until its UI peers pass their checks. Shared/hosted rollout and integrated rehearsal remain pending.
+Coordinate the adopted [section 18 calendar and effective availability target](../../../docs/mvp-spec.md#18-coach-calendar-and-effective-availability): mixed private/group Day/Week/Month coach calendar, Week default, easier location-bound weekly editing, whole-date overrides, retained booked-session warnings and 30-day private publication/public navigation. This coordination maps peer delivery and does not implement runtime behavior. DEV0252 has completed the locally validated backend authority; DEV0253 is implementing the replacement editor while required live persistence/Auth checks remain deferred. Shared/hosted rollout and integrated rehearsal remain pending.
 
 Confirmed feature choices are separate from adopted implementation defaults in the specification and DEV0251. Existing one-hour approval-only private sessions, group lifecycle, actual venue snapshots, manual closures, private detail authority and Messages/notes permissions remain independently authoritative. No external calendar connection, payment, variable-duration service, booking drag/reschedule or athlete-wide conflict guarantee is included.
 
@@ -50,9 +50,13 @@ All required development records exist. These six direct peers each declare COR0
 - 2026-10-16: Everfit reference inspection and six user choices recorded under DEV0251. Adopted remaining operating defaults separately in specification section 18 and split the extension into five small runtime peers plus the documentation owner. No application/migration/dependency change was made by this planning work.
 - 2026-10-16: DEV0251 completed contract/work-map documentation checks and moved to the archive; COR0023 stays open for runtime delivery. External DEV0238 was In progress at the initial planning checkpoint and completed isolated validation during final handoff; its shared-stack migration rollout remains pending. This status update does not claim its implementation evidence for M9. DEV0252 began implementation after prerequisite checkpoint `3890d24`; its migration, typed save/preview/read service and required backend proof are now complete. Independent session-note and invitation planning edits remain outside this work.
 
+- 2026-10-16: DEV0253 frontend work started against the completed DEV0252 contract. The user deferred migrations during independent database work; component/action/static/isolated UI checks may proceed, while real persistence validation remains pending. DEV0254 will use `section=calendar`; this editor reserves `section=availability` and the selected `date` deep link.
+
+- 2026-10-16: DEV0253 now contains the weekly-range/copy/date editor, bounded owner actions, retained-session/request-closure review and draft/access/retry protection. Its isolated browser checkpoints at desktop/375/430 px, application/server tests and static/isolated production build checks passed; its own implementation record owns the evidence. It remains In progress: required real persistence/Auth/reload and booking/group/card checks are deferred, and final owner-group action links depend on DEV0239. No migration was run. DEV0254 remains the next mixed calendar slice.
+
 ## Validation results
 
-Planning links, namespaces, reciprocal membership, exclusive work-map ownership and specification consistency passed under completed DEV0251; its archived validation record contains exact commands/results. DEV0252 completed 123 database driver tests, 239 pgTAP assertions, fresh/preserved-data migrations and application/static/build checks; its archived record owns the details. UI/integration evidence remains pending; no coordination-only check substitutes for another peer's acceptance criteria or DEV0256's real local proof.
+Planning links, namespaces, reciprocal membership, exclusive work-map ownership and specification consistency passed under completed DEV0251; its archived validation record contains exact commands/results. DEV0252 completed 123 database driver tests, 239 pgTAP assertions, fresh/preserved-data migrations and application/static/build checks; its archived record owns the details. DEV0253 isolated interface evidence is recorded in its current ticket, while required live UI/integration proof remains pending; no coordination-only check substitutes for another peer's acceptance criteria or DEV0256's real local proof.
 
 The 16 October 2026 DEV0257 documentary update passed affected links/anchors, namespace/index/status, unchanged six-peer direct ownership, formatting and whitespace checks. Its ticket records exact commands/results. The proposed-amendment link does not adopt service templates or variable durations into the current scope.
 
@@ -63,7 +67,7 @@ Closure provenance and explicit successor identities must preserve manual closur
 ## Completion and review references
 
 - Completed: Not completed — runtime and integrated acceptance evidence pending.
-- Direct development tickets: DEV0251 documentation Completed; DEV0252 backend Completed; DEV0253–DEV0256 Draft.
+- Direct development tickets: DEV0251 documentation Completed; DEV0252 backend Completed; DEV0253 editor In progress; DEV0254–DEV0256 Draft.
 - Commit: Not applicable — COR identifiers are never commit subjects; the user-authorized planning checkpoint is owned by DEV0251.
 - Review: Planning self-review; no independent/runtime integration review.
 - Deployment or release: None.

@@ -3,7 +3,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signInHref } from "@/auth/return-to";
-import { saveCoachAvailabilityRulesAction } from "./actions";
+import {
+  changeAvailabilityEditorAction,
+  loadAvailabilityEditorAction,
+} from "./availability-actions";
+import { AvailabilityWorkspaceEditor } from "@/features/coaches/availability-workspace-editor";
+import {
+  availabilityMonth,
+  berlinAvailabilityDate,
+} from "@/features/coaches/availability-editor-model";
+import { isAvailabilityDate } from "@/domain/effective-availability";
+import { loadAvailabilityEditor } from "@/server/coaches/availability-editor-service";
 import { CoachAvailabilityPanel } from "@/features/coaches/coach-availability-panel";
 import { CoachApplicationGate } from "@/features/coaches/coach-application-gate";
 import { ConnectionWorkspace } from "@/features/connections/connection-workspace";
@@ -21,11 +31,21 @@ export const metadata: Metadata = { title: "Coach workspace" };
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string | string[] | undefined }>;
+  searchParams: Promise<{
+    view?: string | string[];
+    date?: string | string[];
+    section?: string | string[];
+  }>;
 }) {
-  const view = resolveCoachWorkspaceView((await searchParams).view);
+  const params = await searchParams;
+  const view = resolveCoachWorkspaceView(params.view);
+  const selectedDate =
+    typeof params.date === "string" && isAvailabilityDate(params.date)
+      ? params.date
+      : null;
+  const date = selectedDate ?? berlinAvailabilityDate(new Date());
   const [state, bookingState, requestState] = await Promise.all([
-    currentCoachAvailabilityWorkspace(),
+    currentCoachAvailabilityWorkspace(false),
     view === "bookings" ? currentPrivateBookingWorkspace() : null,
     view === "bookings"
       ? currentOwnedCoachBookingRequestPage({ pageSize: 20 })
@@ -124,15 +144,46 @@ export default async function Page({
     );
   }
 
+  const month = availabilityMonth(date);
+  const availability =
+    view === "schedule" && state.coach?.visibility === "visible"
+      ? await loadAvailabilityEditor(
+          month.from,
+          month.through,
+          state.actorScope,
+        )
+      : null;
+
   return (
     <CoachAvailabilityPanel
       coach={state.coach}
-      rules={state.rules}
-      slots={state.slots}
       view={view}
       bookingContent={view === "bookings" ? bookingContent : undefined}
       ownerDisplayName={state.ownerDisplayName}
-      saveRuleSetAction={saveCoachAvailabilityRulesAction}
+      scheduleContent={
+        availability?.status === "ready" ? (
+          <AvailabilityWorkspaceEditor
+            key={`${state.actorScope}:${date}`}
+            initial={availability.data}
+            initialDate={date}
+            initialTab={selectedDate ? "dates" : "weekly"}
+            actions={{
+              load: loadAvailabilityEditorAction,
+              change: changeAvailabilityEditorAction,
+            }}
+          />
+        ) : (
+          <section className="coach-workspace-gate" role="alert">
+            <h2>Availability could not be loaded.</h2>
+            <p>
+              {availability?.message ?? "Reload the workspace to try again."}
+            </p>
+            <Link className="button secondary" href="/coach">
+              Try again
+            </Link>
+          </section>
+        )
+      }
     />
   );
 }

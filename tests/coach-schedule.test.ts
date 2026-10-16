@@ -2,13 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import type { CoachAvailabilityActionState } from "@/app/coach/actions";
-import type {
-  CoachAccessProjection,
-  CoachProjection,
-  OwnedCoachAvailabilityRule,
-  OwnedCoachAvailabilitySlot,
-} from "@/domain/coaches";
+import type { CoachAccessProjection, CoachProjection } from "@/domain/coaches";
 import { CoachAvailabilityPanel } from "@/features/coaches/coach-availability-panel";
 import { CoachApplicationGate } from "@/features/coaches/coach-application-gate";
 import { CoachProfilePreview } from "@/features/coaches/coach-profile-preview";
@@ -88,62 +82,12 @@ const COACH: CoachProjection = Object.freeze({
   disciplines: Object.freeze(["Boxing"] as const),
 });
 
-const RULES: readonly OwnedCoachAvailabilityRule[] = Object.freeze([
-  Object.freeze({
-    id: "70000000-0000-4000-8000-000000000001",
-    locationId: COACH.primaryLocationId,
-    locationUpdatedAt: COACH.locations[0].updatedAt,
-    isoWeekday: 1,
-    localStartTime: "09:00",
-    coachTimezone: "Europe/Berlin",
-  }),
-  Object.freeze({
-    id: "70000000-0000-4000-8000-000000000002",
-    locationId: COACH.locations[1].id,
-    locationUpdatedAt: COACH.locations[1].updatedAt,
-    isoWeekday: 1,
-    localStartTime: "10:00",
-    coachTimezone: "Europe/Berlin",
-  }),
-]);
-
 const SUSPENDED_ACCESS: CoachAccessProjection = Object.freeze({
   status: "suspended",
   submittedAt: "2026-10-01T10:00:00.000Z",
   decisionReason: null,
   verificationPolicyVersion: "movx-identity-application-v1",
 });
-
-const BOOKED_SLOT: OwnedCoachAvailabilitySlot = Object.freeze({
-  id: "80000000-0000-4000-8000-000000000001",
-  startsAt: "2026-10-09T08:00:00.000Z",
-  endsAt: "2026-10-09T09:00:00.000Z",
-  coachTimezone: "Europe/Berlin",
-  location: Object.freeze({
-    trainingLocationId: COACH.primaryLocationId,
-    name: "Tempelhofer Feld",
-    kind: "independent",
-    selectedGymId: null,
-    gymName: null,
-    label: "Tempelhofer Feld — main entrance",
-    latitude: 52.473086,
-    longitude: 13.403665,
-    source: "manual",
-    provider: null,
-    confirmedAt: "2026-10-08T09:00:00.000Z",
-  }),
-  status: "booked",
-  recurrenceRuleId: RULES[0].id,
-  recurrenceLocalDate: "2026-10-09",
-});
-
-async function idleAction(): Promise<CoachAvailabilityActionState> {
-  return Object.freeze({
-    status: "idle",
-    message: "",
-    errors: Object.freeze([]),
-  });
-}
 
 test("coach views share Profile-first navigation with one selected destination", () => {
   for (const active of ["profile", "schedule", "bookings"] as const) {
@@ -212,84 +156,31 @@ test("coach workspace heading and profile preview use current bounded coach data
   assert.doesNotMatch(draft, /Published/);
 });
 
-test("coach working week renders one keyboard-operable one-hour control per cell", () => {
+test("Schedule mounts its editor inside the shared coach frame", () => {
   const html = renderToStaticMarkup(
     createElement(CoachAvailabilityPanel, {
       coach: COACH,
-      rules: RULES,
-      slots: [],
       view: "schedule",
       ownerDisplayName: "Schedule Coach",
-      saveRuleSetAction: idleAction,
+      scheduleContent: createElement(
+        "section",
+        { "aria-label": "Availability editor" },
+        "Weekly hours and date overrides",
+      ),
     }),
   );
-
-  assert.match(html, /Run your coaching week/);
-  assert.match(html, /Profile published/);
-  assert.match(html, /Visible in Explore/);
-  assert.match(html, /Weekly schedule/);
-  assert.match(html, /Europe\/Berlin/);
-  assert.match(html, /Tempelhofer Feld/);
-  assert.match(html, /Assignment location/);
-  assert.match(html, /Location legend/);
-  assert.match(html, /Tempelhofer Feld — Primary/);
-  assert.match(html, /Riverside strength deck/);
-  const paletteIndex = (tagName: "li" | "button", locationId: string) => {
-    const tag = html.match(
-      new RegExp(
-        `<${tagName}[^>]*data-training-location-id="${locationId}"[^>]*>`,
-      ),
-    )?.[0];
-    assert.ok(tag, `${tagName} for ${locationId} should be rendered`);
-    const value = tag.match(/data-location-palette="(\d+)"/)?.[1];
-    assert.ok(value, `${tagName} for ${locationId} should expose its palette`);
-    return value;
-  };
-  const primaryLocationId = "60000000-0000-4000-8000-000000000001";
-  const secondaryLocationId = "60000000-0000-4000-8000-000000000002";
-  const primaryLegendPalette = paletteIndex("li", primaryLocationId);
-  const secondaryLegendPalette = paletteIndex("li", secondaryLocationId);
-  assert.notEqual(primaryLegendPalette, secondaryLegendPalette);
-  assert.equal(paletteIndex("button", primaryLocationId), primaryLegendPalette);
-  assert.equal(
-    paletteIndex("button", secondaryLocationId),
-    secondaryLegendPalette,
-  );
-  assert.match(html, /2 selected hours/);
-  assert.match(html, /Remove Tempelhofer Feld from Monday 09:00–10:00/);
-  assert.match(
-    html,
-    /Review Monday 10:00–11:00, assigned to Riverside strength deck; selected location is Tempelhofer Feld/,
-  );
-  assert.match(html, /Assign Tempelhofer Feld to Sunday 22:00–23:00/);
-  assert.match(html, /aria-pressed="true"/);
-  assert.match(html, /Save schedule/);
-  assert.match(html, /Your displayed working week is saved/);
-  assert.match(
-    html,
-    /locationId&quot;:&quot;60000000-0000-4000-8000-000000000002/,
-  );
-  assert.match(html, /locationUpdatedAt&quot;:&quot;2026-10-05T09:00:00.000Z/);
-  assert.equal((html.match(/<form/g) ?? []).length, 1);
-  assert.equal((html.match(/<button/g) ?? []).length, 23 * 7 + 1);
-  assert.equal((html.match(/type="button"/g) ?? []).length, 23 * 7);
-  assert.match(html, /type="submit"[^>]*disabled/);
-  assert.doesNotMatch(html, /datetime-local/);
-  assert.doesNotMatch(html, /Publish slot/);
+  assert.match(html, /Weekly hours and date overrides/);
+  assert.match(html, /aria-current="page" class="active" href="\/coach"/);
   assert.ok(
     html.indexOf('class="coach-workspace-header"') <
       html.indexOf('class="coach-workspace-nav"'),
   );
-  assert.match(html, /aria-current="page" class="active" href="\/coach"/);
-  assert.match(html, /href="\/coach\?view=bookings"/);
 });
 
-test("Schedule keeps occupied status without rendering private booking detail", () => {
+test("Schedule does not mount private booking detail", () => {
   const html = renderToStaticMarkup(
     createElement(CoachAvailabilityPanel, {
       coach: COACH,
-      rules: RULES,
-      slots: [BOOKED_SLOT],
       view: "schedule",
       bookingContent: createElement(
         "section",
@@ -302,13 +193,15 @@ test("Schedule keeps occupied status without rendering private booking detail", 
         }),
       ),
       ownerDisplayName: "Schedule Coach",
-      saveRuleSetAction: idleAction,
+      scheduleContent: createElement(
+        "section",
+        null,
+        "Weekly hours and date overrides",
+      ),
     }),
   );
 
-  assert.match(html, /Dated class times/);
-  assert.match(html, /booked/);
-  assert.match(html, /Reserved hour/);
+  assert.match(html, /Weekly hours and date overrides/);
   assert.doesNotMatch(html, /Booked sessions/);
   assert.doesNotMatch(html, /Booking Client/);
   assert.doesNotMatch(html, /client-avatar/);
@@ -318,8 +211,6 @@ test("Bookings renders booking detail without the Schedule editor or occurrence 
   const html = renderToStaticMarkup(
     createElement(CoachAvailabilityPanel, {
       coach: COACH,
-      rules: RULES,
-      slots: [BOOKED_SLOT],
       view: "bookings",
       bookingContent: createElement(
         "section",
@@ -332,7 +223,11 @@ test("Bookings renders booking detail without the Schedule editor or occurrence 
         }),
       ),
       ownerDisplayName: "Schedule Coach",
-      saveRuleSetAction: idleAction,
+      scheduleContent: createElement(
+        "section",
+        null,
+        "Weekly hours and date overrides",
+      ),
     }),
   );
 
@@ -344,7 +239,7 @@ test("Bookings renders booking detail without the Schedule editor or occurrence 
     html,
     /aria-current="page" class="active" href="\/coach\?view=bookings"/,
   );
-  assert.doesNotMatch(html, /Weekly schedule/);
+  assert.doesNotMatch(html, /Weekly hours and date overrides/);
   assert.doesNotMatch(html, /Dated class times/);
   assert.doesNotMatch(html, /Save schedule/);
   assert.ok(
@@ -387,15 +282,17 @@ test("hidden coach profile keeps the recurring editor unavailable", () => {
   const html = renderToStaticMarkup(
     createElement(CoachAvailabilityPanel, {
       coach: { ...COACH, visibility: "hidden" },
-      rules: RULES,
-      slots: [],
       view: "schedule",
       ownerDisplayName: "Schedule Coach",
-      saveRuleSetAction: idleAction,
+      scheduleContent: createElement(
+        "section",
+        null,
+        "Weekly hours and date overrides",
+      ),
     }),
   );
 
   assert.match(html, /Publish your profile before offering times/);
-  assert.doesNotMatch(html, /Weekly schedule/);
+  assert.doesNotMatch(html, /Weekly hours and date overrides/);
   assert.equal((html.match(/<button/g) ?? []).length, 0);
 });

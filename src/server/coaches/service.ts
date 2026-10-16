@@ -261,7 +261,9 @@ export async function submitCurrentCoachApplication() {
   return Object.freeze({ status: result.value });
 }
 
-export async function currentCoachAvailabilityWorkspace(): Promise<CoachAvailabilityWorkspaceState> {
+export async function currentCoachAvailabilityWorkspace(
+  includeOccurrences = true,
+): Promise<CoachAvailabilityWorkspaceState> {
   const result = await withAuthorizedActor(async (transaction, actor) => {
     const owner = await currentActorProjection(transaction, actor);
     const coach =
@@ -269,9 +271,10 @@ export async function currentCoachAvailabilityWorkspace(): Promise<CoachAvailabi
         ? null
         : await currentOwnedCoachProfileRecord(transaction, actor);
     const mayOperate = canOperateCoachSchedule(owner.coachAccess.status);
-    const slots = mayOperate
-      ? await currentOwnedCoachAvailabilityRecords(transaction, actor)
-      : Object.freeze([]);
+    const slots =
+      mayOperate && includeOccurrences
+        ? await currentOwnedCoachAvailabilityRecords(transaction, actor)
+        : Object.freeze([]);
     const rules = mayOperate
       ? await currentOwnedCoachAvailabilityRuleRecords(transaction, actor)
       : Object.freeze([]);
