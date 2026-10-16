@@ -8,6 +8,7 @@ import {
   ArrowUpRight,
   BriefcaseBusiness,
   CalendarCheck2,
+  CalendarDays,
   CircleHelp,
   House,
   Info,
@@ -27,6 +28,7 @@ import { Avatar, Brand, Modal, Pill } from "./ui";
 const publicNavigationBeforeAccount = [
   { label: "Home", href: "/", Icon: House },
   { label: "Explore", href: "/explore", Icon: MapPin },
+  { label: "Events", href: "/events", Icon: CalendarDays },
 ];
 
 const howItWorksNavigation = {
@@ -67,12 +69,14 @@ const messagesNavigation = {
 
 const publicHeaderNavigation = [
   publicNavigationBeforeAccount[1],
+  publicNavigationBeforeAccount[2],
   howItWorksNavigation,
 ];
 
 const publicMarketplacePaths = new Set([
   "/",
   "/explore",
+  "/events",
   "/how-it-works",
   "/sign-in",
 ]);
@@ -109,7 +113,8 @@ export function navigationForActor(actor: ActorSnapshot) {
 
 export function mobileNavigationForActor(actor: ActorSnapshot) {
   return navigationForActor(actor).filter(
-    ({ href }) => href !== "/" && href !== "/how-it-works",
+    ({ href }) =>
+      href !== "/" && href !== "/how-it-works" && href !== "/events",
   );
 }
 
@@ -141,8 +146,12 @@ export function isPublicMarketplacePath(path: string) {
   const coachSlug = path.startsWith("/coaches/")
     ? path.slice("/coaches/".length)
     : "";
+  const eventSlug = path.startsWith("/events/")
+    ? path.slice("/events/".length)
+    : "";
   return (
     publicMarketplacePaths.has(path) ||
+    (eventSlug.length > 0 && !eventSlug.includes("/")) ||
     (coachSlug.length > 0 && !coachSlug.includes("/"))
   );
 }

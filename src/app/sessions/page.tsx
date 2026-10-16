@@ -74,6 +74,9 @@ export default async function Page() {
           <a href="#my-sessions">Confirmed sessions</a>
           <a href="#my-coaches">My coaches</a>
         </nav>
+        <p>
+          <Link href="/sessions/groups">Open my group sessions →</Link>
+        </p>
       </header>
       {coachCanOpenWorkspace && (
         <aside className="client-session-coach-context">

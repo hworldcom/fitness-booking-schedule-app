@@ -4,7 +4,7 @@
 
 MovX Club is a focused scheduling application for martial-arts athletes and coaches. Guests discover fictional coaches and real published availability. Email-authenticated athletes request one capacity-one private session, and the coach confirms one athlete before a booking exists. Coaches manage their public profile, training locations, location-aware recurring one-hour availability, request queue and booked schedule.
 
-The delivered application is the private scheduling foundation. A group-training extension is adopted in the [MVP specification](docs/mvp-spec.md#15-group-training-and-events) and planned under [COR0021](tickets/current/organisatory/COR0021-group-training-and-events.md); its runtime is not delivered yet. This repository excludes blockchain, wallets, passes, credits, in-app payments, group funding and social/feed behavior. Completed SQL history is preserved in an immutable archive with an equivalent baseline for fresh databases; see [database baseline and existing-environment guidance](supabase/README.md#migration-baseline-and-history). Dedicated excluded-product documents and evidence were pruned under [DEV0225](tickets/archive/organisatory/DEV0225-remove-blockchain-historical-evidence.md); retained scheduling and contributor records remain historical context. The separate [fitness-booking-social-app](https://github.com/hworldcom/fitness-booking-social-app) repository preserves the Solana hackathon product.
+The delivered application includes private scheduling and the public/athlete group-session interface. The [group-training contract](docs/mvp-spec.md#15-group-training-and-events) is coordinated under [COR0021](tickets/current/organisatory/COR0021-group-training-and-events.md). [DEV0240](tickets/archive/frontend/DEV0240-add-group-event-discovery-and-joining.md) delivers Events discovery, direct seat registration/withdrawal and private Group sessions history with local browser validation. Coach event management and the final combined rehearsal remain DEV0239/DEV0241; deployment is separate. This repository excludes blockchain, wallets, passes, credits, in-app payments, group funding and social/feed behavior. Completed SQL history is preserved in an immutable archive with an equivalent baseline for fresh databases; see [database baseline and existing-environment guidance](supabase/README.md#migration-baseline-and-history). Dedicated excluded-product documents and evidence were pruned under [DEV0225](tickets/archive/organisatory/DEV0225-remove-blockchain-historical-evidence.md); retained scheduling and contributor records remain historical context. The separate [fitness-booking-social-app](https://github.com/hworldcom/fitness-booking-social-app) repository preserves the Solana hackathon product.
 
 The adopted [calendar and effective-availability extension](docs/mvp-spec.md#18-coach-calendar-and-effective-availability) is planned under [COR0023](tickets/current/organisatory/COR0023-coach-calendar-and-availability.md); its runtime is not delivered yet.
 
@@ -190,6 +190,7 @@ npm run test:coach-requests
 npm run test:coach-connections
 npm run test:athlete-connections
 npm run test:private-messages
+npm run test:group-discovery
 npm run test:client-requests
 npm run test:profile-images
 npm run lint
@@ -198,6 +199,8 @@ npm run format:check
 npm run build
 npm run test:e2e
 ```
+
+`test:group-discovery` requires the running repository Supabase Auth/PostgreSQL containers, the restricted runtime login prepared by `npm run db:runtime`, Node.js 24 and local Chrome; port 3113 must be free. It starts its own temporary app snapshot, creates a uniquely named disposable database and tagged DEV0240 Auth accounts, and checks real Events filtering/paging, reservations/withdrawals, confirmation, privacy, unavailable/retry and responsive/no-JavaScript flows. It never resets, migrates or seeds the shared development database. It removes only its owned database, app snapshot and exact temporary accounts afterward. Screenshots are ignored under `test-results/group-discovery-rehearsal/`.
 
 `test:private-messages` requires the Auth-enabled local app at `http://localhost:3100` with the M8 migrations applied. It creates only tagged DEV0247 accounts and fixtures, verifies inquiry/reply, polling, consent, request/booking cards, retry/privacy/block behavior and responsive layouts, then removes those accounts and their message/scheduling records. Use `--cleanup` for its own tagged leftovers. Screenshots are ignored under `test-results/private-messages-rehearsal/`; no message drafts or private CLI configuration are saved. The current behavior is defined in [specification section 16](docs/mvp-spec.md#16-private-messages-and-session-notes).
 

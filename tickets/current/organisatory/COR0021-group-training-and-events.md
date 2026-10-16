@@ -5,7 +5,7 @@
 - Last updated: 2026-10-16
 - Milestone: M7 — Group training and events
 - Converted from: Not applicable — DEV0233 already has committed planning evidence and retains its identity/scope
-- Tracked development tickets: [DEV0233](../../archive/organisatory/DEV0233-define-group-training-and-events-growth-scope.md), [DEV0237](../../archive/backend/DEV0237-persist-group-session-registration.md), [DEV0238](../../archive/backend/DEV0238-integrate-group-session-scheduling-conflicts.md), [DEV0239](../frontend/DEV0239-add-coach-group-session-management.md), [DEV0240](../frontend/DEV0240-add-group-event-discovery-and-joining.md), [DEV0241](../backend/DEV0241-rehearse-group-training-and-event-loop.md)
+- Tracked development tickets: [DEV0233](../../archive/organisatory/DEV0233-define-group-training-and-events-growth-scope.md), [DEV0237](../../archive/backend/DEV0237-persist-group-session-registration.md), [DEV0238](../../archive/backend/DEV0238-integrate-group-session-scheduling-conflicts.md), [DEV0239](../frontend/DEV0239-add-coach-group-session-management.md), [DEV0240](../../archive/frontend/DEV0240-add-group-event-discovery-and-joining.md), [DEV0241](../backend/DEV0241-rehearse-group-training-and-event-loop.md)
 - Related records: independent Explore preview [DEV0235](../frontend/DEV0235-preview-home-aligned-explore.md), independent Explore implementation [DEV0236](../../archive/frontend/DEV0236-align-explore-with-home-discovery.md); existing private scheduling and connection contracts are compatibility baselines, not group implementation
 
 ## Objective and boundaries
@@ -22,7 +22,7 @@ This record implements no runtime behavior. The contract owner distinguishes the
 | Group domain and registration      | [DEV0237](../../archive/backend/DEV0237-persist-group-session-registration.md)                 | New nonfinancial data, owner drafts, direct one-seat joining/withdrawal, manual confirmation/cancellation, deadline reconciliation and bounded projections/tests           | Completed DEV0233 contract; publication unavailable until DEV0238        |
 | Cross-product time authority       | [DEV0238](../../archive/backend/DEV0238-integrate-group-session-scheduling-conflicts.md)       | Guarded publication, coach-wide time reservations, private occurrence/materialization/reopen compatibility and real concurrency tests                                      | Stable DEV0237 records/lifecycle                                         |
 | Coach event interface              | [DEV0239](../frontend/DEV0239-add-coach-group-session-management.md)                           | Coach Events navigation, draft/review/publish, private roster and explicit confirmation/cancellation/conflict recovery                                                     | DEV0237 and DEV0238 completed                                            |
-| Public and athlete event interface | [DEV0240](../frontend/DEV0240-add-group-event-discovery-and-joining.md)                        | Public Events navigation/list/detail, filters/share links, direct join/withdraw and own Group sessions destination                                                         | DEV0237 and DEV0238 completed; sequence shared visual edits with DEV0236 |
+| Public and athlete event interface | [DEV0240](../../archive/frontend/DEV0240-add-group-event-discovery-and-joining.md)             | Public Events navigation/list/detail, filters/share links, direct join/withdraw and own Group sessions destination                                                         | DEV0237 and DEV0238 completed; sequence shared visual edits with DEV0236 |
 | Integrated local proof             | [DEV0241](../backend/DEV0241-rehearse-group-training-and-event-loop.md)                        | Reproducible multi-account free/paid-at-session web rehearsal, privacy/concurrency/scheduling and responsive recovery evidence, guarded cleanup and delivery documentation | DEV0237–DEV0240 completed                                                |
 
 All required implementation tickets exist and are peers. Detailed evidence belongs to each DEV record. No part is implemented under this coordination record or under DEV0235/DEV0236.
@@ -45,12 +45,18 @@ All required implementation tickets exist and are peers. Detailed evidence belon
 
 ## Progress and integration record
 
+- 2026-10-16: DEV0240 completed public Events and athlete Group sessions, including authoritative registration readback, original-attempt/actor protection, native forms, bounded history and real local four-width/privacy/recovery checks. Its record owns the detailed evidence and isolated static-validation context. DEV0239 coach management and DEV0241 combined proof remain open, so COR0021 is not complete.
+
+- 2026-10-16: DEV0240 public/athlete Events interface implementation started with user authorization. Existing backend prerequisites are delivered; preserve concurrent availability/database/booking work and validate using isolated fixtures. DEV0239 coach event management remains separate.
+
 - 2026-10-15: Compared DEV0233 with DEV0235/DEV0236 and found separate owned outcomes. Created a flat work map while preserving the existing committed DEV0233. The user selected direct joining with manual coach confirmation/cancellation after having selected free/pay-at-session pricing.
 - 2026-10-15: Adopted implementation defaults for explicit decision deadlines, no implicit confirmation, missed-decision expiry, withdrawal, immutable published terms, privacy and coach scheduling conflicts. Exact behavior is in the specification, not duplicated as a second product contract here.
 - 2026-10-15: DEV0237 completed the backend data/registration/lifecycle slice with forced row-level security, bounded public/private projections, immutable terms and real capacity/decision/deadline races. It exposes no application publication path or Events interface. DEV0238 is the next implementation peer; DEV0239/DEV0240 still require both backend peers and DEV0241 remains the integrated proof gate.
 - 2026-10-16: DEV0238 completed guarded owner publication and coach-wide group/private time authority with real publication/private/materialization races, bounded contention retry, deadline reconciliation and protected recurrence/withdrawn history. See its archived implementation record for exact contracts and checks. DEV0239/DEV0240's backend prerequisites are now satisfied; their interface work is still Draft and DEV0241 remains the combined browser proof gate. Reviewed the concurrent calendar scope and recorded its downstream boundary above. No shared local or hosted database was migrated.
 
 ## Validation results
+
+2026-10-16 public/athlete interface checkpoint: DEV0240 records 165 application and 17 server tests plus lint/types/format/build on its isolated committed-foundation overlay, and a passing real multi-account/no-JavaScript/four-width local rehearsal. Shared database schema/data were not reset, migrated or seeded. This does not complete the coach interface or replace DEV0241's final combined proof.
 
 2026-10-15: DEV0233 completed the adopted contract and work map. `python3 /tmp/dev0233-check-growth-contract.py` passed 257 relative links, 33 anchors, 147 unique records, six reciprocal direct DEV members, unique work-map rows and metadata/index/retained-Explore checks. Targeted Prettier and `git diff --check` passed; the checks are repeated after contract archival. Integrated runtime evidence remains DEV0241 and is not run.
 
@@ -67,7 +73,7 @@ Manual decisions and status are in-app only; no email/push delivery is promised.
 ## Completion and review references
 
 - Completed: Not completed — runtime delivery and integration pending.
-- Direct development tickets: DEV0233, DEV0237 and DEV0238 Completed; DEV0239/DEV0240 Draft with backend prerequisites satisfied; DEV0241 Draft pending the interface peers.
+- Direct development tickets: DEV0233, DEV0237 and DEV0238 Completed; DEV0239 Draft with backend prerequisites satisfied; DEV0240 Completed; DEV0241 Draft pending the interface peers.
 - Commit: Not applicable — coordination IDs are not used in commit subjects.
 - Review: Contract and backend acceptance self-review; no independent review or combined browser rehearsal.
 - Deployment or release: None.

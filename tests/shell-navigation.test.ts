@@ -11,7 +11,7 @@ import {
 } from "@/components/shell";
 import type { CoachAccessStatus } from "@/domain/coaches";
 
-const PUBLIC_PATHS = ["/", "/explore", "/how-it-works", "/profile"];
+const PUBLIC_PATHS = ["/", "/explore", "/events", "/how-it-works", "/profile"];
 
 function authorizedActor(coachAccessStatus: CoachAccessStatus): ActorSnapshot {
   return {
@@ -51,6 +51,7 @@ test("client and unapproved applicant navigation includes personal sessions", ()
       [
         { label: "Home", href: "/" },
         { label: "Explore", href: "/explore" },
+        { label: "Events", href: "/events" },
         { label: "My sessions", href: "/sessions" },
         { label: "Messages", href: "/messages" },
         { label: "How it works", href: "/how-it-works" },
@@ -70,6 +71,7 @@ test("approved and demo navigation defaults Profile to the coach editor", () => 
       [
         { label: "Home", href: "/" },
         { label: "Explore", href: "/explore" },
+        { label: "Events", href: "/events" },
         { label: "My sessions", href: "/sessions" },
         { label: "Messages", href: "/messages" },
         { label: "Coach workspace", href: "/coach" },
@@ -89,6 +91,7 @@ test("suspended coach navigation keeps workspace and personal Profile", () => {
     [
       { label: "Home", href: "/" },
       { label: "Explore", href: "/explore" },
+      { label: "Events", href: "/events" },
       { label: "My sessions", href: "/sessions" },
       { label: "Messages", href: "/messages" },
       { label: "Coach workspace", href: "/coach" },
@@ -108,6 +111,8 @@ test("public shell mode is restricted to the adopted marketplace routes", () => 
   for (const path of [
     "/",
     "/explore",
+    "/events",
+    "/events/group-00000000000040008000000000000001",
     "/coaches/daniel-park",
     "/how-it-works",
     "/sign-in",
@@ -119,6 +124,8 @@ test("public shell mode is restricted to the adopted marketplace routes", () => 
     "/coaches",
     "/coaches/daniel-park/schedule",
     "/sessions",
+    "/sessions/groups",
+    "/events/example/nested",
     "/coach",
     "/profile",
     "/profile/coach",

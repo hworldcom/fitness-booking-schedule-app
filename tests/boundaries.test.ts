@@ -138,7 +138,7 @@ test("application repositories own database connections per request", () => {
   }
 });
 
-test("blockchain, wallet, group-event and social runtime surfaces are absent", () => {
+test("blockchain, wallet, legacy funding and social runtime surfaces are absent", () => {
   for (const relative of ["Anchor.toml", "Cargo.toml"]) {
     assert.equal(existsSync(path.join(root, relative)), false, relative);
   }
@@ -151,7 +151,8 @@ test("blockchain, wallet, group-event and social runtime surfaces are absent", (
     "src/server/wallet",
     "src/app/api/solana",
     "src/app/api/wallet",
-    "src/app/events",
+    // DEV0240's nonfinancial M7 Events routes use the scheduling backend;
+    // the retired group-events funding module remains forbidden below.
     "src/app/following",
     "src/app/coach/events",
     "src/app/coach/posts",
