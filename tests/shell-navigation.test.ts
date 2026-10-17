@@ -165,6 +165,12 @@ test("public shell mode is restricted to the adopted marketplace routes", () => 
     "/coaches/daniel-park",
     "/how-it-works",
     "/sign-in",
+    "/register",
+    "/check-email",
+    "/forgot-password",
+    "/reset-password",
+    "/complete-profile",
+    "/auth/confirm",
   ]) {
     assert.equal(isPublicMarketplacePath(path), true, path);
   }

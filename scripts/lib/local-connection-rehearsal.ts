@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { createClient } from "@supabase/supabase-js";
-import { createServerClient } from "@supabase/ssr";
 import postgres from "postgres";
 import {
   assertLoopbackSupabaseTargets,
@@ -148,19 +147,30 @@ export async function localConnectionRehearsal(
       runId: enrolled.runId,
       runRole: "member",
     };
-    const client = createServerClient(status.apiUrl, status.publishableKey, {
-      cookies: {
-        getAll: () => entry.cookies,
-        setAll: (values) => {
-          entry.cookies = values.map(({ name, value }) => ({ name, value }));
-        },
-      },
+    const signed = await fetch(base + "/api/auth/operations", {
+      method: "POST",
+      headers: { origin: base, "content-type": "application/json" },
+      body: JSON.stringify({ action: "sign-in", email, password }),
     });
-    const signed = await client.auth.signInWithPassword({ email, password });
-    if (signed.error)
+    const authentication: unknown = await signed.json();
+    if (
+      !signed.ok ||
+      !authentication ||
+      typeof authentication !== "object" ||
+      !("status" in authentication) ||
+      authentication.status !== "success"
+    )
       throw new Error(
-        "Cannot authenticate a local connection rehearsal identity.",
+        "Cannot authenticate a local connection rehearsal identity through application Auth.",
       );
+    entry.cookies = signed.headers.getSetCookie().map((cookie) => {
+      const pair = cookie.split(";", 1)[0],
+        separator = pair.indexOf("=");
+      return {
+        name: pair.slice(0, separator),
+        value: pair.slice(separator + 1),
+      };
+    });
     return entry;
   }
   async function booking(coach: LocalPerson, athlete: LocalPerson) {

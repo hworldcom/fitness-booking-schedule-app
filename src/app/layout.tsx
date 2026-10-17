@@ -14,6 +14,7 @@ import "./explore-discovery.css";
 import "@/features/messages/messages.css";
 import "./account-menu.css";
 import "./account-settings.css";
+import "./authentication.css";
 import "./public-marketplace-accessibility.css";
 import { ActorProvider } from "@/auth/client/actor-provider";
 import { AuthSessionProvider } from "@/auth/client/session-provider";

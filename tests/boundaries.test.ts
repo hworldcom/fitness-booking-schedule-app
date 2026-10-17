@@ -42,6 +42,7 @@ test("Auth SDK imports and calls stay inside documented Auth adapters", () => {
     "src/server/auth/client.ts",
     "src/server/auth/proxy.ts",
     "src/server/auth/session.ts",
+    "src/server/auth/supabase-operations.ts",
   ]);
   for (const file of sourceFiles(src)) {
     const relative = path.relative(root, file);

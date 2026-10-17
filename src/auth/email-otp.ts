@@ -4,7 +4,11 @@ const OTP_PATTERN = /^\d{6}$/;
 export function normalizeEmail(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const email = value.trim().toLowerCase();
-  return email.length <= 254 && EMAIL_PATTERN.test(email) ? email : null;
+  return email.length <= 254 &&
+    !/[\u0000-\u001f\u007f]/.test(email) &&
+    EMAIL_PATTERN.test(email)
+    ? email
+    : null;
 }
 
 export function normalizeEmailOtp(value: unknown): string | null {

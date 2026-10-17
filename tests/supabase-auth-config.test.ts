@@ -7,13 +7,36 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (file: string) => readFileSync(path.join(root, file), "utf8");
 
-test("local Supabase enables six-digit email OTP on the canonical route", () => {
+test("local Supabase confirms password signup and retains bounded existing-account email proofs", () => {
   const config = read("supabase/config.toml");
   const template = read("supabase/templates/email-otp.html");
   assert.match(config, /site_url = "http:\/\/localhost:3100"/);
+  const redirects = JSON.parse(
+    config.match(/additional_redirect_urls = (\[[^\n]+\])/)![1],
+  ) as string[];
+  assert.deepEqual(redirects, [
+    "http://localhost:3100/sign-in",
+    "http://localhost:3100/auth/confirm",
+    "http://localhost:3100/auth/callback",
+  ]);
+  assert.match(config, /minimum_password_length = 8/);
+  assert.match(config, /password_requirements = ""/);
+  assert.match(config, /enable_confirmations = true/);
+  assert.match(config, /max_frequency = "60s"/);
+  assert.match(config, /timebox = "720h"/);
+  for (const [template, purpose] of [
+    ["confirmation", "signup"],
+    ["recovery", "recovery"],
+  ]) {
+    const html = read(`supabase/templates/${template}.html`);
+    assert.match(html, /\.RedirectTo/);
+    assert.match(html, /\.TokenHash/);
+    assert.ok(html.includes(`type=${purpose}`));
+    assert.doesNotMatch(html, /ConfirmationURL/);
+  }
   assert.match(
     config,
-    /additional_redirect_urls = \["http:\/\/localhost:3100\/sign-in"\]/,
+    /\[auth\.email\.notification\.password_changed\]\nenabled = true/,
   );
   assert.match(config, /otp_length = 6/);
   assert.match(config, /email_sent = 30/);

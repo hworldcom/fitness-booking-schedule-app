@@ -2,6 +2,7 @@ export type AuthSessionSnapshot =
   | Readonly<{ status: "disabled" }>
   | Readonly<{ status: "signed-out" }>
   | Readonly<{ status: "unavailable" }>
+  | Readonly<{ status: "recovery-required" }>
   | Readonly<{
       status: "signed-in";
       subject: string;
@@ -32,7 +33,8 @@ export function isAuthSessionSnapshot(
   if (
     session.status === "disabled" ||
     session.status === "signed-out" ||
-    session.status === "unavailable"
+    session.status === "unavailable" ||
+    session.status === "recovery-required"
   ) {
     return true;
   }

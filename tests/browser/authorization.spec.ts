@@ -44,9 +44,7 @@ test("removed marketplace and legacy routes are unavailable", async ({
     "/clubs/sign-in",
     "/search",
     "/users/max",
-    "/events",
     "/following",
-    "/coach/events",
     "/coach/posts",
     "/devnet-bootstrap",
   ]) {

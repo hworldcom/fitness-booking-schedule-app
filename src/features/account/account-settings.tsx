@@ -23,6 +23,7 @@ import { useAuthSession } from "@/auth/client/session-provider";
 import { signInHref } from "@/auth/return-to";
 import { accountEditInput, advanceOtherDraft } from "./account-settings-model";
 import { AccountGenderField } from "./account-gender-field";
+import { AccountAuthenticationControls } from "@/features/auth/account-authentication-controls";
 
 type EditableSection = AccountInput["section"];
 type Draft = { input: AccountInput; error: string | null; conflict: boolean };
@@ -306,6 +307,9 @@ function AccountEditor({
   );
   return (
     <AccountSettingsView
+      authenticationSettings={
+        <AccountAuthenticationControls key={email} email={email} />
+      }
       email={email}
       section={section}
       personalDetails={
@@ -501,11 +505,13 @@ export function AccountSettingsView({
   section,
   personalDetails,
   usernameSettings,
+  authenticationSettings,
 }: {
   email: string;
   section: AccountSection;
   personalDetails?: ReactNode;
   usernameSettings?: ReactNode;
+  authenticationSettings?: ReactNode;
 }) {
   const content = useRef<HTMLDivElement>(null);
   const previousSection = useRef(section);
@@ -565,18 +571,8 @@ export function AccountSettingsView({
             {usernameSettings}
             <dl className="account-settings-rows">
               <SettingRow title="Email address" value={email} />
-              <SettingRow title="Sign-in method" value="One-time email code" />
             </dl>
-            <p className="account-section-intro">
-              Use the code sent to your email to sign in. You don’t need a MovX
-              password.
-            </p>
-            <Link
-              href={signInHref(accountSectionHref("login-security"))}
-              className="account-edit-link"
-            >
-              Manage sign-in and sign out
-            </Link>
+            {authenticationSettings}
           </section>
         ) : (
           <section

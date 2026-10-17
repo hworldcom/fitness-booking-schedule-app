@@ -1,38 +1,18 @@
 import type { Metadata } from "next";
-import { supabasePublicConfig } from "@/auth/config";
-import { safeReturnTo } from "@/auth/return-to";
-import { SignInScreen } from "@/features/auth/sign-in";
+import {
+  AuthenticationPage,
+  type AuthenticationSearchParams,
+} from "../_auth/auth-page";
 
 export const metadata: Metadata = {
   title: "Sign in",
-  description:
-    "Request a one-time email code to create or restore your MovX Club account.",
+  robots: { index: false, follow: false },
+  referrer: "no-referrer",
 };
-
-export default async function SignInPage({
+export default function Page({
   searchParams,
 }: {
-  searchParams: Promise<{
-    returnTo?: string | string[];
-    reason?: string | string[];
-    intent?: string | string[];
-  }>;
+  searchParams: AuthenticationSearchParams;
 }) {
-  const params = await searchParams;
-  const config = supabasePublicConfig();
-  const returnTo =
-    config && params.returnTo !== undefined
-      ? safeReturnTo(params.returnTo, config.siteUrl)
-      : null;
-  const intent =
-    params.intent === "client" || params.intent === "coach"
-      ? params.intent
-      : null;
-  return (
-    <SignInScreen
-      returnTo={returnTo}
-      accessRequired={params.reason === "forbidden"}
-      intent={intent}
-    />
-  );
+  return <AuthenticationPage stage="sign-in" searchParams={searchParams} />;
 }

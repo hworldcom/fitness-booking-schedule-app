@@ -199,6 +199,11 @@ test("exactly the selected settings panel renders, with active query navigation 
           null,
           "Username reserved for future use",
         ),
+        authenticationSettings: createElement(
+          "p",
+          null,
+          "Sign-in security controls",
+        ),
       }),
     );
     for (const target of ACCOUNT_SECTIONS)
@@ -220,7 +225,7 @@ test("exactly the selected settings panel renders, with active query navigation 
       section === "login-security",
     );
     assert.equal(
-      html.includes("One-time email code"),
+      html.includes("Sign-in security controls"),
       section === "login-security",
     );
     assert.equal(

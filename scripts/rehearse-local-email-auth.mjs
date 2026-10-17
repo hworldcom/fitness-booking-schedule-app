@@ -1,303 +1,711 @@
 import assert from "node:assert/strict";
-import { mkdir } from "node:fs/promises";
-import { chromium } from "@playwright/test";
+import { randomUUID, createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { mkdir, writeFile, readFile } from "node:fs/promises";
+import { chromium, expect as baseExpect } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
+import postgres from "postgres";
+import sharp from "sharp";
 
-const siteUrl = process.env.AUTH_TEST_SITE_URL ?? "http://localhost:3100";
-const mailboxUrl =
-  process.env.AUTH_TEST_MAILPIT_URL ?? "http://127.0.0.1:55324";
-const nonce = Date.now();
-const evidenceDirectory = "test-results/email-auth-rehearsal";
-
-async function emailCodeFor(email) {
-  for (let attempt = 0; attempt < 30; attempt += 1) {
-    const response = await fetch(`${mailboxUrl}/api/v1/messages`);
-    if (!response.ok) throw new Error("The local captured mailbox is offline.");
-    const mailbox = await response.json();
-    const message = mailbox.messages?.find((candidate) =>
-      candidate.To?.some((recipient) => recipient.Address === email),
-    );
-    if (message) {
-      assert.equal(message.Subject, "Your MovX Club sign-in code");
-      assert.match(message.Snippet ?? "", /MovX Club/);
-    }
-    const code = message?.Snippet?.match(/\b\d{6}\b/)?.[0];
-    if (code) return code;
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  }
-  throw new Error("The local OTP email did not arrive in time.");
+// Deliberately refuses hosted Auth, databases, mailboxes and websites. CLI keys
+// remain in memory. Every created account has an exact per-run cleanup record.
+const base = process.env.AUTH_TEST_SITE_URL ?? "http://localhost:3100";
+assert.equal(base, "http://localhost:3100");
+const values = Object.fromEntries(
+  execFileSync("node_modules/.bin/supabase", ["status", "-o", "env"], {
+    stdio: ["ignore", "pipe", "pipe"],
+  })
+    .toString()
+    .split(/\r?\n/)
+    .map((line) => {
+      const i = line.indexOf("=");
+      return [line.slice(0, i), line.slice(i + 1).replace(/^"|"$/g, "")];
+    }),
+);
+assert.equal(values.API_URL, "http://127.0.0.1:55321");
+assert.equal(
+  values.DB_URL,
+  "postgresql://postgres:postgres@127.0.0.1:55322/postgres",
+);
+const mailbox = "http://127.0.0.1:55324";
+const admin = createClient(values.API_URL, values.SERVICE_ROLE_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+const sql = postgres(values.DB_URL, {
+  max: 4,
+  prepare: false,
+  ssl: false,
+  onnotice: () => {},
+});
+const expect = baseExpect.configure({ timeout: 30000 });
+const tag = `dev0286-${randomUUID()}`;
+const evidence = `tmp/email-auth-rehearsal/${tag}`;
+await mkdir(evidence, { recursive: true, mode: 0o700 });
+const owned = [],
+  checks = [];
+const ownedFlowHashes = new Set();
+let phase = "setup",
+  browser;
+const password = "starter passphrase",
+  resetPassword = "new easy passphrase",
+  changedPassword = "another passphrase";
+const digest = (value) => createHash("sha256").update(value).digest("hex");
+async function step(name, fn) {
+  phase = name;
+  console.log("Checking: " + name);
+  await fn();
+  checks.push(name);
+  console.log("Passed: " + name);
 }
-
-async function submitForm(page) {
-  await page
-    .locator('form.auth-form button[type="submit"]')
-    .click({ timeout: 20_000 });
-}
-
-async function requestAndVerify(
-  page,
-  email,
-  { testInvalidCode = false, replayedCode = null } = {},
-) {
-  await page.goto(`${siteUrl}/sign-in`, { waitUntil: "domcontentloaded" });
-  await page.waitForFunction(() => {
-    const button = document.querySelector(
-      'form.auth-form button[type="submit"]',
-    );
-    return button instanceof HTMLButtonElement && !button.disabled;
+async function command(context, body) {
+  if (typeof body.email === "string" && body.email.startsWith(tag))
+    ownedFlowHashes.add(digest(body.email));
+  const response = await context.request.post(base + "/api/auth/operations", {
+    headers: { origin: base },
+    data: body,
   });
-  await page.getByLabel("Email address").fill(email);
-  assert.equal(await page.getByLabel("Email address").inputValue(), email);
-  await submitForm(page);
-  try {
-    await page.getByText("Check your email.").waitFor({ timeout: 60_000 });
-  } catch (error) {
-    const actionError = await page.locator(".wallet-error").textContent();
-    throw new Error(
-      `The sign-in code request did not advance: ${actionError ?? "no bounded UI error"}`,
-      { cause: error },
-    );
-  }
-  const code = await emailCodeFor(email);
-
-  if (testInvalidCode) {
-    await page.getByLabel("Six-digit code").fill("000000");
-    await submitForm(page);
-    await page.getByText(/invalid or expired/i).waitFor();
-  }
-
-  if (replayedCode) {
-    await page.getByLabel("Six-digit code").fill(replayedCode);
-    await submitForm(page);
-    await page.getByText(/invalid or expired/i).waitFor();
-  }
-
-  await page.getByLabel("Six-digit code").fill(code);
-  await submitForm(page);
-  await page
-    .getByText(/Email verified|Signed in as/)
-    .first()
-    .waitFor({ timeout: 20_000 });
-  return code;
+  return { code: response.status(), body: await response.json() };
 }
-
-async function completeProfile(page, displayName) {
-  await page.getByLabel("Display name").fill(displayName);
-  await submitForm(page);
-  await page
-    .getByRole("heading", { name: "How would you like to use MovX?" })
-    .waitFor({ timeout: 20_000 });
-  const response = await page.request.get(`${siteUrl}/api/auth/actor`);
-  assert.equal(response.status(), 200);
-  const actor = await response.json();
-  assert.equal(actor.status, "authorized");
-  assert.equal(actor.profile.displayName, displayName);
-  assert.equal(actor.role, "member");
-  assert.equal(actor.coachAccessStatus, "not-applied");
-  return actor;
+async function session(context) {
+  return (await context.request.get(base + "/api/auth/session")).json();
 }
-
-async function verifyAccountProfile(
-  page,
-  displayName,
-  coachState = "none",
-  evidenceName,
-) {
-  await page.goto(`${siteUrl}/profile`, { waitUntil: "domcontentloaded" });
-  await page
-    .getByRole("heading", { name: displayName, exact: true })
-    .waitFor({ timeout: 20_000 });
-  await page.getByText("Email-backed MovX identity").waitFor();
-  if (coachState === "pending") {
-    await page
-      .getByRole("heading", { name: "Coach application pending" })
-      .waitFor();
-    await page.getByRole("link", { name: "Open coach application" }).waitFor();
-  } else {
-    assert.equal(
-      await page
-        .getByRole("link", { name: "Open coach workspace", exact: true })
-        .count(),
-      0,
-    );
-    assert.equal(
-      await page
-        .getByRole("link", { name: "Open coach application", exact: true })
-        .count(),
-      0,
-    );
-  }
-  await page.goto(`${siteUrl}/sessions`, { waitUntil: "domcontentloaded" });
-  await page
-    .getByRole("heading", { name: "Your private-session schedule" })
-    .waitFor();
-  await page.getByRole("heading", { name: "My sessions" }).waitFor();
-  await page
-    .getByRole("navigation", { name: "My sessions sections" })
-    .getByRole("link", { name: "Booking requests" })
-    .waitFor();
-  await page.getByText("No confirmed sessions yet.").waitFor();
-  await page.locator(".authenticated-app-main").waitFor();
-  if ((await page.viewportSize()).width <= 760) {
-    const mobileNavigation = page.getByRole("navigation", {
-      name: "Mobile navigation",
-    });
-    await mobileNavigation.waitFor();
-    for (const destination of ["Explore", "My sessions", "Profile"]) {
-      await mobileNavigation
-        .getByRole("link", { name: destination, exact: true })
-        .waitFor();
-    }
-  } else {
-    await page.locator(".authenticated-sidebar").waitFor();
-    await page.getByText("PRIVATE WORKSPACE", { exact: true }).waitFor();
-  }
-  await page
-    .getByRole("link", { name: "My sessions", exact: true })
-    .first()
-    .waitFor();
-  assert.equal(
-    await page
-      .getByRole("link", { name: "My sessions", exact: true })
-      .first()
-      .getAttribute("href"),
-    "/sessions",
-  );
-  assert.equal(
-    await page.getByRole("link", { name: "Coach", exact: true }).count(),
-    0,
-  );
-  assert.equal(
-    await page
-      .getByRole("link", { name: "Coach workspace", exact: true })
-      .count(),
-    0,
-  );
-  assert.equal(await page.getByText("Illustrative history").count(), 0);
-  if (evidenceName) {
-    await page.screenshot({
-      path: `${evidenceDirectory}/${evidenceName}`,
-      fullPage: true,
+async function actor(context) {
+  return (await context.request.get(base + "/api/auth/actor")).json();
+}
+async function authRow(email) {
+  const [row] = await sql`select id from auth.users where email=${email}`;
+  assert.ok(row);
+  if (!owned.some((item) => item.id === row.id)) {
+    owned.push({ id: row.id, email });
+    await writeFile(evidence + "/recovery-ids.json", JSON.stringify(owned), {
+      mode: 0o600,
     });
   }
+  return row.id;
 }
-
-async function signOut(page) {
-  await page.goto(`${siteUrl}/sign-in`, { waitUntil: "domcontentloaded" });
-  await page.getByRole("button", { name: "Sign out on this device" }).click();
-  await page.getByLabel("Email address").waitFor();
-  assert.equal(await page.locator(".sidebar-profile").count(), 0);
-  assert.equal(await page.locator(".header-avatar").count(), 0);
-  assert.equal(
-    await page.getByRole("link", { name: "My sessions", exact: true }).count(),
-    0,
-  );
-  assert.equal(
-    await page
-      .getByRole("link", { name: "Coach workspace", exact: true })
-      .count(),
-    0,
-  );
-  const response = await page.request.get(`${siteUrl}/api/auth/actor`);
-  assert.equal(response.status(), 401);
-  assert.deepEqual(await response.json(), { status: "signed-out" });
+async function message(email, subject) {
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const list = await (await fetch(mailbox + "/api/v1/messages")).json();
+    const found = list.messages?.find(
+      (item) =>
+        item.To?.some((to) => to.Address === email) && item.Subject === subject,
+    );
+    if (found)
+      return (await fetch(mailbox + "/api/v1/message/" + found.ID)).json();
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  throw new Error("Expected local captured email did not arrive");
 }
-
-await mkdir(evidenceDirectory, { recursive: true });
-const browser = await chromium.launch({ channel: "chrome" });
+function emailLink(mail) {
+  const link = mail.HTML?.match(/href="([^"]+)"/i)?.[1]?.replaceAll(
+    "&amp;",
+    "&",
+  );
+  assert.ok(link);
+  const url = new URL(link);
+  assert.equal(url.origin, base);
+  assert.equal(url.pathname, "/auth/confirm");
+  assert.equal(url.search, "");
+  assert.ok(url.hash.includes("token_hash="));
+  return link;
+}
+function proofFrom(link) {
+  const p = new URLSearchParams(new URL(link).hash.slice(1));
+  return {
+    action: "confirm-email",
+    flow: p.get("flow"),
+    tokenHash: p.get("token_hash"),
+    type: p.get("type"),
+  };
+}
+async function confirm(page, link) {
+  await page.goto(link, { waitUntil: "domcontentloaded" });
+  await expect(
+    page.getByRole("button", { name: "Continue securely" }),
+  ).toBeEnabled();
+  assert.equal(new URL(page.url()).hash, "");
+  await page.getByRole("button", { name: "Continue securely" }).click();
+}
+async function open(page, path) {
+  await page.goto(base + path, { waitUntil: "domcontentloaded" });
+  await expect(
+    page.locator(".authentication-form input").first(),
+  ).toBeEnabled();
+}
+async function login(context, email, secret = password) {
+  const result = await command(context, {
+    action: "sign-in",
+    email,
+    password: secret,
+  });
+  assert.equal(result.body.status, "success", JSON.stringify(result.body));
+  return session(context);
+}
+async function snapshot(id) {
+  return sql.begin(async (tx) => {
+    const [profile] =
+      await tx`select to_jsonb(p) value from app.profiles p where auth_user_id=${id}::uuid`;
+    const details =
+      await tx`select to_jsonb(d) value from app.account_personal_details d where profile_id=(select id from app.profiles where auth_user_id=${id}::uuid)`;
+    const messages =
+      await tx`select to_jsonb(e) value from app.message_entries e join app.message_conversations c on c.id=e.conversation_id where c.athlete_profile_id=(select id from app.profiles where auth_user_id=${id}::uuid) order by e.seq`;
+    return JSON.stringify({
+      profile: profile?.value,
+      details: details.map((r) => r.value),
+      messages: messages.map((r) => r.value),
+    });
+  });
+}
+const baseline =
+  await sql`select id, md5(to_jsonb(p)::text) hash from app.profiles p`;
 try {
-  const firstContext = await browser.newContext({
-    viewport: { width: 1440, height: 1040 },
-  });
-  const firstPage = await firstContext.newPage();
-  const firstErrors = [];
-  firstPage.on("pageerror", (error) => firstErrors.push(error.message));
-  const firstEmail = `dev0052-riley-${nonce}@example.com`;
-
-  const firstCode = await requestAndVerify(firstPage, firstEmail, {
-    testInvalidCode: true,
-  });
-  const firstActor = await completeProfile(firstPage, "Riley Morgan");
-  await firstPage.screenshot({
-    path: `${evidenceDirectory}/account-path-desktop.png`,
-    fullPage: true,
-  });
-  await firstPage.getByRole("link", { name: "Find a coach" }).click();
-  await firstPage.waitForURL(/\/explore$/);
-  await firstPage.goto(`${siteUrl}/coach`, { waitUntil: "domcontentloaded" });
-  await firstPage
-    .getByRole("heading", { name: "Apply before publishing coaching." })
-    .waitFor();
-  await firstPage
-    .getByRole("link", { name: "Your profile: Riley Morgan" })
-    .waitFor();
-  await verifyAccountProfile(
-    firstPage,
-    "Riley Morgan",
-    "none",
-    "client-workspace-desktop.png",
-  );
-  await signOut(firstPage);
-
-  const secondContext = await browser.newContext({
-    viewport: { width: 393, height: 852 },
-    isMobile: true,
-    hasTouch: true,
-  });
-  const secondPage = await secondContext.newPage();
-  const secondErrors = [];
-  secondPage.on("pageerror", (error) => secondErrors.push(error.message));
-  const secondEmail = `dev0052-morgan-${nonce}@example.com`;
-
-  await requestAndVerify(secondPage, secondEmail);
-  const secondActor = await completeProfile(secondPage, "Morgan Lee");
-  assert.notEqual(firstActor.profile.slug, secondActor.profile.slug);
-  assert.equal(
-    await secondPage.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
-    ),
-    true,
-  );
-  await secondPage.screenshot({
-    path: `${evidenceDirectory}/account-path-mobile.png`,
-    fullPage: true,
-  });
-  await secondPage.getByRole("button", { name: "Become a coach" }).focus();
-  assert.equal(
-    await secondPage
-      .getByRole("button", { name: "Become a coach" })
-      .evaluate((element) => element === document.activeElement),
-    true,
-  );
-  await secondPage.getByRole("button", { name: "Become a coach" }).click();
-  await secondPage.waitForURL(/\/profile\/coach$/);
-  await secondPage
-    .getByRole("heading", { name: "Become discoverable as a coach." })
-    .waitFor();
-  await verifyAccountProfile(
-    secondPage,
-    "Morgan Lee",
-    "pending",
-    "client-workspace-mobile.png",
-  );
-  assert.equal(
-    await secondPage.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
-    ),
-    true,
-  );
-
-  await requestAndVerify(firstPage, firstEmail, { replayedCode: firstCode });
-  await firstPage
-    .getByText("Signed in as Riley Morgan.")
-    .waitFor({ timeout: 20_000 });
-  assert.equal(await firstPage.getByLabel("Display name").count(), 0);
-  await verifyAccountProfile(firstPage, "Riley Morgan");
-
-  assert.deepEqual(firstErrors, []);
-  assert.deepEqual(secondErrors, []);
-  console.log(
-    "Email OTP rehearsal passed for separate client and pending coach-application onboarding on one account, one returning account, invalid/replayed-code recovery, profile isolation, mobile keyboard/overflow and immediate sign-out cleanup.",
-  );
+  if (process.argv[2] === "--cleanup") {
+    const manifest = process.argv[3];
+    const matched = manifest?.match(
+      /^tmp\/email-auth-rehearsal\/(dev0286-[a-f0-9-]{36})\/recovery-ids[.]json$/,
+    );
+    assert.ok(matched);
+    ownedFlowHashes.add(digest(matched[1] + "-absent@users.movx.test"));
+    for (const item of JSON.parse(await readFile(manifest, "utf8"))) {
+      assert.match(item.id, /^[0-9a-f-]{36}$/);
+      assert.match(
+        item.email,
+        /^dev0286-[a-f0-9-]+(?:-legacy)?@users\.movx\.test$/,
+      );
+      assert.ok(
+        item.email === matched[1] + "@users.movx.test" ||
+          item.email === matched[1] + "-legacy@users.movx.test",
+      );
+      ownedFlowHashes.add(digest(item.email));
+      const rows =
+        await sql`select id from auth.users where id=${item.id}::uuid and email=${item.email}`;
+      if (rows.length) owned.push(item);
+    }
+  } else {
+    browser = await chromium.launch({ channel: "chrome", headless: true });
+    const first = await browser.newContext({
+        viewport: { width: 1440, height: 1040 },
+      }),
+      second = await browser.newContext({
+        viewport: { width: 393, height: 852 },
+        isMobile: true,
+        hasTouch: true,
+      }),
+      stranger = await browser.newContext();
+    const page = await first.newPage(),
+      mobile = await second.newPage();
+    const errors = [];
+    for (const p of [page, mobile]) {
+      p.on("pageerror", (e) => errors.push(e.message));
+      p.on("request", (r) => {
+        const u = new URL(r.url());
+        const unsafe = [
+          "password",
+          "currentPassword",
+          "token_hash",
+          "access_token",
+          "refresh_token",
+        ].some((key) => u.searchParams.has(key));
+        if (unsafe) errors.push("Credential in request URL");
+      });
+    }
+    const email = tag + "@users.movx.test";
+    let id, original, link, secondRefresh;
+    await step(
+      "registration validates an easy 8-character policy and requires email proof",
+      async () => {
+        await open(page, "/register?returnTo=%2Fsessions%3Fsection%3Drequests");
+        await page.getByLabel("Email address").fill(email);
+        await page.getByLabel("New password", { exact: true }).fill("short");
+        await page
+          .getByRole("button", { name: "Create account", exact: true })
+          .click();
+        await expect(page.locator(".authentication-error")).toContainText(
+          "8 characters",
+        );
+        await page.getByLabel("New password", { exact: true }).fill(password);
+        await page
+          .getByRole("button", { name: "Create account", exact: true })
+          .click();
+        await expect(page).toHaveURL(/\/check-email\?/);
+        id = await authRow(email);
+        assert.equal((await actor(first)).status, "signed-out");
+        assert.equal(
+          (await command(second, { action: "sign-in", email, password })).body
+            .status,
+          "invalid-credentials",
+        );
+        link = emailLink(await message(email, "Confirm your MovX Club email"));
+      },
+    );
+    await step(
+      "confirmation rejects wrong-browser and wrong-purpose proofs without consuming the valid link",
+      async () => {
+        const proof = proofFrom(link);
+        assert.equal(
+          (await command(stranger, proof)).body.status,
+          "invalid-proof",
+        );
+        assert.equal(
+          (await command(first, { ...proof, type: "recovery" })).body.status,
+          "invalid-proof",
+        );
+        const before =
+          await sql`select consumed_at from app.email_auth_flows where id_hash=${digest(proof.flow)}`;
+        assert.equal(before[0].consumed_at, null);
+        await confirm(page, link);
+        await expect(page).toHaveURL(/\/complete-profile\?/);
+        assert.equal((await actor(first)).status, "forbidden");
+        assert.equal(
+          (await (await first.request.get(base + "/api/auth/identity")).json())
+            .status,
+          "profile-required",
+        );
+        assert.equal(
+          (await command(first, proof)).body.status,
+          "invalid-proof",
+        );
+        // A rejected replay leaves the established identity intact; returning login uses the same subject.
+        await login(first, email);
+        await page.goto(
+          base + "/complete-profile?returnTo=%2Fsessions%3Fsection%3Drequests",
+          { waitUntil: "domcontentloaded" },
+        );
+        await expect(page.getByLabel("Display name")).toBeEnabled();
+        await page.getByLabel("Display name").fill("Auth Rehearsal Athlete");
+        await page
+          .getByRole("button", { name: "Continue", exact: true })
+          .click();
+        await expect(page).toHaveURL(/\/sessions\?section=requests$/);
+        original = await actor(first);
+        original.identity = await (
+          await first.request.get(base + "/api/auth/identity")
+        ).json();
+        assert.ok(original.identity.profile.id);
+        assert.equal(original.status, "authorized");
+        assert.equal((await session(first)).subject, id);
+      },
+    );
+    await step(
+      "returning password login, desktop/mobile layout and current-device sign-out",
+      async () => {
+        await open(mobile, "/sign-in");
+        await mobile.getByLabel("Email address").fill(email);
+        await mobile.getByLabel("Password", { exact: true }).fill(password);
+        await mobile
+          .getByRole("button", { name: "Sign in", exact: true })
+          .press("Enter");
+        await expect(mobile).toHaveURL(/\/sessions$/);
+        assert.equal(
+          (await (await second.request.get(base + "/api/auth/identity")).json())
+            .profile.id,
+          original.identity.profile.id,
+        );
+        await page.goto(base + "/account?section=login-security", {
+          waitUntil: "domcontentloaded",
+        });
+        await expect(
+          page.getByRole("button", { name: "Change password", exact: true }),
+        ).toBeVisible();
+        await page.screenshot({
+          path: evidence + "/account-desktop.png",
+          fullPage: true,
+        });
+        assert.equal(
+          (await command(second, { action: "sign-out" })).body.status,
+          "success",
+        );
+        assert.equal((await session(second)).status, "signed-out");
+        assert.equal((await session(first)).subject, id);
+        await open(mobile, "/sign-in");
+        assert.ok(
+          await mobile.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
+        );
+        await mobile.screenshot({
+          path: evidence + "/sign-in-mobile.png",
+          fullPage: true,
+        });
+        await login(second, email);
+      },
+    );
+    const tokenCookies = (await second.cookies())
+      .filter((c) => /^sb-.+-auth-token(?:\.\d+)?$/.test(c.name))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    const encoded = tokenCookies.map((c) => c.value).join("");
+    assert.ok(encoded.startsWith("base64-"));
+    secondRefresh = JSON.parse(
+      Buffer.from(encoded.slice(7), "base64url").toString(),
+    ).refresh_token;
+    assert.ok(secondRefresh);
+    await step(
+      "recovery is restricted on the server, rate-limited, single-use and revokes both devices",
+      async () => {
+        await open(
+          page,
+          "/forgot-password?returnTo=%2Faccount%3Fsection%3Dlogin-security",
+        );
+        await page.getByLabel("Email address").fill(email);
+        await page.getByRole("button", { name: "Send reset link" }).click();
+        await expect(page).toHaveURL(/\/check-email\?/);
+        assert.equal(
+          (await command(first, { action: "request-recovery", email })).code,
+          429,
+        );
+        const recovery = emailLink(
+          await message(email, "Reset your MovX Club password"),
+        );
+        await confirm(page, recovery);
+        await expect(page).toHaveURL(/\/reset-password$/);
+        assert.equal((await session(first)).status, "recovery-required");
+        assert.equal((await actor(first)).status, "signed-out");
+        assert.equal(
+          (await first.request.get(base + "/api/account")).status(),
+          401,
+        );
+        assert.equal(
+          (await command(first, { action: "sign-in", email, password })).body
+            .status,
+          "recovery-required",
+        );
+        const denied = await first.request.post(base + "/api/auth/identity", {
+          headers: { origin: base },
+          data: { displayName: "Forbidden Change" },
+        });
+        assert.equal(denied.status(), 401);
+        await page
+          .getByLabel("New password", { exact: true })
+          .fill(resetPassword);
+        await page
+          .getByRole("button", { name: "Save new password", exact: true })
+          .click();
+        await expect(page).toHaveURL(/\/sign-in\?.*notice=password-updated/);
+        await expect(
+          page
+            .getByRole("status")
+            .filter({ hasText: "Your password was saved" }),
+        ).toBeVisible();
+        assert.equal((await session(first)).status, "signed-out");
+        assert.equal((await session(second)).status, "signed-out");
+        assert.equal(
+          (await command(first, { action: "sign-in", email, password })).body
+            .status,
+          "invalid-credentials",
+        );
+        assert.equal(
+          (await command(first, proofFrom(recovery))).body.status,
+          "invalid-proof",
+        );
+        const refreshed = await fetch(
+          values.API_URL + "/auth/v1/token?grant_type=refresh_token",
+          {
+            method: "POST",
+            headers: {
+              apikey: values.PUBLISHABLE_KEY ?? values.ANON_KEY,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({ refresh_token: secondRefresh }),
+          },
+        );
+        assert.equal(
+          refreshed.ok,
+          false,
+          "A revoked device still refreshed its Auth session",
+        );
+        await message(email, "Your MovX Club password has changed");
+        await login(first, email, resetPassword);
+        assert.equal(
+          (await (await first.request.get(base + "/api/auth/identity")).json())
+            .profile.id,
+          original.identity.profile.id,
+        );
+      },
+    );
+    await step(
+      "Account password changes require the current password and end all old sessions",
+      async () => {
+        await login(second, email, resetPassword);
+        await page.goto(base + "/account?section=login-security", {
+          waitUntil: "domcontentloaded",
+        });
+        await page
+          .getByRole("button", { name: "Change password", exact: true })
+          .click();
+        await page
+          .getByLabel("Current password", { exact: true })
+          .fill("wrong current");
+        await page
+          .getByLabel("New password", { exact: true })
+          .fill(changedPassword);
+        await page
+          .getByRole("button", { name: "Save new password", exact: true })
+          .click();
+        await expect(page.locator(".authentication-error")).toContainText(
+          "incorrect",
+        );
+        assert.equal((await session(first)).subject, id);
+        await page
+          .getByLabel("Current password", { exact: true })
+          .fill(resetPassword);
+        await page
+          .getByRole("button", { name: "Save new password", exact: true })
+          .click();
+        await expect(page).toHaveURL(/\/sign-in\?notice=password-updated/);
+        assert.equal((await session(second)).status, "signed-out");
+        assert.equal(
+          (
+            await command(second, {
+              action: "sign-in",
+              email,
+              password: resetPassword,
+            })
+          ).body.status,
+          "invalid-credentials",
+        );
+        await login(first, email, changedPassword);
+      },
+    );
+    await step(
+      "existing passwordless identity gains a password without losing profile or private account data",
+      async () => {
+        const legacyEmail = tag + "-legacy@users.movx.test";
+        const created = await admin.auth.admin.createUser({
+          email: legacyEmail,
+          email_confirm: true,
+          user_metadata: { fixture: tag },
+        });
+        assert.ok(!created.error);
+        const legacyId = await authRow(legacyEmail);
+        const [enrolled] =
+          await sql`select * from app.enroll_application_identity(${legacyId}::uuid,'Legacy Auth Athlete')`;
+        await sql.begin(async (tx) => {
+          await tx.unsafe("set local role app_runtime");
+          await tx`select set_config('app.current_auth_user_id',${legacyId},true),set_config('app.current_profile_id',${enrolled.identity_profile_id},true),set_config('app.current_run_id',${enrolled.identity_run_id},true),set_config('app.current_run_role','member',true)`;
+          await tx`select app.update_current_account_settings('personal-details',${tx.json({ legalName: "Private Auth Fixture", preferredFirstName: "Legacy", birthdate: null, gender: null })},0)`;
+        });
+        assert.equal(
+          (
+            await command(stranger, {
+              action: "request-code",
+              email: legacyEmail,
+            })
+          ).body.status,
+          "requested",
+        );
+        const mail = await message(legacyEmail, "Your MovX Club sign-in code"),
+          code = (mail.Text ?? mail.Snippet ?? mail.HTML).match(
+            /\b\d{6}\b/,
+          )?.[0];
+        assert.ok(code);
+        assert.equal(
+          (
+            await command(stranger, {
+              action: "verify-code",
+              email: legacyEmail,
+              code,
+            })
+          ).body.status,
+          "success",
+        );
+        assert.equal((await session(stranger)).subject, legacyId);
+        assert.equal(
+          (
+            await (
+              await stranger.request.get(base + "/api/auth/methods")
+            ).json()
+          ).hasPassword,
+          false,
+        );
+        const avatar = await sharp({
+          create: {
+            width: 512,
+            height: 512,
+            channels: 3,
+            background: "#526c31",
+          },
+        })
+          .webp({ quality: 82 })
+          .toBuffer();
+        const uploaded = await stranger.request.post(
+          base + "/api/profile/avatar",
+          {
+            headers: { origin: base, "content-type": "image/webp" },
+            data: avatar,
+          },
+        );
+        assert.equal((await uploaded.json()).status, "saved");
+        const imageBefore = await (
+          await stranger.request.get(base + "/api/profile/avatar")
+        ).body();
+        const conversation = await stranger.request.post(
+          base + "/api/messages",
+          {
+            headers: { origin: base },
+            data: {
+              action: "inquire",
+              args: {
+                coachId: "10000000-0000-4000-8000-000000000002",
+                submissionId: randomUUID(),
+                body: "Private authentication continuity fixture.",
+              },
+            },
+          },
+        );
+        assert.equal(conversation.status(), 200);
+        assert.equal(
+          (
+            await sql`select count(*)::int n from app.message_conversations where athlete_profile_id=${enrolled.identity_profile_id}::uuid`
+          )[0].n,
+          1,
+        );
+        const saved = await snapshot(legacyId);
+        // The real provider shares a per-address send cooldown across code and recovery.
+        // Let that real window elapse rather than bypassing its settings or timestamps.
+        console.log(
+          "Waiting for the real email-send cooldown before password setup.",
+        );
+        await new Promise((resolve) => setTimeout(resolve, 31000));
+        await new Promise((resolve) => setTimeout(resolve, 31000));
+        assert.equal(
+          (
+            await command(stranger, {
+              action: "request-recovery",
+              email: legacyEmail,
+            })
+          ).body.status,
+          "requested",
+        );
+        assert.equal(
+          (
+            await command(
+              stranger,
+              proofFrom(
+                emailLink(
+                  await message(legacyEmail, "Reset your MovX Club password"),
+                ),
+              ),
+            )
+          ).body.status,
+          "recovery-required",
+        );
+        const race = await Promise.all([
+          command(stranger, { action: "reset-password", password }),
+          command(stranger, {
+            action: "reset-password",
+            password: changedPassword,
+          }),
+        ]);
+        assert.equal(
+          race.filter((r) => r.body.status === "password-updated").length,
+          1,
+        );
+        const winner =
+          race[0].body.status === "password-updated"
+            ? password
+            : changedPassword;
+        await login(stranger, legacyEmail, winner);
+        assert.equal((await session(stranger)).subject, legacyId);
+        assert.equal(await snapshot(legacyId), saved);
+        assert.deepEqual(
+          await (
+            await stranger.request.get(base + "/api/profile/avatar")
+          ).body(),
+          imageBefore,
+        );
+      },
+    );
+    await step(
+      "unknown/duplicate account requests stay generic and existing-only codes never enroll",
+      async () => {
+        const unknown = tag + "-absent@users.movx.test";
+        assert.equal(
+          (await command(second, { action: "request-code", email: unknown }))
+            .body.status,
+          "requested",
+        );
+        assert.equal(
+          (
+            await sql`select count(*)::int n from auth.users where email=${unknown}`
+          )[0].n,
+          0,
+        );
+        await sql`update app.email_auth_flows set requested_at=statement_timestamp()-interval '61 seconds' where email_hash=${digest(email)}`;
+        assert.equal(
+          (await command(second, { action: "register", email, password })).body
+            .status,
+          "requested",
+        );
+        assert.equal(
+          (
+            await sql`select count(*)::int n from auth.users where email=${email}`
+          )[0].n,
+          1,
+        );
+      },
+    );
+    assert.deepEqual(errors, []);
+  }
+} catch (error) {
+  console.error("Failed phase: " + phase);
+  console.error(error);
+  throw error;
 } finally {
-  await browser.close();
+  await browser?.close();
+  const removedProfileIds = [];
+  for (const fixture of owned) {
+    const images =
+      await sql`select id,avatar_storage_path from app.profiles where auth_user_id=${fixture.id}::uuid and avatar_storage_path is not null`;
+    for (const image of images) {
+      assert.ok(image.avatar_storage_path.startsWith(image.id + "/"));
+      const removed = await admin.storage
+        .from("account-avatars")
+        .remove([image.avatar_storage_path]);
+      assert.ok(!removed.error, "Exact fixture Storage cleanup failed");
+    }
+    await sql.begin(async (tx) => {
+      const profiles =
+        await tx`select id from app.profiles where auth_user_id=${fixture.id}::uuid`;
+      const ids = profiles.map((r) => r.id);
+      removedProfileIds.push(...ids);
+      if (ids.length) {
+        await tx`delete from app.account_personal_details where profile_id=any(${ids}::uuid[])`;
+        await tx`delete from app.message_conversations where athlete_profile_id=any(${ids}::uuid[])`;
+        await tx`delete from app.demo_run_participants where profile_id=any(${ids}::uuid[])`;
+        await tx`delete from app.profiles where id=any(${ids}::uuid[]) and auth_user_id=${fixture.id}::uuid`;
+      }
+      await tx`delete from app.email_auth_flows where email_hash=${digest(fixture.email)}`;
+    });
+    const result = await admin.auth.admin.deleteUser(fixture.id);
+    assert.ok(!result.error, "Exact fixture Auth cleanup failed");
+  }
+  if (ownedFlowHashes.size)
+    await sql`delete from app.email_auth_flows where email_hash=any(${Array.from(ownedFlowHashes)}::text[])`;
+  const after =
+    await sql`select id, md5(to_jsonb(p)::text) hash from app.profiles p`;
+  assert.deepEqual(
+    Array.from(after).sort((a, b) => a.id.localeCompare(b.id)),
+    baseline
+      .filter((p) => !removedProfileIds.includes(p.id))
+      .sort((a, b) => a.id.localeCompare(b.id)),
+    "Existing profiles changed",
+  );
+  await sql.end();
+  await writeFile(
+    evidence + "/result.json",
+    JSON.stringify(
+      {
+        passed: checks,
+        phase,
+        cleanup: "exact owned accounts removed; existing profiles preserved",
+      },
+      null,
+      2,
+    ),
+  );
 }
+console.log(
+  process.argv[2] === "--cleanup"
+    ? "Exact local rehearsal fixture cleanup passed."
+    : "Local Auth/Mailpit registration, recovery and identity checks passed.",
+);

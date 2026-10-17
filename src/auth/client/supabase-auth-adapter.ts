@@ -3,13 +3,17 @@
 import { createBrowserClient } from "@supabase/ssr";
 import type { AuthChangeEvent } from "@supabase/supabase-js";
 import { supabasePublicConfig } from "../config";
-import { normalizeEmail } from "../email-otp";
-import type { AuthenticationAdapter, AuthenticationResult } from "../gateway";
+import type {
+  AuthenticationAdapter,
+  AuthenticationEvent,
+  AuthenticationResult,
+} from "../gateway";
+import type { AuthenticationCommand } from "../operations";
 import { createAuthServiceFetch } from "../service-availability";
+import { postAuthenticationCommand } from "./operation-client";
 
 type BrowserClient = ReturnType<typeof createBrowserClient>;
 let client: BrowserClient | null | undefined;
-
 function authClient() {
   if (client !== undefined) return client;
   const config = supabasePublicConfig();
@@ -22,121 +26,43 @@ function authClient() {
   return client;
 }
 
-export function supabaseAuthenticationFailure(
-  error: unknown,
-  operation:
-    "request-code" | "verify-code" | "register" | "password" | "sign-out",
-): AuthenticationResult {
-  const failure =
-    error && typeof error === "object"
-      ? (error as Record<string, unknown>)
-      : {};
-  const code = typeof failure.code === "string" ? failure.code : "";
-  if (
-    failure.status === 429 ||
-    code === "over_email_send_rate_limit" ||
-    code === "over_request_rate_limit"
-  ) {
-    // This SDK error does not expose a verified Retry-After value.
-    return { status: "rate-limited", retryAfterSeconds: null };
-  }
-  if (operation === "register" && code === "weak_password")
-    return { status: "invalid", message: "password-unsafe" };
-  // Unknown and duplicate addresses receive exactly the same acknowledgement.
-  if (
-    (operation === "register" &&
-      ["user_already_exists", "email_exists"].includes(code)) ||
-    (operation === "request-code" &&
-      ["user_not_found", "signup_disabled", "otp_disabled"].includes(code))
-  ) {
-    return { status: "requested" };
-  }
-  if (typeof failure.status === "number" && failure.status >= 500)
-    return { status: "unavailable" };
-  if (
-    operation === "verify-code" &&
-    ["otp_expired", "validation_failed"].includes(code)
-  )
-    return { status: "invalid-proof" };
-  if (
-    operation === "password" &&
-    ["invalid_credentials", "email_not_confirmed", "user_banned"].includes(code)
-  )
-    return { status: "invalid-credentials" };
-  return { status: "unavailable" };
-}
-
 export function createSupabaseAuthenticationAdapter(
   getClient: () => Pick<BrowserClient, "auth"> | null = authClient,
+  request: (
+    command: AuthenticationCommand,
+  ) => Promise<AuthenticationResult> = postAuthenticationCommand,
 ): AuthenticationAdapter {
-  return {
-    async requestEmailCode(email, options) {
-      const client = getClient();
-      if (!client) return { status: "unavailable" };
-      const { error } = await client.auth.signInWithOtp({
-        email,
-        options: { shouldCreateUser: options.createAccount === true },
-      });
-      return error
-        ? supabaseAuthenticationFailure(error, "request-code")
-        : { status: "requested" };
-    },
-    async verifyEmailCode(email, token) {
-      const client = getClient();
-      if (!client) return { status: "unavailable" };
-      const { data, error } = await client.auth.verifyOtp({
-        email,
-        token,
-        type: "email",
-      });
-      if (error) return supabaseAuthenticationFailure(error, "verify-code");
-      return data.session && data.user
-        ? { status: "success", email: normalizeEmail(data.user.email) }
-        : { status: "invalid-proof" };
-    },
-    async registerWithPassword(email, password) {
-      const client = getClient();
-      const config = supabasePublicConfig();
-      if (!client || !config) return { status: "unavailable" };
-      const { data, error } = await client.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: new URL("/auth/confirm", config.siteUrl).toString(),
-        },
-      });
-      if (error) return supabaseAuthenticationFailure(error, "register");
-      // An auto-confirming environment does not satisfy the signup contract.
-      if (data.session) {
-        await client.auth.signOut({ scope: "local" });
-        return { status: "unavailable" };
+  async function execute(command: AuthenticationCommand) {
+    const result = await request(command);
+    if (
+      typeof window !== "undefined" &&
+      ["success", "recovery-required", "password-updated"].includes(
+        result.status,
+      )
+    ) {
+      window.dispatchEvent(new Event("movx-auth-session"));
+      if (typeof BroadcastChannel !== "undefined") {
+        const channel = new BroadcastChannel("movx-auth-session");
+        channel.postMessage("changed");
+        channel.close();
       }
-      return { status: "requested" };
-    },
-    async signInWithPassword(email, password) {
+    }
+    return result;
+  }
+  return {
+    execute,
+    requestEmailCode: (email) => execute({ action: "request-code", email }),
+    verifyEmailCode: (email, code) =>
+      execute({ action: "verify-code", email, code }),
+    registerWithPassword: (email, password) =>
+      execute({ action: "register", email, password }),
+    signInWithPassword: (email, password) =>
+      execute({ action: "sign-in", email, password }),
+    signOut: () => execute({ action: "sign-out" }),
+    subscribe(listener: (event: AuthenticationEvent) => void) {
       const client = getClient();
-      if (!client) return { status: "unavailable" };
-      const { data, error } = await client.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) return supabaseAuthenticationFailure(error, "password");
-      return data.session && data.user
-        ? { status: "success", email: normalizeEmail(data.user.email) }
-        : { status: "invalid-credentials" };
-    },
-    async signOut() {
-      const client = getClient();
-      if (!client) return { status: "unavailable" };
-      const { error } = await client.auth.signOut({ scope: "local" });
-      return error
-        ? supabaseAuthenticationFailure(error, "sign-out")
-        : { status: "success", email: null };
-    },
-    subscribe(listener) {
-      const client = getClient();
-      if (!client) return () => {};
-      const { data } = client.auth.onAuthStateChange(
+      const changed = () => listener("session-changed");
+      const subscription = client?.auth.onAuthStateChange(
         (event: AuthChangeEvent) => {
           if (event === "SIGNED_OUT") listener("signed-out");
           else if (
@@ -147,13 +73,28 @@ export function createSupabaseAuthenticationAdapter(
               "PASSWORD_RECOVERY",
             ].includes(event)
           )
-            listener("session-changed");
+            changed();
         },
       );
-      return () => data.subscription.unsubscribe();
+      const channel =
+        typeof window !== "undefined" && typeof BroadcastChannel !== "undefined"
+          ? new BroadcastChannel("movx-auth-session")
+          : null;
+      if (channel) channel.onmessage = changed;
+      if (typeof window !== "undefined") {
+        window.addEventListener("movx-auth-session", changed);
+        window.addEventListener("focus", changed);
+      }
+      return () => {
+        subscription?.data.subscription.unsubscribe();
+        channel?.close();
+        if (typeof window !== "undefined") {
+          window.removeEventListener("movx-auth-session", changed);
+          window.removeEventListener("focus", changed);
+        }
+      };
     },
   };
 }
-
 export const supabaseAuthenticationAdapter =
   createSupabaseAuthenticationAdapter();

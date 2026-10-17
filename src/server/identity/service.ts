@@ -37,7 +37,11 @@ export async function enrollApplicationIdentity(
 ): Promise<ApplicationIdentitySnapshot> {
   if (session.status !== "signed-in") {
     return Object.freeze({
-      status: session.status === "signed-out" ? "signed-out" : "unavailable",
+      status:
+        session.status === "signed-out" ||
+        session.status === "recovery-required"
+          ? "signed-out"
+          : "unavailable",
     });
   }
   const displayName = normalizeDisplayName(displayNameValue);
@@ -61,7 +65,11 @@ export async function currentApplicationIdentity(
 ): Promise<ApplicationIdentitySnapshot> {
   if (session.status !== "signed-in") {
     return Object.freeze({
-      status: session.status === "signed-out" ? "signed-out" : "unavailable",
+      status:
+        session.status === "signed-out" ||
+        session.status === "recovery-required"
+          ? "signed-out"
+          : "unavailable",
     });
   }
 

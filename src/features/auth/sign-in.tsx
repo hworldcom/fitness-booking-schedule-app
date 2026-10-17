@@ -4,704 +4,745 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
-  BadgeCheck,
+  ArrowRight,
   Check,
-  KeyRound,
-  LogOut,
+  Eye,
+  EyeOff,
+  LockKeyhole,
   Mail,
-  Search,
   ShieldCheck,
-  UserRound,
 } from "lucide-react";
-import { Pill } from "@/components/ui";
-import { isCanonicalSignInLocation, supabasePublicConfig } from "@/auth/config";
-import { authServiceUnavailableCopy } from "@/auth/service-availability";
-import { normalizeEmail, normalizeEmailOtp } from "@/auth/email-otp";
-import { normalizeDisplayName } from "@/auth/identity-contracts";
-import { useActor } from "@/auth/client/actor-provider";
 import { authenticationGateway } from "@/auth/client/authentication-gateway";
-import { authenticationResultMessage } from "@/auth/gateway";
-import { submitCoachApplication } from "@/auth/client/coach-application-client";
+import { useAuthSession } from "@/auth/client/session-provider";
+import { useActor } from "@/auth/client/actor-provider";
 import {
   completeApplicationProfile,
   fetchCurrentIdentity,
 } from "@/auth/client/identity-client";
-import { useAuthSession } from "@/auth/client/session-provider";
-import type { ApplicationIdentitySnapshot } from "@/auth/identity-contracts";
+import { submitCoachApplication } from "@/auth/client/coach-application-client";
+import { authenticationResultMessage } from "@/auth/gateway";
+import { validateNewPassword } from "@/auth/password";
+import {
+  normalizeDisplayName,
+  type ApplicationIdentitySnapshot,
+} from "@/auth/identity-contracts";
+import { supabasePublicConfig } from "@/auth/config";
+import {
+  parseAuthenticationCommand,
+  type AuthenticationCommand,
+} from "@/auth/operations";
+import { safeReturnTo } from "@/auth/return-to";
 
-const subscribeToHydration = () => () => {};
+export type AuthenticationStage =
+  | "sign-in"
+  | "register"
+  | "check-email"
+  | "forgot-password"
+  | "reset-password"
+  | "confirm"
+  | "complete-profile";
+const hydrate = () => () => {};
+const stageCopy = {
+  "sign-in": ["Welcome back", "Sign in to find your next training session."],
+  register: [
+    "Create your account",
+    "Find your coach and make room for progress.",
+  ],
+  "check-email": [
+    "Check your email",
+    "If this address is eligible, an email with your next step is on its way.",
+  ],
+  "forgot-password": [
+    "Reset your password",
+    "We’ll email a link to reset your password or add one to your existing account.",
+  ],
+  "reset-password": [
+    "Choose a new password",
+    "Once saved, sign in again with your new password.",
+  ],
+  confirm: [
+    "Continue with your email",
+    "Confirm this action to continue securely.",
+  ],
+  "complete-profile": [
+    "Let’s finish your profile",
+    "Choose the name people will see in MovX Club.",
+  ],
+} as const;
 
-type IdentityUiState =
-  ApplicationIdentitySnapshot | Readonly<{ status: "idle" | "checking" }>;
-
-type IdentityResult = Readonly<{
-  key: string;
-  identity: ApplicationIdentitySnapshot;
-}>;
-
-type ActiveAction =
-  | "request-code"
-  | "verify-code"
-  | "profile"
-  | "submit-coach-application"
-  | "sign-out";
+function stageHref(
+  stage: string,
+  returnTo: string,
+  intent: "client" | "coach" | null,
+) {
+  const search = new URLSearchParams({ returnTo });
+  if (intent) search.set("intent", intent);
+  return `/${stage}?${search}`;
+}
 
 export function SignInScreen({
-  returnTo,
-  accessRequired,
+  stage = "sign-in",
+  returnTo = "/sessions",
   intent,
+  accessRequired = false,
+  emailPurpose = "confirmation",
+  passwordUpdated = false,
 }: {
+  stage?: AuthenticationStage;
   returnTo: string | null;
-  accessRequired: boolean;
   intent: "client" | "coach" | null;
+  accessRequired?: boolean;
+  emailPurpose?: "confirmation" | "recovery";
+  passwordUpdated?: boolean;
 }) {
   const router = useRouter();
+  const navigate = (path: string) => {
+    router.replace(path);
+    router.refresh();
+  };
   const { session, refreshSession } = useAuthSession();
   const { refreshActor } = useActor();
   const mounted = useSyncExternalStore(
-    subscribeToHydration,
+    hydrate,
     () => true,
     () => false,
   );
   const config = supabasePublicConfig();
-  const unavailableCopy = config
-    ? authServiceUnavailableCopy(config.url)
-    : null;
-  const canonicalLocation =
-    mounted && config
-      ? isCanonicalSignInLocation(config, window.location)
-      : false;
-  const [emailInput, setEmailInput] = useState("");
-  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
-  const [codeInput, setCodeInput] = useState("");
-  const [displayNameInput, setDisplayNameInput] = useState("");
-  const [onboardingChoiceVisible, setOnboardingChoiceVisible] = useState(false);
-  const [activeAction, setActiveAction] = useState<ActiveAction | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [identityResult, setIdentityResult] = useState<IdentityResult | null>(
+  const ready = Boolean(
+    mounted && config && window.location.origin === config.siteUrl,
+  );
+  const target = config
+    ? safeReturnTo(returnTo ?? "/sessions", config.siteUrl)
+    : "/sessions";
+  const [email, setEmail] = useState(
+    session.status === "signed-in" ? session.email : "",
+  );
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [code, setCode] = useState("");
+  const [codeMode, setCodeMode] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [identity, setIdentity] = useState<ApplicationIdentitySnapshot | null>(
     null,
   );
-  const actionLock = useRef(false);
-  const identityRequestKey = useRef<string | null>(null);
-  const actorRefreshKey = useRef<string | null>(null);
-  const identityKey =
-    session.status === "signed-in"
-      ? `${session.subject}:${session.expiresAt ?? "no-expiry"}`
-      : null;
-  const applicationIdentity: IdentityUiState = identityKey
-    ? identityResult?.key === identityKey
-      ? identityResult.identity
-      : { status: "checking" }
-    : { status: "idle" };
+  const [proof, setProof] = useState<AuthenticationCommand | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const lock = useRef(false);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  const proofCache = useRef<AuthenticationCommand | null | undefined>(
+    undefined,
+  );
+  const link = (name: string) => stageHref(name, target, intent);
+  const context = { returnTo: target, ...(intent ? { intent } : {}) };
 
   useEffect(() => {
-    if (!identityKey) {
-      identityRequestKey.current = null;
-      actorRefreshKey.current = null;
-      return;
-    }
-    if (identityRequestKey.current === identityKey) return;
-    identityRequestKey.current = identityKey;
-    let active = true;
-    void fetchCurrentIdentity().then((identity) => {
-      if (active && identityRequestKey.current === identityKey) {
-        setIdentityResult({ key: identityKey, identity });
-      }
-    });
-    return () => {
-      active = false;
-      if (identityRequestKey.current === identityKey) {
-        identityRequestKey.current = null;
-      }
-    };
-  }, [identityKey]);
-
-  useEffect(() => {
-    if (
-      !identityKey ||
-      onboardingChoiceVisible ||
-      applicationIdentity.status !== "enrolled" ||
-      actorRefreshKey.current === identityKey
-    ) {
-      return;
-    }
-    actorRefreshKey.current = identityKey;
-    let active = true;
-    void refreshActor().then((actor) => {
-      if (active && returnTo && actor.status === "authorized") {
-        router.replace(returnTo);
-        router.refresh();
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, [
-    applicationIdentity.status,
-    identityKey,
-    onboardingChoiceVisible,
-    refreshActor,
-    returnTo,
-    router,
-  ]);
-
-  async function refreshIdentity() {
-    if (!identityKey) return;
-    identityRequestKey.current = identityKey;
-    setIdentityResult(null);
-    setIdentityResult({
-      key: identityKey,
-      identity: await fetchCurrentIdentity(),
-    });
-  }
-
-  async function requestCode(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (actionLock.current || !config || !canonicalLocation) return;
-    const email = normalizeEmail(emailInput);
-    if (!email) {
-      setActionError("Enter a valid email address.");
-      return;
-    }
-    actionLock.current = true;
-    setActiveAction("request-code");
-    setActionError(null);
-    try {
-      // Preserve the delivered flow until the password-registration peer cuts over.
-      const result = await authenticationGateway.requestEmailCode(email, {
-        createAccount: true,
+    if (stage !== "confirm") return;
+    if (proofCache.current === undefined) {
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      proofCache.current = parseAuthenticationCommand({
+        action: "confirm-email",
+        flow: params.get("flow"),
+        tokenHash: params.get("token_hash"),
+        type: params.get("type"),
       });
-      if (result.status !== "requested") {
-        setActionError(authenticationResultMessage(result));
-        return;
-      }
-      setPendingEmail(email);
-      setEmailInput(email);
-      setCodeInput("");
-    } catch {
-      setActionError(
-        "Sign-in is unavailable right now. Please try again shortly.",
+      window.history.replaceState(
+        null,
+        "",
+        window.location.pathname + window.location.search,
       );
-    } finally {
-      actionLock.current = false;
-      setActiveAction(null);
     }
-  }
+    const parsed = proofCache.current;
+    let active = true;
+    queueMicrotask(() => {
+      if (active) setProof(parsed);
+    });
+    return () => {
+      active = false;
+    };
+  }, [stage]);
 
-  async function verifyCode(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (actionLock.current || !pendingEmail || !config || !canonicalLocation) {
-      return;
-    }
-    const token = normalizeEmailOtp(codeInput);
-    if (!token) {
-      setActionError("Enter the six-digit code from your email.");
-      return;
-    }
-    actionLock.current = true;
-    setActiveAction("verify-code");
-    setActionError(null);
+  useEffect(() => {
+    if (stage !== "complete-profile" || session.status !== "signed-in") return;
+    let active = true;
+    void fetchCurrentIdentity().then((value) => {
+      if (active) setIdentity(value);
+    });
+    return () => {
+      active = false;
+    };
+  }, [stage, session.status]);
+
+  useEffect(() => {
+    if (error) errorRef.current?.focus();
+  }, [error]);
+
+  async function run(command: AuthenticationCommand, onRequested?: () => void) {
+    if (lock.current || !ready) return;
+    lock.current = true;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
     try {
-      const result = await authenticationGateway.verifyEmailCode(
-        pendingEmail,
-        token,
-      );
-      if (result.status !== "success") {
-        setActionError(authenticationResultMessage(result));
-        return;
-      }
-      const verified = await refreshSession();
-      if (verified.status !== "signed-in" || verified.email !== pendingEmail) {
-        await authenticationGateway.signOut();
+      const result = await authenticationGateway.execute(command);
+      if (result.status === "requested") {
+        setPassword("");
+        onRequested?.();
+        if (command.action === "request-code") {
+          setCodeSent(true);
+          setNotice(
+            "If this address has an account, a six-digit code is on its way.",
+          );
+        } else
+          navigate(
+            link("check-email") +
+              "&purpose=" +
+              (command.action === "request-recovery"
+                ? "recovery"
+                : "confirmation"),
+          );
+      } else if (
+        result.status === "success" ||
+        result.status === "recovery-required" ||
+        result.status === "password-updated"
+      ) {
+        setPassword("");
+        setCode("");
         await refreshSession();
-        throw new Error("The server could not verify this email session.");
-      }
-      setCodeInput("");
-      router.refresh();
-    } catch {
-      setActionError(
-        "The server could not verify this email session. Please try again.",
-      );
+        navigate(
+          result.next ?? (command.action === "sign-out" ? "/sign-in" : target),
+        );
+      } else setError(authenticationResultMessage(result));
     } finally {
-      actionLock.current = false;
-      setActiveAction(null);
+      lock.current = false;
+      setBusy(false);
     }
   }
 
-  async function completeProfile(event: React.FormEvent<HTMLFormElement>) {
+  async function profile(event: React.FormEvent) {
     event.preventDefault();
-    if (actionLock.current || !identityKey) return;
-    const displayName = normalizeDisplayName(displayNameInput);
-    if (!displayName) {
-      setActionError(
-        "Enter a display name between 2 and 80 characters using at least one letter or number.",
+    if (lock.current || !ready) return;
+    const name = normalizeDisplayName(displayName);
+    if (!name) {
+      setError(
+        "Enter a name between 2 and 80 characters, using at least one letter or number.",
       );
       return;
     }
-
-    actionLock.current = true;
-    setActiveAction("profile");
-    setActionError(null);
+    lock.current = true;
+    setBusy(true);
+    setError(null);
     try {
-      const identity = await completeApplicationProfile(displayName);
-      setIdentityResult({ key: identityKey, identity });
-      if (identity.status !== "enrolled") {
-        setActionError(
-          identity.status === "profile-required"
-            ? "The profile details were not accepted. Review the display name and try again."
-            : "Profile setup is unavailable. Your verified email session remains active; try again shortly.",
-        );
+      const value = await completeApplicationProfile(name);
+      setIdentity(value);
+      if (value.status !== "enrolled") {
+        setError("We couldn’t save your profile. Please try again.");
         return;
       }
-      setDisplayNameInput("");
-      setOnboardingChoiceVisible(intent !== "client");
-      actorRefreshKey.current = identityKey;
       await refreshActor();
-      if (intent === "client") {
-        router.replace(returnTo ?? "/explore");
-      }
-      router.refresh();
+      if (intent !== "coach") navigate(target);
     } finally {
-      actionLock.current = false;
-      setActiveAction(null);
+      lock.current = false;
+      setBusy(false);
     }
   }
 
-  async function chooseCoaching() {
-    if (actionLock.current || !identityKey) return;
-    actionLock.current = true;
-    setActiveAction("submit-coach-application");
-    setActionError(null);
+  async function coach() {
+    if (lock.current || !ready) return;
+    lock.current = true;
+    setBusy(true);
+    setError(null);
     try {
       const result = await submitCoachApplication();
-      if (result.status !== "pending" && result.status !== "approved") {
-        setActionError(
-          result.status === "signed-out"
-            ? "Your sign-in expired. Sign in again before applying to coach."
-            : result.status === "forbidden"
-              ? "This account cannot submit a coach application in the current workspace."
-              : result.status === "suspended"
-                ? "This coach application is suspended and requires platform review."
-                : "MovX could not submit the coach application right now. Try again shortly.",
+      if (result.status === "pending" || result.status === "approved")
+        navigate("/profile/coach");
+      else
+        setError(
+          "We couldn’t submit your coach application. Please try again or continue as an athlete.",
+        );
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  }
+
+  function credentials(event: React.FormEvent) {
+    event.preventDefault();
+    if (stage === "register" || stage === "reset-password") {
+      const checked = validateNewPassword(password);
+      if (!checked.valid) {
+        setError(
+          authenticationResultMessage({
+            status: "invalid",
+            message: checked.message,
+          }),
         );
         return;
       }
-      actorRefreshKey.current = identityKey;
-      await refreshActor();
-      setOnboardingChoiceVisible(false);
-      router.replace("/profile/coach");
-      router.refresh();
-    } finally {
-      actionLock.current = false;
-      setActiveAction(null);
     }
-  }
-
-  async function signOut() {
-    if (actionLock.current) return;
-    actionLock.current = true;
-    setActiveAction("sign-out");
-    setActionError(null);
-    try {
-      const result = await authenticationGateway.signOut();
-      if (result.status !== "success") {
-        setActionError(authenticationResultMessage(result));
-        return;
-      }
-      await refreshSession();
-      setPendingEmail(null);
-      setIdentityResult(null);
-      setOnboardingChoiceVisible(false);
-      router.refresh();
-    } catch {
-      setActionError(
-        "MovX Club could not sign out. Check the connection and try again.",
+    if (stage === "forgot-password")
+      void run({ action: "request-recovery", email, ...context });
+    else if (stage === "reset-password")
+      void run({ action: "reset-password", password });
+    else if (codeMode)
+      void run(
+        codeSent
+          ? { action: "verify-code", email, code }
+          : { action: "request-code", email, ...context },
       );
-    } finally {
-      actionLock.current = false;
-      setActiveAction(null);
-    }
+    else
+      void run({
+        action: stage === "register" ? "register" : "sign-in",
+        email,
+        password,
+        ...context,
+      });
   }
 
+  const [title, description] = stageCopy[stage];
+  const authEntry = stage === "sign-in" || stage === "register";
+  const recovery = session.status === "recovery-required";
+  const signedIn = session.status === "signed-in";
+  const formVisible =
+    (stage === "forgot-password" && !recovery) ||
+    (stage === "reset-password" && recovery) ||
+    (authEntry && !signedIn && !recovery);
+  const needsPassword = stage === "reset-password" || (authEntry && !codeMode);
   return (
-    <section className="auth-page">
-      <div className="auth-heading">
+    <section className="authentication-page">
+      <aside className="authentication-story" aria-label="Welcome to MovX Club">
+        <Link
+          href="/"
+          className="authentication-brand"
+          aria-label="MovX Club home"
+        >
+          MovX <span>Club</span>
+        </Link>
         <div>
-          <span className="eyebrow">MovX Club identity</span>
-          <h1>
-            {intent === "coach"
-              ? "Apply to coach with your email."
-              : "Sign in with your email."}
-          </h1>
+          <span className="eyebrow">Move forward, together</span>
+          <h2>
+            Your next chapter
+            <br />
+            starts with a coach.
+          </h2>
           <p>
-            {intent === "coach"
-              ? "Create one MovX account, submit a coach application and prepare a private profile for review."
-              : "Request a one-time code, verify your email and create a small profile. That verified account is your scheduling identity."}
+            Find the right fit. Choose a time. Build a routine that feels like
+            you.
           </p>
         </div>
-        <Pill tone="lime">Email code · No password</Pill>
-      </div>
-
-      <div className="auth-layout">
-        <div className="auth-card">
-          <div className="auth-card-title">
-            <ShieldCheck size={22} aria-hidden="true" />
-            <div>
-              <span>Application account</span>
-              <h2>MovX Club sign-in</h2>
-            </div>
-          </div>
-
-          {accessRequired && (
-            <div className="auth-notice neutral" role="status">
-              <strong>This area needs a MovX Club account.</strong>
-              <p>
-                Sign in and complete your profile first. The requested page
-                opens only after the server authorizes your account.
-              </p>
-            </div>
-          )}
-
-          {session.status === "disabled" && (
-            <div className="auth-notice warning" role="status">
-              <strong>Local authentication is not configured.</strong>
-              <p>
-                Add the public Supabase values from <code>.env.example</code>
-                and start the local Auth stack. Public discovery remains
-                available.
-              </p>
-            </div>
-          )}
-
-          {session.status === "unavailable" && (
-            <div className="auth-notice warning" role="alert">
-              <strong>
-                {unavailableCopy?.title ??
-                  "Sign-in status could not be verified."}
-              </strong>
-              <p>
-                {unavailableCopy?.detail ??
-                  "The Auth service is unavailable. No signed-in state is being assumed."}
-              </p>
-              {unavailableCopy?.recoveryCommand && (
-                <p>
-                  Run <code>{unavailableCopy.recoveryCommand}</code> from the
-                  project directory.
-                </p>
-              )}
-              <button
-                type="button"
-                className="text-button"
-                onClick={() => void refreshSession()}
-              >
-                Check again
-              </button>
-              {config && (
-                <button
-                  type="button"
-                  className="text-button auth-clear-session"
-                  disabled={activeAction !== null}
-                  onClick={() => void signOut()}
-                >
-                  {activeAction === "sign-out"
-                    ? "Clearing local session…"
-                    : "Clear local session on this device"}
-                </button>
-              )}
-            </div>
-          )}
-
-          {session.status === "signed-out" && !pendingEmail && (
-            <form className="auth-form" onSubmit={requestCode} noValidate>
-              <label htmlFor="sign-in-email">Email address</label>
-              <input
-                id="sign-in-email"
-                name="email"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                maxLength={254}
-                value={emailInput}
-                disabled={
-                  !config || activeAction !== null || !canonicalLocation
-                }
-                onChange={(event) => setEmailInput(event.target.value)}
-                placeholder="you@example.com"
-                required
-              />
-              <button
-                type="submit"
-                className="button dark full"
-                disabled={
-                  !config || activeAction !== null || !canonicalLocation
-                }
-              >
-                <Mail size={17} aria-hidden="true" />
-                {activeAction === "request-code"
-                  ? "Sending code…"
-                  : "Email me a sign-in code"}
-              </button>
-            </form>
-          )}
-
-          {session.status === "signed-out" && pendingEmail && (
-            <form className="auth-form" onSubmit={verifyCode} noValidate>
-              <div className="auth-notice neutral" role="status">
-                <strong>Check your email.</strong>
-                <p>
-                  If <strong>{pendingEmail}</strong> can receive MovX Club
-                  email, a six-digit code is on its way. New and returning
-                  accounts follow the same steps.
-                </p>
-              </div>
-              <label htmlFor="sign-in-code">Six-digit code</label>
-              <input
-                id="sign-in-code"
-                name="code"
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                pattern="[0-9]{6}"
-                maxLength={6}
-                value={codeInput}
-                disabled={activeAction !== null}
-                onChange={(event) =>
-                  setCodeInput(event.target.value.replace(/\D/g, ""))
-                }
-                placeholder="000000"
-                required
-              />
-              <button
-                type="submit"
-                className="button dark full"
-                disabled={activeAction !== null}
-              >
-                <KeyRound size={17} aria-hidden="true" />
-                {activeAction === "verify-code"
-                  ? "Checking code…"
-                  : "Verify and sign in"}
-              </button>
-              <button
-                type="button"
-                className="text-button"
-                disabled={activeAction !== null}
-                onClick={() => {
-                  setPendingEmail(null);
-                  setCodeInput("");
-                  setActionError(null);
-                }}
-              >
-                Use a different email
-              </button>
-            </form>
-          )}
-
-          {session.status === "signed-in" &&
-            (applicationIdentity.status === "idle" ||
-              applicationIdentity.status === "checking") && (
-              <div className="auth-notice neutral" role="status">
-                <strong>Checking your MovX Club profile…</strong>
-                <p>The server is loading the profile for this account.</p>
-              </div>
-            )}
-
-          {session.status === "signed-in" &&
-            applicationIdentity.status === "profile-required" && (
-              <form className="auth-form" onSubmit={completeProfile} noValidate>
-                <div className="auth-notice success" role="status">
-                  <strong>Email verified.</strong>
-                  <p>
-                    Signed in as {session.email}. Choose the name other people
-                    will see in MovX Club.
-                  </p>
-                </div>
-                <label htmlFor="profile-display-name">Display name</label>
-                <input
-                  id="profile-display-name"
-                  name="displayName"
-                  type="text"
-                  autoComplete="name"
-                  minLength={2}
-                  maxLength={80}
-                  value={displayNameInput}
-                  disabled={activeAction !== null}
-                  onChange={(event) => setDisplayNameInput(event.target.value)}
-                  placeholder="Your display name"
-                  required
-                />
-                <button
-                  type="submit"
-                  className="button dark full"
-                  disabled={activeAction !== null}
-                >
-                  <UserRound size={17} aria-hidden="true" />
-                  {activeAction === "profile"
-                    ? "Creating profile…"
-                    : "Create my profile"}
-                </button>
-              </form>
-            )}
-
-          {session.status === "signed-in" &&
-            applicationIdentity.status === "enrolled" &&
-            onboardingChoiceVisible && (
-              <div className="auth-onboarding-choice">
-                <div className="auth-notice success" role="status">
-                  <strong>
-                    Welcome, {applicationIdentity.profile.displayName}.
-                  </strong>
-                  <p>
-                    {intent === "coach"
-                      ? "Your athlete account is ready. Submit the separate coach application to prepare a private draft."
-                      : "Your account is ready. Choose a starting path; approved coaches can still request sessions as athletes."}
-                  </p>
-                </div>
-                <h3>
-                  {intent === "coach"
-                    ? "Submit your coach application"
-                    : "How would you like to use MovX?"}
-                </h3>
-                <div className="auth-onboarding-actions">
-                  {intent !== "coach" && (
-                    <Link className="button secondary" href="/explore">
-                      <Search size={17} aria-hidden="true" /> Find a coach
-                    </Link>
-                  )}
-                  <button
-                    type="button"
-                    className="button dark"
-                    disabled={activeAction !== null}
-                    onClick={() => void chooseCoaching()}
-                  >
-                    <UserRound size={17} aria-hidden="true" />
-                    {activeAction === "submit-coach-application"
-                      ? "Submitting application…"
-                      : "Become a coach"}
-                  </button>
-                </div>
-                <p className="auth-onboarding-note">
-                  Coach applications require MovX approval. You can prepare a
-                  private profile while the review is pending; only approval
-                  unlocks publication and availability.
-                </p>
-              </div>
-            )}
-
-          {session.status === "signed-in" &&
-            applicationIdentity.status === "enrolled" &&
-            !onboardingChoiceVisible && (
-              <div className="auth-notice success" role="status">
-                <strong>
-                  Signed in as {applicationIdentity.profile.displayName}.
-                </strong>
-                <p>
-                  Your verified email account can browse and manage its own
-                  scheduling activity.
-                </p>
-              </div>
-            )}
-
-          {session.status === "signed-in" &&
-            applicationIdentity.status === "unavailable" && (
-              <div className="auth-notice warning" role="alert">
-                <strong>Profile access is unavailable.</strong>
-                <p>
-                  Your verified email session remains active, but the local
-                  application database could not load the profile.
-                </p>
-                <button
-                  type="button"
-                  className="text-button"
-                  onClick={() => void refreshIdentity()}
-                >
-                  Try profile access again
-                </button>
-              </div>
-            )}
-
-          {config && mounted && !canonicalLocation && (
-            <div className="auth-notice danger" role="alert">
-              <strong>Use the configured sign-in address.</strong>
-              <p>
-                Email sign-in is disabled on this origin. Open{" "}
-                {config.signInUrl}
-                exactly and try again.
-              </p>
-            </div>
-          )}
-
-          {actionError && (
-            <p className="wallet-error" role="alert">
-              {actionError}
+        <p className="authentication-story-foot">
+          <ShieldCheck size={19} aria-hidden="true" />
+          One account for athletes and coaches.
+        </p>
+      </aside>
+      <div className="authentication-main">
+        <div className="authentication-card">
+          <Link
+            href="/"
+            className="authentication-mobile-brand"
+            aria-label="MovX Club home"
+          >
+            MovX <span>Club</span>
+          </Link>
+          <header>
+            <span className="authentication-icon">
+              <LockKeyhole size={22} aria-hidden="true" />
+            </span>
+            <h1>{title}</h1>
+            <p>{description}</p>
+          </header>
+          {!config && (
+            <p className="authentication-notice" role="status">
+              Sign-in is temporarily unavailable. You can keep browsing coaches.
             </p>
           )}
-
-          {session.status === "signed-in" && (
-            <button
-              type="button"
-              className="button secondary full"
-              disabled={activeAction !== null}
-              onClick={() => void signOut()}
+          {passwordUpdated && stage === "sign-in" && (
+            <p role="status" className="authentication-notice">
+              Your password was saved. Sign in again with your new password.
+            </p>
+          )}
+          {accessRequired && (
+            <p className="authentication-notice">
+              Sign in to continue to your private workspace.
+            </p>
+          )}
+          {recovery && stage !== "reset-password" && (
+            <div className="authentication-notice">
+              <p>Finish resetting your password before continuing.</p>
+              <Link className="button dark full" href="/reset-password">
+                Choose a new password
+              </Link>
+            </div>
+          )}
+          {signedIn && authEntry && (
+            <div className="authentication-notice">
+              <p>You’re already signed in.</p>
+              <Link
+                className="button dark full"
+                href={link("complete-profile")}
+              >
+                Continue
+              </Link>
+            </div>
+          )}
+          {authEntry && !signedIn && !recovery && (
+            <>
+              <button
+                className="authentication-google"
+                type="button"
+                disabled
+                aria-describedby="google-unavailable"
+              >
+                <span aria-hidden="true">G</span>Continue with Google
+              </button>
+              <p className="authentication-help" id="google-unavailable">
+                Google sign-in is currently unavailable.
+              </p>
+              <div className="authentication-divider">
+                <span>or continue with email</span>
+              </div>
+            </>
+          )}
+          {formVisible && (
+            <form
+              className="authentication-form"
+              onSubmit={credentials}
+              noValidate
             >
-              <LogOut size={17} aria-hidden="true" />
-              {activeAction === "sign-out"
-                ? "Signing out…"
-                : "Sign out on this device"}
+              <fieldset disabled={!ready || busy}>
+                <legend className="sr-only">{title}</legend>
+                {stage !== "reset-password" && (
+                  <label>
+                    Email address
+                    <input
+                      id="auth-email"
+                      type="email"
+                      name="email"
+                      autoComplete="email"
+                      inputMode="email"
+                      maxLength={254}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      readOnly={codeSent}
+                    />
+                  </label>
+                )}
+                {codeMode && codeSent && (
+                  <label>
+                    Six-digit code
+                    <input
+                      name="code"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      value={code}
+                      onChange={(e) =>
+                        setCode(e.target.value.replace(/\D/g, ""))
+                      }
+                      required
+                    />
+                  </label>
+                )}
+                {needsPassword && (
+                  <div className="authentication-password-field">
+                    <label htmlFor="auth-password">
+                      {stage === "sign-in" ? "Password" : "New password"}
+                    </label>
+                    <span className="authentication-password">
+                      <input
+                        id="auth-password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete={
+                          stage === "sign-in"
+                            ? "current-password"
+                            : "new-password"
+                        }
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        aria-describedby={
+                          stage !== "sign-in" ? "password-guidance" : undefined
+                        }
+                      />
+                      <button
+                        type="button"
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                        aria-pressed={showPassword}
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff size={19} aria-hidden="true" />
+                        ) : (
+                          <Eye size={19} aria-hidden="true" />
+                        )}
+                      </button>
+                    </span>
+                  </div>
+                )}
+                {needsPassword && stage !== "sign-in" && (
+                  <p className="authentication-help" id="password-guidance">
+                    At least 8 characters. No special character mix required.
+                  </p>
+                )}
+                {stage === "sign-in" && !codeMode && (
+                  <Link
+                    className="authentication-inline-link"
+                    href={link("forgot-password")}
+                  >
+                    Forgot password?
+                  </Link>
+                )}
+                <button className="button dark full" type="submit">
+                  {busy
+                    ? "Please wait…"
+                    : stage === "register"
+                      ? "Create account"
+                      : stage === "forgot-password"
+                        ? "Send reset link"
+                        : stage === "reset-password"
+                          ? "Save new password"
+                          : codeMode
+                            ? codeSent
+                              ? "Verify and sign in"
+                              : "Email me a sign-in code"
+                            : "Sign in"}
+                  <ArrowRight size={17} aria-hidden="true" />
+                </button>
+              </fieldset>
+            </form>
+          )}
+          {stage === "sign-in" && !signedIn && !recovery && (
+            <button
+              className="text-button authentication-secondary"
+              type="button"
+              disabled={busy || !ready}
+              onClick={() => {
+                setCodeMode(!codeMode);
+                setCodeSent(false);
+                setCode("");
+                setPassword("");
+                setError(null);
+                setNotice(null);
+              }}
+            >
+              {codeMode ? "Use your password instead" : "Use an email code"}
             </button>
           )}
-
-          <p className="wallet-safety">
-            MovX Club never asks for your email password. Use only the
-            short-lived code delivered by the configured Auth provider.
-          </p>
-        </div>
-
-        <aside className="auth-explainer" aria-label="How email sign-in works">
-          <h2>Three small steps</h2>
-          <ol>
-            <li>
-              <span>
-                <Mail size={17} aria-hidden="true" />
-              </span>
-              <div>
-                <strong>Request</strong>
-                <p>Enter your email and receive a short-lived code.</p>
+          {stage === "check-email" && (
+            <>
+              <div className="authentication-notice">
+                <Mail size={23} aria-hidden="true" />
+                <p>
+                  Open the latest email in the browser where you requested it.
+                  The link works once and expires in one hour.
+                </p>
               </div>
-            </li>
-            <li>
-              <span>
-                <BadgeCheck size={17} aria-hidden="true" />
-              </span>
-              <div>
-                <strong>Verify</strong>
-                <p>Use the six-digit code to create or restore your session.</p>
-              </div>
-            </li>
-            <li>
-              <span>
-                <Check size={17} aria-hidden="true" />
-              </span>
-              <div>
-                <strong>Complete your profile</strong>
-                <p>First-time accounts choose a display name once.</p>
-              </div>
-            </li>
-          </ol>
-          <div className="notice">
-            <strong>Email is the scheduling authority</strong>
-            <p>
-              Public browsing stays open. Booking and coach schedule changes
-              require the server to verify this account.
+              <form
+                className="authentication-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void run({
+                    action:
+                      emailPurpose === "recovery"
+                        ? "request-recovery"
+                        : "resend-confirmation",
+                    email,
+                    ...context,
+                  });
+                }}
+                noValidate
+              >
+                <fieldset disabled={!ready || busy}>
+                  <legend className="sr-only">Resend confirmation</legend>
+                  <label>
+                    Email address
+                    <input
+                      type="email"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      maxLength={254}
+                    />
+                  </label>
+                  <button type="submit" className="button secondary full">
+                    {emailPurpose === "recovery"
+                      ? "Resend reset link"
+                      : "Resend confirmation email"}
+                  </button>
+                </fieldset>
+              </form>
+              <Link
+                href={link("forgot-password")}
+                className="authentication-inline-link"
+              >
+                Request a password reset link
+              </Link>
+            </>
+          )}
+          {stage === "confirm" && (
+            <div className="authentication-notice">
+              {proof ? (
+                <>
+                  <p>
+                    Continue to verify your email or start the password reset
+                    you requested.
+                  </p>
+                  <button
+                    type="button"
+                    className="button dark full"
+                    disabled={!ready || busy}
+                    onClick={() => void run(proof)}
+                  >
+                    {busy ? "Checking…" : "Continue securely"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p>
+                    This link is missing, expired or already used. Request a
+                    fresh email in this browser.
+                  </p>
+                  <Link
+                    href={link("forgot-password")}
+                    className="button secondary full"
+                  >
+                    Request a fresh reset link
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
+          {stage === "reset-password" && !recovery && (
+            <div className="authentication-notice">
+              <p>Open a fresh reset link to choose a new password.</p>
+              <Link
+                href={link("forgot-password")}
+                className="button secondary full"
+              >
+                Request reset link
+              </Link>
+            </div>
+          )}
+          {stage === "complete-profile" && (
+            <>
+              {!signedIn ? (
+                <Link href={link("sign-in")} className="button dark full">
+                  Sign in to continue
+                </Link>
+              ) : identity?.status === "profile-required" ? (
+                <form
+                  className="authentication-form"
+                  onSubmit={profile}
+                  noValidate
+                >
+                  <fieldset disabled={!ready || busy}>
+                    <legend className="sr-only">Complete your profile</legend>
+                    <label>
+                      Display name
+                      <input
+                        name="displayName"
+                        autoComplete="name"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        maxLength={80}
+                        required
+                      />
+                    </label>
+                    <p className="authentication-help">
+                      Use the name you’d like people to see. You can update it
+                      later.
+                    </p>
+                    <button className="button dark full" type="submit">
+                      {busy ? "Saving…" : "Continue"}
+                    </button>
+                  </fieldset>
+                </form>
+              ) : identity?.status === "enrolled" ? (
+                <div className="authentication-notice">
+                  <Check size={24} aria-hidden="true" />
+                  <p>Your profile is ready, {identity.profile.displayName}.</p>
+                  {intent === "coach" && (
+                    <>
+                      <p>
+                        Apply to coach with this same account. MovX reviews
+                        applications before coaches can publish their profile or
+                        schedule.
+                      </p>
+                      <button
+                        className="button dark full"
+                        type="button"
+                        disabled={!ready || busy}
+                        onClick={() => void coach()}
+                      >
+                        {busy ? "Submitting…" : "Apply to coach"}
+                      </button>
+                    </>
+                  )}
+                  <Link href={target} className="button secondary full">
+                    {intent === "coach" ? "Continue as an athlete" : "Continue"}
+                  </Link>
+                </div>
+              ) : (
+                <p role="status">
+                  {identity?.status === "unavailable"
+                    ? "Profile access is unavailable. Please reload to try again."
+                    : "Checking your profile…"}
+                </p>
+              )}
+            </>
+          )}
+          {notice && (
+            <p className="authentication-notice" role="status">
+              {notice}
             </p>
-          </div>
-          <Link href="/" className="text-link">
-            Continue browsing without signing in
-          </Link>
-          <p className="auth-wallet-note">
-            Public browsing needs no account. Sign in only when you want to
-            change schedule state.
-          </p>
-        </aside>
+          )}
+          {error && (
+            <p
+              className="authentication-error"
+              role="alert"
+              ref={errorRef}
+              tabIndex={-1}
+            >
+              {error}
+            </p>
+          )}
+          {(signedIn || recovery) && (
+            <button
+              type="button"
+              className="text-button authentication-secondary"
+              disabled={!ready || busy}
+              onClick={() => void run({ action: "sign-out" })}
+            >
+              Sign out on this device
+            </button>
+          )}
+          {authEntry && (
+            <p className="authentication-switch">
+              {stage === "sign-in"
+                ? "New to MovX Club?"
+                : "Already have an account?"}{" "}
+              <Link href={link(stage === "sign-in" ? "register" : "sign-in")}>
+                {stage === "sign-in" ? "Create an account" : "Sign in"}
+              </Link>
+            </p>
+          )}
+          {!authEntry && (
+            <Link href={link("sign-in")} className="authentication-inline-link">
+              Back to sign in
+            </Link>
+          )}
+          <footer>
+            <Link href="/explore">Browse coaches without signing in</Link>
+            <span>Your account stays with you as your training grows.</span>
+          </footer>
+        </div>
       </div>
     </section>
   );

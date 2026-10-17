@@ -82,6 +82,12 @@ const publicMarketplacePaths = new Set([
   "/events",
   "/how-it-works",
   "/sign-in",
+  "/register",
+  "/check-email",
+  "/forgot-password",
+  "/reset-password",
+  "/complete-profile",
+  "/auth/confirm",
 ]);
 
 function hasCoachWorkspaceNavigation(actor: ActorSnapshot) {

@@ -23,6 +23,9 @@ function fixture() {
     email: "anna@example.com",
   };
   const adapter: AuthenticationAdapter = {
+    async execute() {
+      return { status: "requested" };
+    },
     async requestEmailCode(...args) {
       calls.push(["request", ...args]);
       return { status: "requested" };
@@ -126,16 +129,14 @@ test("gateway rejects malformed inputs before adapter calls and preserves the ex
   ]);
 });
 
-test("email-code operation defaults to existing accounts, with an explicit temporary legacy opt-in", async () => {
+test("email-code operation normalizes the exact address and proof", async () => {
   const { gateway, calls } = fixture();
   assert.deepEqual(await gateway.requestEmailCode(" Anna@Example.COM "), {
     status: "requested",
   });
-  await gateway.requestEmailCode("anna@example.com", { createAccount: true });
   await gateway.verifyEmailCode("anna@example.com", " 123 456 ");
   assert.deepEqual(calls, [
-    ["request", "anna@example.com", { createAccount: false }],
-    ["request", "anna@example.com", { createAccount: true }],
+    ["request", "anna@example.com"],
     ["verify", "anna@example.com", "123456"],
   ]);
 });

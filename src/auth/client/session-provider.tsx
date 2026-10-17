@@ -2,10 +2,8 @@
 
 import {
   createContext,
-  useCallback,
   useContext,
   useEffect,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -15,6 +13,7 @@ import {
 } from "../contracts";
 import { authenticationGateway } from "./authentication-gateway";
 import { fetchVerifiedAuthSession } from "./session-client";
+import { createSessionRefresh } from "./session-refresh";
 
 type AuthSessionContextValue = Readonly<{
   session: AuthSessionSnapshot;
@@ -31,35 +30,22 @@ export function AuthSessionProvider({
   initialSession: AuthSessionSnapshot;
 }) {
   const [session, setSession] = useState(initialSession);
-  const refreshPromise = useRef<Promise<AuthSessionSnapshot> | null>(null);
-
-  const refreshSession = useCallback(() => {
-    if (refreshPromise.current) return refreshPromise.current;
-
-    const request = fetchVerifiedAuthSession()
-      .then((nextSession) => {
-        setSession(nextSession);
-        return nextSession;
-      })
-      .finally(() => {
-        refreshPromise.current = null;
-      });
-
-    refreshPromise.current = request;
-    return request;
-  }, []);
+  const [controller] = useState(() =>
+    createSessionRefresh(fetchVerifiedAuthSession, setSession),
+  );
+  const refreshSession = controller.refresh;
 
   useEffect(() => {
     return authenticationGateway.subscribe((event) => {
       if (event === "signed-out") {
-        setSession(SIGNED_OUT_AUTH_SESSION);
+        controller.invalidate(SIGNED_OUT_AUTH_SESSION);
         return;
       }
       if (event === "session-changed") {
         queueMicrotask(() => void refreshSession());
       }
     });
-  }, [refreshSession]);
+  }, [controller, refreshSession]);
 
   return (
     <AuthSessionContext.Provider value={{ session, refreshSession }}>

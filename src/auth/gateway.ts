@@ -1,10 +1,15 @@
 import { normalizeEmail, normalizeEmailOtp } from "./email-otp";
 import type { AuthSessionSnapshot } from "./contracts";
 import { isSignInPassword, validateNewPassword } from "./password";
+import {
+  parseAuthenticationCommand,
+  type AuthenticationCommand,
+} from "./operations";
 
 export type AuthenticationResult =
-  | Readonly<{ status: "success"; email: string | null }>
-  | Readonly<{ status: "requested" }>
+  | Readonly<{ status: "success"; email: string | null; next?: string }>
+  | Readonly<{ status: "requested"; next?: string }>
+  | Readonly<{ status: "recovery-required" | "password-updated"; next: string }>
   | Readonly<{
       status: "invalid";
       message:
@@ -16,23 +21,17 @@ export type AuthenticationResult =
         | "password-unsafe";
     }>
   | Readonly<{
-      status: "invalid-credentials" | "invalid-proof" | "unavailable";
+      status:
+        "invalid-credentials" | "invalid-proof" | "unavailable" | "forbidden";
     }>
   | Readonly<{ status: "rate-limited"; retryAfterSeconds: number | null }>;
 
 export type AuthenticationEvent = "signed-out" | "session-changed";
 
-export type EmailCodeOptions = Readonly<{
-  /** Only the delivered legacy screen opts in until password registration replaces it. */
-  createAccount?: boolean;
-}>;
-
 /** The adapter translates all vendor responses before crossing this boundary. */
 export interface AuthenticationAdapter {
-  requestEmailCode(
-    email: string,
-    options: EmailCodeOptions,
-  ): Promise<AuthenticationResult>;
+  execute(command: AuthenticationCommand): Promise<AuthenticationResult>;
+  requestEmailCode(email: string): Promise<AuthenticationResult>;
   verifyEmailCode(email: string, code: string): Promise<AuthenticationResult>;
   registerWithPassword(
     email: string,
@@ -47,10 +46,8 @@ export interface AuthenticationAdapter {
 }
 
 export interface AuthenticationGateway {
-  requestEmailCode(
-    email: unknown,
-    options?: EmailCodeOptions,
-  ): Promise<AuthenticationResult>;
+  execute(command: unknown): Promise<AuthenticationResult>;
+  requestEmailCode(email: unknown): Promise<AuthenticationResult>;
   verifyEmailCode(email: unknown, code: unknown): Promise<AuthenticationResult>;
   registerWithPassword(
     email: unknown,
@@ -100,14 +97,16 @@ export function createAuthenticationGateway(
     return { status: "unavailable" };
   }
   return {
-    async requestEmailCode(value, options = {}) {
+    execute(value) {
+      const command = parseAuthenticationCommand(value);
+      return command
+        ? available(() => adapter.execute(command))
+        : Promise.resolve({ status: "invalid", message: "code" });
+    },
+    async requestEmailCode(value) {
       const email = normalizeEmail(value);
       if (!email) return { status: "invalid", message: "email" };
-      return available(() =>
-        adapter.requestEmailCode(email, {
-          createAccount: options.createAccount === true,
-        }),
-      );
+      return available(() => adapter.requestEmailCode(email));
     },
     async verifyEmailCode(value, codeValue) {
       const email = normalizeEmail(value);
@@ -165,7 +164,7 @@ export function authenticationResultMessage(
   if (result.status === "invalid-credentials")
     return "The email or password is incorrect. Try again.";
   if (result.status === "invalid-proof")
-    return "That code is invalid or expired. Request a new code and try again.";
+    return "That link or code is invalid or expired. Request a fresh email and try again.";
   if (result.status === "rate-limited")
     return result.retryAfterSeconds === null
       ? "Too many attempts. Please wait before trying again."

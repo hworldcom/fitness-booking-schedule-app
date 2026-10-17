@@ -50,9 +50,11 @@ All required direct tickets exist and link back here. Work is flat; dependencies
 4. DEV0289 performs the combined actual local-email and hosted-dev password/Google proof, preserved identity/data comparisons, mobile/desktop/keyboard recovery and exact cleanup. Fix defects in their owner rather than implementing missing peers inside the proof ticket.
 5. Complete this COR only when every direct DEV is Completed or explicitly cancelled/replaced and combined evidence passes. Google is the only required social provider. The user explicitly deferred Apple under DEV0311; independent DEV0312 and missing Apple membership/keys/live proof do not block this initial outcome. Deployment and production validation remain separate claims.
 
-Runtime start, 2026-10-17: after contract commit `1314f20`, the user explicitly requested starting implementation. This supersedes the earlier fix-validation/commit sequencing hold for authentication. DEV0286 is In progress, beginning with shared gateway/password boundaries; DEV0287–DEV0289 remain Draft pending their foundation/configuration/proof prerequisites. Adjacent records are not new technical members merely because they remain open. Production deployment and account administration are not implied by starting local implementation.
+Runtime start, 2026-10-17: after contract commit `1314f20`, the user explicitly requested starting implementation. This supersedes the earlier fix-validation/commit sequencing hold for authentication. DEV0286 is In progress, beginning with shared gateway/password boundaries; DEV0288 now integrates functional forms against the written server interface. DEV0287 and DEV0289 remain Draft pending their configuration/proof prerequisites. Adjacent records are not new technical members merely because they remain open. Production deployment and account administration are not implied by starting local implementation.
 
 ## Progress and integration record
+
+- 2026-10-17 working local continuation: DEV0286 now implements confirmed password signup/login, server-restricted recovery/setup/change, application session/credential fencing, truthful method status and local templates/settings; DEV0288 supplies the branded routes and Account controls. Seven actual Auth/Mailpit phases pass, including two-device revocation, real legacy private-data continuity and exact fixture cleanup. Five-width/keyboard/visual checks, 268 unit/server tests, five Auth DB checks and production build pass. Required hosted capability/SMTP/rollback, real Google/Google-first linking, broader continuation/accessibility and combined UAT evidence remain open in the owning peers. DEV0286/DEV0288 remain In progress; DEV0287/DEV0289 remain Draft. Apple is deferred. No hosted setting/migration/deployment operation occurred.
 
 - 2026-10-17 later provider deferral: the user asked to wait with the Apple account and focus on Google. DEV0311 amends current delivery to email/password plus Google, narrows DEV0287, removes Apple from required UI/UAT evidence and assigns future Apple to independent Draft DEV0312. The earlier three-method history below is preserved. No runtime/provider operation occurred; the prior fix-validation/commit sequence is unchanged.
 
@@ -86,7 +88,7 @@ Runtime start, 2026-10-17: after contract commit `1314f20`, the user explicitly 
 ## Completion and review references
 
 - Completed: Not completed.
-- Direct development tickets: DEV0285 Completed; DEV0311 Completed; DEV0286 In progress; DEV0287–DEV0289 Draft.
+- Direct development tickets: DEV0285 Completed; DEV0311 Completed; DEV0286 and DEV0288 In progress; DEV0287 and DEV0289 Draft.
 - Commit: Planning included in this user-authorized workspace checkpoint under DEV0285. COR0027 is never a commit subject identifier; retired DEV0283 is unavailable for future commits.
 - Review: Planning/research self-review only; no independent or implementation review.
 - Deployment or release: None.

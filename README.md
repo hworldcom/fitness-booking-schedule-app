@@ -25,7 +25,7 @@ Delivered reusable foundations include:
 
 - a responsive Next.js application shell and native Vercel build;
 - local/hosted Supabase PostgreSQL with a server-only database boundary;
-- email-code accounts, protected profiles and separate athlete/coach onboarding;
+- password registration/login with confirmed email, existing-account email codes, protected profiles and separate athlete/coach onboarding (local delivery; hosted readiness remains under DEV0286);
 - platform-reviewed coach applications with verified or demo trust labels;
 - owner-scoped coach profiles with multiple provider-neutral training locations, one active primary base and safe deactivation;
 - list-first coach discovery with an OpenFreeMap-backed interactive map;
@@ -82,7 +82,7 @@ npm run start
 
 The preview uses [localhost:3100](http://localhost:3100). Development compiles routes on demand; a production build is appropriate for performance review. An independently started production server needs explicit database/Auth settings for signed-in behavior; the local launcher's settings exist only in its child process.
 
-## Local email sign-in
+## Local registration and sign-in
 
 Public browsing does not require sign-in. Normal development uses local Supabase Auth and captures email in Mailpit:
 
@@ -92,7 +92,7 @@ npm run dev
 
 The local launcher reads the local public `API_URL` and `PUBLISHABLE_KEY` (or legacy `ANON_KEY`) internally, injects loopback settings for that process and does not print or persist private CLI status values. Keep the shared hosted-dev file unchanged; never copy local test or service-role/secret keys into it.
 
-Open `/sign-in`, request a code and read it from local Mailpit at [127.0.0.1:55324](http://127.0.0.1:55324). The first verified login creates one application profile. `Find a coach` continues as an athlete; `Become a coach` submits a coach application on the same account. Applicants may prepare a hidden coach profile, but only platform-approved coaches may publish or manage availability.
+Open `/register` to create an email/password account, open the captured confirmation email in the same browser and choose a display name. Returning users use `/sign-in`; existing passwordless accounts can select **Use an email code** and read it from local Mailpit at [127.0.0.1:55324](http://127.0.0.1:55324). **Forgot password?** sends the password reset/setup email. After changing a password, sign in again on your devices. Google is truthfully unavailable until DEV0287 configures and proves it. See [Auth rollout and recovery](supabase/README.md#password-authentication-rollout) before using these flows on hosted dev. `Find a coach` continues as an athlete; `Become a coach` submits a coach application on the same account. Applicants may prepare a hidden coach profile, but only platform-approved coaches may publish or manage availability.
 
 For Docker athlete-account testing, sign in with `hoang@users.movx.test`. `npm run dev`, `dev:local` and `dev:docker` create this exact local-only account automatically and preserve its profile and private avatar on later starts. It has no password and no coach authority: request a one-time code on `/sign-in`, then open the message in Mailpit. You can also repair/provision it explicitly with `npm run auth:provision:test-user`. A deliberate `npm run db:reset` recreates the identity on the next Docker start but cannot restore a deleted uploaded image. These reserved `.test` accounts are not provisioned on hosted dev.
 

@@ -20,7 +20,8 @@ export function visibleActorForSession(
   session: AuthSessionSnapshot,
   actorState: ActorState,
 ): ActorSnapshot {
-  if (session.status === "signed-out") return SIGNED_OUT_ACTOR;
+  if (session.status === "signed-out" || session.status === "recovery-required")
+    return SIGNED_OUT_ACTOR;
   if (session.status === "unavailable") return UNAVAILABLE_ACTOR;
   if (session.status === "disabled") {
     return actorState.actor.status === "preview"

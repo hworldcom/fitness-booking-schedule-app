@@ -31,8 +31,7 @@ export function safeReturnTo(
       target.origin !== site.origin ||
       target.username ||
       target.password ||
-      target.pathname === "/sign-in" ||
-      target.pathname.startsWith("/sign-in/") ||
+      unsafeReturnPath(target.pathname) ||
       target.pathname === "/api" ||
       target.pathname.startsWith("/api/") ||
       target.pathname === "/_next" ||
@@ -44,6 +43,39 @@ export function safeReturnTo(
   } catch {
     return "/";
   }
+}
+
+function unsafeReturnPath(path: string) {
+  let decoded = path;
+  for (let i = 0; i < 6; i++) {
+    const next = decodeURIComponent(decoded);
+    if (next === decoded) break;
+    decoded = next;
+    if (i === 5) return true;
+  }
+  if (
+    decoded.startsWith("//") ||
+    decoded.includes("\\") ||
+    /[\u0000-\u001f\u007f]/.test(decoded)
+  )
+    return true;
+  const normalized = new URL(
+    decoded,
+    "https://return.invalid",
+  ).pathname.toLowerCase();
+  return [
+    "/sign-in",
+    "/register",
+    "/check-email",
+    "/forgot-password",
+    "/reset-password",
+    "/complete-profile",
+    "/auth",
+    "/api",
+    "/_next",
+  ].some(
+    (prefix) => normalized === prefix || normalized.startsWith(prefix + "/"),
+  );
 }
 
 export function signInHref(returnTo: string) {

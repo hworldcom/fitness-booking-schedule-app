@@ -57,7 +57,8 @@ export async function withAuthorizedSession<T>(
   ) => Promise<T>,
   options?: AuthorizedWorkOptions,
 ): Promise<AuthorizedResult<T>> {
-  if (session.status === "signed-out") return SIGNED_OUT_ACTOR;
+  if (session.status === "signed-out" || session.status === "recovery-required")
+    return SIGNED_OUT_ACTOR;
   if (session.status !== "signed-in") return UNAVAILABLE_ACTOR;
 
   const identity = await currentApplicationIdentity(session);

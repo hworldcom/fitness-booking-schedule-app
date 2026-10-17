@@ -10,6 +10,7 @@ import {
 import { normalizeEmail } from "@/auth/email-otp";
 import { latestEmailOtpAuthenticationAt } from "@/auth/reauthentication";
 import { serverAuthClient } from "./client";
+import { currentApplicationAuthPurpose } from "@/server/db/auth/repository";
 
 export type VerifiedAuthContext = Readonly<{
   session: AuthSessionSnapshot;
@@ -30,14 +31,24 @@ function normalizedAuthSessionId(value: unknown) {
 function isMissingSession(error: AuthError) {
   return (
     error.name === "AuthSessionMissingError" ||
-    error.code === "session_not_found" ||
+    [
+      "session_not_found",
+      "session_expired",
+      "refresh_token_not_found",
+      "refresh_token_already_used",
+      "bad_jwt",
+      "user_not_found",
+    ].includes(error.code ?? "") ||
     error.message.toLowerCase().includes("session missing")
   );
 }
 
-export async function verifiedAuthContext(): Promise<VerifiedAuthContext> {
+// Adapter-only proof inspection. Application services use verifiedAuthContext.
+export async function verifiedProviderContext(
+  providedClient?: Awaited<ReturnType<typeof serverAuthClient>>,
+): Promise<VerifiedAuthContext> {
   try {
-    const client = await serverAuthClient();
+    const client = providedClient ?? (await serverAuthClient());
     if (!client) {
       return Object.freeze({
         session: DISABLED_AUTH_SESSION,
@@ -70,7 +81,10 @@ export async function verifiedAuthContext(): Promise<VerifiedAuthContext> {
     const userResult = await client.auth.getUser();
     if (userResult.error || !userResult.data.user) {
       return Object.freeze({
-        session: UNAVAILABLE_AUTH_SESSION,
+        session:
+          userResult.error && isMissingSession(userResult.error)
+            ? SIGNED_OUT_AUTH_SESSION
+            : UNAVAILABLE_AUTH_SESSION,
         authSessionId: null,
         emailOtpAuthenticatedAt: null,
       });
@@ -87,8 +101,10 @@ export async function verifiedAuthContext(): Promise<VerifiedAuthContext> {
     const email = normalizeEmail(user.email);
     const hasVerifiedEmailIdentity =
       typeof user.email_confirmed_at === "string" &&
-      user.identities?.some((identity) => identity.provider === "email") ===
-        true;
+      user.identities?.some(
+        (identity) =>
+          identity.provider === "email" || identity.provider === "google",
+      ) === true;
     if (!email || !hasVerifiedEmailIdentity) {
       return Object.freeze({
         session: UNAVAILABLE_AUTH_SESSION,
@@ -123,6 +139,33 @@ export async function verifiedAuthContext(): Promise<VerifiedAuthContext> {
       authSessionId: null,
       emailOtpAuthenticatedAt: null,
     });
+  }
+}
+
+export async function verifiedAuthContext(): Promise<VerifiedAuthContext> {
+  const verified = await verifiedProviderContext();
+  if (verified.session.status !== "signed-in" || !verified.authSessionId)
+    return verified;
+  try {
+    const purpose = await currentApplicationAuthPurpose(
+      verified.session.subject,
+      verified.authSessionId,
+    );
+    if (purpose === "ordinary") return verified;
+    return {
+      session:
+        purpose === "recovery"
+          ? { status: "recovery-required" }
+          : SIGNED_OUT_AUTH_SESSION,
+      authSessionId: verified.authSessionId,
+      emailOtpAuthenticatedAt: null,
+    };
+  } catch {
+    return {
+      session: UNAVAILABLE_AUTH_SESSION,
+      authSessionId: null,
+      emailOtpAuthenticatedAt: null,
+    };
   }
 }
 
