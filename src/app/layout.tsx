@@ -12,6 +12,8 @@ import "./coach-discovery.css";
 import "./coach-workspace.css";
 import "./explore-discovery.css";
 import "@/features/messages/messages.css";
+import "./account-menu.css";
+import "./account-settings.css";
 import "./public-marketplace-accessibility.css";
 import { ActorProvider } from "@/auth/client/actor-provider";
 import { AuthSessionProvider } from "@/auth/client/session-provider";

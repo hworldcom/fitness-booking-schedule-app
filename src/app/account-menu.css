@@ -1,0 +1,64 @@
+.account-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+.account-menu .account-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 5px 9px;
+  border: 1px solid #d7dece;
+  border-radius: 999px;
+  background: #fff;
+  color: #254b3d;
+  cursor: pointer;
+  font: inherit;
+}
+.account-menu-trigger:hover,
+.account-menu-trigger[aria-expanded="true"] {
+  background: #f2f5ed;
+  box-shadow: 0 2px 8px #203d2c12;
+}
+.account-menu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  display: grid;
+  gap: 2px;
+  width: min(220px, calc(100vw - 32px));
+  max-height: calc(100dvh - 100px);
+  overflow: auto;
+  padding: 7px;
+  border: 1px solid #dfe5d4;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 32px #203d2c24;
+}
+.account-menu-panel[hidden] {
+  display: none;
+}
+.account-menu .account-menu-link {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: #24372d;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.account-menu-link:hover,
+.account-menu-link[aria-current="page"] {
+  background: #f2f5ed;
+}
+.account-menu :is(button, a):focus-visible {
+  outline: 3px solid #527b24;
+  outline-offset: 3px;
+}

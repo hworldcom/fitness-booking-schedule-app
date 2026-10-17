@@ -16,7 +16,7 @@ export function AuthStatusLink() {
 
   return (
     <Link
-      href="/sign-in"
+      href={signedIn ? "/account" : "/sign-in"}
       className={`auth-status-link ${signedIn ? "signed-in" : ""}`}
       aria-label={signedIn ? `MovX Club signed in as ${session.email}` : label}
     >

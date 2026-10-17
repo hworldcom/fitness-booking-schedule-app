@@ -30,14 +30,6 @@
 .messages-workspace-return:hover {
   background: #f2f5ed;
 }
-.messages-account {
-  min-width: 44px;
-  min-height: 44px;
-  display: grid;
-  place-items: center;
-  border: 1px solid #e2e5df;
-  border-radius: 50%;
-}
 .messages-shell-main {
   min-height: 0;
   min-width: 0;

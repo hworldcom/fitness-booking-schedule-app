@@ -23,6 +23,8 @@ import type { ActorSnapshot } from "@/auth/actor-contracts";
 import { profileInitials } from "@/auth/profile-presentation";
 import { accountProfileImagePresentation } from "@/profile-images/presentation";
 import { useUnreadMessages } from "@/messages/use-unread-messages";
+import { AccountMenu } from "./account-menu";
+import { AccountShell } from "@/components/account-shell";
 import { Avatar, Brand, Modal, Pill } from "./ui";
 
 const publicNavigationBeforeAccount = [
@@ -161,8 +163,8 @@ export function workspaceRoleLabel(actor: ActorSnapshot) {
 export function publicAccountNavigationForActor(actor: ActorSnapshot) {
   if (actor.status !== "authorized") return [];
   return hasCoachWorkspaceNavigation(actor)
-    ? [clientNavigation, messagesNavigation, coachNavigation]
-    : [clientNavigation, messagesNavigation];
+    ? [messagesNavigation, coachNavigation]
+    : [messagesNavigation];
 }
 
 export function isPublicMarketplacePath(path: string) {
@@ -196,12 +198,6 @@ export function MessageShell({
 }) {
   const root = useRef<HTMLDivElement>(null);
   const profile = actor.status === "authorized" ? actor.profile : null;
-  const image = profile
-    ? accountProfileImagePresentation(
-        profile.avatarUrl,
-        profile.coachPortraitUrl,
-      )
-    : null;
   const coachWorkspace = hasCoachWorkspaceNavigation(actor);
   useEffect(() => {
     const viewport = window.visualViewport;
@@ -239,17 +235,7 @@ export function MessageShell({
                   {coachWorkspace ? "Coach workspace" : "My sessions"}
                 </span>
               </Link>
-              <Link
-                href="/profile"
-                className="messages-account"
-                aria-label={`Your account profile: ${profile.displayName}`}
-              >
-                <Avatar
-                  initials={profileInitials(profile.displayName)}
-                  imageUrl={image?.imageUrl}
-                  small
-                />
-              </Link>
+              <AccountMenu actor={actor} pathname="/messages" />
             </>
           ) : (
             authControl
@@ -309,6 +295,17 @@ export function Shell({ children }: { children: ReactNode }) {
       <MessageShell actor={actor} authControl={<AuthStatusLink />}>
         {children}
       </MessageShell>
+    );
+
+  if (path === "/account")
+    return (
+      <AccountShell
+        actor={actor}
+        messageBadge={messageBadge}
+        authControl={<AuthStatusLink />}
+      >
+        {children}
+      </AccountShell>
     );
 
   return (
@@ -425,17 +422,7 @@ export function Shell({ children }: { children: ReactNode }) {
                   </Link>
                 ))}
                 {currentProfile ? (
-                  <Link
-                    href="/profile"
-                    className="public-account-avatar"
-                    aria-label={`Your account profile: ${currentProfile.displayName}`}
-                  >
-                    <Avatar
-                      initials={profileInitials(currentProfile.displayName)}
-                      imageUrl={currentProfileImage?.imageUrl}
-                      small
-                    />
-                  </Link>
+                  <AccountMenu actor={actor} pathname={path} />
                 ) : (
                   <AuthStatusLink />
                 )}
@@ -473,19 +460,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 </Link>
               )}
               <AuthStatusLink />
-              {currentProfile && (
-                <Link
-                  href="/profile"
-                  className="header-avatar"
-                  aria-label={`Your profile: ${currentProfile.displayName}`}
-                >
-                  <Avatar
-                    initials={profileInitials(currentProfile.displayName)}
-                    imageUrl={currentProfileImage?.imageUrl}
-                    small
-                  />
-                </Link>
-              )}
+              {currentProfile && <AccountMenu actor={actor} pathname={path} />}
             </div>
           </header>
         )}

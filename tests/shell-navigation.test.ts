@@ -196,25 +196,25 @@ test("public account controls expose only authorized private destinations", () =
     publicAccountNavigationForActor(authorizedActor("not-applied")).map(
       ({ href }) => href,
     ),
-    ["/sessions", "/messages"],
+    ["/messages"],
   );
   assert.deepEqual(
     publicAccountNavigationForActor(authorizedActor("approved")).map(
       ({ href }) => href,
     ),
-    ["/sessions", "/messages", "/coach"],
+    ["/messages", "/coach"],
   );
   assert.deepEqual(
     publicAccountNavigationForActor(authorizedActor("demo")).map(
       ({ href }) => href,
     ),
-    ["/sessions", "/messages", "/coach"],
+    ["/messages", "/coach"],
   );
   assert.deepEqual(
     publicAccountNavigationForActor(authorizedActor("suspended")).map(
       ({ href }) => href,
     ),
-    ["/sessions", "/messages", "/coach"],
+    ["/messages", "/coach"],
   );
 });
 

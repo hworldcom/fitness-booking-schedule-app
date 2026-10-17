@@ -36,7 +36,7 @@ test("dedicated messages keep an athlete return and personal account without ord
   for (const status of ["not-applied", "pending", "rejected"] as const) {
     const html = render(actor(status));
     assert.match(html, /href="\/sessions"/);
-    assert.match(html, /href="\/profile"/);
+    assert.match(html, /href="\/account"/);
     assert.match(html, /aria-label="MovX Club home"/);
     assert.match(html, /href="#main-content"/);
     assert.match(html, /id="main-content"/);
@@ -47,13 +47,15 @@ test("dedicated messages keep an athlete return and personal account without ord
     );
   }
 });
-test("coach-capable message accounts return to their workspace while the avatar still opens personal Profile", () => {
+test("coach-capable message accounts return to their workspace with a personal Account/My sessions dropdown", () => {
   for (const status of ["approved", "demo", "suspended"] as const) {
     const html = render(actor(status));
     assert.match(html, /href="\/coach"/);
     assert.match(html, /aria-label="Back to Coach workspace"/);
-    assert.match(html, /href="\/profile"/);
-    assert.doesNotMatch(html, /href="\/profile\/coach"|href="\/sessions"/);
+    assert.match(html, /href="\/account"/);
+    assert.match(html, /aria-label="Account menu for Message Athlete"/);
+    assert.match(html, /href="\/sessions"/);
+    assert.doesNotMatch(html, /href="\/profile\/coach"/);
   }
 });
 test("unauthorized message shells expose sign-in and Home without fabricated private destinations", () => {
@@ -68,7 +70,7 @@ test("unauthorized message shells expose sign-in and Home without fabricated pri
     assert.match(html, /aria-label="MovX Club home"/);
     assert.doesNotMatch(
       html,
-      /href="\/sessions"|href="\/coach"|href="\/profile"|Message Athlete/,
+      /href="\/sessions"|href="\/coach"|href="\/account"|Message Athlete/,
     );
   }
 });

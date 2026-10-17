@@ -2,14 +2,22 @@
 
 - Status: Draft
 - Created: 2026-10-10
-- Last updated: 2026-10-15
+- Last updated: 2026-10-16
 - Milestone: Scheduling-only session collaboration follow-up
 - Coordination: [COR0015 — Session notes and training plans](../organisatory/COR0015-session-notes-and-training-plans.md)
-- Related records: contract dependency [DEV0182 — Adopt the session-notes contract](../organisatory/DEV0182-adopt-session-notes-contract.md), backend dependency [DEV0183 — Persist authorized session notes](../backend/DEV0183-persist-authorized-session-notes.md), completed request-interface dependency [DEV0189 — Add the coach booking-request queue](../../archive/frontend/DEV0189-add-coach-booking-request-queue.md), athlete peer [DEV0185 — Add athlete session collaboration](DEV0185-add-client-session-collaboration.md), coach-bookings baseline [DEV0170 — Separate coach Schedule and Bookings tabs](../../archive/frontend/DEV0170-separate-coach-schedule-and-bookings-tabs.md); independent messaging-contract dependency [DEV0243](../../archive/organisatory/DEV0243-define-ongoing-messages-and-session-note-boundaries.md); independent messaging runtime [COR0022](../../archive/organisatory/COR0022-private-messaging-and-booking-context.md)
+- Related records: contract dependency [DEV0182 — Adopt the session-notes contract](../../archive/organisatory/DEV0182-adopt-session-notes-contract.md), backend dependency [DEV0183 — Persist authorized session notes](../backend/DEV0183-persist-authorized-session-notes.md), completed request-interface dependency [DEV0189 — Add the coach booking-request queue](../../archive/frontend/DEV0189-add-coach-booking-request-queue.md), athlete peer [DEV0185 — Add athlete session collaboration](DEV0185-add-client-session-collaboration.md), coach-bookings baseline [DEV0170 — Separate coach Schedule and Bookings tabs](../../archive/frontend/DEV0170-separate-coach-schedule-and-bookings-tabs.md); independent messaging-contract dependency [DEV0243](../../archive/organisatory/DEV0243-define-ongoing-messages-and-session-note-boundaries.md); independent messaging runtime [COR0022](../../archive/organisatory/COR0022-private-messaging-and-booking-context.md)
 
 ## Planning boundary revised — 2026-10-15
 
 The user adopted Airbnb-style contact/consent while retaining one ongoing pair conversation and separate booking notes. DEV0243 reconciles this plan; COR0022 owns messages/inquiries/request cards. The earlier proposal for a conversation per pending request is superseded, not an active implementation instruction. The previously accepted shared-plan/shared-note/coach-private intent remains. This revision implements no note runtime.
+
+## Contract adopted — 2026-10-16
+
+[Specification section 17](../../../docs/mvp-spec.md#17-session-training-plans-and-notes) is the implementation contract. Session messages and filtering are already delivered under COR0022/DEV0248; this workspace is a training record with explicit note saves, not another message composer or thread. Reuse existing shared title/date identity and independent Messages authority.
+
+This ticket owns reusable plan/entry display and form components plus `/coach/sessions/[bookingId]`, Coach Bookings/history entry points and coach Messages Details integration. DEV0185 consumes the shared component contract rather than building a duplicate editor. Keep Shared plan, Shared session notes and Coach-private notes clearly labelled; show author/time/edited state and Load earlier. Private composition has its own controls and no visibility conversion. Honor all section 17 text/quota/paging/status/block/suspension rules and explicit Save/Cancel, stale/uncertain retry and authorized draft recovery.
+
+Do not put this route behind the accepted-connection gate of private athlete details. Rehearse disconnected exact-booking access, cancelled history, empty replacement booking, existing-conversation discussion shortcut, no note-created unread activity and coach-private exclusion from athlete serialized output. The athlete-interface peer supplies the combined second-account UI evidence; this ticket still owns its coach-side checks. Runtime remains unimplemented.
 
 ## Objective and context
 
@@ -19,7 +27,7 @@ Add coach booking-specific shared plans/notes and a clearly separate private-not
 
 In scope:
 
-- Open original-booking details from Coach workspace Bookings and, when delivered, Messages Details/history links.
+- Open original-booking details from Coach workspace Bookings and integrate the already-delivered Messages Details/history links.
 - Present explicit coach-authored shared-plan saves, shared coach/athlete notes and author-owned edits.
 - Present coach-private notes in a distinct labelled region, never an ambiguous shared/private toggle.
 - Handle confirmed/completed/cancelled, block-window, validation/stale/conflict/authorization/unavailable states with responsive keyboard feedback.
@@ -36,7 +44,7 @@ Out of scope: ongoing Messages/inquiry/general-consent/request-card runtime, att
 
 ## Assumptions, decisions, and dependencies
 
-Start after DEV0182/DEV0183. DEV0189 coach request UI is complete. Reuse existing Bookings detail entry points; Messages links are consumed when COR0022 is delivered, not a second chat implemented here.
+Start after DEV0183; DEV0182 supplies the adopted contract and DEV0189 is complete. Own the shared note UI used by DEV0185. Integrate current Bookings and delivered Messages entry points without implementing another chat.
 
 Athlete is the existing training-participant capability; internal `client` names remain compatible. No arbitrary athlete directory or group-note access is added. Account deletion/retention remains DEV0165 and must not be invented here.
 
@@ -62,7 +70,7 @@ Exercise real local original-booking plan/shared/private create/edit, status/blo
 
 ## Implementation record
 
-Pending implementation. DEV0243 revised the planning boundary only; the acceptance criteria below still require this ticket's own evidence.
+Pending runtime implementation. DEV0182 adopted the detailed contract and updated this plan on 2026-10-16; none of this ticket's runtime acceptance criteria are claimed passed.
 
 ### Changes and rationale
 
@@ -80,7 +88,7 @@ Dated earlier planning history (superseded where it proposes request chat):
 
 - 2026-10-14: Updated planning vocabulary to athlete and made connection-independent session authorization explicit; existing filenames/IDs and earlier history remain intact. Session-content contract adoption still belongs to DEV0182.
 
-No implementation decisions or deviations recorded yet.
+- 2026-10-16: DEV0182 adopted section 17, recorded the delivered session-message baseline and assigned shared note UI to DEV0184 before DEV0185 integration. No runtime edit was made under this planning update.
 
 ### Contracts, configuration, and operations
 
@@ -88,7 +96,7 @@ Consumes DEV0183 coach actions/projections and adopted M8 restrictions. No new e
 
 ## Validation results
 
-Runtime acceptance criteria are not run. DEV0243 owns link/status/membership and semantic checks of this planning revision. Do not infer implementation or completed browser/database evidence from the contract amendment.
+Runtime acceptance criteria are not run. DEV0182 records documentation checks for the 2026-10-16 contract/ownership update; DEV0243 retains the earlier boundary-amendment evidence. No browser/database implementation evidence is claimed for this ticket.
 
 ## Risks, limitations, and follow-ups
 

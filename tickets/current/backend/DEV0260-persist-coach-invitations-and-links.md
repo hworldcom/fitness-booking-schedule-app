@@ -22,6 +22,10 @@ The current [connection contract](../../../docs/mvp-spec.md#49-connect-after-a-c
 
 Follow DEV0259's final adopted contract before implementation. Pending invitations are not accounts or accepted relationships, delivery status is not acceptance, and all existing booking/request/history/media/message permissions remain independently checked. Opening/reloading a link must be safe. Actual recipient/pair/coach eligibility is checked on mutation, with bounded stale/expired/revoked/conflict results and exact retry recovery.
 
+Confirmed on 16 October 2026: an individual invitation to `a@gmail.com` can be claimed only with verified control of that address. Another signed-in email, including an Apple private-relay address, cannot remap the recipient or claim the invitation on the strength of its token. Enforce this at the server/database boundary under the adopted Auth proof contract, not just in the form. Preserve the separate reusable-link flow and existing account/pair identity.
+
+Ordinary registration remains open to any supported email. A person following that invitation can create a normal account as `b@gmail.com`; account creation succeeds independently and does not accept/consume/remap the invitation or establish its coach connection. Validate this separation alongside wrong-recipient claim denial.
+
 ## Assumptions, decisions, and dependencies
 
 DEV0259 must adopt identity/consent/lifecycle and bounds first. Stabilize the versioned sender/recipient/outbox result contract with DEV0261–DEV0263. Existing connection, message and block authority is the foundation; inspect current migrations and preserve independent work.
@@ -37,7 +41,7 @@ Scope review: this is one peer boundary under a flat invitation coordination, no
 
 ## Acceptance criteria
 
-- [ ] AC1: Only authorized senders/verified recipients perform the adopted lifecycle; token possession or an invite alone grants no private data, booking or connection.
+- [ ] AC1: Only authorized senders/verified recipients perform the adopted lifecycle; targeted claims require verified control of the exact invited address, including wrong-email/Apple-relay rejection. Token possession or an invite alone grants no private data, booking or connection.
 - [ ] AC2: Explicit accepted invitations establish one existing pair before a booking, without activation; ordinary request guards/history, duplicate recovery, block/removal and exact recipient authority remain intact.
 - [ ] AC3: Invitation/outbox creation is atomic, resend/rotation/expiry/revision results are bounded and exact/altered retries cannot duplicate connections or email intents.
 - [ ] AC4: Fresh/preserved migration, actor/recipient/token/privacy, no-booking message/media and concurrent invitation/connection/block tests plus relevant regressions/static checks pass.

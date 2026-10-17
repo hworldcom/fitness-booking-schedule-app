@@ -2,18 +2,26 @@
 
 - Status: Draft
 - Created: 2026-10-10
-- Last updated: 2026-10-15
+- Last updated: 2026-10-16
 - Milestone: Scheduling-only session collaboration follow-up
 - Coordination: [COR0015 — Session notes and training plans](../organisatory/COR0015-session-notes-and-training-plans.md)
-- Related records: contract dependency [DEV0182 — Adopt the session-notes contract](../organisatory/DEV0182-adopt-session-notes-contract.md), backend dependency [DEV0183 — Persist authorized session notes](../backend/DEV0183-persist-authorized-session-notes.md), completed request-interface dependency [DEV0190 — Add the client booking-request flow](../../archive/frontend/DEV0190-add-client-booking-request-flow.md), coach peer [DEV0184 — Add the coach session workspace](DEV0184-add-coach-session-workspace.md), athlete-history baseline [DEV0144 — Show client booking history](../../archive/frontend/DEV0144-show-client-booking-history.md); independent messaging-contract dependency [DEV0243](../../archive/organisatory/DEV0243-define-ongoing-messages-and-session-note-boundaries.md); independent messaging runtime [COR0022](../../archive/organisatory/COR0022-private-messaging-and-booking-context.md)
+- Related records: contract dependency [DEV0182 — Adopt the session-notes contract](../../archive/organisatory/DEV0182-adopt-session-notes-contract.md), backend dependency [DEV0183 — Persist authorized session notes](../backend/DEV0183-persist-authorized-session-notes.md), completed request-interface dependency [DEV0190 — Add the client booking-request flow](../../archive/frontend/DEV0190-add-client-booking-request-flow.md), shared-interface dependency/coach peer [DEV0184 — Add the coach session workspace](DEV0184-add-coach-session-workspace.md), athlete-history baseline [DEV0144 — Show client booking history](../../archive/frontend/DEV0144-show-client-booking-history.md); independent messaging-contract dependency [DEV0243](../../archive/organisatory/DEV0243-define-ongoing-messages-and-session-note-boundaries.md); independent messaging runtime [COR0022](../../archive/organisatory/COR0022-private-messaging-and-booking-context.md)
 
 ## Planning boundary revised — 2026-10-15
 
 The user adopted Airbnb-style contact/consent while retaining one ongoing pair conversation and separate booking notes. DEV0243 reconciles this plan; COR0022 owns messages/inquiries/request cards. The earlier proposal for a conversation per pending request is superseded, not an active implementation instruction. The previously accepted shared-plan/shared-note/coach-private intent remains. This revision implements no note runtime.
 
+## Contract adopted — 2026-10-16
+
+[Specification section 17](../../../docs/mvp-spec.md#17-session-training-plans-and-notes) is the implementation contract. Session messages and filtering are already delivered under COR0022/DEV0248; training feedback here is an author-owned saved record, with ongoing discussion in Messages. Reuse the existing shared session title/date and DEV0184 note presentation/forms.
+
+Start after DEV0183 and DEV0184's shared component contract stabilize. This ticket owns `/sessions/[bookingId]`, My sessions/history links and athlete Messages Details integration; DEV0184 owns reusable note UI and coach links. The route checks exact booking participation independently of connection or general-message consent. It reads the shared plan, permits only the athlete's own shared entry saves/edits, and never receives a private section, count, cursor or existence flag.
+
+Apply section 17's bounded paging, text/entry limits, cancelled read-only and M8 block/suspension rules with explicit Save/Cancel and stale/uncertain draft recovery. Combined real two-account evidence must show Messages discussion and notes staying separate, original Details/history navigation, disconnection access, cancelled history, empty replacement booking and private bytes/metadata absent from athlete responses. Runtime remains unimplemented.
+
 ## Objective and context
 
-Add athlete booking-specific shared plan/note reading and author-owned note exchange in My sessions. Ongoing chat and pending request discussion are COR0022 work; [section 16.6](../../../docs/mvp-spec.md#166-interface-and-session-note-boundary) keeps the original booking detail separate.
+Add athlete booking-specific shared plan/note reading and author-owned training records in My sessions. Ongoing chat and pending request discussion are COR0022 work; [section 16.6](../../../docs/mvp-spec.md#166-interface-and-session-note-boundary) keeps the original booking detail separate.
 
 ## Scope and non-goals
 
@@ -36,7 +44,7 @@ Out of scope: ongoing Messages/inquiry/general-consent/request-card runtime, att
 
 ## Assumptions, decisions, and dependencies
 
-Start after DEV0182/DEV0183; DEV0190 is complete. May proceed alongside DEV0184 on stable projections. Reuse My sessions details and delivered message links without implementing a global inbox under this ticket.
+Start after DEV0183 and DEV0184 shared components stabilize; DEV0182 and DEV0190 are complete. Reuse My sessions details and delivered message links without implementing a global inbox under this ticket.
 
 Athlete is the existing training-participant capability; internal `client` names remain compatible. No arbitrary athlete directory or group-note access is added. Account deletion/retention remains DEV0165 and must not be invented here.
 
@@ -62,7 +70,7 @@ Rehearse one real local original booking with two actors, shared plan/note visib
 
 ## Implementation record
 
-Pending implementation. DEV0243 revised the planning boundary only; the acceptance criteria below still require this ticket's own evidence.
+Pending runtime implementation. DEV0182 adopted the detailed contract and updated this plan on 2026-10-16; none of this ticket's runtime acceptance criteria are claimed passed.
 
 ### Changes and rationale
 
@@ -80,7 +88,7 @@ Dated earlier planning history (superseded where it proposes request chat):
 
 - 2026-10-14: Updated planning vocabulary to athlete and made connection-independent session authorization explicit; existing filenames/IDs and earlier history remain intact. Session-content contract adoption still belongs to DEV0182.
 
-No implementation decisions or deviations recorded yet.
+- 2026-10-16: DEV0182 adopted section 17, recorded the delivered session-message baseline and assigned shared note UI to DEV0184 before DEV0185 integration. No runtime edit was made under this planning update.
 
 ### Contracts, configuration, and operations
 
@@ -88,7 +96,7 @@ Consumes DEV0183 athlete-only projections/actions and adopted M8 restrictions. N
 
 ## Validation results
 
-Runtime acceptance criteria are not run. DEV0243 owns link/status/membership and semantic checks of this planning revision. Do not infer implementation or completed browser/database evidence from the contract amendment.
+Runtime acceptance criteria are not run. DEV0182 records documentation checks for the 2026-10-16 contract/ownership update; DEV0243 retains the earlier boundary-amendment evidence. No browser/database implementation evidence is claimed for this ticket.
 
 ## Risks, limitations, and follow-ups
 

@@ -1,0 +1,311 @@
+.account-shell {
+  min-height: 100dvh;
+  background: #fff;
+  color: #222;
+}
+.account-shell-header {
+  height: 82px;
+  border-bottom: 1px solid #e9e9e7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  gap: 20px;
+}
+.account-shell-actions {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.account-messages-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 44px;
+}
+.account-settings-layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  max-width: 1280px;
+  margin: 0 auto;
+  min-height: calc(100dvh - 82px);
+}
+.account-settings-sidebar {
+  padding: 48px 28px 48px 36px;
+  border-right: 1px solid #e9e9e7;
+}
+.account-settings-sidebar h1 {
+  font-family: var(--font-sans);
+  font-size: 25px;
+  line-height: 1.3;
+  letter-spacing: -0.8px;
+  margin: 0 0 26px;
+}
+.account-settings-sidebar nav {
+  display: grid;
+  gap: 6px;
+}
+.account-settings-sidebar nav a {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 16px;
+  min-height: 48px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 650;
+}
+.account-settings-sidebar nav a:hover,
+.account-settings-sidebar nav a:focus-visible {
+  background: #f4f5f1;
+}
+.account-profile-return {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 32px 16px 0;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  color: #666;
+}
+.account-settings-content {
+  padding: 48px 56px 80px;
+  min-width: 0;
+}
+.account-settings-section {
+  scroll-margin-top: 28px;
+  margin-bottom: 48px;
+}
+.account-settings-section h2 {
+  font-family: var(--font-sans);
+  font-size: 24px;
+  line-height: 1.4;
+  letter-spacing: -0.6px;
+  margin: 0;
+}
+.account-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.account-section-intro {
+  color: #70716b;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 10px 0 16px;
+}
+.account-edit-link {
+  color: #23291c;
+  background: none;
+  border: 0;
+  padding: 8px 0;
+  min-height: 44px;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+.account-settings-rows {
+  margin: 0;
+}
+.account-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 0;
+  border-bottom: 1px solid #e9e9e7;
+}
+.account-setting-row > div {
+  min-width: 0;
+}
+.account-setting-row dt {
+  font-size: 14px;
+  font-weight: 650;
+  margin-bottom: 5px;
+}
+.account-setting-row dd {
+  margin: 0;
+  color: #70716b;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.account-language-status,
+.account-coming-soon {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 650;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: #eef4e4;
+  color: #45582a;
+}
+.account-coming-soon {
+  background: #f3f3f0;
+  color: #77796f;
+}
+.account-settings-section fieldset {
+  border: 0;
+  padding: 0;
+  margin: 18px 0 0;
+  min-width: 0;
+}
+.account-settings-field {
+  display: block;
+  margin: 0 0 20px;
+  font-size: 14px;
+  font-weight: 650;
+}
+.account-settings-field input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  margin-top: 8px;
+  border: 1px solid #bcbfb5;
+  border-radius: 9px;
+  padding: 11px 13px;
+  font: inherit;
+  font-weight: 400;
+  background: white;
+  color: #222;
+}
+.account-settings-field > span:not(.account-optional) {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: #70716b;
+  margin-top: 6px;
+  line-height: 1.6;
+}
+.account-optional {
+  font-weight: 400;
+  color: #70716b;
+}
+.account-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 20px;
+}
+.account-form-actions .button {
+  min-height: 44px;
+}
+.account-private-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #70716b;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.account-private-note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.account-settings-feedback {
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 14px 16px;
+  border-radius: 9px;
+  background: #fff4e6;
+  color: #6a441d;
+  margin-top: 16px;
+}
+.account-settings-feedback p {
+  margin: 0;
+}
+.account-save-notice {
+  color: #45582a;
+  font-size: 13px;
+  margin-top: 18px;
+}
+.account-access-state {
+  max-width: 640px;
+  margin: auto;
+  padding: 64px 24px;
+}
+.account-shell :is(a, button, input):focus-visible {
+  outline: 2px solid #607e35;
+  outline-offset: 4px;
+}
+@media (max-width: 900px) {
+  .account-shell-header {
+    padding: 0 28px;
+  }
+  .account-settings-layout {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+  .account-settings-sidebar {
+    padding: 36px 18px;
+  }
+  .account-settings-sidebar h1 {
+    font-size: 23px;
+    margin-left: 8px;
+  }
+  .account-settings-content {
+    padding: 36px 28px 64px;
+  }
+}
+@media (max-width: 640px) {
+  .account-shell-header {
+    height: 72px;
+    padding: 0 20px;
+    gap: 12px;
+  }
+  .account-shell-actions {
+    gap: 16px;
+  }
+  .account-messages-link > span:not(.mailbox-nav-badge) {
+    display: none;
+  }
+  .account-settings-layout {
+    display: block;
+    min-height: calc(100dvh - 72px);
+  }
+  .account-settings-sidebar {
+    padding: 28px 20px 16px;
+    border-right: 0;
+    border-bottom: 1px solid #e9e9e7;
+  }
+  .account-settings-sidebar h1 {
+    font-size: 27px;
+    margin: 0 0 16px;
+  }
+  .account-settings-sidebar nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+  .account-settings-sidebar nav a {
+    padding: 8px 0;
+    font-size: 12px;
+    gap: 6px;
+    min-height: 44px;
+  }
+  .account-settings-sidebar nav svg {
+    width: 16px;
+    height: 16px;
+  }
+  .account-profile-return {
+    margin: 8px 0 0;
+  }
+  .account-settings-content {
+    padding: 28px 20px 40px;
+  }
+  .account-settings-section {
+    margin-bottom: 40px;
+  }
+  .account-settings-section h2 {
+    font-size: 22px;
+  }
+}

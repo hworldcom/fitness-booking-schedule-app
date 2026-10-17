@@ -7,3 +7,4 @@ export * from "./bookings";
 
 export * from "./connections";
 export * from "./group-sessions";
+export * from "./account";

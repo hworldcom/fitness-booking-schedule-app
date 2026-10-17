@@ -2,7 +2,7 @@
 
 - Status: In progress
 - Created: 2026-10-16
-- Last updated: 2026-10-16
+- Last updated: 2026-10-17
 - Milestone: Proposed invitation and link onboarding extension
 - Converted from: Not applicable — created separately at the user's request; existing DEV0258 remains the workspace contract owner.
 - Tracked development tickets: [DEV0259 contract](DEV0259-define-invitation-and-link-consent.md), [DEV0260 authority](../backend/DEV0260-persist-coach-invitations-and-links.md), [DEV0261 email delivery](../backend/DEV0261-deliver-athlete-invitation-emails.md), [DEV0262 coach controls](../frontend/DEV0262-manage-coach-invitations-and-links.md), [DEV0263 recipient acceptance](../frontend/DEV0263-review-and-accept-athlete-invitations.md), [DEV0264 local proof](../backend/DEV0264-rehearse-invitation-onboarding.md).
@@ -33,6 +33,7 @@ All six direct records exist and declare COR0024 membership. They are peers: the
 
 - **External host/consumer:** DEV0258 owns the Athletes workspace contract, not invitation acceptance or email transport. It retains the planned All/Connected/Pending/Archived roster and separate coach tab. Its future workspace runtime record(s) have **not been created**; they must explicitly own the host/navigation/roster integration before DEV0262/DEV0264 can complete the real web flow. This is a required external integration dependency, not permission to implement the entire roster under an invitation peer.
 - **Existing foundations:** COR0020 supplies current pair identity and ordinary booking-qualified connection requests; M8 supplies separate message consent/block/media authority. DEV0260 must test accepted invitation pairs with no booking rather than assuming existing request checks already cover them.
+- **External environment/authentication:** the requested hosted-dev mapping for local and test/UAT applications and separate hosted production setup require their own work records; historical DEV0055 remains the hosted baseline. Apple/Google/password authentication was initially proposed on 16 October. On 17 October, the user selected all three under external [COR0027](COR0027-login-registration-and-social-authentication.md); its exact account/linking/verification rules remain DEV0285 contract work and the delivered runtime still uses email codes. Settle its verified-recipient/account-recovery contract before DEV0260/DEV0263 integration; COR0024 consumes that authority without implementing an authentication replacement or provider/project migration. Recommended operational order is new UAT foundation, chosen authentication, then invitations; no hosted operation is authorized by this planning note.
 - **Independent work:** COR0023 calendar and DEV0257 proposed session types are neither direct members nor prerequisites for invitation planning/authority. Preserve their records and uncommitted implementation work. M7 group lifecycle/registration supplies no invitation or new private-data permission.
 
 ## Delivery sequence and completion conditions
@@ -49,6 +50,8 @@ All six direct records exist and declare COR0024 membership. They are peers: the
 
 - 2026-10-16: Everfit Clients/invitation review and the user's three relationship/navigation choices were initially captured by DEV0258. Before specification adoption, the user explicitly requested a separate COR for email invitations/shareable links. Kept the workspace contract separate and created this COR with six direct peers.
 - 2026-10-16: Planning coordination is active. DEV0259 and all five runtime peers are Draft; no specification amendment, invitation, mail delivery, account change or runtime implementation has occurred under this stream. The external workspace runtime owner remains to be created under its own planning.
+- 2026-10-16: The user confirmed that an individual invitation to `a@gmail.com` can map only to that verified recipient address. DEV0259 records the constraint and DEV0260/DEV0263 carry concrete verification/rejection scenarios. A different Apple/Google email or a forwarded link cannot remap a targeted invitation; explicit acceptance remains required. Shared authentication and new Supabase environment work remain separately owned planning dependencies above.
+- 2026-10-16: The user clarified that sign-up may use any supported email. A person opening the `a@gmail.com` invitation may register as `b@gmail.com` normally, without an invitation-derived connection to the sender and without accepting/consuming/remapping the targeted invitation. DEV0259/DEV0260/DEV0263 distinguish successful registration from eligible explicit invitation acceptance; account switching is not mandatory for ordinary onboarding.
 
 ## Validation results
 

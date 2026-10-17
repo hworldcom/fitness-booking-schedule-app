@@ -2,7 +2,7 @@
 
 - Status: Completed
 - Created: 2026-10-16
-- Last updated: 2026-10-16
+- Last updated: 2026-10-17
 - Milestone: M9 — Coach calendar and effective availability
 - Converted from: Not applicable — created as a coordination record; DEV0251 owns contract documentation only.
 - Tracked development tickets: [DEV0251 contract](DEV0251-define-coach-calendar-and-availability.md), [DEV0252 effective availability](../backend/DEV0252-persist-effective-coach-availability.md), [DEV0253 coach editor](../frontend/DEV0253-edit-weekly-hours-and-date-overrides.md), [DEV0254 mixed calendar](../frontend/DEV0254-add-private-and-group-coach-calendar.md), [DEV0255 public dates](../frontend/DEV0255-browse-thirty-day-private-availability.md), [DEV0256 integrated rehearsal](../backend/DEV0256-rehearse-calendar-and-availability.md).
@@ -31,7 +31,7 @@ All required development records exist. These six direct peers each declare COR0
 
 - [DEV0257 — Define reusable session types](../../current/organisatory/DEV0257-define-reusable-session-types.md) is an independent proposed contract amendment, not a direct member or a required deliverable of the current work map. The user requested documenting the addition after reviewing Everfit. Its template-first preference is tentative; private duration and athlete selection remain undecided. Review its potential impacts before changing affected peer scope; adoption must update the specification and assign any new runtime parts explicitly, with reciprocal membership where applicable. Existing one-hour authority remains the current contract until then.
 - DEV0238/COR0021 is an external prerequisite, not a member: it owns group publication, lifecycle-derived reservations and the original shared coach-time boundary. DEV0252 extends that boundary for effective availability; it does not repeat M7 publication implementation or claim its existing evidence.
-- DEV0239 is the external owner group-management/detail destination used by calendar links. DEV0240 retains public group discovery/joining. DEV0239 supplies the original owner route; its independent management criteria remain with that ticket. DEV0254 has completed actual calendar-to-owner URL/roster navigation and access checks; DEV0253 warning links retain their own editor evidence. DEV0256 still owns combined cross-peer integration.
+- DEV0239 is the external owner group-management/detail destination used by calendar links. DEV0240 retains public group discovery/joining. DEV0239 has completed its real hosted-dev management proof. DEV0254 has completed actual calendar-to-owner URL/roster navigation and access checks; DEV0253 warning links retain their own editor evidence. DEV0256 still owns combined cross-peer integration.
 - DEV0205 and location-aware availability history explain the existing frame/draft behavior. They do not own new M9 implementation. DEV0208 remains an independent workspace accessibility effort; M9 peers still prove their own changed flows.
 - COR0015 notes and delivered M8 Messages remain separate capabilities. Original detail links preserve their authority; M9 never copies note content, grants athlete identity access or creates a second message thread.
 
@@ -58,19 +58,21 @@ All required development records exist. These six direct peers each declare COR0
 
 - 2026-10-16: DEV0254 now contains the bounded redacted read contract, prepared owner-read migration, default Week/Day/Month/agenda/filter/navigation UI and Calendar/Availability draft integration. Six isolated browser checkpoints and model/action/static checks passed; its ticket owns exact evidence. Migration application, real SQL/Auth/isolation/paging proof and the DEV0239 original owner destination remain pending, so DEV0254 stays In progress.
 
-- 2026-10-16: User authorized the remaining group-owner link integration. DEV0239 now has the actual owner detail route in progress; DEV0254 will wire original calendar group IDs and DEV0253 retained warnings to it, with isolated cross-route/draft/access checks. DEV0271 already owns the applied dev SQL proof. No new migration or group lifecycle implementation is assigned to the calendar peers.
-
-- 2026-10-16: Group-link implementation now uses DEV0239’s original-ID owner route from calendar dialogs (DEV0254) and before/after-save warnings (DEV0253). Their records own eight calendar/owner and six availability browser checkpoints, unchanged group fixture state and draft/new-tab/access evidence. The owner route is no longer a missing implementation; real authenticated integration and DEV0239’s own live criteria remain pending. No migration or lifecycle authority changed.
-
 - 2026-10-16: DEV0254 checkpoint committed as `e16c06f`. DEV0255 started the independent public 30-day date navigation slice after checking that public route/components do not overlap the calendar or concurrent hosted/notes changes. Migration application and real account/database validation remain deferred.
 
 - 2026-10-16: DEV0255 now has seven-date public pages/native date selection across all 30 local dates, database-clock presentation, original eligible request IDs, selected-day pending reads and account-bound private state. Five isolated browser checkpoints, 210 application/server tests and static/isolated build checks passed. A hosted public read verified database time with empty actual inventory; real athlete/horizon/override/group/restoration proof remains pending in DEV0255, so it stays In progress. No migration was applied.
+
+- 2026-10-16: User authorized the remaining group-owner link integration. DEV0239 now has the actual owner detail route in progress; DEV0254 will wire original calendar group IDs and DEV0253 retained warnings to it, with isolated cross-route/draft/access checks. DEV0271 already owns the applied dev SQL proof. No new migration or group lifecycle implementation is assigned to the calendar peers.
+
+- 2026-10-16: Group-link implementation now uses DEV0239’s original-ID owner route from calendar dialogs (DEV0254) and before/after-save warnings (DEV0253). Their records own eight calendar/owner and six availability browser checkpoints, unchanged group fixture state and draft/new-tab/access evidence. The owner route is no longer a missing implementation; real authenticated integration and DEV0239’s own live criteria remain pending. No migration or lifecycle authority changed.
 
 - 2026-10-16: DEV0253 and DEV0255 completed real hosted-dev production-build criteria, including editor recovery, original retained sessions/cards, actual thirty-date requests, stale-hour conflict correction, native keyboard navigation, responsive/access checks and exact fixture cleanup with original-row preservation. Their archived records distinguish failed full commands, focused passes and scoped cleanup recovery. DEV0256 remains Draft until its concrete integration run starts; no release is claimed.
 
 - 2026-10-16: DEV0256 starts after completed runtime peers (`ed963f8`); its concrete shared-cohort plan and exact-dev safety/cleanup boundaries are recorded before implementation. Final combined proof remains open.
 
 - 2026-10-16: All six direct peers are Completed. DEV0256 run `a3319062-7e2a-436e-a045-dbafdf42932e` on `526e749` passed the shared-cohort calendar/editor/public flow, exact original destinations/Month paging, whole-date retention/closure/restoration, interrupted/stale/unavailable recovery, independent outside-horizon group, real concurrent publication/policy save with no overlapping open private capacity, responsive/access/privacy and exact fixture cleanup with original-row preservation. Its archived record owns the detailed command/results and inherited peer evidence. No deployment is claimed.
+
+- 2026-10-17 documentary correction under [DEV0277](../../current/backend/DEV0277-profile-and-reduce-coach-calendar-latency.md): synchronized the external DEV0239 completion description and ordering of the same-date integration notes. Original implementation/evidence owners and this coordination completion remain unchanged; no new benchmark, runtime or deployment is claimed.
 
 ## Validation results
 

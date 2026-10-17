@@ -2,7 +2,7 @@
 
 - Status: Draft
 - Created: 2026-10-16
-- Last updated: 2026-10-16
+- Last updated: 2026-10-17
 - Milestone: Proposed invitation and link onboarding extension
 - Coordination: [COR0024 — Email invitations and shareable links](COR0024-email-invitations-and-shareable-links.md)
 - Related records: external workspace contract [DEV0258](DEV0258-define-athlete-workspace.md); delivered connections [COR0020](../../archive/organisatory/COR0020-athlete-terminology-and-connections.md); existing message consent [DEV0243](../../archive/organisatory/DEV0243-define-ongoing-messages-and-session-note-boundaries.md); independent calendar [COR0023](../../archive/organisatory/COR0023-coach-calendar-and-availability.md).
@@ -22,9 +22,13 @@ The existing [connection contract](../../../docs/mvp-spec.md#49-connect-after-a-
 
 Confirmed target choices: a coach can invite someone who has no prior MovX booking; authenticated explicit acceptance connects immediately; email invitations and shareable links belong to this separate coordination. The intended host is the separately planned Coach workspace Athletes tab. There is no Waiting Activation stage.
 
+Confirmed recipient constraint, 16 October 2026: an individual invitation to `a@gmail.com` belongs only to that verified recipient address. Signing in with a different verified email, including an Apple private-relay address, does not authorize claiming or remapping the invitation. The Auth flow must establish verified control of the invited address, and the athlete must still explicitly accept. Forwarding the link does not transfer recipient eligibility. This constraint applies to targeted email invitations; a reusable public coach offer remains a separate proposed flow.
+
+The user clarified that ordinary sign-up remains available with any supported email, including when reached through a targeted invitation. For example, someone opening the `a@gmail.com` invitation may register as `b@gmail.com` and receive a normal MovX account, but that registration does not connect them to the inviting coach or accept/consume/remap the invitation. Recipient matching governs the invitation-derived connection, not permission to create an account. Matching-email registration also still requires the separate explicit acceptance step before connecting.
+
 Proposed operating defaults to settle before adoption:
 
-- Individual email invitations carry a recipient-bound, revocable, expiring link. Only an Auth-verified matching recipient may accept; existing accounts are reused. Opening the URL or completing sign-in is not acceptance. Anonymous/wrong-account responses do not expose private email/profile or account-existence information.
+- Individual email invitations carry a recipient-bound, revocable, expiring link and reuse existing accounts after the confirmed recipient constraint above passes. Opening the URL or completing sign-in is not acceptance. Anonymous/wrong-account responses do not expose private email/profile or account-existence information. Exact address normalization and the account-switch/verification recovery interface must be specified before adoption; a different provider address is never treated as equivalent merely because its user holds the URL.
 - A reusable coach link presents an explicit connection offer to signed-in athletes. Visitors can register through ordinary Auth; the link never grants coach capability. Public preview/intake respects coach visibility/approval. Direct offers and hidden-coach eligibility must be reconciled with existing private connection rules. No invite accepts through a block/suspension or after revocation/expiry.
 - Acceptance preserves the existing exact coach–athlete pair and current recipient authority, serializes with ordinary requests/removal/block, recovers exact retries and does not rewrite old attempts. Already connected pairs recover their current relationship. A removed pair needs a fresh explicit acceptance; replaying an earlier success does not reconnect automatically.
 - Acceptance can enable existing connection-scoped identity/media and general messaging without a booking, with that consequence disclosed on review. No booking, session notes, group registration, unrelated history or private data is granted by an unaccepted invitation. Post-booking connections remain available through their ordinary qualifying path.
@@ -33,6 +37,8 @@ Proposed operating defaults to settle before adoption:
 ## Assumptions, decisions, and dependencies
 
 Confirmed on 16 October 2026: invitation acceptance may connect before a first booking; no coach activation follows acceptance; email invitations/shareable links must have a separate COR. The user's Athletes-tab placement is an external workspace decision, recorded in DEV0258.
+
+The user subsequently confirmed exact invited-email eligibility as recorded above while discussing a new Supabase account and web/mobile authentication. The desired environment mapping is local application and deployed test/UAT (user acceptance testing) site to hosted dev, production to hosted prod. Apple/Google/password sign-in was a proposal on 16 October; the user selected these methods on 17 October under external [COR0027](COR0027-login-registration-and-social-authentication.md). DEV0285 must adopt its exact identity/linking/recovery rules before integration; the runtime still uses email codes. Hosted environment setup remains separately owned. Recommended execution order is a validated new UAT foundation, then the chosen shared authentication methods, then invitation onboarding. This sequence is a recommendation, not authorization to provision projects, transfer accounts/data or send emails. DEV0055 is the historical hosted-environment baseline; COR0024 does not take ownership of replacing that environment or authentication.
 
 Still to specify for adoption: token expiry/reuse/rotation and exact send bounds; email and share-link visibility/eligibility; connection-attempt reconciliation; return/retry/decline/revocation behavior; the recipient's explicit consent wording; invitation delivery operation/transport setup and affected message/media reads without a booking. These are contract/implementation details to resolve in this ticket, not reasons to invent an activation stage or remove current consent.
 
@@ -54,7 +60,7 @@ This DEV owns documentation and delivery planning only. COR0024's peers own invi
 
 ## Validation plan
 
-Review new and existing recipient accounts, wrong-email/foreign/self/revoked/expired invites, link preview without mutation, explicit acceptance, duplicate/crossed pending relationships, removed-pair retries, block/suspension races and general messages/private media before a first booking. Review queued/failed/resend email outcomes and account-enumeration denial. Run targeted installed Prettier, local link/anchor/ID/index/membership checks and git diff --check for this planning-only change. Application/database/email/browser/static/build tests belong to the runtime peers.
+Review new and existing recipient accounts, wrong-email/foreign/self/revoked/expired invites, link preview without mutation, explicit acceptance, duplicate/crossed pending relationships, removed-pair retries, block/suspension races and general messages/private media before a first booking. In particular, someone opening an invitation to `a@gmail.com` can register normally as `b@gmail.com`, but receives no invitation-derived connection and does not consume/remap the invitation. A claim from `b@gmail.com` or a different Apple relay address must fail; only verified control of `a@gmail.com` followed by explicit acceptance qualifies. Review queued/failed/resend email outcomes and account-enumeration denial. Run targeted installed Prettier, local link/anchor/ID/index/membership checks and git diff --check for this planning-only change. Application/database/email/browser/static/build tests belong to the runtime peers.
 
 ## Implementation record
 
@@ -78,9 +84,13 @@ Separated invitations from the original combined DEV0258 planning idea before sp
 
 2026-10-16: The user requested a separate COR for email invitations/shareable links while the combined contract was still being prepared. No product specification or runtime had been changed under DEV0258. Preserved its review history, narrowed it to workspace integration, and assigned invitation adoption to this new peer. This is a scope change before implementation, not a DEV-to-COR conversion or renumbering.
 
+2026-10-16 recipient clarification: promoted exact invited-email matching from a proposed mechanic to a confirmed user constraint; added concrete wrong-email/relay examples to the authority and recipient peers. Recorded the requested dev/prod mapping and recommended UAT-before-authentication sequence as external setup/planning, keeping the authentication methods unconfirmed and this invitation amendment Draft. No current specification, Auth, SMTP, environment or runtime changed.
+
+2026-10-16 sign-up clarification: the user explicitly separated ordinary account registration from invitation-based connection. Added successful different-email sign-up with no invitation-derived connection or invitation consumption to this plan and its authority/recipient scenarios. This clarifies the confirmed matching rule without restricting ordinary registration, changing the proposed public reusable-link flow or adopting the unfinished invitation specification.
+
 ### Contracts, configuration, and operations
 
-None changed in the current application/specification. Future adoption and runtime peers must document token/pair/outbox data, narrow actor APIs, transport/environment/setup, migrations/rollback and compatibility. No tokens, recipient addresses or private account data are recorded.
+None changed in the current application/specification. Future adoption and runtime peers must document token/pair/outbox data, narrow actor APIs, transport/environment/setup, migrations/rollback and compatibility. Addresses in the scenarios above are illustrative examples; no actual invitation recipients, tokens or private account data are recorded.
 
 ## Validation results
 
@@ -90,6 +100,10 @@ Initial scope-separation planning checks passed on 16 October 2026 in the local 
 - `./node_modules/.bin/prettier --check tickets/README.md tickets/current/organisatory/DEV0258-*.md tickets/current/organisatory/DEV0259-*.md tickets/current/organisatory/COR0024-*.md tickets/current/{backend,frontend}/DEV026[0-4]-*.md` and `git diff --check`: passed.
 - Scope self-review confirmed that the workspace record was narrowed before adoption, the six invitation peers own distinct boundaries, and no runtime/SMTP/provider/account/email/specification changes occurred. All required direct invitation records exist; missing external workspace runtime ownership is explicit rather than implemented under an invitation ticket.
 - Application/database/mail/browser/static/build checks were not run: this is a planning-only update. Native reference review belongs to DEV0258's investigation; no invitation was transmitted or accepted. Contract adoption and runtime evidence remain separate future work.
+
+2026-10-16 recipient clarification checks: reran `python3 /tmp/dev0259-check-separation.py`, passing the same nine-document/267-link/27-anchor/173-record and reciprocal-ownership/current-contract checks. Targeted installed Prettier over this ticket, COR0024, DEV0260, DEV0263 and the index, followed by `git diff --check`, passed. Self-review confirmed that the exact recipient constraint is consistent across contract/authority/recipient plans, provider choices remain proposed, and the new UAT/Auth work remains externally owned. Application/database/provider tests are not applicable to this documentation checkpoint; invitation adoption and runtime criteria remain open.
+
+The subsequent sign-up clarification passed the same checker, targeted Prettier over the four updated planning records and `git diff --check`. Scenario review distinguishes successful registration as a different email from refusal to claim the targeted invitation, preserving explicit acceptance for a matching recipient. No runtime checks apply to these planning-only edits; all implementation acceptance criteria remain open.
 
 | Criterion | Evidence                                                                          | Result  |
 | --------- | --------------------------------------------------------------------------------- | ------- |
@@ -106,6 +120,6 @@ Pre-booking acceptance affects message/media paths that may currently infer a sh
 2026-10-16 commit preparation: the user authorized committing the planning checkpoint and starting the calendar. Include these interlinked plans and the required completed DEV0238 guard; exclude independent session-note adoption/runtime work. Shared specification/index staging uses scoped snapshots. Fresh `npm test` passed 155 application and 16 server tests; `npm run typecheck` passed. Staged links/scope/format/whitespace are checked separately before commit; no new database or deployment claim is made.
 
 - Completed: Not completed — Draft invitation contract.
-- Commit: User-authorized checkpoint — `[DEV0238][DEV0251][DEV0257][DEV0258][DEV0259] Checkpoint schedule authority and plans`; runtime delivery status remains as recorded above.
+- Commit: User-authorized workspace checkpoint (this commit, subject includes DEV0259) records the current recipient/Auth dependency clarifications. Earlier `[DEV0238][DEV0251][DEV0257][DEV0258][DEV0259] Checkpoint schedule authority and plans` remains history; invitation runtime remains Draft.
 - Review: Planning/reference self-review; no independent/runtime review.
 - Deployment or release: None.
