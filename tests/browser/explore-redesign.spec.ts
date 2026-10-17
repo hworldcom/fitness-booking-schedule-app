@@ -161,7 +161,7 @@ test("Explore shares Home's search and cards without introducing a Home query fi
     await expect(page.locator(".coach-map-panel")).toHaveCount(0);
     await expect(
       page.getByRole("heading", {
-        name: "Find your coach. Make time to train.",
+        name: "Find your coach. Achieve your goals.",
       }),
     ).toBeVisible();
   }

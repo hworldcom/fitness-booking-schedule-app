@@ -565,6 +565,18 @@ button {
   color: #735311;
   font-size: 12px;
 }
+.footer-demo-info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--muted);
+  font-size: 11px;
+}
 .page-content {
   max-width: 1490px;
   margin: 0 auto;

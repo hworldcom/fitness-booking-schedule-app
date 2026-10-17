@@ -1,10 +1,10 @@
 import Link from "next/link";
+import { getImageProps } from "next/image";
 import {
   ArrowRight,
   CalendarCheck2,
   CalendarDays,
   Clock3,
-  ShieldCheck,
   UserRoundSearch,
   UsersRound,
 } from "lucide-react";
@@ -103,29 +103,28 @@ export function CoachStoryHome({
   directory: CoachDirectoryState;
   page?: number;
 }) {
+  const { props: heroImageProps } = getImageProps({
+    src: "/images/home-training-collage.png",
+    alt: "Outdoor training collage with agility, a kick against red pads, battle ropes, pad coaching and a helping hand.",
+    fill: true,
+    sizes: "(max-width: 480px) 480px, 100vw",
+    quality: 95,
+    loading: "eager",
+    fetchPriority: "high",
+    className: "marketplace-home-hero-image",
+  });
   return (
     <div className="coach-story coach-story-home">
       <section
         className="marketplace-home-hero"
         aria-labelledby="coach-hero-title"
       >
+        {/* eslint-disable-next-line @next/next/no-img-element -- getImageProps supplies Next.js optimized responsive sources */}
+        <img {...heroImageProps} alt={heroImageProps.alt} />
         <div className="marketplace-home-hero-copy">
-          <span className="eyebrow">
-            PRIVATE MARTIAL-ARTS COACHING · BERLIN
-          </span>
-          <h1 id="coach-hero-title">Find your coach. Make time to train.</h1>
-          <p>Private martial-arts coaching across Berlin.</p>
-          <div className="marketplace-home-confirmation-note">
-            <ShieldCheck size={17} aria-hidden="true" />
-            <span>
-              A request is pending until the coach confirms it. No instant
-              booking is promised.
-            </span>
-          </div>
-          <Link className="marketplace-home-how-link" href="/how-it-works">
-            How coach confirmation works
-            <ArrowRight size={16} aria-hidden="true" />
-          </Link>
+          <h1 id="coach-hero-title">
+            <span>Find your coach.</span> <span>Achieve your goals.</span>
+          </h1>
         </div>
       </section>
       <HomeMarketplaceSearch filters={directory.filters} />

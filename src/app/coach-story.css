@@ -8,6 +8,27 @@
   padding: 14px 0 48px;
 }
 
+.page-content.home-page-content {
+  max-width: none;
+  padding: 0;
+}
+.coach-story.coach-story-home {
+  max-width: none;
+  padding-top: 0;
+}
+.coach-story-home > :not(.marketplace-home-hero) {
+  width: calc(100% - 72px);
+  margin-inline: auto;
+}
+.coach-story-home
+  > :is(
+    .home-coach-discovery,
+    .coach-story-section,
+    .marketplace-home-coach-cta
+  ) {
+  max-width: 1180px;
+}
+
 .coach-devnet-story .eyebrow,
 .coach-story-cta .eyebrow,
 .how-story-hero .eyebrow,
@@ -28,54 +49,50 @@
 }
 
 .marketplace-home-hero {
-  padding: 22px 0 28px;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  height: clamp(210px, 24vw, 340px);
+  background: #f3f1e8;
   color: var(--story-forest);
   text-align: center;
 }
-.marketplace-home-hero .eyebrow {
-  color: var(--muted);
+.marketplace-home-hero-image {
+  z-index: -2;
+  object-fit: cover;
+  object-position: center top;
 }
-.marketplace-home-hero h1 {
-  margin: 12px 0 10px;
-  font-size: clamp(30px, 4vw, 46px);
-  line-height: 1.12;
-  letter-spacing: -1.8px;
-}
-.marketplace-home-hero-copy > p {
-  color: var(--muted);
-  font-size: 14px;
-}
-.marketplace-home-confirmation-note {
+.marketplace-home-hero-copy {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-top: 13px;
-  color: var(--muted);
-  font-size: 11px;
+  height: 100%;
+  width: 27%;
+  margin-left: 29%;
+  min-width: 0;
+  padding: 56px 4px 0;
 }
-.marketplace-home-confirmation-note svg {
-  flex-shrink: 0;
+.marketplace-home-hero h1 {
+  margin: 0;
+  font-size: clamp(18px, 2.45vw, 32px);
+  font-weight: 650;
+  line-height: 1.1;
+  letter-spacing: -1px;
 }
-.marketplace-home-how-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 12px;
-  color: var(--story-forest);
-  font-size: 11px;
+.marketplace-home-hero h1 span {
+  display: block;
 }
 .home-marketplace-search {
   min-width: 0;
   max-width: 880px;
-  margin: 0 auto 26px;
+  margin: 12px auto 14px;
 }
 .home-coach-search {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) auto;
   align-items: center;
   gap: 0;
-  padding: 8px;
+  padding: 3px;
   border: 1px solid var(--line);
   border-radius: 40px;
   background: var(--white);
@@ -83,16 +100,17 @@
 }
 .home-coach-search label {
   min-width: 0;
-  padding: 6px 18px;
+  padding: 0 14px;
 }
 .home-coach-search label + label {
   border-left: 1px solid var(--line);
 }
 .home-coach-search label > span {
   display: block;
-  margin-bottom: 3px;
-  font-size: 11px;
+  margin-bottom: 0;
+  font-size: 10px;
   font-weight: 750;
+  line-height: 1.2;
 }
 .home-coach-search input {
   width: 100%;
@@ -100,6 +118,7 @@
   min-height: 34px;
   border: 0;
   border-radius: 4px;
+  padding: 0;
   background: transparent;
   color: var(--ink);
   font: inherit;
@@ -110,7 +129,7 @@
   opacity: 1;
 }
 .home-coach-search .button {
-  min-height: 48px;
+  min-height: 44px;
   border-radius: 28px;
   white-space: nowrap;
 }
@@ -175,6 +194,27 @@
   opacity: 0.3;
   cursor: default;
 }
+.coach-story-home .home-discipline-navigation {
+  gap: 8px;
+  margin-top: 8px;
+}
+.coach-story-home .home-discipline-track {
+  padding-bottom: 6px;
+}
+.coach-story-home .home-discipline-shortcut {
+  flex: 0 0 auto;
+  flex-direction: row;
+  min-height: 44px;
+  gap: 7px;
+  padding: 8px 12px;
+}
+.coach-story-home .home-discipline-shortcut svg {
+  width: 19px;
+  height: 19px;
+}
+.home-map-link-short {
+  display: none;
+}
 .home-coach-discovery {
   padding: 4px 0 0;
 }
@@ -183,7 +223,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 .home-coach-discovery-heading h2 {
   margin: 0 0 5px;
@@ -754,14 +794,9 @@
 }
 
 @media (max-width: 1050px) {
-  .marketplace-home-hero {
-    grid-template-columns: 1fr;
+  .marketplace-home-hero h1 {
+    font-size: clamp(18px, 2vw, 22px);
   }
-
-  .marketplace-home-hero-copy {
-    max-width: 760px;
-  }
-
   .coach-step-grid,
   .coach-step-grid.three {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -797,6 +832,9 @@
 }
 
 @media (max-width: 900px) {
+  .marketplace-home-hero-copy {
+    margin-left: 27%;
+  }
   .how-story-hero {
     grid-template-columns: 1fr;
   }
@@ -819,7 +857,6 @@
     padding-top: 3px;
   }
 
-  .marketplace-home-hero,
   .how-story-hero {
     min-height: 0;
     border-radius: 22px;
@@ -831,7 +868,6 @@
     padding: 20px;
   }
 
-  .marketplace-home-hero h1,
   .how-story-hero h1 {
     font-size: clamp(40px, 12vw, 53px);
     letter-spacing: -2.6px;
@@ -916,7 +952,6 @@
 }
 
 @media (max-width: 390px) {
-  .marketplace-home-hero h1,
   .how-story-hero h1 {
     font-size: 38px;
   }
@@ -979,56 +1014,65 @@
 }
 @media (max-width: 760px) {
   .marketplace-home-hero {
-    padding: 18px 0 22px;
-    border-radius: 0;
+    height: 160px;
+  }
+  .marketplace-home-hero-copy {
+    width: 110px;
+    margin-left: calc(50% - 83px);
+    align-items: flex-start;
+    padding: clamp(38px, 7vw, 54px) 0 0;
   }
   .marketplace-home-hero h1 {
-    font-size: clamp(30px, 5vw, 40px);
-    letter-spacing: -1px;
-  }
-  .home-coach-search label {
-    padding: 6px 12px;
+    font-size: 16px;
+    line-height: 1;
+    letter-spacing: -0.7px;
   }
   .home-coach-search .button {
     padding-inline: 14px;
   }
+  .coach-story-home > :not(.marketplace-home-hero) {
+    width: calc(100% - 36px);
+  }
   .home-coach-discovery-heading {
     align-items: flex-start;
+    flex-direction: row;
+    gap: 8px;
   }
   .home-coach-discovery-heading h2 {
-    font-size: 23px;
+    font-size: 21px;
+  }
+  .home-coach-discovery-heading .text-link {
+    gap: 5px;
+  }
+  .home-map-link-wide {
+    display: none;
+  }
+  .home-map-link-short {
+    display: inline;
   }
   .home-coach-discovery-state {
     flex-wrap: wrap;
   }
 }
 @media (max-width: 560px) {
-  .marketplace-home-hero {
-    text-align: left;
-  }
-  .marketplace-home-confirmation-note {
-    justify-content: flex-start;
-    align-items: flex-start;
-  }
   .home-coach-search {
-    grid-template-columns: minmax(0, 1fr);
-    padding: 12px;
-    border-radius: 20px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) 44px;
+    border-radius: 18px;
   }
   .home-coach-search label {
-    padding: 7px 10px;
-  }
-  .home-coach-search label + label {
-    border-left: 0;
-    border-top: 1px solid var(--line);
+    padding: 0 9px;
   }
   .home-coach-search input {
     min-height: 40px;
     font-size: 16px;
   }
   .home-coach-search .button {
-    margin-top: 8px;
-    border-radius: 13px;
+    width: 44px;
+    padding: 0;
+    border-radius: 50%;
+  }
+  .home-coach-search .button span {
+    display: none;
   }
   .home-coach-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1037,11 +1081,16 @@
   .compact-coach-card.marketplace .compact-coach-identity > .avatar {
     height: 155px;
   }
+  .coach-story-home
+    .compact-coach-card.marketplace
+    .compact-coach-identity
+    > .avatar {
+    height: 130px;
+  }
   .home-coach-discovery-heading {
-    flex-wrap: wrap;
     gap: 5px;
   }
   .home-coach-discovery-heading .text-link {
-    min-height: 36px;
+    min-height: 44px;
   }
 }

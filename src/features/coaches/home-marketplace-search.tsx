@@ -34,8 +34,13 @@ export function HomeMarketplaceSearch({
             maxLength={120}
           />
         </label>
-        <button className="button dark" type="submit">
-          <Search size={17} aria-hidden="true" /> Search coaches
+        <button
+          className="button dark"
+          type="submit"
+          aria-label="Search coaches"
+        >
+          <Search size={17} aria-hidden="true" />
+          <span>Search coaches</span>
         </button>
       </Form>
       <HomeDisciplineNavigation filters={filters} />

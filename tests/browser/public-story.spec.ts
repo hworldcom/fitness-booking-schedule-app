@@ -9,7 +9,7 @@ test("home presents the focused scheduling loop", async ({
   );
   await expect(
     page.getByRole("heading", {
-      name: "Find your coach. Make time to train.",
+      name: "Find your coach. Achieve your goals.",
     }),
   ).toBeVisible();
   await expect(
@@ -33,7 +33,11 @@ test("home presents the focused scheduling loop", async ({
   ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "How coach confirmation works" }),
-  ).toHaveAttribute("href", "/how-it-works");
+  ).toHaveCount(0);
+  await expect(page.locator(".marketplace-home-hero .eyebrow")).toHaveCount(0);
+  await expect(page.locator(".marketplace-home-confirmation-note")).toHaveCount(
+    0,
+  );
   const previewGrid = page.locator(".home-coach-grid");
   const previewState = page.locator(".home-coach-discovery-state");
   await expect(previewGrid.or(previewState)).toBeVisible();
@@ -61,7 +65,7 @@ test("home presents the focused scheduling loop", async ({
     await page.goBack();
     await expect(
       page.getByRole("heading", {
-        name: "Find your coach. Make time to train.",
+        name: "Find your coach. Achieve your goals.",
       }),
     ).toBeVisible();
   } else {
@@ -98,9 +102,47 @@ test("home marketplace remains usable at the adopted review widths", async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop");
-  for (const width of [375, 430, 768, 1024, 1440]) {
-    await page.setViewportSize({ width, height: 900 });
+  for (const [width, height] of [
+    [375, 812],
+    [393, 852],
+    [430, 900],
+    [768, 900],
+    [1024, 900],
+    [1440, 900],
+  ]) {
+    await page.setViewportSize({ width, height });
     await page.goto("/");
+    await page.evaluate(() => window.scrollTo(0, 0));
+    const searchBounds = await page.locator(".home-coach-search").boundingBox();
+    expect(searchBounds?.height).toBeLessThanOrEqual(66);
+    const image = page.locator(".marketplace-home-hero-image");
+    await expect(image).toHaveJSProperty("complete", true);
+    expect(
+      await image.evaluate((element: HTMLImageElement) => element.naturalWidth),
+    ).toBeGreaterThan(0);
+    const imageBounds = await image.boundingBox();
+    const headlineBounds = await page
+      .getByRole("heading", { name: "Find your coach. Achieve your goals." })
+      .boundingBox();
+    expect(headlineBounds!.x).toBeGreaterThanOrEqual(imageBounds!.x);
+    expect(headlineBounds!.y).toBeGreaterThanOrEqual(imageBounds!.y);
+    expect(headlineBounds!.x + headlineBounds!.width).toBeLessThanOrEqual(
+      imageBounds!.x + imageBounds!.width + 1,
+    );
+    expect(headlineBounds!.y + headlineBounds!.height).toBeLessThanOrEqual(
+      imageBounds!.y + imageBounds!.height + 1,
+    );
+    const coachNames = page.locator(
+      ".home-coach-grid .compact-coach-identity h3",
+    );
+    for (
+      let index = 0;
+      index < Math.min(2, await coachNames.count());
+      index++
+    ) {
+      const name = await coachNames.nth(index).boundingBox();
+      expect(name!.y + name!.height).toBeLessThanOrEqual(height);
+    }
     await expect(
       page.getByRole("form", { name: "Search coaches" }),
     ).toBeVisible();
@@ -191,9 +233,7 @@ test("public routes use the compact marketplace header", async ({
   }
 
   await page.goto("/");
-  await expect(page.locator(".demo-strip")).toContainText(
-    "Coach discovery and coach-confirmed scheduling preview.",
-  );
+  await expect(page.locator(".demo-strip")).toHaveCount(0);
   await expect(
     page
       .getByRole("banner")
@@ -210,7 +250,7 @@ test("public routes use the compact marketplace header", async ({
   ).toHaveCount(0);
   await expect(
     page.getByRole("link", { name: "Events", exact: true }),
-  ).toHaveCount(0);
+  ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Following", exact: true }),
   ).toHaveCount(0);
@@ -226,6 +266,10 @@ test("public routes use the compact marketplace header", async ({
   await page.keyboard.press("Tab");
   await expect(
     page.getByRole("link", { name: "Explore", exact: true }).first(),
+  ).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(
+    page.getByRole("link", { name: "Events", exact: true }),
   ).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(

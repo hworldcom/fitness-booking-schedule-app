@@ -40,7 +40,7 @@ test("sign-in explains the email/account boundary without blocking public browsi
   await expect(page).toHaveURL(/\/$/);
   await expect(
     page.getByRole("heading", {
-      name: "Find your coach. Make time to train.",
+      name: "Find your coach. Achieve your goals.",
     }),
   ).toBeVisible();
   expect(identityRequests).toBe(0);

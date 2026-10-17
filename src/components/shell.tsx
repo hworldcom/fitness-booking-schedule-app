@@ -468,26 +468,11 @@ export function Shell({ children }: { children: ReactNode }) {
             </div>
           </header>
         )}
-        <div
-          role={publicShell ? "region" : undefined}
-          aria-label={publicShell ? "Demonstration data" : undefined}
-          className={`demo-strip ${
-            publicShell ? "" : "authenticated-demo-strip"
-          }`}
-        >
-          <span>
-            <i /> DEMO WORLD
-          </span>
-          <p>Coach discovery and coach-confirmed scheduling preview.</p>
-          <button onClick={() => setAboutOpen(true)}>
-            Fictional profiles <Info size={13} aria-hidden="true" />
-          </button>
-        </div>
         <main
           id="main-content"
           className={`page-content ${
             publicShell ? "" : "authenticated-page-content"
-          }`}
+          } ${path === "/" ? "home-page-content" : ""}`}
           tabIndex={-1}
         >
           {children}
@@ -504,7 +489,16 @@ export function Shell({ children }: { children: ReactNode }) {
             </a>
           </span>
           <span className="footer-tagline">Find a coach. Book your time.</span>
-          <Pill>Scheduling preview</Pill>
+          {publicShell ? (
+            <button
+              className="footer-demo-info"
+              onClick={() => setAboutOpen(true)}
+            >
+              Fictional profiles <Info size={13} aria-hidden="true" />
+            </button>
+          ) : (
+            <Pill>Scheduling preview</Pill>
+          )}
         </footer>
       </div>
       {!publicShell && (

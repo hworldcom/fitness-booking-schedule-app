@@ -42,8 +42,16 @@ export function HomeCoachDiscovery({
             Clear filters
           </Link>
         ) : (
-          <Link className="text-link" href="/explore?view=map">
-            Explore with a map <ArrowRight size={16} aria-hidden="true" />
+          <Link
+            className="text-link"
+            href="/explore?view=map"
+            aria-label="Explore with a map"
+          >
+            <span className="home-map-link-wide">Explore with a map</span>
+            <span className="home-map-link-short" aria-hidden="true">
+              Map
+            </span>
+            <ArrowRight size={16} aria-hidden="true" />
           </Link>
         )}
       </div>
