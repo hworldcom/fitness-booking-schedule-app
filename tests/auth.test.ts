@@ -11,11 +11,7 @@ import {
   createAuthServiceFetch,
   isLocalAuthServiceUrl,
 } from "../src/auth/service-availability";
-import {
-  emailOtpErrorMessage,
-  normalizeEmail,
-  normalizeEmailOtp,
-} from "../src/auth/email-otp";
+import { normalizeEmail } from "../src/auth/email";
 import {
   EMAIL_REAUTHENTICATION_WINDOW_SECONDS,
   isRecentEmailOtpAuthentication,
@@ -56,13 +52,10 @@ test("public Auth config requires a secure site or literal localhost", () => {
   );
 });
 
-test("email and one-time-code inputs normalize to bounded values", () => {
+test("email inputs normalize to bounded values", () => {
   assert.equal(normalizeEmail(" Anna@Example.COM "), "anna@example.com");
   assert.equal(normalizeEmail("not-an-email"), null);
   assert.equal(normalizeEmail(`${"a".repeat(250)}@example.com`), null);
-  assert.equal(normalizeEmailOtp(" 123 456 "), "123456");
-  assert.equal(normalizeEmailOtp("12345"), null);
-  assert.equal(normalizeEmailOtp("12345a"), null);
 });
 
 test("verified session responses require a bounded email identity", () => {
@@ -81,45 +74,6 @@ test("verified session responses require a bounded email identity", () => {
       walletAddress: "7YWHMfk9JZe1LM1W7mFDJH8QvJ75zEQY4zBbDx8kPn9M",
       expiresAt: session.expiresAt,
     }),
-    false,
-  );
-});
-
-test("OTP failures use bounded copy without echoing provider details", () => {
-  assert.match(
-    emailOtpErrorMessage(
-      {
-        status: 0,
-        message:
-          'Local Supabase Auth could not be reached. Run "npm run auth:start", then retry.',
-      },
-      "request",
-    ),
-    /local supabase auth is unreachable.*npm run auth:start/i,
-  );
-  assert.match(
-    emailOtpErrorMessage({ status: 429, message: "raw body" }, "request"),
-    /too many/i,
-  );
-  assert.match(
-    emailOtpErrorMessage(
-      { status: 400, message: "User account does not exist" },
-      "request",
-    ),
-    /couldn’t send/i,
-  );
-  assert.match(
-    emailOtpErrorMessage(
-      { status: 403, message: "token for secret@example.com expired" },
-      "verify",
-    ),
-    /invalid or expired/i,
-  );
-  assert.equal(
-    emailOtpErrorMessage(
-      { status: 400, message: "User account does not exist" },
-      "request",
-    ).includes("does not exist"),
     false,
   );
 });

@@ -7,9 +7,9 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (file: string) => readFileSync(path.join(root, file), "utf8");
 
-test("local Supabase confirms password signup and retains bounded existing-account email proofs", () => {
+test("local Supabase confirms password signup and does not send login codes", () => {
   const config = read("supabase/config.toml");
-  const template = read("supabase/templates/email-otp.html");
+  const template = read("supabase/templates/password-sign-in.html");
   assert.match(config, /site_url = "http:\/\/localhost:3100"/);
   const redirects = JSON.parse(
     config.match(/additional_redirect_urls = (\[[^\n]+\])/)![1],
@@ -43,15 +43,14 @@ test("local Supabase confirms password signup and retains bounded existing-accou
   assert.match(config, /\[auth\.email\.template\.magic_link\]/);
   assert.match(
     config,
-    /content_path = "\.\/supabase\/templates\/email-otp\.html"/,
+    /content_path = "\.\/supabase\/templates\/password-sign-in\.html"/,
   );
-  assert.match(template, /\{\{ \.Token \}\}/);
-  assert.equal(template.match(/\{\{ \.Token \}\}/g)?.length, 1);
-  assert.match(config, /Your MovX Club sign-in code/);
-  assert.match(template, /Your MovX Club sign-in code/);
-  assert.match(template, /hello@movx\.club/);
-  assert.doesNotMatch(template, /ConfirmationURL|TokenHash/);
-  assert.doesNotMatch(template, /RepX Club/);
+  assert.match(template, /Forgot password/);
+  assert.doesNotMatch(template, /\{\{.*(?:Token|ConfirmationURL)/);
+  assert.doesNotMatch(
+    config,
+    /Your MovX Club sign-in code|templates\/email-otp/,
+  );
   assert.match(config, /\[auth\.web3\.solana\]\nenabled = false/);
   assert.doesNotMatch(config, /\[auth\.captcha\]\nenabled = true/);
 });

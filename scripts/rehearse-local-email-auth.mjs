@@ -484,39 +484,7 @@ try {
           await tx`select set_config('app.current_auth_user_id',${legacyId},true),set_config('app.current_profile_id',${enrolled.identity_profile_id},true),set_config('app.current_run_id',${enrolled.identity_run_id},true),set_config('app.current_run_role','member',true)`;
           await tx`select app.update_current_account_settings('personal-details',${tx.json({ legalName: "Private Auth Fixture", preferredFirstName: "Legacy", birthdate: null, gender: null })},0)`;
         });
-        assert.equal(
-          (
-            await command(stranger, {
-              action: "request-code",
-              email: legacyEmail,
-            })
-          ).body.status,
-          "requested",
-        );
-        const mail = await message(legacyEmail, "Your MovX Club sign-in code"),
-          code = (mail.Text ?? mail.Snippet ?? mail.HTML).match(
-            /\b\d{6}\b/,
-          )?.[0];
-        assert.ok(code);
-        assert.equal(
-          (
-            await command(stranger, {
-              action: "verify-code",
-              email: legacyEmail,
-              code,
-            })
-          ).body.status,
-          "success",
-        );
-        assert.equal((await session(stranger)).subject, legacyId);
-        assert.equal(
-          (
-            await (
-              await stranger.request.get(base + "/api/auth/methods")
-            ).json()
-          ).hasPassword,
-          false,
-        );
+        assert.equal((await session(stranger)).status, "signed-out");
         const avatar = await sharp({
           create: {
             width: 512,
@@ -527,46 +495,22 @@ try {
         })
           .webp({ quality: 82 })
           .toBuffer();
-        const uploaded = await stranger.request.post(
-          base + "/api/profile/avatar",
-          {
-            headers: { origin: base, "content-type": "image/webp" },
-            data: avatar,
-          },
-        );
-        assert.equal((await uploaded.json()).status, "saved");
-        const imageBefore = await (
-          await stranger.request.get(base + "/api/profile/avatar")
-        ).body();
-        const conversation = await stranger.request.post(
-          base + "/api/messages",
-          {
-            headers: { origin: base },
-            data: {
-              action: "inquire",
-              args: {
-                coachId: "10000000-0000-4000-8000-000000000002",
-                submissionId: randomUUID(),
-                body: "Private authentication continuity fixture.",
-              },
-            },
-          },
-        );
-        assert.equal(conversation.status(), 200);
-        assert.equal(
-          (
-            await sql`select count(*)::int n from app.message_conversations where athlete_profile_id=${enrolled.identity_profile_id}::uuid`
-          )[0].n,
-          1,
-        );
+        const avatarPath =
+          enrolled.identity_profile_id + "/" + randomUUID() + ".webp";
+        const uploaded = await admin.storage
+          .from("account-avatars")
+          .upload(avatarPath, avatar, { contentType: "image/webp" });
+        assert.ok(!uploaded.error);
+        await sql.begin(async (tx) => {
+          await tx.unsafe("set local role app_runtime");
+          await tx`select set_config('app.current_auth_user_id',${legacyId},true),set_config('app.current_profile_id',${enrolled.identity_profile_id},true),set_config('app.current_run_id',${enrolled.identity_run_id},true),set_config('app.current_run_role','member',true)`;
+          await tx`select app.set_current_account_avatar_reference(${avatarPath},null)`;
+          const [conversation] =
+            await tx`select app.message_command('inquire',${tx.json({ coachId: "10000000-0000-4000-8000-000000000002", submissionId: randomUUID(), body: "Private authentication continuity fixture." })}) result`;
+          assert.ok(conversation.result.conversationId);
+        });
+        const imageBefore = avatar;
         const saved = await snapshot(legacyId);
-        // The real provider shares a per-address send cooldown across code and recovery.
-        // Let that real window elapse rather than bypassing its settings or timestamps.
-        console.log(
-          "Waiting for the real email-send cooldown before password setup.",
-        );
-        await new Promise((resolve) => setTimeout(resolve, 31000));
-        await new Promise((resolve) => setTimeout(resolve, 31000));
         assert.equal(
           (
             await command(stranger, {
@@ -616,13 +560,13 @@ try {
       },
     );
     await step(
-      "unknown/duplicate account requests stay generic and existing-only codes never enroll",
+      "removed code commands fail while unknown recovery and duplicate signup stay generic",
       async () => {
         const unknown = tag + "-absent@users.movx.test";
         assert.equal(
           (await command(second, { action: "request-code", email: unknown }))
-            .body.status,
-          "requested",
+            .code,
+          400,
         );
         assert.equal(
           (
@@ -630,6 +574,45 @@ try {
           )[0].n,
           0,
         );
+        assert.equal(
+          (
+            await command(second, {
+              action: "verify-code",
+              email: unknown,
+              code: "123456",
+            })
+          ).code,
+          400,
+        );
+        assert.equal(
+          (
+            await command(second, {
+              action: "request-recovery",
+              email: unknown,
+            })
+          ).body.status,
+          "requested",
+        );
+        const legacyFlow = randomUUID().replaceAll("-", "").repeat(2),
+          binding = randomUUID().replaceAll("-", "").repeat(2);
+        await sql`select app.begin_email_auth_flow(${digest(legacyFlow)},${digest(binding)},${digest(unknown)},'login',null,'/sessions')`;
+        await second.addCookies([
+          {
+            name: "movx-auth-flow",
+            value: legacyFlow + "." + binding,
+            url: base,
+            httpOnly: true,
+            sameSite: "Lax",
+          },
+        ]);
+        const invalid = await command(second, {
+          action: "confirm-email",
+          flow: legacyFlow,
+          tokenHash: "b".repeat(64),
+          type: "signup",
+        });
+        assert.equal(invalid.body.status, "invalid-proof");
+        assert.equal((await session(second)).status, "signed-out");
         await sql`update app.email_auth_flows set requested_at=statement_timestamp()-interval '61 seconds' where email_hash=${digest(email)}`;
         assert.equal(
           (await command(second, { action: "register", email, password })).body

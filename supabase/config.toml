@@ -250,8 +250,8 @@ otp_expiry = 3600
 # content_path = "./supabase/templates/invite.html"
 
 [auth.email.template.magic_link]
-subject = "Your MovX Club sign-in code"
-content_path = "./supabase/templates/email-otp.html"
+subject = "Sign in to MovX Club with your password"
+content_path = "./supabase/templates/password-sign-in.html"
 
 [auth.email.template.confirmation]
 subject = "Confirm your MovX Club email"

@@ -58,7 +58,7 @@ Use meaningful component/browser state checks and actual local password/confirma
 
 ### Changes and rationale
 
-2026-10-17: replaced the code-only sign-in screen with branded separate password login/registration, check-email/resend, forgot/reset password, email-proof confirmation and minimal-profile routes. Existing users can explicitly choose email codes; new accounts use registration. The new dark-green desktop support panel becomes a focused single-column phone card. Forms support named/autocomplete fields, preserved pasted passwords, show/hide controls, disabled pending/pre-hydration inputs, visible keyboard focus and focused announced errors. Apple is absent. Google is disabled with truthful unavailable copy until DEV0287 supplies actual readiness.
+2026-10-17: replaced the code-only sign-in screen with branded separate password login/registration, check-email/resend, forgot/reset password, email-proof confirmation and minimal-profile routes. At the initial implementation checkpoint existing users could choose email codes. The later user-directed DEV0322 change removes that fallback; passwordless users use verified recovery/setup, and new accounts use registration. The new dark-green desktop support panel becomes a focused single-column phone card. Forms support named/autocomplete fields, preserved pasted passwords, show/hide controls, disabled pending/pre-hydration inputs, visible keyboard focus and focused announced errors. Apple is absent. Google is disabled with truthful unavailable copy until DEV0287 supplies actual readiness.
 
 The callback strips its proof fragment before explicit confirmation; GET alone consumes nothing. Recovery views use the server's restricted state and offer reset/sign-out. Signup/name completion and safe returns use DEV0286's verified results. Existing completed profiles are reused; coach intent exposes an explicit application action and never grants approval. Account → Login & security now shows a server-derived Set/Change password action, current-password change form, recovery link and current-device sign-out without changing optional username/legal-name persistence. The pure Account view receives its interactive Auth section as a slot, keeping existing rendering tests independent of Next router context.
 
@@ -71,6 +71,8 @@ The callback strips its proof fragment before explicit confirmation; GET alone c
 - [Browser Auth tests](../../../tests/browser/auth.spec.ts), [route-access regression](../../../tests/browser/authorization.spec.ts), [shell tests](../../../tests/shell-navigation.test.ts), [Account view checks](../../../tests/account-settings.test.ts): new entry/navigation/presentation regression coverage. The old access test incorrectly classified delivered `/events` and `/coach/events` as removed; those stale expectations were corrected without changing the routes.
 
 ### Decisions and deviations
+
+2026-10-17 later user decision: [DEV0322](../../archive/backend/DEV0322-remove-email-code-login.md) removes the code-login entry, state and application operations before registration testing. The previous transitional fallback is superseded; confirmation/reset links remain.
 
 2026-10-17 later scope change under DEV0311: initial delivery is email/password and Google; the user deferred Apple account/setup. Apple controls and live provider proof are excluded from this peer and preserved in independent DEV0312. Earlier three-method planning history below is retained. Runtime remains Draft; no implementation/provider operation occurred.
 

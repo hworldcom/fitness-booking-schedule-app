@@ -12,6 +12,10 @@ test("password-first entry offers registration and recovery while public browsin
   await expect(
     page.getByRole("heading", { name: "Welcome back", exact: true }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /email code|sign-in code/i }),
+  ).toHaveCount(0);
+  await expect(page.getByLabel("Six-digit code")).toHaveCount(0);
   await expect(page.getByLabel("Email address")).toBeVisible();
   await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
   await expect(

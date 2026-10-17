@@ -4,7 +4,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { supabasePublicConfig } from "@/auth/config";
-import { normalizeEmail, normalizeEmailOtp } from "@/auth/email-otp";
+import { normalizeEmail } from "@/auth/email";
 import type { AuthenticationResult } from "@/auth/gateway";
 import type { AuthenticationCommand } from "@/auth/operations";
 import { isSignInPassword, validateNewPassword } from "@/auth/password";
@@ -130,11 +130,8 @@ async function boundFlow(flowValue?: string) {
 }
 
 async function requestEmail(
-  command: Exclude<
-    Extract<AuthenticationCommand, { email: string }>,
-    { action: "verify-code" }
-  >,
-  purpose: EmailAuthPurpose,
+  command: Extract<AuthenticationCommand, { email: string }>,
+  purpose: Exclude<EmailAuthPurpose, "login">,
 ): Promise<AuthenticationResult> {
   const config = supabasePublicConfig();
   const client = await serverAuthClient();
@@ -197,20 +194,10 @@ async function requestEmail(
         options: { emailRedirectTo: redirectTo.toString() },
       })
     ).error;
-  } else if (purpose === "recovery") {
+  } else {
     error = (
       await client.auth.resetPasswordForEmail(email, {
         redirectTo: redirectTo.toString(),
-      })
-    ).error;
-  } else {
-    error = (
-      await client.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: false,
-          emailRedirectTo: redirectTo.toString(),
-        },
       })
     ).error;
   }
@@ -218,55 +205,26 @@ async function requestEmail(
     ? failure(error, "request")
     : {
         status: "requested",
-        next: purpose === "login" ? undefined : "/check-email",
+        next: "/check-email",
       };
 }
 
 async function acceptProof(
-  command: Extract<
-    AuthenticationCommand,
-    { action: "confirm-email" | "verify-code" }
-  >,
+  command: Extract<AuthenticationCommand, { action: "confirm-email" }>,
   previous: Awaited<ReturnType<typeof verifiedProviderContext>>,
 ): Promise<AuthenticationResult> {
-  const bound = await boundFlow(
-    command.action === "confirm-email" ? command.flow : undefined,
-  );
-  if (!bound) return { status: "invalid-proof" };
+  const bound = await boundFlow(command.flow);
+  if (!bound || bound.flow.purpose === "login")
+    return { status: "invalid-proof" };
   const { flow, idHash, bindingHash } = bound;
-  const expected = {
-    confirmation: "signup",
-    login: "magiclink",
-    recovery: "recovery",
-  } as const;
-  if (
-    command.action === "confirm-email" &&
-    command.type !== expected[flow.purpose]
-  )
-    return { status: "invalid-proof" };
-  if (
-    command.action === "verify-code" &&
-    (flow.purpose !== "login" ||
-      hash(normalizeEmail(command.email) ?? "") !== flow.emailHash)
-  )
-    return { status: "invalid-proof" };
+  const expected = flow.purpose === "confirmation" ? "signup" : "recovery";
+  if (command.type !== expected) return { status: "invalid-proof" };
   const client = await serverAuthClient();
   if (!client) return { status: "unavailable" };
-  const token =
-    command.action === "verify-code" ? normalizeEmailOtp(command.code) : null;
-  if (command.action === "verify-code" && !token)
-    return { status: "invalid", message: "code" };
-  const verified =
-    command.action === "confirm-email"
-      ? await client.auth.verifyOtp({
-          token_hash: command.tokenHash,
-          type: command.type,
-        })
-      : await client.auth.verifyOtp({
-          email: normalizeEmail(command.email)!,
-          token: token!,
-          type: "email",
-        });
+  const verified = await client.auth.verifyOtp({
+    token_hash: command.tokenHash,
+    type: command.type,
+  });
   if (verified.error) return failure(verified.error, "proof");
   const context = await verifiedProviderContext(client);
   if (
@@ -471,12 +429,9 @@ export async function runAuthenticationCommand(
         return requestEmail(command, "confirmation");
       case "resend-confirmation":
         return requestEmail(command, "confirmation");
-      case "request-code":
-        return requestEmail(command, "login");
       case "request-recovery":
         return requestEmail(command, "recovery");
       case "confirm-email":
-      case "verify-code":
         return acceptProof(command, context);
       case "sign-in":
         return signIn(command, context);

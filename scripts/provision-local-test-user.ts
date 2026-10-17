@@ -143,7 +143,7 @@ async function main() {
         : "- No private avatar yet; upload one from the Profile page.",
     );
     console.log(
-      "Request a sign-in code in the app and read it from http://127.0.0.1:55324.",
+      "Use Forgot password to set/reset a password; open its email in the same browser from http://127.0.0.1:55324.",
     );
   } catch (error) {
     if (createdAuthUser) {

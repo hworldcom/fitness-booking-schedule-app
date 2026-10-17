@@ -1,4 +1,4 @@
-import { normalizeEmail, normalizeEmailOtp } from "./email-otp";
+import { normalizeEmail } from "./email";
 import type { AuthSessionSnapshot } from "./contracts";
 import { isSignInPassword, validateNewPassword } from "./password";
 import {
@@ -14,7 +14,7 @@ export type AuthenticationResult =
       status: "invalid";
       message:
         | "email"
-        | "code"
+        | "input"
         | "password-too-short"
         | "password-too-long"
         | "password-invalid"
@@ -31,8 +31,6 @@ export type AuthenticationEvent = "signed-out" | "session-changed";
 /** The adapter translates all vendor responses before crossing this boundary. */
 export interface AuthenticationAdapter {
   execute(command: AuthenticationCommand): Promise<AuthenticationResult>;
-  requestEmailCode(email: string): Promise<AuthenticationResult>;
-  verifyEmailCode(email: string, code: string): Promise<AuthenticationResult>;
   registerWithPassword(
     email: string,
     password: string,
@@ -47,8 +45,6 @@ export interface AuthenticationAdapter {
 
 export interface AuthenticationGateway {
   execute(command: unknown): Promise<AuthenticationResult>;
-  requestEmailCode(email: unknown): Promise<AuthenticationResult>;
-  verifyEmailCode(email: unknown, code: unknown): Promise<AuthenticationResult>;
   registerWithPassword(
     email: unknown,
     password: unknown,
@@ -101,22 +97,7 @@ export function createAuthenticationGateway(
       const command = parseAuthenticationCommand(value);
       return command
         ? available(() => adapter.execute(command))
-        : Promise.resolve({ status: "invalid", message: "code" });
-    },
-    async requestEmailCode(value) {
-      const email = normalizeEmail(value);
-      if (!email) return { status: "invalid", message: "email" };
-      return available(() => adapter.requestEmailCode(email));
-    },
-    async verifyEmailCode(value, codeValue) {
-      const email = normalizeEmail(value);
-      const code = normalizeEmailOtp(codeValue);
-      if (!email) return { status: "invalid", message: "email" };
-      if (!code) return { status: "invalid", message: "code" };
-      return available(async () => {
-        const result = await adapter.verifyEmailCode(email, code);
-        return verifySuccess(result, email, "invalid-proof");
-      });
+        : Promise.resolve({ status: "invalid", message: "input" });
     },
     async registerWithPassword(value, passwordValue) {
       const email = normalizeEmail(value);
@@ -149,8 +130,8 @@ export function authenticationResultMessage(
     switch (result.message) {
       case "email":
         return "Enter a valid email address.";
-      case "code":
-        return "Enter the six-digit code from your email.";
+      case "input":
+        return "Check the details and try again.";
       case "password-too-short":
         return "Use at least 8 characters for your password.";
       case "password-too-long":
@@ -164,7 +145,7 @@ export function authenticationResultMessage(
   if (result.status === "invalid-credentials")
     return "The email or password is incorrect. Try again.";
   if (result.status === "invalid-proof")
-    return "That link or code is invalid or expired. Request a fresh email and try again.";
+    return "That link is invalid or expired. Request a fresh email and try again.";
   if (result.status === "rate-limited")
     return result.retryAfterSeconds === null
       ? "Too many attempts. Please wait before trying again."

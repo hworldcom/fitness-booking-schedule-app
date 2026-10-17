@@ -11,7 +11,7 @@
 
 Enable real Google web authentication through the existing managed Auth boundary, with one authorized MovX identity and compatible onboarding/return behavior.
 
-Use the current [registration contract](../../../docs/mvp-spec.md#41-register-as-an-athlete-or-apply-to-coach), [identity/privacy rules](../../../docs/mvp-spec.md#8-identity-data-and-demo-integrity), [definition of done](../../../docs/mvp-spec.md#11-definition-of-done), [milestones](../../../docs/mvp-spec.md#12-delivery-milestones) and [acceptance matrix](../../../docs/mvp-spec.md#13-acceptance-matrix). The delivered application still uses email codes until these runtime peers pass.
+Use the current [registration contract](../../../docs/mvp-spec.md#41-register-as-an-athlete-or-apply-to-coach), [identity/privacy rules](../../../docs/mvp-spec.md#8-identity-data-and-demo-integrity), [definition of done](../../../docs/mvp-spec.md#11-definition-of-done), [milestones](../../../docs/mvp-spec.md#12-delivery-milestones) and [acceptance matrix](../../../docs/mvp-spec.md#13-acceptance-matrix). The local password-first flow is implemented; DEV0322 removes the former email-code fallback at the user’s request. Real Google and hosted/combined UAT readiness remain pending.
 
 ## Scope and non-goals
 
@@ -62,6 +62,8 @@ Not started. Provider credentials, Developer accounts and readiness have not bee
 Planned: shared auth client/server callback adapters, provider configuration/readiness contract, ignored credential configuration and non-secret setup documentation, targeted Auth tests. DEV0288 owns the visible controls.
 
 ### Decisions and deviations
+
+2026-10-17 later user decision: remove email-code login now, superseding the previously planned through-UAT fallback. [DEV0322](../../archive/backend/DEV0322-remove-email-code-login.md) owns this application/contract change. Earlier code-login evidence below remains historical; confirmation and recovery email links remain required.
 
 2026-10-17 contract alignment under DEV0285: updated this peer's scope/criteria to consume the adopted specification, including the confirmed 8-character/no-mixture policy and its relevant linking, profile, recovery/session, route and Account boundaries. This is documentation alignment only; runtime remains Draft/on hold and all implementation acceptance evidence is pending.
 

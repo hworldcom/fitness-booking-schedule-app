@@ -7,7 +7,7 @@ import {
   UNAVAILABLE_AUTH_SESSION,
   type AuthSessionSnapshot,
 } from "@/auth/contracts";
-import { normalizeEmail } from "@/auth/email-otp";
+import { normalizeEmail } from "@/auth/email";
 import { latestEmailOtpAuthenticationAt } from "@/auth/reauthentication";
 import { serverAuthClient } from "./client";
 import { currentApplicationAuthPurpose } from "@/server/db/auth/repository";

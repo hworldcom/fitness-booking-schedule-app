@@ -40,9 +40,9 @@ export async function POST(request: Request) {
   if (
     request.headers.get("content-type")?.split(";", 1)[0] !== "application/json"
   )
-    return response({ status: "invalid", message: "code" });
+    return response({ status: "invalid", message: "input" });
   const reader = request.body?.getReader();
-  if (!reader) return response({ status: "invalid", message: "code" });
+  if (!reader) return response({ status: "invalid", message: "input" });
   let input: unknown;
   try {
     let size = 0;
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       size += value.length;
       if (size > 4096) {
         await reader.cancel();
-        return response({ status: "invalid", message: "code" });
+        return response({ status: "invalid", message: "input" });
       }
       chunks.push(value);
     }
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     }
     input = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
   } catch {
-    return response({ status: "invalid", message: "code" });
+    return response({ status: "invalid", message: "input" });
   } finally {
     reader.releaseLock();
   }
@@ -73,6 +73,6 @@ export async function POST(request: Request) {
   return response(
     command
       ? await runAuthenticationCommand(command)
-      : { status: "invalid", message: "code" },
+      : { status: "invalid", message: "input" },
   );
 }

@@ -9,17 +9,16 @@ export type AuthenticationCommand =
       intent?: "client" | "coach";
     }>
   | Readonly<{
-      action: "request-code" | "request-recovery" | "resend-confirmation";
+      action: "request-recovery" | "resend-confirmation";
       email: string;
       returnTo?: string;
       intent?: "client" | "coach";
     }>
-  | Readonly<{ action: "verify-code"; email: string; code: string }>
   | Readonly<{
       action: "confirm-email";
       flow: string;
       tokenHash: string;
-      type: "signup" | "magiclink" | "recovery";
+      type: "signup" | "recovery";
     }>
   | Readonly<{ action: "reset-password"; password: string }>
   | Readonly<{
@@ -37,10 +36,8 @@ export function parseAuthenticationCommand(
   const fields: Record<string, readonly string[]> = {
     register: ["email", "password", "returnTo", "intent"],
     "sign-in": ["email", "password", "returnTo", "intent"],
-    "request-code": ["email", "returnTo", "intent"],
     "request-recovery": ["email", "returnTo", "intent"],
     "resend-confirmation": ["email", "returnTo", "intent"],
-    "verify-code": ["email", "code"],
     "confirm-email": ["flow", "tokenHash", "type"],
     "reset-password": ["password"],
     "change-password": ["password", "currentPassword"],
@@ -76,7 +73,7 @@ export function parseAuthenticationCommand(
     input.action === "confirm-email" &&
     (!/^[0-9a-f]{64}$/.test(input.flow as string) ||
       !/^[A-Za-z0-9_-]{32,256}$/.test(input.tokenHash as string) ||
-      !["signup", "magiclink", "recovery"].includes(input.type as string))
+      !["signup", "recovery"].includes(input.type as string))
   )
     return null;
   return input as AuthenticationCommand;
@@ -133,7 +130,7 @@ export function isAuthenticationResult(
     input.status === "invalid" &&
     ![
       "email",
-      "code",
+      "input",
       "password-too-short",
       "password-too-long",
       "password-invalid",

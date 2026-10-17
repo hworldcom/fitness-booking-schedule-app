@@ -33,7 +33,6 @@ export async function GET() {
         status: "ready",
         email: session.email,
         hasPassword: await accountHasPassword(session.subject),
-        emailCode: true,
       },
       { headers: { "cache-control": "private, no-store", vary: "Cookie" } },
     );

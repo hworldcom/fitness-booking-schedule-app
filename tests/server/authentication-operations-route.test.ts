@@ -28,6 +28,33 @@ test("authentication refuses origin, body and authority violations before using 
     {
       headers,
       body: JSON.stringify({
+        action: "request-code",
+        email: "former@example.test",
+      }),
+      code: 400,
+    },
+    {
+      headers,
+      body: JSON.stringify({
+        action: "verify-code",
+        email: "former@example.test",
+        code: "123456",
+      }),
+      code: 400,
+    },
+    {
+      headers,
+      body: JSON.stringify({
+        action: "confirm-email",
+        flow: "a".repeat(64),
+        tokenHash: "b".repeat(64),
+        type: "magiclink",
+      }),
+      code: 400,
+    },
+    {
+      headers,
+      body: JSON.stringify({
         action: "reset-password",
         password: "some password",
         subject: "forged",
@@ -48,7 +75,7 @@ test("authentication refuses origin, body and authority violations before using 
       await response.json(),
       scenario.code === 403
         ? { status: "forbidden" }
-        : { status: "invalid", message: "code" },
+        : { status: "invalid", message: "input" },
     );
   }
 });

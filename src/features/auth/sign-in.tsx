@@ -119,9 +119,6 @@ export function SignInScreen({
   );
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [code, setCode] = useState("");
-  const [codeMode, setCodeMode] = useState(false);
-  const [codeSent, setCodeSent] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [identity, setIdentity] = useState<ApplicationIdentitySnapshot | null>(
     null,
@@ -129,7 +126,6 @@ export function SignInScreen({
   const [proof, setProof] = useState<AuthenticationCommand | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const lock = useRef(false);
   const errorRef = useRef<HTMLParagraphElement>(null);
   const proofCache = useRef<AuthenticationCommand | null | undefined>(
@@ -179,37 +175,28 @@ export function SignInScreen({
     if (error) errorRef.current?.focus();
   }, [error]);
 
-  async function run(command: AuthenticationCommand, onRequested?: () => void) {
+  async function run(command: AuthenticationCommand) {
     if (lock.current || !ready) return;
     lock.current = true;
     setBusy(true);
     setError(null);
-    setNotice(null);
     try {
       const result = await authenticationGateway.execute(command);
       if (result.status === "requested") {
         setPassword("");
-        onRequested?.();
-        if (command.action === "request-code") {
-          setCodeSent(true);
-          setNotice(
-            "If this address has an account, a six-digit code is on its way.",
-          );
-        } else
-          navigate(
-            link("check-email") +
-              "&purpose=" +
-              (command.action === "request-recovery"
-                ? "recovery"
-                : "confirmation"),
-          );
+        navigate(
+          link("check-email") +
+            "&purpose=" +
+            (command.action === "request-recovery"
+              ? "recovery"
+              : "confirmation"),
+        );
       } else if (
         result.status === "success" ||
         result.status === "recovery-required" ||
         result.status === "password-updated"
       ) {
         setPassword("");
-        setCode("");
         await refreshSession();
         navigate(
           result.next ?? (command.action === "sign-out" ? "/sign-in" : target),
@@ -286,12 +273,6 @@ export function SignInScreen({
       void run({ action: "request-recovery", email, ...context });
     else if (stage === "reset-password")
       void run({ action: "reset-password", password });
-    else if (codeMode)
-      void run(
-        codeSent
-          ? { action: "verify-code", email, code }
-          : { action: "request-code", email, ...context },
-      );
     else
       void run({
         action: stage === "register" ? "register" : "sign-in",
@@ -309,7 +290,7 @@ export function SignInScreen({
     (stage === "forgot-password" && !recovery) ||
     (stage === "reset-password" && recovery) ||
     (authEntry && !signedIn && !recovery);
-  const needsPassword = stage === "reset-password" || (authEntry && !codeMode);
+  const needsPassword = stage === "reset-password" || authEntry;
   return (
     <section className="authentication-page">
       <aside className="authentication-story" aria-label="Welcome to MovX Club">
@@ -426,24 +407,6 @@ export function SignInScreen({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      readOnly={codeSent}
-                    />
-                  </label>
-                )}
-                {codeMode && codeSent && (
-                  <label>
-                    Six-digit code
-                    <input
-                      name="code"
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      maxLength={6}
-                      value={code}
-                      onChange={(e) =>
-                        setCode(e.target.value.replace(/\D/g, ""))
-                      }
-                      required
                     />
                   </label>
                 )}
@@ -491,7 +454,7 @@ export function SignInScreen({
                     At least 8 characters. No special character mix required.
                   </p>
                 )}
-                {stage === "sign-in" && !codeMode && (
+                {stage === "sign-in" && (
                   <Link
                     className="authentication-inline-link"
                     href={link("forgot-password")}
@@ -508,32 +471,11 @@ export function SignInScreen({
                         ? "Send reset link"
                         : stage === "reset-password"
                           ? "Save new password"
-                          : codeMode
-                            ? codeSent
-                              ? "Verify and sign in"
-                              : "Email me a sign-in code"
-                            : "Sign in"}
+                          : "Sign in"}
                   <ArrowRight size={17} aria-hidden="true" />
                 </button>
               </fieldset>
             </form>
-          )}
-          {stage === "sign-in" && !signedIn && !recovery && (
-            <button
-              className="text-button authentication-secondary"
-              type="button"
-              disabled={busy || !ready}
-              onClick={() => {
-                setCodeMode(!codeMode);
-                setCodeSent(false);
-                setCode("");
-                setPassword("");
-                setError(null);
-                setNotice(null);
-              }}
-            >
-              {codeMode ? "Use your password instead" : "Use an email code"}
-            </button>
           )}
           {stage === "check-email" && (
             <>
@@ -697,11 +639,6 @@ export function SignInScreen({
                 </p>
               )}
             </>
-          )}
-          {notice && (
-            <p className="authentication-notice" role="status">
-              {notice}
-            </p>
           )}
           {error && (
             <p

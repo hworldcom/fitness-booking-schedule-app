@@ -12,13 +12,11 @@ test("browser adapter sends closed application commands instead of calling crede
     },
     async (command) => {
       calls.push(command);
-      return command.action === "request-code" || command.action === "register"
+      return command.action === "register"
         ? { status: "requested" }
         : { status: "success", email: null };
     },
   );
-  await adapter.requestEmailCode("existing@example.test");
-  await adapter.verifyEmailCode("existing@example.test", "123456");
   await adapter.registerWithPassword(
     "existing@example.test",
     "  keep spaces  ",
@@ -26,8 +24,6 @@ test("browser adapter sends closed application commands instead of calling crede
   await adapter.signInWithPassword("existing@example.test", "old123");
   await adapter.signOut();
   assert.deepEqual(calls, [
-    { action: "request-code", email: "existing@example.test" },
-    { action: "verify-code", email: "existing@example.test", code: "123456" },
     {
       action: "register",
       email: "existing@example.test",

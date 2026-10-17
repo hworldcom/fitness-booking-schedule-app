@@ -11,7 +11,7 @@
 
 Prove the integrated password and Google experience with real new/returning/existing users before claiming authentication ready for UAT.
 
-Use the current [registration contract](../../../docs/mvp-spec.md#41-register-as-an-athlete-or-apply-to-coach), [identity/privacy rules](../../../docs/mvp-spec.md#8-identity-data-and-demo-integrity), [definition of done](../../../docs/mvp-spec.md#11-definition-of-done), [milestones](../../../docs/mvp-spec.md#12-delivery-milestones) and [acceptance matrix](../../../docs/mvp-spec.md#13-acceptance-matrix). The delivered application still uses email codes until these runtime peers pass.
+Use the current [registration contract](../../../docs/mvp-spec.md#41-register-as-an-athlete-or-apply-to-coach), [identity/privacy rules](../../../docs/mvp-spec.md#8-identity-data-and-demo-integrity), [definition of done](../../../docs/mvp-spec.md#11-definition-of-done), [milestones](../../../docs/mvp-spec.md#12-delivery-milestones) and [acceptance matrix](../../../docs/mvp-spec.md#13-acceptance-matrix). The local password-first flow is implemented; DEV0322 removes the former email-code fallback at the user’s request. Real Google and hosted/combined UAT readiness remain pending.
 
 ## Scope and non-goals
 
@@ -38,10 +38,10 @@ This is one direct peer under a flat coordination record. Dependencies do not cr
 
 ## Acceptance criteria
 
-- [ ] AC1: Actual local signup/confirmation/password login/reset and existing-code-account setup preserve original subject/profile/data. The adopted 7/8-character boundaries, no-mixture/space/multibyte cases, unauthorized/unconfirmed/recovery-only gates, single-use/expiry/resend limits, old-password rejection and secondary existing-account-only code entry pass.
+- [ ] AC1: Actual local signup/confirmation/password login/reset and existing-code-account setup preserve original subject/profile/data. The adopted 7/8-character boundaries, no-mixture/space/multibyte cases, unauthorized/unconfirmed/recovery-only gates, single-use/expiry/resend limits, old-password rejection pass, and removed code-login commands/proofs cannot confer application authority.
 - [ ] AC2: Actual hosted-dev password and Google new/returning/cancel/recovery flows, same-email linking in both method orders and distinct Google-email cases pass through final UI; Google is not marked delivered from mocks alone; Apple live proof is not required. The initial UI has no Apple action and a forged Apple request fails safely. Missing names follow the existing presentation-name contract without private legal-name inference.
 - [ ] AC3: Default/safe returns and hostile-loop rejection, explicit coach application, focused Account password/method controls, private-data isolation, exact-recipient invitation boundary and no automatic business mutations pass desktop/mobile/keyboard/failure review. Two-browser reset/change/current-device sign-out and the adopted refresh/access-token revocation bound are proven.
-- [ ] AC4: Required application/static/build checks, actual hosted confirmation/notification/breached-password/session/provider settings and precise fixture cleanup pass; every other direct peer is Completed or explicitly replaced/cancelled and UAT sign-off records the email-code transition condition. The handoff distinguishes tested environments/configuration from deployment; missing paid/provider capabilities stay blockers.
+- [ ] AC4: Required application/static/build checks, actual hosted confirmation/notification/breached-password/session/provider settings and precise fixture cleanup pass; every other direct peer is Completed or explicitly replaced/cancelled and UAT sign-off confirms the user-directed code-login removal and verified password setup for legacy users. The handoff distinguishes tested environments/configuration from deployment; missing paid/provider capabilities stay blockers.
 
 ## Validation plan
 
@@ -58,6 +58,8 @@ Not started. No real flow, email, OAuth authorization or fixture mutation has be
 Planned: guarded auth rehearsal helpers/commands, relevant Auth/browser/authorization tests and this evidence record. Peer tickets own runtime Auth services, provider setup and interface changes.
 
 ### Decisions and deviations
+
+2026-10-17 later user decision: remove email-code login now, superseding the previously planned through-UAT fallback. [DEV0322](../../archive/backend/DEV0322-remove-email-code-login.md) owns this application/contract change. Earlier code-login evidence below remains historical; confirmation and recovery email links remain required.
 
 2026-10-17 later scope change under DEV0311: initial delivery is email/password and Google; the user deferred Apple account/setup. Apple controls and live provider proof are excluded from this peer and preserved in independent DEV0312. Earlier three-method planning history below is retained. Runtime remains Draft; no implementation/provider operation occurred.
 

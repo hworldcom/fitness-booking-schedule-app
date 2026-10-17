@@ -15,7 +15,7 @@ export function beginEmailAuthFlow(
   idHash: string,
   bindingHash: string,
   emailHash: string,
-  purpose: EmailAuthPurpose,
+  purpose: Exclude<EmailAuthPurpose, "login">,
   continuation: AuthContinuation,
 ) {
   return withDatabaseConnection(async ({ queryClient }) => {

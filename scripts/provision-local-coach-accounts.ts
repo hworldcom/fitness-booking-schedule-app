@@ -245,12 +245,12 @@ async function main() {
       }
     }
 
-    console.log("Provisioned local email-code accounts for seeded coaches:");
+    console.log("Provisioned local accounts for seeded coaches:");
     for (const coach of SEEDED_COACH_ACCOUNTS) {
       console.log(`- ${coach.displayName}: ${coach.email}`);
     }
     console.log(
-      "Request a sign-in code in the app and read it from http://127.0.0.1:55324.",
+      "Use Forgot password to set/reset a password; open its email in the same browser from http://127.0.0.1:55324.",
     );
   } catch (error) {
     let cleanupFailures: string[] = [];

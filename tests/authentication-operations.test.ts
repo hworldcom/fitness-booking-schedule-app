@@ -34,6 +34,11 @@ test("authentication accepts only bounded application commands without caller-ow
     { ...command, returnTo: "x".repeat(2049) },
   ])
     assert.equal(parseAuthenticationCommand(value), null);
+  for (const command of [
+    { action: "request-code", email: "former@example.test" },
+    { action: "verify-code", email: "former@example.test", code: "123456" },
+  ])
+    assert.equal(parseAuthenticationCommand(command), null);
   const proof = {
     action: "confirm-email",
     flow: "a".repeat(64),
@@ -42,7 +47,7 @@ test("authentication accepts only bounded application commands without caller-ow
   };
   assert.deepEqual(parseAuthenticationCommand(proof), proof);
   assert.equal(
-    parseAuthenticationCommand({ ...proof, type: "email_change" }),
+    parseAuthenticationCommand({ ...proof, type: "magiclink" }),
     null,
   );
   assert.equal(

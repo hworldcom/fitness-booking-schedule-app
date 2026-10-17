@@ -12,7 +12,7 @@
 
 Coordinate a professional MovX registration/login experience with **email/password and Continue with Google**, including verification, recovery, existing-account continuity and actual UAT evidence. The user initially selected Google and Apple on 17 October 2026, then explicitly deferred Apple account/setup under DEV0311. Familiar consumer products remain a usability reference rather than an instruction to copy their exact screens or authority model.
 
-This record coordinates peer development work and does not implement runtime authentication. The current application still uses email codes. The [specification](../../../docs/mvp-spec.md#41-register-as-an-athlete-or-apply-to-coach) distinguishes that delivered behavior from the selected target. Retaining Supabase Auth is the adopted implementation default; moving to another identity vendor is not a user-selected requirement. The user subsequently confirmed an 8-character password minimum without mandatory character mixtures.
+This record coordinates peer development work and does not implement runtime authentication. The local application implements password registration/login/recovery; DEV0322 removes the former email-code fallback. The [specification](../../../docs/mvp-spec.md#41-register-as-an-athlete-or-apply-to-coach) distinguishes that delivered behavior from the selected target. Retaining Supabase Auth is the adopted implementation default; moving to another identity vendor is not a user-selected requirement. The user subsequently confirmed an 8-character password minimum without mandatory character mixtures.
 
 Preserve the existing application profile, server-derived athlete/coach capabilities, explicit coach approval, original private data and safe sign-in returns. Signup/provider authentication never books, sends messages or accepts invitations. Exact targeted-invitation email matching remains a separate consent boundary. Password recovery and existing-code-account setup are required parts of the target, not optional later polish.
 
@@ -27,6 +27,7 @@ Native SDK implementation, new identity vendors, custom password/identity storag
 | Password and shared session foundation | [DEV0286](../backend/DEV0286-implement-password-authentication-and-recovery.md)                  | Password signup/login/recovery, verified-email enrollment, existing-user password setup, common server-rendered callback/session interfaces and password-specific local/hosted-dev settings/templates/rollback/proof. | Adopted DEV0285 contract and concrete local/dev prerequisites.                           |
 | Google integration                     | [DEV0287](../backend/DEV0287-integrate-google-authentication.md)                                 | Google setup/readiness, shared-session web flow, same/different verified-email/name cases and actual provider proof.                                                                                                  | Adopted contract/amendment and DEV0286 session interface; actual Google access required. |
 | Professional public authentication UI  | [DEV0288](../frontend/DEV0288-redesign-multi-method-login-and-registration.md)                   | All login/registration/provider/confirmation/recovery/setup/onboarding views, accessible state feedback, safe navigation and responsive visual proof.                                                                 | Adopted contract; final integration depends on DEV0286/DEV0287 services.                 |
+| Remove transitional code login | [DEV0322](../../archive/backend/DEV0322-remove-email-code-login.md) | User-directed retirement of code UI/operations and active contract/guidance alignment; preserve confirmation/reset links and existing accounts. | Current DEV0286/DEV0288 interfaces exist; implementation authorized on 17 October 2026. |
 | Integrated UAT evidence                | [DEV0289](../backend/DEV0289-rehearse-multi-method-authentication-for-uat.md)                    | Combined real local/hosted-dev scenarios, preserved-account/data checks, responsive recovery, exact fixture cleanup and truthful UAT handoff.                                                                         | Every other peer meets its own criteria and required origin/mail/provider access exists. |
 
 All required direct tickets exist and link back here. Work is flat; dependencies do not create ticket hierarchies. Shared callback/session authority belongs to DEV0286; DEV0287 extends it only for provider-specific handling, and DEV0288 consumes it rather than implementing competing authority.
@@ -44,6 +45,8 @@ All required direct tickets exist and link back here. Work is flat; dependencies
 
 ## Delivery sequence and completion conditions
 
+Later user-directed boundary: DEV0322 retires the code fallback after the implemented password/recovery foundation and before DEV0289 combined proof. No code-login transition approval is still required; legacy users keep verified password setup.
+
 1. Completed DEV0285 and scope amendment DEV0311 record the adopted account/password/callback/linking/transition rules in specification sections 4.1.1–4.1.5. Supported verified same-email linking restores one original identity; merging separate MovX accounts and different-email/relay guesses remain forbidden. Contract documentation completion does not prove runtime or provider readiness.
 2. DEV0286 establishes verified-email password/recovery and shared session interfaces. DEV0287 may prepare provider requirements independently after contract adoption, then integrate against the stable session interface. DEV0288 may develop visual components after route/state contracts are concrete; working integration waits for both service peers.
 3. Each runtime peer proves its own required real flow. Missing Google credentials, consent configuration, callback origins or email delivery remain explicit blockers for their actual flows; simulated provider buttons do not satisfy the selected outcome.
@@ -53,6 +56,8 @@ All required direct tickets exist and link back here. Work is flat; dependencies
 Runtime start, 2026-10-17: after contract commit `1314f20`, the user explicitly requested starting implementation. This supersedes the earlier fix-validation/commit sequencing hold for authentication. DEV0286 is In progress, beginning with shared gateway/password boundaries; DEV0288 now integrates functional forms against the written server interface. DEV0287 and DEV0289 remain Draft pending their configuration/proof prerequisites. Adjacent records are not new technical members merely because they remain open. Production deployment and account administration are not implied by starting local implementation.
 
 ## Progress and integration record
+
+- 2026-10-17 user scope change: remove email-code login before testing email/password registration. New direct peer DEV0322 owns this removal and supersedes the earlier through-UAT fallback policy. Independent DEV0323 records exact-account development inventory; the account was absent and the user confirmed no deletion was needed. It is not a direct member. Confirmation/recovery links remain required.
 
 - 2026-10-17 working local continuation: DEV0286 now implements confirmed password signup/login, server-restricted recovery/setup/change, application session/credential fencing, truthful method status and local templates/settings; DEV0288 supplies the branded routes and Account controls. Seven actual Auth/Mailpit phases pass, including two-device revocation, real legacy private-data continuity and exact fixture cleanup. Five-width/keyboard/visual checks, 268 unit/server tests, five Auth DB checks and production build pass. Required hosted capability/SMTP/rollback, real Google/Google-first linking, broader continuation/accessibility and combined UAT evidence remain open in the owning peers. DEV0286/DEV0288 remain In progress; DEV0287/DEV0289 remain Draft. Apple is deferred. No hosted setting/migration/deployment operation occurred.
 
@@ -88,7 +93,7 @@ Runtime start, 2026-10-17: after contract commit `1314f20`, the user explicitly 
 ## Completion and review references
 
 - Completed: Not completed.
-- Direct development tickets: DEV0285 Completed; DEV0311 Completed; DEV0286 and DEV0288 In progress; DEV0287 and DEV0289 Draft.
+- Direct development tickets: DEV0285 Completed; DEV0311 Completed; DEV0322 Completed; DEV0286 and DEV0288 In progress; DEV0287 and DEV0289 Draft.
 - Commit: Planning included in this user-authorized workspace checkpoint under DEV0285. COR0027 is never a commit subject identifier; retired DEV0283 is unavailable for future commits.
 - Review: Planning/research self-review only; no independent or implementation review.
 - Deployment or release: None.

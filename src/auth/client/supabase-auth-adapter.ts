@@ -51,9 +51,6 @@ export function createSupabaseAuthenticationAdapter(
   }
   return {
     execute,
-    requestEmailCode: (email) => execute({ action: "request-code", email }),
-    verifyEmailCode: (email, code) =>
-      execute({ action: "verify-code", email, code }),
     registerWithPassword: (email, password) =>
       execute({ action: "register", email, password }),
     signInWithPassword: (email, password) =>

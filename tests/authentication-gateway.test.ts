@@ -26,14 +26,6 @@ function fixture() {
     async execute() {
       return { status: "requested" };
     },
-    async requestEmailCode(...args) {
-      calls.push(["request", ...args]);
-      return { status: "requested" };
-    },
-    async verifyEmailCode(...args) {
-      calls.push(["verify", ...args]);
-      return result;
-    },
     async registerWithPassword(...args) {
       calls.push(["register", ...args]);
       return { status: "requested" };
@@ -115,10 +107,6 @@ test("gateway rejects malformed inputs before adapter calls and preserves the ex
     (await gateway.signInWithPassword("anna@example.com", "")).status,
     "invalid-credentials",
   );
-  assert.equal(
-    (await gateway.verifyEmailCode("anna@example.com", "12345")).status,
-    "invalid",
-  );
   assert.deepEqual(calls, []);
   const password = "  Ábc 😀 Def  ";
   await gateway.registerWithPassword(" Anna@Example.COM ", password);
@@ -129,32 +117,16 @@ test("gateway rejects malformed inputs before adapter calls and preserves the ex
   ]);
 });
 
-test("email-code operation normalizes the exact address and proof", async () => {
-  const { gateway, calls } = fixture();
-  assert.deepEqual(await gateway.requestEmailCode(" Anna@Example.COM "), {
-    status: "requested",
-  });
-  await gateway.verifyEmailCode("anna@example.com", " 123 456 ");
-  assert.deepEqual(calls, [
-    ["request", "anna@example.com"],
-    ["verify", "anna@example.com", "123456"],
-  ]);
-});
-
 test("a mismatched verified address never becomes successful login and clears that device", async () => {
   const { gateway, calls, setResult } = fixture();
   setResult({ status: "success", email: "different@example.com" });
-  assert.deepEqual(
-    await gateway.verifyEmailCode("anna@example.com", "123456"),
-    { status: "invalid-proof" },
-  );
   assert.deepEqual(
     await gateway.signInWithPassword("anna@example.com", "abcdefgh"),
     { status: "invalid-credentials" },
   );
   assert.deepEqual(
     calls.map((call) => call[0]),
-    ["verify", "sign-out", "password", "sign-out"],
+    ["password", "sign-out"],
   );
 });
 
@@ -194,12 +166,8 @@ test("SDK success without matching server verification never reports application
       await gateway.signInWithPassword("anna@example.com", "abcdefgh"),
       { status: "unavailable" },
     );
-    assert.deepEqual(
-      await gateway.verifyEmailCode("anna@example.com", "123456"),
-      { status: "unavailable" },
-    );
   }
-  assert.equal(calls.filter((call) => call[0] === "sign-out").length, 6);
+  assert.equal(calls.filter((call) => call[0] === "sign-out").length, 3);
 });
 
 test("subscribers consume application events and unsubscribe through the same boundary", () => {
