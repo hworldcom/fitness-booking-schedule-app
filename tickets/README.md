@@ -7,7 +7,7 @@ This directory records planned changes, task status and implementation evidence.
 - A **development ticket** is a small implementable task named `# Ticket DEVNNNN` with a `DEVNNNN-short-title.md` filename. It owns implementation and validation evidence, and its DEV ID is used in commits. Start one from [TEMPLATE.md](TEMPLATE.md).
 - A **coordination record** is a non-implementation umbrella named `# Coordination CORNNNN` with a `CORNNNN-short-title.md` filename. It maps a flat set of peer development tickets and is never used as a commit reference. Start one from [COORDINATION_TEMPLATE.md](COORDINATION_TEMPLATE.md).
 
-DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0284 and COR0027.
+DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0290 and COR0027.
 
 Every DEV record declares its direct coordination membership near the top: one linked COR, or `None — independent development ticket`. Direct membership is limited to one COR and must match that COR's work map. Dependencies, downstream consumers and historical links remain separate relationships.
 
@@ -74,12 +74,15 @@ DEV0272 is allocated to independent local Supabase restoration work. It remains 
 
 DEV0277 and DEV0283 are allocated to independent calendar-responsiveness and UAT authentication planning in the shared workspace. They remain reserved while those separate planning records await their own commits.
 
+DEV0285–DEV0289 are allocated to independent multi-method authentication planning in the shared workspace. They remain reserved while those records await their own commits.
+
 ## Ticket index
 
 ### Current records
 
 | Record                                                                                                                                 | Area         | Milestone                                  | Status      | Outcome                                                                                                                                           |
 | -------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [DEV0284 — Simplify personal Profile sidebar](current/frontend/DEV0284-simplify-personal-profile-sidebar.md) | Frontend | Authenticated workspace refinement | Blocked | Profile sidebar fixed and desktop-verified; 16 tests, lint/types pass; mobile/keyboard proof awaits responsive native input. |
 | [DEV0282 — Remove private header help link](current/frontend/DEV0282-remove-private-header-help-link.md) | Frontend | Authenticated workspace refinement | Blocked | Removed private header help; 16 navigation checks, lint and types pass; final desktop/mobile/keyboard proof awaits a rendered local page. |
 | [DEV0281 — Show message avatars and header entry](current/frontend/DEV0281-show-message-avatars-and-header-entry.md) | Frontend | M8 messaging refinement | Blocked | Authorized photos/header entry implemented and locally migrated; responsive/keyboard/error browser evidence awaits reliable native control. |
 | [DEV0279 — Open a dedicated messaging workspace](current/frontend/DEV0279-open-dedicated-messaging-workspace.md) | Frontend | M8 messaging refinement | Blocked | Dedicated local inbox/thread implemented; automated/build and desktop/375 px checks passed, remaining browser proof blocked by computer-use timeouts. |

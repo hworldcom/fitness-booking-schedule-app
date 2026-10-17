@@ -110,7 +110,12 @@ test("workspace sidebar navigation respects route and actor boundaries", () => {
       path,
     );
   }
-  for (const path of ["/coaches/daniel-park", "/profile", "/sessions-other"]) {
+  for (const path of [
+    "/coaches/daniel-park",
+    "/profile-other",
+    "/profiles",
+    "/sessions-other",
+  ]) {
     assert.deepEqual(
       navigationForActor(actor, path),
       navigationForActor(actor),
@@ -126,6 +131,8 @@ test("workspace sidebar navigation respects route and actor boundaries", () => {
     "/sessions",
     "/sessions/groups",
     "/sessions/groups/example",
+    "/profile",
+    "/profile/security",
   ]) {
     assert.deepEqual(
       navigationForActor(authorizedActor("not-applied"), path).map(
@@ -261,7 +268,12 @@ test("mobile workspace navigation stays bounded to primary private destinations"
   }
   for (const status of ["not-applied", "approved", "suspended"] as const) {
     const actor = authorizedActor(status);
-    for (const path of ["/sessions", "/sessions/groups"]) {
+    for (const path of [
+      "/sessions",
+      "/sessions/groups",
+      "/profile",
+      "/profile/security",
+    ]) {
       assert.deepEqual(
         mobileNavigationForActor(actor, path),
         mobileNavigationForActor(actor),

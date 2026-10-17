@@ -118,7 +118,8 @@ function allNavigationForActor(actor: ActorSnapshot, path = "") {
   ].filter(
     ({ href }) =>
       (!isCoachWorkspacePath(path) &&
-        !isNavigationHrefActive(path, clientNavigation.href)) ||
+        !isNavigationHrefActive(path, clientNavigation.href) &&
+        !isNavigationHrefActive(path, accountProfileNavigation.href)) ||
       !["/explore", "/events", howItWorksNavigation.href].includes(href),
   );
 }
