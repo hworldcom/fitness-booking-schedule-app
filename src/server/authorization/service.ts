@@ -1,4 +1,5 @@
 import "server-only";
+import { profileImageStorage } from "@/server/storage/profile-images";
 
 import {
   FORBIDDEN_ACTOR,
@@ -8,12 +9,8 @@ import {
   isActorRole,
   type ActorSnapshot,
 } from "@/auth/actor-contracts";
-import { supabasePublicConfig } from "@/auth/config";
 import type { AuthSessionSnapshot } from "@/auth/contracts";
-import {
-  privateAccountAvatarUrl,
-  publicCoachPortraitUrl,
-} from "@/profile-images/contracts";
+import { privateAccountAvatarUrl } from "@/profile-images/contracts";
 import { verifiedAuthSession } from "@/server/auth/session";
 import {
   ActorContextRejectedError,
@@ -98,7 +95,6 @@ async function actorSnapshotForSession(
     currentActorProjection(transaction, actor),
   );
   if (result.status !== "authorized") return result;
-  const storageUrl = supabasePublicConfig()?.url ?? null;
 
   return Object.freeze({
     status: "authorized",
@@ -106,9 +102,8 @@ async function actorSnapshotForSession(
       slug: result.value.profileSlug,
       displayName: result.value.displayName,
       avatarUrl: privateAccountAvatarUrl(result.value.avatarUpdatedAt),
-      coachPortraitUrl: publicCoachPortraitUrl(
+      coachPortraitUrl: profileImageStorage.publicPortraitUrl(
         result.value.coachPortrait,
-        storageUrl,
       ),
     }),
     demoRun: Object.freeze({

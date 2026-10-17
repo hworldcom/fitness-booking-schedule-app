@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { materializeMessageMedia } from "@/server/db/messages/media";
 import { parseMessageConversation } from "@/domain/private-messages";
+import { createSupabaseProfileImageStorage } from "@/server/storage/supabase-profile-images";
 const id = "9a221000-0000-4000-8000-000000000001";
 const base = {
   id,
@@ -67,7 +68,10 @@ test("uploaded public portraits use the configured public bucket and preserve th
         updatedAt,
       },
     },
-    "http://127.0.0.1:55321",
+    createSupabaseProfileImageStorage({
+      client: async () => null,
+      publicOrigin: () => "http://127.0.0.1:55321",
+    }),
   );
   assert.equal(
     parseMessageConversation(value).counterpartImageUrl,

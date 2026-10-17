@@ -5,9 +5,6 @@ export const PROFILE_IMAGE_MAX_CANONICAL_BYTES = 512 * 1024;
 export const PROFILE_IMAGE_MIME_TYPE = "image/webp";
 export const PROFILE_IMAGE_WEBP_QUALITY = 82;
 
-export const ACCOUNT_AVATAR_BUCKET = "account-avatars";
-export const COACH_PORTRAIT_BUCKET = "coach-portraits";
-
 export type ProfileImageMutationStatus =
   | "saved"
   | "removed"
@@ -75,21 +72,6 @@ export function privateBookingRequestClientAvatarUrl(
     return null;
   }
   return `/api/coach/requests/${requestId}/client-avatar?v=${encodeURIComponent(updatedAt)}`;
-}
-
-export function publicCoachPortraitUrl(
-  reference: CoachPortraitReference | null,
-  storageUrl: string | null,
-) {
-  if (!reference) return null;
-  if (reference.source === "fixture") return reference.path;
-  if (!storageUrl) return null;
-
-  const encodedPath = reference.path
-    .split("/")
-    .map((segment) => encodeURIComponent(segment))
-    .join("/");
-  return `${storageUrl.replace(/\/$/, "")}/storage/v1/object/public/${COACH_PORTRAIT_BUCKET}/${encodedPath}?v=${encodeURIComponent(reference.updatedAt)}`;
 }
 
 export function isProfileImageMutationSnapshot(

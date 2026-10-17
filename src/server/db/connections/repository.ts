@@ -1,6 +1,6 @@
 import "server-only";
+import { profileImageStorage } from "@/server/storage/profile-images";
 import { sql } from "drizzle-orm";
-import { supabasePublicConfig } from "@/auth/config";
 import { isCoachBookingStatus, isCanonicalUuid } from "@/domain/coach-bookings";
 import { isCoachBookingRequestStatus } from "@/domain/coach-booking-requests";
 import {
@@ -19,7 +19,6 @@ import {
 import {
   isOwnedProfileImageStoragePath,
   isPublicCoachPortraitUrl,
-  publicCoachPortraitUrl,
   type CoachPortraitReference,
 } from "@/profile-images/contracts";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
@@ -110,10 +109,7 @@ function mapConnection(value: unknown): ConnectionProjection {
         !isOwnedProfileImageStoragePath(reference.path, coachProfileId)
       )
         throw new ConnectionConflictError();
-      coachPortraitUrl = publicCoachPortraitUrl(
-        reference,
-        supabasePublicConfig()?.url ?? null,
-      );
+      coachPortraitUrl = profileImageStorage.publicPortraitUrl(reference);
       if (coachPortraitUrl && !isPublicCoachPortraitUrl(coachPortraitUrl))
         throw new ConnectionConflictError();
     }

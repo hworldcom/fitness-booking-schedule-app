@@ -1,7 +1,6 @@
 import "server-only";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
-import { ACCOUNT_AVATAR_BUCKET } from "@/profile-images/contracts";
-import { serverAuthClient } from "@/server/auth/client";
+import { profileImageStorage } from "@/server/storage/profile-images";
 import { withAuthorizedActor } from "@/server/authorization/service";
 import { connectionAvatarReference } from "@/server/db/connections/repository";
 
@@ -25,13 +24,13 @@ async function reference(id: string): Promise<ReferenceResult> {
     : { status: "not-found" };
 }
 async function download(path: string) {
-  const client = await serverAuthClient();
-  if (!client) return null;
-  const { data, error } = await client.storage
-    .from(ACCOUNT_AVATAR_BUCKET)
-    .download(path);
-  return error || !data ? null : new Uint8Array(await data.arrayBuffer());
+  const image = await profileImageStorage.download({
+    scope: "account-avatar",
+    path,
+  });
+  return image.status === "ready" ? image.bytes : null;
 }
+
 export async function connectionAthleteAvatarBytes(
   id: string,
   dependencies: AvatarDependencies = { reference, download },

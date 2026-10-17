@@ -39,6 +39,8 @@ import {
   upsertOwnedCoachProfileRecord,
 } from "@/server/db/coaches/repository";
 import { submitOwnedCoachApplicationRecord } from "@/server/db/coaches/application-repository";
+import { publicCoachWebsiteCards } from "@/server/db/coaches/website-repository";
+import { publicCoachWebsite } from "./website-service";
 
 function canPrepareCoachProfile(status: string) {
   return (
@@ -57,9 +59,20 @@ export async function publicCoachDirectory(
   filters: CoachDirectoryFilters,
 ): Promise<CoachDirectoryState> {
   try {
+    const entries = await publicCoachDirectoryRecords(filters);
+    const websites = await publicCoachWebsiteCards(
+      entries.map((entry) => entry.coach.profileId),
+    );
     return Object.freeze({
       status: "ready",
-      entries: await publicCoachDirectoryRecords(filters),
+      entries: Object.freeze(
+        entries.flatMap((entry) => {
+          const website = websites.get(entry.coach.profileId);
+          // A visibility change between queries removes the entry rather than
+          // presenting stale public website content as an empty successful read.
+          return website ? [Object.freeze({ ...entry, website })] : [];
+        }),
+      ),
       filters,
     });
   } catch {
@@ -77,7 +90,17 @@ export async function publicCoachProfile(
     const coach = await publicCoachProfileRecord(slug);
     if (!coach) return Object.freeze({ status: "not-found" });
     const schedule = await publicCoachAvailabilitySnapshot(coach.profileId);
-    return Object.freeze({ status: "ready", coach, ...schedule });
+    const website = await publicCoachWebsite(slug);
+    if (website.status !== "ready")
+      return Object.freeze({
+        status: website.status === "not-found" ? "not-found" : "unavailable",
+      });
+    return Object.freeze({
+      status: "ready",
+      coach,
+      ...schedule,
+      website: website.website,
+    });
   } catch {
     return Object.freeze({ status: "unavailable" });
   }

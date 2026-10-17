@@ -5,7 +5,7 @@
 - Last updated: 2026-10-17
 - Milestone: Provider boundaries and operational recovery
 - Coordination: None — independent development ticket
-- Related records: Independent implementation follow-ups [DEV0292](../../current/backend/DEV0292-isolate-profile-image-storage-adapter.md) and [DEV0293](../../current/backend/DEV0293-rehearse-database-auth-and-file-recovery.md); Auth workstream [COR0027](../../current/organisatory/COR0027-login-registration-and-social-authentication.md), with implementation owned by its existing peers; historical boundary baseline [DEV0025](../backend/DEV0025-nextjs-backend-boundary.md).
+- Related records: Independent implementation follow-ups [DEV0292](../backend/DEV0292-isolate-profile-image-storage-adapter.md) and [DEV0293](../../current/backend/DEV0293-rehearse-database-auth-and-file-recovery.md); Auth workstream [COR0027](../../current/organisatory/COR0027-login-registration-and-social-authentication.md), with implementation owned by its existing peers; historical boundary baseline [DEV0025](../backend/DEV0025-nextjs-backend-boundary.md).
 
 ## Objective and context
 
@@ -54,7 +54,7 @@ Run existing tests/boundaries.test.ts, tests/auth.test.ts, tests/authorization.t
 - [Specification](../../../docs/mvp-spec.md#61-provider-boundaries-and-operational-recovery): adds confirmed C42, actual coupling findings, owner boundaries, restore acceptance and clearly proposed recovery objectives.
 - [Index](../../README.md): records this completed audit and independent implementation follow-ups, preserving unique IDs and unrelated edits.
 - [COR0027](../../current/organisatory/COR0027-login-registration-and-social-authentication.md), [DEV0285](DEV0285-define-multi-method-authentication-contract.md), [DEV0286](../../current/backend/DEV0286-implement-password-authentication-and-recovery.md), [DEV0287](../../current/backend/DEV0287-integrate-google-authentication.md) and [DEV0288](../../current/frontend/DEV0288-redesign-multi-method-login-and-registration.md): add concrete Auth gateway/adapter/UI acceptance without changing direct membership or duplicating runtime ownership.
-- [DEV0292](../../current/backend/DEV0292-isolate-profile-image-storage-adapter.md) and [DEV0293](../../current/backend/DEV0293-rehearse-database-auth-and-file-recovery.md): create Storage isolation and actual complete restore work as independent tickets.
+- [DEV0292](../backend/DEV0292-isolate-profile-image-storage-adapter.md) and [DEV0293](../../current/backend/DEV0293-rehearse-database-auth-and-file-recovery.md): create Storage isolation and actual complete restore work as independent tickets.
 - Audit-only sources: [database client](../../../src/server/db/client.ts), [profile/Auth references](../../../src/server/db/schema/foundation.ts), [server session verification](../../../src/server/auth/session.ts), [client session events](../../../src/auth/client/session-provider.tsx), [sign-in screen](../../../src/features/auth/sign-in.tsx), [image service](../../../src/server/profile-images/service.ts) and [boundary tests](../../../tests/boundaries.test.ts). No source edits in this ticket.
 
 ### Decisions and deviations

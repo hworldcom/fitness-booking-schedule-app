@@ -5,9 +5,11 @@
 - Last updated: 2026-10-17
 - Milestone: M3 — Coach profile media extension (planned)
 - Coordination: None — independent development ticket
-- Related records: Independent Storage boundary work [DEV0292](DEV0292-isolate-profile-image-storage-adapter.md); independent recovery rehearsal [DEV0293](DEV0293-rehearse-database-auth-and-file-recovery.md); historical coach Profile interface [DEV0207](../../archive/frontend/DEV0207-redesign-account-and-coach-profiles.md).
+- Related records: Independent Storage boundary work [DEV0292](../../archive/backend/DEV0292-isolate-profile-image-storage-adapter.md); independent recovery rehearsal [DEV0293](DEV0293-rehearse-database-auth-and-file-recovery.md); historical coach Profile interface [DEV0207](../../archive/frontend/DEV0207-redesign-account-and-coach-profiles.md).
 
 ## Objective and context
+
+2026-10-17 later user sequence (documented under [DEV0330](../../archive/organisatory/DEV0330-refine-coach-marketplace-pricing-reviews-and-urls.md)): finish [DEV0316 directory profile cards](../frontend/DEV0316-redesign-coach-directory-cards.md) first. Defer clarification of picture/video allowance and premium eligibility until after that card milestone. Preserve the existing confirmed selections and open questions below; none is a start/completion dependency for the separate cards. Revisit them before this affected media implementation, then supply the later website/gallery integration.
 
 Let coaches present themselves and their training through a photo gallery and a short preview video on their coach profile. The delivered profile supports a public portrait, but has no workout-photo gallery or preview-video upload flow. Control storage, visitor data usage and delivery costs while preserving profile visibility and private account media.
 
@@ -109,7 +111,7 @@ This checkpoint changes planning documents only. No runtime interface, schema, m
 
 ## Risks, limitations, and follow-ups
 
-**Premium access is not decided.** Next action: clarify video eligibility and access-loss behavior, then finalize media budgets, retention and delivery ownership before implementation. Preview-video costs depend on delivered minutes, selected quality and buffering; monitor real usage rather than treating earlier estimates as a spending commitment. This Draft does not establish working uploads, recovery proof or deployment readiness. Preserve unrelated account settings work in the shared workspace.
+**Premium access is not decided.** Next action: after DEV0316 profile cards complete, revisit video eligibility/access-loss, picture allowance, media budgets/retention and scope ownership before affected media implementation. Do not ask for those decisions or block the cards now. Preview-video costs depend on delivered minutes, selected quality and buffering; monitor real usage rather than treating earlier estimates as a spending commitment. This Draft does not establish working uploads, recovery proof or deployment readiness. Preserve unrelated account settings work in the shared workspace.
 
 ## Completion and review references
 

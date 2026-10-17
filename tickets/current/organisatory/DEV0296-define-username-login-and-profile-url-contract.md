@@ -9,33 +9,35 @@
 
 ## Objective and context
 
-The user selected a unique username in Login & security for future sign-in and profile URLs, explicitly deferring both flows while the setting is saved now. Define their product contract against [identity requirements](../../../docs/mvp-spec.md#8-identity-data-and-demo-integrity) before runtime implementation. Preferred chat first name and private legal name remain separate.
+Current boundary after the later 17 October 2026 user review: saved canonical unique usernames are implemented under DEV0295/DEV0325. The user now selected public coach username URLs as an M10 outcome; [DEV0331](../backend/DEV0331-enable-username-based-public-coach-urls.md) under COR0028 owns those routes, legacy compatibility and published-handle rename/alias safety. Username login and public/private destinations for non-coach accounts remain separate future work here.
+
+Historical planning originally deferred both login and profile URLs when optional handles were introduced; DEV0325 later required a handle for new registration without implementing either use. DEV0330 records the subsequent scope amendment rather than rewriting that enrollment history. Preferred chat/public coach names and private legal names remain separate.
 
 ## Scope and non-goals
 
-- Define username sign-in with managed Auth, recovery, generic failure/abuse behavior and continuity across existing email/password/social identities.
-- Define the exact public/private profile URL destination, audience, rename/alias/reuse rules, privacy and compatibility with existing coach slugs.
-- Map implementable follow-ups to bounded development records and identify their relationship to COR0027.
-- No authentication, URL routing or deployment implementation under this planning record. No claim that saving a username activates those capabilities.
+- Define future username sign-in with managed Auth, generic failures/abuse recovery and identity continuity.
+- Define any future non-coach/general profile URL audience/privacy only if selected; no public athlete page is adopted now.
+- Coordinate with DEV0331's actual public coach alias/reservation contracts rather than implementing or deciding coach routing twice.
+- No runtime Auth/routing/deployment under this documentary record. Public coach URLs are owned by DEV0331; username login remains deferred.
 
 ## Expected behavior and edge cases
 
-Opaque identity, coach authority, sessions/history and original coach slugs survive username edits. Decide whether released handles may be reused, how aliases work, who can view a profile URL and how email-code/password/social recovery behaves without exposing private account data. Account UI must stay honest about delivered versus planned behavior.
+Stable account/coach IDs, private data and original booking/message/pair-review identity survive handle changes. Public coach routing follows section 19.6/DEV0331, including legacy no-handle coaches, old slugs and safe alias ownership. This ticket must not impose a blanket deferral of those selected coach URLs. Future username login/non-coach URL behavior still requires its own exact contract and privacy/recovery decisions.
 
 ## Assumptions, decisions, and dependencies
 
-Confirmed: username is for login/URL, not chat identity, and those uses are deferred. URL audience/destination, alias retention and exact auth semantics remain unresolved. Depends on DEV0295's actual persisted model and coordination with COR0027; neither is rewritten silently.
+Confirmed: username is separate from chat identity; it is saved/unique, and the later user selected it for public coach URLs. Username authentication and non-coach URL audience remain deferred. Depend on actual DEV0295/DEV0325 storage and the narrowly adopted DEV0331 public-handle policy; no duplicate canonical username or public account directory.
 
 ## Implementation plan
 
-1. Review delivered username/Auth/profile boundaries and settle the open product questions.
-2. Update the single product specification with adopted decisions and privacy/recovery scenarios.
-3. Create bounded runtime tickets/coordination mapping where needed; do not implement a multi-part auth/routing delivery under this record.
+1. Inspect current Account/registration and the selected DEV0331 public coach URL boundary.
+2. Resolve only remaining username-authentication/non-coach policy questions and update the specification without contradicting M10 routing.
+3. Allocate bounded future implementation ownership if those independent capabilities are selected; do not implement DEV0331 scope here.
 
 ## Acceptance criteria
 
-- [ ] AC1: Current spec defines exact username sign-in/recovery and URL audience/rename behavior, separate from chat identity.
-- [ ] AC2: Runtime ownership/dependencies and testable privacy/continuity scenarios are recorded without claiming delivery.
+- [ ] AC1: Future username sign-in/recovery and any selected non-coach URL audience have an exact privacy/continuity contract, separate from chat identity and M10 public coach URLs.
+- [ ] AC2: Runtime ownership/testable cases are recorded with DEV0331's selected public routing boundary preserved; saved handles are not misreported as delivered login/routes.
 
 ## Validation plan
 
@@ -43,7 +45,7 @@ Documentation/link and consistency review against current Auth, Account and coac
 
 ## Implementation record
 
-Pending planning. No runtime edits, migrations, configuration or dependency changes.
+2026-10-17 DEV0330 planning amendment: moved the now-selected public coach URL outcome to direct COR0028 peer DEV0331; retained username login/non-coach policy here. Current scope replaces the earlier blanket URL deferral. No runtime edits, migrations, configuration or dependency changes.
 
 ## Validation results
 
@@ -51,7 +53,7 @@ Product-contract acceptance remains unverified — draft. During the 2026-10-17 
 
 ## Risks, limitations, and follow-ups
 
-Saving an optional username does not create username sign-in or a shareable profile URL. Resolve the product questions above before implementing those uses.
+Saved unique usernames are delivered. Public coach username routes are selected but undelivered DEV0331 work; username login and non-coach URLs remain deferred here. Resolve only those remaining independent product questions before their implementation. DEV0330's current amendment does not reopen archived enrollment evidence.
 
 ## Completion and review references
 

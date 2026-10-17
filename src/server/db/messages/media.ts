@@ -1,33 +1,31 @@
 import "server-only";
-import { supabasePublicConfig } from "@/auth/config";
+import { profileImageStorage } from "@/server/storage/profile-images";
+import type { ProfileImageStorage } from "@/server/storage/contracts";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
 import { connectionAthleteAvatarUrl } from "@/domain/coach-athlete-connections";
 import {
   isOwnedProfileImageStoragePath,
   isPublicCoachPortraitUrl,
   privateBookingRequestClientAvatarUrl,
-  publicCoachPortraitUrl,
 } from "@/profile-images/contracts";
 
 // The database returns a bounded independent grant, never a private object path.
 // Convert it before the shared DTO parser rebuilds the browser response.
 export function materializeMessageMedia(
   value: unknown,
-  storageUrl: string | null = supabasePublicConfig()?.url ?? null,
+  storage: Pick<ProfileImageStorage, "publicPortraitUrl"> = profileImageStorage,
 ): unknown {
   if (!value || typeof value !== "object" || Array.isArray(value)) return value;
   const record = value as Record<string, unknown>;
   if (Array.isArray(record.items))
     return {
       ...record,
-      items: record.items.map((item) =>
-        materializeMessageMedia(item, storageUrl),
-      ),
+      items: record.items.map((item) => materializeMessageMedia(item, storage)),
     };
   if (record.conversation)
     return {
       ...record,
-      conversation: materializeMessageMedia(record.conversation, storageUrl),
+      conversation: materializeMessageMedia(record.conversation, storage),
     };
   if (typeof record.counterpartName !== "string") return value;
   const raw = record.counterpartMedia;
@@ -48,10 +46,11 @@ export function materializeMessageMedia(
           !isOwnedProfileImageStoragePath(media.path, record.coachProfileId))
       )
         throw Error("Invalid message media reference.");
-      imageUrl = publicCoachPortraitUrl(
-        { source: media.source, path: media.path, updatedAt: media.updatedAt },
-        storageUrl,
-      );
+      imageUrl = storage.publicPortraitUrl({
+        source: media.source,
+        path: media.path,
+        updatedAt: media.updatedAt,
+      });
       if (imageUrl && !isPublicCoachPortraitUrl(imageUrl))
         throw Error("Invalid message media reference.");
     } else if (

@@ -1,4 +1,5 @@
 import "server-only";
+import { profileImageStorage } from "@/server/storage/profile-images";
 
 import { sql } from "drizzle-orm";
 import { parseSessionTitleDetails } from "@/domain/private-messages";
@@ -14,11 +15,9 @@ import {
   isCoachBookingRequestEligibility,
   type CoachBookingRequestEligibilityProjection,
 } from "@/domain/coaches";
-import { supabasePublicConfig } from "@/auth/config";
 import {
   isOwnedProfileImageStoragePath,
   privateBookingClientAvatarUrl,
-  publicCoachPortraitUrl,
   type CoachPortraitReference,
 } from "@/profile-images/contracts";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
@@ -117,10 +116,7 @@ function coachPortraitUrl(row: BookingRow) {
     path: row.coach_portrait_path,
     updatedAt,
   });
-  const portraitUrl = publicCoachPortraitUrl(
-    reference,
-    supabasePublicConfig()?.url ?? null,
-  );
+  const portraitUrl = profileImageStorage.publicPortraitUrl(reference);
   if (!portraitUrl) throw new CoachBookingConflictError();
   return portraitUrl;
 }

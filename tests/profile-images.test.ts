@@ -8,7 +8,6 @@ import {
   privateBookingClientAvatarUrl,
   privateBookingRequestClientAvatarUrl,
   profileImageStoragePath,
-  publicCoachPortraitUrl,
 } from "@/profile-images/contracts";
 import { validateProfileImageSource } from "@/profile-images/browser-normalization";
 import { accountProfileImagePresentation } from "@/profile-images/presentation";
@@ -52,24 +51,6 @@ test("presentation URLs are bounded by the declared source", () => {
     null,
   );
   assert.equal(privateBookingRequestClientAvatarUrl(objectId, null), null);
-  assert.equal(
-    publicCoachPortraitUrl(
-      {
-        source: "fixture",
-        path: "/images/coaches/daniel-park.webp",
-        updatedAt,
-      },
-      null,
-    ),
-    "/images/coaches/daniel-park.webp",
-  );
-  assert.equal(
-    publicCoachPortraitUrl(
-      { source: "storage", path: `${profileId}/${objectId}.webp`, updatedAt },
-      "https://example.supabase.co/",
-    ),
-    `https://example.supabase.co/storage/v1/object/public/coach-portraits/${profileId}/${objectId}.webp?v=2026-10-08T12%3A00%3A00.000Z`,
-  );
   assert.equal(
     isPublicCoachPortraitUrl("/images/coaches/daniel-park.webp"),
     true,

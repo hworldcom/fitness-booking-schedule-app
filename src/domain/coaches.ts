@@ -163,6 +163,8 @@ export type CoachDirectoryEntry = Readonly<{
   coach: CoachProjection;
   primaryLocation: CoachTrainingLocation;
   todaySlots: readonly PublicCoachAvailabilitySlot[];
+  /** Optional for legacy fixtures; live directory reads always supply version 1. */
+  website?: import("./coach-website").CoachWebsiteCard;
 }>;
 
 export type OwnedCoachAvailabilitySlot = CoachAvailabilitySlotProjection &
@@ -257,6 +259,8 @@ export type PublicCoachProfileState =
       coach: CoachProjection;
       slots: readonly PublicCoachAvailabilitySlot[];
       databaseTime: string;
+      /** Optional for legacy fixtures; live public reads supply version 1. */
+      website?: import("./coach-website").CoachWebsite;
     }>
   | Readonly<{ status: "not-found" | "unavailable" }>;
 

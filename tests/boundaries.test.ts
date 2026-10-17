@@ -68,6 +68,55 @@ test("Auth SDK imports and calls stay inside documented Auth adapters", () => {
   }
 });
 
+test("Storage I/O, request client and provider URLs stay behind the image adapter", () => {
+  const adapter = "src/server/storage/supabase-profile-images.ts";
+  for (const file of sourceFiles(src)) {
+    const relative = path.relative(root, file);
+    if (relative === adapter) continue;
+    const contents = readFileSync(file, "utf8");
+    assert.doesNotMatch(
+      contents,
+      /\.storage\s*(?:\.|\[)|\[\s*["']storage["']\s*\]/,
+      relative,
+    );
+    for (const specifier of imports(file)) {
+      assert.doesNotMatch(specifier, /^@supabase\/storage-js/, relative);
+      if (!relative.startsWith("src/server/auth/")) {
+        const target = resolveImport(file, specifier);
+        assert.notEqual(target, path.join(src, "server/auth/client"), relative);
+        if (
+          relative.startsWith("src/server/") &&
+          relative !== "src/server/authorization/config.ts"
+        )
+          assert.notEqual(target, path.join(src, "auth/config"), relative);
+        if (relative !== "src/server/storage/profile-images.ts")
+          assert.notEqual(
+            target,
+            path.join(src, "server/storage/supabase-profile-images"),
+            relative,
+          );
+      }
+    }
+    // The domain retains its explicit existing-URL compatibility allowlist.
+    if (relative !== "src/domain/profile-images.ts")
+      assert.doesNotMatch(
+        contents,
+        /\/storage\/v1\/object\/public\//,
+        relative,
+      );
+  }
+  for (const relative of [
+    adapter,
+    "src/server/storage/contracts.ts",
+    "src/server/storage/profile-images.ts",
+    "src/server/profile-images/store-and-attach.ts",
+  ])
+    assert.match(
+      readFileSync(path.join(root, relative), "utf8"),
+      /^import "server-only";/,
+    );
+});
+
 test("source imports respect domain, client, server and feature boundaries", () => {
   const domain = path.join(src, "domain");
   const components = path.join(src, "components");

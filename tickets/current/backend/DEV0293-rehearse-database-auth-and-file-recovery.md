@@ -5,7 +5,7 @@
 - Last updated: 2026-10-17
 - Milestone: Provider boundaries and operational recovery
 - Coordination: None — independent development ticket
-- Related records: Requirements/audit [DEV0291](../../archive/organisatory/DEV0291-adopt-provider-boundaries-and-recovery-requirements.md); Storage boundary follow-up [DEV0292](DEV0292-isolate-profile-image-storage-adapter.md); future-method consumer [DEV0289](DEV0289-rehearse-multi-method-authentication-for-uat.md); separate retained-volume continuity [DEV0232](../organisatory/DEV0232-restore-local-migration-continuity.md).
+- Related records: Requirements/audit [DEV0291](../../archive/organisatory/DEV0291-adopt-provider-boundaries-and-recovery-requirements.md); Storage boundary follow-up [DEV0292](../../archive/backend/DEV0292-isolate-profile-image-storage-adapter.md); future-method consumer [DEV0289](DEV0289-rehearse-multi-method-authentication-for-uat.md); separate retained-volume continuity [DEV0232](../organisatory/DEV0232-restore-local-migration-continuity.md).
 
 ## Objective and context
 

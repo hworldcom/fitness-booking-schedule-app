@@ -1,4 +1,5 @@
 import "server-only";
+import { profileImageStorage } from "@/server/storage/profile-images";
 
 import { sql } from "drizzle-orm";
 import type {
@@ -14,10 +15,8 @@ import {
   MAX_COACH_DIRECTORY_TODAY_SLOTS,
   resolveCoachPrimaryLocation,
 } from "@/domain/coaches";
-import { supabasePublicConfig } from "@/auth/config";
 import {
   isOwnedProfileImageStoragePath,
-  publicCoachPortraitUrl,
   type CoachPortraitReference,
 } from "@/profile-images/contracts";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
@@ -231,8 +230,8 @@ function mapCoach(row: CoachProjectionRow): CoachProjection {
       updatedAt: isoTimestamp(row.portrait_updated_at),
     });
   }
-  const storageUrl = supabasePublicConfig()?.url ?? null;
-  if (portrait?.source === "storage" && !storageUrl) {
+  const portraitUrl = profileImageStorage.publicPortraitUrl(portrait);
+  if (portrait?.source === "storage" && !portraitUrl) {
     throw new CoachProfileConflictError();
   }
 
@@ -251,7 +250,7 @@ function mapCoach(row: CoachProjectionRow): CoachProjection {
     visibility: row.visibility,
     recordSource: row.record_source,
     trustKind: row.trust_kind,
-    portraitUrl: publicCoachPortraitUrl(portrait, storageUrl),
+    portraitUrl,
     disciplines: Object.freeze([...row.disciplines]),
   });
 }

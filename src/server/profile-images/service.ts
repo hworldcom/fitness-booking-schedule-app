@@ -1,17 +1,12 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
-import { supabasePublicConfig } from "@/auth/config";
 import {
-  ACCOUNT_AVATAR_BUCKET,
-  COACH_PORTRAIT_BUCKET,
   privateAccountAvatarUrl,
   profileImageStoragePath,
-  publicCoachPortraitUrl,
   type ProfileImageMutationSnapshot,
 } from "@/profile-images/contracts";
 import { withAuthorizedActor } from "@/server/authorization/service";
-import { serverAuthClient } from "@/server/auth/client";
 import { currentActorProjection } from "@/server/db/authorization/repository";
 import {
   ProfileImageReferenceConflictError,
@@ -27,8 +22,8 @@ import {
   normalizeCanonicalProfileImage,
 } from "./image-normalization";
 
-type StorageBucket =
-  typeof ACCOUNT_AVATAR_BUCKET | typeof COACH_PORTRAIT_BUCKET;
+import { profileImageStorage } from "@/server/storage/profile-images";
+import { storeAndAttachProfileImage } from "./store-and-attach";
 
 function mutationResult(
   status: ProfileImageMutationSnapshot["status"],
@@ -41,32 +36,6 @@ function authorizationMutationResult(
   status: "preview" | "signed-out" | "forbidden" | "unavailable",
 ) {
   return mutationResult(status === "preview" ? "forbidden" : status);
-}
-
-async function removeStorageObject(bucket: StorageBucket, path: string) {
-  try {
-    const client = await serverAuthClient();
-    if (!client) return;
-    await client.storage.from(bucket).remove([path]);
-  } catch {
-    // Reference changes are authoritative. Failed best-effort cleanup leaves a
-    // private or owner-scoped orphan, never a database pointer to missing data.
-  }
-}
-
-async function uploadStorageObject(
-  bucket: StorageBucket,
-  path: string,
-  bytes: Uint8Array,
-) {
-  const client = await serverAuthClient();
-  if (!client) return false;
-  const { error } = await client.storage.from(bucket).upload(path, bytes, {
-    cacheControl: "31536000",
-    contentType: "image/webp",
-    upsert: false,
-  });
-  return !error;
 }
 
 export async function uploadCurrentAccountAvatar(input: Uint8Array) {
@@ -90,46 +59,41 @@ export async function uploadCurrentAccountAvatar(input: Uint8Array) {
   }
 
   const path = profileImageStoragePath(current.value.profileId, randomUUID());
-  if (
-    !(await uploadStorageObject(ACCOUNT_AVATAR_BUCKET, path, canonical.bytes))
-  ) {
-    return mutationResult("unavailable");
-  }
-
-  const attached = await withAuthorizedActor(async (transaction) => {
-    try {
-      return Object.freeze({
-        outcome: "saved" as const,
-        reference: await setCurrentAccountAvatarReference(
-          transaction,
-          path,
-          current.value.reference.path,
-        ),
+  const attached = await storeAndAttachProfileImage<string | null>(
+    profileImageStorage,
+    { scope: "account-avatar", path },
+    canonical.bytes,
+    async () => {
+      const result = await withAuthorizedActor(async (transaction) => {
+        try {
+          return {
+            outcome: "saved" as const,
+            reference: await setCurrentAccountAvatarReference(
+              transaction,
+              path,
+              current.value.reference.path,
+            ),
+          };
+        } catch (error) {
+          if (error instanceof ProfileImageReferenceConflictError)
+            return { outcome: "conflict" as const };
+          throw error;
+        }
       });
-    } catch (error) {
-      if (error instanceof ProfileImageReferenceConflictError) {
-        return Object.freeze({ outcome: "conflict" as const });
-      }
-      throw error;
-    }
-  });
-  if (attached.status !== "authorized") {
-    await removeStorageObject(ACCOUNT_AVATAR_BUCKET, path);
-    return authorizationMutationResult(attached.status);
-  }
-  if (attached.value.outcome === "conflict") {
-    await removeStorageObject(ACCOUNT_AVATAR_BUCKET, path);
-    return mutationResult("conflict");
-  }
-
-  const previousPath = attached.value.reference.previousPath;
-  if (previousPath) {
-    await removeStorageObject(ACCOUNT_AVATAR_BUCKET, previousPath);
-  }
-  return mutationResult(
-    "saved",
-    privateAccountAvatarUrl(attached.value.reference.updatedAt),
+      if (result.status !== "authorized")
+        return {
+          status: result.status === "preview" ? "forbidden" : result.status,
+        };
+      if (result.value.outcome === "conflict") return { status: "conflict" };
+      return {
+        status: "attached",
+        value: result.value.reference.updatedAt,
+        previousPath: result.value.reference.previousPath,
+      };
+    },
   );
+  if (attached.status !== "attached") return mutationResult(attached.status);
+  return mutationResult("saved", privateAccountAvatarUrl(attached.value));
 }
 
 export async function removeCurrentAccountAvatar() {
@@ -161,7 +125,10 @@ export async function removeCurrentAccountAvatar() {
   }
   if (removed.value === "conflict") return mutationResult("conflict");
 
-  await removeStorageObject(ACCOUNT_AVATAR_BUCKET, current.value.path);
+  await profileImageStorage.remove({
+    scope: "account-avatar",
+    path: current.value.path,
+  });
   return mutationResult("removed");
 }
 
@@ -174,23 +141,16 @@ export async function currentAccountAvatarBytes() {
     return Object.freeze({ status: "not-found" as const });
   }
 
-  try {
-    const client = await serverAuthClient();
-    if (!client) return Object.freeze({ status: "unavailable" as const });
-    const { data, error } = await client.storage
-      .from(ACCOUNT_AVATAR_BUCKET)
-      .download(current.value.path);
-    if (error || !data) {
-      return Object.freeze({ status: "unavailable" as const });
-    }
-    return Object.freeze({
-      status: "ready" as const,
-      bytes: new Uint8Array(await data.arrayBuffer()),
-      updatedAt: current.value.updatedAt,
-    });
-  } catch {
-    return Object.freeze({ status: "unavailable" as const });
-  }
+  const image = await profileImageStorage.download({
+    scope: "account-avatar",
+    path: current.value.path,
+  });
+  if (image.status !== "ready") return image;
+  return Object.freeze({
+    status: "ready" as const,
+    bytes: image.bytes,
+    updatedAt: current.value.updatedAt,
+  });
 }
 
 export async function confirmedBookingClientAvatarBytes(bookingId: string) {
@@ -202,23 +162,16 @@ export async function confirmedBookingClientAvatarBytes(bookingId: string) {
     return Object.freeze({ status: "not-found" as const });
   }
 
-  try {
-    const client = await serverAuthClient();
-    if (!client) return Object.freeze({ status: "unavailable" as const });
-    const { data, error } = await client.storage
-      .from(ACCOUNT_AVATAR_BUCKET)
-      .download(current.value.path);
-    if (error || !data) {
-      return Object.freeze({ status: "unavailable" as const });
-    }
-    return Object.freeze({
-      status: "ready" as const,
-      bytes: new Uint8Array(await data.arrayBuffer()),
-      updatedAt: current.value.updatedAt,
-    });
-  } catch {
-    return Object.freeze({ status: "unavailable" as const });
-  }
+  const image = await profileImageStorage.download({
+    scope: "account-avatar",
+    path: current.value.path,
+  });
+  if (image.status !== "ready") return image;
+  return Object.freeze({
+    status: "ready" as const,
+    bytes: image.bytes,
+    updatedAt: current.value.updatedAt,
+  });
 }
 
 export async function bookingRequestClientAvatarBytes(requestId: string) {
@@ -230,23 +183,16 @@ export async function bookingRequestClientAvatarBytes(requestId: string) {
     return Object.freeze({ status: "not-found" as const });
   }
 
-  try {
-    const client = await serverAuthClient();
-    if (!client) return Object.freeze({ status: "unavailable" as const });
-    const { data, error } = await client.storage
-      .from(ACCOUNT_AVATAR_BUCKET)
-      .download(current.value.path);
-    if (error || !data) {
-      return Object.freeze({ status: "unavailable" as const });
-    }
-    return Object.freeze({
-      status: "ready" as const,
-      bytes: new Uint8Array(await data.arrayBuffer()),
-      updatedAt: current.value.updatedAt,
-    });
-  } catch {
-    return Object.freeze({ status: "unavailable" as const });
-  }
+  const image = await profileImageStorage.download({
+    scope: "account-avatar",
+    path: current.value.path,
+  });
+  if (image.status !== "ready") return image;
+  return Object.freeze({
+    status: "ready" as const,
+    bytes: image.bytes,
+    updatedAt: current.value.updatedAt,
+  });
 }
 
 async function currentCoachPortraitUploadState() {
@@ -288,57 +234,52 @@ export async function uploadCurrentCoachPortrait(input: Uint8Array) {
   }
 
   const path = profileImageStoragePath(currentValue.profileId, randomUUID());
-  if (
-    !(await uploadStorageObject(COACH_PORTRAIT_BUCKET, path, canonical.bytes))
-  ) {
-    return mutationResult("unavailable");
-  }
-
-  const attached = await withAuthorizedActor(async (transaction) => {
-    try {
-      return Object.freeze({
-        outcome: "saved" as const,
-        reference: await setCurrentCoachPortraitReference(
-          transaction,
-          path,
-          currentValue.reference.source,
-          currentValue.reference.path,
-        ),
+  const attached = await storeAndAttachProfileImage<string | null>(
+    profileImageStorage,
+    { scope: "coach-portrait", path },
+    canonical.bytes,
+    async () => {
+      const result = await withAuthorizedActor(async (transaction) => {
+        try {
+          return {
+            outcome: "saved" as const,
+            reference: await setCurrentCoachPortraitReference(
+              transaction,
+              path,
+              currentValue.reference.source,
+              currentValue.reference.path,
+            ),
+          };
+        } catch (error) {
+          if (error instanceof ProfileImageReferenceConflictError)
+            return { outcome: "conflict" as const };
+          throw error;
+        }
       });
-    } catch (error) {
-      if (error instanceof ProfileImageReferenceConflictError) {
-        return Object.freeze({ outcome: "conflict" as const });
-      }
-      throw error;
-    }
-  });
-  if (attached.status !== "authorized") {
-    await removeStorageObject(COACH_PORTRAIT_BUCKET, path);
-    return authorizationMutationResult(attached.status);
-  }
-  if (attached.value.outcome === "conflict") {
-    await removeStorageObject(COACH_PORTRAIT_BUCKET, path);
-    return mutationResult("conflict");
-  }
-
-  if (
-    attached.value.reference.previousSource === "storage" &&
-    attached.value.reference.previousPath
-  ) {
-    await removeStorageObject(
-      COACH_PORTRAIT_BUCKET,
-      attached.value.reference.previousPath,
-    );
-  }
-  const updatedAt = attached.value.reference.updatedAt;
-  const storageUrl = supabasePublicConfig()?.url ?? null;
+      if (result.status !== "authorized")
+        return {
+          status: result.status === "preview" ? "forbidden" : result.status,
+        };
+      if (result.value.outcome === "conflict") return { status: "conflict" };
+      return {
+        status: "attached",
+        value: result.value.reference.updatedAt,
+        previousPath:
+          result.value.reference.previousSource === "storage"
+            ? result.value.reference.previousPath
+            : null,
+      };
+    },
+  );
+  if (attached.status !== "attached") return mutationResult(attached.status);
   return mutationResult(
     "saved",
-    updatedAt
-      ? publicCoachPortraitUrl(
-          Object.freeze({ source: "storage", path, updatedAt }),
-          storageUrl,
-        )
+    attached.value
+      ? profileImageStorage.publicPortraitUrl({
+          source: "storage",
+          path,
+          updatedAt: attached.value,
+        })
       : null,
   );
 }
@@ -376,10 +317,10 @@ export async function removeCurrentCoachPortrait() {
   if (removed.value === "conflict") return mutationResult("conflict");
 
   if (currentValue.reference.source === "storage") {
-    await removeStorageObject(
-      COACH_PORTRAIT_BUCKET,
-      currentValue.reference.path,
-    );
+    await profileImageStorage.remove({
+      scope: "coach-portrait",
+      path: currentValue.reference.path,
+    });
   }
   return mutationResult("removed");
 }
