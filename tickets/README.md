@@ -7,7 +7,7 @@ This directory records planned changes, task status and implementation evidence.
 - A **development ticket** is a small implementable task named `# Ticket DEVNNNN` with a `DEVNNNN-short-title.md` filename. It owns implementation and validation evidence, and its DEV ID is used in commits. Start one from [TEMPLATE.md](TEMPLATE.md).
 - A **coordination record** is a non-implementation umbrella named `# Coordination CORNNNN` with a `CORNNNN-short-title.md` filename. It maps a flat set of peer development tickets and is never used as a commit reference. Start one from [COORDINATION_TEMPLATE.md](COORDINATION_TEMPLATE.md).
 
-DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0295 and COR0028.
+DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0299 and COR0028.
 
 Every DEV record declares its direct coordination membership near the top: one linked COR, or `None — independent development ticket`. Direct membership is limited to one COR and must match that COR's work map. Dependencies, downstream consumers and historical links remain separate relationships.
 
@@ -77,12 +77,15 @@ DEV0277 remains allocated to independent calendar-responsiveness planning in the
 
 DEV0285–DEV0289 are allocated to independent multi-method authentication planning in the shared workspace. They remain reserved while those records await their own commits.
 
+DEV0295–DEV0296 and DEV0298 are allocated to independent account/username and Home-banner work in the shared workspace. They remain reserved when the DEV0297 media-planning checkpoint is committed separately.
+
 ## Ticket index
 
 ### Current records
 
 | Record                                                                                                                                                | Area         | Milestone                                  | Status      | Outcome                                                                                                                                                    |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [DEV0297 — Add coach profile photos and Mux video](current/backend/DEV0297-add-coach-profile-photos-and-mux-video.md) | Backend | M3 — Coach profile media extension | Draft | Plan six coach photos and one Mux video up to 60 seconds; premium eligibility remains explicitly unresolved. |
 | [DEV0294 — Add separate account settings](current/frontend/DEV0294-add-separate-account-settings.md)                                                  | Frontend     | M3 — Account settings                      | In progress | Separate Account with personal details, current sign-in management and English/German Coming soon; photo editing stays on Profile.                         |
 | [DEV0293 — Rehearse database Auth and file recovery](current/backend/DEV0293-rehearse-database-auth-and-file-recovery.md)                             | Backend      | Operational recovery                       | Draft       | Prove isolated restoration of records, identities and uploaded bytes with real application/privacy checks and cleanup.                                     |
 | [DEV0292 — Isolate the profile image storage adapter](current/backend/DEV0292-isolate-profile-image-storage-adapter.md)                               | Backend      | Provider boundaries                        | Draft       | Confine Storage I/O to an adapter while preserving validation, media grants and outward behavior.                                                          |
