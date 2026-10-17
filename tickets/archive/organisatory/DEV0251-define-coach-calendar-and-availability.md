@@ -5,7 +5,7 @@
 - Last updated: 2026-10-16
 - Milestone: M9 — Coach calendar and effective availability
 - Coordination: [COR0023 — Coach calendar and availability](COR0023-coach-calendar-and-availability.md)
-- Related records: historical Schedule presentation [DEV0205](../frontend/DEV0205-redesign-coach-schedule.md); historical location-aware availability [DEV0177](../backend/DEV0177-bind-availability-to-training-locations.md); external runtime prerequisites [DEV0238](../backend/DEV0238-integrate-group-session-scheduling-conflicts.md) and [DEV0239](../../current/frontend/DEV0239-add-coach-group-session-management.md) under [COR0021](../../current/organisatory/COR0021-group-training-and-events.md); independent workspace accessibility [DEV0208](../../current/frontend/DEV0208-polish-authenticated-workspace-accessibility.md).
+- Related records: historical Schedule presentation [DEV0205](../frontend/DEV0205-redesign-coach-schedule.md); historical location-aware availability [DEV0177](../backend/DEV0177-bind-availability-to-training-locations.md); external runtime prerequisites [DEV0238](../backend/DEV0238-integrate-group-session-scheduling-conflicts.md) and [DEV0239](../frontend/DEV0239-add-coach-group-session-management.md) under [COR0021](../../current/organisatory/COR0021-group-training-and-events.md); independent workspace accessibility [DEV0208](../../current/frontend/DEV0208-polish-authenticated-workspace-accessibility.md).
 
 ## Objective and context
 

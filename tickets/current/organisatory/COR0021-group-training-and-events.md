@@ -5,7 +5,7 @@
 - Last updated: 2026-10-16
 - Milestone: M7 — Group training and events
 - Converted from: Not applicable — DEV0233 already has committed planning evidence and retains its identity/scope
-- Tracked development tickets: [DEV0233](../../archive/organisatory/DEV0233-define-group-training-and-events-growth-scope.md), [DEV0237](../../archive/backend/DEV0237-persist-group-session-registration.md), [DEV0238](../../archive/backend/DEV0238-integrate-group-session-scheduling-conflicts.md), [DEV0239](../frontend/DEV0239-add-coach-group-session-management.md), [DEV0240](../../archive/frontend/DEV0240-add-group-event-discovery-and-joining.md), [DEV0241](../backend/DEV0241-rehearse-group-training-and-event-loop.md)
+- Tracked development tickets: [DEV0233](../../archive/organisatory/DEV0233-define-group-training-and-events-growth-scope.md), [DEV0237](../../archive/backend/DEV0237-persist-group-session-registration.md), [DEV0238](../../archive/backend/DEV0238-integrate-group-session-scheduling-conflicts.md), [DEV0239](../../archive/frontend/DEV0239-add-coach-group-session-management.md), [DEV0240](../../archive/frontend/DEV0240-add-group-event-discovery-and-joining.md), [DEV0241](../backend/DEV0241-rehearse-group-training-and-event-loop.md)
 - Related records: independent Explore preview [DEV0235](../frontend/DEV0235-preview-home-aligned-explore.md), independent Explore implementation [DEV0236](../../archive/frontend/DEV0236-align-explore-with-home-discovery.md); existing private scheduling and connection contracts are compatibility baselines, not group implementation
 
 ## Objective and boundaries
@@ -21,7 +21,7 @@ This record implements no runtime behavior. The contract owner distinguishes the
 | Product contract and work map      | [DEV0233](../../archive/organisatory/DEV0233-define-group-training-and-events-growth-scope.md) | Scope, confirmed/default decisions, lifecycle/privacy/conflict contract, M7 and acceptance scenarios, README navigation and flat ticket ownership                          | Finish before runtime work                                               |
 | Group domain and registration      | [DEV0237](../../archive/backend/DEV0237-persist-group-session-registration.md)                 | New nonfinancial data, owner drafts, direct one-seat joining/withdrawal, manual confirmation/cancellation, deadline reconciliation and bounded projections/tests           | Completed DEV0233 contract; publication unavailable until DEV0238        |
 | Cross-product time authority       | [DEV0238](../../archive/backend/DEV0238-integrate-group-session-scheduling-conflicts.md)       | Guarded publication, coach-wide time reservations, private occurrence/materialization/reopen compatibility and real concurrency tests                                      | Stable DEV0237 records/lifecycle                                         |
-| Coach event interface              | [DEV0239](../frontend/DEV0239-add-coach-group-session-management.md)                           | Coach Events navigation, draft/review/publish, private roster and explicit confirmation/cancellation/conflict recovery                                                     | DEV0237 and DEV0238 completed                                            |
+| Coach event interface              | [DEV0239](../../archive/frontend/DEV0239-add-coach-group-session-management.md)                | Coach Events navigation, draft/review/publish, private roster and explicit confirmation/cancellation/conflict recovery                                                     | DEV0237 and DEV0238 completed                                            |
 | Public and athlete event interface | [DEV0240](../../archive/frontend/DEV0240-add-group-event-discovery-and-joining.md)             | Public Events navigation/list/detail, filters/share links, direct join/withdraw and own Group sessions destination                                                         | DEV0237 and DEV0238 completed; sequence shared visual edits with DEV0236 |
 | Integrated local proof             | [DEV0241](../backend/DEV0241-rehearse-group-training-and-event-loop.md)                        | Reproducible multi-account free/paid-at-session web rehearsal, privacy/concurrency/scheduling and responsive recovery evidence, guarded cleanup and delivery documentation | DEV0237–DEV0240 completed                                                |
 
@@ -44,6 +44,8 @@ All required implementation tickets exist and are peers. Detailed evidence belon
 5. Complete this coordination only when every direct DEV is Completed or explicitly cancelled/replaced, reciprocal links/statuses agree, the current contract's group acceptance scenarios and integrated local proof pass, and the delivered-versus-planned documentation is accurate. Runtime proof is still required even when contract planning is complete. Hosted deployment is separately authorized operational work.
 
 ## Progress and integration record
+
+- 2026-10-16 completion: DEV0239 passed real hosted-dev OTP/SSR/restricted-runtime browser proof on committed application source 53445ff2, including private-time rejection/recovery, roster/actor privacy, manual decisions, withdrawal race, interrupted-response recovery and four-width/native forms. Exact tagged fixtures were removed and protected non-test fingerprints preserved; its archived record owns detailed evidence and failed-run corrections. This continuation changed verification tooling/records only. DEV0241 is now the remaining direct ticket; no deployment or independent review is claimed.
 
 - 2026-10-16: DEV0239 now contains owner list/new/review/edit routes, explicit publication/confirmation/cancellation/deletion, scoped actions and private roster paging. Its isolated fixture/static checkpoint is recorded in the current ticket. Required live SQL/Auth proof remains pending after DEV0270 removed local services, so DEV0239 and COR0021 remain open; no hosted/schema operation was performed. `/coach/events/[id]` is the supplied owner destination for DEV0254 integration.
 
@@ -72,12 +74,12 @@ After archival, the same checker passed 270 links and 34 anchors across all elev
 
 ## Risks, limitations, and follow-ups
 
-Manual decisions and status are in-app only; no email/push delivery is promised. Pay-at-session registration proves neither attendance nor payment, and confirmed sessions can lose participants through withdrawal. Coach time must be reserved across locations and recurring materialization, not only checked in the browser. Runtime tickets remain open and block coordination completion.
+Manual decisions and status are in-app only; no email/push delivery is promised. Pay-at-session registration proves neither attendance nor payment, and confirmed sessions can lose participants through withdrawal. Coach time must be reserved across locations and recurring materialization, not only checked in the browser. DEV0241 remains open and blocks coordination completion.
 
 ## Completion and review references
 
 - Completed: Not completed — runtime delivery and integration pending.
-- Direct development tickets: DEV0233, DEV0237 and DEV0238 Completed; DEV0239 In progress with backend prerequisites satisfied; DEV0240 Completed; DEV0241 Draft pending the interface peers.
+- Direct development tickets: DEV0233, DEV0237, DEV0238, DEV0239 and DEV0240 Completed; DEV0241 Draft with interface prerequisites now satisfied. COR0021 remains In progress until its combined rehearsal passes.
 - Commit: Not applicable — coordination IDs are not used in commit subjects.
 - Review: Contract and backend acceptance self-review; no independent review or combined browser rehearsal.
 - Deployment or release: None.
