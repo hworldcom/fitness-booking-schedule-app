@@ -36,6 +36,37 @@ function within(target: string, directory: string) {
   return target === directory || target.startsWith(`${directory}${path.sep}`);
 }
 
+test("Auth SDK imports and calls stay inside documented Auth adapters", () => {
+  const adapters = new Set([
+    "src/auth/client/supabase-auth-adapter.ts",
+    "src/server/auth/client.ts",
+    "src/server/auth/proxy.ts",
+    "src/server/auth/session.ts",
+  ]);
+  for (const file of sourceFiles(src)) {
+    const relative = path.relative(root, file);
+    if (adapters.has(relative)) continue;
+    for (const specifier of imports(file)) {
+      assert.doesNotMatch(specifier, /^@supabase\//, relative);
+      if (
+        relative.startsWith("src/features/") ||
+        relative.startsWith("src/components/")
+      ) {
+        assert.doesNotMatch(
+          specifier,
+          /supabase-auth-adapter|browser-client/,
+          relative,
+        );
+      }
+    }
+    assert.doesNotMatch(
+      readFileSync(file, "utf8"),
+      /\.auth\.(?:signIn|signUp|signOut|verifyOtp|onAuthStateChange|resetPassword|updateUser)/,
+      relative,
+    );
+  }
+});
+
 test("source imports respect domain, client, server and feature boundaries", () => {
   const domain = path.join(src, "domain");
   const components = path.join(src, "components");

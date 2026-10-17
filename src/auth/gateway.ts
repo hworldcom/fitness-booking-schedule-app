@@ -1,0 +1,174 @@
+import { normalizeEmail, normalizeEmailOtp } from "./email-otp";
+import type { AuthSessionSnapshot } from "./contracts";
+import { isSignInPassword, validateNewPassword } from "./password";
+
+export type AuthenticationResult =
+  | Readonly<{ status: "success"; email: string | null }>
+  | Readonly<{ status: "requested" }>
+  | Readonly<{
+      status: "invalid";
+      message:
+        | "email"
+        | "code"
+        | "password-too-short"
+        | "password-too-long"
+        | "password-invalid"
+        | "password-unsafe";
+    }>
+  | Readonly<{
+      status: "invalid-credentials" | "invalid-proof" | "unavailable";
+    }>
+  | Readonly<{ status: "rate-limited"; retryAfterSeconds: number | null }>;
+
+export type AuthenticationEvent = "signed-out" | "session-changed";
+
+export type EmailCodeOptions = Readonly<{
+  /** Only the delivered legacy screen opts in until password registration replaces it. */
+  createAccount?: boolean;
+}>;
+
+/** The adapter translates all vendor responses before crossing this boundary. */
+export interface AuthenticationAdapter {
+  requestEmailCode(
+    email: string,
+    options: EmailCodeOptions,
+  ): Promise<AuthenticationResult>;
+  verifyEmailCode(email: string, code: string): Promise<AuthenticationResult>;
+  registerWithPassword(
+    email: string,
+    password: string,
+  ): Promise<AuthenticationResult>;
+  signInWithPassword(
+    email: string,
+    password: string,
+  ): Promise<AuthenticationResult>;
+  signOut(): Promise<AuthenticationResult>;
+  subscribe(listener: (event: AuthenticationEvent) => void): () => void;
+}
+
+export interface AuthenticationGateway {
+  requestEmailCode(
+    email: unknown,
+    options?: EmailCodeOptions,
+  ): Promise<AuthenticationResult>;
+  verifyEmailCode(email: unknown, code: unknown): Promise<AuthenticationResult>;
+  registerWithPassword(
+    email: unknown,
+    password: unknown,
+  ): Promise<AuthenticationResult>;
+  signInWithPassword(
+    email: unknown,
+    password: unknown,
+  ): Promise<AuthenticationResult>;
+  signOut(): Promise<AuthenticationResult>;
+  subscribe(listener: (event: AuthenticationEvent) => void): () => void;
+}
+
+async function available(
+  work: () => Promise<AuthenticationResult>,
+): Promise<AuthenticationResult> {
+  try {
+    return await work();
+  } catch {
+    // SDK/transport errors may contain private request details; never return them.
+    return { status: "unavailable" };
+  }
+}
+
+export function createAuthenticationGateway(
+  adapter: AuthenticationAdapter,
+  readVerifiedSession: () => Promise<AuthSessionSnapshot>,
+): AuthenticationGateway {
+  async function verifySuccess(
+    result: AuthenticationResult,
+    email: string,
+    invalidStatus: "invalid-proof" | "invalid-credentials",
+  ): Promise<AuthenticationResult> {
+    if (result.status !== "success") return result;
+    if (result.email !== email) {
+      await adapter.signOut();
+      return { status: invalidStatus };
+    }
+    try {
+      const session = await readVerifiedSession();
+      if (session.status === "signed-in" && session.email === email)
+        return result;
+    } catch {
+      // A browser SDK success alone never establishes application identity.
+    }
+    await adapter.signOut();
+    return { status: "unavailable" };
+  }
+  return {
+    async requestEmailCode(value, options = {}) {
+      const email = normalizeEmail(value);
+      if (!email) return { status: "invalid", message: "email" };
+      return available(() =>
+        adapter.requestEmailCode(email, {
+          createAccount: options.createAccount === true,
+        }),
+      );
+    },
+    async verifyEmailCode(value, codeValue) {
+      const email = normalizeEmail(value);
+      const code = normalizeEmailOtp(codeValue);
+      if (!email) return { status: "invalid", message: "email" };
+      if (!code) return { status: "invalid", message: "code" };
+      return available(async () => {
+        const result = await adapter.verifyEmailCode(email, code);
+        return verifySuccess(result, email, "invalid-proof");
+      });
+    },
+    async registerWithPassword(value, passwordValue) {
+      const email = normalizeEmail(value);
+      if (!email) return { status: "invalid", message: "email" };
+      const password = validateNewPassword(passwordValue);
+      if (!password.valid)
+        return { status: "invalid", message: password.message };
+      return available(() =>
+        adapter.registerWithPassword(email, password.password),
+      );
+    },
+    async signInWithPassword(value, password) {
+      const email = normalizeEmail(value);
+      if (!email || !isSignInPassword(password))
+        return { status: "invalid-credentials" };
+      return available(async () => {
+        const result = await adapter.signInWithPassword(email, password);
+        return verifySuccess(result, email, "invalid-credentials");
+      });
+    },
+    signOut: () => available(() => adapter.signOut()),
+    subscribe: (listener) => adapter.subscribe(listener),
+  };
+}
+
+export function authenticationResultMessage(
+  result: AuthenticationResult,
+): string {
+  if (result.status === "invalid") {
+    switch (result.message) {
+      case "email":
+        return "Enter a valid email address.";
+      case "code":
+        return "Enter the six-digit code from your email.";
+      case "password-too-short":
+        return "Use at least 8 characters for your password.";
+      case "password-too-long":
+        return "This password is too long. Use no more than 72 UTF-8 bytes; some characters use more than one byte.";
+      case "password-invalid":
+        return "Enter a valid password.";
+      case "password-unsafe":
+        return "This password isn’t safe to use. Choose a different one.";
+    }
+  }
+  if (result.status === "invalid-credentials")
+    return "The email or password is incorrect. Try again.";
+  if (result.status === "invalid-proof")
+    return "That code is invalid or expired. Request a new code and try again.";
+  if (result.status === "rate-limited")
+    return result.retryAfterSeconds === null
+      ? "Too many attempts. Please wait before trying again."
+      : `Please wait ${result.retryAfterSeconds} seconds before trying again.`;
+  return "Sign-in is unavailable right now. Please try again shortly.";
+}

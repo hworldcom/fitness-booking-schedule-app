@@ -16,14 +16,11 @@ import {
 import { Pill } from "@/components/ui";
 import { isCanonicalSignInLocation, supabasePublicConfig } from "@/auth/config";
 import { authServiceUnavailableCopy } from "@/auth/service-availability";
-import {
-  emailOtpErrorMessage,
-  normalizeEmail,
-  normalizeEmailOtp,
-} from "@/auth/email-otp";
+import { normalizeEmail, normalizeEmailOtp } from "@/auth/email-otp";
 import { normalizeDisplayName } from "@/auth/identity-contracts";
 import { useActor } from "@/auth/client/actor-provider";
-import { browserAuthClient } from "@/auth/client/browser-client";
+import { authenticationGateway } from "@/auth/client/authentication-gateway";
+import { authenticationResultMessage } from "@/auth/gateway";
 import { submitCoachApplication } from "@/auth/client/coach-application-client";
 import {
   completeApplicationProfile,
@@ -166,23 +163,25 @@ export function SignInScreen({
       setActionError("Enter a valid email address.");
       return;
     }
-    const client = browserAuthClient();
-    if (!client) return;
-
     actionLock.current = true;
     setActiveAction("request-code");
     setActionError(null);
     try {
-      const result = await client.auth.signInWithOtp({
-        email,
-        options: { shouldCreateUser: true },
+      // Preserve the delivered flow until the password-registration peer cuts over.
+      const result = await authenticationGateway.requestEmailCode(email, {
+        createAccount: true,
       });
-      if (result.error) throw result.error;
+      if (result.status !== "requested") {
+        setActionError(authenticationResultMessage(result));
+        return;
+      }
       setPendingEmail(email);
       setEmailInput(email);
       setCodeInput("");
-    } catch (error) {
-      setActionError(emailOtpErrorMessage(error, "request"));
+    } catch {
+      setActionError(
+        "Sign-in is unavailable right now. Please try again shortly.",
+      );
     } finally {
       actionLock.current = false;
       setActiveAction(null);
@@ -199,33 +198,30 @@ export function SignInScreen({
       setActionError("Enter the six-digit code from your email.");
       return;
     }
-    const client = browserAuthClient();
-    if (!client) return;
-
     actionLock.current = true;
     setActiveAction("verify-code");
     setActionError(null);
     try {
-      const result = await client.auth.verifyOtp({
-        email: pendingEmail,
+      const result = await authenticationGateway.verifyEmailCode(
+        pendingEmail,
         token,
-        type: "email",
-      });
-      if (result.error) throw result.error;
-      if (normalizeEmail(result.data.user?.email) !== pendingEmail) {
-        await client.auth.signOut({ scope: "local" });
-        throw new Error("Verified email did not match the requested account.");
+      );
+      if (result.status !== "success") {
+        setActionError(authenticationResultMessage(result));
+        return;
       }
       const verified = await refreshSession();
       if (verified.status !== "signed-in" || verified.email !== pendingEmail) {
-        await client.auth.signOut({ scope: "local" });
+        await authenticationGateway.signOut();
         await refreshSession();
         throw new Error("The server could not verify this email session.");
       }
       setCodeInput("");
       router.refresh();
-    } catch (error) {
-      setActionError(emailOtpErrorMessage(error, "verify"));
+    } catch {
+      setActionError(
+        "The server could not verify this email session. Please try again.",
+      );
     } finally {
       actionLock.current = false;
       setActiveAction(null);
@@ -303,15 +299,15 @@ export function SignInScreen({
 
   async function signOut() {
     if (actionLock.current) return;
-    const client = browserAuthClient();
-    if (!client) return;
-
     actionLock.current = true;
     setActiveAction("sign-out");
     setActionError(null);
     try {
-      const result = await client.auth.signOut({ scope: "local" });
-      if (result.error) throw result.error;
+      const result = await authenticationGateway.signOut();
+      if (result.status !== "success") {
+        setActionError(authenticationResultMessage(result));
+        return;
+      }
       await refreshSession();
       setPendingEmail(null);
       setIdentityResult(null);
@@ -426,7 +422,9 @@ export function SignInScreen({
                 autoComplete="email"
                 maxLength={254}
                 value={emailInput}
-                disabled={!config || activeAction !== null}
+                disabled={
+                  !config || activeAction !== null || !canonicalLocation
+                }
                 onChange={(event) => setEmailInput(event.target.value)}
                 placeholder="you@example.com"
                 required

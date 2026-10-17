@@ -25,7 +25,7 @@ The integrated application uses one adopted account authority across all selecte
 
 Starts after contract/amendment DEV0285/DEV0311 and runtime DEV0286–DEV0288 meet their own criteria and required dev/UAT origin, SMTP, Google test accounts exist. Those environment/provider prerequisites are external start blockers; no email, account or project action occurs in planning. Runtime defects go to the owning peer with its scope updated first. Fixture creation/deletion is bounded to exact controlled IDs, with credentials/tokens excluded from evidence.
 
-The [adopted contract](../../../docs/mvp-spec.md#411-methods-and-account-resolution) now supplies exact password, linking, recovery/session, name, route and Account behavior. The user's preceding fix-validation/commit sequence remains a runtime hold. Keep the distinction between documenting those decisions and actually proving local/hosted readiness.
+The [adopted contract](../../../docs/mvp-spec.md#411-methods-and-account-resolution) now supplies exact password, linking, recovery/session, name, route and Account behavior. The user authorized implementation after checkpoint `1314f20`, and DEV0286 is In progress. This proof peer remains Draft until the required runtime/configuration exists. Keep the distinction between documenting those decisions and actually proving local/hosted readiness.
 
 This is one direct peer under a flat coordination record. Dependencies do not create child tickets. Record material scope/behavior changes before implementation and split/consolidate through the repository policy if this boundary proves too broad. Ready is not an additional approval gate.
 

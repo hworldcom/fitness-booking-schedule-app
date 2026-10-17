@@ -27,7 +27,7 @@ Continue with Google creates or recovers a provider-verified account and then fo
 
 Use the adopted [same-email/relay policy](../../../docs/mvp-spec.md#411-methods-and-account-resolution), [name/route/return contract](../../../docs/mvp-spec.md#413-routes-profile-completion-and-returns) and [application Auth interface](../../../docs/mvp-spec.md#415-application-authentication-interfaces), then integrate against DEV0286's common session interface. Same verified-email linking restores the original identity; different addresses/Apple relay remain separate. Manual provider connection/removal and merging separate MovX accounts are excluded. Existing names/settings/private media are never overwritten from provider metadata.
 
-Google requires Cloud/Auth client/consent configuration, appropriate test audience and exact allowed origins/redirects. Apple account/setup, signing/renewal and integration are deferred to independent [DEV0312](DEV0312-integrate-deferred-apple-authentication.md) and do not block this peer. Missing provider credentials/approvals are explicit blockers, not grounds for fake working buttons. Supabase is the adopted implementation default. Runtime preparation/integration remains Draft/on hold under the user's preceding fix-validation/commit sequence; no credentials or provider administration have been inspected/performed by the contract update.
+Google requires Cloud/Auth client/consent configuration, appropriate test audience and exact allowed origins/redirects. Apple account/setup, signing/renewal and integration are deferred to independent [DEV0312](DEV0312-integrate-deferred-apple-authentication.md) and do not block this peer. Missing provider credentials/approvals are explicit blockers, not grounds for fake working buttons. Supabase is the adopted implementation default. The user authorized starting Auth implementation after checkpoint `1314f20`; DEV0286's gateway/password foundation is In progress. This Google peer remains Draft pending its shared callback interface and actual Google access; no provider administration has been performed.
 
 This is one direct peer under a flat coordination record. Dependencies do not create child tickets. Record material scope/behavior changes before implementation and split/consolidate through the repository policy if this boundary proves too broad. Ready is not an additional approval gate.
 
@@ -83,7 +83,7 @@ Planning only so far: no runtime API/schema, dependencies, secrets, provider acc
 
 ## Risks, limitations, and follow-ups
 
-Current password/Google contract decisions are adopted; the runtime hold, DEV0286 callback foundation and actual Google access remain prerequisites. Apple is deferred to DEV0312 and is not a completion blocker. No claim of registration, identity linking or Google readiness before real evidence.
+Current password/Google contract decisions are adopted; the DEV0286 callback foundation and actual Google access remain prerequisites. Apple is deferred to DEV0312 and is not a completion blocker. No claim of registration, identity linking or Google readiness before real evidence.
 
 ## Completion and review references
 

@@ -11,7 +11,7 @@
 
 When the configured local Supabase Auth stack is stopped, the server and browser currently expose the generic provider exceptions `AuthRetryableFetchError: fetch failed` and `AuthRetryableFetchError: Failed to fetch`. The sign-in screen only says that verification failed, so a developer must reconstruct that `NEXT_PUBLIC_SUPABASE_URL` points to an unavailable local service.
 
-Make this expected infrastructure failure explicit and recoverable without weakening the fail-closed authentication boundary described in the [architecture and delivery boundaries](../../../docs/mvp-spec.md#6-architecture-and-delivery-boundaries) and [definition of done](../../../docs/mvp-spec.md#11-definition-of-done).
+Make this expected infrastructure failure explicit and recoverable without weakening the fail-closed authentication boundary described in the [architecture and delivery boundaries](../../../docs/mvp-spec.md#6-application-and-infrastructure-boundaries) and [definition of done](../../../docs/mvp-spec.md#11-definition-of-done).
 
 ## Scope and non-goals
 
@@ -68,7 +68,7 @@ The browser client, request proxy and server-render client all use the wrapper. 
 | File or component                                                                                                                           | Change and purpose                                                                                                                                       |
 | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`src/auth/service-availability.ts`](../../../src/auth/service-availability.ts)                                                             | Classifies loopback Auth URLs, supplies bounded local/hosted UI copy and wraps fetch transport failures without leaking the underlying exception.        |
-| [`src/auth/client/browser-client.ts`](../../../src/auth/client/browser-client.ts)                                                           | Attaches the diagnostic fetch to the browser Supabase client and makes the application-owned module cache the only singleton.                            |
+| [`src/auth/client/supabase-auth-adapter.ts`](../../../src/auth/client/supabase-auth-adapter.ts)                                               | Attaches the diagnostic fetch to the browser Supabase client and makes the application-owned module cache the only singleton.                            |
 | [`src/server/auth/client.ts`](../../../src/server/auth/client.ts) and [`src/server/auth/proxy.ts`](../../../src/server/auth/proxy.ts)       | Attach the same diagnostic to server-render and request-proxy Auth calls.                                                                                |
 | [`src/auth/email-otp.ts`](../../../src/auth/email-otp.ts) and [`src/features/auth/sign-in.tsx`](../../../src/features/auth/sign-in.tsx)     | Present the local start command for OTP transport failures and configured-but-unreachable Auth state while keeping hosted copy bounded.                  |
 | [`src/app/api/auth/session/route.ts`](../../../src/app/api/auth/session/route.ts)                                                           | Returns HTTP 503 for an unavailable verified-session snapshot.                                                                                           |

@@ -9,14 +9,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { AuthChangeEvent } from "@supabase/supabase-js";
 import {
-  isAuthSessionSnapshot,
-  UNAVAILABLE_AUTH_SESSION,
   SIGNED_OUT_AUTH_SESSION,
   type AuthSessionSnapshot,
 } from "../contracts";
-import { browserAuthClient } from "./browser-client";
+import { authenticationGateway } from "./authentication-gateway";
+import { fetchVerifiedAuthSession } from "./session-client";
 
 type AuthSessionContextValue = Readonly<{
   session: AuthSessionSnapshot;
@@ -38,16 +36,7 @@ export function AuthSessionProvider({
   const refreshSession = useCallback(() => {
     if (refreshPromise.current) return refreshPromise.current;
 
-    const request = fetch("/api/auth/session", {
-      cache: "no-store",
-      headers: { accept: "application/json" },
-    })
-      .then(async (response) => {
-        if (!response.ok) return UNAVAILABLE_AUTH_SESSION;
-        const value: unknown = await response.json();
-        return isAuthSessionSnapshot(value) ? value : UNAVAILABLE_AUTH_SESSION;
-      })
-      .catch(() => UNAVAILABLE_AUTH_SESSION)
+    const request = fetchVerifiedAuthSession()
       .then((nextSession) => {
         setSession(nextSession);
         return nextSession;
@@ -61,24 +50,15 @@ export function AuthSessionProvider({
   }, []);
 
   useEffect(() => {
-    const client = browserAuthClient();
-    if (!client) return;
-
-    const { data } = client.auth.onAuthStateChange((event: AuthChangeEvent) => {
-      if (event === "SIGNED_OUT") {
+    return authenticationGateway.subscribe((event) => {
+      if (event === "signed-out") {
         setSession(SIGNED_OUT_AUTH_SESSION);
         return;
       }
-      if (
-        event === "SIGNED_IN" ||
-        event === "TOKEN_REFRESHED" ||
-        event === "USER_UPDATED"
-      ) {
+      if (event === "session-changed") {
         queueMicrotask(() => void refreshSession());
       }
     });
-
-    return () => data.subscription.unsubscribe();
   }, [refreshSession]);
 
   return (

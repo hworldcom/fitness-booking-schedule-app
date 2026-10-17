@@ -27,7 +27,7 @@ Login offers email/password plus Google. Registration offers email/password plus
 
 Use the adopted [password/email policy](../../../docs/mvp-spec.md#412-password-email-verification-and-recovery), [route/name/return table](../../../docs/mvp-spec.md#413-routes-profile-completion-and-returns) and [Account/session interfaces](../../../docs/mvp-spec.md#414-sessions-account-security-and-environments), DEV0286 services and DEV0287 provider readiness. Labels describe the user-confirmed 8-character minimum without mandatory character mixtures. Signup requires no legal name, birthdate, gender or username; the existing presentation-name step remains separate and repeat logins preserve completed data. The committed DEV0295 Account model is the compatibility baseline, not a reason to reimplement name/username persistence here.
 
-Adopt existing MovX brand, one focused primary form, quiet desktop support and a single-column phone layout; final visual/copy details stay within that contract. Email/password and Google are required for initial UAT; Apple is deferred and absent from active sign-in controls; unavailable provider states stay truthful. Runtime remains Draft/on hold under the user's preceding fix-validation/commit sequence. Screens cannot substitute a browser flag for DEV0286's recovery/verification gates.
+Adopt existing MovX brand, one focused primary form, quiet desktop support and a single-column phone layout; final visual/copy details stay within that contract. Email/password and Google are required for initial UAT; Apple is deferred and absent from active sign-in controls; unavailable provider states stay truthful. The user authorized implementation after checkpoint `1314f20`; this UI peer remains Draft pending DEV0286's working password/recovery interfaces and DEV0287 provider readiness. Screens cannot substitute a browser flag for DEV0286's recovery/verification gates.
 
 This is one direct peer under a flat coordination record. Dependencies do not create child tickets. Record material scope/behavior changes before implementation and split/consolidate through the repository policy if this boundary proves too broad. Ready is not an additional approval gate.
 
@@ -84,7 +84,7 @@ Planning only so far: no runtime API/schema, dependencies, secrets, provider acc
 
 ## Risks, limitations, and follow-ups
 
-Routes/contracts are adopted; the runtime hold and working service/provider interfaces remain. Existing browser-control/rendering failures in adjacent tickets may affect later proof and must be reported rather than treated as passes. Preserve DEV0295's private name/username contracts when adding the small Account security controls.
+Routes/contracts are adopted; working service/provider interfaces and actual proof remain. Existing browser-control/rendering failures in adjacent tickets may affect later proof and must be reported rather than treated as passes. Preserve DEV0295's private name/username contracts when adding the small Account security controls.
 
 ## Completion and review references
 
