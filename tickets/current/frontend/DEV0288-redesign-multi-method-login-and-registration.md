@@ -9,7 +9,7 @@
 
 ## Objective and context
 
-Build professional MovX login and registration views with email/password, Continue with Google and Continue with Apple, plus confirmation, recovery, existing-user setup and onboarding suitable for UAT.
+Build professional MovX login and registration views with email/password and Continue with Google, plus confirmation, recovery, existing-user setup and onboarding suitable for UAT.
 
 Use the current [registration contract](../../../docs/mvp-spec.md#41-register-as-an-athlete-or-apply-to-coach), [identity/privacy rules](../../../docs/mvp-spec.md#8-identity-data-and-demo-integrity), [definition of done](../../../docs/mvp-spec.md#11-definition-of-done), [milestones](../../../docs/mvp-spec.md#12-delivery-milestones) and [acceptance matrix](../../../docs/mvp-spec.md#13-acceptance-matrix). The delivered application still uses email codes until these runtime peers pass.
 
@@ -17,15 +17,17 @@ Use the current [registration contract](../../../docs/mvp-spec.md#41-register-as
 
 Provider-boundary refinement, 17 October 2026: the finished screens consume DEV0286's typed application Auth gateway and DEV0287's provider operations. Remove the current sign-in screen's direct browser Auth client/SDK calls as part of wiring these views. UI tests use the gateway's application results rather than Supabase-specific errors or event types; authorization remains server-derived.
 
-In scope: separate login/registration presentation, password manager/autofill and show/hide controls, provider controls, verification/resend, forgot/set password, existing-user setup, profile/coach continuation, accessible loading/error/ready states and public navigation/return integration. Out of scope: owning provider credentials or Auth policy, duplicating password/callback services, new profile fields, private-workspace redesign, invitations, fictitious endorsements and deployment.
+In scope: separate login/registration presentation, password manager/autofill and show/hide controls, provider controls, verification/resend, forgot/set password, existing-user setup, profile/coach continuation, accessible loading/error/ready states, public navigation/return integration and the focused Account → Login & security method/password/sign-out controls. Out of scope: owning provider credentials or Auth policy, duplicating password/callback services, new profile fields, deferred Apple controls/setup/proof, broader private-workspace/Account redesign, editable email, manual provider connect/disconnect, username login/URLs, invitations, fictitious endorsements and deployment.
 
 ## Expected behavior and edge cases
 
-Login offers email/password plus Google/Apple. Registration offers email/password plus the same provider choices; social choices can create or recover the account through the managed provider and collect only any missing minimal profile. Returning users skip completed onboarding. Ordinary password login sends no code; verification/recovery and transitional password setup have distinct explanations. Existing /sign-in entries and sanitized return/coach intent remain compatible. Keep public browsing available and preserve explicit coach review. All states use product language, without terminal commands or environment/database instructions.
+Login offers email/password plus Google. Registration offers email/password plus the same provider choices; social choices can create or recover the account through the managed provider and collect only any missing minimal profile. Returning users skip completed onboarding. Ordinary password login sends no code; verification/recovery and transitional password setup have distinct explanations. Existing /sign-in entries and sanitized return/coach intent remain compatible. Keep public browsing available and preserve explicit coach review. All states use product language, without terminal commands or environment/database instructions.
 
 ## Assumptions, decisions, and dependencies
 
-Uses adopted DEV0285 contracts, DEV0286 password/recovery services and DEV0287 provider results/readiness. Proposed composition: existing MovX brand, one focused primary form, quiet desktop support and single-column phone layout; exact routes/copy remain implementation defaults. All three methods are required for the requested UAT outcome; incomplete provider readiness must be truthful and cannot be counted as delivered integration.
+Use the adopted [password/email policy](../../../docs/mvp-spec.md#412-password-email-verification-and-recovery), [route/name/return table](../../../docs/mvp-spec.md#413-routes-profile-completion-and-returns) and [Account/session interfaces](../../../docs/mvp-spec.md#414-sessions-account-security-and-environments), DEV0286 services and DEV0287 provider readiness. Labels describe the user-confirmed 8-character minimum without mandatory character mixtures. Signup requires no legal name, birthdate, gender or username; the existing presentation-name step remains separate and repeat logins preserve completed data. The committed DEV0295 Account model is the compatibility baseline, not a reason to reimplement name/username persistence here.
+
+Adopt existing MovX brand, one focused primary form, quiet desktop support and a single-column phone layout; final visual/copy details stay within that contract. Email/password and Google are required for initial UAT; Apple is deferred and absent from active sign-in controls; unavailable provider states stay truthful. Runtime remains Draft/on hold under the user's preceding fix-validation/commit sequence. Screens cannot substitute a browser flag for DEV0286's recovery/verification gates.
 
 This is one direct peer under a flat coordination record. Dependencies do not create child tickets. Record material scope/behavior changes before implementation and split/consolidate through the repository policy if this boundary proves too broad. Ready is not an additional approval gate.
 
@@ -38,9 +40,9 @@ This is one direct peer under a flat coordination record. Dependencies do not cr
 
 ## Acceptance criteria
 
-- [ ] AC1: Distinct polished login and registration expose email/password, Google and Apple, with coherent confirmation/recovery and existing-user setup views and truthful provider readiness.
-- [ ] AC2: New/returning/coach-intent and protected-return flows use the adopted services; no duplicate profile, auto booking/message/invitation action or coach approval is introduced.
-- [ ] AC3: All steps work at 375/430/768/1024/1440 px with keyboard, password-manager/autofill/paste, 200% zoom, reduced motion, long text, visible focus, announced errors, contrast and at least 44 px primary controls.
+- [ ] AC1: The adopted routes expose distinct branded login/registration, truthful Google readiness with no active Apple entry, confirmation/resend, recovery and existing-user setup with the 8-character/no-mixture guidance and generic account-safe outcomes. Focused Account security controls use the same services and preserve current optional username/name settings.
+- [ ] AC2: New/returning/missing-name, `intent=client|coach`, default My sessions and protected-return flows follow the adopted precedence and services. Recovery cannot navigate into protected behavior before update; hostile/looping returns fail safely. No duplicate profile, legal-name assertion, automatic booking/message/invitation action or coach approval is introduced.
+- [ ] AC3: All in-scope steps work at 375/430/768/1024/1440 px with keyboard, password-manager/autofill/paste, 200% zoom, reduced motion, long text, visible focus, announced errors, contrast and at least 44 px primary controls.
 - [ ] AC4: Normal/error/unavailable copy is concise and user-facing; relevant component/browser regressions, lint/typecheck/format/build and visual review pass without public/private shell regressions.
 - [ ] AC5: Authentication views use only application-owned Auth operation/result contracts and contain no direct provider SDK/client calls or vendor-specific session/error types; the strengthened boundary checks pass.
 
@@ -60,6 +62,10 @@ Planned: src/features/auth/sign-in.tsx and focused Auth components/routes, src/a
 
 ### Decisions and deviations
 
+2026-10-17 later scope change under DEV0311: initial delivery is email/password and Google; the user deferred Apple account/setup. Apple controls and live provider proof are excluded from this peer and preserved in independent DEV0312. Earlier three-method planning history below is retained. Runtime remains Draft; no implementation/provider operation occurred.
+
+2026-10-17 contract alignment under DEV0285: updated this peer's scope/criteria to consume the adopted specification, including the confirmed 8-character/no-mixture policy and its relevant linking, profile, recovery/session, route and Account boundaries. This is documentation alignment only; runtime remains Draft/on hold and all implementation acceptance evidence is pending.
+
 2026-10-17: Created as a fresh direct peer when retired DEV0283 expanded from presentation to password and Google/Apple authentication. No runtime implementation deviation; confirmed method choices are distinct from proposed implementation details.
 
 ### Contracts, configuration, and operations
@@ -78,7 +84,7 @@ Planning only so far: no runtime API/schema, dependencies, secrets, provider acc
 
 ## Risks, limitations, and follow-ups
 
-Need adopted routes/contracts and working service/provider interfaces. Existing browser-control/rendering failures in adjacent tickets may affect later proof and must be reported rather than treated as passes.
+Routes/contracts are adopted; the runtime hold and working service/provider interfaces remain. Existing browser-control/rendering failures in adjacent tickets may affect later proof and must be reported rather than treated as passes. Preserve DEV0295's private name/username contracts when adding the small Account security controls.
 
 ## Completion and review references
 
