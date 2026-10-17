@@ -53,7 +53,6 @@ test("client and unapproved applicant navigation includes personal sessions", ()
         { label: "Explore", href: "/explore" },
         { label: "Events", href: "/events" },
         { label: "My sessions", href: "/sessions" },
-        { label: "Messages", href: "/messages" },
         { label: "How it works", href: "/how-it-works" },
         { label: "Profile", href: "/profile" },
       ],
@@ -73,7 +72,6 @@ test("approved and demo navigation defaults Profile to the coach editor", () => 
         { label: "Explore", href: "/explore" },
         { label: "Events", href: "/events" },
         { label: "My sessions", href: "/sessions" },
-        { label: "Messages", href: "/messages" },
         { label: "Coach workspace", href: "/coach" },
         { label: "How it works", href: "/how-it-works" },
         { label: "Profile", href: "/profile/coach" },
@@ -93,7 +91,6 @@ test("suspended coach navigation keeps workspace and personal Profile", () => {
       { label: "Explore", href: "/explore" },
       { label: "Events", href: "/events" },
       { label: "My sessions", href: "/sessions" },
-      { label: "Messages", href: "/messages" },
       { label: "Coach workspace", href: "/coach" },
       { label: "How it works", href: "/how-it-works" },
       { label: "Profile", href: "/profile" },
@@ -101,7 +98,7 @@ test("suspended coach navigation keeps workspace and personal Profile", () => {
   );
 });
 
-test("coach workspace active state does not match public coach profiles", () => {
+test("workspace sidebar navigation respects route and actor boundaries", () => {
   assert.equal(isNavigationHrefActive("/coach", "/coach"), true);
   assert.equal(isNavigationHrefActive("/coach/settings", "/coach"), true);
   assert.equal(isNavigationHrefActive("/coaches/daniel-park", "/coach"), false);
@@ -109,11 +106,11 @@ test("coach workspace active state does not match public coach profiles", () => 
   for (const path of ["/coach", "/coach/events/example", "/profile/coach"]) {
     assert.deepEqual(
       navigationForActor(actor, path).map(({ href }) => href),
-      ["/", "/sessions", "/messages", "/coach", "/profile/coach"],
+      ["/", "/sessions", "/coach", "/profile/coach"],
       path,
     );
   }
-  for (const path of ["/coaches/daniel-park", "/profile", "/sessions"]) {
+  for (const path of ["/coaches/daniel-park", "/profile", "/sessions-other"]) {
     assert.deepEqual(
       navigationForActor(actor, path),
       navigationForActor(actor),
@@ -125,6 +122,31 @@ test("coach workspace active state does not match public coach profiles", () => 
     ),
     ["/", "/profile"],
   );
+  for (const path of [
+    "/sessions",
+    "/sessions/groups",
+    "/sessions/groups/example",
+  ]) {
+    assert.deepEqual(
+      navigationForActor(authorizedActor("not-applied"), path).map(
+        ({ href }) => href,
+      ),
+      ["/", "/sessions", "/profile"],
+      path,
+    );
+    assert.deepEqual(
+      navigationForActor(actor, path).map(({ href }) => href),
+      ["/", "/sessions", "/coach", "/profile/coach"],
+      path,
+    );
+    assert.deepEqual(
+      navigationForActor({ status: "signed-out" }, path).map(
+        ({ href }) => href,
+      ),
+      ["/", "/profile"],
+      path,
+    );
+  }
 });
 
 test("public shell mode is restricted to the adopted marketplace routes", () => {
@@ -233,6 +255,16 @@ test("mobile workspace navigation stays bounded to primary private destinations"
             href: status === "suspended" ? "/profile" : "/profile/coach",
           },
         ],
+        `${status}: ${path}`,
+      );
+    }
+  }
+  for (const status of ["not-applied", "approved", "suspended"] as const) {
+    const actor = authorizedActor(status);
+    for (const path of ["/sessions", "/sessions/groups"]) {
+      assert.deepEqual(
+        mobileNavigationForActor(actor, path),
+        mobileNavigationForActor(actor),
         `${status}: ${path}`,
       );
     }

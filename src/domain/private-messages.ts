@@ -1,3 +1,4 @@
+import { isPublicCoachPortraitUrl } from "./profile-images";
 import { isCanonicalUuid } from "./coach-bookings";
 import { validSessionTitle, type SessionTitleDetails } from "./session-titles";
 export type MessageConsent = Readonly<{
@@ -13,6 +14,7 @@ export type MessageConversation = Readonly<{
   athleteProfileId: string;
   actorProfileId: string;
   counterpartName: string;
+  counterpartImageUrl: string | null;
   role: "coach" | "athlete";
   activityAt: string;
   canSendGeneral: boolean;
@@ -65,8 +67,6 @@ export type MessageAction =
   | "open"
   | "inquire"
   | "send"
-  | "request-consent"
-  | "consent"
   | "read"
   | "block"
   | "unblock"
@@ -113,7 +113,7 @@ export function validMessageCommand(
   if (action === "inbox")
     return (
       (args.filter === undefined ||
-        ["all", "unread", "requests"].includes(String(args.filter))) &&
+        ["all", "unread"].includes(String(args.filter))) &&
       ((args.beforeAt === undefined && args.beforeId === undefined) ||
         (id("beforeId") &&
           typeof args.beforeAt === "string" &&
@@ -141,13 +141,6 @@ export function validMessageCommand(
       id("submissionId") &&
       (args.contextId === null || id("contextId")) &&
       validMessageBody(args.body)
-    );
-  if (action === "request-consent")
-    return id("submissionId") && validMessageBody(args.body);
-  if (action === "consent")
-    return (
-      id("consentId") &&
-      ["accept", "decline", "withdraw"].includes(String(args.decision))
     );
   if (action === "read")
     return (
@@ -214,6 +207,24 @@ function consent(v: unknown): MessageConsent | null {
     ]),
   };
 }
+// Only explicit public portraits or existing private relationship endpoints.
+function messageImageUrl(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  if (isPublicCoachPortraitUrl(value)) return value;
+  if (typeof value === "string") {
+    const match =
+      /^\/api\/(?:connections\/([^/]+)\/athlete-avatar|coach\/requests\/([^/]+)\/client-avatar)\?v=([^&]+)$/.exec(
+        value,
+      );
+    if (
+      match &&
+      isCanonicalUuid(match[1] ?? match[2]) &&
+      Number.isFinite(Date.parse(decodeURIComponent(match[3])))
+    )
+      return value;
+  }
+  throw Error("Invalid message image response.");
+}
 export function parseMessageConversation(v: unknown): MessageConversation {
   const a = object(v);
   return {
@@ -222,6 +233,7 @@ export function parseMessageConversation(v: unknown): MessageConversation {
     athleteProfileId: uuid(a.athleteProfileId),
     actorProfileId: uuid(a.actorProfileId),
     counterpartName: text(a.counterpartName),
+    counterpartImageUrl: messageImageUrl(a.counterpartImageUrl),
     role: choice(a.role, ["coach", "athlete"]),
     activityAt: text(a.activityAt),
     canSendGeneral: bool(a.canSendGeneral),
@@ -285,11 +297,10 @@ export function parseMessageResult(action: MessageAction, v: unknown): unknown {
   const a = object(v);
   if (action === "contact")
     return { coachId: uuid(a.coachId), name: text(a.name) };
-  if (["inquire", "send", "open", "request-consent"].includes(action))
+  if (["inquire", "send", "open"].includes(action))
     return {
       conversationId: uuid(a.conversationId),
       ...(a.entryId ? { entryId: uuid(a.entryId) } : {}),
-      ...(a.consentId ? { consentId: uuid(a.consentId) } : {}),
     };
   return {};
 }

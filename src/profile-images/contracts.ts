@@ -1,3 +1,4 @@
+export { isPublicCoachPortraitUrl } from "@/domain/profile-images";
 export const PROFILE_IMAGE_DIMENSION = 512;
 export const PROFILE_IMAGE_MAX_SOURCE_BYTES = 8 * 1024 * 1024;
 export const PROFILE_IMAGE_MAX_CANONICAL_BYTES = 512 * 1024;
@@ -89,33 +90,6 @@ export function publicCoachPortraitUrl(
     .map((segment) => encodeURIComponent(segment))
     .join("/");
   return `${storageUrl.replace(/\/$/, "")}/storage/v1/object/public/${COACH_PORTRAIT_BUCKET}/${encodedPath}?v=${encodeURIComponent(reference.updatedAt)}`;
-}
-
-export function isPublicCoachPortraitUrl(value: unknown): value is string {
-  if (typeof value !== "string" || value.length < 1 || value.length > 1024) {
-    return false;
-  }
-  if (/^\/images\/coaches\/[a-z0-9]+(?:-[a-z0-9]+)*[.]webp$/.test(value)) {
-    return true;
-  }
-  try {
-    const url = new URL(value);
-    const pathPattern = new RegExp(
-      `^/storage/v1/object/public/${COACH_PORTRAIT_BUCKET}/${UUID_PATTERN}/${UUID_PATTERN}[.]webp$`,
-      "i",
-    );
-    return (
-      (url.protocol === "https:" || url.protocol === "http:") &&
-      !url.username &&
-      !url.password &&
-      !url.hash &&
-      pathPattern.test(url.pathname) &&
-      url.searchParams.size === 1 &&
-      Boolean(url.searchParams.get("v"))
-    );
-  } catch {
-    return false;
-  }
 }
 
 export function isProfileImageMutationSnapshot(

@@ -1,4 +1,5 @@
 import "server-only";
+import { materializeMessageMedia } from "./media";
 import { sql } from "drizzle-orm";
 import {
   parseMessageResult,
@@ -19,7 +20,10 @@ export async function messageCommandRecord(
       sql`select app.message_command(${command.action}::text,${JSON.stringify(command.args)}::jsonb) result`,
     );
     if (rows.length !== 1) throw new MessageConflictError();
-    return parseMessageResult(command.action, rows[0].result);
+    return parseMessageResult(
+      command.action,
+      materializeMessageMedia(rows[0].result),
+    );
   } catch (error) {
     let current: unknown = error;
     for (let i = 0; i < 5; i++) {

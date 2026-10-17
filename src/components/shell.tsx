@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   ArrowRight,
+  ArrowLeft,
   ArrowUpRight,
   BriefcaseBusiness,
   CalendarCheck2,
   CalendarDays,
-  CircleHelp,
   House,
   Info,
   ListChecks,
@@ -97,7 +97,7 @@ function isCoachWorkspacePath(path: string) {
   );
 }
 
-export function navigationForActor(actor: ActorSnapshot, path = "") {
+function allNavigationForActor(actor: ActorSnapshot, path = "") {
   const accountNavigation =
     actor.status !== "authorized"
       ? []
@@ -117,13 +117,22 @@ export function navigationForActor(actor: ActorSnapshot, path = "") {
     profileNavigation,
   ].filter(
     ({ href }) =>
-      !isCoachWorkspacePath(path) ||
+      (!isCoachWorkspacePath(path) &&
+        !isNavigationHrefActive(path, clientNavigation.href)) ||
       !["/explore", "/events", howItWorksNavigation.href].includes(href),
   );
 }
 
+// The desktop header owns Messages; keep it in the independent mobile menu.
+export function navigationForActor(actor: ActorSnapshot, path = "") {
+  return allNavigationForActor(actor, path).filter(
+    ({ href }) => href !== "/messages",
+  );
+}
+
 export function mobileNavigationForActor(actor: ActorSnapshot, path = "") {
-  return navigationForActor(actor, path).filter(
+  const navigationPath = isCoachWorkspacePath(path) ? path : "";
+  return allNavigationForActor(actor, navigationPath).filter(
     ({ href }) =>
       (href !== "/" || isCoachWorkspacePath(path)) &&
       href !== "/how-it-works" &&
@@ -175,6 +184,84 @@ export function isNavigationHrefActive(path: string, href: string) {
     : path === href || path.startsWith(`${href}/`);
 }
 
+export function MessageShell({
+  actor,
+  children,
+  authControl,
+}: {
+  actor: ActorSnapshot;
+  children?: ReactNode;
+  authControl?: ReactNode;
+}) {
+  const root = useRef<HTMLDivElement>(null);
+  const profile = actor.status === "authorized" ? actor.profile : null;
+  const image = profile
+    ? accountProfileImagePresentation(
+        profile.avatarUrl,
+        profile.coachPortraitUrl,
+      )
+    : null;
+  const coachWorkspace = hasCoachWorkspaceNavigation(actor);
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const fit = () => {
+      if (viewport.scale === 1)
+        root.current?.style.setProperty(
+          "--messages-height",
+          `${viewport.height}px`,
+        );
+    };
+    fit();
+    viewport.addEventListener("resize", fit);
+    return () => viewport.removeEventListener("resize", fit);
+  }, []);
+  return (
+    <div className="messages-shell" ref={root}>
+      <a className="skip-link" href="#main-content">
+        Skip to messages
+      </a>
+      <header className="messages-shell-header">
+        <Link href="/" className="brand-home" aria-label="MovX Club home">
+          <Brand compact />
+        </Link>
+        <nav aria-label="Messaging navigation">
+          {profile ? (
+            <>
+              <Link
+                href={coachWorkspace ? "/coach" : "/sessions"}
+                className="messages-workspace-return"
+                aria-label={`Back to ${coachWorkspace ? "Coach workspace" : "My sessions"}`}
+              >
+                <ArrowLeft size={16} aria-hidden="true" />
+                <span>
+                  {coachWorkspace ? "Coach workspace" : "My sessions"}
+                </span>
+              </Link>
+              <Link
+                href="/profile"
+                className="messages-account"
+                aria-label={`Your account profile: ${profile.displayName}`}
+              >
+                <Avatar
+                  initials={profileInitials(profile.displayName)}
+                  imageUrl={image?.imageUrl}
+                  small
+                />
+              </Link>
+            </>
+          ) : (
+            authControl
+          )}
+        </nav>
+      </header>
+      <main id="main-content" className="messages-shell-main" tabIndex={-1}>
+        {children}
+      </main>
+    </div>
+  );
+}
+
 export function Shell({ children }: { children: ReactNode }) {
   const path = usePathname();
   const { actor } = useActor();
@@ -203,7 +290,6 @@ export function Shell({ children }: { children: ReactNode }) {
       </span>
     );
   const publicShell = isPublicMarketplacePath(path);
-  const coachWorkspace = isCoachWorkspacePath(path);
   const currentProfile = actor.status === "authorized" ? actor.profile : null;
   const currentProfileImage = currentProfile
     ? accountProfileImagePresentation(
@@ -216,6 +302,13 @@ export function Shell({ children }: { children: ReactNode }) {
   const publicAccountNavigation = publicAccountNavigationForActor(actor);
   const roleLabel = workspaceRoleLabel(actor);
   const active = (href: string) => isNavigationHrefActive(path, href);
+
+  if (path === "/messages")
+    return (
+      <MessageShell actor={actor} authControl={<AuthStatusLink />}>
+        {children}
+      </MessageShell>
+    );
 
   return (
     <>
@@ -363,10 +456,19 @@ export function Shell({ children }: { children: ReactNode }) {
               <span>Berlin, Germany</span>
             </span>
             <div className="header-right">
-              {!coachWorkspace && (
-                <Link href="/how-it-works" className="how-it-works-link">
-                  <CircleHelp size={17} aria-hidden="true" />
-                  <span>How it works</span>
+              {currentProfile && (
+                <Link
+                  href="/messages"
+                  className="header-messages"
+                  aria-label="Messages"
+                >
+                  <MessageSquare
+                    size={21}
+                    strokeWidth={1.8}
+                    aria-hidden="true"
+                  />
+                  <span className="header-messages-label">Messages</span>
+                  {messageBadge}
                 </Link>
               )}
               <AuthStatusLink />

@@ -1,0 +1,73 @@
+import "server-only";
+import { supabasePublicConfig } from "@/auth/config";
+import { isCanonicalUuid } from "@/domain/coach-bookings";
+import { connectionAthleteAvatarUrl } from "@/domain/coach-athlete-connections";
+import {
+  isOwnedProfileImageStoragePath,
+  isPublicCoachPortraitUrl,
+  privateBookingRequestClientAvatarUrl,
+  publicCoachPortraitUrl,
+} from "@/profile-images/contracts";
+
+// The database returns a bounded independent grant, never a private object path.
+// Convert it before the shared DTO parser rebuilds the browser response.
+export function materializeMessageMedia(
+  value: unknown,
+  storageUrl: string | null = supabasePublicConfig()?.url ?? null,
+): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const record = value as Record<string, unknown>;
+  if (Array.isArray(record.items))
+    return {
+      ...record,
+      items: record.items.map((item) =>
+        materializeMessageMedia(item, storageUrl),
+      ),
+    };
+  if (record.conversation)
+    return {
+      ...record,
+      conversation: materializeMessageMedia(record.conversation, storageUrl),
+    };
+  if (typeof record.counterpartName !== "string") return value;
+  const raw = record.counterpartMedia;
+  let imageUrl: string | null = null;
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    const media = raw as Record<string, unknown>;
+    if (
+      typeof media.updatedAt !== "string" ||
+      !Number.isFinite(Date.parse(media.updatedAt))
+    )
+      throw Error("Invalid message media reference.");
+    if (record.role === "athlete" && media.kind === "coach-portrait") {
+      if (
+        (media.source !== "fixture" && media.source !== "storage") ||
+        typeof media.path !== "string" ||
+        typeof record.coachProfileId !== "string" ||
+        (media.source === "storage" &&
+          !isOwnedProfileImageStoragePath(media.path, record.coachProfileId))
+      )
+        throw Error("Invalid message media reference.");
+      imageUrl = publicCoachPortraitUrl(
+        { source: media.source, path: media.path, updatedAt: media.updatedAt },
+        storageUrl,
+      );
+      if (imageUrl && !isPublicCoachPortraitUrl(imageUrl))
+        throw Error("Invalid message media reference.");
+    } else if (
+      record.role === "coach" &&
+      typeof media.id === "string" &&
+      isCanonicalUuid(media.id)
+    ) {
+      if (media.kind === "connection-avatar")
+        imageUrl = connectionAthleteAvatarUrl(media.id, media.updatedAt);
+      else if (media.kind === "request-avatar")
+        imageUrl = privateBookingRequestClientAvatarUrl(
+          media.id,
+          media.updatedAt,
+        );
+      else throw Error("Invalid message media reference.");
+    } else throw Error("Invalid message media reference.");
+  }
+  return { ...record, counterpartImageUrl: imageUrl };
+}

@@ -2,10 +2,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, MessageSquare, Send, ShieldBan, X } from "lucide-react";
+import { Avatar } from "@/components/ui";
+import { profileInitials } from "@/auth/profile-presentation";
 import { useActor } from "@/auth/client/actor-provider";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
 import { sessionTitle } from "@/domain/session-titles";
 import { SessionTitleEditor } from "./session-title-editor";
+import { HistoricalContact } from "./historical-contact";
 import {
   messageStatusLabel,
   validMessageBody,
@@ -30,7 +33,7 @@ const date = (value: string) =>
   }).format(new Date(value));
 const contextLabel = (context: MessageContext) =>
   context.kind === "inquiry"
-    ? "Coach inquiry"
+    ? "Conversation"
     : `${context.bookingId ? sessionTitle(context.title) : "Session request"} · ${context.startsAt ? date(context.startsAt) : "Details"}`;
 function mergeThread(
   old: MessageThread | null,
@@ -94,6 +97,8 @@ function MailboxWorkspace({
   const [inbox, setInbox] = useState<MessageInbox | null>(null);
   const [error, setError] = useState("");
   const [more, setMore] = useState(false);
+  const listHeading = useRef<HTMLHeadingElement>(null);
+  const selectedButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!pairId || !isCanonicalUuid(pairId)) return;
     let active = true;
@@ -167,6 +172,16 @@ function MailboxWorkspace({
     setSelected(id);
     window.history.replaceState(null, "", `/messages?conversation=${id}`);
   };
+  const backToConversations = () => {
+    const previous = selectedButton.current;
+    setContact(null);
+    setSelected(null);
+    window.history.replaceState(null, "", "/messages");
+    requestAnimationFrame(() => {
+      if (previous?.isConnected) previous.focus();
+      else listHeading.current?.focus();
+    });
+  };
   const loadMore = async () => {
     if (!inbox?.items.length) return;
     const version = generation.current;
@@ -199,23 +214,20 @@ function MailboxWorkspace({
   };
   return (
     <div className="mailbox-page">
-      <header className="mailbox-heading">
-        <span className="eyebrow">YOUR CONVERSATIONS</span>
-        <h1>Messages</h1>
-        <p>
-          Questions, session requests and updates, together with your coach or
-          athlete.
-        </p>
-      </header>
       <div
         className={`mailbox-layout ${selected || contact ? "has-conversation" : ""}`}
       >
         <aside className="mailbox-list" aria-label="Conversations">
+          <header className="mailbox-heading">
+            <h1 ref={listHeading} tabIndex={-1}>
+              Messages
+            </h1>
+            <p>Your private conversations</p>
+          </header>
           <div className="mailbox-filters" aria-label="Filter conversations">
             {[
               ["all", "All"],
               ["unread", "Unread"],
-              ["requests", "Message requests"],
             ].map(([key, label]) => (
               <button
                 type="button"
@@ -230,67 +242,65 @@ function MailboxWorkspace({
               </button>
             ))}
           </div>
-          {error && (
-            <p className="mailbox-error" role="alert">
-              {error} <button onClick={refresh}>Try again</button>
-            </p>
-          )}
-          {!inbox && !error && <p role="status">Loading conversations…</p>}
-          {inbox && inbox.items.length === 0 && (
-            <div className="mailbox-empty">
-              <MessageSquare aria-hidden="true" />
-              <h2>
-                {filter === "requests"
-                  ? "No message requests"
-                  : filter === "unread"
+          <div className="mailbox-conversations">
+            {error && (
+              <p className="mailbox-error" role="alert">
+                {error} <button onClick={refresh}>Try again</button>
+              </p>
+            )}
+            {!inbox && !error && <p role="status">Loading conversations…</p>}
+            {inbox && inbox.items.length === 0 && (
+              <div className="mailbox-empty">
+                <MessageSquare aria-hidden="true" />
+                <h2>
+                  {filter === "unread"
                     ? "You’re all caught up"
                     : "Your conversations start here"}
-              </h2>
-              <p>
-                Ask a coach a question from their profile, or send a session
-                request.
-              </p>
-              <Link href="/explore">Discover coaches</Link>
-            </div>
-          )}
-          {inbox?.items.map((c) => (
-            <button
-              className={`mailbox-list-item ${selected === c.id ? "selected" : ""}`}
-              key={c.id}
-              onClick={() => select(c.id)}
-              aria-current={selected === c.id ? "true" : undefined}
-            >
-              <span className="mailbox-initial" aria-hidden="true">
-                {c.counterpartName
-                  .split(" ")
-                  .map((s) => s[0])
-                  .slice(0, 2)
-                  .join("")}
-              </span>
-              <span>
-                <strong>{c.counterpartName}</strong>
-                <small>
-                  {c.role === "coach" ? "Your athlete" : "Your coach"}
-                  {c.consent?.status === "pending" ? " · Message request" : ""}
-                </small>
-                <small>{date(c.activityAt)}</small>
-              </span>
-              {c.unread && (
-                <span className="mailbox-unread" aria-label="Unread" />
-              )}
-            </button>
-          ))}
-          {more && (
-            <button className="mailbox-load" onClick={loadMore}>
-              Load more conversations
-            </button>
-          )}
+                </h2>
+                <p>
+                  Ask a coach a question from their profile, or send a session
+                  request.
+                </p>
+                <Link href="/explore">Discover coaches</Link>
+              </div>
+            )}
+            {inbox?.items.map((c) => (
+              <button
+                className={`mailbox-list-item ${selected === c.id ? "selected" : ""}`}
+                ref={selected === c.id ? selectedButton : undefined}
+                key={c.id}
+                onClick={() => select(c.id)}
+                aria-current={selected === c.id ? "true" : undefined}
+              >
+                <Avatar
+                  initials={profileInitials(c.counterpartName)}
+                  imageUrl={c.counterpartImageUrl}
+                  color="blue"
+                />
+                <span>
+                  <strong>{c.counterpartName}</strong>
+                  <small>
+                    {c.role === "coach" ? "Your athlete" : "Your coach"}
+                  </small>
+                  <small>{date(c.activityAt)}</small>
+                </span>
+                {c.unread && (
+                  <span className="mailbox-unread" aria-label="Unread" />
+                )}
+              </button>
+            ))}
+            {more && (
+              <button className="mailbox-load" onClick={loadMore}>
+                Load more conversations
+              </button>
+            )}
+          </div>
         </aside>
         {contact ? (
           <Inquiry
             key={contact}
             coachId={contact}
-            back={() => setContact(null)}
+            back={backToConversations}
             saved={(id) => {
               select(id);
               void refresh();
@@ -300,10 +310,7 @@ function MailboxWorkspace({
           <Conversation
             key={selected}
             id={selected}
-            back={() => {
-              setSelected(null);
-              window.history.replaceState(null, "", "/messages");
-            }}
+            back={backToConversations}
           />
         ) : (
           <section className="mailbox-welcome">
@@ -368,20 +375,24 @@ function Inquiry({
   return (
     <section className="mailbox-thread">
       <header className="mailbox-thread-header">
-        <button className="mailbox-back" onClick={back}>
+        <button
+          className="mailbox-back"
+          onClick={back}
+          aria-label="Back to conversations"
+        >
           <ArrowLeft size={18} />
-          Back
+          <span>Back</span>
         </button>
         <div>
           <h2>{coach ? `Message ${coach.name}` : "Message coach"}</h2>
-          <p>Ask a question before choosing a session.</p>
+          <p>Start a conversation before choosing a session.</p>
         </div>
       </header>
       <div className="mailbox-contact-intro">
         <MessageSquare size={36} />
-        <h3>What would you like to work on?</h3>
+        <h3>Start a conversation</h3>
         <p>
-          Your question starts a private conversation. It doesn’t book a session
+          Your message starts a private conversation. It doesn’t book a session
           or create a connection.
         </p>
       </div>
@@ -391,7 +402,7 @@ function Inquiry({
         </p>
       )}
       <div className="mailbox-composer">
-        <label htmlFor="inquiry-body">Your question</label>
+        <label htmlFor="inquiry-body">Your message</label>
         <textarea
           id="inquiry-body"
           rows={4}
@@ -423,10 +434,29 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
   const latest = useRef<MessageThread | null>(null);
   const [error, setError] = useState("");
   const [details, setDetails] = useState<MessageContext | null>(null);
+  const detailsClose = useRef<HTMLButtonElement>(null);
+  const detailsTrigger = useRef<HTMLElement | null>(null);
+  const detailsId = details?.id;
+  useEffect(() => {
+    if (detailsId) detailsClose.current?.focus();
+  }, [detailsId]);
+  const openDetails = (value: MessageContext) => {
+    detailsTrigger.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    setDetails(value);
+  };
+  const closeDetails = () => {
+    setDetails(null);
+    requestAnimationFrame(() => {
+      if (detailsTrigger.current?.isConnected) detailsTrigger.current.focus();
+    });
+  };
   const [busy, setBusy] = useState(false);
   const [confirmBlock, setConfirmBlock] = useState(false);
   const [body, setBody] = useState("");
-  const [context, setContext] = useState<string>("");
+  const [context, setContext] = useState<string>("general");
   const [historyFilter, setHistoryFilter] = useState("");
   const filterRef = useRef("");
   const [filterLoading, setFilterLoading] = useState(false);
@@ -439,7 +469,6 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
     id: string;
     body: string;
     contextId: string | null;
-    action: "send" | "request-consent";
   } | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const refresh = useCallback(
@@ -459,12 +488,6 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
           ...cursor,
         })) as MessageThread;
         if (mounted.current && version === revision.current) {
-          if (!latest.current)
-            setContext(
-              next.conversation.canSendGeneral
-                ? "general"
-                : (next.contexts.find((c) => c.canSend)?.id ?? "general"),
-            );
           const merged = mergeThread(latest.current, next);
           latest.current = merged;
           setThread(merged);
@@ -558,7 +581,7 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
     revision.current++;
     filterRef.current = value;
     setHistoryFilter(value);
-    if (value) setContext(value);
+    setContext(value || "general");
     const empty = latest.current && {
       ...latest.current,
       entries: [],
@@ -570,15 +593,12 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
     setFilterLoading(true);
     void refresh();
   }
-  const action = async (
-    type: "consent" | "block" | "unblock",
-    args: Record<string, unknown> = {},
-  ) => {
+  const action = async (type: "block" | "unblock") => {
     if (busy) return;
     setBusy(true);
     setError("");
     try {
-      await messageWrite(type, { conversationId: id, ...args });
+      await messageWrite(type, { conversationId: id });
       revision.current++;
       setConfirmBlock(false);
       await refresh();
@@ -591,9 +611,13 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
   if (!thread)
     return (
       <section className="mailbox-thread">
-        <button className="mailbox-back" onClick={back}>
+        <button
+          className="mailbox-back"
+          onClick={back}
+          aria-label="Back to conversations"
+        >
           <ArrowLeft size={18} />
-          Back
+          <span>Back</span>
         </button>
         <p role={error ? "alert" : "status"}>
           {error || "Loading conversation…"}
@@ -607,19 +631,8 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
   const service = thread.contexts.find((v) => v.id === activeContext);
   const canSend =
     activeContext === "general" ? c.canSendGeneral : !!service?.canSend;
-  const requestMode =
-    activeContext === "general" &&
-    !c.canSendGeneral &&
-    c.canRequestGeneral &&
-    c.consent?.status !== "pending";
   const send = async () => {
-    if (
-      busy ||
-      filterLoading ||
-      !validMessageBody(body) ||
-      (!canSend && !requestMode)
-    )
-      return;
+    if (busy || filterLoading || !validMessageBody(body) || !canSend) return;
     setBusy(true);
     setError("");
     setNotice("");
@@ -627,11 +640,10 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
       id: crypto.randomUUID(),
       body,
       contextId: service?.id ?? null,
-      action: requestMode ? "request-consent" : "send",
     };
     setPending(submission);
     try {
-      await messageWrite(submission.action, {
+      await messageWrite("send", {
         conversationId: id,
         body: submission.body,
         contextId: submission.contextId,
@@ -640,11 +652,7 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
       revision.current++;
       setPending(null);
       setBody("");
-      setNotice(
-        submission.action === "request-consent"
-          ? "Message request sent. Wait for their decision."
-          : "Message sent.",
-      );
+      setNotice("Message sent.");
       await refresh({ after: thread.entries.at(-1)?.seq ?? 0 });
     } catch (e) {
       if (accessRevoked(e)) {
@@ -661,14 +669,23 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
   };
   return (
     <section
-      className="mailbox-thread"
+      className={`mailbox-thread ${details ? "has-details" : ""}`}
       aria-label={`Conversation with ${c.counterpartName}`}
     >
       <header className="mailbox-thread-header">
-        <button className="mailbox-back" onClick={back}>
+        <button
+          className="mailbox-back"
+          onClick={back}
+          aria-label="Back to conversations"
+        >
           <ArrowLeft size={18} />
-          Back
+          <span>Back</span>
         </button>
+        <Avatar
+          initials={profileInitials(c.counterpartName)}
+          imageUrl={c.counterpartImageUrl}
+          color="blue"
+        />
         <div>
           <h2>{c.counterpartName}</h2>
           <p>
@@ -710,54 +727,6 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
           used. Your history remains available.
         </p>
       )}
-      {c.consent?.status === "pending" && (
-        <div className="mailbox-consent">
-          <strong>
-            {c.consent.recipientProfileId === c.actorProfileId
-              ? "New message request"
-              : "Your message request is awaiting a decision"}
-          </strong>
-          <p>{c.consent.body}</p>
-          {c.consent.recipientProfileId === c.actorProfileId ? (
-            <>
-              <button
-                onClick={() =>
-                  action("consent", {
-                    consentId: c.consent!.id,
-                    decision: "accept",
-                  })
-                }
-                disabled={busy}
-              >
-                Accept messages
-              </button>
-              <button
-                onClick={() =>
-                  action("consent", {
-                    consentId: c.consent!.id,
-                    decision: "decline",
-                  })
-                }
-                disabled={busy}
-              >
-                Decline
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() =>
-                action("consent", {
-                  consentId: c.consent!.id,
-                  decision: "withdraw",
-                })
-              }
-              disabled={busy}
-            >
-              Withdraw message request
-            </button>
-          )}
-        </div>
-      )}
       {error && (
         <p role="alert" className="mailbox-error">
           {error}{" "}
@@ -767,48 +736,53 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
       <p className="sr-only" role="status">
         {thread.lastSeq} conversation entries.
       </p>
-      <div className="mailbox-history-filter">
-        <label htmlFor="message-history-filter">Show messages</label>
-        <select
-          id="message-history-filter"
-          value={historyFilter}
-          disabled={busy || pending !== null}
-          onChange={(e) => changeFilter(e.target.value)}
-        >
-          <option value="">All messages</option>
-          {thread.contexts
-            .filter((v) => v.kind !== "inquiry")
-            .filter(
-              (v, i, all) =>
-                !v.bookingId ||
-                all.findIndex((other) => other.bookingId === v.bookingId) === i,
-            )
-            .map((v) => (
-              <option key={v.id} value={v.id}>
-                {contextLabel(v)}
-              </option>
-            ))}
-        </select>
-        {historyFilter && (
-          <button
-            onClick={() => changeFilter("")}
+      {thread.contexts.some((v) => v.kind !== "inquiry") && (
+        <div className="mailbox-history-filter">
+          <label htmlFor="message-history-filter">Show messages</label>
+          <select
+            id="message-history-filter"
+            value={historyFilter}
             disabled={busy || pending !== null}
+            onChange={(e) => changeFilter(e.target.value)}
           >
-            All messages
-          </button>
-        )}
-        <small>
-          {historyFilter
-            ? "Only this session’s messages are shown. Other messages keep their unread status."
-            : "Choose a session to see its messages. Load earlier history to find older sessions."}
-        </small>
-      </div>
+            <option value="">All messages</option>
+            {thread.contexts
+              .filter((v) => v.kind !== "inquiry")
+              .filter(
+                (v, i, all) =>
+                  !v.bookingId ||
+                  all.findIndex((other) => other.bookingId === v.bookingId) ===
+                    i,
+              )
+              .map((v) => (
+                <option key={v.id} value={v.id}>
+                  {contextLabel(v)}
+                </option>
+              ))}
+          </select>
+          {historyFilter && (
+            <button
+              onClick={() => changeFilter("")}
+              disabled={busy || pending !== null}
+            >
+              All messages
+            </button>
+          )}
+          {historyFilter && (
+            <small>
+              Only this session’s messages are shown. Other messages keep their
+              unread status.
+            </small>
+          )}
+        </div>
+      )}
       <div
         className="mailbox-entry-list"
         ref={listRef}
         tabIndex={0}
         aria-label="Message history"
       >
+        {!historyFilter && <HistoricalContact conversation={c} />}
         {thread.hasOlder && thread.entries.length > 0 && (
           <button
             className="mailbox-load"
@@ -823,7 +797,7 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
             entry={e}
             conversation={c}
             context={thread.contexts.find((x) => x.id === e.contextId)}
-            details={setDetails}
+            details={openDetails}
             filter={changeFilter}
           />
         ))}
@@ -845,9 +819,19 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
         )}
       </div>
       {details && (
-        <aside className="mailbox-details" aria-label="Session details">
+        <aside
+          className="mailbox-details"
+          aria-label="Session details"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.stopPropagation();
+              closeDetails();
+            }
+          }}
+        >
           <button
-            onClick={() => setDetails(null)}
+            ref={detailsClose}
+            onClick={closeDetails}
             aria-label="Close session details"
           >
             <X size={18} />
@@ -890,25 +874,39 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
         </aside>
       )}
       <div className="mailbox-composer">
-        <label htmlFor="message-context">Message context</label>
-        <select
-          id="message-context"
-          value={activeContext}
-          disabled={
-            busy || pending !== null || !!historyFilter || filterLoading
-          }
-          onChange={(e) => setContext(e.target.value)}
-        >
-          <option value="general">
-            General messages{!c.canSendGeneral ? " · consent required" : ""}
-          </option>
-          {thread.contexts.map((v) => (
-            <option key={v.id} value={v.id}>
-              {contextLabel(v)}
-              {!v.canSend ? " · closed" : ""}
-            </option>
-          ))}
-        </select>
+        {thread.contexts.some((v) => v.kind !== "inquiry") && (
+          <>
+            <label htmlFor="message-context">
+              Attach to a session (optional)
+            </label>
+            <select
+              id="message-context"
+              value={activeContext}
+              disabled={
+                busy || pending !== null || !!historyFilter || filterLoading
+              }
+              onChange={(e) => {
+                if (body.trim()) {
+                  setError(
+                    "Send or clear your draft before changing its session.",
+                  );
+                  return;
+                }
+                setContext(e.target.value);
+              }}
+            >
+              <option value="general">Conversation</option>
+              {thread.contexts
+                .filter((v) => v.kind !== "inquiry")
+                .map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {contextLabel(v)}
+                    {!v.canSend ? " · closed" : ""}
+                  </option>
+                ))}
+            </select>
+          </>
+        )}
         {historyFilter && (
           <p className="mailbox-selected-session">
             Sending about:{" "}
@@ -919,9 +917,8 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
         )}
         {!canSend && (
           <p>
-            {requestMode
-              ? "Send one opening message. General chat starts only after they accept."
-              : "Messaging is paused in this context. Choose an available session or inquiry context."}
+            Messaging is paused. You can still select an eligible existing
+            session when coordination is available.
           </p>
         )}
         <label className="sr-only" htmlFor="message-body">
@@ -931,34 +928,22 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
           id="message-body"
           value={body}
           readOnly={busy || pending !== null}
-          disabled={filterLoading || (!canSend && !requestMode)}
-          rows={3}
+          disabled={filterLoading || !canSend}
+          rows={2}
           onChange={(e) => setBody(e.target.value)}
           placeholder="Write a message…"
         />
         <div className="mailbox-composer-footer">
-          <small>
-            {[...body].length} / 4,000 characters
-            {chosen?.kind === "inquiry" ? " · Coach inquiry" : ""}
-          </small>
+          <small>{[...body].length} / 4,000 characters</small>
           <button
             className="button dark"
             disabled={
-              busy ||
-              filterLoading ||
-              !validMessageBody(body) ||
-              (!canSend && !requestMode)
+              busy || filterLoading || !validMessageBody(body) || !canSend
             }
             onClick={send}
           >
             <Send size={16} />
-            {busy
-              ? "Saving…"
-              : pending
-                ? "Retry same message"
-                : requestMode
-                  ? "Request messages"
-                  : "Send"}
+            {busy ? "Saving…" : pending ? "Retry same message" : "Send"}
           </button>
         </div>
         <p role="status">{notice}</p>
@@ -1016,8 +1001,7 @@ function Entry({
       </span>
       <p>{e.body}</p>
       <small>
-        {context ? contextLabel(context) : "General message"} ·{" "}
-        {date(e.createdAt)}
+        {context ? contextLabel(context) : "Conversation"} · {date(e.createdAt)}
       </small>
     </article>
   );

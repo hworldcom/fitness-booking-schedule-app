@@ -1,13 +1,105 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { HistoricalContact } from "@/features/messages/historical-contact";
 import { validSessionTitle, sessionTitle } from "@/domain/session-titles";
 import {
   parseMessageInbox,
   parseMessageThread,
   validMessageBody,
   validMessageCommand,
+  type MessageConversation,
 } from "@/domain/private-messages";
 const id = "ac024400-0000-4000-8000-000000000001";
+test("obsolete message approval commands and request filtering are rejected while ordinary messaging remains valid", () => {
+  for (const action of ["request-consent", "consent"])
+    assert.equal(
+      validMessageCommand({
+        action,
+        args: {
+          conversationId: id,
+          submissionId: id,
+          consentId: id,
+          body: "Opening message",
+          decision: "accept",
+        },
+      }),
+      false,
+    );
+  assert.equal(
+    validMessageCommand({ action: "inbox", args: { filter: "requests" } }),
+    false,
+  );
+  for (const filter of ["all", "unread"])
+    assert.equal(
+      validMessageCommand({ action: "inbox", args: { filter } }),
+      true,
+    );
+  assert.equal(
+    validMessageCommand({
+      action: "send",
+      args: {
+        conversationId: id,
+        submissionId: id,
+        contextId: null,
+        body: "Normal message",
+      },
+    }),
+    true,
+  );
+});
+test("historical pending contact stays readable without approval controls or duplicated accepted messages", () => {
+  const value: MessageConversation = {
+    id,
+    coachProfileId: id,
+    athleteProfileId: id,
+    actorProfileId: id,
+    counterpartName: "Earlier coach",
+    counterpartImageUrl: null,
+    role: "athlete",
+    activityAt: "2026-10-17T10:00:00Z",
+    canSendGeneral: true,
+    canRequestGeneral: false,
+    blocked: false,
+    blockedByMe: false,
+    unread: false,
+    consent: {
+      id,
+      senderProfileId: id,
+      recipientProfileId: id,
+      body: "Earlier text <script>must stay plain</script>",
+      status: "pending",
+    },
+  };
+  const html = renderToStaticMarkup(
+    createElement(HistoricalContact, { conversation: value }),
+  );
+  assert.match(html, /Earlier contact/);
+  assert.match(
+    html,
+    /Earlier text &lt;script&gt;must stay plain&lt;\/script&gt;/,
+  );
+  assert.match(html, /You/);
+  assert.doesNotMatch(
+    html,
+    /<button|<script>|Accept messages|Decline|Withdraw/,
+  );
+  for (const status of [
+    "accepted",
+    "declined",
+    "withdrawn",
+    "revoked",
+  ] as const)
+    assert.equal(
+      renderToStaticMarkup(
+        createElement(HistoricalContact, {
+          conversation: { ...value, consent: { ...value.consent!, status } },
+        }),
+      ),
+      "",
+    );
+});
 test("session titles stay optional and bounded; edit and history scope commands validate", () => {
   for (const title of ["", "  Footwork  ", "🥊".repeat(100)])
     assert.equal(validSessionTitle(title), true);
@@ -57,6 +149,7 @@ const conversation = {
   athleteProfileId: id,
   actorProfileId: id,
   counterpartName: "Coach",
+  counterpartImageUrl: null,
   role: "athlete",
   activityAt: "2026-10-15T10:00:00Z",
   canSendGeneral: false,

@@ -8,7 +8,7 @@ const url = process.env.DATABASE_TEST_URL;
 if (!url) throw new Error("DATABASE_TEST_URL is required.");
 class RolledBack extends Error {}
 
-test("private message database authority, retries, limits and read isolation", async (t) => {
+test("private message database authority, unlimited sends, retries and read isolation", async (t) => {
   const db = postgres(url, { max: 1, ssl: false, onnotice: () => {} });
   try {
     await db.begin(async (tx) => {
@@ -55,6 +55,36 @@ test("private message database authority, retries, limits and read isolation", a
             "utf8",
           ),
         );
+      await tx.unsafe(
+        readFileSync(
+          "supabase/migrations/20261017000100_normal_coach_conversations.sql",
+          "utf8",
+        ),
+      );
+      await tx.unsafe(
+        readFileSync(
+          "supabase/migrations/20261017000200_unlimited_coach_messages.sql",
+          "utf8",
+        ),
+      );
+      await tx.unsafe(
+        readFileSync(
+          "supabase/migrations/20261017000300_retire_message_requests.sql",
+          "utf8",
+        ),
+      );
+      await tx.unsafe(
+        readFileSync(
+          "supabase/migrations/20261017000400_message_counterpart_media.sql",
+          "utf8",
+        ),
+      );
+      await tx.unsafe(
+        readFileSync(
+          "supabase/migrations/20261017000400_message_counterpart_media.sql",
+          "utf8",
+        ),
+      );
       const actors = [];
       for (let i = 0; i < 4; i++) {
         const authId = randomUUID();
@@ -114,12 +144,414 @@ test("private message database authority, retries, limits and read isolation", a
           assert.equal(thread.entries.length, 1);
           assert.equal(thread.entries[0].body, "Can we practise footwork?");
           assert.equal(thread.conversation.unread, true);
-          assert.equal(thread.conversation.canSendGeneral, false);
+          assert.equal(thread.conversation.canSendGeneral, true);
           contextId = thread.contexts[0].id;
           assert.equal(thread.contexts[0].canSend, true);
           assert.ok(
             !/authUser|email|avatar|private_note/i.test(JSON.stringify(thread)),
           );
+        },
+      );
+      await t.test(
+        "message pictures reuse independent grants and never expose private paths",
+        async () => {
+          try {
+            await tx.savepoint(async (sp) => {
+              await sp.unsafe("reset role");
+              const avatarPath = `${athlete.id}/${randomUUID()}.webp`;
+              const portraitPath = `${coach.id}/${randomUUID()}.webp`;
+              await sp`update app.profiles set avatar_storage_path=${avatarPath}, avatar_updated_at=statement_timestamp() where id=${athlete.id}::uuid`;
+              await sp`update app.coach_profiles set portrait_source='storage',portrait_path=${portraitPath},portrait_updated_at=statement_timestamp() where profile_id=${coach.id}::uuid`;
+              assert.equal(
+                (await command(coach, "thread", { conversationId }))
+                  .conversation.counterpartMedia,
+                null,
+              );
+              const portrait = (
+                await command(athlete, "thread", { conversationId })
+              ).conversation.counterpartMedia;
+              assert.equal(portrait.kind, "coach-portrait");
+              assert.equal(portrait.path, portraitPath);
+              assert.ok(!JSON.stringify(portrait).includes(avatarPath));
+              await assert.rejects(
+                command(outsider, "thread", { conversationId }),
+              );
+              const slot = await source(
+                coach,
+                "select app.create_owned_coach_availability((date_trunc('day',statement_timestamp())+interval '4 days 14 hours') at time zone 'Europe/Berlin',60) id",
+                [],
+              );
+              const [request] = await source(
+                athlete,
+                "select * from app.create_coach_booking_request($1::uuid)",
+                [slot[0].id],
+              );
+              const requestMedia = (
+                await command(coach, "thread", { conversationId })
+              ).conversation.counterpartMedia;
+              assert.equal(requestMedia.kind, "request-avatar");
+              assert.equal(requestMedia.id, request.request_id);
+              assert.ok(!JSON.stringify(requestMedia).includes(avatarPath));
+              const [accepted] = await source(
+                coach,
+                "select * from app.accept_coach_booking_request($1::uuid)",
+                [request.request_id],
+              );
+              const connectionId = randomUUID();
+              await source(
+                coach,
+                "select app.send_coach_athlete_connection($1::uuid,$2::uuid,null)",
+                [accepted.booking_id, connectionId],
+              );
+              assert.equal(
+                (await command(coach, "thread", { conversationId }))
+                  .conversation.counterpartMedia.kind,
+                "request-avatar",
+              );
+              await source(
+                athlete,
+                "select app.decide_coach_athlete_connection($1::uuid,'accept')",
+                [connectionId],
+              );
+              const connected = (
+                await command(coach, "thread", { conversationId })
+              ).conversation.counterpartMedia;
+              assert.equal(connected.kind, "connection-avatar");
+              assert.equal(connected.id, connectionId);
+              const inbox = await command(coach, "inbox", { filter: "all" });
+              assert.deepEqual(
+                inbox.items.find(
+                  (item: { id: string }) => item.id === conversationId,
+                ).counterpartMedia,
+                connected,
+              );
+              await source(
+                athlete,
+                "select app.decide_coach_athlete_connection($1::uuid,'disconnect')",
+                [connectionId],
+              );
+              assert.equal(
+                (await command(coach, "thread", { conversationId }))
+                  .conversation.counterpartMedia.kind,
+                "request-avatar",
+              );
+              await sp.unsafe("reset role");
+              await sp`update app.profiles set avatar_storage_path=null,avatar_updated_at=null where id=${athlete.id}::uuid`;
+              assert.equal(
+                (await command(coach, "thread", { conversationId }))
+                  .conversation.counterpartMedia,
+                null,
+              );
+              await act(coach);
+              await sp`select set_config('app.current_run_id',${randomUUID()},true)`;
+              await assert.rejects(
+                sp.savepoint(async (nested) => {
+                  await nested`select app.message_command('thread',jsonb_build_object('conversationId',${conversationId}::text))`;
+                }),
+              );
+              throw new RolledBack();
+            });
+          } catch (e) {
+            if (!(e instanceof RolledBack)) throw e;
+          }
+        },
+      );
+      await t.test(
+        "forward upgrade opens normal chat without rewriting history or granting empty-conversation outreach",
+        async () => {
+          try {
+            await tx.savepoint(async () => {
+              await tx.unsafe("reset role");
+              const frozen = readFileSync(
+                "supabase/migration-history/20261016000100/20261015000100_private_message_authority.sql",
+                "utf8",
+              );
+              const oldPermission = frozen.slice(
+                frozen.indexOf("create function app.mail_general_allowed("),
+                frozen.indexOf("create function app.mail_general_eligible("),
+              );
+              assert.ok(oldPermission.includes("message_consents"));
+              await tx.unsafe(
+                oldPermission.replace(
+                  "create function",
+                  "create or replace function",
+                ),
+              );
+              const original = await command(athlete, "thread", {
+                conversationId,
+              });
+              assert.equal(original.conversation.canSendGeneral, false);
+              await assert.rejects(
+                command(athlete, "send", {
+                  conversationId,
+                  contextId: null,
+                  body: "Before upgrade",
+                  submissionId: randomUUID(),
+                }),
+                /consent required/,
+              );
+              await tx.unsafe("reset role");
+              const [privileges] =
+                await tx`select proowner,proacl,prosecdef,proconfig from pg_proc where oid='app.mail_general_allowed(app.message_conversations)'::regprocedure`;
+              await tx.unsafe(
+                readFileSync(
+                  "supabase/migrations/20261017000100_normal_coach_conversations.sql",
+                  "utf8",
+                ),
+              );
+              assert.deepEqual(
+                (
+                  await tx`select proowner,proacl,prosecdef,proconfig from pg_proc where oid='app.mail_general_allowed(app.message_conversations)'::regprocedure`
+                )[0],
+                privileges,
+              );
+              const upgraded = await command(athlete, "thread", {
+                conversationId,
+              });
+              assert.equal(upgraded.conversation.canSendGeneral, true);
+              assert.deepEqual(upgraded.entries, original.entries);
+              assert.deepEqual(upgraded.contexts, original.contexts);
+              assert.equal(upgraded.readThrough, original.readThrough);
+              assert.equal(
+                upgraded.conversation.consent,
+                original.conversation.consent,
+              );
+              assert.equal(upgraded.lastSeq, original.lastSeq);
+              const first = {
+                conversationId,
+                contextId: null,
+                body: "Normal athlete message",
+                submissionId: randomUUID(),
+              };
+              const sent = await command(athlete, "send", first);
+              assert.deepEqual(await command(athlete, "send", first), sent);
+              await assert.rejects(
+                command(athlete, "send", { ...first, body: "Changed retry" }),
+                /submission conflicts/,
+              );
+              await command(coach, "send", {
+                conversationId,
+                contextId: null,
+                body: "Normal coach reply",
+                submissionId: randomUUID(),
+              });
+              const current = await command(athlete, "thread", {
+                conversationId,
+              });
+              assert.equal(current.lastSeq, original.lastSeq + 2);
+              assert.equal(current.conversation.consent, null);
+              assert.ok(
+                current.entries
+                  .slice(-2)
+                  .every(
+                    (entry: { contextId: string | null }) =>
+                      entry.contextId === null,
+                  ),
+              );
+              await tx.unsafe("reset role");
+              const [empty] =
+                await tx`select (app.mail_ensure_conversation(${coach.run}::uuid,${coach.id}::uuid,${other.id}::uuid)).id`;
+              const emptyThread = await command(other, "thread", {
+                conversationId: empty.id,
+              });
+              assert.equal(emptyThread.conversation.canSendGeneral, false);
+              await assert.rejects(
+                command(other, "send", {
+                  conversationId: empty.id,
+                  contextId: null,
+                  body: "No established contact",
+                  submissionId: randomUUID(),
+                }),
+                /consent required/,
+              );
+              await assert.rejects(
+                command(outsider, "send", {
+                  conversationId,
+                  contextId: null,
+                  body: "Intrusion",
+                  submissionId: randomUUID(),
+                }),
+              );
+              throw new RolledBack();
+            });
+          } catch (error) {
+            if (!(error instanceof RolledBack)) throw error;
+          }
+        },
+      );
+      await t.test(
+        "retiring approvals preserves historical-only contact and clears pending-only unread without widening access",
+        async () => {
+          try {
+            await tx.savepoint(async () => {
+              await tx.unsafe("reset role");
+              const frozen = readFileSync(
+                "supabase/migration-history/20261016000100/20261015000100_private_message_authority.sql",
+                "utf8",
+              );
+              const oldProjection = frozen.slice(
+                frozen.indexOf(
+                  "create function app.mail_conversation_projection(",
+                ),
+                frozen.indexOf("create function app.mail_dispatch("),
+              );
+              await tx.unsafe(
+                oldProjection.replace(
+                  "create function",
+                  "create or replace function",
+                ),
+              );
+              await tx.unsafe(
+                readFileSync(
+                  "supabase/migrations/20261017000100_normal_coach_conversations.sql",
+                  "utf8",
+                ),
+              );
+              const [legacy] =
+                await tx`select (app.mail_ensure_conversation(${coach.run}::uuid,${coach.id}::uuid,${other.id}::uuid)).id`;
+              const consentId = randomUUID();
+              await tx`insert into app.message_consents(id,conversation_id,sender_profile_id,recipient_profile_id,first_body) values(${consentId}::uuid,${legacy.id}::uuid,${other.id}::uuid,${coach.id}::uuid,'An earlier opening remains readable')`;
+              const original = await command(coach, "thread", {
+                conversationId: legacy.id,
+              });
+              assert.equal(original.conversation.unread, true);
+              assert.equal(original.conversation.canSendGeneral, false);
+              const originalInbox = await command(coach, "inbox", {
+                filter: "unread",
+              });
+              await tx.unsafe("reset role");
+              const audit =
+                await tx`select * from app.message_consents where id=${consentId}::uuid`;
+              const functionMetadata = async () =>
+                tx`select proname,proowner,proacl,prosecdef,proconfig from pg_proc where oid in ('app.mail_general_allowed(app.message_conversations)'::regprocedure,'app.mail_conversation_projection(app.message_conversations,uuid)'::regprocedure) order by proname`;
+              const privileges = await functionMetadata();
+              const migration = readFileSync(
+                "supabase/migrations/20261017000300_retire_message_requests.sql",
+                "utf8",
+              );
+              await tx.unsafe(migration);
+              await tx.unsafe(migration);
+              assert.deepEqual(await functionMetadata(), privileges);
+              assert.deepEqual(
+                await tx`select * from app.message_consents where id=${consentId}::uuid`,
+                audit,
+              );
+              const upgraded = await command(coach, "thread", {
+                conversationId: legacy.id,
+              });
+              assert.equal(upgraded.conversation.canSendGeneral, true);
+              assert.equal(upgraded.conversation.canRequestGeneral, false);
+              assert.equal(upgraded.conversation.unread, false);
+              const unreadInbox = await command(coach, "inbox", {
+                filter: "unread",
+              });
+              assert.equal(
+                unreadInbox.unreadCount,
+                originalInbox.unreadCount - 1,
+              );
+              assert.ok(
+                !unreadInbox.items.some(
+                  (item: { id: string }) => item.id === legacy.id,
+                ),
+              );
+              assert.ok(
+                (await command(coach, "inbox", { filter: "all" })).items.some(
+                  (item: { id: string }) => item.id === legacy.id,
+                ),
+              );
+              assert.deepEqual(upgraded.entries, original.entries);
+              assert.deepEqual(upgraded.contexts, original.contexts);
+              assert.equal(upgraded.readThrough, original.readThrough);
+              assert.deepEqual(
+                upgraded.conversation.consent,
+                original.conversation.consent,
+              );
+              const args = {
+                conversationId: legacy.id,
+                contextId: null,
+                submissionId: randomUUID(),
+                body: "Normal reply without approval",
+              };
+              const sent = await command(other, "send", args);
+              assert.deepEqual(await command(other, "send", args), sent);
+              await assert.rejects(
+                command(other, "send", { ...args, body: "Changed retry" }),
+                /submission conflicts/,
+              );
+              const incoming = await command(coach, "thread", {
+                conversationId: legacy.id,
+              });
+              assert.equal(incoming.conversation.unread, true);
+              await command(coach, "read", {
+                conversationId: legacy.id,
+                through: incoming.lastSeq,
+              });
+              assert.equal(
+                (await command(coach, "thread", { conversationId: legacy.id }))
+                  .conversation.unread,
+                false,
+              );
+              await command(coach, "send", {
+                ...args,
+                submissionId: randomUUID(),
+                body: "Coach reply without approval",
+              });
+              await tx.unsafe("reset role");
+              assert.deepEqual(
+                await tx`select * from app.message_consents where id=${consentId}::uuid`,
+                audit,
+              );
+              await assert.rejects(
+                command(outsider, "thread", { conversationId: legacy.id }),
+              );
+              try {
+                await tx.savepoint(async () => {
+                  await tx.unsafe("reset role");
+                  await tx`select app.review_coach_application(${coach.id}::uuid,'approved','suspended','Historical-contact suspension boundary test.','database-test','movx-identity-application-v1')`;
+                  assert.equal(
+                    (
+                      await command(other, "thread", {
+                        conversationId: legacy.id,
+                      })
+                    ).conversation.canSendGeneral,
+                    false,
+                  );
+                  await assert.rejects(
+                    command(other, "send", {
+                      ...args,
+                      submissionId: randomUUID(),
+                    }),
+                  );
+                  throw new RolledBack();
+                });
+              } catch (e) {
+                if (!(e instanceof RolledBack)) throw e;
+              }
+              await command(coach, "block", { conversationId: legacy.id });
+              assert.equal(
+                (await command(other, "thread", { conversationId: legacy.id }))
+                  .conversation.canSendGeneral,
+                false,
+              );
+              await assert.rejects(
+                command(other, "send", { ...args, submissionId: randomUUID() }),
+              );
+              await tx.unsafe("reset role");
+              const [empty] =
+                await tx`select (app.mail_ensure_conversation(${coach.run}::uuid,${coach.id}::uuid,${outsider.id}::uuid)).id`;
+              assert.equal(
+                (
+                  await command(outsider, "thread", {
+                    conversationId: empty.id,
+                  })
+                ).conversation.canSendGeneral,
+                false,
+              );
+              throw new RolledBack();
+            });
+          } catch (e) {
+            if (!(e instanceof RolledBack)) throw e;
+          }
         },
       );
       await t.test(
@@ -228,15 +660,12 @@ test("private message database authority, retries, limits and read isolation", a
         },
       );
       await t.test(
-        "general consent cannot be bypassed by discovery or crossed service contact",
+        "established chat does not require a second request; legacy request eligibility stays bounded",
         async () => {
-          await assert.rejects(
-            command(athlete, "send", {
-              conversationId,
-              contextId: null,
-              body: "General",
-              submissionId: randomUUID(),
-            }),
+          assert.equal(
+            (await command(athlete, "thread", { conversationId })).conversation
+              .canSendGeneral,
+            true,
           );
           await assert.rejects(
             command(athlete, "request-consent", {
@@ -545,7 +974,7 @@ test("private message database authority, retries, limits and read isolation", a
         },
       );
       await t.test(
-        "general message requests require exact recipient acceptance; crossed sends recover pending",
+        "legacy message requests retain exact recipient decisions without pausing established chat",
         async () => {
           const consentId = randomUUID();
           await command(coach, "request-consent", {
@@ -578,7 +1007,7 @@ test("private message database authority, retries, limits and read isolation", a
           assert.equal(
             (await command(coach, "thread", { conversationId })).conversation
               .canSendGeneral,
-            false,
+            true,
           );
           await command(athlete, "consent", {
             conversationId,
@@ -623,7 +1052,7 @@ test("private message database authority, retries, limits and read isolation", a
           assert.equal(
             (await command(coach, "thread", { conversationId })).conversation
               .canSendGeneral,
-            false,
+            true,
           );
           assert.equal(
             (await command(coach, "thread", { conversationId })).contexts.find(
@@ -657,10 +1086,25 @@ test("private message database authority, retries, limits and read isolation", a
               decision: "accept",
             }),
           );
+          const beforeReplies = await command(athlete, "thread", {
+            conversationId,
+          });
+          for (const actor of [coach, athlete])
+            await command(actor, "send", {
+              conversationId,
+              contextId: null,
+              body: "Normal chat does not need legacy message approval",
+              submissionId: randomUUID(),
+            });
+          const afterReplies = await command(athlete, "thread", {
+            conversationId,
+          });
+          assert.equal(afterReplies.lastSeq, beforeReplies.lastSeq + 2);
+          assert.equal(afterReplies.conversation.consent.status, "declined");
         },
       );
       await t.test(
-        "accepted connection alone permits general chat after its only booking is cancelled",
+        "established conversation survives booking cancellation and disconnection",
         async () => {
           const slot = await source(
             coach,
@@ -716,7 +1160,7 @@ test("private message database authority, retries, limits and read isolation", a
                 conversationId: opened.conversationId,
               })
             ).conversation.canSendGeneral,
-            false,
+            true,
           );
           await assert.rejects(
             command(other, "request-consent", {
@@ -844,7 +1288,7 @@ test("private message database authority, retries, limits and read isolation", a
           assert.equal(
             (await command(coach, "thread", { conversationId })).conversation
               .canSendGeneral,
-            false,
+            true,
           );
         },
       );
@@ -915,26 +1359,84 @@ test("private message database authority, retries, limits and read isolation", a
         },
       );
       await t.test(
-        "per-conversation text rate limits are database enforced and exact retry still succeeds",
+        "quota upgrade preserves history and privileges while both participants send beyond twenty messages",
         async () => {
           await tx.unsafe("reset role");
+          const frozen = readFileSync(
+            "supabase/migration-history/20261016000100/20261015000100_private_message_authority.sql",
+            "utf8",
+          );
+          const oldRate = frozen.slice(
+            frozen.indexOf("create function app.mail_rate("),
+            frozen.indexOf("create function app.mail_context_projection("),
+          );
+          assert.ok(oldRate.includes("per_pair>=20"));
+          await tx.unsafe(
+            oldRate.replace("create function", "create or replace function"),
+          );
           const [used] =
             await tx`select count(*) n from app.message_entries where conversation_id=${conversationId}::uuid and sender_profile_id=${athlete.id}::uuid and kind='text' and created_at>statement_timestamp()-interval '1 minute'`;
           for (let i = Number(used.n); i < 20; i++)
             await command(athlete, "send", {
               conversationId,
-              contextId,
+              contextId: null,
               body: "Practice question " + i,
               submissionId: randomUUID(),
             });
           await assert.rejects(
             command(athlete, "send", {
               conversationId,
-              contextId,
+              contextId: null,
               body: "Over limit",
               submissionId: randomUUID(),
             }),
             /rate limited/,
+          );
+          const original = await command(athlete, "thread", { conversationId });
+          await tx.unsafe("reset role");
+          const [privileges] =
+            await tx`select proowner,proacl,prosecdef,proconfig from pg_proc where oid='app.mail_rate(app.message_conversations,uuid,boolean)'::regprocedure`;
+          await tx.unsafe(
+            readFileSync(
+              "supabase/migrations/20261017000200_unlimited_coach_messages.sql",
+              "utf8",
+            ),
+          );
+          assert.deepEqual(
+            (
+              await tx`select proowner,proacl,prosecdef,proconfig from pg_proc where oid='app.mail_rate(app.message_conversations,uuid,boolean)'::regprocedure`
+            )[0],
+            privileges,
+          );
+          assert.deepEqual(
+            await command(athlete, "thread", { conversationId }),
+            original,
+          );
+          const sentIds = new Set<string>();
+          for (const actor of [athlete, coach])
+            for (let i = 0; i < 25; i++) {
+              const args = {
+                conversationId,
+                contextId: null,
+                body: "Unlimited normal message " + i,
+                submissionId: randomUUID(),
+              };
+              const saved = await command(actor, "send", args);
+              sentIds.add(saved.entryId);
+              assert.deepEqual(await command(actor, "send", args), saved);
+              await assert.rejects(
+                command(actor, "send", { ...args, body: "Changed retry" }),
+                /submission conflicts/,
+              );
+            }
+          assert.equal(sentIds.size, 50);
+          const afterReplies = await command(athlete, "thread", {
+            conversationId,
+          });
+          assert.equal(afterReplies.lastSeq, original.lastSeq + 50);
+          assert.deepEqual(
+            afterReplies.conversation.consent,
+            original.conversation.consent,
           );
           assert.equal(
             (
@@ -971,15 +1473,15 @@ test("private message database authority, retries, limits and read isolation", a
         },
       );
       await t.test(
-        "first-contact and aggregate sender caps cannot be bypassed across conversations",
+        "more than ten first contacts and one hundred actor sends succeed without recipient approval",
         async () => {
-          const targets: { conversationId: string; contextId: string }[] = [];
-          for (let i = 0; i < 10; i++) {
+          const targets: { conversationId: string; contextId: null }[] = [];
+          for (let i = 0; i < 11; i++) {
             await tx.unsafe("reset role");
             const authId = randomUUID();
             await tx`insert into auth.users(id,is_sso_user,is_anonymous) values(${authId}::uuid,false,false)`;
             const [p] =
-              await tx`select * from app.enroll_application_identity(${authId}::uuid,${"Rate Coach " + i})`;
+              await tx`select * from app.enroll_application_identity(${authId}::uuid,${"Contact Coach " + i})`;
             const target = {
               authId,
               id: p.identity_profile_id as string,
@@ -987,21 +1489,10 @@ test("private message database authority, retries, limits and read isolation", a
             };
             await act(target);
             await tx`select app.submit_owned_coach_application()`;
-            await tx`select app.upsert_owned_coach_profile(${"Rate Coach " + i},'A coach fixture for database-enforced first-contact and aggregate sender boundaries.',array['Boxing'],'Europe/Berlin','hidden','40000000-0000-4000-8000-000000000001'::uuid,null,null,null,null,null)`;
+            await tx`select app.upsert_owned_coach_profile(${"Contact Coach " + i},'An isolated coach fixture for unlimited first contact and normal conversation replies.',array['Boxing'],'Europe/Berlin','hidden','40000000-0000-4000-8000-000000000001'::uuid,null,null,null,null,null)`;
             await tx.unsafe("reset role");
-            await tx`select app.review_coach_application(${target.id}::uuid,'pending','approved','Isolated rate test reviewed.','database-test','movx-identity-application-v1')`;
+            await tx`select app.review_coach_application(${target.id}::uuid,'pending','approved','Isolated contact test reviewed.','database-test','movx-identity-application-v1')`;
             await tx`update app.coach_profiles set visibility='visible' where profile_id=${target.id}::uuid`;
-            if (i === 9) {
-              await assert.rejects(
-                command(athlete, "inquire", {
-                  coachId: target.id,
-                  body: "Eleventh counterpart",
-                  submissionId: randomUUID(),
-                }),
-                /rate limited/,
-              );
-              continue;
-            }
             const saved = await command(athlete, "inquire", {
               coachId: target.id,
               body: "First contact",
@@ -1010,31 +1501,41 @@ test("private message database authority, retries, limits and read isolation", a
             const current = await command(athlete, "thread", {
               conversationId: saved.conversationId,
             });
-            targets.push({
+            assert.equal(current.conversation.canSendGeneral, true);
+            assert.equal(current.conversation.consent, null);
+            const normal = {
               conversationId: saved.conversationId,
-              contextId: current.contexts[0].id,
+              contextId: null,
+            };
+            await command(target, "send", {
+              ...normal,
+              body: "Coach reply without approval",
+              submissionId: randomUUID(),
             });
+            await command(athlete, "send", {
+              ...normal,
+              body: "Athlete follow-up without approval",
+              submissionId: randomUUID(),
+            });
+            targets.push(normal);
           }
+          assert.equal(targets.length, 11);
           await tx.unsafe("reset role");
           const [sent] =
             await tx`select count(*) n from app.message_entries where sender_profile_id=${athlete.id}::uuid and kind='text' and created_at>statement_timestamp()-interval '1 minute'`;
-          let remaining = 100 - Number(sent.n);
+          let remaining = Math.max(101 - Number(sent.n), 1);
           for (const target of targets)
-            for (let n = 1; n < 20 && remaining > 0; n++, remaining--)
+            for (let n = 0; n < 10 && remaining > 0; n++, remaining--)
               await command(athlete, "send", {
                 ...target,
-                body: "Within aggregate cap",
+                body: "Beyond the former aggregate quota",
                 submissionId: randomUUID(),
               });
           assert.equal(remaining, 0);
-          await assert.rejects(
-            command(athlete, "send", {
-              ...targets.at(-1),
-              body: "Beyond aggregate cap",
-              submissionId: randomUUID(),
-            }),
-            /rate limited/,
-          );
+          await tx.unsafe("reset role");
+          const [total] =
+            await tx`select count(*) n from app.message_entries where sender_profile_id=${athlete.id}::uuid and kind='text' and created_at>statement_timestamp()-interval '1 minute'`;
+          assert.ok(Number(total.n) >= 101);
         },
       );
       await tx.unsafe("reset role");

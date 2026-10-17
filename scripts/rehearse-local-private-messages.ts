@@ -67,7 +67,7 @@ try {
       .getByRole("link", { name: "Message coach", exact: true })
       .click();
     await athletePage
-      .getByLabel("Your question")
+      .getByLabel("Your message")
       .fill("Can we practise footwork? <script>literal text</script>");
     await athletePage
       .getByRole("button", { name: "Send message", exact: true })
@@ -256,25 +256,28 @@ try {
       coachPage.getByRole("complementary", { name: "Session details" }),
     ).toContainText("Confirmed");
     console.log("Completed phase: " + phase);
-    phase = "general-message consent remains explicit in both browsers";
-    await coachPage.getByLabel("Message context").selectOption("general");
-    await body.fill("Can we share training ideas?");
+    phase = "ordinary conversation needs no additional consent";
     await coachPage
-      .getByRole("button", { name: "Request messages", exact: true })
-      .click();
-    await expect(
-      coachPage.getByText("Your message request is awaiting a decision", {
-        exact: true,
-      }),
-    ).toBeVisible();
+      .getByLabel("Attach to a session (optional)")
+      .selectOption("general");
+    await body.fill("Can we share training ideas?");
+    await coachPage.getByRole("button", { name: "Send", exact: true }).click();
     await athletePage.evaluate(() => window.dispatchEvent(new Event("focus")));
-    await athletePage
-      .getByRole("button", { name: "Accept messages", exact: true })
-      .click();
+    await expect(
+      athletePage.getByText("Can we share training ideas?", { exact: true }),
+    ).toBeVisible();
     await expect(
       athletePage.getByRole("button", { name: "Accept messages", exact: true }),
     ).toHaveCount(0);
-    await coachPage.evaluate(() => window.dispatchEvent(new Event("focus")));
+    await expect(
+      athletePage.getByRole("button", {
+        name: "Message requests",
+        exact: true,
+      }),
+    ).toHaveCount(0);
+    await expect(
+      coachPage.getByRole("button", { name: "Request messages", exact: true }),
+    ).toHaveCount(0);
     await expect(body).toBeEnabled();
     const response = await fetch(
       `${base}/api/messages?conversationId=${conversationId}`,
@@ -305,7 +308,9 @@ try {
       .getByRole("button", { name: "Back", exact: true })
       .click();
     await athletePage.getByRole("button", { name: /DEV0247 Coach/ }).click();
-    await expect(athletePage.getByLabel("Message context")).toBeVisible();
+    await expect(
+      athletePage.getByLabel("Attach to a session (optional)"),
+    ).toBeVisible();
     assert.equal(
       await athletePage.evaluate(
         () => document.documentElement.scrollWidth > innerWidth,
@@ -321,7 +326,9 @@ try {
         ),
         false,
       );
-      await expect(page.getByLabel("Message context")).toBeVisible();
+      await expect(
+        page.getByLabel("Attach to a session (optional)"),
+      ).toBeVisible();
     }
     await athletePage.setViewportSize({ width: 375, height: 812 });
     await mkdir(evidence, { recursive: true });
@@ -358,13 +365,13 @@ try {
     await expect(
       coachPage.getByLabel("Message to DEV0247 Athlete"),
     ).toBeDisabled();
-    await coachPage.getByLabel("Message context").selectOption({
+    await coachPage.getByLabel("Attach to a session (optional)").selectOption({
       label: (
         await coachPage
-          .getByLabel("Message context")
+          .getByLabel("Attach to a session (optional)")
           .locator("option")
           .allTextContents()
-      ).find((v) => v.startsWith("Session ·"))!,
+      ).find((v) => v.startsWith("Training session ·"))!,
     });
     await expect(
       coachPage.getByLabel("Message to DEV0247 Athlete"),
