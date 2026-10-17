@@ -58,6 +58,7 @@
   font-weight: 650;
 }
 .account-settings-sidebar nav a:hover,
+.account-settings-sidebar nav a[aria-current="page"],
 .account-settings-sidebar nav a:focus-visible {
   background: #f4f5f1;
 }
@@ -76,8 +77,16 @@
   min-width: 0;
 }
 .account-settings-section {
-  scroll-margin-top: 28px;
-  margin-bottom: 48px;
+  margin-bottom: 0;
+}
+.account-username-settings {
+  margin-top: 28px;
+}
+.account-username-settings h3 {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  margin: 0;
+  font-weight: 650;
 }
 .account-settings-section h2 {
   font-family: var(--font-sans);
@@ -165,7 +174,8 @@
   font-size: 14px;
   font-weight: 650;
 }
-.account-settings-field input {
+.account-settings-field input,
+.account-settings-field select {
   display: block;
   width: 100%;
   min-width: 0;

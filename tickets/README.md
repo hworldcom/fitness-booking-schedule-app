@@ -7,7 +7,7 @@ This directory records planned changes, task status and implementation evidence.
 - A **development ticket** is a small implementable task named `# Ticket DEVNNNN` with a `DEVNNNN-short-title.md` filename. It owns implementation and validation evidence, and its DEV ID is used in commits. Start one from [TEMPLATE.md](TEMPLATE.md).
 - A **coordination record** is a non-implementation umbrella named `# Coordination CORNNNN` with a `CORNNNN-short-title.md` filename. It maps a flat set of peer development tickets and is never used as a commit reference. Start one from [COORDINATION_TEMPLATE.md](COORDINATION_TEMPLATE.md).
 
-DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0299 and COR0028.
+DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0301 and COR0028.
 
 Every DEV record declares its direct coordination membership near the top: one linked COR, or `None — independent development ticket`. Direct membership is limited to one COR and must match that COR's work map. Dependencies, downstream consumers and historical links remain separate relationships.
 
@@ -79,14 +79,19 @@ DEV0285–DEV0289 are allocated to independent multi-method authentication plann
 
 DEV0295–DEV0296 and DEV0298 are allocated to independent account/username and Home-banner work in the shared workspace. They remain reserved when the DEV0297 media-planning checkpoint is committed separately.
 
+DEV0300 remains reserved for independent banner-framing work excluded from the account-settings checkpoint.
+
 ## Ticket index
 
 ### Current records
 
 | Record                                                                                                                                                | Area         | Milestone                                  | Status      | Outcome                                                                                                                                                    |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [DEV0299 — Simplify gender and workspace account controls](archive/frontend/DEV0299-simplify-gender-and-workspace-account-controls.md) | Frontend | M3 — Account settings/workspace | Completed | Optional Male/Female select and one workspace dropdown; 252 tests, build and desktop/phone keyboard/save review pass. |
 | [DEV0297 — Add coach profile photos and Mux video](current/backend/DEV0297-add-coach-profile-photos-and-mux-video.md) | Backend | M3 — Coach profile media extension | Draft | Plan six coach photos and one Mux video up to 60 seconds; premium eligibility remains explicitly unresolved. |
-| [DEV0294 — Add separate account settings](current/frontend/DEV0294-add-separate-account-settings.md)                                                  | Frontend     | M3 — Account settings                      | In progress | Separate Account with personal details, current sign-in management and English/German Coming soon; photo editing stays on Profile.                         |
+| [DEV0296 — Define username login and profile URL contract](current/organisatory/DEV0296-define-username-login-and-profile-url-contract.md) | Organisatory | Account follow-up | Draft | Define deferred username sign-in, profile URL audience, rename/recovery and implementation ownership. |
+| [DEV0295 — Refine account names and section navigation](current/frontend/DEV0295-refine-account-names-and-section-navigation.md) | Frontend | M3 — Account settings | Blocked | Names/username and one-panel settings implemented; 248 tests, 63 DB checks/build and desktop recovery pass; phone interaction proof remains. |
+| [DEV0294 — Add separate account settings](current/frontend/DEV0294-add-separate-account-settings.md)                                                  | Frontend     | M3 — Account settings                      | Blocked     | Account implemented with personal details and static languages; 244 tests, 30 DB checks/build and desktop edit/save pass; final mobile/keyboard/recovery proof remains.                         |
 | [DEV0293 — Rehearse database Auth and file recovery](current/backend/DEV0293-rehearse-database-auth-and-file-recovery.md)                             | Backend      | Operational recovery                       | Draft       | Prove isolated restoration of records, identities and uploaded bytes with real application/privacy checks and cleanup.                                     |
 | [DEV0292 — Isolate the profile image storage adapter](current/backend/DEV0292-isolate-profile-image-storage-adapter.md)                               | Backend      | Provider boundaries                        | Draft       | Confine Storage I/O to an adapter while preserving validation, media grants and outward behavior.                                                          |
 | [COR0027 — Coordination: Login, registration and social authentication](current/organisatory/COR0027-login-registration-and-social-authentication.md) | Organisatory | Authentication quality before UAT          | In progress | Coordinate email/password, Google and Apple, account continuity, professional entry screens and actual combined proof.                                     |

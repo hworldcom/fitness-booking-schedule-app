@@ -1,7 +1,7 @@
 import "server-only";
 
 import { sql } from "drizzle-orm";
-import { isAccountResult, type AccountDetails } from "@/account/contracts";
+import { isAccountResult, type AccountInput } from "@/account/contracts";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
 
 export async function currentAccountDetailsRecord(
@@ -17,11 +17,12 @@ export async function currentAccountDetailsRecord(
 
 export async function saveAccountDetailsRecord(
   transaction: ActorDatabaseTransaction,
-  details: AccountDetails,
+  details: AccountInput,
 ) {
+  const { section, revision, ...values } = details;
   const rows = await transaction.execute<{ result: unknown }>(sql`
-    select app.save_current_account_settings(${details.displayName}::text,
-      ${details.birthdate}::date, ${details.gender}::text, ${details.revision}::integer) as result
+    select app.update_current_account_settings(${section}::text,
+      ${JSON.stringify(values)}::jsonb, ${revision}::integer) as result
   `);
   const value = rows[0]?.result;
   if (!isAccountResult(value)) throw new Error("Account settings unavailable.");

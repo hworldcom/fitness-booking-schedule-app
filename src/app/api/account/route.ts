@@ -13,6 +13,7 @@ function response(result: AccountResult) {
     ready: 200,
     invalid: 400,
     conflict: 409,
+    "username-taken": 409,
     "signed-out": 401,
     forbidden: 403,
     unavailable: 503,

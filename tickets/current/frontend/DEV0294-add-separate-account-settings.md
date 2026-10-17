@@ -1,6 +1,6 @@
 # Ticket DEV0294: Add separate account settings
 
-- Status: In progress
+- Status: Blocked
 - Created: 2026-10-17
 - Last updated: 2026-10-17
 - Milestone: M3 — Account interface refinement
@@ -36,9 +36,9 @@ Confirmed choices are distinguished above from implementation defaults: `/accoun
 
 ## Acceptance criteria
 
-- [ ] AC1: Account opens a separate protected settings page for athletes and coaches; Profile photo editing remains separate.
+- [x] AC1: Account opens a separate protected settings page for athletes and coaches; Profile photo editing remains separate.
 - [ ] AC2: Name/birthdate/gender save, clear and reload with owner isolation, validation, safe retry/stale revision and failure draft retention; no private-field leakage or authority/public-coach changes.
-- [ ] AC3: Login & security uses current verified identity/session management; English is current and German Coming soon cannot switch language; no photo editing on Account.
+- [x] AC3: Login & security uses current verified identity/session management; English is current and German Coming soon cannot switch language; no photo editing on Account.
 - [ ] AC4: Desktop/mobile, keyboard and unavailable states are verified, required automated checks pass, and durable records are complete.
 
 ## Validation plan
@@ -72,25 +72,38 @@ Adds owner-only optional birthdate/gender/revision data and a bounded display-na
 
 ## Validation results
 
-- 2026-10-17 commit review, Node 24.21.0: `npm test` passed **219 application + 25 server tests (244 total)**, including the new account validation and route cases. The default sandbox and an equivalent Node invocation initially hit tsx child-process IPC permission errors; the authorized full run passed without changing test behavior.
-- `npm run lint` and `npm run format:check` passed. A configuration-free isolated checkout at `/private/tmp/movx-commit-build-nlot34t_` passed `npm run build -- --webpack` (compile, TypeScript and all 17 static pages) and `npm run typecheck`. No populated environment files were copied and the active development build was preserved. A later-added API test was copied into that checkout for the final type-check; source implementation hashes remained unchanged.
-- The 30 assertions in `supabase/tests/database/account-settings.test.sql` passed through local Docker PostgreSQL inside a rolled-back transaction. This covered forced row security, denied direct writes/browser execution, input bounds, exact retry versus conflict, optional-field clearing, wrong/forged actor denial and unchanged original identity/coach state. The table was already present at preflight. Before/after checks confirmed the table state and absence of the two exact test Auth IDs were preserved; no persistent database change was made by validation.
-- Live account save/reload, interrupted-network recovery and full mobile/desktop/keyboard flow have not been verified in this commit review. Fresh-database migration installation, hosted rollout and a deployed UAT rehearsal were not performed. These remain required evidence; keep the ticket In progress.
+- Environment: 2026-10-17, Node 24.21.0, Next 16.3.8, local Docker Supabase and localhost:3100. No external settings form submitted; no reference private values copied.
+- Passed `node --import tsx --test tests/account-settings.test.ts tests/account-menu.test.ts tests/message-shell.test.ts tests/shell-navigation.test.ts tests/profile-navigation.test.ts`: 24 focused checks.
+- Passed `npm test`: 219 application + 25 server checks (244 total); output `/tmp/movx-dev0294-tests.log`. This includes API cases for cross-origin, wrong content type, malformed JSON, streamed oversized bodies, invalid UTF-8 and forged target fields, all denied without private-data responses. The first full run found two source-layer violations; moving AccountShell to shared components and SQL to its database repository resolved them. A focused date-format expectation and test children-prop lint issue were also corrected before the passing checks.
+- Passed `npm run typecheck`, focused ESLint on all new/changed implementation and tests, focused Prettier and `git diff --check`.
+- Passed `node scripts/database-baseline.mjs verify`: 53 original migration hashes and frozen baseline unchanged.
+- Passed 30 committed pgTAP checks in [account-settings.test.sql](../../../supabase/tests/database/account-settings.test.sql), first with the new migration inside one rollback-only local transaction and then against the installed local schema. `/tmp/movx-dev0294-database-check.mjs` and `/tmp/movx-dev0294-check-installed.mjs` orchestrated those exact checks. The pre-install rehearsal confirmed all 39 existing app tables were unchanged and the new table absent after rollback. Missing actor, forged profile, other-actor reads, direct writes, invalid/future fields, stale/altered writes, exact retry, clearing/reload and unchanged identity/avatar/coach data passed. Initial rehearsal-harness issues (identifier quoting and test-role access to pgTAP) were corrected; assertions run after restoring the test role while runtime reads/saves remain explicit. Test users/rows were rolled back.
+- Local installation: `node /tmp/movx-dev0294-install.mjs`, guarded exact seven-version ledger, atomic migration/ledger insertion and 42 unchanged source table fingerprints; exact installed SQL rechecked. Runtime-role read of the current local review account returned a valid owner-only DTO; only validation booleans/field keys were logged.
+- Passed configuration-free isolated production build: explicit Node 24 with `node_modules/next/dist/bin/next build --webpack` in `/var/folders/97/qxdkjfmj0_l4w87jnk_rsq6w0000gq/T/movx-dev0294-build-37sy12g6`; compilation, TypeScript, 17 static pages and traces succeeded. Populated environment files were excluded, required service settings blank and the live development `.next` untouched.
+- Local unauthenticated HTTP checks: `/account` returned 307 to `/sign-in?returnTo=%2Faccount`; `/api/account` returned 401 with JSON. No browser cookies or credentials read for these checks.
+- Native Chrome desktop at 1390×768: confirmed separate left settings navigation, personal detail rows, compact Home/Messages/account header, read-only current method, English active/German Coming soon and absence of photo editor/general workspace chrome. An initial unavailable details state exposed Try again without invented personal values; a fresh post-migration route render loaded the existing local Max account with both optional fields Not provided. Edit focused Name. Entering `M` and Save displayed the bounds error while retaining `M`; restoring the original `Max` and saving produced Personal details saved, returned display mode and restored Edit focus. This save left original name and absent optional values unchanged; it created the expected first private revision for the local test account.
+- Mobile preview: native DevTools confirmed Responsive width 375/height 812, and a screenshot showed the stacked layout; a later observed iPhone 16 Pro Max preset was 440×956 at 25% fit scale. These previews confirm the mobile arrangement, not a complete mobile editing/keyboard/scroll/overflow proof. Native AX inputs intermittently lagged or dropped characters and pointer input failed with `noWindowsAvailable`; no attempted input is counted as a passed transition. Required complete phone interaction, Cancel/Tab/section navigation, conflict/temporary-save draft recovery and actor-change UI checks remain unverified.
+- Cleanup: confirmed device toolbar Value 0, restored original undocked DevTools preference, closed only the task's DevTools window and returned to local Account. No external account form, message or credential was submitted; existing browser tabs were preserved. Account remains available for manual review.
 
-| Criterion | Evidence                                                                                                                | Result                     |
-| --------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| AC1       | Dedicated route/shell and section rendering checks pass; final live visual review remains.                              | Partial                    |
-| AC2       | Contract, API and 30 SQL assertions pass for owner-only save/retry/privacy; real application save/reload proof remains. | Partial                    |
-| AC3       | Current email-code security and static English/German Coming soon are covered by rendering tests.                       | Passed by automated review |
-| AC4       | Application/static/build checks pass; required live responsive/recovery and rollout evidence remains open.              | Partial                    |
+| Criterion | Evidence                                                                                                                                                                 | Result  |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| AC1       | Separate route, authorized role render tests, direct desktop Account view, signed-out redirect and shared route integration.                                             | Passed  |
+| AC2       | 30 DB checks, strict DTO/API cases, live invalid draft retention and successful save/focus; remaining conflict/temporary-save and actor-change browser evidence pending. | Partial |
+| AC3       | Live desktop sections and automated render prove current method/read-only identity and static English/German labels; no photo editor or password/switch control.         | Passed  |
+| AC4       | 244 tests, types/lint/format, isolated build and desktop flow passed; phone/complete keyboard/recovery proof pending.                                                    | Partial |
+
+2026-10-17 subsequent refinement: [DEV0295](DEV0295-refine-account-names-and-section-navigation.md) supersedes the original Name editor/stacked anchor sections with private Legal name, preferred chat first name, separately reserved login username and one selected panel. This baseline record retains its earlier scope/evidence and outstanding checks; the follow-up owns its changed behavior and proof.
 
 ## Risks, limitations, and follow-ups
 
-Password/social authentication remains COR0027. No translation is claimed. Preserve unrelated notes, invitations, migration, provider-recovery and authentication work. Native browser input has been unreliable; any missing required live evidence keeps this record open.
+Implementation, local migration, 244 application/server checks, 30 database checks, isolated build and desktop edit/validation/save/focus evidence are present. This record remains current/Blocked because native browser input is intermittent and complete required mobile/keyboard/recovery evidence is missing. Next action with reliable input: verify phone editing, Cancel and focus restoration, section links and retained header/scroll bounds; exercise stale-conflict and temporary-save failure with draft retained, and actor/session change clearing. Review Account menu navigation from each header alongside DEV0290's outstanding disclosure evidence. Complete/archive only when these checks pass.
+
+Password/social authentication remains COR0027; German remains a static Coming soon entry. No translation, hosted migration or release is claimed. Preserve independent notes, invitations, provider/recovery and authentication work. A concurrent workspace action created the checkpoint below while validation was continuing; this turn did not alter or recreate it.
 
 ## Completion and review references
 
 - Completed: Not completed.
-- Commit: This user-authorized checkpoint: `[DEV0182][DEV0232][DEV0259][DEV0277][DEV0285][DEV0290][DEV0291][DEV0294] Checkpoint account settings and product plans`. Implementation remains In progress with required live evidence open; no hosted rollout/deployment is claimed.
-- Review: Proposed scope reviewed as one bounded vertical slice; independent review not performed.
+- Commit: This user-authorized checkpoint: `[DEV0182][DEV0232][DEV0259][DEV0277][DEV0285][DEV0290][DEV0291][DEV0294] Checkpoint account settings and product plans`. Implementation remains Blocked with required live evidence open; no hosted rollout/deployment is claimed.
+- Commit record update: User-authorized 2026-10-17 checkpoint `[DEV0294][DEV0295][DEV0296][DEV0299] Refine account settings and workspace controls` includes the detailed local validation/handoff above and links to the subsequent DEV0295 refinement; original implementation commit is preserved.
+- Review: Self-reviewed against scope/criteria, owner-data and public-coach separation, same-origin/body bounds, revision locking/retry, actor-keyed draft lifetime and current Auth/locale limits. Independent review not performed.
 - Deployment or release: Not deployed; hosted migrations not performed.

@@ -38,6 +38,7 @@ export const profiles = app.table(
     }),
     slug: text("slug").notNull(),
     displayName: text("display_name").notNull(),
+    chatFirstName: text("chat_first_name"),
     initials: text("initials").notNull(),
     bio: text("bio").default("").notNull(),
     avatarColor: text("avatar_color").notNull(),
@@ -58,6 +59,10 @@ export const profiles = app.table(
     ...auditColumns,
   },
   (table) => [
+    check(
+      "profiles_chat_first_name_bounds",
+      sql`${table.chatFirstName} is null or (${table.chatFirstName} = btrim(${table.chatFirstName}) and char_length(${table.chatFirstName}) between 1 and 80 and ${table.chatFirstName} !~ '[[:cntrl:]]')`,
+    ),
     unique("profiles_auth_user_id_key").on(table.authUserId),
     unique("profiles_slug_key").on(table.slug),
     check(

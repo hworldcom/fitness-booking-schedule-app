@@ -35,9 +35,8 @@ test("account writes reject cross-origin, malformed, oversized and authority-bea
     {
       headers,
       body: JSON.stringify({
-        displayName: "Settings Test",
-        birthdate: null,
-        gender: null,
+        section: "login-security",
+        username: "settings_test",
         revision: 0,
         profileId: "someone-else",
       }),

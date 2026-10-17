@@ -4,43 +4,82 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   accountDetailsInput,
+  defaultFirstName,
   isAccountResult,
+  normalizeUsername,
+  preferredChatName,
   validBirthdate,
+  type AccountDetails,
+  type PersonalDetailsInput,
 } from "@/account/contracts";
+import {
+  ACCOUNT_SECTIONS,
+  accountSection,
+  accountSectionHref,
+} from "@/account/sections";
 import {
   AccountSettingsView,
   formatBirthdate,
 } from "@/features/account/account-settings";
+import {
+  accountEditInput,
+  advanceOtherDraft,
+} from "@/features/account/account-settings-model";
 import { AccountShell } from "@/components/account-shell";
 import type { ActorSnapshot } from "@/auth/actor-contracts";
 
-const input = {
-  displayName: "Settings Athlete",
+const input: PersonalDetailsInput = {
+  section: "personal-details",
+  legalName: null,
+  preferredFirstName: null,
   birthdate: null,
   gender: null,
   revision: 0,
 };
-test("personal settings normalize names and optional gender without accepting authority or unknown fields", () => {
+const details: AccountDetails = {
+  displayName: "Legacy Person",
+  legalName: "Morgan Private Legal",
+  preferredFirstName: null,
+  username: "reserved_login",
+  birthdate: null,
+  gender: null,
+  revision: 0,
+};
+
+test("personal input separates private legal name from a nonunique preferred chat first name", () => {
   assert.deepEqual(
     accountDetailsInput({
       ...input,
-      displayName: "  Renée   Lee  ",
+      legalName: "  Renée   Lee  ",
+      preferredFirstName: "  Ray  ",
       gender: "  nonbinary  ",
     }),
-    { ...input, displayName: "Renée Lee", gender: "nonbinary" },
+    {
+      ...input,
+      legalName: "Renée Lee",
+      preferredFirstName: "Ray",
+      gender: "nonbinary",
+    },
   );
-  assert.deepEqual(accountDetailsInput({ ...input, gender: "  " }), input);
+  assert.deepEqual(
+    accountDetailsInput({
+      ...input,
+      legalName: "  ",
+      preferredFirstName: "  ",
+      gender: "  ",
+    }),
+    input,
+  );
   for (const value of [
     null,
     [],
     { ...input, profileId: "another-person" },
-    { ...input, role: "coach" },
-    { ...input, email: "other@example.test" },
-    { ...input, displayName: "a" },
-    { ...input, displayName: "x".repeat(81) },
-    { ...input, displayName: "Name\nChanged" },
-    { ...input, displayName: "Name\u200b" },
-    { ...input, gender: "x".repeat(81) },
+    { ...input, username: "hidden_change" },
+    { ...input, displayName: "Public Rename" },
+    { ...input, legalName: "a" },
+    { ...input, preferredFirstName: "x".repeat(81) },
+    { ...input, legalName: "Name\nChanged" },
+    { ...input, preferredFirstName: "Name\u200b" },
     { ...input, gender: "x\u0000" },
     { ...input, revision: -1 },
     { ...input, revision: 0.5 },
@@ -48,7 +87,58 @@ test("personal settings normalize names and optional gender without accepting au
   ])
     assert.equal(accountDetailsInput(value), null);
   assert.ok(
-    accountDetailsInput({ ...input, displayName: "李明", gender: null }),
+    accountDetailsInput({
+      ...input,
+      legalName: "李明",
+      preferredFirstName: "李",
+    }),
+  );
+});
+test("preferred first name uses explicit preference then first legal-name word then retained name without treating it as legal identity", () => {
+  assert.equal(preferredChatName(details), "Morgan");
+  assert.equal(
+    preferredChatName({ ...details, preferredFirstName: "Morgan Lee" }),
+    "Morgan Lee",
+  );
+  assert.equal(preferredChatName({ ...details, legalName: null }), "Legacy");
+  assert.equal(
+    defaultFirstName("  Mary   Jane Smith ", "Legacy Person"),
+    "Mary",
+  );
+});
+test("login username normalizes independently and rejects invalid or authority-bearing writes", () => {
+  for (const value of [" Morgan_1 ", "@MORGAN_1"])
+    assert.equal(normalizeUsername(value), "morgan_1");
+  for (const value of [null, "  "])
+    assert.equal(normalizeUsername(value), null);
+  for (const value of [
+    "ab",
+    "1morgan",
+    "a-b",
+    "two words",
+    "@",
+    "@@morgan",
+    "äbc",
+    "x".repeat(31),
+    true,
+  ])
+    assert.equal(normalizeUsername(value), undefined);
+  const login = {
+    section: "login-security",
+    username: "  Reserve_Me ",
+    revision: 0,
+  };
+  assert.deepEqual(accountDetailsInput(login), {
+    ...login,
+    username: "reserve_me",
+  });
+  assert.equal(
+    accountDetailsInput({ ...login, legalName: "Hidden Update" }),
+    null,
+  );
+  assert.equal(
+    accountDetailsInput({ ...login, email: "private@example.test" }),
+    null,
   );
 });
 test("birthdates reject impossible, future and out-of-range dates without timezone conversion", () => {
@@ -68,52 +158,112 @@ test("birthdates reject impossible, future and out-of-range dates without timezo
     assert.equal(validBirthdate(value, "2026-10-17"), false);
   assert.equal(formatBirthdate("2000-02-29"), "29 February 2000");
 });
-test("private response validation accepts database key order and rejects injected/unavailable personal data", () => {
+test("strict account responses accept key order but reject extra fields, unnormalized names and private-data error payloads", () => {
   assert.ok(
     isAccountResult({
       status: "ready",
       details: {
         revision: 0,
+        username: "reserved_login",
         gender: null,
         birthdate: null,
-        displayName: "Settings Athlete",
+        preferredFirstName: null,
+        legalName: "Morgan Private Legal",
+        displayName: "Legacy Person",
       },
     }),
   );
+  assert.ok(isAccountResult({ status: "username-taken" }));
   for (const value of [
-    { status: "ready", details: { ...input, email: "no@example.test" } },
-    { status: "ready", details: { ...input, gender: "  " } },
-    { status: "unavailable", details: input },
-    { status: "ready", details: { ...input, birthdate: "3000-01-01" } },
+    { status: "ready", details: { ...details, email: "no@example.test" } },
+    { status: "ready", details: { ...details, legalName: "  Morgan  " } },
+    { status: "ready", details: { ...details, username: "UPPER" } },
+    { status: "conflict", details },
+    { status: "ready", details: { ...details, birthdate: "3000-01-01" } },
   ])
     assert.equal(isAccountResult(value), false);
 });
-test("Account sections show current email-code security, static English and German Coming soon without photo editing", () => {
-  const html = renderToStaticMarkup(
-    createElement(
-      AccountSettingsView,
-      { email: "settings@example.test" },
-      createElement("section", { id: "personal-details" }, "Personal details"),
-    ),
-  );
-  for (const href of [
-    "#personal-details",
-    "#login-security",
-    "#language",
-    "/profile",
-    "/sign-in?returnTo=%2Faccount",
+test("exactly the selected settings panel renders, with active query navigation and existing security/language scope", () => {
+  for (const section of ACCOUNT_SECTIONS) {
+    const html = renderToStaticMarkup(
+      createElement(AccountSettingsView, {
+        email: "settings@example.test",
+        section,
+        personalDetails: createElement(
+          "section",
+          { id: "personal-details" },
+          "Private legal details",
+        ),
+        usernameSettings: createElement(
+          "p",
+          null,
+          "Username reserved for future use",
+        ),
+      }),
+    );
+    for (const target of ACCOUNT_SECTIONS)
+      assert.ok(html.includes(`href="${accountSectionHref(target)}"`));
+    assert.equal([...html.matchAll(/<section /g)].length, 1);
+    assert.ok(html.includes(`id="${section}"`));
+    assert.equal([...html.matchAll(/aria-current="page"/g)].length, 1);
+    assert.match(html, /href="\/profile"/);
+    assert.doesNotMatch(
+      html,
+      /href="#personal-details"|href="#login-security"|href="#language"|type="file"|Change password|<select/,
+    );
+    assert.equal(
+      html.includes("Private legal details"),
+      section === "personal-details",
+    );
+    assert.equal(
+      html.includes("settings@example.test"),
+      section === "login-security",
+    );
+    assert.equal(
+      html.includes("One-time email code"),
+      section === "login-security",
+    );
+    assert.equal(
+      html.includes("Username reserved for future use"),
+      section === "login-security",
+    );
+    assert.equal(html.includes("Coming soon"), section === "language");
+    if (section === "language") assert.match(html, /lang="de">Deutsch<\/dt>/);
+  }
+});
+test("untrusted or repeated section inputs safely default to Personal details", () => {
+  for (const value of [
+    null,
+    undefined,
+    "",
+    "profile",
+    ["language"],
+    ["language", "login-security"],
+    "https://outside.test",
+    { section: "language" },
   ])
-    assert.ok(html.includes(`href="${href}"`));
-  assert.match(html, /settings@example.test/);
-  assert.match(html, /One-time email code/);
-  assert.match(html, />English<\/dt>/);
-  assert.match(html, /Current language/);
-  assert.match(html, /lang="de">Deutsch<\/dt>/);
-  assert.match(html, /Coming soon/);
-  assert.doesNotMatch(
-    html,
-    /<select|<input|type="file"|Change password|billing|Steuern|Payments|<button/,
+    assert.equal(accountSection(value), "personal-details");
+  for (const value of ACCOUNT_SECTIONS)
+    assert.equal(accountSection(value), value);
+});
+test("separate section commands do not include hidden private edits, and own-save rebasing never advances stale drafts", () => {
+  const personal = accountEditInput(details, "personal-details");
+  const login = accountEditInput(details, "login-security");
+  assert.ok(!("username" in personal));
+  assert.ok(!("legalName" in login));
+  assert.deepEqual(advanceOtherDraft(personal, login, 1), {
+    ...personal,
+    revision: 1,
+  });
+  assert.equal(
+    advanceOtherDraft(
+      { ...personal, revision: 0 },
+      { ...login, revision: 1 },
+      2,
+    ).revision,
+    0,
   );
+  assert.equal(advanceOtherDraft(personal, personal, 1), personal);
 });
 test("Account has its own settings shell and personal menu across coach states, without workspace discovery chrome", () => {
   for (const coachAccessStatus of [

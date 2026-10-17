@@ -24,6 +24,7 @@ import { profileInitials } from "@/auth/profile-presentation";
 import { accountProfileImagePresentation } from "@/profile-images/presentation";
 import { useUnreadMessages } from "@/messages/use-unread-messages";
 import { AccountMenu } from "./account-menu";
+import { HeaderAccountControl } from "./header-account-control";
 import { AccountShell } from "@/components/account-shell";
 import { Avatar, Brand, Modal, Pill } from "./ui";
 
@@ -421,11 +422,11 @@ export function Shell({ children }: { children: ReactNode }) {
                     {href === "/messages" && messageBadge}
                   </Link>
                 ))}
-                {currentProfile ? (
-                  <AccountMenu actor={actor} pathname={path} />
-                ) : (
-                  <AuthStatusLink />
-                )}
+                <HeaderAccountControl
+                  actor={actor}
+                  pathname={path}
+                  authControl={<AuthStatusLink />}
+                />
               </div>
             </div>
           </header>
@@ -459,8 +460,11 @@ export function Shell({ children }: { children: ReactNode }) {
                   {messageBadge}
                 </Link>
               )}
-              <AuthStatusLink />
-              {currentProfile && <AccountMenu actor={actor} pathname={path} />}
+              <HeaderAccountControl
+                actor={actor}
+                pathname={path}
+                authControl={<AuthStatusLink />}
+              />
             </div>
           </header>
         )}

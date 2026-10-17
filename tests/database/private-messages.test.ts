@@ -85,6 +85,34 @@ test("private message database authority, unlimited sends, retries and read isol
           "utf8",
         ),
       );
+      if (
+        !(
+          await tx`select to_regclass('app.account_personal_details') present`
+        )[0].present
+      )
+        await tx.unsafe(
+          readFileSync(
+            "supabase/migrations/20261017000500_private_account_settings.sql",
+            "utf8",
+          ),
+        );
+      const accountNames = readFileSync(
+        "supabase/migrations/20261017000600_account_names_and_usernames.sql",
+        "utf8",
+      );
+      if (
+        !(
+          await tx`select 1 from information_schema.columns where table_schema='app' and table_name='profiles' and column_name='chat_first_name'`
+        ).length
+      )
+        await tx.unsafe(accountNames);
+      else
+        // Replaying the older media migration above must not hide current chat-name behavior.
+        await tx.unsafe(
+          accountNames.slice(
+            accountNames.indexOf("-- Preserve every media/permission field"),
+          ),
+        );
       const actors = [];
       for (let i = 0; i < 4; i++) {
         const authId = randomUUID();
