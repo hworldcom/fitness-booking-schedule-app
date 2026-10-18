@@ -168,6 +168,10 @@ export type CoachDirectoryEntry = Readonly<{
   todaySlots: readonly PublicCoachAvailabilitySlot[];
   /** Optional for legacy fixtures; live directory reads always supply version 1. */
   website?: import("./coach-website").CoachWebsiteCard;
+  /** Null/absent means unavailable, never a successful zero-review count. */
+  reviewSummary?: import("./coach-reviews").ReviewSummary | null;
+  /** Derived from the public primary training point; never a private address. */
+  areaLabel?: string | null;
 }>;
 
 export type OwnedCoachAvailabilitySlot = CoachAvailabilitySlotProjection &

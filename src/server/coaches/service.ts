@@ -45,6 +45,8 @@ import {
 import { submitOwnedCoachApplicationRecord } from "@/server/db/coaches/application-repository";
 import { publicCoachWebsiteCards } from "@/server/db/coaches/website-repository";
 import { publicCoachWebsite } from "./website-service";
+import { directoryReviewSummaries } from "./directory-reviews";
+import { directoryAreaLabel } from "./directory-area";
 
 function canPrepareCoachProfile(status: string) {
   return (
@@ -64,12 +66,12 @@ export async function publicCoachDirectory(
 ): Promise<CoachDirectoryState> {
   try {
     const entries = await publicCoachDirectoryRecords(filters);
-    const paths = await publicCoachPathsRecord(
-      entries.map((entry) => entry.coach.slug),
-    );
-    const websites = await publicCoachWebsiteCards(
-      entries.map((entry) => entry.coach.profileId),
-    );
+    const slugs = entries.map((entry) => entry.coach.slug);
+    const [paths, websites, reviews] = await Promise.all([
+      publicCoachPathsRecord(slugs),
+      publicCoachWebsiteCards(entries.map((entry) => entry.coach.profileId)),
+      directoryReviewSummaries(slugs),
+    ]);
     return Object.freeze({
       status: "ready",
       entries: Object.freeze(
@@ -88,6 +90,8 @@ export async function publicCoachDirectory(
                       : {}),
                   },
                   website,
+                  reviewSummary: reviews.get(entry.coach.slug) ?? null,
+                  areaLabel: directoryAreaLabel(entry.primaryLocation.location),
                 }),
               ]
             : [];

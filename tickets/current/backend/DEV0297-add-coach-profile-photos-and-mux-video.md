@@ -9,7 +9,7 @@
 
 ## Objective and context
 
-2026-10-17 later user sequence (documented under [DEV0330](../../archive/organisatory/DEV0330-refine-coach-marketplace-pricing-reviews-and-urls.md)): finish [DEV0316 directory profile cards](../frontend/DEV0316-redesign-coach-directory-cards.md) first. Defer clarification of picture/video allowance and premium eligibility until after that card milestone. Preserve the existing confirmed selections and open questions below; none is a start/completion dependency for the separate cards. Revisit them before this affected media implementation, then supply the later website/gallery integration.
+2026-10-17 later user sequence (documented under [DEV0330](../../archive/organisatory/DEV0330-refine-coach-marketplace-pricing-reviews-and-urls.md)): finish [DEV0316 directory profile cards](../../archive/frontend/DEV0316-redesign-coach-directory-cards.md) first. Defer clarification of picture/video allowance and premium eligibility until after that card milestone. Preserve the existing confirmed selections and open questions below; none is a start/completion dependency for the separate cards. Revisit them before this affected media implementation, then supply the later website/gallery integration.
 
 Let coaches present themselves and their training through a photo gallery and a short preview video on their coach profile. The delivered profile supports a public portrait, but has no workout-photo gallery or preview-video upload flow. Control storage, visitor data usage and delivery costs while preserving profile visibility and private account media.
 

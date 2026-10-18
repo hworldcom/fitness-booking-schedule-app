@@ -5,7 +5,7 @@
 - Last updated: 2026-10-18
 - Milestone: M10 design review before coach website editing
 - Coordination: None — independent development ticket
-- Related records: Downstream editor [DEV0315](../../current/frontend/DEV0315-edit-and-preview-coach-websites.md), cards [DEV0316](../../current/frontend/DEV0316-redesign-coach-directory-cards.md), full public page [DEV0317](../../current/frontend/DEV0317-build-shareable-personal-coach-websites.md); context [COR0028](../../current/organisatory/COR0028-coach-marketplace-cards-and-personal-websites.md). Historical standalone design approach: [DEV0304](../../archive/frontend/DEV0304-preview-photo-collage-banners.md).
+- Related records: Downstream editor [DEV0315](../../current/frontend/DEV0315-edit-and-preview-coach-websites.md), cards [DEV0316](DEV0316-redesign-coach-directory-cards.md), full public page [DEV0317](../../current/frontend/DEV0317-build-shareable-personal-coach-websites.md); context [COR0028](../../current/organisatory/COR0028-coach-marketplace-cards-and-personal-websites.md). Historical standalone design approach: [DEV0304](../../archive/frontend/DEV0304-preview-photo-collage-banners.md).
 
 ## Objective and context
 

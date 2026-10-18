@@ -1,5 +1,4 @@
 "use client";
-import { coachProfileHref } from "@/domain/coach-public-url";
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -7,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
-  ArrowRight,
   List,
   Map as MapIcon,
   MapPinned,
@@ -18,9 +16,7 @@ import type {
   CoachDirectoryEntry,
   CoachDirectoryFilters,
 } from "@/domain/coaches";
-import { Avatar } from "@/components/ui";
 import { CompactCoachCard } from "./compact-coach-card";
-import { CoachTodayAvailability } from "./coach-today-availability";
 import {
   coachDirectoryHref,
   type CoachExploreView,
@@ -241,33 +237,7 @@ export function CoachExploreResults({
               ref={selectedPreviewRef}
               tabIndex={-1}
             >
-              <header>
-                <Avatar
-                  initials={profileInitials(selectedEntry.coach.displayName)}
-                  imageUrl={selectedEntry.coach.portraitUrl}
-                  alt=""
-                />
-                <div>
-                  <span className="eyebrow">SELECTED COACH</span>
-                  <h3>{selectedEntry.coach.displayName}</h3>
-                </div>
-              </header>
-              <div className="coach-map-primary">
-                <MapPinned size={15} aria-hidden="true" />
-                <span>
-                  <small>Primary training location</small>
-                  <strong>{selectedEntry.primaryLocation.publicName}</strong>
-                  {selectedEntry.primaryLocation.publicName !==
-                    selectedEntry.primaryLocation.location.label && (
-                    <em>{selectedEntry.primaryLocation.location.label}</em>
-                  )}
-                </span>
-              </div>
-              <CoachTodayAvailability entry={selectedEntry} limit={5} />
-              <Link href={coachProfileHref(selectedEntry.coach)}>
-                View full profile and schedule
-                <ArrowRight size={15} aria-hidden="true" />
-              </Link>
+              <CompactCoachCard entry={selectedEntry} availabilityLimit={5} />
             </section>
           )}
           {mapStatus === "ready" ? (

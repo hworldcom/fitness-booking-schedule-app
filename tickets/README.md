@@ -7,7 +7,7 @@ This directory records planned changes, task status and implementation evidence.
 - A **development ticket** is a small implementable task named `# Ticket DEVNNNN` with a `DEVNNNN-short-title.md` filename. It owns implementation and validation evidence, and its DEV ID is used in commits. Start one from [TEMPLATE.md](TEMPLATE.md).
 - A **coordination record** is a non-implementation umbrella named `# Coordination CORNNNN` with a `CORNNNN-short-title.md` filename. It maps a flat set of peer development tickets and is never used as a commit reference. Start one from [COORDINATION_TEMPLATE.md](COORDINATION_TEMPLATE.md).
 
-DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0350 and COR0030.
+DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0351 and COR0030.
 
 Every DEV record declares its direct coordination membership near the top: one linked COR, or `None — independent development ticket`. Direct membership is limited to one COR and must match that COR's work map. Dependencies, downstream consumers and historical links remain separate relationships.
 
@@ -40,7 +40,6 @@ Retired DEV IDs cannot be reused or referenced by future commits. Add a row when
 | [COR0028 — Coordination: Coach marketplace cards and personal websites](current/organisatory/COR0028-coach-marketplace-cards-and-personal-websites.md) | Organisatory | M10 — Coach marketplace websites | In progress | Coordinate card-first websites, optional starting-rate publicity, one review per pair and username URLs; media allowance decisions after cards. |
 | [DEV0319 — Rehearse coach marketplace websites](current/backend/DEV0319-rehearse-coach-marketplace-websites.md) | Backend | M10 — Coach marketplace websites | Draft | Prove card-before-media/full website loop, hidden-rate privacy, pair-review uniqueness, username routing and exact cleanup. |
 | [DEV0317 — Build shareable personal coach websites](current/frontend/DEV0317-build-shareable-personal-coach-websites.md) | Frontend | M10 — Coach marketplace websites | Draft | After cards: username-based personal coach template, optional starting rates, pair reviews and later authorized gallery integration. |
-| [DEV0316 — Redesign coach directory cards](current/frontend/DEV0316-redesign-coach-directory-cards.md) | Frontend | M10 — Coach marketplace websites | Draft | First visible slice: richer Home/Explore profile cards with optional starting rate, pair ratings and username links; media decisions later. |
 | DEV0010        | Historical frontend-planning identifier consolidated before the superseded product record was pruned under DEV0112.                                             |
 | DEV0011        | Historical frontend-planning identifier consolidated before the superseded product record was pruned under DEV0112.                                             |
 | DEV0012        | Historical frontend-planning identifier consolidated before the superseded product record was pruned under DEV0112.                                             |
@@ -96,6 +95,8 @@ DEV0340–DEV0346 and COR0029 are allocated to independent session-type work in 
 DEV0347 delivers independent test-coach public-URL preservation. DEV0348 is reserved for the independent profile compatibility repair in the shared workspace; its pending session-type dependencies are excluded from this checkpoint.
 
 DEV0349 is reserved for the newly requested local-only fictional coach/UAT retirement slice; its implementation is not included in this checkpoint.
+
+DEV0350 is allocated to independent public-theme/Home-banner work in the shared workspace; its implementation is excluded from the DEV0316 checkpoint.
 
 ## Ticket index
 
@@ -173,6 +174,7 @@ DEV0349 is reserved for the newly requested local-only fictional coach/UAT retir
 | [DEV0345 — Integrate session types with groups and calendar](archive/frontend/DEV0345-integrate-session-types-with-groups-and-calendar.md) | Frontend | M11 — Session types and flexible bookings | Completed | Type snapshot integration in group drafts/public selection/registration and calendar labels/filter; type removal blocks new use while preserving existing sessions. |
 | [DEV0346 — Rehearse session types and flexible bookings](archive/backend/DEV0346-rehearse-session-types-and-flexible-bookings.md) | Backend | M11 — Session types and flexible bookings | Completed | Combined disposable-dataset proof, fresh/retained-schema upgrade compatibility, scoped deployment readiness and final documentation evidence. |
 | [DEV0348 — Keep coach profiles visible before session-type rollout](archive/backend/DEV0348-keep-coach-profiles-visible-before-session-type-rollout.md) | Backend | Public profile compatibility | Completed | Six actual local pages restored; absent-capability legacy fallback, booking-only outage recovery, 76 regressions and desktop/mobile keyboard checks passed. |
+| [DEV0316 — Redesign coach directory cards](archive/frontend/DEV0316-redesign-coach-directory-cards.md) | Frontend | M10 — Coach marketplace websites | Completed | Shared cards/four-card Home, accurate areas, safe rates/reviews/media and native keyboard/history/no-script/map recovery; 365 regressions and final production build pass. |
 | [DEV0349 — Restrict fictional coaches to local development](archive/backend/DEV0349-restrict-fictional-coaches-to-local-development.md) | Backend | UAT environment integrity | Completed | Local-only fixture setup and exact hosted demo visibility/participation retirement with real-user/history preservation. |
 | [DEV0347 — Preserve test coach public URLs](archive/backend/DEV0347-preserve-test-coach-public-urls.md) | Backend | Development fixtures / M10 | Completed | Six fixed creation defaults and local public URLs; credentials/content preserved, 12 disposable DB checks and 12 HTTP checks pass; hosted rollout and in-progress session-type rendering remain separate. |
 | [DEV0338 — Preview a personal coach page](archive/frontend/DEV0338-preview-a-personal-coach-page.md) | Frontend | M10 design review | Completed | Standalone fictional coach-page proposal; desktop/phone keyboard/fallback and 25 static checks pass. Design acceptance/live editor remain separate. |

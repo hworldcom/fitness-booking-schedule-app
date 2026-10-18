@@ -34,13 +34,13 @@ const entries = Object.freeze([
   directoryEntry(4, "Dario Diaz"),
 ]);
 
-test("Home pagination expands in 15-coach increments and clamps to available rows", () => {
+test("Home pagination expands in four-coach increments and clamps to available rows", () => {
   const rows = Object.freeze(
     Array.from({ length: 31 }, (_, index) =>
       directoryEntry(index + 1, "Coach " + String(index + 1).padStart(3, "0")),
     ),
   );
-  for (const count of [0, 1, 14, 15, 16, 30, 31]) {
+  for (const count of [0, 1, 3, 4, 5, 8, 31]) {
     for (const page of [1, 2, 3, Number.MAX_SAFE_INTEGER, 0, NaN]) {
       const slice = homeCoachDirectoryPage(rows.slice(0, count), page);
       const expectedPage = Math.min(
@@ -60,6 +60,7 @@ test("Home pagination expands in 15-coach increments and clamps to available row
       assert.ok(Object.isFrozen(slice.entries));
     }
   }
+  assert.equal(HOME_COACH_PAGE_SIZE, 4);
   assert.equal(rows.length, 31);
 });
 
@@ -124,7 +125,7 @@ test("Home renders one paginated grid and one card for a multi-discipline coach"
       }),
     ),
   );
-  for (const page of [1, 2, 3]) {
+  for (const page of [1, 2, 8]) {
     const html = renderToStaticMarkup(
       createElement(HomeCoachDiscovery, {
         state: { status: "ready", filters, entries: rows },
@@ -133,11 +134,11 @@ test("Home renders one paginated grid and one card for a multi-discipline coach"
     );
     assert.equal(
       [...html.matchAll(/class="compact-coach-card marketplace/g)].length,
-      Math.min(31, page * 15),
+      Math.min(31, page * 4),
     );
     assert.equal([...html.matchAll(/id="home-coach-grid"/g)].length, 1);
     assert.equal([...html.matchAll(/<h3>Coach 001<\/h3>/g)].length, 1);
-    if (page < 3)
+    if (page < 8)
       assert.match(html, new RegExp('href="/\\?page=' + (page + 1) + '"'));
     else assert.doesNotMatch(html, /Load more/);
   }
@@ -163,7 +164,7 @@ test("ready home discovery renders authoritative profiles and fallbacks only", (
   assert.match(markup, />BB<\/span>/);
   assert.match(markup, /Verified coach/);
   assert.match(markup, /Demo coach/);
-  assert.match(markup, /Amina Ali training base/);
+  assert.doesNotMatch(markup, /Primary training place|Amina Ali training base/);
   assert.doesNotMatch(markup, /1 open time|No availability today/);
   assert.match(markup, /href="\/coaches\/amina-ali"/);
   assert.doesNotMatch(markup, /near you|recommended|rating|price/i);

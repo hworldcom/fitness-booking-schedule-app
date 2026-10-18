@@ -10,7 +10,7 @@ export {
   DISCIPLINE_SEARCH_PATTERN as HOME_DISCIPLINE_PATTERN,
 } from "./discipline-search-contract";
 
-export const HOME_COACH_PAGE_SIZE = 15;
+export const HOME_COACH_PAGE_SIZE = 4;
 export type HomeSearchParams = Readonly<
   Record<string, string | string[] | undefined>
 >;
