@@ -66,6 +66,12 @@ export function EventCard({ session }: { session: GroupSession }) {
 export function EventTerms({ session }: { session: GroupSession }) {
   return (
     <dl className="event-terms">
+      {session.sessionType && (
+        <div>
+          <dt>Session type</dt>
+          <dd>{session.sessionType.name}</dd>
+        </div>
+      )}
       <div>
         <dt>Date and time</dt>
         <dd>

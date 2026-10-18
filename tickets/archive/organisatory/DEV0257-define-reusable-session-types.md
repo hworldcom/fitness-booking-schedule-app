@@ -1,11 +1,11 @@
 # Ticket DEV0257: Define reusable session types
 
-- Status: Draft
+- Status: Completed
 - Created: 2026-10-16
-- Last updated: 2026-10-16
-- Milestone: Proposed M9 calendar and availability amendment
-- Coordination: None — independent development ticket
-- Related records: proposed amendment to [COR0023 — Coach calendar and availability](../../archive/organisatory/COR0023-coach-calendar-and-availability.md); historical contract [DEV0251](../../archive/organisatory/DEV0251-define-coach-calendar-and-availability.md); existing shared booking titles [DEV0248](../../archive/frontend/DEV0248-add-shared-session-titles-and-message-filtering.md); existing group lifecycle [COR0021](COR0021-group-training-and-events.md).
+- Last updated: 2026-10-18
+- Milestone: M11 — Session types and flexible bookings
+- Coordination: [COR0029 — Session types and flexible bookings](COR0029-session-types-and-flexible-bookings.md)
+- Related records: proposed amendment to [COR0023 — Coach calendar and availability](COR0023-coach-calendar-and-availability.md); historical contract [DEV0251](DEV0251-define-coach-calendar-and-availability.md); existing shared booking titles [DEV0248](../frontend/DEV0248-add-shared-session-titles-and-message-filtering.md); existing group lifecycle [COR0021](../../current/organisatory/COR0021-group-training-and-events.md).
 
 ## Objective and context
 
@@ -31,6 +31,14 @@ These facts describe Everfit, not decisions to add variable durations, service s
 
 The live Session Types screen was not re-inspected in this turn. Automatic approval review rejected the browser-control documentation refresh as unrelated/unauthorized; used the official guide as the read-only alternative. No session type or account setting was changed in Everfit.
 
+## Adopted continuation — 18 October 2026
+
+The user confirmed type-first athlete booking, 60/75/90-minute offerings, coach scheduling for an existing client and individual-booking overrides. The latest instruction retains default Private session and Group session types while allowing removal. The earlier proposals and pending choices below are historical planning context; the authoritative adopted target is [specification section 18.6](../../../docs/mvp-spec.md#186-session-types-and-flexible-bookings).
+
+Adopted defaults and rationale: 15-minute starts and zero buffers keep duration independent from start spacing; soft archival preserves scheduled history; explicit restoration and an empty catalog avoid forced defaults. Defaults are created only with a new coach profile, with an explicit owner action for existing coaches, so retained/demo data is never backfilled. Type format is immutable; edits are revision-checked; request/booking terms are snapshots. On-behalf scheduling requires an accepted same-dataset athlete connection. New requests/acceptance and group registrations stop when their type is archived; confirmed sessions and existing enrollment remain accessible. No prices, credits, payments, automatic emails or external calendars are added.
+
+[COR0029](COR0029-session-types-and-flexible-bookings.md) assigns every runtime deliverable exactly once to DEV0340–DEV0346. DEV0257 remains the contract owner because its historical planning commit already exists; it is not converted or retired. COR0023 remains a completed baseline. The seven new runtime peers contain their scope, edge cases, dependencies, acceptance and validation before implementation; the COR work table supplies order, parallel branches and completion conditions.
+
 ## Scope and non-goals
 
 - In scope for this ticket: confirm the session-type purpose/fields/visibility/duration with the user; review interactions with weekly/date availability, private/group sessions, shared titles and calendar presentation; adopt a specification amendment when settled; assign required runtime work to flat peers under the appropriate coordination and validate ownership/documentation.
@@ -52,7 +60,7 @@ Proposals for discussion, not adopted requirements:
 
 Start with coach-managed reusable templates and calendar organization: create/edit/archive a type, choose its name/description/color and optional default venue, assign an applicable type deliberately when preparing availability or a new session, and show its name/color in calendar summaries with a type filter. Examples are Boxing technique and Competition preparation. Type management and athlete visibility are separate decisions: a coach-managed type need not be hidden from participants, and displaying its label does not require an athlete service picker.
 
-Record a default duration as part of the proposed template model, with 60 minutes as the initial value. Whether coaches can change that duration and which lengths/start increments are supported remain open. Do not introduce an editable duration field that changes only its label while still reserving one hour. Athlete service selection, buffers and per-booking duration/venue overrides are separate candidate features, not adopted because Everfit supports them.
+The 18 October 2026 continuation confirms offered private-session lengths of 60, 75 and 90 minutes. Use 60 minutes as the proposed default and 15-minute possible start intervals as the proposed implementation default. Actual available starts must fit the selected duration and current availability/conflicts. Do not introduce a duration field that changes only its label while still reserving one hour. Athlete service selection, buffers and per-booking duration/venue overrides remain separate choices. These are target requirements; current private booking still enforces one hour until its runtime integration is delivered.
 
 Template edits apply to later selections by default; already scheduled sessions keep the reviewed details they copied. Archiving prevents new selection and preserves existing sessions/history. Existing untyped records retain a fallback. Resolve explicit relabeling, restoration, default-venue deactivation and private/group applicability before implementation. Reuse the existing shared booking title and note permissions independently rather than replacing those fields with the type name/description.
 
@@ -60,14 +68,14 @@ Template edits apply to later selections by default; already scheduled sessions 
 
 This is an impact review, not an adopted runtime work map or new coordination membership. The current owners below retain their existing scope until the amendment is settled.
 
-| Potential part                              | Existing consumer or required future owner                                                                                                                                          | Review before adoption                                                                                                                                           |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Coach-owned type persistence and management | New small runtime peer ticket(s), not created yet                                                                                                                                   | Define actor scope, fields, revisions/retries, archive/history snapshots and management interface; this documentation ticket implements none of them.            |
-| Availability/template assignment            | [DEV0252](../../archive/backend/DEV0252-persist-effective-coach-availability.md) and [DEV0253](../../archive/frontend/DEV0253-edit-weekly-hours-and-date-overrides.md) are potential consumers | Define whether weekly/date ranges offer a type, how changes affect pending attempts and how type duration interacts with occupied hours and whole-day overrides. |
-| Calendar organization                       | [DEV0254](../../archive/frontend/DEV0254-add-private-and-group-coach-calendar.md) is the potential consumer                                                                         | Add type labels/filter and color precedence without losing actual-venue cues, private/group format, lifecycle state or complete paging.                          |
-| Athlete-facing labels or service selection  | [DEV0255](../../archive/frontend/DEV0255-browse-thirty-day-private-availability.md) is a conditional consumer                                                                                  | Decide label visibility separately from service selection; retain the current request flow until a public amendment is adopted.                                  |
-| Group template use                          | [DEV0239](../../archive/frontend/DEV0239-add-coach-group-session-management.md) under external COR0021 is a potential consumer                                                                 | Decide group applicability and draft prefilling; preserve publication review, capacity, deadlines, frozen terms and existing group ownership.                    |
-| Integrated proof                            | [DEV0256](../../archive/backend/DEV0256-rehearse-calendar-and-availability.md) is the potential consumer                                                                                       | Once adopted, cover assignment, filtering, type edits/archival, old untyped history, permissions and any selected duration/public changes in real flows.         |
+| Potential part                              | Existing consumer or required future owner                                                                                                                               | Review before adoption                                                                                                                                           |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Coach-owned type persistence and management | New small runtime peer ticket(s), not created yet                                                                                                                        | Define actor scope, fields, revisions/retries, archive/history snapshots and management interface; this documentation ticket implements none of them.            |
+| Availability/template assignment            | [DEV0252](../backend/DEV0252-persist-effective-coach-availability.md) and [DEV0253](../frontend/DEV0253-edit-weekly-hours-and-date-overrides.md) are potential consumers | Define whether weekly/date ranges offer a type, how changes affect pending attempts and how type duration interacts with occupied hours and whole-day overrides. |
+| Calendar organization                       | [DEV0254](../frontend/DEV0254-add-private-and-group-coach-calendar.md) is the potential consumer                                                                         | Add type labels/filter and color precedence without losing actual-venue cues, private/group format, lifecycle state or complete paging.                          |
+| Athlete-facing labels or service selection  | [DEV0255](../frontend/DEV0255-browse-thirty-day-private-availability.md) is a conditional consumer                                                                       | Decide label visibility separately from service selection; retain the current request flow until a public amendment is adopted.                                  |
+| Group template use                          | [DEV0239](../frontend/DEV0239-add-coach-group-session-management.md) under external COR0021 is a potential consumer                                                      | Decide group applicability and draft prefilling; preserve publication review, capacity, deadlines, frozen terms and existing group ownership.                    |
+| Integrated proof                            | [DEV0256](../backend/DEV0256-rehearse-calendar-and-availability.md) is the potential consumer                                                                            | Once adopted, cover assignment, filtering, type edits/archival, old untyped history, permissions and any selected duration/public changes in real flows.         |
 
 ## Assumptions, decisions, and dependencies
 
@@ -75,12 +83,28 @@ Confirmed: on 16 October 2026 the user requested considering Everfit-style sessi
 
 Confirmed documentary action: after the explanation, the user asked to add a ticket or update the current records. This Draft and COR0023's proposed-amendment link satisfy that action; it does not add session types to the adopted M9 work map yet.
 
-The user's follow-up is a request for clarification, not a final selection:
+Historical 16 October follow-up, before the 18 October continuation below:
 
 1. Tentative preference: coach templates and labels first, explicitly subject to understanding Everfit's behavior. Athlete-facing selection and whether labels are visible in session details remain undecided; coach-managed does not necessarily mean hidden from athletes.
 2. Duration remains undecided. The user asked how Everfit works rather than selecting one-hour or variable-duration private sessions. Explain duration versus start-time spacing before asking for adoption.
 
-Proposed starting fields: name, description, color and optional default venue. Type assignment, private/group applicability, public visibility, edit/archive snapshots and duration-specific behavior depend on those answers. No field list or scheduling model is attributed to the user yet.
+Proposed starting fields: name, description, color and optional default venue. Type assignment, private/group applicability, public visibility and edit/archive snapshots remain proposals. No complete field list or booking interaction is attributed to the user yet.
+
+### 18 October 2026 implementation assessment
+
+The user authorized starting DEV0257 after reviewing Everfit and explicitly selected 60-, 75- and 90-minute offerings. They asked for more context before selecting athlete-facing session types versus coach-only templates. The remaining booking-flow choice is open:
+
+- Public types: coach offers Boxing technique · 75 min or Fitness · 90 min; athlete chooses that offering, then an available time, then requests coach confirmation.
+- Duration-first alternative: athlete chooses 60/75/90 minutes and a time; named templates remain internal to the coach.
+- Coach-assigned appointment: coach sets each offering's type and length while preparing availability; athlete chooses a published appointment without a separate service picker.
+
+Public type selection is the recommendation, not a confirmed user choice. Pending the answer, no schema or API contract assumes which of these flows will ship. Private/group applicability, buffer defaults and template-snapshot/history rules must be explicitly bounded in the final contract. No billing, credit system or automatic private booking follows from the Everfit reference.
+
+Read-only review found existing one-hour checks in effective availability, request projections and SQL acceptance. Supporting 75/90 minutes therefore requires coordinated inventory, request and reservation/conflict changes. The older generic duration field in availability code is not evidence of a completed variable-duration client flow. Existing cross-venue private/group reservations and whole-day overrides must continue to protect coach time.
+
+Concurrent work modifies coach profile/public routes, availability entry actions and navigation; it is an integration consideration, not a blocker to a separate type-catalog foundation. Preserve those edits. Plan a new flat coordination record with this existing contract ticket and peer owners for persistence/API, coach type management, variable-duration authority, availability assignment, public booking selection, calendar presentation and integrated proof. This ticket already has committed planning evidence and must be preserved rather than converted/retired. Do not reopen completed COR0023 or implement runtime under this contract ticket. Allocate runtime IDs only after rechecking the live index when their boundaries are settled.
+
+Retained demo data follows the current specification and AGENTS.md: no startup provisioning, marker-based resets, fixture edits, broad seed replay or credential rotation. Use disposable datasets or uniquely tagged temporary accounts for future runtime validation.
 
 COR0023's effective availability/editor/calendar/public/rehearsal peers remain separately owned. If adopted as M9 work, add this contract ticket and any new runtime peers to that COR's work map with reciprocal membership; update affected pending peer scope before implementation. Preserve DEV0251 as the completed historical baseline. Existing group capacity/lifecycle and original shared-title/note permissions remain independent. Read actual current IDs/statuses/migrations before allocating runtime records.
 
@@ -96,10 +120,10 @@ Scope review: this DEV owns one documentation amendment and its work-map reconci
 
 ## Acceptance criteria
 
-- [ ] AC1: Purpose, fields, assignment, coach/athlete visibility, private/group applicability and private-duration decision are confirmed or explicitly adopted defaults, with no unresolved material behavior.
-- [ ] AC2: The specification consistently defines types separately from individual shared titles, private/group lifecycle, actual venues and calendar/status cues, including archival/edit/history/retry/access behavior.
-- [ ] AC3: A flat work map assigns all runtime parts and existing-peer integrations once, with dependency/start conditions and meaningful migration/privacy/scheduling/recovery/visual validation.
-- [ ] AC4: Documentation links/anchors, IDs/index/statuses, ownership, formatting and whitespace pass; planning evidence never claims runtime delivery.
+- [x] AC1: Purpose, fields, assignment, coach/athlete visibility, private/group applicability and private-duration decision are confirmed or explicitly adopted defaults, with no unresolved material behavior.
+- [x] AC2: The specification consistently defines types separately from individual shared titles, private/group lifecycle, actual venues and calendar/status cues, including archival/edit/history/retry/access behavior.
+- [x] AC3: A flat work map assigns all runtime parts and existing-peer integrations once, with dependency/start conditions and meaningful migration/privacy/scheduling/recovery/visual validation.
+- [x] AC4: Documentation links/anchors, IDs/index/statuses, ownership, formatting and whitespace pass; planning evidence never claims runtime delivery.
 
 ## Validation plan
 
@@ -109,7 +133,7 @@ Run targeted installed Prettier, relative-link/anchor and namespace/metadata/ind
 
 ## Implementation record
 
-Specification adoption and runtime implementation have not started. This is a conversation checkpoint.
+Contract adopted on 18 October 2026. Section 18.6 records confirmed choices separately from adopted defaults and current delivery. COR0029 and DEV0340–DEV0346 define exclusive runtime ownership; no runtime changes are implemented by this documentation ticket.
 
 ### Changes and rationale
 
@@ -123,7 +147,7 @@ Following the user's explicit ticket/update request, expanded this existing reco
 | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | This ticket                                           | Owns the proposed specification amendment, questions and future delivery planning.                                      |
 | [Ticket index](../../README.md)                       | Reserves DEV0257 and exposes its Draft status.                                                                          |
-| [COR0023](../../archive/organisatory/COR0023-coach-calendar-and-availability.md) | Links the proposed amendment separately from direct delivery ownership, with a scope-review note before integrating it. |
+| [COR0023](COR0023-coach-calendar-and-availability.md) | Links the proposed amendment separately from direct delivery ownership, with a scope-review note before integrating it. |
 
 ### Decisions and deviations
 
@@ -136,6 +160,13 @@ Following the user's explicit ticket/update request, expanded this existing reco
 None changed. No new dependency, environment variable, schema, migration, public service catalog, duration model or deployment was introduced by this Draft.
 
 ## Validation results
+
+18 October 2026 decision checkpoint:
+
+- Read-only source review confirmed that public request projection still requires a one-hour interval and effective-availability SQL materializes one-hour occurrences. The generic legacy duration choices alone do not satisfy the new end-to-end requirement.
+- Inline Python checks passed: exactly one current DEV0257 record, In progress status and matching index entry, 13 existing repository-relative ticket links, one new specification subsection, explicit confirmed 60/75/90-minute target and pending athlete flow. Existing historical planning and the closed COR0023 record were preserved.
+- `node_modules/.bin/prettier --check tickets/current/organisatory/DEV0257-define-reusable-session-types.md` initially found style differences after the additions. Formatted only this ticket and reran the check successfully. Shared specification/index tables were not broadly reformatted. `git diff --check` passed after the final record update.
+- Application tests, database operations, browser tests, lint/type/build and runtime peer creation are not applicable to this documentary decision checkpoint. No feature delivery, migration, retained-data mutation, external review or deployment is claimed. AC1–AC3 remain incomplete while athlete selection and the delivery boundaries are being settled; AC4's checkpoint consistency checks pass and final ownership checks await that work map.
 
 Initial Draft documentation checks passed on 16 October 2026 in the local repository:
 
@@ -159,13 +190,37 @@ Requested ticket-update validation on 16 October 2026:
 
 Type colors can conflict with existing venue/status cues; use text/shape/legend and preserve actual venues. Applying type edits to existing sessions can change perceived promises, and variable durations affect the whole availability authority. Keep those choices explicit. No live Session Types screen behavior or populated-session interaction was verified.
 
-Handoff: the requested documentary update is complete: this existing Draft captures the explanation, working proposal and potential integrations, and COR0023 links it as a proposed amendment. No specification/runtime change or new runtime record exists. The user tentatively favors coach-managed templates and has not selected a duration model. Next action: settle visibility, duration and assignment, then adopt the contract and reconcile actual peer ownership before implementation.
+16 October handoff (historical): the requested documentary update captured the explanation, working proposal and potential integrations, and COR0023 linked it as a proposed amendment. No specification/runtime change or new runtime record existed then; duration and athlete visibility remained open.
+
+18 October handoff: duration options are confirmed; awaiting the athlete booking-flow answer after providing concrete examples. Record that answer, settle the bounded first slice and create a separate coordination/work map with runtime peer tickets. No runtime files, migrations, retained accounts or credentials have changed under this continuation. No external technical dependency currently prevents contract/foundation work; full booking integration depends on resolving the flow and replacing the one-hour scheduling assumptions safely.
 
 ## Completion and review references
 
 2026-10-16 commit preparation: the user authorized committing the planning checkpoint and starting the calendar. Include these interlinked plans and the required completed DEV0238 guard; exclude independent session-note adoption/runtime work. Shared specification/index staging uses scoped snapshots. Fresh `npm test` passed 155 application and 16 server tests; `npm run typecheck` passed. Staged links/scope/format/whitespace are checked separately before commit; no new database or deployment claim is made.
 
-- Completed: Not completed — Draft amendment.
+- Completed: 2026-10-18 — contract and flat runtime work map adopted; final contract review below owns the evidence. Earlier checkpoint/handoff notes remain historical context.
 - Commit: User-authorized checkpoint — `[DEV0238][DEV0251][DEV0257][DEV0258][DEV0259] Checkpoint schedule authority and plans`; runtime delivery status remains as recorded above.
 - Review: Official-reference/current-contract self-review; no independent/runtime review.
 - Deployment or release: None.
+
+### 18 October adoption record
+
+Changed this ticket, specification section 18.6/milestone M11, the ticket index, COR0029 and seven runtime peer records. The reason is the now-confirmed type-first booking and removable private/group defaults. Contracts change as the target described above; no environment variables, deployed migrations, dependencies or retained-account changes occur in this ticket. Link, identifier, ownership and formatting validation follows before archival.
+
+### Final contract review — 18 October 2026
+
+AC1–AC3: adopted section 18.6 covers fields, type-first selection, immutable format, 60/75/90-minute intervals, archive/edit/history/venue behavior, defaults, permissions, coach overrides and group/calendar integration. COR0029 maps each runtime deliverable once to DEV0340–DEV0346, with prerequisites and combined evidence owned by DEV0346. All eight DEV metadata fields link exclusively to COR0029. No runtime delivery or deployment is claimed by completion of DEV0257.
+
+AC4: targeted Prettier, link/anchor and ID/ownership validation are recorded with the final command results. Application/database/browser tests are not applicable to this contract-only ticket; those checks belong to the runtime peers.
+
+Validation: `python3 work/dev0257/validate.py` passed nine records, 46 relative links/anchors and 259 unique live/archive identifiers; targeted installed Prettier passed. All eight direct DEV metadata fields agree with COR0029. Whitespace is checked with the runtime handoff; no runtime evidence is claimed here.
+
+2026-10-18 documentary consistency correction under DEV0346: synchronized the completion reference with this record's Completed metadata and final contract review. Historical planning notes and runtime ownership are unchanged.
+
+### Authorized commit checkpoint — 18 October 2026
+
+The completed contract/runtime peers and DEV0348 profile compatibility repair share new domain types, public page/service imports and booking projections. They are committed together to keep the checkpoint buildable; each ticket retains its own scope/evidence. Active Auth and directory-card edits are excluded using an isolated Git index and exported candidate tree.
+
+Exact candidate validation under Node 24.21.0: `node --import tsx --test tests/*.test.ts` passed **301 unit tests**; `node --import tsx --conditions=react-server --test tests/server/*.test.ts` passed **51 server tests** (352 total, zero failures/skips). Scoped ESLint and Prettier passed. `NEXT_TELEMETRY_DISABLED=1 node node_modules/next/dist/bin/next build --webpack` passed compilation, TypeScript, page generation and optimized production output. This suite count describes the isolated checkpoint; earlier larger shared-workspace counts include separate pending tests and are retained as historical evidence. Database/browser and preserved-data results above remain the evidence for those acceptance criteria; no code changed after candidate validation. Candidate Markdown review resolved 559 file links, with only the two intentionally untracked private tester journals handled outside Git. Final namespace, archive/index, dependency and whitespace checks passed.
+
+Commit reference: `[DEV0257][DEV0340][DEV0341][DEV0342][DEV0343][DEV0344][DEV0345][DEV0346][DEV0348] Add session types and preserve public profiles` (this checkpoint). No hosted schema rollout, application deployment or independent review is implied.

@@ -58,6 +58,9 @@ export default async function Page({
     ...period,
     type: selection.type,
     venueId: selection.venueId,
+    ...(selection.sessionTypeId
+      ? { sessionTypeId: selection.sessionTypeId }
+      : {}),
     history: selection.history,
     after: null,
   };
@@ -66,6 +69,7 @@ export default async function Page({
     through: query.through,
     type: query.type,
     venueId: query.venueId,
+    ...(query.sessionTypeId ? { sessionTypeId: query.sessionTypeId } : {}),
     history: query.history,
     after: null,
   };

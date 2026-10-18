@@ -55,11 +55,20 @@ export function CoachEventDetail({
   context: CoachEventContext;
   after: boolean;
 }) {
+  const selectedType = session.sessionType
+    ? context.sessionTypes?.find((t) => t.id === session.sessionType?.id)
+    : null;
+  const typeCanPublish =
+    !session.sessionType ||
+    Boolean(selectedType && !selectedType.archived && selectedType.bookable);
   return (
     <>
       <header className="events-heading">
         <span className="eyebrow">YOUR GROUP SESSION</span>
         <h1>{session.title}</h1>
+        {session.sessionType && (
+          <p>{session.sessionType.name} · Session type</p>
+        )}
         <EventStatus session={session} />
         <p>
           {session.status === "draft"
@@ -98,7 +107,7 @@ export function CoachEventDetail({
                   Edit draft
                 </Link>
               )}
-              {context.canPublish ? (
+              {context.canPublish && typeCanPublish ? (
                 <CoachEventDecisionForm
                   id={session.id}
                   scope={context.scope}
@@ -109,8 +118,16 @@ export function CoachEventDetail({
                 />
               ) : (
                 <p>
-                  Publishing requires a visible approved/demo coach profile.
-                  Existing drafts remain private.
+                  {typeCanPublish ? (
+                    "Publishing requires a visible approved/demo coach profile. Existing drafts remain private."
+                  ) : (
+                    <>
+                      Enable or replace this session type before publishing.{" "}
+                      <Link href="/coach/session-types">
+                        Manage session types
+                      </Link>
+                    </>
+                  )}
                 </p>
               )}
               <CoachEventDecisionForm

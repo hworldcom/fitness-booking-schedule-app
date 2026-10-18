@@ -48,6 +48,19 @@ export default async function Page({
         className="events-filters"
         aria-label="Filter group sessions"
       >
+        {filters?.sessionTypeId && (
+          <>
+            <input
+              type="hidden"
+              name="sessionType"
+              value={filters.sessionTypeId}
+            />
+            <p>
+              Showing this coach’s session type.{" "}
+              <Link href="/events">Show all group sessions</Link>
+            </p>
+          </>
+        )}
         <label>
           Discipline
           <select name="discipline" defaultValue={filters?.discipline ?? ""}>

@@ -8,6 +8,7 @@ import type {
   CalendarQuery,
 } from "@/domain/coach-calendar";
 export type CoachCalendarData = Readonly<{
+  sessionTypes?: readonly import("@/domain/session-types").SessionType[];
   scope: string;
   actorIdentity: string;
   locations: readonly CoachTrainingLocation[];

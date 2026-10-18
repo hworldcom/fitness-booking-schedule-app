@@ -29,6 +29,10 @@ export function CoachScheduleNavigation({
       >
         <SlidersHorizontal size={16} /> Availability
       </Link>
+      <Link href="/coach/session-types">
+        <SlidersHorizontal size={16} /> Session types
+      </Link>
+      <Link href="/coach/bookings/new">Schedule a client</Link>
     </nav>
   );
 }

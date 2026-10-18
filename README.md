@@ -8,6 +8,8 @@ The delivered application includes private scheduling and the public/athlete gro
 
 The [calendar and effective-availability extension](docs/mvp-spec.md#18-coach-calendar-and-effective-availability) is complete under [COR0023](tickets/archive/organisatory/COR0023-coach-calendar-and-availability.md): mixed calendar, weekly/date editing, thirty-date public requests and the real combined hosted-dev rehearsal. Completion does not imply UAT/production deployment; response-time limitations are recorded in DEV0256.
 
+Reusable session types and duration-aware booking are specified in [section 18.6](docs/mvp-spec.md#186-session-types-and-flexible-bookings), with implementation and validation tracked in [COR0029](tickets/archive/organisatory/COR0029-session-types-and-flexible-bookings.md). Existing coaches can open **Schedule → Session types** and explicitly create their offerings or add the two defaults; startup never fills an existing coach's catalog. Hosted rollout is separate.
+
 Start with the [MVP specification](docs/mvp-spec.md), the single current product contract. The scheduling-product split is recorded by completed [COR0011](tickets/archive/organisatory/COR0011-scheduling-only-product.md); hosted deployment and rehearsal remain separate operational work.
 
 ## Repository guide
@@ -81,6 +83,16 @@ npm run start
 ```
 
 The preview uses [localhost:3100](http://localhost:3100). Development compiles routes on demand; a production build is appropriate for performance review. An independently started production server needs explicit database/Auth settings for signed-in behavior; the local launcher's settings exist only in its child process.
+
+### Session-type validation
+
+With local Supabase running and dependencies installed, run the isolated schema/booking rehearsal:
+
+```sh
+node scripts/rehearse-typed-sessions-database.mjs
+```
+
+It creates disposable fresh and upgrade databases, checks retained-row fingerprints and legacy compatibility, exercises type management/private bookings/group integration, and removes its own databases afterward. It does not reset or seed the retained application database. [DEV0346](tickets/archive/backend/DEV0346-rehearse-session-types-and-flexible-bookings.md) records the separate browser-copy setup and final evidence.
 
 ## Local registration and sign-in
 

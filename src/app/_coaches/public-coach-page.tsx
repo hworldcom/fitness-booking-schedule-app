@@ -1,3 +1,5 @@
+import { publicSessionCatalog } from "@/server/coaches/typed-session-service";
+import { TypeFirstBooking } from "@/features/session-types/public-booking";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -8,6 +10,7 @@ import { CoachMarketplace } from "@/features/coaches/coach-marketplace";
 import { currentClientCoachMarketplaceWorkspace } from "@/server/coaches/booking-request-service";
 import { publicCoachProfile } from "@/server/coaches/service";
 import { calendarDate } from "@/domain/coach-calendar";
+import { coachRedirectHref } from "@/domain/coach-public-url";
 import {
   publicScheduleSelection,
   publicScheduleSlots,
@@ -24,6 +27,14 @@ export async function PublicCoachPage({
   if (state.status !== "ready") {
     if (state.status === "not-found") notFound();
     return <CoachProfileUnavailable />;
+  }
+  let catalog;
+  let catalogUnavailable = false;
+  try {
+    catalog = await publicSessionCatalog(slug);
+    catalogUnavailable = catalog === null;
+  } catch {
+    catalogUnavailable = true;
   }
   const query = await searchParams;
   const selection = publicScheduleSelection(query.date, state.databaseTime);
@@ -70,17 +81,52 @@ export async function PublicCoachPage({
               </Link>
             </section>
           )}
-          <CoachMarketplace
-            key={`${slug}:${selection.date}:${actor.status === "authorized" ? actor.subject + actor.actorIdentity : actor.status}`}
-            coachProfileId={state.coach.profileId}
-            coachDisplayName={state.coach.displayName}
-            coachSlug={state.coach.slug}
-            publicPath={state.coach.publicPath}
-            slots={state.slots}
-            actor={actor}
-            referenceTime={state.databaseTime}
-            selectedDate={query.date}
-          />
+          {catalogUnavailable ? (
+            <section
+              id="private-schedule"
+              className="coach-open-slots public-schedule"
+              aria-labelledby="booking-unavailable"
+            >
+              <h2 id="booking-unavailable">Session booking is unavailable</h2>
+              <p role="status">
+                We couldn’t load available sessions. You can still browse this
+                coach’s profile and try again.
+              </p>
+              <Link
+                className="button secondary"
+                href={coachRedirectHref(
+                  state.coach.publicPath ?? `/coaches/${slug}`,
+                  { date: selection.date },
+                )}
+                prefetch={false}
+              >
+                Retry available sessions
+              </Link>
+            </section>
+          ) : catalog?.enabled ? (
+            <TypeFirstBooking
+              catalog={catalog}
+              slug={slug}
+              ownProfile={
+                actor.status === "authorized" &&
+                actor.actorProfileId === state.coach.profileId
+              }
+              referenceTime={state.databaseTime}
+              returnTo={state.coach.publicPath ?? `/coaches/${slug}`}
+            />
+          ) : (
+            <CoachMarketplace
+              key={`${slug}:${selection.date}:${actor.status === "authorized" ? actor.subject + actor.actorIdentity : actor.status}`}
+              coachProfileId={state.coach.profileId}
+              coachDisplayName={state.coach.displayName}
+              coachSlug={state.coach.slug}
+              publicPath={state.coach.publicPath}
+              slots={state.slots}
+              actor={actor}
+              referenceTime={state.databaseTime}
+              selectedDate={query.date}
+            />
+          )}
         </>
       }
     />

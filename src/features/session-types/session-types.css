@@ -1,0 +1,145 @@
+.session-types-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: clamp(20px, 4vw, 44px);
+}
+.session-types-page h1 {
+  margin: 16px 0 8px;
+}
+.session-types-page header p,
+.session-type-card p {
+  color: var(--muted, #58616d);
+}
+.session-type-toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.session-types-page > .session-type-toolbar {
+  margin: 24px 0 12px;
+}
+.session-type-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 24px;
+}
+.session-type-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: white;
+  border: 1px solid #dde1e5;
+  border-radius: 18px;
+  padding: 22px;
+}
+.session-type-card > div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.session-type-card h2 {
+  font-size: 19px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.session-type-card p {
+  margin: 7px 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.session-type-color {
+  width: 9px;
+  align-self: stretch;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+.session-type-editor {
+  border: 1px solid #d5dbe2;
+  border-radius: 18px;
+  background: white;
+  padding: 24px;
+  margin: 20px 0;
+}
+.session-type-editor label {
+  display: grid;
+  gap: 7px;
+  font-weight: 600;
+  margin: 14px 0;
+}
+.session-type-editor input:not([type="checkbox"]):not([type="radio"]),
+.session-type-editor select,
+.session-type-editor textarea {
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #aab3c0;
+  border-radius: 9px;
+  padding: 10px;
+  font: inherit;
+  background: white;
+}
+.session-type-fields {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr;
+  gap: 18px;
+}
+.session-type-editor .session-type-check {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  gap: 10px;
+}
+.session-type-check input {
+  width: 20px;
+  height: 20px;
+}
+.session-types-page button {
+  min-height: 44px;
+}
+.session-types-page :focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .session-type-card {
+    flex-wrap: wrap;
+    padding: 16px;
+  }
+  .session-type-card > .session-type-toolbar {
+    width: 100%;
+    padding-left: 25px;
+  }
+  .session-type-fields {
+    grid-template-columns: 1fr;
+  }
+  .session-type-editor {
+    padding: 16px;
+  }
+  .session-type-toolbar .button {
+    flex-grow: 1;
+    text-align: center;
+  }
+}
+
+.session-type-editor .session-type-time {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid #d5dbe2;
+  border-radius: 10px;
+  padding: 10px;
+  margin: 0;
+  font-weight: 500;
+  min-height: 44px;
+  background: #fafbfc;
+}
+.session-type-time input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin: 0;
+  flex: none;
+}
+.typed-public-booking {
+  margin-top: 24px;
+}

@@ -13,6 +13,8 @@ export type BookingLocationSnapshot = Readonly<{
 
 export type PrivateBookingProjection = SessionTitleDetails &
   Readonly<{
+    hasSessionDetails?: true;
+    sessionType?: import("./session-types").SessionType | null;
     id: string;
     slotId: string;
     coachProfileId: string;

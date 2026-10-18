@@ -1,4 +1,5 @@
 import "server-only";
+import { ownedSessionTypes } from "@/server/db/coaches/session-type-repository";
 import {
   parseGroupSessionCommand,
   type GroupCursor,
@@ -39,6 +40,7 @@ async function withOwner<T>(
         const context: CoachEventContext = {
           scope,
           identity: [owner.profileSlug, owner.runSlug, owner.role].join(":"),
+          sessionTypes: await ownedSessionTypes(tx, actor, true),
           canDraft: ["approved", "demo"].includes(owner.coachAccess.status),
           canPublish:
             coach.visibility === "visible" &&

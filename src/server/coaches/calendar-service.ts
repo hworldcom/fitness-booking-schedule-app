@@ -1,4 +1,5 @@
 import "server-only";
+import { ownedSessionTypes } from "@/server/db/coaches/session-type-repository";
 import { parseCalendarQuery } from "@/domain/coach-calendar";
 import type { CoachCalendarResult } from "@/features/coaches/coach-calendar-model";
 import { withAuthorizedActor } from "@/server/authorization/service";
@@ -34,6 +35,7 @@ export async function loadCoachCalendar(
       scope,
       actorIdentity: [owner.profileSlug, owner.runSlug, owner.role].join(":"),
       locations: coach.locations,
+      sessionTypes: await ownedSessionTypes(tx, actor, true),
       mayEditAvailability:
         coach.visibility === "visible" &&
         ["approved", "demo"].includes(owner.coachAccess.status),

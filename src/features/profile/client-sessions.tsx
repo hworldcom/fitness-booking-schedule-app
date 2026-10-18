@@ -113,6 +113,15 @@ export function ClientSessions({
             </span>
           </header>
           <div className="client-session-facts">
+            {booking.sessionType && (
+              <p>
+                {booking.sessionType.name} ·{" "}
+                {(Date.parse(booking.scheduledEndAt) -
+                  Date.parse(booking.scheduledStartAt)) /
+                  60000}{" "}
+                min
+              </p>
+            )}
             <SessionTitleEditor bookingId={booking.id} value={booking} />
             <p>
               <Clock3 size={16} aria-hidden="true" />
@@ -126,6 +135,11 @@ export function ClientSessions({
               </span>
             </p>
           </div>
+          {booking.hasSessionDetails && (
+            <Link href={`/sessions/${booking.id}`}>
+              Session details and schedule history
+            </Link>
+          )}
           {renderConnection?.(booking)}
           {reviewEntryCandidate(booking, referenceTime) && (
             <AthleteReviewEntry booking={booking} />

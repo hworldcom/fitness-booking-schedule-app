@@ -55,7 +55,7 @@ function dateTimeParts(timestamp: string, timeZone: string) {
 }
 
 function sessionTime(group: CoachBookingRequestOccurrenceGroup) {
-  return dateTimeParts(group.scheduledStartAt, group.coachTimezone);
+  return `${dateTimeParts(group.scheduledStartAt, group.coachTimezone)} · ${(Date.parse(group.scheduledEndAt) - Date.parse(group.scheduledStartAt)) / 60000} min`;
 }
 
 function requestDeadline(request: OwnedCoachBookingRequestProjection) {
@@ -77,6 +77,7 @@ function RequestIdentity({
       />
       <div>
         <strong>{request.clientDisplayName}</strong>
+        {request.sessionType && <span>{request.sessionType.name}</span>}
         <span>
           Requested {dateTimeParts(request.createdAt, BERLIN_TIMEZONE)}
         </span>

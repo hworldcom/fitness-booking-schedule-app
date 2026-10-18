@@ -1,4 +1,9 @@
 import "server-only";
+import {
+  sessionTypeProjection,
+  sessionDetailsCapability,
+} from "./session-type-capability";
+import { parseSessionTypes } from "@/domain/session-types";
 import { profileImageStorage } from "@/server/storage/profile-images";
 
 import { sql } from "drizzle-orm";
@@ -25,6 +30,8 @@ import type { ActorDatabaseTransaction } from "@/server/db/authorization/reposit
 
 type BookingRow = Readonly<{
   session_details: unknown;
+  session_type_snapshot?: unknown;
+  typed_details_available?: boolean;
   connection_context: unknown;
   viewer_is_coach: boolean;
   id: string;
@@ -163,6 +170,18 @@ function mapBooking(row: BookingRow): PrivateBookingProjection {
   }
   return Object.freeze({
     ...parseSessionTitleDetails(row.session_details),
+    ...(row.typed_details_available
+      ? { hasSessionDetails: true as const }
+      : {}),
+    ...(row.session_type_snapshot !== undefined &&
+    row.session_type_snapshot !== null
+      ? {
+          sessionType:
+            row.session_type_snapshot === null
+              ? null
+              : parseSessionTypes([row.session_type_snapshot])[0],
+        }
+      : {}),
     id: row.id,
     slotId: row.slot_id,
     coachProfileId: row.coach_profile_id,
@@ -239,6 +258,8 @@ async function bookingRecords(
   const rows = await transaction.execute<BookingRow>(sql`
     select
       app.current_session_title_details(booking.id) as session_details,
+      ${await sessionTypeProjection(transaction, "booking", sql`booking.id`)} as session_type_snapshot,
+      ${await sessionDetailsCapability(transaction)}::boolean as typed_details_available,
       connection_context.projection as connection_context,
       booking.coach_profile_id::text = current_setting('app.current_profile_id', true) as viewer_is_coach,
       booking.id,

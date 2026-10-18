@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
   saveCoachEventDraftAction,
@@ -12,6 +12,8 @@ import {
   type CoachEventContext,
   type DraftFormState,
   type DraftValues,
+  berlinLocalInstant,
+  berlinLocalInput,
 } from "./contract";
 
 function Submit({ children }: { children: string }) {
@@ -28,13 +30,19 @@ export function CoachEventDraftForm({
   context,
   initial,
   permalink,
+  sessionType,
 }: {
   id: string;
+  sessionType?: import("@/domain/session-types").SessionType | null;
   revision: number | null;
   context: CoachEventContext;
   initial: DraftValues;
   permalink: string;
 }) {
+  const [selectedType, setSelectedType] = useState(sessionType?.id ?? "");
+  const type =
+    context.sessionTypes?.find((t) => t.id === selectedType) ??
+    (sessionType?.id === selectedType ? sessionType : null);
   const [state, action] = useActionState<DraftFormState, FormData>(
     saveCoachEventDraftAction,
     { issue: null },
@@ -57,6 +65,77 @@ export function CoachEventDraftForm({
   return (
     <form action={action} className="coach-event-form">
       <input type="hidden" name="intent" value="save-draft" />
+      <label>
+        Session type
+        <select
+          name="sessionTypeId"
+          value={selectedType}
+          onChange={(e) => setSelectedType(e.target.value)}
+        >
+          <option value="">Custom group · no type</option>
+          {context.sessionTypes
+            ?.filter((t) => t.format === "group" && !t.archived)
+            .map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name} · {t.durationMinutes} min
+                {!t.bookable ? " · Coach draft only" : ""}
+              </option>
+            ))}
+          {sessionType?.archived && (
+            <option value={sessionType.id}>{sessionType.name} · Removed</option>
+          )}
+        </select>
+      </label>
+      <input
+        type="hidden"
+        name="sessionTypeRevision"
+        value={type?.revision ?? ""}
+      />
+      {type && (
+        <button
+          type="button"
+          className="button secondary"
+          onClick={(e) => {
+            const form = e.currentTarget.form;
+            if (!form) return;
+            const set = (name: string, value: string) => {
+              const field = form.elements.namedItem(name);
+              if (
+                field instanceof HTMLInputElement ||
+                field instanceof HTMLTextAreaElement ||
+                field instanceof HTMLSelectElement
+              )
+                field.value = value;
+            };
+            set("title", type.name);
+            set("description", type.description);
+            if (type.defaultLocationId)
+              set("locationId", type.defaultLocationId);
+            const start = form.elements.namedItem("startsAt");
+            if (start instanceof HTMLInputElement) {
+              const instant = berlinLocalInstant(start.value);
+              if (instant)
+                set(
+                  "endsAt",
+                  berlinLocalInput(
+                    new Date(
+                      Date.parse(instant) + type.durationMinutes * 60000,
+                    ).toISOString(),
+                  ),
+                );
+            }
+          }}
+        >
+          Use type defaults · review before saving
+        </button>
+      )}
+      {type && (
+        <p>
+          Prefills title, description and default venue. Choose a start first to
+          prefill the {type.durationMinutes}-minute end. Capacity, deadline and
+          publication still require your review.
+        </p>
+      )}
       <input type="hidden" name="sessionId" value={id} />
       <input type="hidden" name="revision" value={revision ?? ""} />
       <input type="hidden" name="actorScope" value={context.scope} />

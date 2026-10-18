@@ -53,6 +53,7 @@ export default async function Page({
         <CoachEventDraftForm
           id={id}
           revision={session.revision}
+          sessionType={session.sessionType}
           context={state.context}
           initial={draftValues(session)}
           permalink={permalink}

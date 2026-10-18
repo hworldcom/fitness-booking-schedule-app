@@ -24,6 +24,7 @@ export type CalendarQuery = Readonly<{
   through: string;
   type: CalendarType;
   venueId: string | null;
+  sessionTypeId?: string | null;
   history: boolean;
   after: CalendarCursor | null;
 }>;
@@ -32,6 +33,7 @@ export type CalendarSelection = Readonly<{
   view: CalendarView;
   type: CalendarType;
   venueId: string | null;
+  sessionTypeId?: string | null;
   history: boolean;
 }>;
 export type CalendarItem = Readonly<{
@@ -46,6 +48,9 @@ export type CalendarItem = Readonly<{
   venueLabel: string;
   venueActive: boolean;
   pendingCount: number;
+  sessionTypeId?: string | null;
+  sessionTypeName?: string | null;
+  sessionTypeColor?: string | null;
 }>;
 export type CalendarDay = Readonly<{
   date: string;
@@ -131,7 +136,7 @@ export function calendarPeriod(
 export function calendarQueryKey(
   query: Pick<
     CalendarQuery,
-    "from" | "through" | "type" | "venueId" | "history"
+    "from" | "through" | "type" | "venueId" | "history" | "sessionTypeId"
   >,
 ) {
   return [
@@ -140,6 +145,7 @@ export function calendarQueryKey(
     query.type,
     query.venueId ?? "all",
     query.history ? "1" : "0",
+    ...(query.sessionTypeId ? [query.sessionTypeId] : []),
   ].join("|");
 }
 export function parseCalendarQuery(value: unknown): CalendarQuery | null {
@@ -147,7 +153,15 @@ export function parseCalendarQuery(value: unknown): CalendarQuery | null {
     !record(value) ||
     Object.keys(value).some(
       (k) =>
-        !["from", "through", "type", "venueId", "history", "after"].includes(k),
+        ![
+          "from",
+          "through",
+          "type",
+          "venueId",
+          "history",
+          "after",
+          "sessionTypeId",
+        ].includes(k),
     ) ||
     typeof value.from !== "string" ||
     typeof value.through !== "string" ||
@@ -158,6 +172,10 @@ export function parseCalendarQuery(value: unknown): CalendarQuery | null {
     !["all", "private", "group"].includes(String(value.type)) ||
     (value.venueId !== null &&
       (typeof value.venueId !== "string" || !isCanonicalUuid(value.venueId))) ||
+    (value.sessionTypeId !== undefined &&
+      value.sessionTypeId !== null &&
+      (typeof value.sessionTypeId !== "string" ||
+        !isCanonicalUuid(value.sessionTypeId))) ||
     typeof value.history !== "boolean"
   )
     return null;
@@ -200,6 +218,10 @@ export function calendarSelection(
         ? params.venue
         : null,
     history: params.history === "1",
+    ...(typeof params.sessionType === "string" &&
+    isCanonicalUuid(params.sessionType)
+      ? { sessionTypeId: params.sessionType }
+      : {}),
   };
 }
 export function calendarHref(selection: CalendarSelection) {
@@ -210,6 +232,8 @@ export function calendarHref(selection: CalendarSelection) {
     calendarView: selection.view,
     type: selection.type,
   });
+  if (selection.sessionTypeId)
+    params.set("sessionType", selection.sessionTypeId);
   if (selection.venueId) params.set("venue", selection.venueId);
   if (selection.history) params.set("history", "1");
   return `/coach?${params}`;
@@ -255,6 +279,18 @@ export function mergeCalendarItems(
 }
 function parseItem(value: unknown): CalendarItem {
   if (
+    record(value) &&
+    value.sessionTypeId !== undefined &&
+    ((value.sessionTypeId !== null &&
+      (typeof value.sessionTypeId !== "string" ||
+        !isCanonicalUuid(value.sessionTypeId))) ||
+      (value.sessionTypeName !== null && !text(value.sessionTypeName, 80)) ||
+      (value.sessionTypeColor !== null &&
+        (typeof value.sessionTypeColor !== "string" ||
+          !/^#[0-9a-f]{6}$/.test(value.sessionTypeColor))))
+  )
+    throw new Error("Calendar type unavailable.");
+  if (
     !record(value) ||
     !["availability", "booking", "group"].includes(String(value.source)) ||
     typeof value.id !== "string" ||
@@ -296,6 +332,13 @@ function parseItem(value: unknown): CalendarItem {
     venueLabel: value.venueLabel,
     venueActive: value.venueActive,
     pendingCount: value.pendingCount,
+    ...(value.sessionTypeId !== undefined
+      ? {
+          sessionTypeId: value.sessionTypeId as string | null,
+          sessionTypeName: value.sessionTypeName as string | null,
+          sessionTypeColor: value.sessionTypeColor as string | null,
+        }
+      : {}),
   };
 }
 export function parseCalendarPage(

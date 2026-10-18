@@ -1,4 +1,6 @@
 import "server-only";
+import { sessionTypeProjection } from "./session-type-capability";
+import { parseSessionTypes } from "@/domain/session-types";
 import { profileImageStorage } from "@/server/storage/profile-images";
 
 import { sql } from "drizzle-orm";
@@ -24,6 +26,7 @@ const MAX_PAGE_SIZE = 50;
 const MAX_SLOT_SELECTION_SIZE = 200;
 
 type BookingRequestRow = Readonly<{
+  session_type_snapshot?: unknown;
   id: string;
   slot_id: string;
   coach_profile_id: string;
@@ -138,9 +141,11 @@ function commonRequestProjection(row: BookingRequestRow) {
     !decisionDeadlineAt ||
     !createdAt ||
     !updatedAt ||
-    new Date(scheduledEndAt).getTime() -
-      new Date(scheduledStartAt).getTime() !==
-      60 * 60 * 1000 ||
+    ![60, 75, 90].includes(
+      (new Date(scheduledEndAt).getTime() -
+        new Date(scheduledStartAt).getTime()) /
+        60000,
+    ) ||
     new Date(decisionDeadlineAt).getTime() >
       new Date(scheduledStartAt).getTime() ||
     (row.status === "pending") !== (decidedAt === null) ||
@@ -153,6 +158,15 @@ function commonRequestProjection(row: BookingRequestRow) {
     id: row.id,
     slotId: row.slot_id,
     status: row.status,
+    ...(row.session_type_snapshot !== undefined &&
+    row.session_type_snapshot !== null
+      ? {
+          sessionType:
+            row.session_type_snapshot === null
+              ? null
+              : parseSessionTypes([row.session_type_snapshot])[0],
+        }
+      : {}),
     scheduledStartAt,
     scheduledEndAt,
     coachTimezone: row.coach_timezone,
@@ -414,6 +428,7 @@ export async function currentClientCoachBookingRequestRecords(
   return requestOperation(async () => {
     const rows = await transaction.execute<BookingRequestRow>(sql`
       select
+        ${await sessionTypeProjection(transaction, "request", sql`request.id`)} as session_type_snapshot,
         request.id,
         request.slot_id,
         request.coach_profile_id,
@@ -461,6 +476,7 @@ export async function currentClientCoachBookingRequestRecord(
   return requestOperation(async () => {
     const rows = await transaction.execute<BookingRequestRow>(sql`
       select
+        ${await sessionTypeProjection(transaction, "request", sql`request.id`)} as session_type_snapshot,
         request.id,
         request.slot_id,
         request.coach_profile_id,
@@ -504,6 +520,7 @@ export async function currentClientPendingCoachBookingRequestRecords(
   return requestOperation(async () => {
     const rows = await transaction.execute<BookingRequestRow>(sql`
       select
+        ${await sessionTypeProjection(transaction, "request", sql`request.id`)} as session_type_snapshot,
         request.id,
         request.slot_id,
         request.coach_profile_id,
@@ -554,6 +571,7 @@ export async function currentOwnedCoachBookingRequestRecords(
   return requestOperation(async () => {
     const rows = await transaction.execute<BookingRequestRow>(sql`
       select
+        ${await sessionTypeProjection(transaction, "request", sql`id`)} as session_type_snapshot,
         id,
         slot_id,
         coach_profile_id,

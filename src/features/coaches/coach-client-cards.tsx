@@ -9,6 +9,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import {
   cancelPrivateBookingAction,
@@ -135,6 +136,15 @@ export function CoachClientCards({
                     </span>
                   </AthleteIdentity>
                 </header>
+                {booking.sessionType && (
+                  <p>
+                    {booking.sessionType.name} ·{" "}
+                    {(Date.parse(booking.scheduledEndAt) -
+                      Date.parse(booking.scheduledStartAt)) /
+                      60000}{" "}
+                    min
+                  </p>
+                )}
                 <SessionTitleEditor bookingId={booking.id} value={booking} />
                 <div className="coach-client-card-main">
                   <span>
@@ -149,6 +159,14 @@ export function CoachClientCards({
                   </em>
                 </div>
                 <div className="coach-client-card-actions">
+                  {booking.hasSessionDetails && (
+                    <Link
+                      className="button secondary"
+                      href={`/sessions/${booking.id}`}
+                    >
+                      Session details
+                    </Link>
+                  )}
                   {cancellable && (
                     <button
                       type="button"

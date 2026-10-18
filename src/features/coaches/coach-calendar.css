@@ -1,5 +1,6 @@
 .coach-schedule-navigation {
   display: flex;
+  flex-wrap: wrap;
   gap: 23px;
   margin: 24px 0 0;
   border-bottom: 1px solid #dce3d5;

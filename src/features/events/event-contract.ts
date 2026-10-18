@@ -11,13 +11,21 @@ import type { CoachDiscipline } from "@/domain/coaches";
 export type EventSearch = Record<string, string | string[] | undefined>;
 export type EventFilters = Readonly<{
   discipline: CoachDiscipline | null;
+  sessionTypeId?: string | null;
   location: string;
   after: GroupCursor | null;
 }>;
 export function parseEventFilters(search: EventSearch): EventFilters | null {
   if (
     Object.keys(search).some(
-      (key) => !["discipline", "location", "afterAt", "afterId"].includes(key),
+      (key) =>
+        ![
+          "discipline",
+          "location",
+          "afterAt",
+          "afterId",
+          "sessionType",
+        ].includes(key),
     ) ||
     Object.values(search).some((value) => Array.isArray(value))
   )
@@ -27,6 +35,7 @@ export function parseEventFilters(search: EventSearch): EventFilters | null {
   const query = parsePublicGroupQuery({
     action: "list",
     args: {
+      ...(search.sessionType ? { sessionTypeId: search.sessionType } : {}),
       discipline: search.discipline || null,
       location: search.location ?? "",
       after: hasCursor ? { at: search.afterAt, id: search.afterId } : null,
@@ -34,6 +43,9 @@ export function parseEventFilters(search: EventSearch): EventFilters | null {
   });
   return query?.action === "list"
     ? {
+        ...(query.args.sessionTypeId
+          ? { sessionTypeId: query.args.sessionTypeId }
+          : {}),
         discipline: query.args.discipline ?? null,
         location: query.args.location ?? "",
         after: query.args.after ?? null,
@@ -48,6 +60,7 @@ export function eventPageHref(
   after: GroupCursor | null,
 ) {
   const params = new URLSearchParams();
+  if (filters.sessionTypeId) params.set("sessionType", filters.sessionTypeId);
   if (filters.discipline) params.set("discipline", filters.discipline);
   if (filters.location) params.set("location", filters.location);
   if (after) {

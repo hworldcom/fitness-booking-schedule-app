@@ -1,0 +1,30 @@
+import {
+  publicSessionCatalog,
+  publicSessionTimes,
+} from "@/server/coaches/typed-session-service";
+export const dynamic = "force-dynamic";
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ slug: string }> },
+) {
+  const { slug } = await params;
+  const q = new URL(request.url).searchParams;
+  let result: unknown;
+  try {
+    result = q.has("typeId")
+      ? await publicSessionTimes(
+          slug,
+          q.get("typeId") ?? "",
+          q.get("locationId") ?? "",
+          q.get("date") ?? "",
+        )
+      : { status: "ready", catalog: await publicSessionCatalog(slug) };
+  } catch {
+    result = { status: "unavailable" };
+  }
+  const status = (result as { status: string }).status;
+  return Response.json(result, {
+    status: status === "ready" ? 200 : status === "invalid" ? 400 : 503,
+    headers: { "cache-control": "no-store" },
+  });
+}

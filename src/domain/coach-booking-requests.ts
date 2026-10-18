@@ -20,6 +20,7 @@ export type CoachBookingRequestPageCursor = Readonly<{
 }>;
 
 type BookingRequestProjection = Readonly<{
+  sessionType?: import("./session-types").SessionType | null;
   id: string;
   slotId: string;
   status: CoachBookingRequestStatus;

@@ -1,3 +1,4 @@
+import { parseSessionTypes, type SessionType } from "./session-types";
 import { COACH_DISCIPLINES, type CoachDiscipline } from "./coaches";
 
 export const GROUP_SESSION_STATUSES = [
@@ -26,6 +27,7 @@ export type GroupVenue = Readonly<{
   longitude: number;
 }>;
 export type GroupSession = Readonly<{
+  sessionType?: SessionType | null;
   id: string;
   slug: string;
   title: string;
@@ -83,6 +85,8 @@ export type GroupPage<T> = Readonly<{
   nextCursor: GroupCursor | null;
 }>;
 export type GroupDraftInput = Readonly<{
+  sessionTypeId?: string | null;
+  sessionTypeRevision?: number | null;
   id: string;
   expectedRevision: number | null;
   title: string;
@@ -121,6 +125,7 @@ export type PublicGroupQuery =
       action: "list";
       args: {
         discipline?: CoachDiscipline | null;
+        sessionTypeId?: string | null;
         location?: string;
         after?: GroupCursor | null;
       };
@@ -297,8 +302,21 @@ export function parseGroupSessionCommand(
   try {
     const command = object(value, ["action", "args"]);
     if (command.action === "save-draft") {
-      const r = object(command.args, draftKeys);
+      const r = object(command.args, draftKeys, [
+        "sessionTypeId",
+        "sessionTypeRevision",
+      ]);
       const args: GroupDraftInput = {
+        ...(r.sessionTypeId !== undefined
+          ? {
+              sessionTypeId:
+                r.sessionTypeId === null ? null : uuid(r.sessionTypeId),
+              sessionTypeRevision:
+                r.sessionTypeId === null
+                  ? null
+                  : integer(r.sessionTypeRevision),
+            }
+          : {}),
         id: uuid(r.id),
         expectedRevision:
           r.expectedRevision === null ? null : integer(r.expectedRevision, 1),
@@ -376,10 +394,15 @@ export function parsePublicGroupQuery(value: unknown): PublicGroupQuery | null {
         : null;
     }
     if (c.action !== "list") return null;
-    const r = object(c.args, [], ["discipline", "location", "after"]);
+    const r = object(
+      c.args,
+      [],
+      ["discipline", "location", "after", "sessionTypeId"],
+    );
     return {
       action: "list",
       args: {
+        ...(r.sessionTypeId ? { sessionTypeId: uuid(r.sessionTypeId) } : {}),
         discipline:
           r.discipline == null
             ? null
@@ -395,36 +418,40 @@ export function parsePublicGroupQuery(value: unknown): PublicGroupQuery | null {
 }
 
 export function parseGroupSession(value: unknown): GroupSession {
-  const r = object(value, [
-    "id",
-    "slug",
-    "title",
-    "description",
-    "discipline",
-    "intendedLevel",
-    "venue",
-    "startsAt",
-    "endsAt",
-    "decisionDeadlineAt",
-    "minimumParticipants",
-    "maximumParticipants",
-    "priceCents",
-    "currency",
-    "status",
-    "displayStatus",
-    "revision",
-    "createdAt",
-    "updatedAt",
-    "publishedAt",
-    "confirmedAt",
-    "closedAt",
-    "coach",
-    "participantCount",
-    "canJoin",
-    "canConfirm",
-    "canCancel",
-    "canEdit",
-  ]);
+  const r = object(
+    value,
+    [
+      "id",
+      "slug",
+      "title",
+      "description",
+      "discipline",
+      "intendedLevel",
+      "venue",
+      "startsAt",
+      "endsAt",
+      "decisionDeadlineAt",
+      "minimumParticipants",
+      "maximumParticipants",
+      "priceCents",
+      "currency",
+      "status",
+      "displayStatus",
+      "revision",
+      "createdAt",
+      "updatedAt",
+      "publishedAt",
+      "confirmedAt",
+      "closedAt",
+      "coach",
+      "participantCount",
+      "canJoin",
+      "canConfirm",
+      "canCancel",
+      "canEdit",
+    ],
+    ["sessionType"],
+  );
   const v = object(r.venue, [
     "id",
     "name",
@@ -484,6 +511,14 @@ export function parseGroupSession(value: unknown): GroupSession {
           ? null
           : enumeration(c.trustKind, ["verified", "demo"] as const),
     }),
+    ...(r.sessionType !== undefined
+      ? {
+          sessionType:
+            r.sessionType === null
+              ? null
+              : parseSessionTypes([r.sessionType])[0],
+        }
+      : {}),
     participantCount: integer(r.participantCount, 0, 100),
     canJoin: bool(r.canJoin),
     canConfirm: bool(r.canConfirm),

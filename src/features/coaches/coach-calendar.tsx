@@ -77,12 +77,20 @@ function CalendarItemButton({
       type="button"
       className={`coach-calendar-item ${item.source} ${item.status}${compact ? " compact" : ""}`}
       aria-label={itemLabel(item, now)}
+      style={
+        item.sessionTypeColor
+          ? { borderLeft: `4px solid ${item.sessionTypeColor}` }
+          : undefined
+      }
       onClick={() => onSelect(item)}
     >
       <span className="coach-calendar-item-time">
         {calendarItemRange(item, compact ? date : undefined)}
       </span>
       <strong>{item.title}</strong>
+      {item.sessionTypeName && item.sessionTypeName !== item.title && (
+        <span>{item.sessionTypeName}</span>
+      )}
       <span className="coach-calendar-item-status">
         {kindLabel(item)} · {calendarStatusLabel(item, now)}
       </span>
@@ -408,6 +416,22 @@ export function CoachCalendar({
                 <option key={l.id} value={l.id}>
                   {l.publicName}
                   {l.status === "inactive" ? " (Inactive)" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="coach-calendar-venue-filter">
+            <span>Session type</span>
+            <select
+              name="sessionType"
+              aria-label="Session type"
+              defaultValue={selection.sessionTypeId ?? ""}
+            >
+              <option value="">All session types</option>
+              {data.sessionTypes?.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                  {t.archived ? " (Removed)" : ""}
                 </option>
               ))}
             </select>

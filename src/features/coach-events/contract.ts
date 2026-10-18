@@ -1,3 +1,4 @@
+import type { SessionType } from "@/domain/session-types";
 import type { CoachDiscipline } from "@/domain/coaches";
 import {
   parseGroupSessionCommand,
@@ -11,6 +12,7 @@ export type CoachEventContext = Readonly<{
   scope: string;
   identity: string;
   canDraft: boolean;
+  sessionTypes?: readonly SessionType[];
   canPublish: boolean;
   disciplines: readonly CoachDiscipline[];
   locations: readonly { id: string; name: string; label: string }[];
@@ -140,7 +142,12 @@ export function parseOwnerForm(
     )
   )
     return null;
+  const typeKeys =
+    intent === "save-draft" && form.has("sessionTypeId")
+      ? ["sessionTypeId", "sessionTypeRevision"]
+      : [];
   const keys = [
+    ...typeKeys,
     "intent",
     "sessionId",
     "actorScope",
@@ -187,6 +194,15 @@ export function parseOwnerForm(
       return null;
     args = {
       id,
+      ...(typeKeys.length
+        ? {
+            sessionTypeId: form.get("sessionTypeId") || null,
+            sessionTypeRevision:
+              form.get("sessionTypeRevision") === ""
+                ? null
+                : Number(form.get("sessionTypeRevision")),
+          }
+        : {}),
       expectedRevision: revision === "" ? null : Number(revision),
       title: values.title,
       description: values.description,

@@ -183,6 +183,15 @@ export function ClientBookingRequests({
             </span>
           </header>
           <div className="client-session-facts">
+            {request.sessionType && (
+              <p>
+                {request.sessionType.name} ·{" "}
+                {(Date.parse(request.scheduledEndAt) -
+                  Date.parse(request.scheduledStartAt)) /
+                  60000}{" "}
+                min
+              </p>
+            )}
             <p>
               <Clock3 size={16} aria-hidden="true" />
               <strong>{requestTime(request)}</strong>
