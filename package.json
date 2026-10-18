@@ -50,6 +50,8 @@
     "auth:provision:coaches": "tsx scripts/provision-local-coach-accounts.ts",
     "demo:setup:local": "node --import tsx scripts/provision-demo-coaches.ts --environment local",
     "demo:setup:dev": "node --env-file=.env.development.local --import tsx scripts/provision-demo-coaches.ts --environment dev",
+    "demo:urls:local": "node --import tsx scripts/provision-demo-coaches.ts --environment local --publish-urls",
+    "demo:urls:dev": "node --env-file=.env.development.local --import tsx scripts/provision-demo-coaches.ts --environment dev --publish-urls",
     "coach:review": "node --env-file-if-exists=.env.staging.local scripts/review-coach-application.mjs",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset --local",

@@ -18,11 +18,14 @@ import {
   DEMO_FIXTURE_VERSION,
   assertDemoCoachStates,
   demoCoachDefaultsSql,
+  demoCoachPublicUrlStatements,
   sqlLiteral,
   type DemoCoachState,
 } from "./demo-coach-fixtures";
 import {
   generateDemoPassword,
+  attachDemoCoachUrls,
+  demoCoachPublicUrl,
   privateDemoCredentialStore,
   type DemoEnvironment,
 } from "./demo-coach-credentials";
@@ -66,6 +69,7 @@ export async function createMissingDemoAccounts({
   auth,
   query,
   openStore,
+  siteUrl = "http://localhost:3100",
 }: {
   users: readonly User[];
   environment: DemoEnvironment;
@@ -74,6 +78,7 @@ export async function createMissingDemoAccounts({
   openStore: () => Promise<
     Awaited<ReturnType<typeof privateDemoCredentialStore>>
   >;
+  siteUrl?: string;
 }) {
   const missing = DEMO_COACH_FIXTURES.filter(
     (coach) => !users.some((user) => user.id === coach.authUserId),
@@ -94,6 +99,10 @@ export async function createMissingDemoAccounts({
               initializedAt: null,
             };
       store.credentials.coaches[coach.slug] = credential;
+      store.credentials.coaches[coach.slug].publicUrl = demoCoachPublicUrl(
+        siteUrl,
+        coach.username,
+      );
       await store.save();
       const response = await auth.auth.admin.createUser({
         id: coach.authUserId,
@@ -185,7 +194,7 @@ export async function provisionDemoCoaches(args: readonly string[]) {
       const configuration = demoHostedTarget(process.env);
       target = configuration.projectRef;
       apiUrl = `https://${target}.supabase.co`;
-      if (args.includes("--check")) {
+      if (args.includes("--check") && !args.includes("--publish-urls")) {
         console.log(
           "Validated exact hosted-dev demo target; no data or credentials changed.",
         );
@@ -243,7 +252,7 @@ export async function provisionDemoCoaches(args: readonly string[]) {
       if (key.length < 40)
         throw new Error("Hosted-dev administrative Auth key is unavailable.");
     }
-    if (args.includes("--check")) {
+    if (args.includes("--check") && !args.includes("--publish-urls")) {
       console.log(
         "Validated exact local demo target; no data or credentials changed.",
       );
@@ -263,7 +272,7 @@ export async function provisionDemoCoaches(args: readonly string[]) {
       where p.id in (${DEMO_COACH_FIXTURES.map((coach) => sqlLiteral(coach.profileId) + "::uuid").join(",")}) order by p.id;`);
     assertDemoCoachStates(rows as unknown as DemoCoachState[]);
     const [schema] = await query(
-      "select to_regclass('app.coach_website_content') is not null website, to_regprocedure('app.record_password_method(uuid)') is not null passwords;",
+      "select to_regclass('app.coach_website_content') is not null website, to_regprocedure('app.record_password_method(uuid)') is not null passwords, to_regclass('app.coach_public_handles') is not null and to_regprocedure('app.public_coach_handle(text,boolean)') is not null public_urls;",
     );
     const auth = createClient(apiUrl, key, options);
     const users: User[] = [];
@@ -316,12 +325,67 @@ export async function provisionDemoCoaches(args: readonly string[]) {
           `Bound demo account is missing for ${coach.slug}; repair it explicitly before setup.`,
         );
     }
+    const publishingUrls = args.includes("--publish-urls");
+    const hasMissingAccounts = users.length < DEMO_COACH_FIXTURES.length;
+    if ((publishingUrls || hasMissingAccounts) && !schema.public_urls)
+      throw new Error(
+        "Public URL migration 20261018000600 is required before demo account creation or URL publication. No data or credentials changed.",
+      );
+    const siteUrl =
+      environment === "local"
+        ? "http://localhost:3100"
+        : (process.env.NEXT_PUBLIC_SITE_URL ?? "");
+    if (publishingUrls || hasMissingAccounts)
+      demoCoachPublicUrl(siteUrl, DEMO_COACH_FIXTURES[0].username);
+    if (publishingUrls) {
+      if (hasMissingAccounts)
+        throw new Error(
+          "URL-only mode requires the six existing bound demo accounts. Run explicit fresh setup for missing untouched fixtures first.",
+        );
+      if (args.includes("--check")) {
+        console.log(
+          `Verified ${environment} demo identities and public URL schema. No data or private tester files changed.`,
+        );
+        return;
+      }
+      const store = await privateDemoCredentialStore(
+        root,
+        environment,
+        target,
+        {
+          preserveNote: true,
+        },
+      );
+      try {
+        await query(
+          `begin; ${demoCoachPublicUrlStatements(DEMO_COACH_FIXTURES.map((c) => c.profileId))} commit; select true as urls_prepared;`,
+        );
+        const names = await query(
+          `select a.profile_id::text,a.username from app.account_personal_details a join app.coach_public_handles h on h.profile_id=a.profile_id and h.username=a.username where a.profile_id in (${DEMO_COACH_FIXTURES.map((c) => sqlLiteral(c.profileId) + "::uuid").join(",")});`,
+        );
+        if (
+          attachDemoCoachUrls(
+            store.credentials,
+            names as { profile_id: string; username: string }[],
+            siteUrl,
+          )
+        )
+          await store.save();
+        console.log(
+          `Prepared public URLs for six existing ${environment} Demo coaches. Other data and passwords preserved; existing private tester entries include publicUrl.`,
+        );
+      } finally {
+        await store.close();
+      }
+      return;
+    }
     const initialized = await createMissingDemoAccounts({
       users,
       environment,
       auth,
       query,
       openStore: () => privateDemoCredentialStore(root, environment, target),
+      siteUrl,
     });
     const resolved = await query(
       `select expected.id::text auth_user_id,i.identity_profile_id::text,i.identity_role from unnest(array[${DEMO_COACH_FIXTURES.map((c) => sqlLiteral(c.authUserId)).join(",")}]::uuid[]) expected(id) cross join lateral app.current_application_identity(expected.id) i;`,

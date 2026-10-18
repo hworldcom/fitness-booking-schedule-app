@@ -18,6 +18,7 @@ export type DemoCredential = {
   authUserId: string;
   password: string;
   initializedAt: string | null;
+  publicUrl?: string;
 };
 export type DemoCredentials = {
   environment: DemoEnvironment;
@@ -30,6 +31,7 @@ export async function privateDemoCredentialStore(
   root: string,
   environment: DemoEnvironment,
   target: string,
+  options: { preserveNote?: boolean } = {},
 ) {
   const directory = path.join(root, "work", "demo-coaches");
   await mkdir(directory, { recursive: true, mode: 0o700 });
@@ -82,7 +84,10 @@ export async function privateDemoCredentialStore(
         )
           throw new Error("Invalid demo credential entry.");
       }
-      credentials = { ...saved, note: credentials.note };
+      credentials = {
+        ...saved,
+        note: options.preserveNote ? saved.note : credentials.note,
+      };
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
     }
@@ -121,4 +126,44 @@ export async function privateDemoCredentialStore(
 
 export function generateDemoPassword() {
   return `MovX!9a-${randomBytes(20).toString("base64url")}`;
+}
+
+export function demoCoachPublicUrl(siteUrl: string, username: string) {
+  const site = new URL(siteUrl);
+  if (
+    !["http:", "https:"].includes(site.protocol) ||
+    (site.protocol === "http:" &&
+      !["localhost", "127.0.0.1", "[::1]"].includes(site.hostname)) ||
+    site.username ||
+    site.password ||
+    site.pathname !== "/" ||
+    site.search ||
+    site.hash ||
+    !/^[a-z][a-z0-9_]{2,29}$/.test(username)
+  )
+    throw new Error(
+      "Demo URL requires a clean application origin and valid username.",
+    );
+  return `${site.origin}/@${username}`;
+}
+
+export function attachDemoCoachUrls(
+  credentials: DemoCredentials,
+  usernames: readonly { profile_id: string; username: string }[],
+  siteUrl: string,
+) {
+  let changed = false;
+  for (const coach of DEMO_COACH_FIXTURES) {
+    const entry = credentials.coaches[coach.slug];
+    if (!entry) continue; // An absent journal is never password-recovery authority.
+    const current = usernames.find((row) => row.profile_id === coach.profileId);
+    if (!current)
+      throw new Error(`Public demo URL unavailable for ${coach.slug}.`);
+    const url = demoCoachPublicUrl(siteUrl, current.username);
+    if (entry.publicUrl !== url) {
+      entry.publicUrl = url;
+      changed = true;
+    }
+  }
+  return changed;
 }

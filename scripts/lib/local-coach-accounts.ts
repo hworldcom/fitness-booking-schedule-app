@@ -2,6 +2,7 @@ export type SeededCoachAccount = Readonly<{
   authUserId: string;
   profileId: string;
   slug: string;
+  username: string;
   displayName: string;
   email: string;
   seedParticipantRole: "member" | "operator";
@@ -12,6 +13,7 @@ export const SEEDED_COACH_ACCOUNTS = Object.freeze([
     authUserId: "90000000-0000-4000-8000-000000000002",
     profileId: "10000000-0000-4000-8000-000000000002",
     slug: "daniel-park",
+    username: "daniel_park",
     displayName: "Daniel Park",
     email: "daniel.park@coaches.movx.test",
     seedParticipantRole: "member",
@@ -20,6 +22,7 @@ export const SEEDED_COACH_ACCOUNTS = Object.freeze([
     authUserId: "90000000-0000-4000-8000-000000000005",
     profileId: "10000000-0000-4000-8000-000000000005",
     slug: "sam-lee",
+    username: "sam_lee",
     displayName: "Sam Lee",
     email: "sam.lee@coaches.movx.test",
     seedParticipantRole: "operator",
@@ -28,6 +31,7 @@ export const SEEDED_COACH_ACCOUNTS = Object.freeze([
     authUserId: "90000000-0000-4000-8000-000000000007",
     profileId: "10000000-0000-4000-8000-000000000007",
     slug: "nora-klein",
+    username: "nora_klein",
     displayName: "Nora Klein",
     email: "nora.klein@coaches.movx.test",
     seedParticipantRole: "operator",
@@ -36,6 +40,7 @@ export const SEEDED_COACH_ACCOUNTS = Object.freeze([
     authUserId: "90000000-0000-4000-8000-000000000008",
     profileId: "10000000-0000-4000-8000-000000000008",
     slug: "idris-malik",
+    username: "idris_malik",
     displayName: "Idris Malik",
     email: "idris.malik@coaches.movx.test",
     seedParticipantRole: "operator",
@@ -44,6 +49,7 @@ export const SEEDED_COACH_ACCOUNTS = Object.freeze([
     authUserId: "90000000-0000-4000-8000-000000000009",
     profileId: "10000000-0000-4000-8000-000000000009",
     slug: "elif-demir",
+    username: "elif_demir",
     displayName: "Elif Demir",
     email: "elif.demir@coaches.movx.test",
     seedParticipantRole: "operator",
@@ -52,6 +58,7 @@ export const SEEDED_COACH_ACCOUNTS = Object.freeze([
     authUserId: "90000000-0000-4000-8000-000000000013",
     profileId: "10000000-0000-4000-8000-000000000013",
     slug: "jake-miller",
+    username: "jake_miller",
     displayName: "Jake Miller",
     email: "jake.miller@coaches.movx.test",
     seedParticipantRole: "member",

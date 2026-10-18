@@ -11,11 +11,11 @@ export function demoEnvironmentArgument(args: readonly string[]) {
     args.length < 2 ||
     args[0] !== "--environment" ||
     !["local", "dev"].includes(args[1]) ||
-    args.slice(2).some((v) => v !== "--check") ||
+    args.slice(2).some((v) => !["--check", "--publish-urls"].includes(v)) ||
     new Set(args).size !== args.length
   )
     throw new Error(
-      "Usage: provision-demo-coaches.ts --environment local|dev [--check]. Setup creates missing accounts only; existing data and passwords are preserved.",
+      "Usage: provision-demo-coaches.ts --environment local|dev [--check] [--publish-urls]. Default setup creates missing accounts only. URL-only mode never changes passwords or profile content.",
     );
   return args[1] as DemoEnvironment;
 }

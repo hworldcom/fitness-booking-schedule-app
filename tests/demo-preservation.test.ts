@@ -95,6 +95,7 @@ test("mixed setup writes and initializes only the newly created account, preserv
     auth,
     query: async (sql) => {
       assert.ok(sql.includes(missing.profileId));
+      assert.ok(sql.includes(missing.username));
       assert.doesNotMatch(
         sql,
         /set bio|set portrait|insert into app\.coach_website_content/,
@@ -116,6 +117,10 @@ test("mixed setup writes and initializes only the newly created account, preserv
     }),
   });
   assert.deepEqual(result, { created: 1 });
+  assert.equal(
+    (credentials.coaches[missing.slug] as { publicUrl?: string }).publicUrl,
+    `http://localhost:3100/@${missing.username}`,
+  );
   assert.deepEqual(mutations, [
     "create:" + missing.authUserId,
     "bind-new",

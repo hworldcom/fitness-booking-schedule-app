@@ -7,7 +7,7 @@ This directory records planned changes, task status and implementation evidence.
 - A **development ticket** is a small implementable task named `# Ticket DEVNNNN` with a `DEVNNNN-short-title.md` filename. It owns implementation and validation evidence, and its DEV ID is used in commits. Start one from [TEMPLATE.md](TEMPLATE.md).
 - A **coordination record** is a non-implementation umbrella named `# Coordination CORNNNN` with a `CORNNNN-short-title.md` filename. It maps a flat set of peer development tickets and is never used as a commit reference. Start one from [COORDINATION_TEMPLATE.md](COORDINATION_TEMPLATE.md).
 
-DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0348 and COR0030.
+DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0350 and COR0030.
 
 Every DEV record declares its direct coordination membership near the top: one linked COR, or `None — independent development ticket`. Direct membership is limited to one COR and must match that COR's work map. Dependencies, downstream consumers and historical links remain separate relationships.
 
@@ -93,7 +93,9 @@ DEV0338 records the independently prepared coach-page example in the completed a
 
 DEV0340–DEV0346 and COR0029 are allocated to independent session-type work in the shared workspace and remain reserved while awaiting their own commits. The navigation checkpoints exclude that work.
 
-DEV0347 is allocated to independent test-coach public-URL preservation work and remains reserved while awaiting its own commit.
+DEV0347 delivers independent test-coach public-URL preservation. DEV0348 is reserved for the independent profile compatibility repair in the shared workspace; its pending session-type dependencies are excluded from this checkpoint.
+
+DEV0349 is reserved for the newly requested local-only fictional coach/UAT retirement slice; its implementation is not included in this checkpoint.
 
 ## Ticket index
 
@@ -162,6 +164,7 @@ DEV0347 is allocated to independent test-coach public-URL preservation work and 
 
 | Record                                                                                                                                               | Area         | Milestone                                  | Status    | Outcome                                                                                                                                                                                                                  |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [DEV0347 — Preserve test coach public URLs](archive/backend/DEV0347-preserve-test-coach-public-urls.md) | Backend | Development fixtures / M10 | Completed | Six fixed creation defaults and local public URLs; credentials/content preserved, 12 disposable DB checks and 12 HTTP checks pass; hosted rollout and in-progress session-type rendering remain separate. |
 | [DEV0338 — Preview a personal coach page](archive/frontend/DEV0338-preview-a-personal-coach-page.md) | Frontend | M10 design review | Completed | Standalone fictional coach-page proposal; desktop/phone keyboard/fallback and 25 static checks pass. Design acceptance/live editor remain separate. |
 | [DEV0339 — Promote My athletes to coach navigation](archive/frontend/DEV0339-promote-my-athletes-to-coach-navigation.md) | Frontend | Coach workspace navigation | Completed | Separate My athletes page/sidebar/mobile entry, focused Bookings and correct history links; 327 isolated-snapshot tests, lint/types, build, responsive and user keyboard checks pass. |
 | [DEV0334 — Promote coach sections to primary navigation](archive/frontend/DEV0334-promote-coach-sections-to-primary-navigation.md)                   | Frontend     | Authenticated workspace refinement         | Completed | Home, Schedule, Bookings and Events; query/nested selection, 293 tests, real desktop/phone checks and production build pass.                                                                                                      |

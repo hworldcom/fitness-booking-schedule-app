@@ -220,5 +220,57 @@ export function demoCoachDefaultsSql(
   websiteIds: readonly string[],
   passwordIds: readonly string[],
 ) {
-  return `begin; ${demoCoachDefaultsStatements(profileIds, websiteIds, passwordIds)} commit; select true as prepared;`;
+  return `begin; ${demoCoachDefaultsStatements(profileIds, websiteIds, passwordIds)} ${demoCoachPublicUrlStatements(profileIds)} commit; select true as prepared;`;
+}
+
+// DEV0347: explicit fixture consent, never a general private-username backfill.
+// Call only in a transaction, after binding freshly created fixture accounts or
+// through the separately requested URL-only command. Profile then reservation
+// lock order matches ordinary Account writes and URL confirmation.
+export function demoCoachPublicUrlStatements(profileIds: readonly string[]) {
+  if (!profileIds.length) return "select true as urls_preserved;";
+  if (
+    new Set(profileIds).size !== profileIds.length ||
+    profileIds.some(
+      (id) => !DEMO_COACH_FIXTURES.some((coach) => coach.profileId === id),
+    )
+  )
+    throw new Error("Unknown or duplicate demo profile in URL plan.");
+  const selected = DEMO_COACH_FIXTURES.filter((coach) =>
+    profileIds.includes(coach.profileId),
+  );
+  return `set local lock_timeout='5s'; set local statement_timeout='30s';
+    select id from app.profiles where id in (${selected.map((c) => sqlLiteral(c.profileId) + "::uuid").join(",")}) order by id for update;
+    select pg_advisory_xact_lock(3381,1);
+    do $demo_urls$ declare current_name text; begin
+    ${selected
+      .map((coach) => {
+        const id = sqlLiteral(coach.profileId) + "::uuid";
+        const username = sqlLiteral(coach.username);
+        return `
+      if not exists(select 1 from app.profiles p
+        join app.coach_profiles c on c.profile_id=p.id
+        join app.demo_runs r on r.id=c.run_id
+        join app.demo_run_participants d on d.profile_id=p.id and d.run_id=r.id
+        where p.id=${id} and p.auth_user_id=${sqlLiteral(coach.authUserId)}::uuid
+          and p.record_source='user' and p.claimed_at is not null
+          and c.run_id=${sqlLiteral(FOUNDATION_RUN_ID)}::uuid and c.public_slug=${sqlLiteral(coach.slug)}
+          and c.is_demo and c.record_source='user' and r.slug='local-foundation-2030'
+          and r.status='active' and d.status='active' and d.role='member')
+        then raise exception 'Demo URL ownership conflicts for ${coach.slug}'; end if;
+      select username into current_name from app.account_personal_details where profile_id=${id};
+      if current_name is not null and current_name<>${username} then
+        if not exists(select 1 from app.coach_public_handles where username=${username} and profile_id=${id})
+          or not exists(select 1 from app.coach_public_handles where username=current_name and profile_id=${id})
+          then raise exception 'Custom demo username requires explicit review for ${coach.slug}'; end if;
+      else
+        if exists(select 1 from app.coach_public_handles where username=${username} and profile_id is distinct from ${id})
+          then raise exception 'Demo URL reserved by another owner for ${coach.slug}'; end if;
+        insert into app.account_personal_details as details(profile_id,username) values(${id},${username})
+          on conflict(profile_id) do update set username=excluded.username,revision=details.revision+1 where details.username is null;
+        insert into app.coach_public_handles(username,profile_id) values(${username},${id}) on conflict(username) do nothing;
+      end if;`;
+      })
+      .join("\n")}
+    end $demo_urls$;`;
 }
