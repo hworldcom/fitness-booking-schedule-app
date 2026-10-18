@@ -67,6 +67,7 @@ export async function localConnectionRehearsal(
     | "DEV0250"
     | "DEV0292"
     | "DEV0313"
+    | "DEV0315"
     | "DEV0321"
     | "DEV0331",
 ): Promise<LocalConnectionRehearsal> {
@@ -78,6 +79,7 @@ export async function localConnectionRehearsal(
     ticket !== "DEV0250" &&
     ticket !== "DEV0292" &&
     ticket !== "DEV0313" &&
+    ticket !== "DEV0315" &&
     ticket !== "DEV0321" &&
     ticket !== "DEV0331"
   )
@@ -256,7 +258,7 @@ export async function localConnectionRehearsal(
       }[]
     >`select u.id,p.id as profile_id,p.avatar_storage_path,case when c.portrait_source='storage' then c.portrait_path else null end as coach_portrait_path from auth.users u left join app.profiles p on p.auth_user_id=u.id left join app.coach_profiles c on c.profile_id=p.id
     where u.raw_app_meta_data->>'movx_test_ticket'=${ticket} and u.raw_app_meta_data->>'temporary'='true' and u.email like ${ticket.toLowerCase() + "-connections-%@users.movx.test"}
-      and (${ticket} not in ('DEV0313','DEV0321','DEV0331') or u.id=any(${people.map((entry) => entry.id)}::uuid[]))`;
+      and (${ticket} not in ('DEV0313','DEV0315','DEV0321','DEV0331') or u.id=any(${people.map((entry) => entry.id)}::uuid[]))`;
     for (const row of owned)
       if (row.avatar_storage_path) {
         assert.ok(
@@ -284,7 +286,7 @@ export async function localConnectionRehearsal(
     const ids = owned.flatMap((row) =>
       row.profile_id ? [row.profile_id] : [],
     );
-    if (ticket === "DEV0321" && ids.length) {
+    if ((ticket === "DEV0321" || ticket === "DEV0315") && ids.length) {
       // Admin cleanup is confined to exact tagged temporary owners, including
       // unattached test-orphan objects; never delete object metadata directly.
       const banners = await database<

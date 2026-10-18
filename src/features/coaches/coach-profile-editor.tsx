@@ -24,6 +24,7 @@ import { CoachWorkspaceHeader } from "./coach-workspace-header";
 import { CoachTrainingLocationManager } from "./coach-training-location-manager";
 import { CoachPublicUrlSettings } from "./coach-public-url-settings";
 import type { CoachPublicHandleResult } from "@/domain/coach-public-url";
+import { CoachWebsiteEditor } from "./website/coach-website-editor";
 import "./coach-public-url-settings.css";
 
 const INITIAL_COACH_PROFILE_ACTION_STATE: CoachProfileActionState =
@@ -88,6 +89,13 @@ export function CoachProfileEditor({
       </header>
 
       <CoachApplicationBanner access={coachAccess} />
+      {coach && (
+        <CoachWebsiteEditor
+          key={coach.profileId}
+          coach={coach}
+          publicationAllowed={publicationAllowed}
+        />
+      )}
       {publicationAllowed && publicUrl && (
         <CoachPublicUrlSettings
           key={
