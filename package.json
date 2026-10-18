@@ -40,6 +40,8 @@
     "test:profile-storage": "node --import tsx --conditions=react-server scripts/rehearse-local-storage-adapter.ts",
     "test:coach-website-db": "node scripts/rehearse-coach-website-database.mjs",
     "test:coach-website": "node --import tsx --conditions=react-server scripts/rehearse-local-coach-website.ts",
+    "test:coach-starting-rates-db": "node scripts/rehearse-coach-starting-rates-database.mjs",
+    "test:coach-starting-rates": "node --import tsx --conditions=react-server scripts/rehearse-local-coach-starting-rates.ts",
     "test:e2e": "playwright test",
     "db:start": "supabase start --exclude gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
     "auth:start": "supabase start --exclude realtime,imgproxy,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",

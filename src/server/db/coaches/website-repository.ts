@@ -13,6 +13,8 @@ import { isOwnedProfileImageStoragePath } from "@/profile-images/contracts";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
 import { withDatabaseConnection } from "@/server/db/client";
+import { publicStartingRateFromRow } from "./starting-rate-repository";
+import type { PublicCoachStartingRate } from "@/domain/coach-starting-rate";
 
 type WebsiteRow = {
   profile_id: string;
@@ -21,6 +23,7 @@ type WebsiteRow = {
   content: unknown;
   card_path: string | null;
   hero_path: string | null;
+  starting_rate?: unknown;
 };
 export type WebsiteRecord = Readonly<{
   profileId: string;
@@ -29,6 +32,7 @@ export type WebsiteRecord = Readonly<{
   content: CoachWebsiteContent;
   cardPath: string | null;
   heroPath: string | null;
+  startingRate?: PublicCoachStartingRate;
 }>;
 export class CoachWebsiteError extends Error {
   constructor(public readonly status: "conflict" | "invalid" | "forbidden") {
@@ -68,6 +72,7 @@ function mapRecord(row: WebsiteRow): WebsiteRecord {
         row.card_path === row.hero_path))
   )
     throw new Error("Invalid coach website record.");
+  const startingRate = publicStartingRateFromRow(row.starting_rate);
   return Object.freeze({
     profileId: row.profile_id,
     slug: row.public_slug,
@@ -75,6 +80,7 @@ function mapRecord(row: WebsiteRow): WebsiteRecord {
     content,
     cardPath: row.card_path,
     heroPath: row.hero_path,
+    ...(startingRate ? { startingRate } : {}),
   });
 }
 export async function ownedCoachWebsiteRecord(
@@ -126,7 +132,7 @@ export async function publicCoachWebsiteRecord(
 ): Promise<WebsiteRecord | null> {
   return withDatabaseConnection(async ({ db }) => {
     const rows = await db.execute<WebsiteRow>(
-      sql`select * from app.public_coach_website(${slug}::text)`,
+      sql`select * from app.public_coach_website_pricing(${slug}::text)`,
     );
     if (rows.length > 1) throw new Error("Invalid public coach website.");
     return rows[0] ? mapRecord(rows[0]) : null;
@@ -139,12 +145,13 @@ export async function publicCoachWebsiteCards(profileIds: readonly string[]) {
     for (let start = 0; start < profileIds.length; start += 100) {
       const ids = profileIds.slice(start, start + 100);
       const rows = await db.execute<Omit<WebsiteRow, "hero_path">>(
-        sql`select * from app.public_coach_website_cards(array[${sql.join(
+        sql`select * from app.public_coach_website_cards_pricing(array[${sql.join(
           ids.map((id) => sql`${id}::uuid`),
           sql`, `,
         )}]::uuid[])`,
       );
       for (const row of rows) {
+        const startingRate = publicStartingRateFromRow(row.starting_rate);
         const content = parseCoachWebsiteContent(row.content);
         if (
           !content ||
@@ -168,6 +175,7 @@ export async function publicCoachWebsiteCards(profileIds: readonly string[]) {
                   height: COACH_BANNER_VARIANTS.card.height,
                 })
               : null,
+            ...(startingRate ? { startingRate } : {}),
           }),
         );
       }

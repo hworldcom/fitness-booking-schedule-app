@@ -5,11 +5,11 @@
 - Last updated: 2026-10-18
 - Milestone: M10 — Coach marketplace websites (planned)
 - Coordination: [COR0028 — Coach marketplace cards and personal websites](../organisatory/COR0028-coach-marketplace-cards-and-personal-websites.md)
-- Related records: Peer dependencies/consumers: [DEV0320](../../archive/organisatory/DEV0320-adopt-coach-marketplace-website-contract.md), [DEV0321](../../archive/backend/DEV0321-persist-coach-website-content-and-banners.md), [DEV0313](../backend/DEV0313-manage-coach-starting-prices-and-visibility.md), [DEV0317](DEV0317-build-shareable-personal-coach-websites.md), [DEV0319](../backend/DEV0319-rehearse-coach-marketplace-websites.md). External media: [DEV0297](../backend/DEV0297-add-coach-profile-photos-and-mux-video.md). Amendment: [DEV0330](../../archive/organisatory/DEV0330-refine-coach-marketplace-pricing-reviews-and-urls.md); username routing: [DEV0331](../backend/DEV0331-enable-username-based-public-coach-urls.md).
+- Related records: Peer dependencies/consumers: [DEV0320](../../archive/organisatory/DEV0320-adopt-coach-marketplace-website-contract.md), [DEV0321](../../archive/backend/DEV0321-persist-coach-website-content-and-banners.md), [DEV0313](../../archive/backend/DEV0313-manage-coach-starting-prices-and-visibility.md), [DEV0317](DEV0317-build-shareable-personal-coach-websites.md), [DEV0319](../backend/DEV0319-rehearse-coach-marketplace-websites.md). External media: [DEV0297](../backend/DEV0297-add-coach-profile-photos-and-mux-video.md). Amendment: [DEV0330](../../archive/organisatory/DEV0330-refine-coach-marketplace-pricing-reviews-and-urls.md); username routing: [DEV0331](../backend/DEV0331-enable-username-based-public-coach-urls.md).
 
 ## Objective and context
 
-Let an authorized coach prepare and preview the structured website without a separate website editor or exposing private account fields. The existing Profile editor does not manage M10 branding, content or a private offer.
+Let an authorized coach prepare and preview the structured website without a separate website editor or exposing private account fields. The existing Profile editor does not manage M10 branding, content or a starting rate.
 
 Implement against the [M10 contract](../../../docs/mvp-spec.md#19-coach-marketplace-cards-and-personal-websites), especially [the relevant boundary](../../../docs/mvp-spec.md#195-owner-editing-and-media-sequence), [milestone](../../../docs/mvp-spec.md#12-delivery-milestones) and [acceptance matrix](../../../docs/mvp-spec.md#13-acceptance-matrix). This ticket is future runtime work; the user requested tickets only on 17 October 2026.
 
@@ -24,7 +24,7 @@ Clearly separate public coach identity/content from private Account fields. Star
 
 ## Assumptions, decisions, and dependencies
 
-DEV0321 provides schema-version-1 content plus private banner preview/mutation APIs and one expected revision shared by text/banner; its content/banner backend prerequisite is delivered locally. Consume its documented contracts and conflict/recovery statuses without another media pipeline. Depends on the revised DEV0313 owner contracts; DEV0331 supplies URL/claim capability and keeps username ownership in Account. Foundations/editor may proceed before cards, but do not ask for or decide gallery/video allowances now. DEV0316 completes before that media review; later media-control composition consumes DEV0297 without duplicating its engine. Coordinate shared preview structure with DEV0317.
+DEV0321 provides schema-version-1 content plus private banner preview/mutation APIs and one expected revision shared by text/banner; its content/banner backend prerequisite is delivered locally. Consume its documented contracts and conflict/recovery statuses without another media pipeline. DEV0313 supplies `GET/PUT /api/coach/starting-rate`, schema-1 integer EUR cents, independent `showPublicly` and a separate pricing revision; content/banner saves must not reuse that revision. Use its exact decimal helper, preserve drafts on 400/409/503, and omit hidden rates from public preview. Depends on the revised DEV0313 owner contracts; DEV0331 supplies URL/claim capability and keeps username ownership in Account. Foundations/editor may proceed before cards, but do not ask for or decide gallery/video allowances now. DEV0316 completes before that media review; later media-control composition consumes DEV0297 without duplicating its engine. Coordinate shared preview structure with DEV0317.
 
 ## Implementation plan
 

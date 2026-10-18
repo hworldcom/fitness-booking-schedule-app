@@ -5,7 +5,7 @@
 - Last updated: 2026-10-18
 - Milestone: M10 — Coach marketplace websites (planned)
 - Coordination: [COR0028 — Coach marketplace cards and personal websites](../organisatory/COR0028-coach-marketplace-cards-and-personal-websites.md)
-- Related records: Peer dependencies/consumers: [DEV0320](../../archive/organisatory/DEV0320-adopt-coach-marketplace-website-contract.md), [DEV0321](../../archive/backend/DEV0321-persist-coach-website-content-and-banners.md), [DEV0313](../backend/DEV0313-manage-coach-starting-prices-and-visibility.md), [DEV0314](../backend/DEV0314-persist-booking-linked-coach-reviews.md), [DEV0315](DEV0315-edit-and-preview-coach-websites.md), [DEV0316](DEV0316-redesign-coach-directory-cards.md), [DEV0318](DEV0318-add-athlete-coach-review-controls.md), [DEV0319](../backend/DEV0319-rehearse-coach-marketplace-websites.md). External media: [DEV0297](../backend/DEV0297-add-coach-profile-photos-and-mux-video.md). Amendment: [DEV0330](../../archive/organisatory/DEV0330-refine-coach-marketplace-pricing-reviews-and-urls.md); username routing: [DEV0331](../backend/DEV0331-enable-username-based-public-coach-urls.md).
+- Related records: Peer dependencies/consumers: [DEV0320](../../archive/organisatory/DEV0320-adopt-coach-marketplace-website-contract.md), [DEV0321](../../archive/backend/DEV0321-persist-coach-website-content-and-banners.md), [DEV0313](../../archive/backend/DEV0313-manage-coach-starting-prices-and-visibility.md), [DEV0314](../backend/DEV0314-persist-booking-linked-coach-reviews.md), [DEV0315](DEV0315-edit-and-preview-coach-websites.md), [DEV0316](DEV0316-redesign-coach-directory-cards.md), [DEV0318](DEV0318-add-athlete-coach-review-controls.md), [DEV0319](../backend/DEV0319-rehearse-coach-marketplace-websites.md). External media: [DEV0297](../backend/DEV0297-add-coach-profile-photos-and-mux-video.md). Amendment: [DEV0330](../../archive/organisatory/DEV0330-refine-coach-marketplace-pricing-reviews-and-urls.md); username routing: [DEV0331](../backend/DEV0331-enable-username-based-public-coach-urls.md).
 
 ## Objective and context
 
@@ -24,7 +24,7 @@ Visible coaches use the saved username canonical URL; DEV0331 supplies safe lega
 
 ## Assumptions, decisions, and dependencies
 
-DEV0321 now supplies `PublicCoachProfileState.website` version-1 full optional content/banner projections and the public content/image APIs, with visibility/revision checks and truthful unavailable states. Its backend contract is delivered locally. Starts after DEV0316 cards complete and DEV0313/DEV0314/DEV0331 public contracts pass; DEV0315 provides real authored content. DEV0331 owns route resolution/legacy/rename behavior, while this ticket owns page layout, canonical metadata and share controls. Revisit media allowance only after cards, then consume DEV0297's delivered authorized photo component for the full gallery outcome. No media-engine duplication, username-login or premium assumption. Existing group routes/data are consumed unchanged.
+DEV0321 now supplies `PublicCoachProfileState.website` version-1 full optional content/banner projections and the public content/image APIs, with visibility/revision checks and truthful unavailable states. Its backend contract is delivered locally. DEV0313 adds optional `website.startingRate` with only disclosed public data and the formatted label. Hidden/missing amounts omit the field; page metadata, share controls and serialized props must consume this same public DTO and never the owner API. Starts after DEV0316 cards complete and DEV0313/DEV0314/DEV0331 public contracts pass; DEV0315 provides real authored content. DEV0331 owns route resolution/legacy/rename behavior, while this ticket owns page layout, canonical metadata and share controls. Revisit media allowance only after cards, then consume DEV0297's delivered authorized photo component for the full gallery outcome. No media-engine duplication, username-login or premium assumption. Existing group routes/data are consumed unchanged.
 
 ## Implementation plan
 
@@ -60,7 +60,7 @@ The following are planned investigation/implementation areas, not a claim that t
 | [src/app/coaches/[slug]/page.tsx](../../../src/app/coaches/[slug]/page.tsx)                                   | Existing route, public metadata and canonical service composition.   |
 | [src/features/coaches/coach-discovery.tsx](../../../src/features/coaches/coach-discovery.tsx)                 | Existing CoachProfileView template extension.                        |
 | [src/features/coaches/coach-profile-locations.tsx](../../../src/features/coaches/coach-profile-locations.tsx) | Preserved all-location map/list presentation.                        |
-| [src/features/coaches/coach-marketplace.tsx](../../../src/features/coaches/coach-marketplace.tsx)             | Compose existing schedule; term-flow implementation remains DEV0313. |
+| [src/features/coaches/coach-marketplace.tsx](../../../src/features/coaches/coach-marketplace.tsx)             | Compose the existing schedule; indicative starting rates add no price gating or quote-lock flow. |
 
 ### Decisions and deviations
 

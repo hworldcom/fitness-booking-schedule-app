@@ -1,3 +1,5 @@
+import type { PublicCoachStartingRate } from "./coach-starting-rate";
+
 export const COACH_WEBSITE_SCHEMA_VERSION = 1;
 export const COACH_BANNER_MAX_SOURCE_BYTES = 4 * 1024 * 1024;
 export const COACH_BANNER_VARIANTS = {
@@ -24,6 +26,7 @@ export type CoachWebsite = Readonly<{
   revision: number;
   content: CoachWebsiteContent;
   banner: Readonly<Record<CoachBannerVariant, CoachBannerImage>> | null;
+  startingRate?: PublicCoachStartingRate;
 }>;
 export type CoachWebsiteCard = Readonly<{
   schemaVersion: 1;
@@ -32,6 +35,7 @@ export type CoachWebsiteCard = Readonly<{
   introduction: string;
   focusLabels: readonly string[];
   banner: CoachBannerImage | null;
+  startingRate?: PublicCoachStartingRate;
 }>;
 export type CoachWebsiteFailure = Readonly<{
   status:
@@ -194,6 +198,7 @@ export function projectCoachWebsite(
   revision: number,
   hasBanner: boolean,
   slug: string | null,
+  startingRate?: PublicCoachStartingRate,
 ): CoachWebsite {
   const image = (variant: CoachBannerVariant) =>
     Object.freeze({
@@ -208,5 +213,6 @@ export function projectCoachWebsite(
     banner: hasBanner
       ? Object.freeze({ card: image("card"), hero: image("hero") })
       : null,
+    ...(startingRate ? { startingRate } : {}),
   });
 }

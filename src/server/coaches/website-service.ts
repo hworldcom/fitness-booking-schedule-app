@@ -77,6 +77,7 @@ function project(record: WebsiteRecord, publicRead = false) {
     record.revision,
     record.cardPath !== null,
     publicRead ? record.slug : null,
+    publicRead ? record.startingRate : undefined,
   );
 }
 export async function currentCoachWebsite(): Promise<CoachWebsiteResult> {

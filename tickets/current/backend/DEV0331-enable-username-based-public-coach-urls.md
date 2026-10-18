@@ -30,6 +30,8 @@ Confirmed: public coach URLs use usernames. Adopted defaults: `/@username`, reta
 
 Starts after DEV0330's contract and current DEV0295/DEV0325 username behavior are reviewed. Coordinate narrowly with their in-progress Account/Auth consumers; preserve unrelated edits. Can proceed independently of media and content/rate/review implementation. DEV0316 consumes the public URL projection, DEV0317 owns metadata/share controls, DEV0315 presents the owner URL/claim guidance, and DEV0319 owns combined proof. Media allowance questions do not block this ticket or cards.
 
+DEV0313 invalidates current Home/Explore and legacy public coach paths after successful rate saves. When adding canonical username and alias paths, extend the same server invalidation and public-only DTO behavior to those paths; a hidden amount must remain absent in metadata/serialized/share output after a fresh visit. Pricing has an independent revision and adds no booking-price gate.
+
 ## Implementation plan
 
 1. Inspect actual Account/signup username writes, current coach visibility/slug resolution and installed Next.js route/redirect docs. Record public/owner DTOs and route continuation rules before coding.
