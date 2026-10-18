@@ -52,7 +52,7 @@ export async function privateDemoCredentialStore(
     let credentials: DemoCredentials = {
       environment,
       target,
-      note: "Private initial tester passwords. Do not commit or publish. Later password changes are preserved; these saved initial values can become stale. Run the explicit --reset-passwords command to rotate only these demo passwords if needed.",
+      note: "Private initial tester passwords. Do not commit or publish. Existing accounts are never overwritten by setup; these saved initial values can become stale after an owner password change. Use the account recovery flow for deliberate individual password changes.",
       coaches: {},
     };
     try {

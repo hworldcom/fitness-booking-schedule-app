@@ -18,7 +18,6 @@ import {
   FOUNDATION_RUN_ID,
   assertDemoCoachStates,
   demoCoachDefaultsSql,
-  needsDemoInitialization,
   sqlLiteral,
   type DemoCoachState,
 } from "../scripts/lib/demo-coach-fixtures";
@@ -83,13 +82,15 @@ test("only confirmed exact demo identities with matching environment metadata ca
 test("demo target selection refuses production, mixed URLs and unintended local databases", () => {
   assert.equal(demoEnvironmentArgument(["--environment", "local"]), "local");
   assert.equal(
-    demoEnvironmentArgument(["--environment", "dev", "--reset-passwords"]),
+    demoEnvironmentArgument(["--environment", "dev", "--check"]),
     "dev",
   );
   for (const args of [
     [],
     ["--environment", "prod"],
     ["--environment", "staging"],
+    ["--environment", "local", "--reset-passwords"],
+    ["--environment", "dev", "--reset-passwords"],
     ["--environment", "dev", "--reset-passwords", "--check"],
   ])
     assert.throws(() => demoEnvironmentArgument(args));
@@ -191,25 +192,6 @@ test("fixture content is valid, illustrated, explicitly fictional and collision 
       readFileSync("supabase/seed.sql", "utf8").includes(coach.portraitPath),
     );
   }
-  assert.equal(needsDemoInitialization({}, "profile"), true);
-  assert.equal(
-    needsDemoInitialization({ movx_demo_profile_version: 1 }, "profile"),
-    false,
-  );
-  assert.equal(
-    needsDemoInitialization({ movx_demo_profile_version: 2 }, "profile"),
-    false,
-  );
-  assert.throws(() =>
-    needsDemoInitialization(
-      { movx_demo_password_version: "invalid" },
-      "password",
-    ),
-  );
-  assert.equal(
-    needsDemoInitialization({ movx_demo_profile_version: 1 }, "website"),
-    true,
-  );
   assert.equal(sqlLiteral("Coach's goals"), "'Coach''s goals'");
   assert.throws(() => demoCoachDefaultsSql(["unrelated-profile"], [], []));
 });

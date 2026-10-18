@@ -11,12 +11,11 @@ export function demoEnvironmentArgument(args: readonly string[]) {
     args.length < 2 ||
     args[0] !== "--environment" ||
     !["local", "dev"].includes(args[1]) ||
-    args.slice(2).some((v) => !["--check", "--reset-passwords"].includes(v)) ||
-    new Set(args).size !== args.length ||
-    (args.includes("--check") && args.includes("--reset-passwords"))
+    args.slice(2).some((v) => v !== "--check") ||
+    new Set(args).size !== args.length
   )
     throw new Error(
-      "Usage: provision-demo-coaches.ts --environment local|dev [--check|--reset-passwords]. Production is never allowed.",
+      "Usage: provision-demo-coaches.ts --environment local|dev [--check]. Setup creates missing accounts only; existing data and passwords are preserved.",
     );
   return args[1] as DemoEnvironment;
 }

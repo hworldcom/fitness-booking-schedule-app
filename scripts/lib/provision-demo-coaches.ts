@@ -15,11 +15,9 @@ import {
 } from "./demo-coach-target";
 import {
   DEMO_COACH_FIXTURES,
-  fitnessDemoCoachSeedSql,
   DEMO_FIXTURE_VERSION,
   assertDemoCoachStates,
   demoCoachDefaultsSql,
-  needsDemoInitialization,
   sqlLiteral,
   type DemoCoachState,
 } from "./demo-coach-fixtures";
@@ -60,9 +58,90 @@ export function assertDemoAuthUser(
     throw new Error(`Reserved demo Auth identity conflicts for ${coach.slug}.`);
 }
 
+// Only accounts absent from the validated inventory can enter the write path.
+// Initialization markers on an existing account never authorize an upgrade.
+export async function createMissingDemoAccounts({
+  users,
+  environment,
+  auth,
+  query,
+  openStore,
+}: {
+  users: readonly User[];
+  environment: DemoEnvironment;
+  auth: Pick<ReturnType<typeof createClient>, "auth">;
+  query: Query;
+  openStore: () => Promise<
+    Awaited<ReturnType<typeof privateDemoCredentialStore>>
+  >;
+}) {
+  const missing = DEMO_COACH_FIXTURES.filter(
+    (coach) => !users.some((user) => user.id === coach.authUserId),
+  );
+  if (!missing.length) return { created: 0 };
+  const store = await openStore();
+  try {
+    const created: User[] = [];
+    for (const coach of missing) {
+      const previous = store.credentials.coaches[coach.slug];
+      const credential =
+        previous?.initializedAt === null
+          ? previous
+          : {
+              email: coach.email,
+              authUserId: coach.authUserId,
+              password: generateDemoPassword(),
+              initializedAt: null,
+            };
+      store.credentials.coaches[coach.slug] = credential;
+      await store.save();
+      const response = await auth.auth.admin.createUser({
+        id: coach.authUserId,
+        email: coach.email,
+        password: credential.password,
+        email_confirm: true,
+        user_metadata: { display_name: coach.displayName },
+        app_metadata: {
+          ...(environment === "local" ? { movx_local_demo: true } : {}),
+          movx_demo_environment: environment,
+          movx_coach_profile_id: coach.profileId,
+          movx_coach_slug: coach.slug,
+        },
+      });
+      if (response.error || !response.data.user)
+        throw new Error(
+          `Could not create ${coach.slug}'s missing demo account. Private journal retained.`,
+        );
+      assertDemoAuthUser(coach, response.data.user, environment);
+      created.push(response.data.user);
+    }
+    const ids = missing.map((coach) => coach.profileId);
+    await query(demoCoachDefaultsSql(ids, [], ids));
+    for (const user of created) {
+      const coach = missing.find((entry) => entry.authUserId === user.id)!;
+      const response = await auth.auth.admin.updateUserById(user.id, {
+        app_metadata: {
+          ...user.app_metadata,
+          movx_demo_password_version: DEMO_FIXTURE_VERSION,
+          movx_demo_profile_version: DEMO_FIXTURE_VERSION,
+        },
+      });
+      if (response.error)
+        throw new Error(
+          `Could not finish ${coach.slug}'s new account initialization; explicit repair may be required.`,
+        );
+      store.credentials.coaches[coach.slug].initializedAt =
+        new Date().toISOString();
+    }
+    await store.save();
+    return { created: created.length };
+  } finally {
+    await store.close();
+  }
+}
+
 export async function provisionDemoCoaches(args: readonly string[]) {
   const environment = demoEnvironmentArgument(args);
-  const resetPasswords = args.includes("--reset-passwords");
   const root = process.cwd();
   const cli = (args: string[]) => {
     try {
@@ -82,7 +161,6 @@ export async function provisionDemoCoaches(args: readonly string[]) {
   let query: Query, apiUrl: string, key: string, target: string;
   let closeDatabase = async () => {};
   let work: string | undefined;
-  let store: Awaited<ReturnType<typeof privateDemoCredentialStore>> | undefined;
   try {
     if (environment === "local") {
       assertLocalSupabaseConfiguration(
@@ -179,10 +257,6 @@ export async function provisionDemoCoaches(args: readonly string[]) {
       throw new Error(
         "Apply the Fitness migration 20261018000500 to this nonproduction target before demo setup. No fixture or account changes were made.",
       );
-    // One exact additive fixture block, after target validation; no broad re-seed.
-    await query(
-      `begin; ${fitnessDemoCoachSeedSql(readFileSync(path.join(root, "supabase/seed.sql"), "utf8"))} commit; select true prepared;`,
-    );
     const rows =
       await query(`select p.id::text profile_id,p.auth_user_id::text,p.record_source,p.claimed_at::text,c.run_id::text,r.slug run_slug,r.status run_status,d.status participant_status,d.role participant_role,c.public_slug,c.record_source coach_record_source,c.is_demo
       from app.profiles p join app.coach_profiles c on c.profile_id=p.id join app.demo_runs r on r.id=c.run_id join app.demo_run_participants d on d.profile_id=p.id and d.run_id=c.run_id
@@ -225,8 +299,16 @@ export async function provisionDemoCoaches(args: readonly string[]) {
             `Reserved demo email/ID conflicts for ${coach.slug}.`,
           );
         assertDemoAuthUser(coach, byId, environment);
-        for (const part of ["password", "profile", "website"] as const)
-          needsDemoInitialization(byId.app_metadata, part);
+        const state = rows.find((row) => row.profile_id === coach.profileId);
+        if (
+          state?.auth_user_id !== byId.id ||
+          state.record_source !== "user" ||
+          state.coach_record_source !== "user" ||
+          state.participant_role !== "member"
+        )
+          throw new Error(
+            `Existing demo binding needs explicit repair for ${coach.slug}; no existing data was changed.`,
+          );
       } else if (
         rows.find((row) => row.profile_id === coach.profileId)?.auth_user_id
       )
@@ -234,94 +316,13 @@ export async function provisionDemoCoaches(args: readonly string[]) {
           `Bound demo account is missing for ${coach.slug}; repair it explicitly before setup.`,
         );
     }
-    store = await privateDemoCredentialStore(root, environment, target);
-    const profileIds: string[] = [],
-      websiteIds: string[] = [],
-      passwordIds: string[] = [];
-    const currentUsers = new Map<string, User>();
-    for (const coach of DEMO_COACH_FIXTURES) {
-      let user = users.find((candidate) => candidate.id === coach.authUserId);
-      const metadata = user?.app_metadata ?? {};
-      const configurePassword =
-        !user ||
-        resetPasswords ||
-        needsDemoInitialization(metadata, "password");
-      const defaults = {
-        ...metadata,
-        ...(environment === "local" ? { movx_local_demo: true } : {}),
-        movx_demo_environment: environment,
-        movx_coach_profile_id: coach.profileId,
-        movx_coach_slug: coach.slug,
-      };
-      if (configurePassword) {
-        const previous = store.credentials.coaches[coach.slug];
-        const credential =
-          !resetPasswords && previous?.initializedAt === null
-            ? previous
-            : {
-                email: coach.email,
-                authUserId: coach.authUserId,
-                password: generateDemoPassword(),
-                initializedAt: null,
-              };
-        store.credentials.coaches[coach.slug] = credential;
-        await store.save(); // Journal the secret before the administrative mutation.
-        const attributes = {
-          email: coach.email,
-          password: credential.password,
-          email_confirm: true,
-          app_metadata: defaults,
-        };
-        const response = user
-          ? await auth.auth.admin.updateUserById(user.id, attributes)
-          : await auth.auth.admin.createUser({
-              ...attributes,
-              id: coach.authUserId,
-              user_metadata: { display_name: coach.displayName },
-            });
-        if (response.error || !response.data.user)
-          throw new Error(
-            `Could not initialize ${coach.slug}'s demo password. Private journal retained; rerun setup.`,
-          );
-        user = response.data.user;
-        passwordIds.push(coach.profileId);
-      }
-      if (!user) throw new Error("Missing demo Auth user.");
-      assertDemoAuthUser(coach, user, environment);
-      if (needsDemoInitialization(metadata, "profile"))
-        profileIds.push(coach.profileId);
-      if (schema.website && needsDemoInitialization(metadata, "website"))
-        websiteIds.push(coach.profileId);
-      currentUsers.set(coach.profileId, user);
-    }
-    await query(demoCoachDefaultsSql(profileIds, websiteIds, passwordIds));
-    for (const coach of DEMO_COACH_FIXTURES) {
-      const user = currentUsers.get(coach.profileId)!;
-      const parts = {
-        ...(passwordIds.includes(coach.profileId)
-          ? { movx_demo_password_version: DEMO_FIXTURE_VERSION }
-          : {}),
-        ...(profileIds.includes(coach.profileId)
-          ? { movx_demo_profile_version: DEMO_FIXTURE_VERSION }
-          : {}),
-        ...(websiteIds.includes(coach.profileId)
-          ? { movx_demo_website_version: DEMO_FIXTURE_VERSION }
-          : {}),
-      };
-      if (Object.keys(parts).length) {
-        const response = await auth.auth.admin.updateUserById(user.id, {
-          app_metadata: { ...user.app_metadata, ...parts },
-        });
-        if (response.error)
-          throw new Error(
-            `Could not record completed demo setup for ${coach.slug}; private journal retained.`,
-          );
-      }
-      const credential = store.credentials.coaches[coach.slug];
-      if (credential && passwordIds.includes(coach.profileId))
-        credential.initializedAt = new Date().toISOString();
-    }
-    await store.save();
+    const initialized = await createMissingDemoAccounts({
+      users,
+      environment,
+      auth,
+      query,
+      openStore: () => privateDemoCredentialStore(root, environment, target),
+    });
     const resolved = await query(
       `select expected.id::text auth_user_id,i.identity_profile_id::text,i.identity_role from unnest(array[${DEMO_COACH_FIXTURES.map((c) => sqlLiteral(c.authUserId)).join(",")}]::uuid[]) expected(id) cross join lateral app.current_application_identity(expected.id) i;`,
     );
@@ -340,23 +341,17 @@ export async function provisionDemoCoaches(args: readonly string[]) {
         "Demo application identities did not resolve to the original allowlisted member profiles.",
       );
     console.log(
-      `Prepared ${DEMO_COACH_FIXTURES.length} Demo coaches in ${environment}. Private initial tester logins: ${path.relative(root, store.file)} (passwords are not printed).`,
+      `Verified ${DEMO_COACH_FIXTURES.length} Demo coaches in ${environment}; created ${initialized.created} missing accounts. Existing data and passwords preserved. Private initial tester logins: work/demo-coaches/${environment}.json (passwords are not printed).`,
     );
     if (!schema.website)
       console.log(
-        "Hosted-dev website migration is not installed; existing profiles are ready and sample website content will initialize after that migration.",
+        "Website schema is unavailable. Existing profiles remain unchanged; setup does not backfill their content.",
       );
     if (!schema.passwords)
       console.log(
         "Hosted-dev authentication migrations are not installed; provider password login is ready, full current-application Auth requires the separately owned rollout.",
       );
-    for (const coach of DEMO_COACH_FIXTURES)
-      if (!store.credentials.coaches[coach.slug])
-        console.log(
-          `${coach.email}: existing password preserved; obtain its existing credential or explicitly use --reset-passwords.`,
-        );
   } finally {
-    await store?.close();
     await closeDatabase();
     if (work) await rm(work, { recursive: true, force: true });
   }

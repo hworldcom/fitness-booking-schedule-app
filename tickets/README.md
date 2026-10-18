@@ -7,7 +7,7 @@ This directory records planned changes, task status and implementation evidence.
 - A **development ticket** is a small implementable task named `# Ticket DEVNNNN` with a `DEVNNNN-short-title.md` filename. It owns implementation and validation evidence, and its DEV ID is used in commits. Start one from [TEMPLATE.md](TEMPLATE.md).
 - A **coordination record** is a non-implementation umbrella named `# Coordination CORNNNN` with a `CORNNNN-short-title.md` filename. It maps a flat set of peer development tickets and is never used as a commit reference. Start one from [COORDINATION_TEMPLATE.md](COORDINATION_TEMPLATE.md).
 
-DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0337 and COR0029.
+DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0339 and COR0029.
 
 Every DEV record declares its direct coordination membership near the top: one linked COR, or `None — independent development ticket`. Direct membership is limited to one COR and must match that COR's work map. Dependencies, downstream consumers and historical links remain separate relationships.
 
@@ -91,6 +91,8 @@ DEV0313–DEV0319, DEV0320–DEV0321 and COR0028 are allocated to coach marketpl
 
 DEV0330–DEV0331 are allocated to the coach marketplace pricing/review/username-URL planning amendment and routing peer. DEV0324–DEV0329 and DEV0332–DEV0335 are allocated to independent concurrent work and remain unavailable for reuse.
 
+DEV0338 is allocated to independently prepared coach-page preview work in the shared workspace. It remains reserved while that record awaits its own commit; the DEV0337 preservation checkpoint does not include that work.
+
 ## Ticket index
 
 ### Current records
@@ -157,6 +159,7 @@ DEV0330–DEV0331 are allocated to the coach marketplace pricing/review/username
 
 | Record                                                                                                                                               | Area         | Milestone                                  | Status    | Outcome                                                                                                                                                                                                                  |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [DEV0337 — Preserve existing demo coach data](archive/backend/DEV0337-preserve-existing-demo-coach-data.md) | Backend | Nonproduction data integrity | Completed | Create-only setup and seed replay preserve six retained coaches and private logins; 328 unit/server and 6 disposable database checks passed. |
 | [DEV0314 — Persist booking-linked coach reviews](archive/backend/DEV0314-persist-booking-linked-coach-reviews.md)                                      | Backend      | M10 — Coach marketplace websites           | Completed   | Pair-review backend complete; 307 tests, 18 fresh/upgrade DB checks and build pass; UI completion/hosted rollout remain separate.                                                                                                                                          |
 | [DEV0336 — Add Fitness and a sixth demo coach](archive/backend/DEV0336-add-fitness-and-sixth-demo-coach.md) | Backend | Coach discovery and nonproduction fixtures | Completed | Fitness category and one additional fictional coach with preserved local/dev tester accounts. |
 | [DEV0335 — Provision nonproduction demo coaches](archive/backend/DEV0335-provision-nonproduction-demo-coaches.md) | Backend | Development and tester fixtures | Completed | Five local/dev fictional coach profiles and private tester logins; preservation, 308 tests and 20 responsive views passed. |

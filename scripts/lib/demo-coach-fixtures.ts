@@ -105,19 +105,7 @@ export const DEMO_COACH_FIXTURES = SEEDED_COACH_ACCOUNTS.map((coach, index) => {
 export const DEMO_FIXTURE_VERSION = 1;
 export const FOUNDATION_RUN_ID = "20000000-0000-4000-8000-000000000001";
 
-export function fitnessDemoCoachSeedSql(seed: string) {
-  const start = "-- BEGIN DEV0336 FITNESS COACH";
-  const end = "-- END DEV0336 FITNESS COACH";
-  if (
-    seed.split(start).length !== 2 ||
-    seed.split(end).length !== 2 ||
-    seed.indexOf(start) >= seed.indexOf(end)
-  )
-    throw new Error(
-      "The exact additive Fitness demo seed block is unavailable.",
-    );
-  return seed.slice(seed.indexOf(start) + start.length, seed.indexOf(end));
-}
+export { fitnessDemoCoachSeedSql } from "./demo-coach-seed.mjs";
 
 export type DemoCoachState = {
   profile_id: string;
@@ -170,24 +158,6 @@ export function assertDemoCoachStates(rows: readonly DemoCoachState[]) {
   }
 }
 
-export function needsDemoInitialization(
-  metadata: Record<string, unknown>,
-  part: "password" | "profile" | "website",
-) {
-  const version = metadata[`movx_demo_${part}_version`];
-  if (version === undefined) return true;
-  if (
-    typeof version !== "number" ||
-    !Number.isSafeInteger(version) ||
-    version < 1
-  )
-    throw new Error(
-      "Invalid demo initialization marker; existing credentials/data were preserved.",
-    );
-  // An older checkout must never undo initialization from a newer fixture version.
-  return version < DEMO_FIXTURE_VERSION;
-}
-
 export function sqlLiteral(value: string) {
   if (value.includes("\0")) throw new Error("NUL is not valid fixture text.");
   return "'" + value.replaceAll("'", "''") + "'";
@@ -206,7 +176,11 @@ export function demoCoachDefaultsStatements(
     )
   )
     throw new Error("Unknown demo profile in fixture plan.");
-  const statements = DEMO_COACH_FIXTURES.map((coach) => {
+  const selected = DEMO_COACH_FIXTURES.filter((coach) =>
+    wanted.has(coach.profileId),
+  );
+  if (!selected.length) return "select true as preserved;";
+  const statements = selected.map((coach) => {
     const profile = sqlLiteral(coach.profileId) + "::uuid";
     const auth = sqlLiteral(coach.authUserId) + "::uuid";
     const run = sqlLiteral(FOUNDATION_RUN_ID) + "::uuid";
@@ -222,23 +196,6 @@ export function demoCoachDefaultsStatements(
       update app.demo_run_participants set role='member',updated_at=statement_timestamp() where profile_id=${profile} and run_id=${run} and role<>'member';
       update app.coach_profiles set record_source='user',updated_at=statement_timestamp() where profile_id=${profile} and run_id=${run} and record_source='fixture';
       ${
-        profileIds.includes(coach.profileId)
-          ? `
-      update app.coach_profiles set bio=${sqlLiteral(coach.bio)},updated_at=statement_timestamp()
-        where profile_id=${profile} and run_id=${run} and (bio=${sqlLiteral(coach.previousBio)} or btrim(bio)='');
-      update app.coach_profiles set portrait_source='fixture',portrait_path=${sqlLiteral(coach.portraitPath)},portrait_updated_at=statement_timestamp(),updated_at=statement_timestamp()
-        where profile_id=${profile} and run_id=${run} and portrait_source is null and portrait_path is null and portrait_updated_at is null;
-      `
-          : ""
-      }
-      ${
-        websiteIds.includes(coach.profileId)
-          ? `
-      insert into app.coach_website_content(run_id,profile_id,content,revision) values(${run},${profile},${sqlLiteral(JSON.stringify(coach.website))}::jsonb,1) on conflict do nothing;
-      `
-          : ""
-      }
-      ${
         passwordIds.includes(coach.profileId)
           ? `
       if to_regprocedure('app.record_password_method(uuid)') is not null then perform app.record_password_method(${auth}); end if;
@@ -253,7 +210,7 @@ export function demoCoachDefaultsStatements(
     select set_config('app.coach_profile_management','on',true);
     select p.id from app.profiles p join app.coach_profiles c on c.profile_id=p.id
       join app.demo_run_participants d on d.profile_id=p.id and d.run_id=c.run_id
-      where c.run_id='${FOUNDATION_RUN_ID}'::uuid and p.id in (${DEMO_COACH_FIXTURES.map((coach) => sqlLiteral(coach.profileId) + "::uuid").join(",")})
+      where c.run_id='${FOUNDATION_RUN_ID}'::uuid and p.id in (${selected.map((coach) => sqlLiteral(coach.profileId) + "::uuid").join(",")})
       order by p.id for update of p,c,d;
     do $demo_defaults$ begin ${statements.join("\n")} end $demo_defaults$;`;
 }

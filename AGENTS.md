@@ -68,6 +68,12 @@ Use the development ticket's implementation record and validation results as the
 
 ## Product requirements
 
+### Retained demo coach data
+
+- Follow the [retained demo data contract](docs/mvp-spec.md#8-identity-data-and-demo-integrity) when changing startup, provisioning, seeds, migrations or rehearsals.
+- Normal startup performs no demo provisioning. Manual demo setup creates missing fresh accounts only; missing/old initialization markers never authorize changing an existing account or filling its cleared/empty content. Use disposable datasets or uniquely tagged temporary accounts for tests.
+- A future change to retained demo data requires an explicit user request and a development ticket naming the exact records, intended changes and preservation/validation evidence. Owner-requested edits and individual account recovery remain ordinary product behavior. Do not use a reset or credential rotation to repair a login without that authorization.
+
 Implement against the specification's [scheduling state model](docs/mvp-spec.md#5-scheduling-state-model), [booking and recovery](docs/mvp-spec.md#7-requests-booking-and-recovery), [identity, data and demo integrity](docs/mvp-spec.md#8-identity-data-and-demo-integrity), and [scheduling behavior and permissions](docs/mvp-spec.md#9-scheduling-behavior-and-permissions). Use its [confirmed decision register](docs/mvp-spec.md#2-confirmed-target-and-decisions), [definition of done](docs/mvp-spec.md#11-definition-of-done) and [acceptance matrix](docs/mvp-spec.md#13-acceptance-matrix) to select checks. Keep the requirements in that document rather than restating them here.
 
 ## Validation and definition of done

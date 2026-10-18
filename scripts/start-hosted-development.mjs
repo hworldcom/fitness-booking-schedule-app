@@ -1,4 +1,4 @@
-import { spawn, execFileSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { fileURLToPath } from "node:url";
 import { hostedDevelopmentConfiguration } from "./lib/hosted-environment.mjs";
@@ -16,18 +16,6 @@ async function main() {
     return;
   }
   const environment = { ...process.env };
-  // Development-only initialization; production build/start never import this script.
-  execFileSync(
-    process.execPath,
-    [
-      "--import",
-      "tsx",
-      fileURLToPath(new URL("./provision-demo-coaches.ts", import.meta.url)),
-      "--environment",
-      "dev",
-    ],
-    { env: process.env, stdio: "inherit" },
-  );
   for (const name of [
     "COACH_REVIEW_DATABASE_URL",
     "SUPABASE_SERVICE_ROLE_KEY",

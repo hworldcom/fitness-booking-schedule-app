@@ -7,6 +7,7 @@ import {
   LOCAL_SUPABASE_DATABASE_CONTAINER,
 } from "./lib/local-supabase-project.mjs";
 import { seedBeforeFitness } from "./lib/seed-compatibility.mjs";
+import { fitnessDemoCoachSeedSql } from "./lib/demo-coach-seed.mjs";
 assertLocalSupabaseConfiguration(readFileSync("supabase/config.toml", "utf8"));
 const target = "20261018000500_fitness_discipline.sql";
 const migrations = readdirSync("supabase/migrations")
@@ -83,7 +84,34 @@ try {
         ),
         previous,
       );
-    psql(database, seed);
+    if (mode === "fresh") {
+      psql(
+        database,
+        `insert into app.profiles(id,slug,display_name,initials,bio,avatar_color,record_source)
+        values('10000000-0000-4000-8000-000000000002','daniel-park','Preserved partial fixture','PF','Retained content','blue','fixture');`,
+      );
+      assert.throws(
+        () => psql(database, seed),
+        /Partial demo foundation requires explicit repair/,
+      );
+      assert.equal(
+        psql(database, "select count(*) from app.demo_runs;"),
+        "0\n",
+      );
+      assert.equal(
+        psql(
+          database,
+          "select display_name from app.profiles where id='10000000-0000-4000-8000-000000000002';",
+        ),
+        "Preserved partial fixture\n",
+      );
+      psql(
+        database,
+        "delete from app.profiles where id='10000000-0000-4000-8000-000000000002';",
+      );
+    }
+    // Retained datasets are never reseeded; this is the explicitly scoped new fixture.
+    psql(database, mode === "upgrade" ? fitnessDemoCoachSeedSql(seed) : seed);
     assert.equal(
       psql(
         database,
@@ -98,7 +126,10 @@ try {
         "tsx",
         "--conditions=react-server",
         "--test",
+        "--test-concurrency=1",
         "tests/database/fitness.test.ts",
+        "tests/database/demo-coaches.test.ts",
+        "tests/database/demo-preservation.test.ts",
       ],
       {
         encoding: "utf8",
@@ -111,7 +142,7 @@ try {
     );
     process.stdout.write(output);
     console.log(
-      `Passed Fitness ${mode} migration, seed and owner/group persistence; disposable database removed on exit.`,
+      `Passed ${mode} Fitness migration, seed and demo preservation; disposable database removed on exit.`,
     );
   }
 } finally {

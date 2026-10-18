@@ -1,3 +1,17 @@
+-- DEV0337: bootstrap a new foundation only. Existing tester data is authoritative.
+-- Replaying the complete seed must not restore deleted content or old defaults.
+do $demo_bootstrap$
+begin
+  if exists(select 1 from app.demo_runs where id='20000000-0000-4000-8000-000000000001') then
+    return;
+  end if;
+  if exists(select 1 from app.profiles where id in (
+    '10000000-0000-4000-8000-000000000002','10000000-0000-4000-8000-000000000005',
+    '10000000-0000-4000-8000-000000000007','10000000-0000-4000-8000-000000000008',
+    '10000000-0000-4000-8000-000000000009','10000000-0000-4000-8000-000000000013')) then
+    raise exception 'Partial demo foundation requires explicit repair; existing data was preserved';
+  end if;
+
 insert into app.profiles (
   id,
   auth_user_id,
@@ -538,3 +552,6 @@ where c.run_id='20000000-0000-4000-8000-000000000001' and c.profile_id='10000000
  and c.record_source='fixture' and p.record_source='fixture' and p.auth_user_id is null and p.claimed_at is null
 on conflict do nothing;
 -- END DEV0336 FITNESS COACH
+
+end;
+$demo_bootstrap$;

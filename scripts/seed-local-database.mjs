@@ -13,7 +13,9 @@ const connection = postgres(localDatabaseUrl, {
 try {
   const seedSql = await readFile(seedPath, "utf8");
   await connection.unsafe(seedSql);
-  console.log("Applied supabase/seed.sql to the local database.");
+  console.log(
+    "Seed bootstrap complete. Existing foundation datasets are preserved.",
+  );
 } catch (error) {
   const message =
     error instanceof Error
