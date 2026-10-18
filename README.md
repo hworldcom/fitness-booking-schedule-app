@@ -219,6 +219,8 @@ npm run test:coach-website-db
 npm run test:coach-website
 npm run test:coach-starting-rates-db
 npm run test:coach-starting-rates
+npm run test:coach-public-urls-db
+npm run test:coach-public-urls
 npm run lint
 npm run typecheck
 npm run format:check

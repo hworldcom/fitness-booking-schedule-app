@@ -1,3 +1,4 @@
+import { coachProfileHref } from "@/domain/coach-public-url";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, MapPin } from "lucide-react";
 import type { FocusEventHandler, Ref } from "react";
@@ -24,7 +25,7 @@ export function CompactCoachCard({
   onShowOnMap,
 }: CompactCoachCardProps) {
   const { coach, primaryLocation } = entry;
-  const profileHref = `/coaches/${coach.slug}`;
+  const profileHref = coachProfileHref(coach);
   const Heading = "h3";
   const trustLabel =
     coach.trustKind === "verified"

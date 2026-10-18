@@ -1,6 +1,39 @@
 import { sql } from "drizzle-orm";
-import { check, date, integer, text, unique, uuid } from "drizzle-orm/pg-core";
+import {
+  check,
+  date,
+  index,
+  integer,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { app, profiles } from "./foundation";
+
+/** Published reservations only; accountPersonalDetails.username remains canonical. */
+export const coachPublicHandles = app.table(
+  "coach_public_handles",
+  {
+    username: text("username").primaryKey(),
+    profileId: uuid("profile_id").references(() => profiles.id, {
+      onDelete: "set null",
+    }),
+    confirmedAt: timestamp("confirmed_at", {
+      withTimezone: true,
+      mode: "string",
+    })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    check(
+      "coach_public_handles_username_check",
+      sql`${table.username} ~ '^[a-z][a-z0-9_]{2,29}$'`,
+    ),
+    index("coach_public_handles_owner").on(table.profileId),
+  ],
+);
 
 export const accountPersonalDetails = app.table(
   "account_personal_details",

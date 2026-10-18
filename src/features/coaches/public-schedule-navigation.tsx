@@ -1,3 +1,4 @@
+import { coachProfileHref } from "@/domain/coach-public-url";
 import Link from "next/link";
 import "./public-schedule.css";
 import {
@@ -17,10 +18,12 @@ export function publicScheduleDateLabel(date: string, short = false) {
 
 export function PublicScheduleNavigation({
   slug,
+  publicPath,
   selection,
   counts,
 }: {
   slug: string;
+  publicPath?: string;
   selection: ReturnType<typeof publicScheduleSelection>;
   counts: ReadonlyMap<string, number>;
 }) {
@@ -34,20 +37,23 @@ export function PublicScheduleNavigation({
         {selection.previous ? (
           <Link
             prefetch={false}
-            href={publicScheduleHref(slug, selection.previous)}
+            href={publicScheduleHref(slug, selection.previous, publicPath)}
           >
             Previous dates
           </Link>
         ) : (
           <span aria-disabled="true">Previous dates</span>
         )}
-        <Link prefetch={false} href={publicScheduleHref(slug, selection.today)}>
+        <Link
+          prefetch={false}
+          href={publicScheduleHref(slug, selection.today, publicPath)}
+        >
           Today
         </Link>
         {selection.next ? (
           <Link
             prefetch={false}
-            href={publicScheduleHref(slug, selection.next)}
+            href={publicScheduleHref(slug, selection.next, publicPath)}
           >
             Next dates
           </Link>
@@ -60,7 +66,7 @@ export function PublicScheduleNavigation({
           <Link
             key={date}
             prefetch={false}
-            href={publicScheduleHref(slug, date)}
+            href={publicScheduleHref(slug, date, publicPath)}
             aria-current={date === selection.date ? "date" : undefined}
           >
             <time dateTime={date}>{publicScheduleDateLabel(date, true)}</time>
@@ -72,7 +78,7 @@ export function PublicScheduleNavigation({
         ))}
       </nav>
       <form
-        action={`/coaches/${encodeURIComponent(slug)}#private-schedule`}
+        action={`${coachProfileHref({ slug, publicPath })}#private-schedule`}
         className="public-schedule-date-form"
       >
         <label htmlFor="private-session-date">Choose a date</label>

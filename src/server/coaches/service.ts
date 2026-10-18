@@ -1,4 +1,8 @@
 import "server-only";
+import {
+  publicCoachPathsRecord,
+  publicCoachHandleRecord,
+} from "@/server/db/coaches/public-url-repository";
 
 import type {
   CoachAvailabilityInput,
@@ -60,6 +64,9 @@ export async function publicCoachDirectory(
 ): Promise<CoachDirectoryState> {
   try {
     const entries = await publicCoachDirectoryRecords(filters);
+    const paths = await publicCoachPathsRecord(
+      entries.map((entry) => entry.coach.slug),
+    );
     const websites = await publicCoachWebsiteCards(
       entries.map((entry) => entry.coach.profileId),
     );
@@ -70,7 +77,20 @@ export async function publicCoachDirectory(
           const website = websites.get(entry.coach.profileId);
           // A visibility change between queries removes the entry rather than
           // presenting stale public website content as an empty successful read.
-          return website ? [Object.freeze({ ...entry, website })] : [];
+          return website
+            ? [
+                Object.freeze({
+                  ...entry,
+                  coach: {
+                    ...entry.coach,
+                    ...(paths.has(entry.coach.slug)
+                      ? { publicPath: paths.get(entry.coach.slug) }
+                      : {}),
+                  },
+                  website,
+                }),
+              ]
+            : [];
         }),
       ),
       filters,
@@ -89,6 +109,7 @@ export async function publicCoachProfile(
   try {
     const coach = await publicCoachProfileRecord(slug);
     if (!coach) return Object.freeze({ status: "not-found" });
+    const path = await publicCoachHandleRecord(slug, true);
     const schedule = await publicCoachAvailabilitySnapshot(coach.profileId);
     const website = await publicCoachWebsite(slug);
     if (website.status !== "ready")
@@ -97,7 +118,7 @@ export async function publicCoachProfile(
       });
     return Object.freeze({
       status: "ready",
-      coach,
+      coach: { ...coach, ...(path ? { publicPath: path.publicPath } : {}) },
       ...schedule,
       website: website.website,
     });

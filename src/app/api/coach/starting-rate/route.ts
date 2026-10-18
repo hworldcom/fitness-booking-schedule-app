@@ -30,6 +30,7 @@ export async function PUT(request: Request) {
     revalidatePath("/");
     revalidatePath("/explore");
     revalidatePath("/coaches/[slug]", "page");
+    revalidatePath("/[handle]", "page");
   }
   return startingRateResponse(result);
 }

@@ -1,4 +1,5 @@
 "use client";
+import { coachProfileHref } from "@/domain/coach-public-url";
 
 import { CalendarCheck2, Clock3, RotateCcw } from "lucide-react";
 import Link from "next/link";
@@ -49,6 +50,7 @@ type CoachMarketplaceProps = Readonly<{
   coachProfileId: string;
   coachDisplayName: string;
   coachSlug: string;
+  publicPath?: string;
   slots: readonly PublicCoachAvailabilitySlot[];
   actor: MarketplaceActor;
   referenceTime: string;
@@ -186,7 +188,9 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
   }
   const signIn =
     "/sign-in?returnTo=" +
-    encodeURIComponent(publicScheduleHref(props.coachSlug, selection.date));
+    encodeURIComponent(
+      publicScheduleHref(props.coachSlug, selection.date, props.publicPath),
+    );
   const actions = props.actions ?? {
     request: requestPrivateSessionAction,
     withdraw: withdrawPrivateSessionRequestAction,
@@ -378,6 +382,7 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
       >
         <PublicScheduleNavigation
           slug={props.coachSlug}
+          publicPath={props.publicPath}
           selection={selection}
           counts={counts}
         />
@@ -486,7 +491,12 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
             })}
           </ol>
         )}
-        <form action={`/coaches/${encodeURIComponent(props.coachSlug)}`}>
+        <form
+          action={coachProfileHref({
+            slug: props.coachSlug,
+            publicPath: props.publicPath,
+          })}
+        >
           <input type="hidden" name="date" value={selection.date} />
           <button type="submit" className="public-schedule-reload">
             Refresh available times

@@ -96,6 +96,8 @@ export type CoachTrainingLocation = Readonly<{
 }>;
 
 export type CoachProjection = Readonly<{
+  /** Present only after explicit public-handle confirmation on a visible coach. */
+  publicPath?: string;
   profileId: string;
   slug: string;
   displayName: string;

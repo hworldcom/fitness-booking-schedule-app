@@ -224,11 +224,13 @@ function AccountEditor({
           target,
           next.status === "username-taken"
             ? "That username is already taken. Try another."
-            : next.status === "conflict"
-              ? "These settings changed in another window. Your draft is kept. Load the latest settings before editing again."
-              : next.status === "invalid"
-                ? "Check these details, then try again."
-                : "We couldn’t save your settings. Your draft is kept; try again.",
+            : next.status === "username-required"
+              ? "This username has a published coach URL. Enter a replacement instead of clearing it."
+              : next.status === "conflict"
+                ? "These settings changed in another window. Your draft is kept. Load the latest settings before editing again."
+                : next.status === "invalid"
+                  ? "Check these details, then try again."
+                  : "We couldn’t save your settings. Your draft is kept; try again.",
           next.status === "conflict",
         );
     } finally {
@@ -446,8 +448,8 @@ function AccountEditor({
             {details && !loginInput && edit("login-security")}
           </div>
           <p className="account-section-intro">
-            Reserve a username for future sign-in and profile links. These
-            features aren’t available yet.
+            Your username stays private until you confirm a public coach URL in
+            Coach Profile. Sign in with your email address.
           </p>
           {!details ? (
             unavailable
@@ -475,6 +477,11 @@ function AccountEditor({
                   <span>
                     3–30 letters, numbers or underscores, starting with a
                     letter. This isn’t your chat name.
+                  </span>
+                  <span>
+                    If you have confirmed a public coach URL, saving changes it
+                    to the new username. Previous public links stay reserved to
+                    you. Enter a replacement rather than clearing it.
                   </span>
                 </label>
                 {feedback(login)}

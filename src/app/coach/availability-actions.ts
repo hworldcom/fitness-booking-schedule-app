@@ -59,6 +59,7 @@ export async function changeAvailabilityEditorAction(
   ) {
     revalidatePath("/coach");
     revalidatePath("/coaches/[slug]", "page");
+    revalidatePath("/[handle]", "page");
   }
   return result;
 }

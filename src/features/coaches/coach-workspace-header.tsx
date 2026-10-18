@@ -1,3 +1,4 @@
+import { coachProfileHref } from "@/domain/coach-public-url";
 import Link from "next/link";
 import { Eye } from "lucide-react";
 import type { CoachProjection } from "@/domain/coaches";
@@ -42,7 +43,7 @@ export function CoachWorkspaceHeader({
           </span>
         </div>
         {coach?.visibility === "visible" && (
-          <Link className="button secondary" href={`/coaches/${coach.slug}`}>
+          <Link className="button secondary" href={coachProfileHref(coach)}>
             <Eye size={16} aria-hidden="true" /> View public profile
           </Link>
         )}

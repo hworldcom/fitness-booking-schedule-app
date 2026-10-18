@@ -1,0 +1,165 @@
+import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import { readFileSync, readdirSync } from "node:fs";
+import { randomUUID } from "node:crypto";
+import {
+  LOCAL_SUPABASE_DATABASE_CONTAINER,
+  assertLocalSupabaseConfiguration,
+} from "./lib/local-supabase-project.mjs";
+assertLocalSupabaseConfiguration(readFileSync("supabase/config.toml", "utf8"));
+const container = LOCAL_SUPABASE_DATABASE_CONTAINER;
+const suffix = randomUUID().replaceAll("-", "").slice(0, 12);
+const created = [];
+const target = "20261018000600_public_coach_usernames.sql";
+const migrations = readdirSync("supabase/migrations")
+  .filter((file) => file.endsWith(".sql") && file <= target)
+  .sort();
+assert.equal(migrations.at(-1), target);
+function docker(args, input) {
+  return execFileSync(
+    "docker",
+    ["exec", ...(input === undefined ? [] : ["-i"]), container, ...args],
+    {
+      input,
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
+      stdio: ["pipe", "pipe", "pipe"],
+    },
+  );
+}
+function psql(database, input) {
+  assert.match(database, /^dev0331_[a-z0-9_]+$/);
+  return docker(
+    [
+      "psql",
+      "-X",
+      "-qAt",
+      "-U",
+      "supabase_admin",
+      "-d",
+      database,
+      "-v",
+      "ON_ERROR_STOP=1",
+      "--single-transaction",
+    ],
+    input,
+  );
+}
+const infrastructure = docker([
+  "pg_dump",
+  "-U",
+  "supabase_admin",
+  "-d",
+  "postgres",
+  "--schema-only",
+]);
+const preservation = `create temporary table handle_preserved(table_name text,hash text);
+do $$ declare t record;fingerprint text; begin
+ for t in select tablename from pg_tables where schemaname='app' and tablename<>'coach_public_handles' order by tablename loop
+  execute format('select md5(coalesce(jsonb_agg(to_jsonb(v) order by to_jsonb(v)::text)::text,''[]'')) from app.%I v',t.tablename) into fingerprint;
+  insert into handle_preserved values(t.tablename,fingerprint);
+ end loop;
+end $$;
+select jsonb_agg(to_jsonb(t) order by table_name) from handle_preserved t;
+select md5(coalesce(jsonb_agg(to_jsonb(o) order by id)::text,'[]')) from storage.objects o;
+select md5(string_agg(pg_get_functiondef(p.oid),'\n' order by p.oid::regprocedure::text)) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='app' and p.proname~'(book|request|message|group)';`;
+function run(database, files) {
+  const output = execFileSync(
+    process.execPath,
+    [
+      "--import",
+      "tsx",
+      "--conditions=react-server",
+      "--test",
+      "--test-concurrency=1",
+      ...files,
+    ],
+    {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        DATABASE_TEST_URL: `postgresql://postgres:postgres@127.0.0.1:55322/${database}`,
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+      maxBuffer: 8 * 1024 * 1024,
+    },
+  );
+  process.stdout.write(output);
+}
+try {
+  for (const mode of ["fresh", "upgrade"]) {
+    const database = `dev0331_${suffix}_${mode}`;
+    docker(["createdb", "-U", "supabase_admin", "-O", "postgres", database]);
+    created.push(database);
+    psql(database, infrastructure + "\nDROP SCHEMA app CASCADE;\n");
+    for (const file of migrations.filter((file) => file !== target))
+      psql(database, readFileSync("supabase/migrations/" + file, "utf8"));
+    if (mode === "upgrade") {
+      psql(database, readFileSync("supabase/seed.sql", "utf8"));
+      psql(
+        database,
+        `insert into app.coach_website_content(run_id,profile_id,revision,content)
+        select run_id,profile_id,5,'{"brandLabel":"Retained branding","introduction":"Retained introduction","approach":"","experience":"","focusLabels":[],"faqs":[],"links":[]}'::jsonb from app.coach_profiles order by profile_id limit 1;
+        update app.profiles set avatar_storage_path=id::text||'/91310000-0000-4000-8000-000000000001.webp',avatar_updated_at='2026-10-01T10:00:00Z' where id=(select id from app.profiles order by id limit 1);
+        insert into storage.objects(bucket_id,name,metadata) select 'account-avatars',avatar_storage_path,'{"mimetype":"image/webp","size":100}'::jsonb from app.profiles where avatar_storage_path is not null;`,
+      );
+      const before = psql(database, preservation);
+      psql(database, readFileSync("supabase/migrations/" + target, "utf8"));
+      assert.equal(
+        psql(database, preservation),
+        before,
+        "Public-handle migration changed existing application data or booking/request/message/group functions.",
+      );
+      assert.equal(
+        psql(database, "select count(*) from app.coach_public_handles;"),
+        "0\n",
+      );
+    } else {
+      psql(database, readFileSync("supabase/migrations/" + target, "utf8"));
+      psql(database, readFileSync("supabase/seed.sql", "utf8"));
+      run(database, [
+        "tests/database/coach-bookings.test.ts",
+        "tests/database/registration-profile.test.ts",
+        "tests/database/private-messages.test.ts",
+        "tests/database/group-sessions.test.ts",
+      ]);
+    }
+    run(database, ["tests/database/coach-public-urls.test.ts"]);
+    // Application rollback keeps the additive schema and reservations: old slug
+    // readers and original Account/enrollment functions remain callable.
+    assert.ok(
+      Number(
+        psql(
+          database,
+          "select count(*) from app.coach_profiles where visibility='visible';",
+        ).trim(),
+      ) > 0,
+    );
+
+    console.log(
+      `Passed DEV0331 ${mode} migration/privacy/claim checks through ${target}; later peer migrations are outside this focused run.`,
+    );
+  }
+} catch (error) {
+  console.error(
+    error instanceof Error
+      ? error.message
+      : "Public-handle database checks failed.",
+  );
+  if (error?.stdout) console.error(String(error.stdout));
+  if (error?.stderr) console.error(String(error.stderr));
+  process.exitCode = 1;
+} finally {
+  for (const database of created.reverse()) {
+    try {
+      docker(["dropdb", "-U", "supabase_admin", database]);
+      console.log(`Removed ${database}.`);
+    } catch {
+      console.error(
+        `Cleanup failed for owned disposable database ${database}.`,
+      );
+      process.exitCode = 1;
+    }
+  }
+}

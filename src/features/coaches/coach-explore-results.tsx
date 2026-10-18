@@ -1,4 +1,5 @@
 "use client";
+import { coachProfileHref } from "@/domain/coach-public-url";
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -263,7 +264,7 @@ export function CoachExploreResults({
                 </span>
               </div>
               <CoachTodayAvailability entry={selectedEntry} limit={5} />
-              <Link href={`/coaches/${selectedEntry.coach.slug}`}>
+              <Link href={coachProfileHref(selectedEntry.coach)}>
                 View full profile and schedule
                 <ArrowRight size={15} aria-hidden="true" />
               </Link>

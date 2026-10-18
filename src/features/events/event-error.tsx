@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import "./events.css";
 
@@ -21,7 +22,7 @@ export function EventError({ retry }: { retry: () => void }) {
             Retry loading status
           </button>
           <a href={path}>Reload this page</a>
-          <a href="/sessions/groups">Review my group registrations</a>
+          <Link href="/sessions/groups">Review my group registrations</Link>
         </div>
       </section>
     </div>

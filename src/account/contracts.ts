@@ -28,6 +28,7 @@ export type AccountResult =
         | "invalid"
         | "conflict"
         | "username-taken"
+        | "username-required"
         | "signed-out"
         | "forbidden"
         | "unavailable";
@@ -151,6 +152,7 @@ export function isAccountResult(value: unknown): value is AccountResult {
         "invalid",
         "conflict",
         "username-taken",
+        "username-required",
         "signed-out",
         "forbidden",
         "unavailable",

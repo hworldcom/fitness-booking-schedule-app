@@ -90,6 +90,7 @@ function refreshScheduling() {
   revalidatePath("/coach");
   revalidatePath("/explore");
   revalidatePath("/coaches/[slug]", "page");
+  revalidatePath("/[handle]", "page");
 }
 
 export async function loadOwnedCoachBookingRequestPageAction(

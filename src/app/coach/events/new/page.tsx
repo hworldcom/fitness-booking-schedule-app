@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { signInHref } from "@/auth/return-to";
@@ -75,7 +76,7 @@ export default async function Page({
               An approved/demo coach account, active training venue and coach
               discipline are required to save a draft.
             </p>
-            <a href="/profile/coach">Review coach profile and venues</a>
+            <Link href="/profile/coach">Review coach profile and venues</Link>
           </section>
         )}
       </CoachEventsAccess>

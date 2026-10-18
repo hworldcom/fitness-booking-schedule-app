@@ -1,3 +1,4 @@
+import { coachProfileHref } from "./coach-public-url";
 import { addCalendarDays, calendarDate } from "./coach-calendar";
 import type { PublicCoachAvailabilitySlot } from "./coaches";
 import { isAvailabilityDate } from "./effective-availability";
@@ -31,8 +32,12 @@ export function publicScheduleSelection(value: unknown, databaseTime: string) {
   });
 }
 
-export function publicScheduleHref(slug: string, date: string) {
-  return `/coaches/${encodeURIComponent(slug)}?date=${encodeURIComponent(date)}#private-schedule`;
+export function publicScheduleHref(
+  slug: string,
+  date: string,
+  publicPath?: string,
+) {
+  return `${coachProfileHref({ slug, publicPath })}?date=${encodeURIComponent(date)}#private-schedule`;
 }
 
 /** Presentation follows the public database projection; mutations recheck it. */

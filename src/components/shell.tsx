@@ -1,4 +1,5 @@
 "use client";
+import { publicCoachHandle } from "@/domain/coach-public-url";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -183,6 +184,7 @@ export function isPublicMarketplacePath(path: string) {
     : "";
   return (
     publicMarketplacePaths.has(path) ||
+    (path.startsWith("/") && publicCoachHandle(path.slice(1)) !== null) ||
     (eventSlug.length > 0 && !eventSlug.includes("/")) ||
     (coachSlug.length > 0 && !coachSlug.includes("/"))
   );

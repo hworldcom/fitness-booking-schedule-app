@@ -23,6 +23,9 @@ import { profileInitials } from "@/auth/profile-presentation";
 import { CoachWorkspaceHeader } from "./coach-workspace-header";
 import { CoachWorkspaceNavigation } from "./coach-workspace-navigation";
 import { CoachTrainingLocationManager } from "./coach-training-location-manager";
+import { CoachPublicUrlSettings } from "./coach-public-url-settings";
+import type { CoachPublicHandleResult } from "@/domain/coach-public-url";
+import "./coach-public-url-settings.css";
 
 const INITIAL_COACH_PROFILE_ACTION_STATE: CoachProfileActionState =
   Object.freeze({ status: "idle", message: "", errors: Object.freeze([]) });
@@ -33,12 +36,14 @@ export function CoachProfileEditor({
   ownerDisplayName,
   coachAccess,
   locationSearchConfiguration,
+  publicUrl,
 }: {
   coach: CoachProjection | null;
   gyms: readonly CoachGymOption[];
   ownerDisplayName: string;
   coachAccess: CoachAccessProjection;
   locationSearchConfiguration: LocationSearchConfiguration;
+  publicUrl?: CoachPublicHandleResult;
 }) {
   const [state, formAction, pending] = useActionState(
     updateCoachProfileAction,
@@ -80,6 +85,17 @@ export function CoachProfileEditor({
       </header>
 
       <CoachApplicationBanner access={coachAccess} />
+      {publicationAllowed && publicUrl && (
+        <CoachPublicUrlSettings
+          key={
+            publicUrl.status === "ready"
+              ? `${publicUrl.username}:${publicUrl.revision}:${publicUrl.confirmed}`
+              : publicUrl.status
+          }
+          initial={publicUrl}
+          visible={coach?.visibility === "visible"}
+        />
+      )}
 
       <div className={`coach-profile-layout${coach ? "" : " no-preview"}`}>
         <div className="coach-profile-editor-column">

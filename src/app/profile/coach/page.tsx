@@ -6,6 +6,7 @@ import { CoachApplicationGate } from "@/features/coaches/coach-application-gate"
 import { signInHref } from "@/auth/return-to";
 import { resolveLocationSearchConfiguration } from "@/location";
 import { currentCoachEditor } from "@/server/coaches/service";
+import { currentCoachPublicHandle } from "@/server/coaches/public-url-service";
 
 export const metadata: Metadata = { title: "Your coach profile" };
 
@@ -64,6 +65,7 @@ export default async function Page() {
       gyms={state.gyms}
       ownerDisplayName={state.ownerDisplayName}
       coachAccess={state.coachAccess}
+      publicUrl={await currentCoachPublicHandle()}
       locationSearchConfiguration={resolveLocationSearchConfiguration(
         process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY,
       )}

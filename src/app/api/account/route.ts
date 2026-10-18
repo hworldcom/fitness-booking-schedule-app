@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import type { AccountResult } from "@/account/contracts";
 import { supabasePublicConfig } from "@/auth/config";
 import {
@@ -14,6 +15,7 @@ function response(result: AccountResult) {
     invalid: 400,
     conflict: 409,
     "username-taken": 409,
+    "username-required": 409,
     "signed-out": 401,
     forbidden: 403,
     unavailable: 503,
@@ -64,5 +66,13 @@ export async function POST(request: Request) {
   } finally {
     reader.releaseLock();
   }
-  return response(await saveCurrentAccountDetails(input));
+  const result = await saveCurrentAccountDetails(input);
+  if (result.status === "ready") {
+    revalidatePath("/");
+    revalidatePath("/explore");
+    revalidatePath("/profile/coach");
+    revalidatePath("/coaches/[slug]", "page");
+    revalidatePath("/[handle]", "page");
+  }
+  return response(result);
 }

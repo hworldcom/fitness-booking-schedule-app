@@ -54,6 +54,7 @@ function trainingLocationInput(formData: FormData) {
 }
 
 function revalidateCoachLocationPaths(slug?: string) {
+  revalidatePath("/[handle]", "page");
   revalidatePath("/profile/coach");
   revalidatePath("/explore");
   if (slug) revalidatePath(`/coaches/${slug}`);
@@ -287,6 +288,7 @@ export async function updateCoachProfileAction(
 
   revalidatePath("/explore");
   revalidatePath(`/coaches/${result.slug}`);
+  revalidatePath("/[handle]", "page");
   revalidatePath("/profile/coach");
   return Object.freeze({
     status: "saved",

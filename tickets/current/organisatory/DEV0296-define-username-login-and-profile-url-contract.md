@@ -9,7 +9,7 @@
 
 ## Objective and context
 
-Current boundary after the later 17 October 2026 user review: saved canonical unique usernames are implemented under DEV0295/DEV0325. The user now selected public coach username URLs as an M10 outcome; [DEV0331](../backend/DEV0331-enable-username-based-public-coach-urls.md) under COR0028 owns those routes, legacy compatibility and published-handle rename/alias safety. Username login and public/private destinations for non-coach accounts remain separate future work here.
+Current boundary after the later 17 October 2026 user review: saved canonical unique usernames are implemented under DEV0295/DEV0325. The user now selected public coach username URLs as an M10 outcome; [DEV0331](../../archive/backend/DEV0331-enable-username-based-public-coach-urls.md) under COR0028 owns those routes, legacy compatibility and published-handle rename/alias safety. Username login and public/private destinations for non-coach accounts remain separate future work here.
 
 Historical planning originally deferred both login and profile URLs when optional handles were introduced; DEV0325 later required a handle for new registration without implementing either use. DEV0330 records the subsequent scope amendment rather than rewriting that enrollment history. Preferred chat/public coach names and private legal names remain separate.
 
