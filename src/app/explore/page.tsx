@@ -11,9 +11,9 @@ import {
 import { publicCoachDirectory } from "@/server/coaches/service";
 
 export const metadata: Metadata = {
-  title: "Explore martial-arts coaches",
+  title: "Explore coaches",
   description:
-    "Browse fictional martial-arts coach profiles by discipline and coach-confirmed public training place.",
+    "Browse martial-arts and fitness coaches by discipline and coach-confirmed public training place.",
 };
 
 export default async function Page({

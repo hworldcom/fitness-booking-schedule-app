@@ -49,7 +49,7 @@ npm ci
 npm run dev
 ```
 
-`npm run dev`, `dev:local` and `dev:docker` start the local Supabase PostgreSQL, Auth, Storage and Mailpit services, apply pending local migrations, prepare the restricted application login and preserve/provision `hoang@users.movx.test`. The app opens at [localhost:3100](http://localhost:3100); captured sign-in email is available in [Mailpit](http://127.0.0.1:55324).
+`npm run dev`, `dev:local` and `dev:docker` start the local Supabase PostgreSQL, Auth, Storage and Mailpit services, apply pending local migrations, prepare the restricted application login, preserve/provision `hoang@users.movx.test`, and initialize the six fictional coach profiles and private tester logins. The app opens at [localhost:3100](http://localhost:3100); captured sign-in email is available in [Mailpit](http://127.0.0.1:55324).
 
 The fresh Docker project is `movx-club-local`. Initial image downloads and database initialization can take several minutes. First startup builds its database from the accepted baseline/forward migrations and seed; later startups preserve its data and apply only pending migrations. The older `fitness-booking-social-app` database/upload volumes remain separate and untouched. Their optional historical transition remains [DEV0232](tickets/current/organisatory/DEV0232-restore-local-migration-continuity.md).
 
@@ -71,7 +71,7 @@ cp -n .env.development.local.example .env.development.local
 npm run dev:hosted
 ```
 
-Fill the placeholder values before startup. `dev:hosted` validates the dev project, dedicated runtime login and localhost origin. It starts no Docker services and performs no migration, seed or account provisioning. Missing or wrong hosted settings fail without a fallback. An existing app process keeps its target until restarted. Planned UAT is `https://test.movx.club`; planned production is `https://movx.club`. Provisioning status remains in [COR0026](tickets/current/organisatory/COR0026-separate-hosted-dev-and-production.md).
+Fill the placeholder values before startup. `dev:hosted` validates the dev project, dedicated runtime login and localhost origin. It starts no Docker services and performs no migrations or broad database seed. It initializes only the six allowlisted fictional coach profiles/accounts through the operator's existing Supabase CLI access; later starts preserve tester edits and passwords. Missing or wrong hosted settings fail without a fallback. An existing app process keeps its target until restarted. Planned UAT is `https://test.movx.club`; planned production is `https://movx.club`. Provisioning status remains in [COR0026](tickets/current/organisatory/COR0026-separate-hosted-dev-and-production.md).
 
 For a configuration-free production-mode public preview:
 
@@ -94,15 +94,19 @@ The local launcher reads the local public `API_URL` and `PUBLISHABLE_KEY` (or le
 
 Open `/register` to create an email/password account, open the captured confirmation email in the same browser and choose a display name. Returning users use `/sign-in`; existing passwordless accounts use **Forgot password?** to set a password on the same account. Read confirmation/reset messages from local Mailpit at [127.0.0.1:55324](http://127.0.0.1:55324). **Forgot password?** sends the password reset/setup email. After changing a password, sign in again on your devices. Google is truthfully unavailable until DEV0287 configures and proves it. See [Auth rollout and recovery](supabase/README.md#password-authentication-rollout) before using these flows on hosted dev. `Find a coach` continues as an athlete; `Become a coach` submits a coach application on the same account. Applicants may prepare a hidden coach profile, but only platform-approved coaches may publish or manage availability.
 
-For Docker athlete-account testing, sign in with `hoang@users.movx.test`. `npm run dev`, `dev:local` and `dev:docker` create this exact local-only account automatically and preserve its profile and private avatar on later starts. It starts without a user-set password and has no coach authority: choose **Forgot password?** on `/sign-in`, open the reset link in Mailpit in that same browser and set a password. Later startups preserve the password you set. You can also repair/provision it explicitly with `npm run auth:provision:test-user`. A deliberate `npm run db:reset` recreates the identity on the next Docker start but cannot restore a deleted uploaded image. These reserved `.test` accounts are not provisioned on hosted dev.
+For Docker athlete-account testing, sign in with `hoang@users.movx.test`. `npm run dev`, `dev:local` and `dev:docker` create this exact local-only account automatically and preserve its profile and private avatar on later starts. It starts without a user-set password and has no coach authority: choose **Forgot password?** on `/sign-in`, open the reset link in Mailpit in that same browser and set a password. Later startups preserve the password you set. You can also repair/provision it explicitly with `npm run auth:provision:test-user`. A deliberate `npm run db:reset` recreates the identity on the next Docker start but cannot restore a deleted uploaded image. This ordinary athlete test account is local-only; the separate six demo-coach accounts below are also provisioned on hosted dev.
 
-To exercise owner flows as the five fictional coaches:
+To exercise owner flows as the six fictional coaches:
 
 ```sh
 npm run auth:provision:coaches
 ```
 
-Use `daniel.park@coaches.movx.test`, `sam.lee@coaches.movx.test`, `nora.klein@coaches.movx.test`, `idris.malik@coaches.movx.test` or `elif.demir@coaches.movx.test` on `/sign-in`. These reserved `.test` addresses are fictional identifiers, not credentials. The command refuses non-loopback targets and is safe to rerun. `npm run db:reset` removes disposable local accounts.
+Use `daniel.park@coaches.movx.test`, `sam.lee@coaches.movx.test`, `nora.klein@coaches.movx.test`, `idris.malik@coaches.movx.test`, `elif.demir@coaches.movx.test` or `jake.miller@coaches.movx.test` on `/sign-in`. Normal local startup now prepares these automatically. Each has a fictional portrait, coaching biography and a unique generated initial password. Open the ignored private [local login file](work/demo-coaches/local.json) for email/password pairs. Do not commit or publish it. These accounts remain **Demo coaches** and retain their existing scheduling identities.
+
+`npm run demo:setup:local` prepares only the exact loopback project. `npm run demo:setup:dev` prepares only the allowlisted hosted development project and writes its separate [dev login file](work/demo-coaches/dev.json); it requires the existing Supabase CLI operator login and `.env.development.local`. Both commands run by default in their corresponding development launcher. Production build/start never run them; production/unknown/mixed targets are refused regardless of NODE_ENV. No real inbox email is sent.
+
+Initialization runs once per account. Later starts preserve edited names, descriptions, visibility, uploaded/removed portraits, website content and passwords. Sample website content initializes only after its separately owned migration exists. Existing profile content is preserved if it differs from the original seed. Initial credential setup for DEV0335 replaces the old demo passwords once and ends those demo sessions; subsequent starts do not. If a tester changes a password, the saved initial value becomes stale. Explicitly rotate only these demo passwords with `npm run demo:setup:local -- --reset-passwords` (or `demo:setup:dev`). Losing the private file alone never triggers a reset. `npm run db:reset` deliberately removes disposable local accounts; the next normal startup reprovisions them. If an interrupted setup leaves `work/demo-coaches/<environment>.lock`, check that no setup is running before removing that exact directory and rerunning. Provision one environment from one operator workspace at a time. No real coach approval, fabricated reviews or availability changes are included. See [DEV0335](tickets/archive/backend/DEV0335-provision-nonproduction-demo-coaches.md) for validation and hosted migration limits.
 
 The fictional seed profiles display `Demo coach`; they are never promoted to `Verified coach` by provisioning. Real approval is an owner-operated process until the separate admin-panel ticket is delivered.
 
@@ -252,3 +256,5 @@ npm run test:e2e
 - `public/`: local illustrative assets only; no real coach or venue affiliation is implied.
 
 Keep product requirements in the specification, workflow rules in `AGENTS.md`, and implementation evidence in development tickets.
+
+Fitness category and sixth fictional coach Jake Miller are recorded in [DEV0336](tickets/archive/backend/DEV0336-add-fitness-and-sixth-demo-coach.md). His reserved local/dev tester login is `jake.miller@coaches.movx.test`; use the corresponding private login file above. Existing tester passwords are preserved.

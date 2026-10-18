@@ -128,6 +128,11 @@ async function main() {
 
   const applicationEnvironment =
     localDevelopmentProcessEnvironment(readLocalStatus());
+  runStep(
+    "Preparing fictional coach profiles and tester logins without resetting data.",
+    npmCommand,
+    ["run", "--silent", "auth:provision:coaches"],
+  );
   if (args.includes("--setup-only")) {
     console.log(
       "Local Supabase setup is ready; no application server started.",

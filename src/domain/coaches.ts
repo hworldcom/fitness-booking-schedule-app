@@ -7,6 +7,7 @@ export const COACH_DISCIPLINES = Object.freeze([
   "Brazilian Jiu-Jitsu",
   "MMA",
   "Wrestling",
+  "Fitness",
 ] as const);
 
 export type CoachDiscipline = (typeof COACH_DISCIPLINES)[number];

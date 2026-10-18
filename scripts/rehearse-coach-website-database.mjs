@@ -1,3 +1,4 @@
+import { seedBeforeFitness } from "./lib/seed-compatibility.mjs";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync } from "node:fs";
@@ -42,7 +43,7 @@ function psql(database, input) {
   );
 }
 const migrations = readdirSync("supabase/migrations")
-  .filter((file) => file.endsWith(".sql"))
+  .filter((file) => file.endsWith(".sql") && file <= "20261018000200_coach_banner_cleanup_serialization.sql")
   .sort();
 const ownedMigrations = [
   "20261018000100_coach_website_content.sql",
@@ -81,7 +82,7 @@ try {
     ))
       psql(database, readMigration(file));
     if (mode === "upgrade") {
-      psql(database, readFileSync("supabase/seed.sql", "utf8"));
+      psql(database, seedBeforeFitness(readFileSync("supabase/seed.sql", "utf8")));
       // Preserve an actual old avatar reference and Storage metadata row as well
       // as seeded portraits, coaches and multiple training locations.
       psql(
@@ -103,7 +104,7 @@ try {
       );
     } else {
       for (const file of ownedMigrations) psql(database, readMigration(file));
-      psql(database, readFileSync("supabase/seed.sql", "utf8"));
+      psql(database, seedBeforeFitness(readFileSync("supabase/seed.sql", "utf8")));
     }
     const output = execFileSync(
       process.execPath,

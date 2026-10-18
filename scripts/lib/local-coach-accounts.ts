@@ -48,6 +48,14 @@ export const SEEDED_COACH_ACCOUNTS = Object.freeze([
     email: "elif.demir@coaches.movx.test",
     seedParticipantRole: "operator",
   }),
+  Object.freeze({
+    authUserId: "90000000-0000-4000-8000-000000000013",
+    profileId: "10000000-0000-4000-8000-000000000013",
+    slug: "jake-miller",
+    displayName: "Jake Miller",
+    email: "jake.miller@coaches.movx.test",
+    seedParticipantRole: "member",
+  }),
 ]) satisfies readonly SeededCoachAccount[];
 
 export type LocalSupabaseStatus = Readonly<{
@@ -175,7 +183,7 @@ export function assertSeededCoachDatabaseState(
   expectedState: "seeded-or-provisioned" | "provisioned",
 ) {
   if (rows.length !== SEEDED_COACH_ACCOUNTS.length) {
-    throw new Error("The five expected seeded coach records are unavailable.");
+    throw new Error("The expected seeded coach records are unavailable.");
   }
 
   const rowsByProfile = new Map(rows.map((row) => [row.profile_id, row]));

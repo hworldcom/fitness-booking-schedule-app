@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleDot,
+  Dumbbell,
   Flame,
   Footprints,
   HandFist,
@@ -30,6 +31,7 @@ const icons = {
   "Brazilian Jiu-Jitsu": CircleDot,
   MMA: Swords,
   Wrestling: UsersRound,
+  Fitness: Dumbbell,
 };
 
 export function MarketplaceDisciplineNavigation({

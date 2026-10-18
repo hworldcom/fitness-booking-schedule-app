@@ -33,18 +33,18 @@ function databaseRows(state: "fixture" | "user") {
 }
 
 test("seeded coach account allowlist is exact and collision-free", () => {
-  assert.equal(SEEDED_COACH_ACCOUNTS.length, 5);
+  assert.equal(SEEDED_COACH_ACCOUNTS.length, 6);
   assert.equal(
     new Set(SEEDED_COACH_ACCOUNTS.map((coach) => coach.authUserId)).size,
-    5,
+    6,
   );
   assert.equal(
     new Set(SEEDED_COACH_ACCOUNTS.map((coach) => coach.profileId)).size,
-    5,
+    6,
   );
   assert.equal(
     new Set(SEEDED_COACH_ACCOUNTS.map((coach) => coach.email)).size,
-    5,
+    6,
   );
   for (const coach of SEEDED_COACH_ACCOUNTS) {
     assert.match(coach.email, /^[a-z.]+@coaches\.movx\.test$/);

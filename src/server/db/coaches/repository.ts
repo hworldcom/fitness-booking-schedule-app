@@ -12,6 +12,7 @@ import type {
   CoachTrainingLocationInput,
 } from "@/domain/coaches";
 import {
+  COACH_DISCIPLINES,
   MAX_COACH_DIRECTORY_TODAY_SLOTS,
   resolveCoachPrimaryLocation,
 } from "@/domain/coaches";
@@ -86,14 +87,7 @@ function isoTimestamp(value: string | Date) {
 }
 
 function isDiscipline(value: string): value is CoachDiscipline {
-  return (
-    value === "Boxing" ||
-    value === "Muay Thai" ||
-    value === "Kickboxing" ||
-    value === "Brazilian Jiu-Jitsu" ||
-    value === "MMA" ||
-    value === "Wrestling"
-  );
+  return COACH_DISCIPLINES.some((discipline) => discipline === value);
 }
 
 function isUuid(value: unknown): value is string {

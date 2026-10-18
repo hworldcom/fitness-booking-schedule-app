@@ -459,3 +459,82 @@ where coach_posts.record_source = 'fixture'
     excluded.visibility,
     excluded.published_at
   );
+
+-- DEV0335: richer fictional coach defaults for new/unclaimed nonproduction fixtures.
+-- Claimed profiles, uploaded/removed portraits and later tester edits are preserved.
+update app.coach_profiles c set bio=v.bio,
+ portrait_source=case when c.portrait_path is null then 'fixture' else c.portrait_source end,
+ portrait_path=coalesce(c.portrait_path,v.portrait_path),
+ portrait_updated_at=coalesce(c.portrait_updated_at,'2026-10-18T00:00:00Z'::timestamptz)
+from (values
+('10000000-0000-4000-8000-000000000002'::uuid,'Build boxing confidence with clear feedback, balanced footwork and focused pad rounds.
+
+We start with your goals and a comfortable warm-up, then work on stance, movement and combinations. Each session finishes with a short recap and something practical to work on next time. Beginners and returning athletes are welcome.','/images/coaches/daniel-park.webp'),
+('10000000-0000-4000-8000-000000000005'::uuid,'Find your rhythm in Muay Thai with relaxed pad work, purposeful combinations and steady progress.
+
+We build from stance and balance to punches, kicks and controlled knees. Short technical rounds leave room for questions and feedback. Training intensity follows your experience and goals; contact drills are always discussed first.','/images/coaches/sam-lee.webp'),
+('10000000-0000-4000-8000-000000000007'::uuid,'Make sense of MMA through approachable striking, wrestling entries and movement drills.
+
+Each session has one clear theme, from distance management to moving safely between standing and ground positions. We practise progressively, agree contact levels together and leave time to review what felt useful. You do not need competition experience.','/images/coaches/nora-klein.webp'),
+('10000000-0000-4000-8000-000000000008'::uuid,'Understand no-gi grappling through patient explanations, positional practice and useful escapes.
+
+We explore one position at a time, connecting frames, balance and movement before adding resistance. Repetition and clear stopping signals keep practice collaborative. Sessions can focus on first steps or a specific problem from your regular training.','/images/coaches/idris-malik.webp'),
+('10000000-0000-4000-8000-000000000009'::uuid,'Enjoy kickboxing with crisp combinations, encouraging feedback and conditioning at your pace.
+
+A typical session combines an easy warm-up, technique on pads and short conditioning rounds. We develop guard, footwork and balanced kicks before adding speed. New starters can learn without sparring; every session is adapted together.','/images/coaches/elif-demir.webp')
+) v(profile_id,bio,portrait_path)
+where c.profile_id=v.profile_id and c.run_id='20000000-0000-4000-8000-000000000001'
+ and c.is_demo and c.record_source='fixture'
+ and exists(select 1 from app.profiles p where p.id=c.profile_id and p.record_source='fixture' and p.auth_user_id is null and p.claimed_at is null)
+ and (c.bio,c.portrait_path) is distinct from (v.bio,coalesce(c.portrait_path,v.portrait_path));
+
+-- BEGIN DEV0336 FITNESS COACH
+-- Reused verbatim by the guarded nonproduction provisioner; never run from migrations.
+do $fitness_fixture$
+begin
+  if not exists(select 1 from app.demo_runs where id='20000000-0000-4000-8000-000000000001' and slug='local-foundation-2030' and status='active') then
+    raise exception 'Fitness demo coach requires the existing active foundation dataset';
+  end if;
+  if exists(select 1 from app.profiles where
+      (slug='jake-miller' and id<>'10000000-0000-4000-8000-000000000013') or
+      (auth_user_id='90000000-0000-4000-8000-000000000013' and id<>'10000000-0000-4000-8000-000000000013') or
+      (id='10000000-0000-4000-8000-000000000013' and not
+        (slug='jake-miller' and ((record_source='fixture' and auth_user_id is null and claimed_at is null)
+        or (record_source='user' and auth_user_id='90000000-0000-4000-8000-000000000013' and claimed_at is not null)))))
+    or exists(select 1 from app.coach_profiles where
+      (public_slug='jake-miller' and profile_id<>'10000000-0000-4000-8000-000000000013') or
+      (profile_id='10000000-0000-4000-8000-000000000013' and (not is_demo or public_slug<>'jake-miller' or run_id<>'20000000-0000-4000-8000-000000000001')))
+    or exists(select 1 from app.profiles p where p.id='10000000-0000-4000-8000-000000000013' and p.auth_user_id is not null
+      and not exists(select 1 from app.coach_profiles c where c.profile_id=p.id)) then
+    raise exception 'Reserved Fitness demo identity conflicts with existing data';
+  end if;
+  if not exists(select 1 from app.gyms where id='40000000-0000-4000-8000-000000000002'
+    and run_id='20000000-0000-4000-8000-000000000001' and status='active' and record_source='fixture' and location_confirmed_at is not null) then
+    raise exception 'Fitness demo coach requires the existing confirmed fictional Fabrik venue';
+  end if;
+end;
+$fitness_fixture$;
+insert into app.profiles(id,slug,display_name,initials,bio,avatar_color,record_source,coaching_activated_at)
+values('10000000-0000-4000-8000-000000000013','jake-miller','Jake Miller','JM','Small steps, steady progress and a good training playlist.','blue','fixture',statement_timestamp())
+on conflict do nothing;
+insert into app.demo_run_participants(run_id,profile_id,role,status,joined_at)
+values('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000013','member','active',statement_timestamp())
+on conflict do nothing;
+insert into app.coach_profiles(run_id,profile_id,public_slug,display_name,bio,service_mode,timezone,
+ selected_gym_id,location_kind,public_location_label,latitude,longitude,location_source,location_provider,location_confirmed_at,
+ visibility,record_source,is_demo,portrait_source,portrait_path,portrait_updated_at)
+select g.run_id,'10000000-0000-4000-8000-000000000013','jake-miller','Jake Miller',
+ 'Get stronger and feel fitter with approachable strength training, useful conditioning and a plan that fits your week.
+
+We start with your goals and current routine, then practise comfortable squat, hinge, push and pull patterns. Sessions mix technique, manageable resistance and short conditioning rounds. Clear feedback and steady progression help beginners and returning athletes build consistency.',
+ 'private-training','Europe/Berlin',g.id,'gym',g.public_location_label,g.latitude,g.longitude,g.location_source,g.location_provider,g.location_confirmed_at,
+ 'visible','fixture',true,'fixture','/images/coaches/jake-miller.webp',statement_timestamp()
+from app.gyms g where g.id='40000000-0000-4000-8000-000000000002' and g.run_id='20000000-0000-4000-8000-000000000001'
+on conflict do nothing;
+-- The existing profile trigger creates exactly one confirmed active primary venue.
+insert into app.coach_profile_disciplines(run_id,profile_id,discipline,sort_order)
+select c.run_id,c.profile_id,'Fitness',1 from app.coach_profiles c join app.profiles p on p.id=c.profile_id
+where c.run_id='20000000-0000-4000-8000-000000000001' and c.profile_id='10000000-0000-4000-8000-000000000013'
+ and c.record_source='fixture' and p.record_source='fixture' and p.auth_user_id is null and p.claimed_at is null
+on conflict do nothing;
+-- END DEV0336 FITNESS COACH

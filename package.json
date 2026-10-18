@@ -46,6 +46,8 @@
     "auth:status": "supabase status -o env | grep -E '^(API_URL|PUBLISHABLE_KEY|ANON_KEY)='",
     "auth:provision:test-user": "tsx scripts/provision-local-test-user.ts",
     "auth:provision:coaches": "tsx scripts/provision-local-coach-accounts.ts",
+    "demo:setup:local": "node --import tsx scripts/provision-demo-coaches.ts --environment local",
+    "demo:setup:dev": "node --env-file=.env.development.local --import tsx scripts/provision-demo-coaches.ts --environment dev",
     "coach:review": "node --env-file-if-exists=.env.staging.local scripts/review-coach-application.mjs",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset --local",

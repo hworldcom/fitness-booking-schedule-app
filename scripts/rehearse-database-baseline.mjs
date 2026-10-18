@@ -1,3 +1,4 @@
+import { seedBeforeFitness } from "./lib/seed-compatibility.mjs";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -18,7 +19,9 @@ const baseline = readFileSync(
   resolve(root, "supabase/migrations/20261016000100_baseline.sql"),
   "utf8",
 );
-const seed = readFileSync(resolve(root, "supabase/seed.sql"), "utf8");
+const seed = seedBeforeFitness(
+  readFileSync(resolve(root, "supabase/seed.sql"), "utf8"),
+);
 const created = [];
 const options = { cwd: root, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 };
 function docker(args, input) {

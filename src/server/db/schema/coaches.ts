@@ -340,7 +340,7 @@ export const coachProfileDisciplines = app.table(
     ),
     check(
       "coach_profile_disciplines_value_check",
-      sql`${table.discipline} in ('Boxing', 'Muay Thai', 'Kickboxing', 'Brazilian Jiu-Jitsu', 'MMA', 'Wrestling')`,
+      sql`${table.discipline} in ('Boxing', 'Muay Thai', 'Kickboxing', 'Brazilian Jiu-Jitsu', 'MMA', 'Wrestling', 'Fitness')`,
     ),
     check(
       "coach_profile_disciplines_sort_order_check",

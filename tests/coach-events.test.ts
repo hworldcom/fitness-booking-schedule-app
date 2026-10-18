@@ -35,6 +35,16 @@ function draft() {
     form.set(key, value);
   return form;
 }
+test("group drafts accept Fitness and reject unsupported disciplines", () => {
+  const form = draft();
+  form.set("discipline", "Fitness");
+  const parsed = parseOwnerForm(form);
+  assert.equal(parsed?.command.action, "save-draft");
+  if (parsed?.command.action !== "save-draft") assert.fail();
+  assert.equal(parsed.command.args.discipline, "Fitness");
+  form.set("discipline", "Yoga");
+  assert.equal(parseOwnerForm(form), null);
+});
 test("Berlin form instants round-trip independently of server timezone and reject DST folds/gaps", () => {
   assert.equal(
     berlinLocalInstant("2027-07-20T18:00"),

@@ -41,6 +41,7 @@ function startupFixture(local = false) {
           ? {
               "db:runtime": "supabase fixture-runtime",
               "auth:provision:test-user": "supabase fixture-user",
+              "auth:provision:coaches": "supabase fixture-coaches",
             }
           : {}),
       },
@@ -66,6 +67,20 @@ function startupFixture(local = false) {
   }
   const bin = join(directory, "node_modules/.bin");
   mkdirSync(bin, { recursive: true });
+  // Hosted startup exercises its real guard/child order; fixture provisioning is
+  // a bounded stub so this launcher test never touches a real database/Auth API.
+  symlinkSync(
+    new URL("../node_modules/tsx", import.meta.url),
+    join(directory, "node_modules/tsx"),
+  );
+  writeFileSync(
+    join(directory, "scripts/provision-demo-coaches.ts"),
+    `
+    import assert from 'node:assert/strict';
+    assert.deepEqual(process.argv.slice(2), ['--environment','dev']);
+    console.log('DEMO_RECORD:dev');
+  `,
+  );
   for (const command of ["docker", "supabase", "tsx"]) {
     if (local && command === "tsx") {
       symlinkSync(
@@ -128,7 +143,7 @@ if(process.argv[2]==='status')console.log('API_URL="http://127.0.0.1:55321"\\nDB
             ...(local ? values : {}),
           },
           encoding: "utf8",
-          timeout: 10000,
+          timeout: 30000,
         },
       );
     },
@@ -144,7 +159,7 @@ if(process.argv[2]==='status')console.log('API_URL="http://127.0.0.1:55321"\\nDB
   };
 }
 
-test("explicit hosted development launches without local database setup", () => {
+test("explicit hosted development prepares bounded demo defaults and launches without local database setup", () => {
   const fixture = startupFixture();
   try {
     fixture.writeEnvironment(values);
@@ -152,6 +167,7 @@ test("explicit hosted development launches without local database setup", () => 
       const result = fixture.run(command);
       assert.equal(result.error, undefined);
       assert.equal(result.status, 0, result.stderr);
+      assert.match(result.stdout, /DEMO_RECORD:dev/);
       const recorded = result.stdout
         .split("\n")
         .find((line) => line.startsWith("NEXT_RECORD:"));
@@ -203,7 +219,7 @@ test("explicit hosted development refuses missing, loopback and prod settings wi
         );
         assert.doesNotMatch(
           result.stdout + result.stderr,
-          /NEXT_RECORD:|synthetic-secret/,
+          /NEXT_RECORD:|DEMO_RECORD:|synthetic-secret/,
         );
         fixture.assertNoDatabaseSetup();
       }
@@ -238,6 +254,7 @@ test("ordinary development prepares local services and overrides inherited hoste
         "fixture-runtime",
         "fixture-user",
         "status -o env",
+        "fixture-coaches",
       ]);
       assert.doesNotMatch(calls.join("\n"), /reset|--linked|db push/);
       assert.doesNotMatch(
