@@ -5,7 +5,7 @@
 - Last updated: 2026-10-18
 - Milestone: M10 design review before coach website editing
 - Coordination: None — independent development ticket
-- Related records: Downstream editor [DEV0315](../../current/frontend/DEV0315-edit-and-preview-coach-websites.md), cards [DEV0316](DEV0316-redesign-coach-directory-cards.md), full public page [DEV0317](../../current/frontend/DEV0317-build-shareable-personal-coach-websites.md); context [COR0028](../../current/organisatory/COR0028-coach-marketplace-cards-and-personal-websites.md). Historical standalone design approach: [DEV0304](../../archive/frontend/DEV0304-preview-photo-collage-banners.md).
+- Related records: Downstream editor [DEV0315](DEV0315-edit-and-preview-coach-websites.md), cards [DEV0316](DEV0316-redesign-coach-directory-cards.md), full public page [DEV0317](../../current/frontend/DEV0317-build-shareable-personal-coach-websites.md); context [COR0028](../../current/organisatory/COR0028-coach-marketplace-cards-and-personal-websites.md). Historical standalone design approach: [DEV0304](../../archive/frontend/DEV0304-preview-photo-collage-banners.md).
 
 ## Objective and context
 
@@ -60,7 +60,7 @@ The preview uses existing unchanged image/font files rather than generating or u
 | [preview.js](../../../previews/coach-page/preview.js) | Local-only state comparisons, sample day/time selection, dialog/focus return and section highlighting; no API or persistent storage. |
 | [serve.mjs](../../../previews/coach-page/serve.mjs) | Loopback-only exact eight-route static allowlist, restrictive content policy, rejected writes and no repository directory serving. |
 | [Preview guide](../../../previews/coach-page/README.md) | Launch command, source-image/font provenance, disconnected controls and proposal boundaries. |
-| This record, [ticket index](../../README.md) and [DEV0315](../../current/frontend/DEV0315-edit-and-preview-coach-websites.md) | Plan, evidence, archive and the explicit preview-first/editor-later handoff. |
+| This record, [ticket index](../../README.md) and [DEV0315](DEV0315-edit-and-preview-coach-websites.md) | Plan, evidence, archive and the explicit preview-first/editor-later handoff. |
 
 ### Decisions and deviations
 

@@ -1054,6 +1054,8 @@ DEV0321 owns the separate banner using the application-owned Storage boundary; r
 
 Full personal-page gallery integration later consumes DEV0297's actual authorized photo components and owner controls; DEV0315/DEV0317 do not duplicate its pipeline. The integrated full photographic outcome still needs that later delivered capability, but the card milestone can complete independently. Optional Mux video remains independently scoped; no premium rule is selected by this amendment.
 
+[DEV0315](../tickets/archive/frontend/DEV0315-edit-and-preview-coach-websites.md) completes the core content/banner/rate/URL owner editor locally, with saved/draft previews and desktop/mobile recovery evidence. Future gallery owner controls remain DEV0297 work; DEV0317 owns their full public-page composition.
+
 ### 19.6 Cards, username URLs and scheduling compatibility
 
 Home/Explore share a richer card: public banner, portrait/initials/name, truthful trust label, primary training place, short introduction, discipline/format/focus cues, optional disclosed `Sessions start from …` rate and actual review mean/count. Banner/identity open the same public coach website using its username URL when available. Missing/hidden prices, absent/failed media and unavailable reviews remain truthful. Preserve semantic links/buttons, bounded text, Home's chosen collage/search and initial coach visibility, alphabetical discipline/location filtering, four initial matches/four-item Load more, and Explore query/map/List–Map/history/actual-venue fallbacks. Add no price/rating filter or ranking.
