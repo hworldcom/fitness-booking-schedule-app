@@ -172,10 +172,12 @@ export function Artwork({
 }
 export function Modal({
   title,
+  eyebrow = "MOVX CLUB / PREVIEW",
   children,
   onClose,
 }: {
   title: string;
+  eyebrow?: string;
   children: ReactNode;
   onClose: () => void;
 }) {
@@ -227,7 +229,7 @@ export function Modal({
       }}
     >
       <div className="dialog-top">
-        <span className="eyebrow">MOVX CLUB / PREVIEW</span>
+        <span className="eyebrow">{eyebrow}</span>
         <button
           type="button"
           className="icon-button"

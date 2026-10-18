@@ -12,6 +12,7 @@ import "./coach-discovery.css";
 import "./coach-workspace.css";
 import "./explore-discovery.css";
 import "@/features/messages/messages.css";
+import "@/features/reviews/reviews.css";
 import "./account-menu.css";
 import "./account-settings.css";
 import "./authentication.css";

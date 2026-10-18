@@ -21,6 +21,11 @@ import {
 } from "@/domain/coach-bookings";
 import { ClientSessionCoachIdentity } from "./client-session-coach-identity";
 import { ClientSessionDateTile } from "./client-session-date-tile";
+import {
+  AthleteReviewWorkspace,
+  AthleteReviewEntry,
+} from "@/features/reviews/athlete-review-workspace";
+import { reviewEntryCandidate } from "@/features/reviews/review-workspace-model";
 import { SessionTitleEditor } from "@/features/messages/session-title-editor";
 
 function bookingTime(booking: PrivateBookingProjection) {
@@ -122,6 +127,9 @@ export function ClientSessions({
             </p>
           </div>
           {renderConnection?.(booking)}
+          {reviewEntryCandidate(booking, referenceTime) && (
+            <AthleteReviewEntry booking={booking} />
+          )}
         </div>
         {cancellable && (
           <div className="client-session-card-actions">
@@ -141,80 +149,82 @@ export function ClientSessions({
   }
 
   return (
-    <section className="client-sessions" id="my-sessions">
-      <header className="client-sessions-heading">
-        <div>
-          <span className="eyebrow">CONFIRMED TRAINING</span>
-          <h2>Your private-session schedule</h2>
-          <p>
-            Every session shown here comes from your actor-scoped scheduling
-            record.
-          </p>
-        </div>
-        <span className="client-session-count">
-          {bookings === null
-            ? "Unavailable"
-            : `${bookings.length} session${bookings.length === 1 ? "" : "s"}`}
-        </span>
-      </header>
-
-      {bookings === null ? (
-        <div className="client-sessions-state" role="alert">
-          <ShieldAlert size={24} aria-hidden="true" />
+    <AthleteReviewWorkspace>
+      <section className="client-sessions" id="my-sessions">
+        <header className="client-sessions-heading">
           <div>
-            <strong>Your sessions cannot be verified right now.</strong>
-            <p>No cached or placeholder booking history was shown.</p>
-          </div>
-        </div>
-      ) : bookings.length === 0 ? (
-        <div className="client-sessions-state" role="status">
-          <CalendarCheck2 size={24} aria-hidden="true" />
-          <div>
-            <strong>No confirmed sessions yet.</strong>
+            <span className="eyebrow">CONFIRMED TRAINING</span>
+            <h2>Your private-session schedule</h2>
             <p>
-              Send a request from a coach profile. An accepted request will
-              appear here as a confirmed booking.
+              Every session shown here comes from your actor-scoped scheduling
+              record.
             </p>
-            <Link className="text-link" href="/explore">
-              Find a coach
-            </Link>
           </div>
-        </div>
-      ) : (
-        <div className="client-session-groups">
-          {timeline && timeline.upcoming.length > 0 && (
-            <section aria-labelledby="upcoming-sessions-title">
-              <div className="client-session-group-heading">
-                <h3 id="upcoming-sessions-title">Upcoming</h3>
-                <span>{timeline.upcoming.length}</span>
-              </div>
-              <div className="client-session-grid">
-                {timeline.upcoming.map(bookingCard)}
-              </div>
-            </section>
-          )}
-          {timeline && timeline.history.length > 0 && (
-            <section aria-labelledby="session-history-title">
-              <div className="client-session-group-heading">
-                <h3 id="session-history-title">History</h3>
-                <span>{timeline.history.length}</span>
-              </div>
-              <div className="client-session-grid">
-                {timeline.history.map(bookingCard)}
-              </div>
-            </section>
-          )}
-        </div>
-      )}
+          <span className="client-session-count">
+            {bookings === null
+              ? "Unavailable"
+              : `${bookings.length} session${bookings.length === 1 ? "" : "s"}`}
+          </span>
+        </header>
 
-      {result && (
-        <p
-          className={`client-session-message ${result.status === "saved" ? "success" : "error"}`}
-          role={result.status === "saved" ? "status" : "alert"}
-        >
-          {result.message}
-        </p>
-      )}
-    </section>
+        {bookings === null ? (
+          <div className="client-sessions-state" role="alert">
+            <ShieldAlert size={24} aria-hidden="true" />
+            <div>
+              <strong>Your sessions cannot be verified right now.</strong>
+              <p>No cached or placeholder booking history was shown.</p>
+            </div>
+          </div>
+        ) : bookings.length === 0 ? (
+          <div className="client-sessions-state" role="status">
+            <CalendarCheck2 size={24} aria-hidden="true" />
+            <div>
+              <strong>No confirmed sessions yet.</strong>
+              <p>
+                Send a request from a coach profile. An accepted request will
+                appear here as a confirmed booking.
+              </p>
+              <Link className="text-link" href="/explore">
+                Find a coach
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="client-session-groups">
+            {timeline && timeline.upcoming.length > 0 && (
+              <section aria-labelledby="upcoming-sessions-title">
+                <div className="client-session-group-heading">
+                  <h3 id="upcoming-sessions-title">Upcoming</h3>
+                  <span>{timeline.upcoming.length}</span>
+                </div>
+                <div className="client-session-grid">
+                  {timeline.upcoming.map(bookingCard)}
+                </div>
+              </section>
+            )}
+            {timeline && timeline.history.length > 0 && (
+              <section aria-labelledby="session-history-title">
+                <div className="client-session-group-heading">
+                  <h3 id="session-history-title">History</h3>
+                  <span>{timeline.history.length}</span>
+                </div>
+                <div className="client-session-grid">
+                  {timeline.history.map(bookingCard)}
+                </div>
+              </section>
+            )}
+          </div>
+        )}
+
+        {result && (
+          <p
+            className={`client-session-message ${result.status === "saved" ? "success" : "error"}`}
+            role={result.status === "saved" ? "status" : "alert"}
+          >
+            {result.message}
+          </p>
+        )}
+      </section>
+    </AthleteReviewWorkspace>
   );
 }

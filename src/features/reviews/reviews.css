@@ -1,0 +1,163 @@
+.athlete-review-entry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-top: 16px;
+}
+.athlete-review-entry small {
+  color: var(--muted);
+}
+.dialog:has(.athlete-review-panel) {
+  width: min(640px, calc(100vw - 24px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.athlete-review-panel {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+  text-align: left;
+}
+.athlete-review-panel p {
+  margin: 0;
+  line-height: 1.6;
+}
+.athlete-review-panel h3 {
+  margin: 0 0 10px;
+}
+.athlete-review-panel small {
+  line-height: 1.6;
+  color: var(--muted);
+}
+.athlete-review-notice,
+.athlete-review-recovery {
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: var(--surface-soft, #f5f5f1);
+  border-radius: 12px;
+}
+.athlete-review-publication {
+  padding: 18px;
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  display: grid;
+  gap: 10px;
+  overflow-wrap: anywhere;
+}
+.athlete-review-score {
+  color: #806016;
+  letter-spacing: 2px;
+}
+.athlete-review-score span {
+  color: var(--muted);
+  letter-spacing: normal;
+  font-size: 0.85rem;
+}
+.athlete-review-comment {
+  white-space: pre-wrap;
+}
+.athlete-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+.athlete-review-panel .button {
+  min-height: 44px;
+  white-space: normal;
+  text-align: center;
+}
+.athlete-review-form {
+  display: grid;
+  gap: 10px;
+}
+.athlete-review-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0 0 8px;
+  min-width: 0;
+}
+.athlete-review-form legend,
+.athlete-review-form > label {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.athlete-review-ratings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.athlete-review-ratings label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.athlete-review-ratings label:has(:checked) {
+  background: #f4eddc;
+  border-color: #806016;
+}
+.athlete-review-ratings label:has(:focus-visible) {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+.athlete-review-form > input,
+.athlete-review-form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  font: inherit;
+  color: inherit;
+  background: var(--surface, #fff);
+}
+.athlete-review-form textarea {
+  resize: vertical;
+}
+.athlete-review-form > .button {
+  justify-self: start;
+  margin-top: 8px;
+}
+.athlete-review-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 10px 0;
+  line-height: 1.6;
+  cursor: pointer;
+}
+.athlete-review-consent input {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  margin-top: 3px;
+}
+.athlete-review-draft-note {
+  display: block;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+@media (max-width: 540px) {
+  .dialog:has(.athlete-review-panel) {
+    padding: 20px;
+  }
+  .athlete-review-actions {
+    flex-direction: column;
+  }
+  .athlete-review-actions .button,
+  .athlete-review-form > .button {
+    width: 100%;
+  }
+}
