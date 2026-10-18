@@ -4,6 +4,7 @@ import type { ActorSnapshot } from "@/auth/actor-contracts";
 import {
   isNavigationHrefActive,
   isPublicMarketplacePath,
+  isProfilePath,
   mobileNavigationForActor,
   navigationForActor,
   publicAccountNavigationForActor,
@@ -11,7 +12,7 @@ import {
 } from "@/components/shell";
 import type { CoachAccessStatus } from "@/domain/coaches";
 
-const PUBLIC_PATHS = ["/", "/explore", "/events", "/how-it-works", "/profile"];
+const PUBLIC_PATHS = ["/", "/explore", "/events", "/how-it-works"];
 
 function authorizedActor(coachAccessStatus: CoachAccessStatus): ActorSnapshot {
   return {
@@ -41,80 +42,93 @@ test("personal sessions are omitted from every unauthorized shell state", () => 
   }
 });
 
-test("client and unapproved applicant navigation includes personal sessions", () => {
+test("athlete view keeps Home first and unchanged private labels for every account", () => {
+  for (const status of [
+    "not-applied",
+    "pending",
+    "rejected",
+    "approved",
+    "demo",
+    "suspended",
+  ] as const) {
+    const actor = authorizedActor(status);
+    for (const path of [
+      "",
+      "/sessions",
+      "/sessions/groups/example",
+      "/my-coaches",
+      "/my-coaches/history",
+    ]) {
+      const expected = [
+        { label: "Home", href: "/" },
+        { label: "My sessions", href: "/sessions" },
+        { label: "My coaches", href: "/my-coaches" },
+      ];
+      assert.deepEqual(
+        navigationForActor(actor, path, "athlete").map(({ label, href }) => ({
+          label,
+          href,
+        })),
+        expected,
+      );
+      assert.deepEqual(
+        navigationForActor(actor, path),
+        mobileNavigationForActor(actor, path),
+      );
+    }
+  }
+});
+
+test("coach view exclusively exposes its existing authorized workspace", () => {
+  for (const status of ["approved", "demo", "suspended"] as const) {
+    for (const path of [
+      "/coach",
+      "/coach/events/example",
+      "/profile/coach",
+      "/profile/coach/edit",
+    ]) {
+      const expected = [
+        { label: "Home", href: "/" },
+        { label: "Schedule", href: "/coach" },
+        { label: "Bookings", href: "/coach?view=bookings" },
+        { label: "Events", href: "/coach/events" },
+      ];
+      assert.deepEqual(
+        navigationForActor(authorizedActor(status), path).map(
+          ({ label, href }) => ({ label, href }),
+        ),
+        expected,
+      );
+      assert.deepEqual(
+        mobileNavigationForActor(authorizedActor(status), path).map(
+          ({ label, href }) => ({ label, href }),
+        ),
+        expected,
+      );
+    }
+  }
   for (const status of ["not-applied", "pending", "rejected"] as const) {
     assert.deepEqual(
-      navigationForActor(authorizedActor(status)).map(({ label, href }) => ({
-        label,
-        href,
-      })),
-      [
-        { label: "Home", href: "/" },
-        { label: "Explore", href: "/explore" },
-        { label: "Events", href: "/events" },
-        { label: "My sessions", href: "/sessions" },
-        { label: "How it works", href: "/how-it-works" },
-        { label: "Profile", href: "/profile" },
-      ],
+      navigationForActor(authorizedActor(status), "/coach", "coach").map(
+        ({ href }) => href,
+      ),
+      ["/", "/sessions", "/my-coaches"],
     );
   }
 });
 
-test("approved and demo navigation defaults Profile to the coach editor", () => {
-  for (const status of ["approved", "demo"] as const) {
-    assert.deepEqual(
-      navigationForActor(authorizedActor(status)).map(({ label, href }) => ({
-        label,
-        href,
-      })),
-      [
-        { label: "Home", href: "/" },
-        { label: "Explore", href: "/explore" },
-        { label: "Events", href: "/events" },
-        { label: "My sessions", href: "/sessions" },
-        { label: "Coach workspace", href: "/coach" },
-        { label: "How it works", href: "/how-it-works" },
-        { label: "Profile", href: "/profile/coach" },
-      ],
-    );
-  }
-});
-
-test("suspended coach navigation keeps workspace and personal Profile", () => {
-  assert.deepEqual(
-    navigationForActor(authorizedActor("suspended")).map(({ label, href }) => ({
-      label,
-      href,
-    })),
-    [
-      { label: "Home", href: "/" },
-      { label: "Explore", href: "/explore" },
-      { label: "Events", href: "/events" },
-      { label: "My sessions", href: "/sessions" },
-      { label: "Coach workspace", href: "/coach" },
-      { label: "How it works", href: "/how-it-works" },
-      { label: "Profile", href: "/profile" },
-    ],
-  );
-});
-
-test("workspace sidebar navigation respects route and actor boundaries", () => {
+test("workspace routes use exact segment boundaries without confusing public coaches", () => {
   assert.equal(isNavigationHrefActive("/coach", "/coach"), true);
-  assert.equal(isNavigationHrefActive("/coach/settings", "/coach"), true);
+  assert.equal(isNavigationHrefActive("/coach/events", "/coach"), true);
   assert.equal(isNavigationHrefActive("/coaches/daniel-park", "/coach"), false);
   const actor = authorizedActor("approved");
-  for (const path of ["/coach", "/coach/events/example", "/profile/coach"]) {
-    assert.deepEqual(
-      navigationForActor(actor, path).map(({ href }) => href),
-      ["/", "/sessions", "/coach", "/profile/coach"],
-      path,
-    );
-  }
   for (const path of [
     "/coaches/daniel-park",
+    "/coach-other",
     "/profile-other",
     "/profiles",
     "/sessions-other",
+    "/my-coaches-other",
   ]) {
     assert.deepEqual(
       navigationForActor(actor, path),
@@ -125,35 +139,8 @@ test("workspace sidebar navigation respects route and actor boundaries", () => {
     navigationForActor({ status: "signed-out" }, "/coach").map(
       ({ href }) => href,
     ),
-    ["/", "/profile"],
+    ["/"],
   );
-  for (const path of [
-    "/sessions",
-    "/sessions/groups",
-    "/sessions/groups/example",
-    "/profile",
-    "/profile/security",
-  ]) {
-    assert.deepEqual(
-      navigationForActor(authorizedActor("not-applied"), path).map(
-        ({ href }) => href,
-      ),
-      ["/", "/sessions", "/profile"],
-      path,
-    );
-    assert.deepEqual(
-      navigationForActor(actor, path).map(({ href }) => href),
-      ["/", "/sessions", "/coach", "/profile/coach"],
-      path,
-    );
-    assert.deepEqual(
-      navigationForActor({ status: "signed-out" }, path).map(
-        ({ href }) => href,
-      ),
-      ["/", "/profile"],
-      path,
-    );
-  }
 });
 
 test("public shell mode is restricted to the adopted marketplace routes", () => {
@@ -180,6 +167,7 @@ test("public shell mode is restricted to the adopted marketplace routes", () => 
     "/coaches/daniel-park/schedule",
     "/sessions",
     "/sessions/groups",
+    "/my-coaches",
     "/events/example/nested",
     "/coach",
     "/profile",
@@ -189,118 +177,73 @@ test("public shell mode is restricted to the adopted marketplace routes", () => 
   }
 });
 
-test("public account controls expose only authorized private destinations", () => {
+test("public header follows the selected mode without granting coach capability", () => {
   for (const status of [
     "preview",
     "signed-out",
     "forbidden",
     "unavailable",
+  ] as const)
+    assert.deepEqual(publicAccountNavigationForActor({ status }, "coach"), []);
+  for (const status of [
+    "not-applied",
+    "pending",
+    "rejected",
+    "approved",
+    "demo",
+    "suspended",
   ] as const) {
-    assert.deepEqual(publicAccountNavigationForActor({ status }), []);
+    const actor = authorizedActor(status);
+    assert.deepEqual(
+      publicAccountNavigationForActor(actor).map(({ href }) => href),
+      ["/messages"],
+    );
+    assert.deepEqual(
+      publicAccountNavigationForActor(actor, "coach").map(({ href }) => href),
+      ["approved", "demo", "suspended"].includes(status)
+        ? ["/messages", "/coach"]
+        : ["/messages"],
+    );
   }
-  assert.deepEqual(
-    publicAccountNavigationForActor(authorizedActor("not-applied")).map(
-      ({ href }) => href,
-    ),
-    ["/messages"],
-  );
-  assert.deepEqual(
-    publicAccountNavigationForActor(authorizedActor("approved")).map(
-      ({ href }) => href,
-    ),
-    ["/messages", "/coach"],
-  );
-  assert.deepEqual(
-    publicAccountNavigationForActor(authorizedActor("demo")).map(
-      ({ href }) => href,
-    ),
-    ["/messages", "/coach"],
-  );
-  assert.deepEqual(
-    publicAccountNavigationForActor(authorizedActor("suspended")).map(
-      ({ href }) => href,
-    ),
-    ["/messages", "/coach"],
-  );
 });
 
-test("mobile workspace navigation stays bounded to primary private destinations", () => {
+test("unauthorized mobile preview retains public navigation", () => {
   assert.deepEqual(
     mobileNavigationForActor({ status: "preview" }).map(({ href }) => href),
     ["/explore", "/profile"],
   );
-  assert.deepEqual(
-    mobileNavigationForActor(authorizedActor("not-applied")).map(
-      ({ label, href }) => ({ label, href }),
-    ),
-    [
-      { label: "Explore", href: "/explore" },
-      { label: "My sessions", href: "/sessions" },
-      { label: "Messages", href: "/messages" },
-      { label: "Profile", href: "/profile" },
-    ],
-  );
-  assert.deepEqual(
-    mobileNavigationForActor(authorizedActor("approved")).map(
-      ({ label, href }) => ({ label, href }),
-    ),
-    [
-      { label: "Explore", href: "/explore" },
-      { label: "My sessions", href: "/sessions" },
-      { label: "Messages", href: "/messages" },
-      { label: "Coach workspace", href: "/coach" },
-      { label: "Profile", href: "/profile/coach" },
-    ],
-  );
-  for (const status of ["approved", "demo", "suspended"] as const) {
-    for (const path of ["/coach", "/coach/events", "/profile/coach"]) {
-      assert.deepEqual(
-        mobileNavigationForActor(authorizedActor(status), path).map(
-          ({ label, href }) => ({ label, href }),
-        ),
-        [
-          { label: "Home", href: "/" },
-          { label: "My sessions", href: "/sessions" },
-          { label: "Messages", href: "/messages" },
-          { label: "Coach workspace", href: "/coach" },
-          {
-            label: "Profile",
-            href: status === "suspended" ? "/profile" : "/profile/coach",
-          },
-        ],
-        `${status}: ${path}`,
-      );
-    }
-  }
-  for (const status of ["not-applied", "approved", "suspended"] as const) {
-    const actor = authorizedActor(status);
-    for (const path of [
-      "/sessions",
-      "/sessions/groups",
-      "/profile",
-      "/profile/security",
-    ]) {
-      assert.deepEqual(
-        mobileNavigationForActor(actor, path),
-        mobileNavigationForActor(actor),
-        `${status}: ${path}`,
-      );
-    }
-  }
 });
 
-test("authenticated workspace role copy reflects capability without granting it", () => {
+test("workspace role label describes the view and preserves pending/suspended notices", () => {
   assert.equal(workspaceRoleLabel({ status: "signed-out" }), "MovX preview");
   assert.equal(
     workspaceRoleLabel(authorizedActor("not-applied")),
-    "Athlete account",
+    "Athlete view",
+  );
+  assert.equal(workspaceRoleLabel(authorizedActor("approved")), "Athlete view");
+  assert.equal(
+    workspaceRoleLabel(authorizedActor("approved"), "coach"),
+    "Coach view",
   );
   assert.equal(
-    workspaceRoleLabel(authorizedActor("approved")),
-    "Coach and athlete",
-  );
-  assert.equal(
-    workspaceRoleLabel(authorizedActor("suspended")),
+    workspaceRoleLabel(authorizedActor("suspended"), "coach"),
     "Coach access limited",
   );
+  assert.equal(
+    workspaceRoleLabel(authorizedActor("pending")),
+    "Coach application pending",
+  );
+});
+
+test("standalone Profile classification uses exact segment boundaries", () => {
+  for (const path of ["/profile", "/profile/coach", "/profile/security"])
+    assert.equal(isProfilePath(path), true, path);
+  for (const path of [
+    "/profile-other",
+    "/profiles",
+    "/coaches/person",
+    "/account",
+    "/coach",
+  ])
+    assert.equal(isProfilePath(path), false, path);
 });

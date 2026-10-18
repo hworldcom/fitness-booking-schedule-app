@@ -14,6 +14,8 @@ Coordinate the approved authenticated-interface direction so `My sessions`, `Coa
 
 This record coordinates peer development tickets and does not implement runtime behavior. The October authenticated interactive preview is visual input, not a data or navigation contract. Existing confirmed behavior wins where the concept is illustrative: coaches retain client capability and `My sessions`; coach pages keep stable `Profile → Schedule → Bookings` navigation; account Profile remains separately reachable through account-avatar controls.
 
+2026-10-17 independent downstream refinement: [DEV0326](../../archive/frontend/DEV0326-separate-profile-from-workspace-navigation.md) supersedes the earlier Profile-first navigation/framing in this design baseline. The current specification owns the adopted contract. DEV0326 is independent, not a direct member or additional completion condition of this coordination.
+
 ## Direct development work
 
 | Implementation part    | Development ticket                                                                                                                                     | Owned deliverable                                                                                                                        | Start condition or dependency          |

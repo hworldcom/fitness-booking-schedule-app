@@ -471,7 +471,7 @@ test("athlete booking controls ask the coach for consent and link the athlete li
       onMutation: noop,
     }),
   );
-  assert.match(accepted, /href="#my-coaches"/);
+  assert.match(accepted, /href="\/my-coaches"/);
   assert.match(accepted, /View My coaches/);
 });
 
@@ -500,7 +500,10 @@ test("athlete history returns to the original athlete session, preserving select
       onLoad: noop,
     }),
   );
-  assert.match(html, new RegExp(`href="#athlete-booking-${booking.id}"`));
+  assert.match(
+    html,
+    new RegExp(`href="/sessions#athlete-booking-${booking.id}"`),
+  );
   assert.match(html, /Accepted request · Cancelled session/);
   assert.equal((html.match(/data-history-id=/g) ?? []).length, 1);
   assert.doesNotMatch(html, /coach-booking-|conversation|private note/);

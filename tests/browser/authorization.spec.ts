@@ -26,7 +26,7 @@ test("configured guests keep public routes and are redirected from private pages
     expect(new URL(page.url()).pathname).toBe(path);
   }
 
-  for (const path of ["/profile", "/sessions"]) {
+  for (const path of ["/profile", "/sessions", "/my-coaches"]) {
     await page.goto(path);
     const destination = new URL(page.url());
     expect(destination.pathname).toBe("/sign-in");

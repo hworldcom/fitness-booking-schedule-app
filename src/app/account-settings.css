@@ -3,6 +3,25 @@
   background: #fff;
   color: #222;
 }
+.profile-shell {
+  background: var(--paper);
+}
+.profile-page-content {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 40px clamp(20px, 4vw, 56px) 64px;
+}
+.profile-page-content .account-profile-workspace {
+  margin: 0 auto;
+}
+.profile-page-content .coach-workspace-header > div:first-child > .button {
+  margin-top: 16px;
+}
+@media (max-width: 600px) {
+  .profile-page-content {
+    padding: 24px 16px 40px;
+  }
+}
 .account-shell-header {
   height: 82px;
   border-bottom: 1px solid #e9e9e7;

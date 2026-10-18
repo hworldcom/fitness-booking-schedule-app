@@ -21,7 +21,6 @@ import { CoachProfilePreview } from "./coach-profile-preview";
 import { ProfileImageUploader } from "@/features/profile/profile-image-uploader";
 import { profileInitials } from "@/auth/profile-presentation";
 import { CoachWorkspaceHeader } from "./coach-workspace-header";
-import { CoachWorkspaceNavigation } from "./coach-workspace-navigation";
 import { CoachTrainingLocationManager } from "./coach-training-location-manager";
 import { CoachPublicUrlSettings } from "./coach-public-url-settings";
 import type { CoachPublicHandleResult } from "@/domain/coach-public-url";
@@ -60,8 +59,12 @@ export function CoachProfileEditor({
 
   return (
     <div className="coach-workspace coach-editor">
-      <CoachWorkspaceHeader coach={coach} ownerDisplayName={ownerDisplayName} />
-      <CoachWorkspaceNavigation active="profile" />
+      <CoachWorkspaceHeader
+        coach={coach}
+        ownerDisplayName={ownerDisplayName}
+        view="profile"
+        profileReturnHref={publicationAllowed ? "/coach" : "/profile"}
+      />
       <header className="coach-profile-view-heading">
         <div>
           <span className="eyebrow">

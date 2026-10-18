@@ -43,6 +43,7 @@ export function ConnectionLists({
   onDecision,
   onHistory,
   renderHistory,
+  headingLevel = 2,
 }: {
   role?: ConnectionRole;
   pages: ConnectionPages;
@@ -53,7 +54,9 @@ export function ConnectionLists({
   onDecision: (row: ConnectionProjection, intent: ConnectionDecision) => void;
   onHistory: (row: ConnectionProjection) => void;
   renderHistory: (row: ConnectionProjection) => ReactNode;
+  headingLevel?: 1 | 2;
 }) {
+  const Heading = headingLevel === 1 ? "h1" : "h2";
   const noun = role === "coach" ? "athletes" : "coaches";
   const title = role === "coach" ? "My athletes" : "My coaches";
   const target = role === "coach" ? "my-athletes" : "my-coaches";
@@ -73,7 +76,7 @@ export function ConnectionLists({
       <header className="coach-connections-heading">
         <div>
           <span className="eyebrow">YOUR CONNECTIONS</span>
-          <h2 id={`${target}-heading`}>{title}</h2>
+          <Heading id={`${target}-heading`}>{title}</Heading>
           <p>
             Connections need both people to accept. Booking a session does not
             connect you automatically.

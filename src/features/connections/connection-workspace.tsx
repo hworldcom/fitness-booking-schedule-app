@@ -62,6 +62,7 @@ export function ConnectionWorkspace({
   initialPages,
   sourceVersion,
   mayInitiate,
+  view = "all",
 }: {
   role?: ConnectionRole;
   bookings: readonly PrivateBookingProjection[] | null;
@@ -69,6 +70,7 @@ export function ConnectionWorkspace({
   initialPages: ConnectionPages;
   sourceVersion: string;
   mayInitiate: boolean;
+  view?: "all" | "sessions" | "connections";
 }) {
   const router = useRouter();
   const [local, setLocal] = useState<{
@@ -301,48 +303,55 @@ export function ConnectionWorkspace({
           {result.message}
         </p>
       )}
-      <SessionCards
-        bookings={bookings}
-        referenceTime={referenceTime}
-        renderConnection={(booking) => (
-          <BookingConnectionOptions
-            key={`${booking.id}:${booking.status}:${contextRevision}`}
-            role={role}
-            booking={booking}
-            context={contextEntries[booking.id]?.value}
-            error={contextEntries[booking.id]?.message ?? null}
-            busy={busy}
-            mayInitiate={mayInitiate}
-            onLoad={() => loadContext(booking)}
-            onMutation={mutate}
-          />
-        )}
-      />
-      <ConnectionLists
-        role={role}
-        pages={pages}
-        busy={busy}
-        mayInitiate={mayInitiate}
-        onRefresh={refresh}
-        onPage={loadPage}
-        onDecision={decide}
-        onHistory={(row) => loadHistory(row)}
-        renderHistory={(row) =>
-          visibleHistory?.attemptId === row.id ? (
-            <ConnectionHistory
+      {view !== "connections" && (
+        <SessionCards
+          bookings={bookings}
+          referenceTime={referenceTime}
+          renderConnection={(booking) => (
+            <BookingConnectionOptions
+              key={`${booking.id}:${booking.status}:${contextRevision}`}
               role={role}
-              name={
-                role === "coach" ? row.athleteDisplayName : row.coachDisplayName
-              }
-              page={visibleHistory.page}
-              message={visibleHistory.message}
+              booking={booking}
+              context={contextEntries[booking.id]?.value}
+              error={contextEntries[booking.id]?.message ?? null}
               busy={busy}
-              bookingIds={bookingIds}
-              onLoad={() => loadHistory(row, Boolean(visibleHistory.page))}
+              mayInitiate={mayInitiate}
+              onLoad={() => loadContext(booking)}
+              onMutation={mutate}
             />
-          ) : null
-        }
-      />
+          )}
+        />
+      )}
+      {view !== "sessions" && (
+        <ConnectionLists
+          role={role}
+          headingLevel={view === "connections" ? 1 : 2}
+          pages={pages}
+          busy={busy}
+          mayInitiate={mayInitiate}
+          onRefresh={refresh}
+          onPage={loadPage}
+          onDecision={decide}
+          onHistory={(row) => loadHistory(row)}
+          renderHistory={(row) =>
+            visibleHistory?.attemptId === row.id ? (
+              <ConnectionHistory
+                role={role}
+                name={
+                  role === "coach"
+                    ? row.athleteDisplayName
+                    : row.coachDisplayName
+                }
+                page={visibleHistory.page}
+                message={visibleHistory.message}
+                busy={busy}
+                bookingIds={bookingIds}
+                onLoad={() => loadHistory(row, Boolean(visibleHistory.page))}
+              />
+            ) : null
+          }
+        />
+      )}
     </div>
   );
 }

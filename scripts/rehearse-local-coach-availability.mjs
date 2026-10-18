@@ -287,7 +287,7 @@ async function addSecondaryGym(page, primaryGymName) {
 
 async function assertCoachPrimaryNavigation(page) {
   const workspaceLink = page.getByRole("link", {
-    name: "Coach workspace",
+    name: "Schedule",
     exact: true,
   });
   await workspaceLink.first().waitFor();
@@ -299,19 +299,20 @@ async function assertCoachPrimaryNavigation(page) {
       .evaluate((element) => element === document.activeElement),
     true,
   );
-  const sessionsLink = page.getByRole("link", {
-    name: "My sessions",
-    exact: true,
-  });
-  await sessionsLink.first().waitFor();
-  assert.equal(await sessionsLink.first().getAttribute("href"), "/sessions");
-  await sessionsLink.first().focus();
   assert.equal(
-    await sessionsLink
-      .first()
-      .evaluate((element) => element === document.activeElement),
-    true,
+    await page.getByRole("link", { name: "My sessions", exact: true }).count(),
+    0,
   );
+  const menu = page.getByRole("button", { name: /^Account menu for / });
+  await menu.click();
+  await expect(
+    page.getByRole("link", { name: "Trainings", exact: true }),
+  ).toHaveAttribute("href", "/coach");
+  await expect(
+    page.getByRole("link", { name: "Switch to athlete view", exact: true }),
+  ).toHaveAttribute("href", "/sessions");
+  await page.keyboard.press("Escape");
+  await expect(menu).toBeFocused();
 }
 
 async function locationColor(element) {
@@ -538,8 +539,10 @@ async function rehearseAvailability(
     ),
     true,
   );
+  const accountMenu = page.getByRole("button", { name: /Account menu for/ });
+  await accountMenu.click();
   const workspaceProfileLink = page
-    .getByRole("navigation", { name: "Coach workspace" })
+    .locator(".account-menu-panel")
     .getByRole("link", { name: "Profile", exact: true });
   await workspaceProfileLink.focus();
   assert.equal(
@@ -548,6 +551,8 @@ async function rehearseAvailability(
     ),
     true,
   );
+  await page.keyboard.press("Escape");
+  assert.equal(await accountMenu.getAttribute("aria-expanded"), "false");
   assert.equal(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,

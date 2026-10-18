@@ -28,7 +28,7 @@
   z-index: 30;
   display: grid;
   gap: 2px;
-  width: min(220px, calc(100vw - 32px));
+  width: min(260px, calc(100vw - 32px));
   max-height: calc(100dvh - 100px);
   overflow: auto;
   padding: 7px;
@@ -61,4 +61,16 @@
 .account-menu :is(button, a):focus-visible {
   outline: 3px solid #527b24;
   outline-offset: 3px;
+}
+.account-menu-view {
+  margin-top: 5px;
+  padding-top: 6px;
+  border-top: 1px solid #dfe5d4;
+}
+.account-menu-view-label {
+  display: block;
+  padding: 4px 12px;
+  color: #65705f;
+  font-size: 12px;
+  font-weight: 600;
 }

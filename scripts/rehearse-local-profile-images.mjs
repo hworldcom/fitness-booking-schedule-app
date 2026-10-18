@@ -73,10 +73,7 @@ async function removeVisibleImage(page) {
   });
 }
 
-const shellAvatarSelectors = [
-  ".sidebar-profile .avatar",
-  ".header-avatar .avatar",
-];
+const shellAvatarSelectors = [".account-menu-trigger .avatar"];
 
 async function assertShellImages(page, expectedUrlFragment) {
   await page.waitForFunction(
@@ -285,37 +282,24 @@ try {
     await coachPage.goto(`${siteUrl}/profile/coach`, {
       waitUntil: "domcontentloaded",
     });
-    await coachPage
-      .getByRole("heading", { name: "Run your coaching week." })
-      .waitFor();
-    await coachPage
-      .getByRole("navigation", { name: "Coach workspace" })
-      .getByRole("link", { name: "Profile", exact: true })
-      .waitFor();
+    await coachPage.getByRole("heading", { name: "Profile." }).waitFor();
+    await coachPage.locator(".profile-shell").waitFor();
+    assert.equal(await coachPage.locator(".coach-workspace-nav").count(), 0);
     await coachPage
       .getByRole("heading", { name: "Edit your public coach profile." })
       .waitFor();
-    assert.deepEqual(
+    assert.equal(
       await coachPage.evaluate(() => {
         const header = document.querySelector(".coach-workspace-header");
-        const navigation = document.querySelector(".coach-workspace-nav");
         const content = document.querySelector(".coach-profile-view-heading");
-        return {
-          headerBeforeNavigation: Boolean(
-            header &&
-            navigation &&
-            header.compareDocumentPosition(navigation) &
-              Node.DOCUMENT_POSITION_FOLLOWING,
-          ),
-          navigationBeforeContent: Boolean(
-            navigation &&
-            content &&
-            navigation.compareDocumentPosition(content) &
-              Node.DOCUMENT_POSITION_FOLLOWING,
-          ),
-        };
+        return Boolean(
+          header &&
+          content &&
+          header.compareDocumentPosition(content) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        );
       }),
-      { headerBeforeNavigation: true, navigationBeforeContent: true },
+      true,
     );
     await coachPage.getByLabel("Coach profile preview").waitFor();
     await coachPage.locator(".coach-profile-location-overview").waitFor();

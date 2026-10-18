@@ -48,7 +48,12 @@ async function actorPage(actor: LocalPerson, route: string) {
   await page.goto(base + route);
   return { session, page };
 }
+async function openMyCoaches(page: Page) {
+  if (new URL(page.url()).pathname === "/sessions")
+    await page.goto(base + "/my-coaches");
+}
 async function refresh(page: Page) {
+  await openMyCoaches(page);
   await page
     .getByRole("button", { name: "Refresh connections", exact: true })
     .click();
@@ -57,6 +62,8 @@ async function refresh(page: Page) {
   ).toBeEnabled();
 }
 async function sendThrough(page: Page, id: string, role: "athlete" | "coach") {
+  if (role === "athlete" && new URL(page.url()).pathname !== "/sessions")
+    await page.goto(base + "/sessions");
   const session = page.locator(`#${role}-booking-${id}`);
   const options = session.getByRole("button", {
     name: "Connection options",
@@ -75,11 +82,13 @@ async function sendThrough(page: Page, id: string, role: "athlete" | "coach") {
   await expect(feedback(page)).toHaveText(
     "Connection request pending acceptance.",
   );
+  if (role === "athlete") await openMyCoaches(page);
   await expect(
     page.getByRole("button", { name: "Refresh connections", exact: true }),
   ).toBeEnabled();
 }
 async function acceptThrough(page: Page, id: string) {
+  await openMyCoaches(page);
   await card(page, id)
     .getByRole("button", { name: "Accept connection", exact: true })
     .click();
@@ -89,6 +98,7 @@ async function acceptThrough(page: Page, id: string) {
   ).toBeEnabled();
 }
 async function disconnectThrough(page: Page, id: string) {
+  await openMyCoaches(page);
   await card(page, id)
     .getByRole("button", { name: "Disconnect", exact: true })
     .click();
@@ -117,6 +127,7 @@ async function disconnectThrough(page: Page, id: string) {
   ).toHaveCount(0);
 }
 async function revealAccepted(page: Page, id: string) {
+  await openMyCoaches(page);
   while ((await card(page, id).count()) === 0) {
     const count = await page
       .locator('[aria-label="My coaches"] .coach-connection-card')
@@ -134,6 +145,7 @@ async function revealAccepted(page: Page, id: string) {
   }
 }
 async function history(page: Page, id: string) {
+  await openMyCoaches(page);
   const entry = card(page, id);
   await entry
     .getByRole("button", { name: "View shared history", exact: true })
@@ -226,9 +238,11 @@ try {
     athletePage.on("pageerror", (error) => errors.push(error.message));
     coachPage.on("pageerror", (error) => errors.push(error.message));
     await mkdir(evidence, { recursive: true });
+    await openMyCoaches(athletePage);
     await expect(athletePage.locator("#my-coaches")).toContainText(
       "No connected coaches yet",
     );
+    await athletePage.goto(base + "/sessions");
     phase =
       "real athlete request, ambiguous retry, withdraw and explicit coach acceptance";
     console.log("Rehearsal: " + phase);
@@ -264,6 +278,7 @@ try {
     await expect(feedback(athletePage)).toHaveText(
       "Connection request pending acceptance.",
     );
+    await openMyCoaches(athletePage);
     await expect(
       athletePage.getByRole("button", {
         name: "Refresh connections",
@@ -397,7 +412,7 @@ try {
       "**/storage/v1/object/public/coach-portraits/**",
       (route) => route.abort(),
     );
-    await athletePage.goto(base + "/sessions");
+    await athletePage.goto(base + "/my-coaches");
     await expect(card(athletePage, next.id).locator(".avatar img")).toHaveCount(
       0,
     );
@@ -454,11 +469,13 @@ try {
         name: "Accept connection",
       }),
     ).toHaveCount(0);
+    await athletePage.goto(base + "/sessions");
     await expect(
       athletePage.locator(
         `#athlete-booking-${race.bookingId} .coach-booking-status`,
       ),
     ).toContainText("Cancelled");
+    await openMyCoaches(athletePage);
     await card(athletePage, pending.id)
       .getByRole("button", { name: "Decline connection" })
       .click();
@@ -507,7 +524,7 @@ try {
     await expect(
       athletePage.locator('[aria-label="My coaches"] .coach-connection-card'),
     ).toHaveCount(20);
-    await athletePage.route("**/sessions", async (route) => {
+    await athletePage.route("**/my-coaches", async (route) => {
       if (route.request().method() === "POST") await route.abort();
       else await route.continue();
     });
@@ -520,7 +537,7 @@ try {
     await expect(
       athletePage.locator('[aria-label="My coaches"] .coach-connection-card'),
     ).toHaveCount(0);
-    await athletePage.unroute("**/sessions");
+    await athletePage.unroute("**/my-coaches");
     await athletePage
       .getByRole("button", { name: "Retry my coaches", exact: true })
       .click();
@@ -639,10 +656,11 @@ try {
       cancelDirectPrivateBookingRecord(tx, noConfirmed.bookingId),
     );
     await requestFixture(coachB, stranger, noConfirmed.slotId, "pending");
-    const { page: strangerPage } = await actorPage(stranger, "/sessions");
+    const { page: strangerPage } = await actorPage(stranger, "/my-coaches");
     await expect(
       strangerPage.locator('[aria-label="My coaches"] .coach-connection-card'),
     ).toHaveCount(0);
+    await strangerPage.goto(base + "/sessions");
     await strangerPage
       .locator(`#athlete-booking-${noConfirmed.bookingId}`)
       .getByRole("button", { name: "Connection options", exact: true })
@@ -662,7 +680,7 @@ try {
       suspendedPendingBooking.bookingId,
     );
     await database`select app.review_coach_application(${coachB.actor.profileId}::uuid,'approved','suspended','Local-only suspension check.','local-test','movx-identity-application-v1')`;
-    await strangerPage.reload();
+    await strangerPage.goto(base + "/my-coaches");
     await expect(
       card(strangerPage, suspendedPending.id).getByRole("button", {
         name: "Accept connection",
@@ -681,7 +699,7 @@ try {
     );
     const guest = await browser.newContext();
     const guestPage = await guest.newPage();
-    await guestPage.goto(base + "/sessions");
+    await guestPage.goto(base + "/my-coaches");
     await expect(guestPage).toHaveURL(/\/sign-in\?/);
     await expect(
       guestPage.getByRole("heading", { name: "My coaches", exact: true }),

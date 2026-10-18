@@ -102,6 +102,7 @@ export async function mutateConnectionAction(
   }
   revalidatePath("/coach");
   revalidatePath("/sessions");
+  revalidatePath("/my-coaches");
   const message =
     result.value.status === "pending"
       ? "Connection request pending acceptance."

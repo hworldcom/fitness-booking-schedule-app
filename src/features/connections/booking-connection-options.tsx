@@ -134,7 +134,10 @@ export function BookingConnectionOptions({
             )}
             {connection?.canDisconnect && (
               <>
-                <a href={`#${target}`} className="button secondary">
+                <a
+                  href={role === "athlete" ? "/my-coaches" : `#${target}`}
+                  className="button secondary"
+                >
                   View {list}
                 </a>
                 <ConnectionDisconnectControl

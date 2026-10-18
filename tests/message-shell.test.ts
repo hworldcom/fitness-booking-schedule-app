@@ -47,15 +47,16 @@ test("dedicated messages keep an athlete return and personal account without ord
     );
   }
 });
-test("coach-capable message accounts return to their workspace with a personal Account/My sessions dropdown", () => {
+test("coach-capable message accounts default to athlete view until a browser preference is chosen", () => {
   for (const status of ["approved", "demo", "suspended"] as const) {
     const html = render(actor(status));
     assert.match(html, /href="\/coach"/);
-    assert.match(html, /aria-label="Back to Coach workspace"/);
+    assert.match(html, /aria-label="Back to My sessions"/);
+    assert.match(html, /Switch to coach view/);
     assert.match(html, /href="\/account"/);
     assert.match(html, /aria-label="Account menu for Message Athlete"/);
     assert.match(html, /href="\/sessions"/);
-    assert.doesNotMatch(html, /href="\/profile\/coach"/);
+    assert.ok(html.includes(`href="/profile"`));
   }
 });
 test("unauthorized message shells expose sign-in and Home without fabricated private destinations", () => {

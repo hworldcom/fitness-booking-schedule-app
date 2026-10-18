@@ -72,7 +72,6 @@ export default async function Page() {
         <nav aria-label="My sessions sections">
           <a href="#booking-requests">Booking requests</a>
           <a href="#my-sessions">Confirmed sessions</a>
-          <a href="#my-coaches">My coaches</a>
         </nav>
         <p>
           <Link href="/sessions/groups">Open my group sessions →</Link>
@@ -92,6 +91,7 @@ export default async function Page() {
       )}
       <ClientBookingRequests initialPage={bookingState.requests} />
       <ConnectionWorkspace
+        view="sessions"
         role="athlete"
         mayInitiate={true}
         initialPages={connectionPages}

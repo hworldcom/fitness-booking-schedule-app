@@ -4,6 +4,11 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ActorSnapshot } from "@/auth/actor-contracts";
 import { AccountMenu } from "@/components/account-menu";
+import {
+  hasCoachWorkspace,
+  resolveWorkspaceView,
+  workspaceHref,
+} from "@/auth/workspace-view";
 import type { CoachAccessStatus } from "@/domain/coaches";
 
 function actor(coachAccessStatus: CoachAccessStatus): ActorSnapshot {
@@ -36,7 +41,7 @@ test("account dropdown exposes no private identity or links to unauthorized acto
     assert.equal(render({ status }), "");
 });
 
-test("athlete and coach dropdowns contain only the two personal destinations, initially hidden", () => {
+test("dropdown names Trainings and follows the selected capability-bounded view", () => {
   for (const status of [
     "not-applied",
     "pending",
@@ -45,28 +50,52 @@ test("athlete and coach dropdowns contain only the two personal destinations, in
     "demo",
     "suspended",
   ] as const) {
-    const html = render(actor(status), "/profile/coach");
-    assert.match(
-      html,
-      /<button[^>]*aria-label="Account menu for Menu Athlete"/,
-    );
-    assert.match(html, /aria-expanded="false"/);
-    const controlled = /aria-controls="([^"]+)"/.exec(html)?.[1];
-    assert.ok(controlled);
-    assert.ok(
-      html.includes(`id="${controlled}" class="account-menu-panel" hidden=""`),
-    );
-    assert.deepEqual(
-      [...html.matchAll(/href="([^"]+)"/g)].map((m) => m[1]),
-      ["/account", "/sessions"],
-    );
-    assert.match(html, /lucide-menu/);
-    assert.match(html, />Account<|>Account<\/span>/);
-    assert.match(html, />My sessions<\/span>/);
-    assert.doesNotMatch(
-      html,
-      /href="\/profile\/coach"|href="\/coach"|role="menu"|role="menuitem"/,
-    );
+    const value = actor(status);
+    for (const path of ["/", "/sessions/groups", "/coach", "/profile/coach"]) {
+      const view = resolveWorkspaceView(value, path);
+      const profileHref =
+        view === "coach" && status !== "suspended"
+          ? "/profile/coach"
+          : "/profile";
+      const html = render(value, path);
+      assert.match(
+        html,
+        /<button[^>]*aria-label="Account menu for Menu Athlete"/,
+      );
+      assert.match(html, /aria-expanded="false"/);
+      const controlled = /aria-controls="([^"]+)"/.exec(html)?.[1];
+      assert.ok(controlled);
+      assert.ok(
+        html.includes(
+          `id="${controlled}" class="account-menu-panel" hidden=""`,
+        ),
+      );
+      assert.deepEqual(
+        [...html.matchAll(/href="([^"]+)"/g)].map((m) => m[1]),
+        [
+          profileHref,
+          workspaceHref(view),
+          "/account",
+          ...(hasCoachWorkspace(value)
+            ? [workspaceHref(view === "coach" ? "athlete" : "coach")]
+            : []),
+        ],
+      );
+      assert.match(html, />Profile<\/span>/);
+      assert.match(html, />Trainings<\/span>/);
+      assert.match(html, />Account settings<\/span>/);
+      assert.doesNotMatch(html, /My sessions|role="menu"|role="menuitem"/);
+      if (hasCoachWorkspace(value))
+        assert.match(
+          html,
+          new RegExp(
+            `Switch to ${view === "coach" ? "athlete" : "coach"} view`,
+          ),
+        );
+      else assert.doesNotMatch(html, /Switch to|href="\/coach"/);
+      if (path === "/coach" && view === "coach")
+        assert.match(html, /aria-current="page"[^>]*href="\/coach"/);
+    }
   }
 });
 

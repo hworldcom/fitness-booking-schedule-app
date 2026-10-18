@@ -10,16 +10,20 @@ export function AccountShell({
   children,
   messageBadge,
   authControl,
+  pathname = "/account",
 }: {
   actor: ActorSnapshot;
   children?: ReactNode;
   messageBadge?: ReactNode;
   authControl?: ReactNode;
+  pathname?: string;
 }) {
+  const profilePage =
+    pathname === "/profile" || pathname.startsWith("/profile/");
   return (
-    <div className="account-shell">
+    <div className={`account-shell${profilePage ? " profile-shell" : ""}`}>
       <a className="skip-link" href="#main-content">
-        Skip to account settings
+        {profilePage ? "Skip to profile" : "Skip to account settings"}
       </a>
       <header className="account-shell-header">
         <Link href="/" className="brand-home" aria-label="MovX Club home">
@@ -37,14 +41,18 @@ export function AccountShell({
                 <span>Messages</span>
                 {messageBadge}
               </Link>
-              <AccountMenu actor={actor} pathname="/account" />
+              <AccountMenu actor={actor} pathname={pathname} />
             </>
           ) : (
             authControl
           )}
         </div>
       </header>
-      <main id="main-content" tabIndex={-1}>
+      <main
+        id="main-content"
+        className={profilePage ? "profile-page-content" : undefined}
+        tabIndex={-1}
+      >
         {children}
       </main>
     </div>

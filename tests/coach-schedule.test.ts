@@ -7,7 +7,8 @@ import { CoachAvailabilityPanel } from "@/features/coaches/coach-availability-pa
 import { CoachApplicationGate } from "@/features/coaches/coach-application-gate";
 import { CoachProfilePreview } from "@/features/coaches/coach-profile-preview";
 import { CoachWorkspaceHeader } from "@/features/coaches/coach-workspace-header";
-import { CoachWorkspaceNavigation } from "@/features/coaches/coach-workspace-navigation";
+import { COACH_WORKSPACE_DESTINATIONS } from "@/features/coaches/coach-workspace-navigation";
+import { WorkspaceNavigationItems } from "@/components/workspace-navigation";
 import { resolveCoachWorkspaceView } from "@/features/coaches/coach-workspace-view";
 
 const COACH: CoachProjection = Object.freeze({
@@ -89,32 +90,33 @@ const SUSPENDED_ACCESS: CoachAccessProjection = Object.freeze({
   verificationPolicyVersion: "movx-identity-application-v1",
 });
 
-test("coach views share Profile-first navigation with one selected destination", () => {
-  for (const active of ["profile", "schedule", "bookings", "events"] as const) {
+test("scheduling views keep Schedule, Bookings and Events without the independent Profile", () => {
+  for (const active of ["schedule", "bookings", "events"] as const) {
     const html = renderToStaticMarkup(
-      createElement(CoachWorkspaceNavigation, { active }),
+      createElement(WorkspaceNavigationItems, {
+        navigation: COACH_WORKSPACE_DESTINATIONS,
+        pathname: active === "events" ? "/coach/events" : "/coach",
+        viewValues: active === "bookings" ? ["bookings"] : [],
+      }),
     );
-    const profileIndex = html.indexOf('href="/profile/coach"');
     const scheduleIndex = html.indexOf('href="/coach"');
     const bookingsIndex = html.indexOf('href="/coach?view=bookings"');
     const eventsIndex = html.indexOf('href="/coach/events"');
 
-    assert.ok(profileIndex >= 0);
-    assert.ok(profileIndex < scheduleIndex);
+    assert.ok(scheduleIndex >= 0);
+    assert.doesNotMatch(html, /href="\/profile\/coach"/);
     assert.ok(scheduleIndex < bookingsIndex);
     assert.ok(bookingsIndex < eventsIndex);
     assert.equal((html.match(/aria-current="page"/g) ?? []).length, 1);
     assert.match(
       html,
       new RegExp(
-        `aria-current="page" class="active" href="${
-          active === "profile"
-            ? "/profile/coach"
-            : active === "schedule"
-              ? "/coach"
-              : active === "bookings"
-                ? "/coach\\?view=bookings"
-                : "/coach/events"
+        `aria-current="page" href="${
+          active === "schedule"
+            ? "/coach"
+            : active === "bookings"
+              ? "/coach\\?view=bookings"
+              : "/coach/events"
         }"`,
       ),
     );
@@ -174,10 +176,10 @@ test("Schedule mounts its editor inside the shared coach frame", () => {
     }),
   );
   assert.match(html, /Weekly hours and date overrides/);
-  assert.match(html, /aria-current="page" class="active" href="\/coach"/);
+  assert.doesNotMatch(html, /coach-workspace-nav|aria-label="Coach workspace"/);
   assert.ok(
     html.indexOf('class="coach-workspace-header"') <
-      html.indexOf('class="coach-workspace-nav"'),
+      html.indexOf("Weekly hours and date overrides"),
   );
 });
 
@@ -239,16 +241,13 @@ test("Bookings renders booking detail without the Schedule editor or occurrence 
   assert.match(html, /Booked sessions/);
   assert.match(html, /Booking Client/);
   assert.match(html, /client-avatar/);
-  assert.match(
-    html,
-    /aria-current="page" class="active" href="\/coach\?view=bookings"/,
-  );
+  assert.doesNotMatch(html, /coach-workspace-nav|aria-label="Coach workspace"/);
   assert.doesNotMatch(html, /Weekly hours and date overrides/);
   assert.doesNotMatch(html, /Dated class times/);
   assert.doesNotMatch(html, /Save schedule/);
   assert.ok(
     html.indexOf('class="coach-workspace-header"') <
-      html.indexOf('class="coach-workspace-nav"'),
+      html.indexOf("Booked sessions"),
   );
 });
 
@@ -299,4 +298,33 @@ test("hidden coach profile keeps the recurring editor unavailable", () => {
   assert.match(html, /Publish your profile before offering times/);
   assert.doesNotMatch(html, /Weekly hours and date overrides/);
   assert.equal((html.match(/<button/g) ?? []).length, 0);
+});
+
+test("coach Profile has its own title and workspace return while preserving publication details", () => {
+  const html = renderToStaticMarkup(
+    createElement(CoachWorkspaceHeader, {
+      coach: COACH,
+      ownerDisplayName: "Schedule Coach",
+      view: "profile",
+    }),
+  );
+  assert.match(html, /<h1>Profile\.<\/h1>/);
+  assert.match(html, /href="\/coach"/);
+  assert.match(html, /Profile published/);
+  assert.match(html, /href="\/coaches\/schedule-coach"/);
+  assert.doesNotMatch(html, /Run your coaching week|coach-workspace-nav/);
+});
+
+test("applicant Profile returns to personal Profile without a scheduling-workspace action", () => {
+  const html = renderToStaticMarkup(
+    createElement(CoachWorkspaceHeader, {
+      coach: null,
+      ownerDisplayName: "Applicant",
+      view: "profile",
+      profileReturnHref: "/profile",
+    }),
+  );
+  assert.match(html, /href="\/profile"/);
+  assert.match(html, /Personal profile/);
+  assert.doesNotMatch(html, /href="\/coach"|View public profile/);
 });

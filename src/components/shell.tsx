@@ -7,7 +7,6 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   ArrowRight,
   ArrowLeft,
-  ArrowUpRight,
   BriefcaseBusiness,
   CalendarCheck2,
   CalendarDays,
@@ -17,17 +16,25 @@ import {
   MapPin,
   MessageSquare,
   UserRound,
+  UsersRound,
 } from "lucide-react";
 import { AuthStatusLink } from "@/auth/client/auth-status-link";
 import { useActor } from "@/auth/client/actor-provider";
 import type { ActorSnapshot } from "@/auth/actor-contracts";
-import { profileInitials } from "@/auth/profile-presentation";
-import { accountProfileImagePresentation } from "@/profile-images/presentation";
+import { useWorkspaceView } from "@/auth/client/use-workspace-view";
+import {
+  hasCoachWorkspace as hasCoachWorkspaceNavigation,
+  resolveWorkspaceView,
+  workspaceHref,
+  type WorkspaceView,
+} from "@/auth/workspace-view";
 import { useUnreadMessages } from "@/messages/use-unread-messages";
 import { AccountMenu } from "./account-menu";
 import { HeaderAccountControl } from "./header-account-control";
 import { AccountShell } from "@/components/account-shell";
-import { Avatar, Brand, Modal, Pill } from "./ui";
+import { WorkspaceNavigation } from "./workspace-navigation";
+import { COACH_WORKSPACE_DESTINATIONS } from "./coach-workspace-destinations";
+import { Brand, Modal, Pill } from "./ui";
 
 const publicNavigationBeforeAccount = [
   { label: "Home", href: "/", Icon: House },
@@ -57,6 +64,12 @@ const clientNavigation = {
   label: "My sessions",
   href: "/sessions",
   Icon: CalendarCheck2,
+};
+
+const myCoachesNavigation = {
+  label: "My coaches",
+  href: "/my-coaches",
+  Icon: UsersRound,
 };
 
 const coachNavigation = {
@@ -91,15 +104,6 @@ const publicMarketplacePaths = new Set([
   "/auth/confirm",
 ]);
 
-function hasCoachWorkspaceNavigation(actor: ActorSnapshot) {
-  return (
-    actor.status === "authorized" &&
-    (actor.coachAccessStatus === "approved" ||
-      actor.coachAccessStatus === "demo" ||
-      actor.coachAccessStatus === "suspended")
-  );
-}
-
 function isCoachWorkspacePath(path: string) {
   return (
     isNavigationHrefActive(path, coachNavigation.href) ||
@@ -107,41 +111,56 @@ function isCoachWorkspacePath(path: string) {
   );
 }
 
-function allNavigationForActor(actor: ActorSnapshot, path = "") {
-  const accountNavigation =
-    actor.status !== "authorized"
-      ? []
-      : hasCoachWorkspaceNavigation(actor)
-        ? [clientNavigation, messagesNavigation, coachNavigation]
-        : [clientNavigation, messagesNavigation];
-  const profileNavigation =
-    actor.status === "authorized" &&
-    (actor.coachAccessStatus === "approved" ||
-      actor.coachAccessStatus === "demo")
-      ? coachProfileNavigation
-      : accountProfileNavigation;
+function allNavigationForActor(
+  actor: ActorSnapshot,
+  path = "",
+  view: WorkspaceView = "athlete",
+) {
+  if (actor.status === "authorized") {
+    return [
+      publicNavigationBeforeAccount[0],
+      ...(resolveWorkspaceView(actor, path, view) === "coach"
+        ? [...COACH_WORKSPACE_DESTINATIONS]
+        : [clientNavigation, myCoachesNavigation]),
+      messagesNavigation,
+    ];
+  }
   return [
     ...publicNavigationBeforeAccount,
-    ...accountNavigation,
     howItWorksNavigation,
-    profileNavigation,
+    accountProfileNavigation,
   ].filter(
     ({ href }) =>
       (!isCoachWorkspacePath(path) &&
         !isNavigationHrefActive(path, clientNavigation.href) &&
+        !isNavigationHrefActive(path, myCoachesNavigation.href) &&
         !isNavigationHrefActive(path, accountProfileNavigation.href)) ||
       !["/explore", "/events", howItWorksNavigation.href].includes(href),
   );
 }
 
-// The desktop header owns Messages; keep it in the independent mobile menu.
-export function navigationForActor(actor: ActorSnapshot, path = "") {
-  return allNavigationForActor(actor, path).filter(
-    ({ href }) => href !== "/messages",
+// Header controls own Messages and Profile in both workspace views.
+export function navigationForActor(
+  actor: ActorSnapshot,
+  path = "",
+  view: WorkspaceView = "athlete",
+) {
+  return allNavigationForActor(actor, path, view).filter(
+    ({ href }) => href !== "/messages" && !isProfilePath(href),
   );
 }
 
-export function mobileNavigationForActor(actor: ActorSnapshot, path = "") {
+export function isProfilePath(path: string) {
+  return path === "/profile" || path.startsWith("/profile/");
+}
+
+export function mobileNavigationForActor(
+  actor: ActorSnapshot,
+  path = "",
+  view: WorkspaceView = "athlete",
+) {
+  if (actor.status === "authorized")
+    return navigationForActor(actor, path, view);
   const navigationPath = isCoachWorkspacePath(path) ? path : "";
   return allNavigationForActor(actor, navigationPath).filter(
     ({ href }) =>
@@ -151,12 +170,15 @@ export function mobileNavigationForActor(actor: ActorSnapshot, path = "") {
   );
 }
 
-export function workspaceRoleLabel(actor: ActorSnapshot) {
+export function workspaceRoleLabel(
+  actor: ActorSnapshot,
+  view: WorkspaceView = "athlete",
+) {
   if (actor.status !== "authorized") return "MovX preview";
   switch (actor.coachAccessStatus) {
     case "approved":
     case "demo":
-      return "Coach and athlete";
+      return view === "coach" ? "Coach view" : "Athlete view";
     case "suspended":
       return "Coach access limited";
     case "pending":
@@ -164,13 +186,16 @@ export function workspaceRoleLabel(actor: ActorSnapshot) {
     case "rejected":
       return "Coach application needs changes";
     case "not-applied":
-      return "Athlete account";
+      return "Athlete view";
   }
 }
 
-export function publicAccountNavigationForActor(actor: ActorSnapshot) {
+export function publicAccountNavigationForActor(
+  actor: ActorSnapshot,
+  view: WorkspaceView = "athlete",
+) {
   if (actor.status !== "authorized") return [];
-  return hasCoachWorkspaceNavigation(actor)
+  return hasCoachWorkspaceNavigation(actor) && view === "coach"
     ? [messagesNavigation, coachNavigation]
     : [messagesNavigation];
 }
@@ -207,7 +232,8 @@ export function MessageShell({
 }) {
   const root = useRef<HTMLDivElement>(null);
   const profile = actor.status === "authorized" ? actor.profile : null;
-  const coachWorkspace = hasCoachWorkspaceNavigation(actor);
+  const view = useWorkspaceView(actor, "/messages");
+  const coachWorkspace = view === "coach";
   useEffect(() => {
     const viewport = window.visualViewport;
     if (!viewport) return;
@@ -235,7 +261,7 @@ export function MessageShell({
           {profile ? (
             <>
               <Link
-                href={coachWorkspace ? "/coach" : "/sessions"}
+                href={workspaceHref(view)}
                 className="messages-workspace-return"
                 aria-label={`Back to ${coachWorkspace ? "Coach workspace" : "My sessions"}`}
               >
@@ -261,6 +287,7 @@ export function MessageShell({
 export function Shell({ children }: { children: ReactNode }) {
   const path = usePathname();
   const { actor } = useActor();
+  const view = useWorkspaceView(actor, path);
   const [aboutOpen, setAboutOpen] = useState(false);
   const unreadCount = useUnreadMessages(
     actor.status === "authorized"
@@ -287,16 +314,10 @@ export function Shell({ children }: { children: ReactNode }) {
     );
   const publicShell = isPublicMarketplacePath(path);
   const currentProfile = actor.status === "authorized" ? actor.profile : null;
-  const currentProfileImage = currentProfile
-    ? accountProfileImagePresentation(
-        currentProfile.avatarUrl,
-        currentProfile.coachPortraitUrl,
-      )
-    : null;
-  const visibleNavigation = navigationForActor(actor, path);
-  const mobileNavigation = mobileNavigationForActor(actor, path);
-  const publicAccountNavigation = publicAccountNavigationForActor(actor);
-  const roleLabel = workspaceRoleLabel(actor);
+  const visibleNavigation = navigationForActor(actor, path, view);
+  const mobileNavigation = mobileNavigationForActor(actor, path, view);
+  const publicAccountNavigation = publicAccountNavigationForActor(actor, view);
+  const roleLabel = workspaceRoleLabel(actor, view);
   const active = (href: string) => isNavigationHrefActive(path, href);
 
   if (path === "/messages")
@@ -306,12 +327,13 @@ export function Shell({ children }: { children: ReactNode }) {
       </MessageShell>
     );
 
-  if (path === "/account")
+  if (path === "/account" || isProfilePath(path))
     return (
       <AccountShell
         actor={actor}
         messageBadge={messageBadge}
         authControl={<AuthStatusLink />}
+        pathname={path}
       >
         {children}
       </AccountShell>
@@ -332,23 +354,10 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
           <nav aria-label="Main navigation">
             <span className="authenticated-nav-label">Navigate</span>
-            {visibleNavigation.map(({ label, href, Icon }) => (
-              <Link
-                href={href}
-                key={href}
-                className={`nav-item ${active(href) ? "active" : ""}`}
-                aria-current={active(href) ? "page" : undefined}
-              >
-                <Icon
-                  size={22}
-                  strokeWidth={1.7}
-                  aria-hidden="true"
-                  fill={href === "/" && active(href) ? "currentColor" : "none"}
-                />
-                <span>{label}</span>
-                {href === "/messages" && messageBadge}
-              </Link>
-            ))}
+            <WorkspaceNavigation
+              navigation={visibleNavigation}
+              pathname={path}
+            />
           </nav>
           <div className="sidebar-bottom">
             <button
@@ -361,22 +370,6 @@ export function Shell({ children }: { children: ReactNode }) {
                 <small>Fictional coaches and places</small>
               </span>
             </button>
-            {currentProfile && (
-              <Link
-                href="/profile"
-                className="sidebar-profile authenticated-account-card"
-              >
-                <Avatar
-                  initials={profileInitials(currentProfile.displayName)}
-                  imageUrl={currentProfileImage?.imageUrl}
-                />
-                <span>
-                  <strong>{currentProfile.displayName}</strong>
-                  <small>{roleLabel}</small>
-                </span>
-                <ArrowUpRight size={18} />
-              </Link>
-            )}
           </div>
         </aside>
       )}
@@ -514,30 +507,11 @@ export function Shell({ children }: { children: ReactNode }) {
           className="mobile-nav authenticated-mobile-nav"
           aria-label="Mobile navigation"
         >
-          {mobileNavigation.map(({ label, href, Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className={active(href) ? "active" : ""}
-              aria-current={active(href) ? "page" : undefined}
-              aria-label={label}
-            >
-              <Icon
-                size={21}
-                strokeWidth={1.7}
-                aria-hidden="true"
-                fill={href === "/" && active(href) ? "currentColor" : "none"}
-              />
-              <span>
-                {label === "My sessions"
-                  ? "Sessions"
-                  : label === "Coach workspace"
-                    ? "Workspace"
-                    : label}
-              </span>
-              {href === "/messages" && messageBadge}
-            </Link>
-          ))}
+          <WorkspaceNavigation
+            navigation={mobileNavigation}
+            pathname={path}
+            mobile
+          />
         </nav>
       )}
       {aboutOpen && (

@@ -74,7 +74,7 @@ export default async function Page({
           reservation alone does not confirm a session.
         </p>
         <nav aria-label="My sessions sections">
-          <Link href="/sessions">Private sessions and My coaches</Link>
+          <Link href="/sessions">Private sessions</Link>
           <Link href="/sessions/groups" aria-current="page">
             Group sessions
           </Link>

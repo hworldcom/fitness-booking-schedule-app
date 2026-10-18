@@ -5,7 +5,6 @@ import type {
   GroupPage,
   GroupRosterItem,
 } from "@/domain/group-sessions";
-import { CoachWorkspaceNavigation } from "@/features/coaches/coach-workspace-navigation";
 import { EventStatus, EventTerms } from "@/features/events/event-ui";
 import { eventDate, eventHref } from "@/features/events/event-contract";
 import {
@@ -18,12 +17,7 @@ import "@/features/events/events.css";
 import "./coach-events.css";
 
 export function CoachEventsFrame({ children }: { children: ReactNode }) {
-  return (
-    <div className="events-page coach-events-page">
-      <CoachWorkspaceNavigation active="events" />
-      {children}
-    </div>
-  );
+  return <div className="events-page coach-events-page">{children}</div>;
 }
 export function CoachEventsState({
   status,

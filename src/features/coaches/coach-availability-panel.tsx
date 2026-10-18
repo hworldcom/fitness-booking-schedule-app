@@ -4,7 +4,6 @@ import { Eye, Settings2 } from "lucide-react";
 import type { CoachProjection } from "@/domain/coaches";
 import type { CoachWorkspaceView } from "./coach-workspace-view";
 import { CoachWorkspaceHeader } from "./coach-workspace-header";
-import { CoachWorkspaceNavigation } from "./coach-workspace-navigation";
 
 export function CoachAvailabilityPanel({
   coach,
@@ -24,7 +23,6 @@ export function CoachAvailabilityPanel({
   return (
     <div className="coach-workspace">
       <CoachWorkspaceHeader coach={coach} ownerDisplayName={ownerDisplayName} />
-      <CoachWorkspaceNavigation active={view} />
 
       {view === "bookings" && coach ? (
         bookingContent

@@ -7,7 +7,7 @@ This directory records planned changes, task status and implementation evidence.
 - A **development ticket** is a small implementable task named `# Ticket DEVNNNN` with a `DEVNNNN-short-title.md` filename. It owns implementation and validation evidence, and its DEV ID is used in commits. Start one from [TEMPLATE.md](TEMPLATE.md).
 - A **coordination record** is a non-implementation umbrella named `# Coordination CORNNNN` with a `CORNNNN-short-title.md` filename. It maps a flat set of peer development tickets and is never used as a commit reference. Start one from [COORDINATION_TEMPLATE.md](COORDINATION_TEMPLATE.md).
 
-DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0339 and COR0029.
+DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0348 and COR0030.
 
 Every DEV record declares its direct coordination membership near the top: one linked COR, or `None — independent development ticket`. Direct membership is limited to one COR and must match that COR's work map. Dependencies, downstream consumers and historical links remain separate relationships.
 
@@ -92,6 +92,12 @@ DEV0330–DEV0331 are allocated to the coach marketplace pricing/review/username
 
 DEV0338 is allocated to independently prepared coach-page preview work in the shared workspace. It remains reserved while that record awaits its own commit; the DEV0337 preservation checkpoint does not include that work.
 
+DEV0340–DEV0346 and COR0029 are allocated to independent session-type work in the shared workspace and remain reserved while awaiting their own commits. The navigation checkpoints exclude that work.
+
+DEV0339 is allocated to the separate My athletes navigation change, which follows these workspace-navigation prerequisites.
+
+DEV0347 is allocated to independent test-coach public-URL preservation work and remains reserved while awaiting its own commit.
+
 ## Ticket index
 
 ### Current records
@@ -158,6 +164,10 @@ DEV0338 is allocated to independently prepared coach-page preview work in the sh
 
 | Record                                                                                                                                               | Area         | Milestone                                  | Status    | Outcome                                                                                                                                                                                                                  |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [DEV0334 — Promote coach sections to primary navigation](archive/frontend/DEV0334-promote-coach-sections-to-primary-navigation.md)                   | Frontend     | Authenticated workspace refinement         | Completed | Home, Schedule, Bookings and Events; query/nested selection, 293 tests, real desktop/phone checks and production build pass.                                                                                                      |
+| [DEV0333 — Switch athlete and coach navigation views](archive/frontend/DEV0333-switch-athlete-and-coach-navigation-views.md)                         | Frontend     | Authenticated workspace refinement         | Completed | Trainings dropdown and exclusive Home-first views; 280 tests, real desktop/phone checks, build and exact fixture cleanup pass.                                                                                                    |
+| [DEV0327 — Promote My coaches to workspace navigation](archive/frontend/DEV0327-promote-my-coaches-to-workspace-navigation.md)                       | Frontend     | M3 — Authenticated navigation refinement   | Completed | Profile/session/settings dropdown and independent My coaches route; 271 tests, build, eight responsive cases, original-session links and state/guard checks pass.                                                                 |
+| [DEV0326 — Separate Profile from workspace navigation](archive/frontend/DEV0326-separate-profile-from-workspace-navigation.md)                       | Frontend     | M3 — Authenticated navigation refinement   | Completed | Profile/settings/session dropdown and independent personal/coach framing; 271 tests, build, 20 actor/viewport checks and signed-out redirect proof pass.                                                                          |
 | [DEV0331 — Enable username-based public coach URLs](archive/backend/DEV0331-enable-username-based-public-coach-urls.md)                              | Backend      | M10 — Coach marketplace websites           | Completed | Confirmed owner opt-in, public/legacy/alias URLs, atomic claims and local migration/browser proof; hosted rollout separate.                                                                                                       |
 | [DEV0325 — Collect registration names and unique username](archive/backend/DEV0325-collect-registration-names-and-unique-username.md) | Backend | Authentication quality before UAT | Completed | Atomic enrollment backend checkpoint committed for DEV0331; validated registration interface remains separate shared work. |
 | [DEV0337 — Preserve existing demo coach data](archive/backend/DEV0337-preserve-existing-demo-coach-data.md) | Backend | Nonproduction data integrity | Completed | Create-only setup and seed replay preserve six retained coaches and private logins; 328 unit/server and 6 disposable database checks passed. |

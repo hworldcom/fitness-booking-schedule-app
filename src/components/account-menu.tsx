@@ -2,13 +2,21 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
-import { CalendarCheck2, Menu, UserRound } from "lucide-react";
+import {
+  ArrowLeftRight,
+  CalendarCheck2,
+  Menu,
+  Settings2,
+  UserRound,
+} from "lucide-react";
 import type { ActorSnapshot } from "@/auth/actor-contracts";
+import { useWorkspaceView } from "@/auth/client/use-workspace-view";
+import { hasCoachWorkspace, workspaceHref } from "@/auth/workspace-view";
 import { profileInitials } from "@/auth/profile-presentation";
 import { accountProfileImagePresentation } from "@/profile-images/presentation";
 import { Avatar } from "./ui";
 
-type Profile = Extract<ActorSnapshot, { status: "authorized" }>["profile"];
+type AuthorizedActor = Extract<ActorSnapshot, { status: "authorized" }>;
 
 export function AccountMenu({
   actor,
@@ -21,20 +29,27 @@ export function AccountMenu({
   // Navigation or an actor change discards the former disclosure state.
   return (
     <AccountDisclosure
-      key={`${actor.demoRun.slug}:${actor.profile.slug}:${pathname}`}
-      profile={actor.profile}
+      key={`${actor.demoRun.slug}:${actor.profile.slug}:${actor.coachAccessStatus}:${pathname}`}
+      actor={actor}
       pathname={pathname}
     />
   );
 }
 
 function AccountDisclosure({
-  profile,
+  actor,
   pathname,
 }: {
-  profile: Profile;
+  actor: AuthorizedActor;
   pathname: string;
 }) {
+  const profile = actor.profile;
+  const view = useWorkspaceView(actor, pathname);
+  const profileHref =
+    view === "coach" && actor.coachAccessStatus !== "suspended"
+      ? "/profile/coach"
+      : "/profile";
+  const trainingsHref = workspaceHref(view);
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -94,23 +109,54 @@ function AccountDisclosure({
       </button>
       <div id={panelId} className="account-menu-panel" hidden={!open}>
         <Link
+          href={profileHref}
+          className="account-menu-link"
+          aria-current={pathname === profileHref ? "page" : undefined}
+          onClick={choose}
+        >
+          <UserRound size={18} aria-hidden="true" />
+          <span>Profile</span>
+        </Link>
+        <Link
+          href={trainingsHref}
+          className="account-menu-link"
+          aria-current={
+            pathname === trainingsHref ||
+            pathname.startsWith(`${trainingsHref}/`)
+              ? "page"
+              : undefined
+          }
+          onClick={choose}
+        >
+          <CalendarCheck2 size={18} aria-hidden="true" />
+          <span>Trainings</span>
+        </Link>
+        <Link
           href="/account"
           className="account-menu-link"
           aria-current={pathname === "/account" ? "page" : undefined}
           onClick={choose}
         >
-          <UserRound size={18} aria-hidden="true" />
-          <span>Account</span>
+          <Settings2 size={18} aria-hidden="true" />
+          <span>Account settings</span>
         </Link>
-        <Link
-          href="/sessions"
-          className="account-menu-link"
-          aria-current={pathname === "/sessions" ? "page" : undefined}
-          onClick={choose}
-        >
-          <CalendarCheck2 size={18} aria-hidden="true" />
-          <span>My sessions</span>
-        </Link>
+        {hasCoachWorkspace(actor) && (
+          <div className="account-menu-view">
+            <span className="account-menu-view-label">
+              {view === "coach" ? "Coach view" : "Athlete view"}
+            </span>
+            <Link
+              href={workspaceHref(view === "coach" ? "athlete" : "coach")}
+              className="account-menu-link"
+              onClick={choose}
+            >
+              <ArrowLeftRight size={18} aria-hidden="true" />
+              <span>
+                Switch to {view === "coach" ? "athlete" : "coach"} view
+              </span>
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
