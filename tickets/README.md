@@ -94,8 +94,6 @@ DEV0338 is allocated to independently prepared coach-page preview work in the sh
 
 DEV0340–DEV0346 and COR0029 are allocated to independent session-type work in the shared workspace and remain reserved while awaiting their own commits. The navigation checkpoints exclude that work.
 
-DEV0339 is allocated to the separate My athletes navigation change, which follows these workspace-navigation prerequisites.
-
 DEV0347 is allocated to independent test-coach public-URL preservation work and remains reserved while awaiting its own commit.
 
 ## Ticket index
@@ -164,6 +162,7 @@ DEV0347 is allocated to independent test-coach public-URL preservation work and 
 
 | Record                                                                                                                                               | Area         | Milestone                                  | Status    | Outcome                                                                                                                                                                                                                  |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [DEV0339 — Promote My athletes to coach navigation](archive/frontend/DEV0339-promote-my-athletes-to-coach-navigation.md) | Frontend | Coach workspace navigation | Completed | Separate My athletes page/sidebar/mobile entry, focused Bookings and correct history links; 327 isolated-snapshot tests, lint/types, build, responsive and user keyboard checks pass. |
 | [DEV0334 — Promote coach sections to primary navigation](archive/frontend/DEV0334-promote-coach-sections-to-primary-navigation.md)                   | Frontend     | Authenticated workspace refinement         | Completed | Home, Schedule, Bookings and Events; query/nested selection, 293 tests, real desktop/phone checks and production build pass.                                                                                                      |
 | [DEV0333 — Switch athlete and coach navigation views](archive/frontend/DEV0333-switch-athlete-and-coach-navigation-views.md)                         | Frontend     | Authenticated workspace refinement         | Completed | Trainings dropdown and exclusive Home-first views; 280 tests, real desktop/phone checks, build and exact fixture cleanup pass.                                                                                                    |
 | [DEV0327 — Promote My coaches to workspace navigation](archive/frontend/DEV0327-promote-my-coaches-to-workspace-navigation.md)                       | Frontend     | M3 — Authenticated navigation refinement   | Completed | Profile/session/settings dropdown and independent My coaches route; 271 tests, build, eight responsive cases, original-session links and state/guard checks pass.                                                                 |

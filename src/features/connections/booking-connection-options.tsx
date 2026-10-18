@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef } from "react";
 import type {
   BookingConnectionContext,
@@ -52,7 +53,6 @@ export function BookingConnectionOptions({
   const name =
     role === "coach" ? booking.clientDisplayName : booking.coachDisplayName;
   const list = role === "coach" ? "My athletes" : "My coaches";
-  const target = role === "coach" ? "my-athletes" : "my-coaches";
   return (
     <div
       className="coach-booking-connection"
@@ -134,12 +134,12 @@ export function BookingConnectionOptions({
             )}
             {connection?.canDisconnect && (
               <>
-                <a
-                  href={role === "athlete" ? "/my-coaches" : `#${target}`}
+                <Link
+                  href={role === "athlete" ? "/my-coaches" : "/coach/athletes"}
                   className="button secondary"
                 >
                   View {list}
-                </a>
+                </Link>
                 <ConnectionDisconnectControl
                   name={name}
                   disabled={busy}

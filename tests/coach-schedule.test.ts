@@ -90,23 +90,35 @@ const SUSPENDED_ACCESS: CoachAccessProjection = Object.freeze({
   verificationPolicyVersion: "movx-identity-application-v1",
 });
 
-test("scheduling views keep Schedule, Bookings and Events without the independent Profile", () => {
-  for (const active of ["schedule", "bookings", "events"] as const) {
+test("coach destinations separate Schedule, Bookings, My athletes and Events from Profile", () => {
+  for (const active of [
+    "schedule",
+    "bookings",
+    "athletes",
+    "events",
+  ] as const) {
     const html = renderToStaticMarkup(
       createElement(WorkspaceNavigationItems, {
         navigation: COACH_WORKSPACE_DESTINATIONS,
-        pathname: active === "events" ? "/coach/events" : "/coach",
+        pathname:
+          active === "events"
+            ? "/coach/events"
+            : active === "athletes"
+              ? "/coach/athletes"
+              : "/coach",
         viewValues: active === "bookings" ? ["bookings"] : [],
       }),
     );
     const scheduleIndex = html.indexOf('href="/coach"');
     const bookingsIndex = html.indexOf('href="/coach?view=bookings"');
+    const athletesIndex = html.indexOf('href="/coach/athletes"');
     const eventsIndex = html.indexOf('href="/coach/events"');
 
     assert.ok(scheduleIndex >= 0);
     assert.doesNotMatch(html, /href="\/profile\/coach"/);
     assert.ok(scheduleIndex < bookingsIndex);
-    assert.ok(bookingsIndex < eventsIndex);
+    assert.ok(bookingsIndex < athletesIndex);
+    assert.ok(athletesIndex < eventsIndex);
     assert.equal((html.match(/aria-current="page"/g) ?? []).length, 1);
     assert.match(
       html,
@@ -116,7 +128,9 @@ test("scheduling views keep Schedule, Bookings and Events without the independen
             ? "/coach"
             : active === "bookings"
               ? "/coach\\?view=bookings"
-              : "/coach/events"
+              : active === "athletes"
+                ? "/coach/athletes"
+                : "/coach/events"
         }"`,
       ),
     );

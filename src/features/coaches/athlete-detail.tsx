@@ -30,10 +30,7 @@ export function AthleteDetail({
   if (!athlete) return null;
   return (
     <div className="private-athlete-detail">
-      <Link
-        className="button secondary"
-        href="/coach?view=bookings#my-athletes"
-      >
+      <Link className="button secondary" href="/coach/athletes">
         Back to My athletes
       </Link>
       <header className="private-athlete-heading">

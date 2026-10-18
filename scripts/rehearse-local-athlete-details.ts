@@ -126,7 +126,7 @@ try {
         level: 2,
       }),
     ).toBeVisible();
-    await cp.goto(base + "/coach?view=bookings");
+    await cp.goto(base + "/coach/athletes");
     await cp
       .locator("#my-athletes")
       .getByRole("link", { name: "View DEV0250 Athlete’s athlete details" })
@@ -166,7 +166,7 @@ try {
     });
     await back.focus();
     await cp.keyboard.press("Enter");
-    await expect(cp).toHaveURL(base + "/coach?view=bookings#my-athletes");
+    await expect(cp).toHaveURL(base + "/coach/athletes");
     await cp
       .locator("#my-athletes")
       .getByRole("link", { name: "View DEV0250 Athlete’s athlete details" })

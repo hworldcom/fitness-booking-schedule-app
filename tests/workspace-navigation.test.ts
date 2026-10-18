@@ -16,11 +16,13 @@ const cases = [
   ["/coach/events/new", [], "events"],
   ["/coach/events/example/edit", [], "events"],
   ["/coach/sessions/example", [], "bookings"],
-  ["/coach/athletes/example", [], "bookings"],
+  ["/coach/athletes", ["bookings"], "athletes"],
+  ["/coach/athletes/example", [], "athletes"],
   ["/coach-other", [], null],
   ["/coaches/daniel-park", [], null],
   ["/events/example", [], null],
   ["/coach/events-other", [], null],
+  ["/coach/athletes-other", [], null],
 ] as const;
 
 test("coach selection matches strict server query handling and exact nested routes", () => {
@@ -53,7 +55,7 @@ test("desktop and mobile expose one selected coach destination without ambiguous
       if (href) assert.ok(current[0].includes(`href="${href}"`));
       assert.deepEqual(
         links.map((link) => /href="([^"]+)"/.exec(link)?.[1]),
-        ["/coach", "/coach?view=bookings", "/coach/events"],
+        ["/coach", "/coach?view=bookings", "/coach/athletes", "/coach/events"],
       );
     }
 });
@@ -65,6 +67,6 @@ test("prerender fallback retains usable links without inventing query selection"
       viewValues: null,
     }),
   );
-  assert.equal((html.match(/<a /g) ?? []).length, 3);
+  assert.equal((html.match(/<a /g) ?? []).length, 4);
   assert.doesNotMatch(html, /aria-current/);
 });

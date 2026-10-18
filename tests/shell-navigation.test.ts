@@ -84,6 +84,8 @@ test("coach view exclusively exposes its existing authorized workspace", () => {
     for (const path of [
       "/coach",
       "/coach/events/example",
+      "/coach/athletes",
+      "/coach/athletes/example",
       "/profile/coach",
       "/profile/coach/edit",
     ]) {
@@ -91,6 +93,7 @@ test("coach view exclusively exposes its existing authorized workspace", () => {
         { label: "Home", href: "/" },
         { label: "Schedule", href: "/coach" },
         { label: "Bookings", href: "/coach?view=bookings" },
+        { label: "My athletes", href: "/coach/athletes" },
         { label: "Events", href: "/coach/events" },
       ];
       assert.deepEqual(

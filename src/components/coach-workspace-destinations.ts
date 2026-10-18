@@ -8,5 +8,11 @@ export const COACH_WORKSPACE_DESTINATIONS = Object.freeze([
     href: "/coach?view=bookings",
     Icon: CalendarDays,
   },
+  {
+    id: "athletes",
+    label: "My athletes",
+    href: "/coach/athletes",
+    Icon: UsersRound,
+  },
   { id: "events", label: "Events", href: "/coach/events", Icon: UsersRound },
 ] as const);

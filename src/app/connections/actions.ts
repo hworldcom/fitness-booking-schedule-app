@@ -101,6 +101,7 @@ export async function mutateConnectionAction(
     );
   }
   revalidatePath("/coach");
+  revalidatePath("/coach/athletes");
   revalidatePath("/sessions");
   revalidatePath("/my-coaches");
   const message =

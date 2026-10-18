@@ -89,6 +89,7 @@ function refreshScheduling() {
   revalidatePath("/sessions");
   revalidatePath("/my-coaches");
   revalidatePath("/coach");
+  revalidatePath("/coach/athletes");
   revalidatePath("/explore");
   revalidatePath("/coaches/[slug]", "page");
   revalidatePath("/[handle]", "page");

@@ -18,7 +18,6 @@ import { CoachAvailabilityPanel } from "@/features/coaches/coach-availability-pa
 import { CoachApplicationGate } from "@/features/coaches/coach-application-gate";
 import { ConnectionWorkspace } from "@/features/connections/connection-workspace";
 import { UNAVAILABLE_CONNECTION_PAGES } from "@/features/connections/connection-model";
-import { loadConnectionPagesAction } from "@/app/connections/actions";
 import "@/features/connections/connections.css";
 import { CoachBookingRequestQueue } from "@/features/coaches/coach-booking-request-queue";
 import { resolveCoachWorkspaceView } from "@/features/coaches/coach-workspace-view";
@@ -131,11 +130,6 @@ export default async function Page({
   const mayInitiate =
     state.coachAccess.status === "approved" ||
     state.coachAccess.status === "demo";
-  const connectionPages =
-    view === "bookings" &&
-    (mayInitiate || state.coachAccess.status === "suspended")
-      ? await loadConnectionPagesAction("coach")
-      : UNAVAILABLE_CONNECTION_PAGES;
   const bookingContent = (
     <div className="coach-bookings-workspace">
       <nav
@@ -144,7 +138,6 @@ export default async function Page({
       >
         <a href="#booking-requests">Booking requests</a>
         <a href="#client-bookings">Booked sessions</a>
-        <a href="#my-athletes">My athletes</a>
       </nav>
       <CoachBookingRequestQueue
         key={`${state.actorScope}:${occurrence ?? "all"}`}
@@ -153,12 +146,12 @@ export default async function Page({
       />
       <ConnectionWorkspace
         role="coach"
+        view="sessions"
         bookings={coachBookings}
         referenceTime={new Date().toISOString()}
-        initialPages={connectionPages}
+        initialPages={UNAVAILABLE_CONNECTION_PAGES}
         key={state.actorScope}
         sourceVersion={connectionWorkspaceVersion(state.actorScope, "coach", [
-          connectionPages,
           coachBookings,
           coachRequestPage,
           state.coachAccess.status,

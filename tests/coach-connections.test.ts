@@ -250,6 +250,35 @@ test("suspended presentation preserves resolution/history while suppressing new 
   assert.doesNotMatch(options, /Send connection request/);
 });
 
+test("accepted booking connection shortcuts reach the separate role-specific connection pages", () => {
+  for (const role of ["coach", "athlete"] as const) {
+    const html = renderToStaticMarkup(
+      createElement(BookingConnectionOptions, {
+        role,
+        booking,
+        context: {
+          connection: connection(1, {
+            status: "accepted",
+            canDisconnect: true,
+          }),
+          canSend: false,
+        },
+        error: null,
+        busy: false,
+        mayInitiate: true,
+        onLoad: noop,
+        onMutation: noop,
+      }),
+    );
+    assert.ok(
+      html.includes(
+        `href="${role === "coach" ? "/coach/athletes" : "/my-coaches"}"`,
+      ),
+    );
+    assert.doesNotMatch(html, /href="#my-(?:athletes|coaches)"/);
+  }
+});
+
 test("empty, unavailable and paged lists make no invented total or hidden identity claim", () => {
   const html = markup(
     pages({
@@ -307,7 +336,9 @@ test("history keeps one continuing accepted request/session and unsuccessful ori
   assert.equal((html.match(/data-history-id=/g) ?? []).length, 2);
   assert.match(html, /Accepted request · Cancelled session/);
   assert.match(html, /Declined request/);
-  assert.ok(html.includes(`href="#coach-booking-${booking.id}"`));
+  assert.ok(
+    html.includes(`href="/coach?view=bookings#coach-booking-${booking.id}"`),
+  );
   assert.ok(html.includes(`data-request-id="${declined.id}"`));
   assert.match(html, /Load older shared history/);
   assert.doesNotMatch(html, /Conversation|private notes|Send message/);

@@ -48,12 +48,14 @@ async function actorPage(actor: LocalPerson, route: string) {
   await page.goto(base + route);
   return { session, page };
 }
-async function openMyCoaches(page: Page) {
+async function openConnectionList(page: Page) {
   if (new URL(page.url()).pathname === "/sessions")
     await page.goto(base + "/my-coaches");
+  else if (new URL(page.url()).pathname === "/coach")
+    await page.goto(base + "/coach/athletes");
 }
 async function refresh(page: Page) {
-  await openMyCoaches(page);
+  await openConnectionList(page);
   await page
     .getByRole("button", { name: "Refresh connections", exact: true })
     .click();
@@ -64,6 +66,7 @@ async function refresh(page: Page) {
 async function sendThrough(page: Page, id: string, role: "athlete" | "coach") {
   if (role === "athlete" && new URL(page.url()).pathname !== "/sessions")
     await page.goto(base + "/sessions");
+  if (role === "coach") await page.goto(base + "/coach?view=bookings");
   const session = page.locator(`#${role}-booking-${id}`);
   const options = session.getByRole("button", {
     name: "Connection options",
@@ -82,13 +85,13 @@ async function sendThrough(page: Page, id: string, role: "athlete" | "coach") {
   await expect(feedback(page)).toHaveText(
     "Connection request pending acceptance.",
   );
-  if (role === "athlete") await openMyCoaches(page);
+  await openConnectionList(page);
   await expect(
     page.getByRole("button", { name: "Refresh connections", exact: true }),
   ).toBeEnabled();
 }
 async function acceptThrough(page: Page, id: string) {
-  await openMyCoaches(page);
+  await openConnectionList(page);
   await card(page, id)
     .getByRole("button", { name: "Accept connection", exact: true })
     .click();
@@ -98,7 +101,7 @@ async function acceptThrough(page: Page, id: string) {
   ).toBeEnabled();
 }
 async function disconnectThrough(page: Page, id: string) {
-  await openMyCoaches(page);
+  await openConnectionList(page);
   await card(page, id)
     .getByRole("button", { name: "Disconnect", exact: true })
     .click();
@@ -127,7 +130,7 @@ async function disconnectThrough(page: Page, id: string) {
   ).toHaveCount(0);
 }
 async function revealAccepted(page: Page, id: string) {
-  await openMyCoaches(page);
+  await openConnectionList(page);
   while ((await card(page, id).count()) === 0) {
     const count = await page
       .locator('[aria-label="My coaches"] .coach-connection-card')
@@ -145,7 +148,7 @@ async function revealAccepted(page: Page, id: string) {
   }
 }
 async function history(page: Page, id: string) {
-  await openMyCoaches(page);
+  await openConnectionList(page);
   const entry = card(page, id);
   await entry
     .getByRole("button", { name: "View shared history", exact: true })
@@ -233,12 +236,12 @@ try {
     wanted.add(oldCompleted.bookingId);
     browser = await chromium.launch({ channel: "chrome", headless: true });
     const { page: athletePage } = await actorPage(athlete, "/sessions");
-    const { page: coachPage } = await actorPage(coach, "/coach?view=bookings");
+    const { page: coachPage } = await actorPage(coach, "/coach/athletes");
     const errors: string[] = [];
     athletePage.on("pageerror", (error) => errors.push(error.message));
     coachPage.on("pageerror", (error) => errors.push(error.message));
     await mkdir(evidence, { recursive: true });
-    await openMyCoaches(athletePage);
+    await openConnectionList(athletePage);
     await expect(athletePage.locator("#my-coaches")).toContainText(
       "No connected coaches yet",
     );
@@ -278,7 +281,7 @@ try {
     await expect(feedback(athletePage)).toHaveText(
       "Connection request pending acceptance.",
     );
-    await openMyCoaches(athletePage);
+    await openConnectionList(athletePage);
     await expect(
       athletePage.getByRole("button", {
         name: "Refresh connections",
@@ -475,7 +478,7 @@ try {
         `#athlete-booking-${race.bookingId} .coach-booking-status`,
       ),
     ).toContainText("Cancelled");
-    await openMyCoaches(athletePage);
+    await openConnectionList(athletePage);
     await card(athletePage, pending.id)
       .getByRole("button", { name: "Decline connection" })
       .click();

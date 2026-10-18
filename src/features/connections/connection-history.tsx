@@ -68,7 +68,7 @@ export function ConnectionHistory({
               </div>
               {row.bookingId && bookingIds.has(row.bookingId) && (
                 <a
-                  href={`${role === "athlete" ? "/sessions" : ""}#${role}-booking-${row.bookingId}`}
+                  href={`${role === "athlete" ? "/sessions" : "/coach?view=bookings"}#${role}-booking-${row.bookingId}`}
                 >
                   View session
                 </a>

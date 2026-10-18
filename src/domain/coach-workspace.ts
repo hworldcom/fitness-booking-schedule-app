@@ -1,5 +1,6 @@
 export type CoachWorkspaceView = "schedule" | "bookings";
-export type CoachWorkspaceDestination = CoachWorkspaceView | "events";
+export type CoachWorkspaceDestination =
+  CoachWorkspaceView | "athletes" | "events";
 
 export function resolveCoachWorkspaceView(
   value: string | string[] | undefined,
@@ -13,7 +14,8 @@ export function selectedCoachWorkspaceDestination(
 ): CoachWorkspaceDestination | null {
   const within = (root: string) => path === root || path.startsWith(`${root}/`);
   if (within("/coach/events")) return "events";
-  if (within("/coach/sessions") || within("/coach/athletes")) return "bookings";
+  if (within("/coach/athletes")) return "athletes";
+  if (within("/coach/sessions")) return "bookings";
   if (path !== "/coach") return null;
   return resolveCoachWorkspaceView(
     viewValues.length === 1 ? viewValues[0] : undefined,

@@ -149,13 +149,15 @@ try {
     page.on("pageerror", (error) => errors.push(error.message));
     await mkdir(evidence, { recursive: true });
     phase = "coach sends, withdraws, and receives explicit athlete consent";
-    await page.goto(base + "/coach?view=bookings");
+    await page.goto(base + "/coach/athletes");
     await expect(
       page.getByRole("heading", { name: "My athletes", exact: true }),
     ).toBeVisible();
     await expect(page.locator("#my-athletes")).toContainText(
       "No connected athletes yet",
     );
+    await page.goto(base + "/coach?view=bookings");
+    await expect(page.locator("#my-athletes")).toHaveCount(0);
     const mainCard = page.locator(`#coach-booking-${main.bookingId}`);
     await mainCard
       .getByRole("button", { name: "Connection options", exact: true })
@@ -202,6 +204,7 @@ try {
         bookingConnectionContextRecord(tx, main.bookingId),
       )
     ).connection!;
+    await page.goto(base + "/coach/athletes");
     await page
       .locator(`.coach-connection-card[data-connection-id="${first.id}"]`)
       .getByRole("button", { name: "Withdraw request" })
@@ -209,6 +212,7 @@ try {
     await expect(page.locator(".coach-connection-feedback")).toHaveText(
       "Connection request withdrawn.",
     );
+    await page.goto(base + "/coach?view=bookings");
     await mainCard
       .getByRole("button", { name: "Connection options", exact: true })
       .click();
@@ -224,6 +228,7 @@ try {
       )
     ).connection!;
     await decide(athlete, pending.id, "accept");
+    await page.goto(base + "/coach/athletes");
     await page
       .getByRole("button", { name: "Refresh connections", exact: true })
       .click();
@@ -272,6 +277,7 @@ try {
       "Disconnected. Shared history is retained.",
     );
     await expect(page.locator(".coach-connection-feedback")).toBeFocused();
+    await page.goto(base + "/coach?view=bookings");
     await mainCard
       .getByRole("button", { name: "Connection options", exact: true })
       .click();
@@ -285,6 +291,7 @@ try {
     await expect(page.locator(".coach-connection-feedback")).toHaveText(
       "Connection request pending acceptance.",
     );
+    await page.goto(base + "/coach/athletes");
     await expect(
       page.locator(`[aria-label="My athletes"] .coach-connection-card`),
     ).toHaveCount(0);
@@ -355,11 +362,13 @@ try {
         .locator(`[data-connection-id="${stale.id}"]`)
         .getByRole("button", { name: "Accept connection" }),
     ).toHaveCount(0);
+    await page.goto(base + "/coach?view=bookings");
     await expect(
       page.locator(
         `#coach-booking-${otherBooking.bookingId} .coach-booking-status`,
       ),
     ).toHaveText("cancelled");
+    await page.goto(base + "/coach/athletes");
     await page
       .locator(`[data-connection-id="${stale.id}"]`)
       .getByRole("button", { name: "Decline connection", exact: true })
@@ -375,6 +384,7 @@ try {
       ).connection?.status,
       "declined",
     );
+    await page.goto(base + "/coach?view=bookings");
     const cancelledCard = page.locator(`#coach-booking-${cancelled.bookingId}`);
     await cancelledCard
       .getByRole("button", { name: "Connection options", exact: true })
@@ -385,7 +395,7 @@ try {
     await page.route("**/api/connections/**/athlete-avatar**", (route) =>
       route.abort(),
     );
-    await page.reload();
+    await page.goto(base + "/coach/athletes");
     acceptedCard = page.locator(
       `[aria-label="My athletes"] [data-connection-id="${again.id}"]`,
     );
@@ -406,7 +416,7 @@ try {
     await expect(
       page.locator(`[aria-label="My athletes"] .coach-connection-card`),
     ).toHaveCount(20);
-    await page.route("**/coach?view=bookings", async (route) => {
+    await page.route("**/coach/athletes", async (route) => {
       if (route.request().method() === "POST") await route.abort();
       else await route.continue();
     });
@@ -419,7 +429,7 @@ try {
     await expect(
       page.locator(`[aria-label="My athletes"] .coach-connection-card`),
     ).toHaveCount(0);
-    await page.unroute("**/coach?view=bookings");
+    await page.unroute("**/coach/athletes");
     await page
       .getByRole("button", { name: "Retry my athletes", exact: true })
       .click();
@@ -497,14 +507,14 @@ try {
       })),
     );
     const strangerPage = await strangerContext.newPage();
-    await strangerPage.goto(base + "/coach?view=bookings");
+    await strangerPage.goto(base + "/coach/athletes");
     await expect(
       strangerPage.getByRole("heading", { name: "My athletes", exact: true }),
     ).toHaveCount(0);
     await expect(strangerPage.locator("body")).not.toContainText(athlete.name);
     const guestContext = await browser.newContext();
     const guestPage = await guestContext.newPage();
-    await guestPage.goto(base + "/coach?view=bookings");
+    await guestPage.goto(base + "/coach/athletes");
     await expect(guestPage).toHaveURL(/\/sign-in\?/);
     await expect(
       guestPage.getByRole("heading", { name: "My athletes", exact: true }),
