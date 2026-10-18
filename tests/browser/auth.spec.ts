@@ -31,7 +31,9 @@ test("password-first entry offers registration and recovery while public browsin
     "autocomplete",
     "current-password",
   );
-  await page.getByRole("link", { name: "Create an account" }).click();
+  const createAccount = page.getByRole("link", { name: "Create an account" });
+  await expect(createAccount).toHaveAttribute("href", "/register?returnTo=%2F");
+  await createAccount.click();
   await expect(
     page.getByRole("heading", { name: "Create your account", exact: true }),
   ).toBeVisible();

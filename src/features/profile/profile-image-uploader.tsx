@@ -23,6 +23,7 @@ export function ProfileImageUploader({
   displayName,
   initials,
   kind,
+  onBusyChange,
 }: {
   endpoint: "/api/profile/avatar" | "/api/coach/portrait";
   currentImageUrl: string | null;
@@ -30,6 +31,7 @@ export function ProfileImageUploader({
   displayName: string;
   initials: string;
   kind: "account" | "coach";
+  onBusyChange?: (working: boolean) => void;
 }) {
   const { refreshActor } = useActor();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -49,6 +51,7 @@ export function ProfileImageUploader({
   }
 
   async function upload(file: File) {
+    onBusyChange?.(true);
     setStatus("working");
     setMessage("Preparing your image…");
     try {
@@ -84,10 +87,12 @@ export function ProfileImageUploader({
       );
     } finally {
       if (inputRef.current) inputRef.current.value = "";
+      onBusyChange?.(false);
     }
   }
 
   async function remove() {
+    onBusyChange?.(true);
     setStatus("working");
     setMessage("Removing the image…");
     try {
@@ -111,6 +116,8 @@ export function ProfileImageUploader({
     } catch {
       setStatus("error");
       setMessage("The image could not be removed. Try again.");
+    } finally {
+      onBusyChange?.(false);
     }
   }
 

@@ -3,7 +3,9 @@ import test from "node:test";
 import {
   isApplicationIdentitySnapshot,
   normalizeDisplayName,
+  isProfileCompletionResult,
 } from "@/auth/identity-contracts";
+import { registrationProfileInput } from "@/auth/registration-profile";
 import { isCoachApplicationSubmissionSnapshot } from "@/auth/coach-application-contracts";
 
 test("display names are normalized and bounded without assuming ASCII names", () => {
@@ -78,6 +80,44 @@ test("the coach application response exposes only its bounded status", () => {
   );
   assert.equal(
     isCoachApplicationSubmissionSnapshot({ status: "activated" }),
+    false,
+  );
+});
+
+test("registration requires three distinct bounded fields and canonicalizes the reserved handle", () => {
+  const input = {
+    username: " @Alex_29 ",
+    fullName: "  李   雷 ",
+    displayName: "Alex R",
+  };
+  assert.deepEqual(registrationProfileInput(input), {
+    username: "alex_29",
+    fullName: "李 雷",
+    displayName: "Alex R",
+  });
+  for (const invalid of [
+    { displayName: "Alex R" },
+    { ...input, fullName: "" },
+    { ...input, username: "" },
+    { ...input, username: "1alex" },
+    { ...input, username: "ab" },
+    { ...input, username: "a".repeat(31) },
+    { ...input, fullName: "Alex\nPrivate" },
+    { ...input, displayName: "Alex\u200b" },
+    { ...input, role: "coach" },
+    { ...input, subject: "forged" },
+  ])
+    assert.equal(registrationProfileInput(invalid), null);
+  assert.equal(isProfileCompletionResult({ status: "username-taken" }), true);
+  assert.equal(
+    isApplicationIdentitySnapshot({ status: "username-taken" }),
+    false,
+  );
+  assert.equal(
+    isProfileCompletionResult({
+      status: "username-taken",
+      fullName: "Private",
+    }),
     false,
   );
 });

@@ -84,10 +84,7 @@ function continuation(
   site: string,
 ): AuthContinuation {
   return {
-    returnTo:
-      command.returnTo === undefined
-        ? "/sessions"
-        : safeReturnTo(command.returnTo, site),
+    returnTo: safeReturnTo(command.returnTo, site),
     intent: command.intent ?? null,
   };
 }
@@ -332,7 +329,7 @@ async function updatePassword(
   const resume = (await currentApplicationAuthContinuation(
     subject,
     sessionId,
-  )) ?? { returnTo: "/sessions", intent: null };
+  )) ?? { returnTo: "/", intent: null };
   const reauth =
     command.action === "change-password"
       ? createClient(config.url, config.publishableKey, {

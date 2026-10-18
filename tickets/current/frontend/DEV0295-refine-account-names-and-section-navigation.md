@@ -9,6 +9,8 @@
 
 ## Objective and context
 
+2026-10-17 later new-account behavior: [DEV0325](../../archive/backend/DEV0325-collect-registration-names-and-unique-username.md) requires username/private full name/display name during confirmed registration and initializes preferred chat presentation with the chosen display name. Existing accounts, later explicit Account preferences and this ticket's incomplete validation are preserved; username sign-in/URLs remain deferred under DEV0296.
+
 The user requested one visible settings section at a time instead of anchor scrolling. They then refined name semantics to Amtlicher Name (Legal name) and Bevorzugter Vorname (Preferred first name), with the preferred first name shown in chat and defaulting to the first name. Their latest decision keeps username under Login & security, saved uniquely now for future login/profile URLs; those flows are explicitly deferred. The earlier visible-username idea is superseded. Follow the [identity/privacy contract](../../../docs/mvp-spec.md#8-identity-data-and-demo-integrity) and [Account contract](../../../docs/mvp-spec.md#9-scheduling-behavior-and-permissions). Preferred first name belongs in Personal details; the separate future-use username belongs in Login & security.
 
 ## Scope and non-goals

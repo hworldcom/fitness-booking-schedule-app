@@ -25,11 +25,7 @@ export async function AuthenticationPage({
     <SignInScreen
       key={stage}
       stage={stage}
-      returnTo={
-        config && params.returnTo !== undefined
-          ? safeReturnTo(params.returnTo, config.siteUrl)
-          : "/sessions"
-      }
+      returnTo={config ? safeReturnTo(params.returnTo, config.siteUrl) : "/"}
       intent={
         params.intent === "coach" || params.intent === "client"
           ? params.intent

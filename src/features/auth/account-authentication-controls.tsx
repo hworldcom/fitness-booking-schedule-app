@@ -8,6 +8,10 @@ import { authenticationResultMessage } from "@/auth/gateway";
 import { validateNewPassword } from "@/auth/password";
 
 export function AccountAuthenticationControls({ email }: { email: string }) {
+  return <AccountPasswordControls key={email} email={email} />;
+}
+
+function AccountPasswordControls({ email }: { email: string }) {
   const router = useRouter();
   const navigate = (path: string) => {
     router.replace(path);
@@ -22,6 +26,14 @@ export function AccountAuthenticationControls({ email }: { email: string }) {
   const [error, setError] = useState<string | null>(null);
   const lock = useRef(false);
   const notice = useRef<HTMLParagraphElement>(null);
+  const currentPasswordInput = useRef<HTMLInputElement>(null);
+  const changePasswordButton = useRef<HTMLButtonElement>(null);
+  const wasEditing = useRef(false);
+  useEffect(() => {
+    if (editing) currentPasswordInput.current?.focus();
+    else if (wasEditing.current) changePasswordButton.current?.focus();
+    wasEditing.current = editing;
+  }, [editing]);
   useEffect(() => {
     let active = true;
     void fetch("/api/auth/methods", {
@@ -115,8 +127,7 @@ export function AccountAuthenticationControls({ email }: { email: string }) {
           <p className="account-section-intro">
             {hasPassword
               ? "You can sign in with your email and password."
-              : "You haven’t added a password yet. Verify your email to set one on this same account."}{" "}
-            Email codes remain available for existing accounts.
+              : "You haven’t added a password yet. Verify your email to set one on this same account."}
           </p>
           {hasPassword ? (
             editing ? (
@@ -130,6 +141,7 @@ export function AccountAuthenticationControls({ email }: { email: string }) {
                   <label>
                     Current password
                     <input
+                      ref={currentPasswordInput}
                       name="currentPassword"
                       type="password"
                       autoComplete="current-password"
@@ -176,6 +188,7 @@ export function AccountAuthenticationControls({ email }: { email: string }) {
               </form>
             ) : (
               <button
+                ref={changePasswordButton}
                 type="button"
                 className="button secondary"
                 onClick={() => setEditing(true)}

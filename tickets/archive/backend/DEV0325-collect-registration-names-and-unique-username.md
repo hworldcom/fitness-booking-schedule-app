@@ -5,7 +5,7 @@
 - Last updated: 2026-10-18
 - Milestone: Authentication quality before UAT
 - Coordination: [COR0027 — Login, registration and social authentication](../../current/organisatory/COR0027-login-registration-and-social-authentication.md)
-- Related records: [DEV0286](../../current/backend/DEV0286-implement-password-authentication-and-recovery.md), [DEV0288](../../current/frontend/DEV0288-redesign-multi-method-login-and-registration.md), independent account baseline [DEV0295](../../current/frontend/DEV0295-refine-account-names-and-section-navigation.md), deferred username uses [DEV0296](../../current/organisatory/DEV0296-define-username-login-and-profile-url-contract.md), DEV0324 (separate pending commit).
+- Related records: [DEV0286](../../current/backend/DEV0286-implement-password-authentication-and-recovery.md), [DEV0288](../frontend/DEV0288-redesign-multi-method-login-and-registration.md), independent account baseline [DEV0295](../../current/frontend/DEV0295-refine-account-names-and-section-navigation.md), deferred username uses [DEV0296](../../current/organisatory/DEV0296-define-username-login-and-profile-url-contract.md), DEV0324 (separate pending commit).
 
 ## Objective and context
 

@@ -21,6 +21,10 @@ In scope: password operations, common server-rendered session/callback foundatio
 
 ## Expected behavior and edge cases
 
+2026-10-17 later request: [DEV0325](../../archive/backend/DEV0325-collect-registration-names-and-unique-username.md) supersedes name-only enrollment for new accounts with required canonical unique username, private full name and display name; the chosen display name initializes chat presentation. Existing identities/data and deferred username login/URLs are retained.
+
+2026-10-17 later user request: completed [DEV0324](../../archive/frontend/DEV0324-default-authentication-return-to-home.md) changes the shared no-destination fallback to Home (`/`). Explicit internal returns and required verification/profile/coach/recovery continuations keep priority; already-issued email flows retain their saved destination.
+
 New email/password registration requires email proof before an application profile or protected authority is granted. Returning password login sends no routine code. Recovery gives generic request outcomes and accepts only valid provider-issued ownership proof for the exact account; expired/used links recover safely. Existing passwordless users can set a password on their exact Auth subject and retain profile, coach status, bookings, media and messages. Ordinary navigation must not escape recovery before password update. Preserve existing sign-in query/return semantics and server-derived permissions.
 
 ## Assumptions, decisions, and dependencies

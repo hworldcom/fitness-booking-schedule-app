@@ -82,14 +82,13 @@ test("database-only and Auth-enabled local startup remain separate", () => {
   assert.equal(packageJson.dependencies["@supabase/ssr"], "0.12.7");
 });
 
-test("profile enrollment accepts only a bounded display name", () => {
+test("profile enrollment uses verified authority and a strict registration input", () => {
   const exampleEnvironment = read(".env.example");
   const route = read("src/app/api/auth/identity/route.ts");
 
   assert.doesNotMatch(exampleEnvironment, /PREPARED_PERSONAL_IDENTITIES_JSON/);
   assert.match(route, /verifiedAuthSession\(\)/);
-  assert.match(route, /normalizeDisplayName/);
-  assert.match(route, /Object\.keys\(value\)\.length === 1/);
+  assert.match(route, /registrationProfileInput/);
 });
 
 test("server Auth verifies claims and never promotes editable metadata", () => {

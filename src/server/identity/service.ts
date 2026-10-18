@@ -3,12 +3,14 @@ import "server-only";
 import type {
   ApplicationIdentitySnapshot,
   EnrolledApplicationIdentity,
+  ProfileCompletionResult,
 } from "@/auth/identity-contracts";
-import { normalizeDisplayName } from "@/auth/identity-contracts";
+import { registrationProfileInput } from "@/auth/registration-profile";
 import type { AuthSessionSnapshot } from "@/auth/contracts";
 import {
   currentApplicationProfile,
-  enrollApplicationProfile,
+  completeApplicationRegistration,
+  UsernameTakenError,
   type ApplicationIdentityRecord,
 } from "@/server/db/identity/repository";
 
@@ -33,8 +35,8 @@ function enrolledSnapshot(
 
 export async function enrollApplicationIdentity(
   session: AuthSessionSnapshot,
-  displayNameValue: unknown,
-): Promise<ApplicationIdentitySnapshot> {
+  inputValue: unknown,
+): Promise<ProfileCompletionResult> {
   if (session.status !== "signed-in") {
     return Object.freeze({
       status:
@@ -44,18 +46,20 @@ export async function enrollApplicationIdentity(
           : "unavailable",
     });
   }
-  const displayName = normalizeDisplayName(displayNameValue);
-  if (!displayName) return Object.freeze({ status: "profile-required" });
+  const input = registrationProfileInput(inputValue);
+  if (!input) return Object.freeze({ status: "invalid" });
 
   try {
-    const identity = await enrollApplicationProfile(
+    const identity = await completeApplicationRegistration(
       session.subject,
-      displayName,
+      input,
     );
     return identity
       ? enrolledSnapshot(identity)
       : Object.freeze({ status: "profile-required" });
-  } catch {
+  } catch (error) {
+    if (error instanceof UsernameTakenError)
+      return Object.freeze({ status: "username-taken" });
     return Object.freeze({ status: "unavailable" });
   }
 }

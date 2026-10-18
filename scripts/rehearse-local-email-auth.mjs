@@ -39,6 +39,7 @@ const sql = postgres(values.DB_URL, {
 });
 const expect = baseExpect.configure({ timeout: 30000 });
 const tag = `dev0286-${randomUUID()}`;
+let cleanupTag = tag;
 const evidence = `tmp/email-auth-rehearsal/${tag}`;
 await mkdir(evidence, { recursive: true, mode: 0o700 });
 const owned = [],
@@ -165,16 +166,19 @@ try {
       /^tmp\/email-auth-rehearsal\/(dev0286-[a-f0-9-]{36})\/recovery-ids[.]json$/,
     );
     assert.ok(matched);
+    cleanupTag = matched[1];
     ownedFlowHashes.add(digest(matched[1] + "-absent@users.movx.test"));
     for (const item of JSON.parse(await readFile(manifest, "utf8"))) {
       assert.match(item.id, /^[0-9a-f-]{36}$/);
       assert.match(
         item.email,
-        /^dev0286-[a-f0-9-]+(?:-legacy)?@users\.movx\.test$/,
+        /^dev0286-[a-f0-9-]+(?:-legacy|-reserved|-picture)?@users\.movx\.test$/,
       );
       assert.ok(
         item.email === matched[1] + "@users.movx.test" ||
-          item.email === matched[1] + "-legacy@users.movx.test",
+          item.email === matched[1] + "-legacy@users.movx.test" ||
+          item.email === matched[1] + "-reserved@users.movx.test" ||
+          item.email === matched[1] + "-picture@users.movx.test",
       );
       ownedFlowHashes.add(digest(item.email));
       const rows =
@@ -210,11 +214,22 @@ try {
       });
     }
     const email = tag + "@users.movx.test";
+    const username = "r_" + tag.slice(8).replaceAll("-", "").slice(0, 16);
+    const reservedEmail = tag + "-reserved@users.movx.test";
+    const reserved = await admin.auth.admin.createUser({
+      email: reservedEmail,
+      email_confirm: true,
+    });
+    assert.equal(reserved.error, null);
+    const reservedId = await authRow(reservedEmail);
+    const [reservedProfile] =
+      await sql`select identity_profile_id id from app.enroll_application_identity(${reservedId}::uuid,'Reserved rehearsal handle')`;
+    await sql`insert into app.account_personal_details(profile_id,username) values (${reservedProfile.id}::uuid,${username + "_taken"})`;
     let id, original, link, secondRefresh;
     await step(
       "registration validates an easy 8-character policy and requires email proof",
       async () => {
-        await open(page, "/register?returnTo=%2Fsessions%3Fsection%3Drequests");
+        await open(page, "/register");
         await page.getByLabel("Email address").fill(email);
         await page.getByLabel("New password", { exact: true }).fill("short");
         await page
@@ -230,6 +245,18 @@ try {
         await expect(page).toHaveURL(/\/check-email\?/);
         id = await authRow(email);
         assert.equal((await actor(first)).status, "signed-out");
+        const unconfirmedEnrollment = await first.request.post(
+          base + "/api/auth/identity",
+          {
+            headers: { origin: base },
+            data: {
+              username,
+              fullName: "Private Rehearsal Name",
+              displayName: "Auth Rehearsal Athlete",
+            },
+          },
+        );
+        assert.equal(unconfirmedEnrollment.status(), 401);
         assert.equal(
           (await command(second, { action: "sign-in", email, password })).body
             .status,
@@ -255,6 +282,7 @@ try {
         assert.equal(before[0].consumed_at, null);
         await confirm(page, link);
         await expect(page).toHaveURL(/\/complete-profile\?/);
+        assert.equal(new URL(page.url()).searchParams.get("returnTo"), "/");
         assert.equal((await actor(first)).status, "forbidden");
         assert.equal(
           (await (await first.request.get(base + "/api/auth/identity")).json())
@@ -267,23 +295,272 @@ try {
         );
         // A rejected replay leaves the established identity intact; returning login uses the same subject.
         await login(first, email);
-        await page.goto(
-          base + "/complete-profile?returnTo=%2Fsessions%3Fsection%3Drequests",
-          { waitUntil: "domcontentloaded" },
-        );
+        await page.goto(base + "/complete-profile", {
+          waitUntil: "domcontentloaded",
+        });
         await expect(page.getByLabel("Display name")).toBeEnabled();
-        await page.getByLabel("Display name").fill("Auth Rehearsal Athlete");
         await page
           .getByRole("button", { name: "Continue", exact: true })
           .click();
-        await expect(page).toHaveURL(/\/sessions\?section=requests$/);
+        await expect(page.locator(".authentication-error")).toContainText(
+          "full name and display name",
+        );
+        await page
+          .getByLabel("Username", { exact: true })
+          .fill(username + "_taken");
+        await page
+          .getByLabel("Full name", { exact: true })
+          .fill("Private Rehearsal Name");
+        await page.getByLabel("Display name").fill("Auth Rehearsal Athlete");
+        await page.screenshot({
+          path: evidence + "/registration-profile-desktop.png",
+          fullPage: true,
+        });
+        await page
+          .getByRole("button", { name: "Continue", exact: true })
+          .click();
+        await expect(page.locator(".authentication-error")).toContainText(
+          "username is already taken",
+        );
+        await expect(page.getByLabel("Full name", { exact: true })).toHaveValue(
+          "Private Rehearsal Name",
+        );
+        assert.equal(
+          (
+            await sql`select id from app.profiles where auth_user_id=${id}::uuid`
+          ).length,
+          0,
+        );
+        await page.setViewportSize({ width: 393, height: 852 });
+        assert.ok(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
+        );
+        await expect(page.locator(".authentication-error")).toBeFocused();
+        await page.screenshot({
+          path: evidence + "/registration-profile-mobile-error.png",
+          fullPage: true,
+        });
+        await page
+          .getByLabel("Username", { exact: true })
+          .fill(" @" + username.toUpperCase() + " ");
+        await page.getByLabel("Display name").press("Enter");
+        const pictureHeading = page.getByRole("heading", {
+          name: "Add a profile picture",
+          exact: true,
+        });
+        await expect(pictureHeading).toBeVisible();
+        await expect(pictureHeading).toBeFocused();
+        const later = page.getByRole("button", {
+          name: "Do this later",
+          exact: true,
+        });
+        await expect(later).toBeEnabled();
+        await page.screenshot({
+          path: evidence + "/optional-picture-mobile.png",
+          fullPage: true,
+        });
+        await later.focus();
+        await page.keyboard.press("Enter");
+        await expect(page).toHaveURL(base + "/");
+        await page.setViewportSize({ width: 1440, height: 1040 });
         original = await actor(first);
+        assert.equal(original.profile.avatarUrl, null);
         original.identity = await (
           await first.request.get(base + "/api/auth/identity")
         ).json();
         assert.ok(original.identity.profile.id);
+        const [saved] =
+          await sql`select legal_name,preferred_first_name,username from app.account_personal_details where profile_id=${original.identity.profile.id}::uuid`;
+        assert.equal(saved.legal_name, "Private Rehearsal Name");
+        assert.equal(saved.preferred_first_name, "Auth Rehearsal Athlete");
+        assert.equal(saved.username, username);
+        assert.ok(!JSON.stringify(original).includes("Private Rehearsal Name"));
+        assert.ok(!JSON.stringify(original.identity).includes(username));
+        const privateDetails = await (
+          await first.request.get(base + "/api/account")
+        ).json();
+        assert.equal(privateDetails.details.username, username);
+        assert.equal(
+          privateDetails.details.legalName,
+          "Private Rehearsal Name",
+        );
         assert.equal(original.status, "authorized");
         assert.equal((await session(first)).subject, id);
+      },
+    );
+    await step(
+      "optional registration picture normalizes private upload and preserves explicit coach continuation",
+      async () => {
+        const pictureEmail = tag + "-picture@users.movx.test";
+        const created = await admin.auth.admin.createUser({
+          email: pictureEmail,
+          password,
+          email_confirm: true,
+        });
+        assert.equal(created.error, null);
+        const pictureId = await authRow(pictureEmail);
+        await login(stranger, pictureEmail);
+        const picturePage = await stranger.newPage();
+        await picturePage.setViewportSize({ width: 1440, height: 1040 });
+        await open(
+          picturePage,
+          "/complete-profile?intent=coach&returnTo=%2Fsessions%3Fsection%3Drequests",
+        );
+        await picturePage
+          .getByLabel("Username", { exact: true })
+          .fill(username + "_photo");
+        await picturePage
+          .getByLabel("Full name", { exact: true })
+          .fill("Picture Private Name");
+        await picturePage
+          .getByLabel("Display name", { exact: true })
+          .fill("Picture Fixture");
+        await picturePage
+          .getByRole("button", { name: "Continue", exact: true })
+          .press("Enter");
+        await expect(
+          picturePage.getByRole("heading", {
+            name: "Add a profile picture",
+            exact: true,
+          }),
+        ).toBeFocused();
+        await picturePage.locator('input[type="file"]').setInputFiles({
+          name: "invalid.txt",
+          mimeType: "text/plain",
+          buffer: Buffer.from("not an image"),
+        });
+        await expect(
+          picturePage.locator(".profile-image-uploader").getByRole("alert"),
+        ).toContainText("Choose a JPEG, PNG or WebP image.");
+        await expect(
+          picturePage.getByRole("button", {
+            name: "Do this later",
+            exact: true,
+          }),
+        ).toBeEnabled();
+        await expect(
+          picturePage.getByRole("button", { name: "Continue", exact: true }),
+        ).toBeEnabled();
+        let releaseUpload;
+        const held = new Promise((resolve) => {
+          releaseUpload = resolve;
+        });
+        await picturePage.route("**/api/profile/avatar", async (route) => {
+          if (route.request().method() === "POST") await held;
+          await route.continue();
+        });
+        const source = await sharp({
+          create: {
+            width: 900,
+            height: 600,
+            channels: 3,
+            background: "#49783a",
+          },
+        })
+          .jpeg()
+          .toBuffer();
+        const uploadStarted = picturePage.waitForRequest(
+          (r) =>
+            new URL(r.url()).pathname === "/api/profile/avatar" &&
+            r.method() === "POST",
+        );
+        try {
+          await picturePage.locator('input[type="file"]').setInputFiles({
+            name: "picture.jpg",
+            mimeType: "image/jpeg",
+            buffer: source,
+          });
+          await uploadStarted;
+          await expect(
+            picturePage.getByRole("button", { name: "Continue", exact: true }),
+          ).toBeDisabled();
+          await expect(
+            picturePage.getByRole("button", {
+              name: "Do this later",
+              exact: true,
+            }),
+          ).toBeDisabled();
+        } finally {
+          releaseUpload();
+        }
+        await expect(
+          picturePage
+            .getByRole("status")
+            .filter({ hasText: "Account avatar saved." }),
+        ).toBeVisible();
+        const privateImage = await stranger.request.get(
+          base + "/api/profile/avatar",
+        );
+        assert.equal(privateImage.status(), 200);
+        assert.match(privateImage.headers()["content-type"], /image\/webp/);
+        const bytes = await privateImage.body();
+        const metadata = await sharp(bytes).metadata();
+        assert.equal(metadata.width, 512);
+        assert.equal(metadata.height, 512);
+        assert.equal(metadata.exif, undefined);
+        assert.ok(bytes.length <= 512 * 1024);
+        assert.equal(
+          (await second.request.get(base + "/api/profile/avatar")).status(),
+          401,
+        );
+        await picturePage.screenshot({
+          path: evidence + "/optional-picture-desktop-saved.png",
+          fullPage: true,
+        });
+        await picturePage
+          .getByRole("button", { name: "Remove", exact: true })
+          .click();
+        await expect(
+          picturePage
+            .getByRole("status")
+            .filter({ hasText: "Account avatar removed." }),
+        ).toBeVisible();
+        assert.equal(
+          (await stranger.request.get(base + "/api/profile/avatar")).status(),
+          404,
+        );
+        await picturePage.locator('input[type="file"]').setInputFiles({
+          name: "picture.jpg",
+          mimeType: "image/jpeg",
+          buffer: source,
+        });
+        await expect(
+          picturePage
+            .getByRole("status")
+            .filter({ hasText: "Account avatar saved." }),
+        ).toBeVisible();
+        await picturePage
+          .getByRole("button", { name: "Continue", exact: true })
+          .press("Enter");
+        await expect(
+          picturePage.getByRole("button", {
+            name: "Apply to coach",
+            exact: true,
+          }),
+        ).toBeVisible();
+        assert.equal((await actor(stranger)).coachAccessStatus, "not-applied");
+        await picturePage
+          .getByRole("link", { name: "Continue as an athlete", exact: true })
+          .click();
+        await expect(picturePage).toHaveURL(/\/sessions\?section=requests$/);
+        await picturePage.goto(base + "/profile");
+        await expect(
+          picturePage.getByRole("heading", {
+            name: "Choose your account picture",
+            exact: true,
+          }),
+        ).toBeVisible();
+        const [saved] =
+          await sql`select avatar_storage_path from app.profiles where auth_user_id=${pictureId}::uuid`;
+        assert.ok(saved.avatar_storage_path);
+        assert.equal(
+          (await command(stranger, { action: "sign-out" })).body.status,
+          "success",
+        );
+        assert.equal((await session(stranger)).status, "signed-out");
+        await picturePage.close();
       },
     );
     await step(
@@ -295,7 +572,7 @@ try {
         await mobile
           .getByRole("button", { name: "Sign in", exact: true })
           .press("Enter");
-        await expect(mobile).toHaveURL(/\/sessions$/);
+        await expect(mobile).toHaveURL(base + "/");
         assert.equal(
           (await (await second.request.get(base + "/api/auth/identity")).json())
             .profile.id,
@@ -317,6 +594,27 @@ try {
         );
         assert.equal((await session(second)).status, "signed-out");
         assert.equal((await session(first)).subject, id);
+        const deliberateReturn = await command(second, {
+          action: "sign-in",
+          email,
+          password,
+          returnTo: "/sessions?section=requests",
+        });
+        assert.equal(deliberateReturn.body.next, "/sessions?section=requests");
+        const coachIntent = await command(second, {
+          action: "sign-in",
+          email,
+          password,
+          intent: "coach",
+        });
+        assert.equal(
+          coachIntent.body.next,
+          "/complete-profile?returnTo=%2F&intent=coach",
+        );
+        assert.equal(
+          (await command(second, { action: "sign-out" })).body.status,
+          "success",
+        );
         await open(mobile, "/sign-in");
         assert.ok(
           await mobile.evaluate(
@@ -371,7 +669,11 @@ try {
         );
         const denied = await first.request.post(base + "/api/auth/identity", {
           headers: { origin: base },
-          data: { displayName: "Forbidden Change" },
+          data: {
+            username: "forbidden_change",
+            fullName: "Forbidden Private",
+            displayName: "Forbidden Change",
+          },
         });
         assert.equal(denied.status(), 401);
         await page
@@ -635,6 +937,19 @@ try {
   throw error;
 } finally {
   await browser?.close();
+  // A request may commit before navigation times out and before authRow records
+  // its ID. Recover only this run's four explicitly permitted fixture addresses.
+  for (const suffix of ["", "-legacy", "-reserved", "-picture"]) {
+    const email = cleanupTag + suffix + "@users.movx.test";
+    const rows = await sql`select id from auth.users where email=${email}`;
+    for (const row of rows) {
+      if (!owned.some((item) => item.id === row.id))
+        owned.push({ id: row.id, email });
+    }
+  }
+  await writeFile(evidence + "/recovery-ids.json", JSON.stringify(owned), {
+    mode: 0o600,
+  });
   const removedProfileIds = [];
   for (const fixture of owned) {
     const images =

@@ -2,7 +2,7 @@
 
 - Status: Draft
 - Created: 2026-10-17
-- Last updated: 2026-10-17
+- Last updated: 2026-10-18
 - Milestone: Authentication quality before user acceptance testing (UAT)
 - Coordination: [COR0027 — Login, registration and social authentication](../organisatory/COR0027-login-registration-and-social-authentication.md)
 - Related records: Scope amendment [DEV0311](../../archive/organisatory/DEV0311-defer-apple-from-initial-authentication-rollout.md); independent deferred Apple [DEV0312](DEV0312-integrate-deferred-apple-authentication.md). Direct peer/dependency boundaries and external consumers are mapped by COR0027. Historical identity foundations: [DEV0046](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md) and [DEV0147](../../archive/backend/DEV0147-separate-client-onboarding-and-verified-coach-access.md).
@@ -14,6 +14,8 @@ Enable real Google web authentication through the existing managed Auth boundary
 Use the current [registration contract](../../../docs/mvp-spec.md#41-register-as-an-athlete-or-apply-to-coach), [identity/privacy rules](../../../docs/mvp-spec.md#8-identity-data-and-demo-integrity), [definition of done](../../../docs/mvp-spec.md#11-definition-of-done), [milestones](../../../docs/mvp-spec.md#12-delivery-milestones) and [acceptance matrix](../../../docs/mvp-spec.md#13-acceptance-matrix). The local password-first flow is implemented; DEV0322 removes the former email-code fallback at the user’s request. Real Google and hosted/combined UAT readiness remain pending.
 
 ## Scope and non-goals
+
+2026-10-18 frontend completion boundary: the user explicitly confirmed closing DEV0288 with Google clearly unavailable while keeping activation and UAT sign-off open here and in DEV0289. This ticket owns the remaining provider-specific UI wiring: replace the disabled state only when the real gateway operation/readiness and callback exist, reuse DEV0288's branded controls and accessible feedback, then prove actual Google success/cancel/failure. It must not enable a cosmetic button or export SDK types into the view. DEV0288's completion does not establish Google readiness.
 
 Provider-boundary refinement, 17 October 2026: implement Google operations inside the Auth adapter interface owned by DEV0286. Translate provider errors/results there; do not introduce SDK calls or provider claim types into feature views, business services or the domain layer. Apply the same verified identity-resolution contract across every login method.
 
@@ -35,7 +37,7 @@ This is one direct peer under a flat coordination record. Dependencies do not cr
 
 1. Inspect official Google and installed Supabase docs; inventory required owned credentials, test users, origins, callbacks and Google consent/branding readiness without exposing secrets.
 2. Prepare exact local/hosted-dev provider setup and rollback, minimal scopes and tested readiness interface.
-3. Implement supported web provider flows/callback integration and ordinary server verification/onboarding; handle absent names, provider errors and unsupported Apple requests.
+3. Implement supported web provider flows/callback integration and ordinary server verification/onboarding; wire actual provider readiness/start/results into the existing branded login/registration views, and handle absent names, provider errors and unsupported Apple requests. Follow the current required registration fields in specification section 4.1.3; do not revive the superseded name-only form.
 4. Prove Google new/returning/cancelled flows with controlled accounts, same/different-email linking and return cases and private-data continuity; record environment gaps accurately.
 
 ## Acceptance criteria
@@ -59,7 +61,7 @@ Not started. Provider credentials, Developer accounts and readiness have not bee
 
 ### Affected files
 
-Planned: shared auth client/server callback adapters, provider configuration/readiness contract, ignored credential configuration and non-secret setup documentation, targeted Auth tests. DEV0288 owns the visible controls.
+Planned: shared auth client/server callback adapters, provider configuration/readiness contract, ignored credential configuration and non-secret setup documentation, targeted Auth tests. DEV0288 owns the delivered branded/unavailable controls; this ticket wires actual Google readiness/start/callback results into them under the 18 October user-confirmed completion boundary.
 
 ### Decisions and deviations
 

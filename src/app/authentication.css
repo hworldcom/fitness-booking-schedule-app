@@ -64,7 +64,9 @@
 }
 .authentication-card {
   width: 100%;
+  min-width: 0;
   max-width: 382px;
+  overflow-wrap: anywhere;
 }
 .authentication-card header {
   margin-bottom: 28px;
@@ -118,7 +120,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #7c8377;
+  color: #697064;
   font-size: 11px;
   margin: 20px 0;
 }
@@ -177,15 +179,16 @@
 }
 .authentication-password input {
   padding-right: 52px;
+  min-height: 52px;
 }
 .authentication-password button {
   position: absolute;
-  right: 5px;
-  top: 5px;
+  right: 4px;
+  top: 4px;
   display: grid;
   place-items: center;
-  width: 39px;
-  height: 39px;
+  width: 44px;
+  height: 44px;
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -198,10 +201,14 @@
   gap: 12px;
   border-radius: 12px;
 }
+.authentication-card .button,
+.account-authentication-controls .button {
+  min-height: 44px;
+}
 .authentication-help {
   font-size: 11px;
   line-height: 1.6;
-  color: #7a8271;
+  color: #626b5a;
   margin: 9px 0 16px;
   font-weight: 450;
 }
@@ -251,7 +258,7 @@
   text-align: center;
   margin: 26px 0;
   font-size: 12px;
-  color: #737b6d;
+  color: #626b5a;
 }
 .authentication-switch a {
   font-weight: 750;
@@ -267,7 +274,7 @@
   gap: 10px;
   text-align: center;
   font-size: 11px;
-  color: #909789;
+  color: #68715f;
 }
 .authentication-card footer a {
   color: #5c6d4d;
@@ -278,6 +285,15 @@
 }
 .account-authentication-controls .authentication-form {
   max-width: 420px;
+}
+.authentication-picture-step .profile-image-uploader {
+  grid-template-columns: minmax(0, 1fr);
+  margin: 0 0 22px;
+  padding: 0;
+  border: 0;
+}
+.authentication-picture-step .profile-image-uploader-actions .button {
+  max-width: 100%;
 }
 .account-authentication-controls .authentication-form label {
   margin-top: 12px;

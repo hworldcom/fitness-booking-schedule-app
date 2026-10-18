@@ -19,6 +19,21 @@ export type ApplicationIdentitySnapshot =
       status: "profile-required" | "signed-out" | "unavailable";
     }>;
 
+export type ProfileCompletionResult =
+  | ApplicationIdentitySnapshot
+  | Readonly<{ status: "username-taken" | "invalid" }>;
+
+export function isProfileCompletionResult(
+  value: unknown,
+): value is ProfileCompletionResult {
+  return (
+    isApplicationIdentitySnapshot(value) ||
+    (isRecord(value) &&
+      hasExactKeys(value, ["status"]) &&
+      (value.status === "username-taken" || value.status === "invalid"))
+  );
+}
+
 export const UNAVAILABLE_APPLICATION_IDENTITY: ApplicationIdentitySnapshot =
   Object.freeze({ status: "unavailable" });
 

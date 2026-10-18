@@ -211,7 +211,11 @@ async function person(label) {
   assert.equal((await session.json()).status, "signed-in");
   const enrolled = await p.context.request.post(base + "/api/auth/identity", {
     headers: { origin: base },
-    data: { displayName: `DEV0254 ${label}` },
+    data: {
+      displayName: `DEV0254 ${label}`,
+      fullName: `DEV0254 ${label}`,
+      username: "dev0254_" + p.id.replaceAll("-", "").slice(0, 20),
+    },
   });
   assert.equal(enrolled.status(), 200);
   assert.equal((await enrolled.json()).status, "enrolled");

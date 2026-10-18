@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   ArrowRight,
@@ -22,10 +21,10 @@ import {
 import { submitCoachApplication } from "@/auth/client/coach-application-client";
 import { authenticationResultMessage } from "@/auth/gateway";
 import { validateNewPassword } from "@/auth/password";
-import {
-  normalizeDisplayName,
-  type ApplicationIdentitySnapshot,
-} from "@/auth/identity-contracts";
+import { type ApplicationIdentitySnapshot } from "@/auth/identity-contracts";
+import { registrationProfileInput } from "@/auth/registration-profile";
+import { profileInitials } from "@/auth/profile-presentation";
+import { ProfileImageUploader } from "@/features/profile/profile-image-uploader";
 import { supabasePublicConfig } from "@/auth/config";
 import {
   parseAuthenticationCommand,
@@ -66,7 +65,7 @@ const stageCopy = {
   ],
   "complete-profile": [
     "Let’s finish your profile",
-    "Choose the name people will see in MovX Club.",
+    "Choose your username and how people will know you in MovX Club.",
   ],
 } as const;
 
@@ -82,7 +81,7 @@ function stageHref(
 
 export function SignInScreen({
   stage = "sign-in",
-  returnTo = "/sessions",
+  returnTo = "/",
   intent,
   accessRequired = false,
   emailPurpose = "confirmation",
@@ -95,13 +94,11 @@ export function SignInScreen({
   emailPurpose?: "confirmation" | "recovery";
   passwordUpdated?: boolean;
 }) {
-  const router = useRouter();
   const navigate = (path: string) => {
-    router.replace(path);
-    router.refresh();
+    window.location.replace(path);
   };
   const { session, refreshSession } = useAuthSession();
-  const { refreshActor } = useActor();
+  const { actor, refreshActor } = useActor();
   const mounted = useSyncExternalStore(
     hydrate,
     () => true,
@@ -111,15 +108,18 @@ export function SignInScreen({
   const ready = Boolean(
     mounted && config && window.location.origin === config.siteUrl,
   );
-  const target = config
-    ? safeReturnTo(returnTo ?? "/sessions", config.siteUrl)
-    : "/sessions";
+  const target = config ? safeReturnTo(returnTo, config.siteUrl) : "/";
   const [email, setEmail] = useState(
     session.status === "signed-in" ? session.email : "",
   );
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
+  const [pictureStep, setPictureStep] = useState(false);
+  const [pictureBusy, setPictureBusy] = useState(false);
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const [identity, setIdentity] = useState<ApplicationIdentitySnapshot | null>(
     null,
   );
@@ -175,6 +175,11 @@ export function SignInScreen({
     if (error) errorRef.current?.focus();
   }, [error]);
 
+  useEffect(() => {
+    if (stage === "complete-profile" && identity?.status === "enrolled")
+      headingRef.current?.focus();
+  }, [pictureStep, stage, identity?.status]);
+
   async function run(command: AuthenticationCommand) {
     if (lock.current || !ready) return;
     lock.current = true;
@@ -211,10 +216,10 @@ export function SignInScreen({
   async function profile(event: React.FormEvent) {
     event.preventDefault();
     if (lock.current || !ready) return;
-    const name = normalizeDisplayName(displayName);
-    if (!name) {
+    const input = registrationProfileInput({ username, fullName, displayName });
+    if (!input) {
       setError(
-        "Enter a name between 2 and 80 characters, using at least one letter or number.",
+        "Enter a full name and display name of 2–80 characters. Your username must start with a letter and use 3–30 letters, numbers or underscores.",
       );
       return;
     }
@@ -222,14 +227,18 @@ export function SignInScreen({
     setBusy(true);
     setError(null);
     try {
-      const value = await completeApplicationProfile(name);
-      setIdentity(value);
+      const value = await completeApplicationProfile(input);
       if (value.status !== "enrolled") {
-        setError("We couldn’t save your profile. Please try again.");
+        setError(
+          value.status === "username-taken"
+            ? "That username is already taken. Choose another one."
+            : "We couldn’t save your profile. Check your details and try again.",
+        );
         return;
       }
+      setIdentity(value);
+      setPictureStep(true);
       await refreshActor();
-      if (intent !== "coach") navigate(target);
     } finally {
       lock.current = false;
       setBusy(false);
@@ -283,6 +292,15 @@ export function SignInScreen({
   }
 
   const [title, description] = stageCopy[stage];
+  const showingPicture =
+    stage === "complete-profile" &&
+    pictureStep &&
+    identity?.status === "enrolled";
+  const finishPicture = () => {
+    if (pictureBusy || busy) return;
+    if (intent === "coach") setPictureStep(false);
+    else navigate(target);
+  };
   const authEntry = stage === "sign-in" || stage === "register";
   const recovery = session.status === "recovery-required";
   const signedIn = session.status === "signed-in";
@@ -331,8 +349,14 @@ export function SignInScreen({
             <span className="authentication-icon">
               <LockKeyhole size={22} aria-hidden="true" />
             </span>
-            <h1>{title}</h1>
-            <p>{description}</p>
+            <h1 ref={headingRef} tabIndex={-1}>
+              {showingPicture ? "Add a profile picture" : title}
+            </h1>
+            <p>
+              {showingPicture
+                ? "Help people recognize you. You can also do this later from your Profile."
+                : description}
+            </p>
           </header>
           {!config && (
             <p className="authentication-notice" role="status">
@@ -402,6 +426,8 @@ export function SignInScreen({
                       type="email"
                       name="email"
                       autoComplete="email"
+                      autoCapitalize="none"
+                      spellCheck={false}
                       inputMode="email"
                       maxLength={254}
                       value={email}
@@ -507,7 +533,10 @@ export function SignInScreen({
                     Email address
                     <input
                       type="email"
+                      name="email"
                       autoComplete="email"
+                      autoCapitalize="none"
+                      spellCheck={false}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       maxLength={254}
@@ -587,25 +616,103 @@ export function SignInScreen({
                   <fieldset disabled={!ready || busy}>
                     <legend className="sr-only">Complete your profile</legend>
                     <label>
-                      Display name
+                      Username
                       <input
-                        name="displayName"
-                        autoComplete="name"
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                        maxLength={80}
+                        name="username"
+                        autoComplete="username"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        maxLength={31}
+                        aria-describedby="registration-username-help"
                         required
                       />
                     </label>
-                    <p className="authentication-help">
-                      Use the name you’d like people to see. You can update it
-                      later.
+                    <p
+                      id="registration-username-help"
+                      className="authentication-help"
+                    >
+                      3–30 letters, numbers or underscores, starting with a
+                      letter. Usernames are unique. Sign in with your email for
+                      now.
+                    </p>
+                    <label>
+                      Full name
+                      <input
+                        name="fullName"
+                        autoComplete="name"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        maxLength={80}
+                        aria-describedby="registration-full-name-help"
+                        required
+                      />
+                    </label>
+                    <p
+                      id="registration-full-name-help"
+                      className="authentication-help"
+                    >
+                      Your full name stays private.
+                    </p>
+                    <label>
+                      Display name
+                      <input
+                        name="displayName"
+                        autoComplete="nickname"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        maxLength={80}
+                        aria-describedby="registration-display-name-help"
+                        required
+                      />
+                    </label>
+                    <p
+                      id="registration-display-name-help"
+                      className="authentication-help"
+                    >
+                      The name other people see, including in chats. It doesn’t
+                      need to be unique.
                     </p>
                     <button className="button dark full" type="submit">
                       {busy ? "Saving…" : "Continue"}
                     </button>
                   </fieldset>
                 </form>
+              ) : showingPicture && identity?.status === "enrolled" ? (
+                <div className="authentication-picture-step">
+                  {actor.status === "authorized" ? (
+                    <ProfileImageUploader
+                      endpoint="/api/profile/avatar"
+                      currentImageUrl={actor.profile.avatarUrl}
+                      displayName={identity.profile.displayName}
+                      initials={profileInitials(identity.profile.displayName)}
+                      kind="account"
+                      onBusyChange={setPictureBusy}
+                    />
+                  ) : (
+                    <p role="status">
+                      Picture upload is temporarily unavailable. You can
+                      continue and add it from your Profile later.
+                    </p>
+                  )}
+                  <button
+                    className="button dark full"
+                    type="button"
+                    disabled={busy || pictureBusy}
+                    onClick={finishPicture}
+                  >
+                    Continue
+                  </button>
+                  <button
+                    className="text-button authentication-secondary"
+                    type="button"
+                    disabled={busy || pictureBusy}
+                    onClick={finishPicture}
+                  >
+                    Do this later
+                  </button>
+                </div>
               ) : identity?.status === "enrolled" ? (
                 <div className="authentication-notice">
                   <Check size={24} aria-hidden="true" />
@@ -654,7 +761,7 @@ export function SignInScreen({
             <button
               type="button"
               className="text-button authentication-secondary"
-              disabled={!ready || busy}
+              disabled={!ready || busy || pictureBusy}
               onClick={() => void run({ action: "sign-out" })}
             >
               Sign out on this device
