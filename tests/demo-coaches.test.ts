@@ -81,9 +81,8 @@ test("only confirmed exact demo identities with matching environment metadata ca
 
 test("demo target selection refuses production, mixed URLs and unintended local databases", () => {
   assert.equal(demoEnvironmentArgument(["--environment", "local"]), "local");
-  assert.equal(
+  assert.throws(() =>
     demoEnvironmentArgument(["--environment", "dev", "--check"]),
-    "dev",
   );
   for (const args of [
     [],

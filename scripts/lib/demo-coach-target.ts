@@ -4,20 +4,19 @@ import {
   type LocalSupabaseStatus,
 } from "./local-coach-accounts";
 import { hostedDevelopmentConfiguration } from "./hosted-environment.mjs";
-import type { DemoEnvironment } from "./demo-coach-credentials";
 
 export function demoEnvironmentArgument(args: readonly string[]) {
   if (
     args.length < 2 ||
     args[0] !== "--environment" ||
-    !["local", "dev"].includes(args[1]) ||
+    args[1] !== "local" ||
     args.slice(2).some((v) => !["--check", "--publish-urls"].includes(v)) ||
     new Set(args).size !== args.length
   )
     throw new Error(
-      "Usage: provision-demo-coaches.ts --environment local|dev [--check] [--publish-urls]. Default setup creates missing accounts only. URL-only mode never changes passwords or profile content.",
+      "Fictional coaches are local-only. Usage: provision-demo-coaches.ts --environment local [--check] [--publish-urls]. Hosted UAT uses real coaches; no target or credentials were accessed.",
     );
-  return args[1] as DemoEnvironment;
+  return "local" as const;
 }
 
 export function assertDemoLocalTarget(status: LocalSupabaseStatus) {
@@ -42,6 +41,8 @@ export function assertDemoLocalTarget(status: LocalSupabaseStatus) {
 }
 
 export function demoHostedTarget(values: Record<string, string | undefined>) {
+  // Operator inspection/retirement only. Provisioning rejects every hosted flag
+  // before this validator or any CLI/Auth/credential access can be reached.
   const configuration = hostedDevelopmentConfiguration(values);
   // Also reject accidental editing of the environment manifest to point dev at prod.
   const targets = JSON.parse(
@@ -55,7 +56,7 @@ export function demoHostedTarget(values: Record<string, string | undefined>) {
     configuration.projectRef !== "mdzidiqosxbghmfyxphb"
   )
     throw new Error(
-      "Demo setup refuses production or an unknown development project.",
+      "Hosted demo retirement refuses production or an unknown development project.",
     );
   return configuration;
 }

@@ -33,6 +33,8 @@ export async function privateDemoCredentialStore(
   target: string,
   options: { preserveNote?: boolean } = {},
 ) {
+  if (environment !== "local")
+    throw new Error("Fictional coach credential journals are local-only.");
   const directory = path.join(root, "work", "demo-coaches");
   await mkdir(directory, { recursive: true, mode: 0o700 });
   if (

@@ -1,8 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import path from "node:path";
 import { createClient, type User } from "@supabase/supabase-js";
 import postgres from "postgres";
@@ -11,7 +8,6 @@ import { parseLocalSupabaseStatus } from "./local-coach-accounts";
 import {
   assertDemoLocalTarget,
   demoEnvironmentArgument,
-  demoHostedTarget,
 } from "./demo-coach-target";
 import {
   DEMO_COACH_FIXTURES,
@@ -80,6 +76,8 @@ export async function createMissingDemoAccounts({
   >;
   siteUrl?: string;
 }) {
+  if (environment !== "local")
+    throw new Error("Fictional coach account creation is local-only.");
   const missing = DEMO_COACH_FIXTURES.filter(
     (coach) => !users.some((user) => user.id === coach.authUserId),
   );
@@ -163,95 +161,28 @@ export async function provisionDemoCoaches(args: readonly string[]) {
       });
     } catch {
       throw new Error(
-        "Supabase CLI operation failed. Check local services or hosted-dev CLI login/project access; no fallback target was used.",
+        "Supabase CLI operation failed. Check the exact local services; no hosted target or fallback was used.",
       );
     }
   };
-  let query: Query, apiUrl: string, key: string, target: string;
-  let closeDatabase = async () => {};
-  let work: string | undefined;
+  assertLocalSupabaseConfiguration(
+    readFileSync(path.join(root, "supabase/config.toml"), "utf8"),
+  );
+  const status = parseLocalSupabaseStatus(cli(["status", "-o", "env"]));
+  assertDemoLocalTarget(status);
+  const apiUrl = status.apiUrl;
+  const key = status.serviceRoleKey;
+  const target = "movx-club-local";
+  const database = postgres(status.databaseUrl, {
+    max: 1,
+    prepare: false,
+    ssl: false,
+    connect_timeout: 10,
+    onnotice: () => {},
+  });
+  const query: Query = (sql) =>
+    database.unsafe(sql) as unknown as Promise<Record<string, unknown>[]>;
   try {
-    if (environment === "local") {
-      assertLocalSupabaseConfiguration(
-        readFileSync(path.join(root, "supabase/config.toml"), "utf8"),
-      );
-      const status = parseLocalSupabaseStatus(cli(["status", "-o", "env"]));
-      assertDemoLocalTarget(status);
-      apiUrl = status.apiUrl;
-      key = status.serviceRoleKey;
-      target = "movx-club-local";
-      const database = postgres(status.databaseUrl, {
-        max: 1,
-        prepare: false,
-        ssl: false,
-        connect_timeout: 10,
-        onnotice: () => {},
-      });
-      closeDatabase = () => database.end({ timeout: 5 });
-      query = (sql) =>
-        database.unsafe(sql) as unknown as Promise<Record<string, unknown>[]>;
-    } else {
-      const configuration = demoHostedTarget(process.env);
-      target = configuration.projectRef;
-      apiUrl = `https://${target}.supabase.co`;
-      if (args.includes("--check") && !args.includes("--publish-urls")) {
-        console.log(
-          "Validated exact hosted-dev demo target; no data or credentials changed.",
-        );
-        return;
-      }
-      work = await mkdtemp(path.join(tmpdir(), "movx-demo-coaches-"));
-      await mkdir(path.join(work, "supabase"));
-      await writeFile(
-        path.join(work, "supabase/config.toml"),
-        'project_id="dev0335_demo_coaches"\n',
-        { mode: 0o600 },
-      );
-      query = async (sql) => {
-        const file = path.join(work!, `${randomUUID()}.sql`);
-        await writeFile(file, sql, { mode: 0o600 });
-        try {
-          const result = JSON.parse(
-            cli([
-              "db",
-              "query",
-              "--linked",
-              "--project-ref",
-              target,
-              "--workdir",
-              work!,
-              "--file",
-              file,
-              "--output",
-              "json",
-            ]),
-          );
-          if (!Array.isArray(result.rows))
-            throw new Error("Unexpected hosted-dev database response.");
-          return result.rows;
-        } finally {
-          await rm(file, { force: true });
-        }
-      };
-      const keys = JSON.parse(
-        cli([
-          "projects",
-          "api-keys",
-          "--project-ref",
-          target,
-          "--output",
-          "json",
-          "--reveal",
-        ]),
-      ) as { name?: string; type?: string; api_key: string }[];
-      key =
-        (
-          keys.find((entry) => entry.type === "secret") ??
-          keys.find((entry) => entry.name === "service_role")
-        )?.api_key ?? "";
-      if (key.length < 40)
-        throw new Error("Hosted-dev administrative Auth key is unavailable.");
-    }
     if (args.includes("--check") && !args.includes("--publish-urls")) {
       console.log(
         "Validated exact local demo target; no data or credentials changed.",
@@ -331,10 +262,7 @@ export async function provisionDemoCoaches(args: readonly string[]) {
       throw new Error(
         "Public URL migration 20261018000600 is required before demo account creation or URL publication. No data or credentials changed.",
       );
-    const siteUrl =
-      environment === "local"
-        ? "http://localhost:3100"
-        : (process.env.NEXT_PUBLIC_SITE_URL ?? "");
+    const siteUrl = "http://localhost:3100";
     if (publishingUrls || hasMissingAccounts)
       demoCoachPublicUrl(siteUrl, DEMO_COACH_FIXTURES[0].username);
     if (publishingUrls) {
@@ -413,10 +341,9 @@ export async function provisionDemoCoaches(args: readonly string[]) {
       );
     if (!schema.passwords)
       console.log(
-        "Hosted-dev authentication migrations are not installed; provider password login is ready, full current-application Auth requires the separately owned rollout.",
+        "Local authentication migrations are not installed; complete their separate rollout before testing current application Auth.",
       );
   } finally {
-    await closeDatabase();
-    if (work) await rm(work, { recursive: true, force: true });
+    await database.end({ timeout: 5 });
   }
 }
