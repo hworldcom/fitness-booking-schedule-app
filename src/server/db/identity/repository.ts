@@ -1,6 +1,7 @@
 import "server-only";
 
 import { withDatabaseConnection } from "../client";
+import type { RegistrationProfileInput } from "@/auth/registration-profile";
 
 type ApplicationIdentityRow = Readonly<{
   identity_profile_id: string;
@@ -28,6 +29,8 @@ export class ApplicationIdentityConflictError extends Error {
     this.name = "ApplicationIdentityConflictError";
   }
 }
+
+export class UsernameTakenError extends Error {}
 
 function mapIdentity(row: ApplicationIdentityRow): ApplicationIdentityRecord {
   return Object.freeze({
@@ -58,11 +61,36 @@ async function oneIdentity(
     if (rows.length > 1) throw new ApplicationIdentityConflictError();
     return rows[0] ? mapIdentity(rows[0]) : null;
   } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "23505" &&
+      "constraint_name" in error &&
+      error.constraint_name === "account_username_unique"
+    )
+      throw new UsernameTakenError();
     if (isIdentityConflict(error)) {
       throw new ApplicationIdentityConflictError();
     }
     throw error;
   }
+}
+
+export function completeApplicationRegistration(
+  authUserId: string,
+  input: RegistrationProfileInput,
+) {
+  return withDatabaseConnection(({ queryClient }) =>
+    oneIdentity(
+      () => queryClient<ApplicationIdentityRow[]>`
+      select * from app.enroll_application_identity(
+        ${authUserId}::uuid, ${input.displayName}::text,
+        ${input.fullName}::text, ${input.username}::text
+      )
+    `,
+    ),
+  );
 }
 
 export function enrollApplicationProfile(

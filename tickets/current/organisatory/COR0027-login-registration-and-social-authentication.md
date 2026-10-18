@@ -2,10 +2,10 @@
 
 - Status: In progress
 - Created: 2026-10-17
-- Last updated: 2026-10-17
+- Last updated: 2026-10-18
 - Milestone: Authentication quality before user acceptance testing (UAT)
 - Converted from: Retired DEV0283 — Redesign login and registration for UAT; converted before runtime implementation or any commit.
-- Tracked development tickets: completed [DEV0285 — Define the multi-method authentication contract](../../archive/organisatory/DEV0285-define-multi-method-authentication-contract.md), [DEV0311 — Defer Apple from the initial authentication rollout](../../archive/organisatory/DEV0311-defer-apple-from-initial-authentication-rollout.md), [DEV0286 — Implement password authentication and recovery](../backend/DEV0286-implement-password-authentication-and-recovery.md), [DEV0287 — Integrate Google authentication](../backend/DEV0287-integrate-google-authentication.md), [DEV0288 — Redesign multi-method login and registration](../frontend/DEV0288-redesign-multi-method-login-and-registration.md) and [DEV0289 — Rehearse multi-method authentication for UAT](../backend/DEV0289-rehearse-multi-method-authentication-for-uat.md).
+- Tracked development tickets: completed [DEV0285 — Define the multi-method authentication contract](../../archive/organisatory/DEV0285-define-multi-method-authentication-contract.md), [DEV0311 — Defer Apple from the initial authentication rollout](../../archive/organisatory/DEV0311-defer-apple-from-initial-authentication-rollout.md), [DEV0286 — Implement password authentication and recovery](../backend/DEV0286-implement-password-authentication-and-recovery.md), [DEV0287 — Integrate Google authentication](../backend/DEV0287-integrate-google-authentication.md), [DEV0288 — Redesign multi-method login and registration](../frontend/DEV0288-redesign-multi-method-login-and-registration.md) and [DEV0289 — Rehearse multi-method authentication for UAT](../backend/DEV0289-rehearse-multi-method-authentication-for-uat.md). Backend enrollment: [DEV0325](../../archive/backend/DEV0325-collect-registration-names-and-unique-username.md) (Completed local implementation; backend commit checkpoint).
 - Related records: historical email identity [DEV0046](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md) and athlete/coach authority [DEV0147](../../archive/backend/DEV0147-separate-client-onboarding-and-verified-coach-access.md); public shell/accessibility [COR0017](../../archive/organisatory/COR0017-public-marketplace-redesign.md); adjacent private-workspace redesign [COR0018](COR0018-authenticated-workspace-redesign.md); downstream invitation consumer [COR0024](COR0024-email-invitations-and-shareable-links.md); external hosted-environment foundation [COR0026](COR0026-separate-hosted-dev-and-production.md).
 
 ## Objective and boundaries
@@ -16,7 +16,7 @@ This record coordinates peer development work and does not implement runtime aut
 
 Preserve the existing application profile, server-derived athlete/coach capabilities, explicit coach approval, original private data and safe sign-in returns. Signup/provider authentication never books, sends messages or accepts invitations. Exact targeted-invitation email matching remains a separate consent boundary. Password recovery and existing-code-account setup are required parts of the target, not optional later polish.
 
-Native SDK implementation, new identity vendors, custom password/identity storage, phone/passkeys, new profile fields, invitation runtime, production operations and deployment are outside this work map.
+Native SDK implementation, new identity vendors, custom password/identity storage, phone/passkeys, new profile fields beyond DEV0325's confirmed enrollment fields, invitation runtime, production operations and deployment are outside this work map.
 
 ## Direct development work
 
@@ -28,6 +28,7 @@ Native SDK implementation, new identity vendors, custom password/identity storag
 | Google integration                     | [DEV0287](../backend/DEV0287-integrate-google-authentication.md)                                 | Google setup/readiness, shared-session web flow, same/different verified-email/name cases and actual provider proof.                                                                                                  | Adopted contract/amendment and DEV0286 session interface; actual Google access required. |
 | Professional public authentication UI  | [DEV0288](../frontend/DEV0288-redesign-multi-method-login-and-registration.md)                   | All login/registration/provider/confirmation/recovery/setup/onboarding views, accessible state feedback, safe navigation and responsive visual proof.                                                                 | Adopted contract; final integration depends on DEV0286/DEV0287 services.                 |
 | Remove transitional code login | [DEV0322](../../archive/backend/DEV0322-remove-email-code-login.md) | User-directed retirement of code UI/operations and active contract/guidance alignment; preserve confirmation/reset links and existing accounts. | Current DEV0286/DEV0288 interfaces exist; implementation authorized on 17 October 2026. |
+| Registration profile enrollment | [DEV0325](../../archive/backend/DEV0325-collect-registration-names-and-unique-username.md) | User-selected username/private full name/display name; atomic registration/Account uniqueness. Backend checkpoint committed before DEV0331; Auth form commit remains separate. |
 | Integrated UAT evidence                | [DEV0289](../backend/DEV0289-rehearse-multi-method-authentication-for-uat.md)                    | Combined real local/hosted-dev scenarios, preserved-account/data checks, responsive recovery, exact fixture cleanup and truthful UAT handoff.                                                                         | Every other peer meets its own criteria and required origin/mail/provider access exists. |
 
 All required direct tickets exist and link back here. Work is flat; dependencies do not create ticket hierarchies. Shared callback/session authority belongs to DEV0286; DEV0287 extends it only for provider-specific handling, and DEV0288 consumes it rather than implementing competing authority.
@@ -93,7 +94,9 @@ Runtime start, 2026-10-17: after contract commit `1314f20`, the user explicitly 
 ## Completion and review references
 
 - Completed: Not completed.
-- Direct development tickets: DEV0285 Completed; DEV0311 Completed; DEV0322 Completed; DEV0286 and DEV0288 In progress; DEV0287 and DEV0289 Draft.
+- Direct development tickets: DEV0325 locally Completed (backend checkpoint); DEV0285 Completed; DEV0311 Completed; DEV0322 Completed; DEV0286 and DEV0288 In progress; DEV0287 and DEV0289 Draft.
 - Commit: Planning included in this user-authorized workspace checkpoint under DEV0285. COR0027 is never a commit subject identifier; retired DEV0283 is unavailable for future commits.
 - Review: Planning/research self-review only; no independent or implementation review.
 - Deployment or release: None.
+
+- 2026-10-18 commit checkpoint: DEV0325's normalized input, atomic enrollment overload, unique-claim error mapping and real database test are committed as the DEV0331 prerequisite. Its previously validated public Auth form/optional picture changes remain in the shared working tree for a separate commit. The original enrollment API stays compatible. This checkpoint does not complete this coordination.
