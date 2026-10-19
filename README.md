@@ -21,6 +21,8 @@ Start with the [MVP specification](docs/mvp-spec.md), the single current product
 | [tickets/README.md](tickets/README.md)   | Current and archived development/coordination records.     |
 | [supabase/README.md](supabase/README.md) | Local database and hosted migration operations.            |
 
+Google sign-in activation and remaining live checks: [provider setup](docs/google-auth-setup.md).
+
 ## Current foundation
 
 Delivered reusable foundations include:
