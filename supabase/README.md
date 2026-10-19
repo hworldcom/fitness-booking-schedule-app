@@ -142,7 +142,7 @@ The user confirmed these independent Supabase projects on 16 October 2026; [publ
 
 | Use                    | Application origin                                           | Project reference                    | Dedicated runtime login   |
 | ---------------------- | ------------------------------------------------------------ | ------------------------------------ | ------------------------- |
-| Local app and UAT/test | `http://localhost:3100` and planned `https://test.movx.club` | `mdzidiqosxbghmfyxphb` (`movx-dev`)  | `movx_dev_runtime_login`  |
+| Local app and UAT/test | `http://localhost:3100` and `https://uat.movx.club` | `mdzidiqosxbghmfyxphb` (`movx-dev`)  | `movx_dev_runtime_login`  |
 | Production             | Planned `https://movx.club`                                  | `yltijwebedkraypgkqmc` (`movx-prod`) | `movx_prod_runtime_login` |
 
 Both projects are in Frankfurt (`eu-central-1`). They have separate Auth users, Storage and database state. Local and UAT intentionally share dev data; production receives no development demonstration seed or copied test accounts. New authentication providers and old-data transfer are separate work. Keep the old staging and retained Docker environments unchanged during new dev setup.
@@ -186,6 +186,15 @@ The guarded Vercel build requires the complete database/Auth group whenever host
 
 ## Hosted changes and recovery
 
+### UAT rollout on 19 October 2026
+
+The user selected `https://uat.movx.club`, replacing the formerly planned test hostname. [DEV0372](../tickets/current/organisatory/DEV0372-deploy-reviewed-release-to-uat.md) owns the dedicated Vercel `movx-club-uat` Preview deployment, exact-origin Auth configuration, DNS/TLS and final smoke evidence. Preview intentionally uses `movx-dev`; production and the historical staging app remain separate. Public Supabase/site values must be supplied at build time as well as runtime. Startup and deployment create no demonstration accounts.
+
+Hosted dev now has all 24 committed migration versions through `20261019000100`. The twenty previously missing forward migrations passed an actual rollback-only rehearsal and an exact dry-run before applying, without seed/role/vault work. All previous fields of 64 original rows across 42 tables matched after rollout; two new private banner buckets were the only intended reference additions. Six retained fictional coach profiles remain hidden. The existing runtime verifier passed all 20 least-privilege checks.
+
+Auth now uses the repository confirmation/recovery/password-notification templates, password minimum eight with no mixture requirement, secure password change and exact UAT/local confirmation/callback redirects. Existing SMTP credentials, confirmation requirement, email cap and disabled Google were preserved. Existing sessions need a fresh application login after the application-session cutover. The provider refused managed 30-day session time-box and breached-password protection with HTTP 402 because this project is on the Free plan; no paid upgrade was made. Full hosted email/reset/two-device and Google acceptance remains under DEV0286/DEV0289, separate from deployment smoke. Earlier configuration paragraphs above describe the historical setup rather than the current rollout.
+
+
 ### Established coach conversations (DEV0276)
 
 The forward migration `20261017000100_normal_coach_conversations.sql` allows ordinary messages in an existing inquiry/request/booking conversation while the coach is enabled and the pair unblocked. It replaces one private permission function and preserves message/consent records, ownership and privileges. Install it before deploying the simplified composer; its legacy `canSendGeneral` response field now includes this conversation grant. The frozen baseline/history remains unchanged. Rollback requires a reviewed forward correction restoring the earlier function and compatible composer; do not delete or rewrite retained messages.
@@ -224,7 +233,7 @@ The scheduling-only migrations are additive: historical rows and tables remain, 
 
 ### Local-only demo coach defaults
 
-Fictional test coaches are local-only under [the current identity/data contract](../docs/mvp-spec.md#8-identity-data-and-demo-integrity). UAT at test.movx.club uses real coaches via ordinary registration/application/approval. Normal startup and hosted deployment never provision demo accounts. Manual `npm run demo:setup:local` and `demo:urls:local` accept only the exact loopback project and preserve existing credentials/content; all hosted provisioning/publication flags and hosted credential-journal writes fail closed. Old hosted command aliases refuse without loading environment files or contacting Supabase.
+Fictional test coaches are local-only under [the current identity/data contract](../docs/mvp-spec.md#8-identity-data-and-demo-integrity). UAT at uat.movx.club uses real coaches via ordinary registration/application/approval. Normal startup and hosted deployment never provision demo accounts. Manual `npm run demo:setup:local` and `demo:urls:local` accept only the exact loopback project and preserve existing credentials/content; all hosted provisioning/publication flags and hosted credential-journal writes fail closed. Old hosted command aliases refuse without loading environment files or contacting Supabase.
 
 The complete local seed initializes only a new foundation dataset and preserves an existing one, including edits, removed content, retired participation and scheduling/history. Never seed/reset hosted UAT. The existing active/public dataset remains available for real users; fresh hosted dataset initialization is a separate reviewed operation. Local private credentials stay ignored mode 0600, and repeated existing-account setup does not rewrite them. Historical dev tester files are preserved privately, not active UAT login instructions. [DEV0335](../tickets/archive/backend/DEV0335-provision-nonproduction-demo-coaches.md) and [DEV0337](../tickets/archive/backend/DEV0337-preserve-existing-demo-coach-data.md) retain their historical evidence.
 
