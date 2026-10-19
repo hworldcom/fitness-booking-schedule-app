@@ -4,8 +4,8 @@
 - Created: 2026-10-19
 - Last updated: 2026-10-20
 - Milestone: UAT coach application image continuity
-- Coordination: [COR0032 — Shared account and coach picture](../../current/organisatory/COR0032-shared-account-and-coach-picture.md)
-- Related records: [DEV0383](../../current/frontend/DEV0383-select-and-preview-shared-coach-picture.md) (peer consumer and rollout); [DEV0292](../backend/DEV0292-isolate-profile-image-storage-adapter.md) (Storage dependency)
+- Coordination: [COR0032 — Shared account and coach picture](../organisatory/COR0032-shared-account-and-coach-picture.md)
+- Related records: [DEV0383](../frontend/DEV0383-select-and-preview-shared-coach-picture.md) (peer consumer and rollout); [DEV0292](../backend/DEV0292-isolate-profile-image-storage-adapter.md) (Storage dependency)
 
 ## Objective and context
 
@@ -78,12 +78,12 @@ New opt-in source and additive migration; no automatic data backfill. Owner POST
 - `npm run db:lint`: fails on pre-existing functions `accept_coach_booking_request` / `session_booking_detail` requiring actor settings, plus existing type/shadow/unused warnings in `public_session_type_times`, `public_private_schedule_preview` and `mail_rate`. No new function is reported. This broad diagnostic is recorded, not treated as a passed check or expanded into unrelated repairs.
 - Production build passed in the isolated rehearsal source copy (`/private/tmp/movx-dev0382-j1WMRA`). No hosted write, approval, publication, seed/reset or retained-account repair occurred in this ticket. DEV0383 owns native responsive and hosted integration evidence.
 
-| Criterion | Evidence | Result |
-| --- | --- | --- |
-| AC1 | Real Storage groups 1, 5–7; exact original-row preservation | Passed |
-| AC2 | Groups 1–4, 7; four reference/I/O tests | Passed |
-| AC3 | Groups 4–7; legacy database and URL tests | Passed |
-| AC4 | Migration, 422 tests, 6 database tests, clean lint/types, production build; existing broad DB lint findings disclosed | Passed |
+| Criterion | Evidence                                                                                                              | Result |
+| --------- | --------------------------------------------------------------------------------------------------------------------- | ------ |
+| AC1       | Real Storage groups 1, 5–7; exact original-row preservation                                                           | Passed |
+| AC2       | Groups 1–4, 7; four reference/I/O tests                                                                               | Passed |
+| AC3       | Groups 4–7; legacy database and URL tests                                                                             | Passed |
+| AC4       | Migration, 422 tests, 6 database tests, clean lint/types, production build; existing broad DB lint findings disclosed | Passed |
 
 ## Risks, limitations, and follow-ups
 
@@ -92,6 +92,6 @@ Portrait consumers validate discriminants independently today; account-source co
 ## Completion and review references
 
 - Completed: 2026-10-20.
-- Commit: Backend source checkpoint uses DEV0382; exact hash recorded in peer rollout evidence.
+- Commit: Backend source checkpoint `4649717`; integrated release `5640d9e` is recorded by peer DEV0383.
 - Review: Self-reviewed source, grants, CAS/cleanup, acceptance evidence and ticket ownership; no independent review requested.
-- Deployment or release: Owned by peer DEV0383; not yet deployed.
+- Deployment or release: Owned by peer DEV0383; integrated UAT source `5640d9e` and migration `20261019000200` verified in its completed record.

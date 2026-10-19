@@ -1,11 +1,11 @@
 # Ticket DEV0383: Select and preview shared coach picture
 
-- Status: In progress
+- Status: Completed
 - Created: 2026-10-19
 - Last updated: 2026-10-20
 - Milestone: UAT coach application image continuity
 - Coordination: [COR0032 — Shared account and coach picture](../organisatory/COR0032-shared-account-and-coach-picture.md)
-- Related records: [DEV0382](../../archive/backend/DEV0382-support-opt-in-shared-coach-pictures.md) (peer backend dependency); [DEV0381](../../archive/frontend/DEV0381-clarify-editable-coach-application-submission.md) (application editing baseline)
+- Related records: [DEV0382](../backend/DEV0382-support-opt-in-shared-coach-pictures.md) (peer backend dependency); [DEV0381](../frontend/DEV0381-clarify-editable-coach-application-submission.md) (application editing baseline)
 
 ## Objective and context
 
@@ -34,10 +34,10 @@ DEV0382 establishes the new source and request/response contract before UI integ
 
 ## Acceptance criteria
 
-- [ ] AC1: Owner can explicitly share their account picture during application and understand where to change it and when it becomes public.
-- [ ] AC2: Shared/updated/removed portraits refresh both coach previews without losing unrelated unsaved inputs; existing separate controls and failure states remain correct.
-- [ ] AC3: Desktop/mobile/keyboard checks pass; requesting owner's actual account picture appears in private coach previews after selection, with anonymous access still denied while pending.
-- [ ] AC4: Exact UAT source/migration/region/alias and preservation evidence are verified; required backend/UI checks and integrated release criteria pass.
+- [x] AC1: Owner can explicitly share their account picture during application and understand where to change it and when it becomes public.
+- [x] AC2: Shared/updated/removed portraits refresh both coach previews without losing unrelated unsaved inputs; existing separate controls and failure states remain correct.
+- [x] AC3: Desktop/mobile/keyboard checks pass; requesting owner's actual account picture appears in private coach previews after selection, with anonymous access still denied while pending.
+- [x] AC4: Exact UAT source/migration/region/alias and preservation evidence are verified; required backend/UI checks and integrated release criteria pass.
 
 ## Validation plan
 
@@ -45,7 +45,7 @@ Use native Chrome desktop and 375×568 for settings, preview, keyboard and truth
 
 ## Implementation record
 
-Implemented locally; hosted migration/release and native desktop/mobile evidence remain in progress.
+Implemented, released to UAT and verified on native desktop and phone layouts.
 
 ### Changes and rationale
 
@@ -64,20 +64,31 @@ A Coach picture panel is available during application. Owners explicitly choose 
 
 ### Contracts, configuration, and operations
 
-Consumes DEV0382's opt-in API; rollout and rollback details pending. No new environment variable or credential is planned.
+Consumes DEV0382's opt-in API; migration and exact-source rollout are recorded below. Roll back UI only on a runtime retaining DEV0382 account-source parsers, policy and byte route. The source checkpoint can be rebuilt as Preview/fra1; do not alias the older DEV0381 runtime while account-source rows remain. No new environment variable or credential is planned.
 
 ## Validation results
 
 Local integrated source: 422 unit/server tests (354 + 68), clean-source lint/types and scoped Prettier passed. Three preview helper tests prove unchanged unrelated draft references, different-owner isolation and newer-server/removal behavior. DEV0382's fresh production build plus seven real HTTP/Storage groups and six legacy database tests passed; its record discloses pre-existing broad database-lint failures. No original draft tab has been altered.
 
-UAT rollout and native checks remain pending. Backend compatible checkpoint: `4649717` (DEV0382). The old DEV0381 runtime is not a safe rollback after new account-source opt-ins; retain the backend checkpoint's parsers/API if rolling back UI.
+Hosted migration, release and native desktop/phone checks passed. Chrome initially switched to the original window; stopped input, requested one minute free and resumed after the owner confirmed availability. Selected the verified one-tab QA window through the Window menu; no original-tab content was changed.
 
-| Criterion | Evidence | Result |
-| --- | --- | --- |
-| AC1 | Pending | Not run |
-| AC2 | Pending | Not run |
-| AC3 | Pending | Not run |
-| AC4 | Pending | Not run |
+- `npx supabase db query --project-ref mdzidiqosxbghmfyxphb --linked --file ... --output json` ran the guarded migration first with rollback, then commit. Both transactions verified expected previous migration `20261019000100`, the exact active Chimosa catalog and no existing account-source choice. New ledger `20261019000200` contains the reviewed migration. All 57 existing app/Auth-user/Storage-bucket/object table fingerprints matched before/after DDL; no data backfill.
+- Exact source `5640d9ed4f1ede9ea1dbdc34044c5c376d481319` was exported with `git archive` outside the checkout and linked explicitly to `movx-club-uat`, keeping root staging linkage unchanged. Vercel CLI 64.3.1 `deploy --target preview --regions fra1 --yes --no-wait --meta releaseCommit=... --meta releaseTicket=DEV0383`, followed by `inspect --logs --wait`, produced READY deployment `dpl_9FJQEuEt8phJZkTVfVB6WGujJ89A` at `movx-club-3jhvioq1s-hoangworldcoms-projects.vercel.app`. API verification confirmed exact source, Preview target and Frankfurt before aliasing `uat.movx.club`. Five existing environment entries' IDs/keys/types/targets/update times stayed identical; no environment secret was logged.
+- Native Chrome 1390×775, dedicated one-tab QA window: existing account photo rendered in the new panel. Entered `Hoang QA unsaved` in the name field without saving, then selected Use my account picture. Success status appeared; the real face rendered immediately in the private coach card and website preview. The unsaved name remained intact. Escape closed the website modal and restored Preview website focus. Original multi-tab draft window was untouched.
+- Before/after opt-in snapshots normalized only coach portrait source/path/version and row update time. All 57 stable table fingerprints matched exactly, including applications, private avatar references, Storage bytes metadata, website/banner content, disciplines and locations. Exactly one coach portrait changed: requesting Hoang profile `016189ee-a53d-44a3-ae59-1a396ab4694c`, marker equals owner UUID, source account; visibility remains hidden. No approval, publication or actual image-byte replacement/removal.
+- Anonymous HTTP probes on the alias: home 200; exact versioned shared-picture URL 404 with `private, no-store`; pending coach route 404; same-origin signed-out sharing POST 401. Native owner's rendered actual face proves private authorized access.
+- Native phone emulation 375×568 at 50% device zoom: reloaded only the owned QA route to reset viewport scaling and discard the unsaved test name. Shared picture persisted; privacy text and full-width stacked actions fit. Actual face rendered in both private coach card and website hero; modal scroll stayed inside the viewport. Escape restored the Preview website button and Return reopened the modal. The user’s real picture was never replaced/removed. Closed only the one-tab QA window after the check. Screenshots: mobile-settings.png, mobile-website.png, mobile-card.png.
+- Scoped source Prettier and `git diff --check` passed; record formatting and repository links checked at final handoff. No independent reviewer was requested.
+- Evidence is ignored under `work/dev0383/`: migration dry-run/applied results, preservation before/after/result, deployment/config/HTTP JSON, desktop-card.png and desktop-website.png. `work/dev0383/check-unrelated.py` confirms initial unrelated README/spec/browser-test edits and staging project bytes remain unchanged.
+
+Backend compatible checkpoint: `4649717` (DEV0382). The old DEV0381 runtime is not a safe rollback after new account-source opt-ins; retain the backend checkpoint's parsers/API if rolling back UI.
+
+| Criterion | Evidence                                                                                                            | Result |
+| --------- | ------------------------------------------------------------------------------------------------------------------- | ------ |
+| AC1       | Explicit choice and privacy copy; actual owner selected successfully                                                | Passed |
+| AC2       | Three state tests, actual preserved unsaved name, immediate two previews, real backend transition/error groups      | Passed |
+| AC3       | Actual face in desktop and 375×568 phone card/website, stacked controls and Escape/Return; pending anonymous denial | Passed |
+| AC4       | Guarded 57-table preservation, READY exact-source Preview/fra1/alias, unchanged environment/staging, privacy probes | Passed |
 
 ## Risks, limitations, and follow-ups
 
@@ -85,7 +96,7 @@ Block rollout if migration/byte authorization is unverified. Preserve original u
 
 ## Completion and review references
 
-- Completed: Not completed.
-- Commit: Not created.
-- Review: Self-review pending; no independent review requested.
-- Deployment or release: Pending.
+- Completed: 2026-10-20.
+- Commit: Source `5640d9e`; backend `4649717`.
+- Review: Self-reviewed acceptance evidence, source scope, privacy probes, preservation and release metadata; no independent review requested.
+- Deployment or release: READY `dpl_9FJQEuEt8phJZkTVfVB6WGujJ89A`, exact source `5640d9e`, Preview/fra1; `https://uat.movx.club`.
