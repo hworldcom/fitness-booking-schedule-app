@@ -2,14 +2,16 @@
 
 - Status: Draft
 - Created: 2026-10-17
-- Last updated: 2026-10-17
+- Last updated: 2026-10-19
 - Milestone: M3 — Coach profile media extension (planned)
 - Coordination: None — independent development ticket
-- Related records: Independent Storage boundary work [DEV0292](../../archive/backend/DEV0292-isolate-profile-image-storage-adapter.md); independent recovery rehearsal [DEV0293](DEV0293-rehearse-database-auth-and-file-recovery.md); historical coach Profile interface [DEV0207](../../archive/frontend/DEV0207-redesign-account-and-coach-profiles.md).
+- Related records: Independent Storage boundary work [DEV0292](../../archive/backend/DEV0292-isolate-profile-image-storage-adapter.md); independent recovery rehearsal [DEV0293](DEV0293-rehearse-database-auth-and-file-recovery.md); historical coach Profile interface [DEV0207](../../archive/frontend/DEV0207-redesign-account-and-coach-profiles.md); core public-template dependency for later public composition [DEV0317](../frontend/DEV0317-build-shareable-personal-coach-websites.md); core-first planning amendment [DEV0363](../../archive/organisatory/DEV0363-refresh-core-coach-website-delivery-plan.md).
 
 ## Objective and context
 
 2026-10-17 later user sequence (documented under [DEV0330](../../archive/organisatory/DEV0330-refine-coach-marketplace-pricing-reviews-and-urls.md)): finish [DEV0316 directory profile cards](../../archive/frontend/DEV0316-redesign-coach-directory-cards.md) first. Defer clarification of picture/video allowance and premium eligibility until after that card milestone. Preserve the existing confirmed selections and open questions below; none is a start/completion dependency for the separate cards. Revisit them before this affected media implementation, then supply the later website/gallery integration.
+
+2026-10-19 core-first amendment under DEV0363: completed cards allow DEV0317 to deliver the core public page with the current banner/portrait. This independent ticket owns the later gallery/video authoring/provider flow **and its public composition on that core page**, using the same authorized components. Resolve the existing policy/budget questions before the affected media work. Neither DEV0317, DEV0319 nor COR0028 core completion waits for this extension; no media capability is claimed delivered or cancelled. Review this broad Draft's delivery size and split it under the contributor rules before media implementation if necessary.
 
 Let coaches present themselves and their training through a photo gallery and a short preview video on their coach profile. The delivered profile supports a public portrait, but has no workout-photo gallery or preview-video upload flow. Control storage, visitor data usage and delivery costs while preserving profile visibility and private account media.
 
@@ -19,7 +21,7 @@ The user requested a ticket only on 2026-10-17. This is a planning checkpoint; f
 
 ## Scope and non-goals
 
-- In scope for the future feature: coach-owned gallery upload, ordering, replacement and removal; bounded image processing and delivery; one Mux preview video with upload/processing/preview/publication/replacement/removal states; responsive owner and public profile presentation; authoritative quotas, ownership and visibility checks; usage monitoring and provider setup documentation.
+- In scope for the future feature: coach-owned gallery upload, ordering, replacement and removal; bounded image processing and delivery; one Mux preview video with upload/processing/preview/publication/replacement/removal states; responsive owner presentation and later gallery/video composition on the DEV0317 core public page; authoritative quotas, ownership and visibility checks; usage monitoring and provider setup documentation.
 - Out of scope: implementation during this planning request, a social feed, workout libraries, long-form or live video, changing private-avatar behavior, unrelated profile redesign, subscription billing, checkout or selecting a premium price.
 
 ## Expected behavior and edge cases
@@ -53,7 +55,7 @@ Keep provider SDK/configuration and Mux callback handling behind server-only ada
 2. Inspect current owner/public Profile routes, image normalization/storage, database authority and installed integration documentation. Design bounded asset records and server-enforced quotas with safe upload reservations and replacement handling.
 3. Add the photo gallery processing/storage flow using the existing Storage provider boundary, preserving portrait/avatar permissions and immutable variant naming.
 4. Integrate authenticated direct Mux uploads, verified provider callbacks, authoritative duration/readiness checks, playback access, deletion, retry and orphan cleanup behind a video adapter. Document environment separation and credential setup without recording secrets.
-5. Add coach media controls and public gallery/video views with clear progress/failure states, keyboard access, responsive images, thumbnail-first playback and the adopted eligibility behavior.
+5. After the core DEV0317 template is available, add coach media controls and compose the authorized public gallery/video components there with clear progress/failure states, keyboard access, responsive images, thumbnail-first playback and the adopted eligibility behavior.
 6. Validate permissions, quota races, processing/replacement recovery, real Mux upload/playback/deletion, data budgets and desktop/mobile behavior. Record setup, export/restore, rollback and usage-monitoring evidence before completion.
 
 ## Acceptance criteria
@@ -79,6 +81,8 @@ Keep provider SDK/configuration and Mux callback handling behind server-only ada
 
 2026-10-17: Created this Draft planning record at the user's request. Recorded Mux, six photos and one video up to 60 seconds as confirmed choices, and highlighted premium eligibility as unresolved. Added the selected future scope to the specification and linked this record from the index. No media feature, provider account or hosted configuration was changed.
 
+2026-10-19: DEV0363 records this ticket as the sole later media/public-composition owner, preserving all confirmed media selections and unresolved policy/budget decisions. No media/runtime implementation started.
+
 ### Affected files
 
 | File | Change and purpose |
@@ -91,13 +95,16 @@ Keep provider SDK/configuration and Mux callback handling behind server-only ada
 
 2026-10-17: Create planning only. Keep runtime criteria pending and avoid choosing a free/premium entitlement or adding billing implicitly. Compression quality, resolution and photo/portrait allowance interpretation remain proposals or open questions. No deviation from the ticket-only request.
 
+2026-10-19: core page/rehearsal completion is independent of this extension. Later public media depends on the core template and this ticket's resolved media authority; retain shared components and avoid a second public upload/playback pipeline.
+
 ### Contracts, configuration, and operations
 
 This checkpoint changes planning documents only. No runtime interface, schema, migration, dependency, environment variable, secret, storage object, Mux account or deployment changed. Final media records/provider setup and migration/rollback steps remain to be designed before runtime implementation.
 
 ## Validation results
 
-- Date/environment: 2026-10-17, repository documentation review.
+- Date/environment: 2026-10-17, original repository documentation review.
+- 2026-10-19: later public-composition/core-first ownership revision is documentary only; checks are recorded in DEV0363. No media runtime/provider evidence is added.
 - Passed scoped `python3 - <<'PY'` documentation checks: three documents, 307 repository-relative links and 27 heading anchors resolved; 208 unique DEV/COR records; next IDs DEV0298/COR0028; this ticket's required sections, independent membership, single Draft index row and confirmed-versus-pending choices agree with specification C43.
 - Passed `git diff --check -- docs/mvp-spec.md tickets/README.md tickets/current/backend/DEV0297-add-coach-profile-photos-and-mux-video.md` and a direct Python check of the new untracked ticket's trailing whitespace, final newline, Draft status and unresolved premium decision. Planning content self-review passed; unrelated account settings edits were preserved.
 - Commit preparation: include only this Draft record, specification C43 and the corresponding index/ID-allocation metadata. Independently allocated DEV0295–DEV0296 and DEV0298 remain reserved and their work is excluded from this checkpoint; the current next IDs are DEV0299/COR0028. Application tests are not applicable to these documentation-only changes.
