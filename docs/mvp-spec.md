@@ -155,7 +155,7 @@ DEV0287’s isolated implementation adds an adapter-owned same-origin Google sta
 1. A new visitor registers with email/password and confirms email; returning users sign in with their password; existing passwordless accounts first use verified password setup through Forgot password.
 2. A new confirmed account chooses a unique username, private full name and display name before profile creation; MovX restores its original profile on return without forcing existing users to supply new fields.
 3. The visitor follows the `Find a coach` path and can use athlete behavior immediately, or follows `Become a coach` and submits a coach application.
-4. A pending applicant may prepare a hidden coach-profile draft but cannot publish availability or receive booking requests.
+4. A pending applicant completes the private coach application form with **Submit application**. After submission, the owner can continue editing and use **Save application changes** while review remains pending. Editing retains the same application and does not approve it, publish availability or enable booking requests. Approved/demo coaches retain their separate **Save coach profile** action; rejected applicants save changes before using the existing explicit resubmission control.
 5. A guarded platform review approves, rejects or suspends the application atomically with audit evidence.
 6. Approval unlocks coach publication and scheduling without removing athlete capability, and navigation enables the coach-view switch while retaining athlete view. Approval does not automatically make the profile visible.
 7. After saving the required registration profile, the account is invited to add an optional private picture or choose **Do this later**. Existing normalization/private-avatar rules apply, and personal Profile supports adding/editing it later. Refresh/lost optional state cannot block a completed account. Athlete continuation keeps Home/explicit return; coach intent still requires a separate explicit application action. An approved coach separately chooses whether to add a public portrait to the coach profile.
@@ -326,7 +326,7 @@ One profile belongs to one verified Supabase Auth identity inside a dataset. It 
 
 ### Coach application and review
 
-One current coach application belongs to one application profile. Absence means not applied; submitted applications move through `pending`, `approved`, `rejected` or `suspended`. Review events are append-only evidence of platform decisions. Historical self-service activation may remain stored for continuity but grants no current coach authority.
+One current coach application belongs to one application profile. Absence means not applied; submitted applications move through `pending`, `approved`, `rejected` or `suspended`. Onboarding records the explicit application intent as pending before coaching details are complete; the form’s Submit application action saves the required review details. Pending owners may repeatedly update those private details without changing the application identity, submitted timestamp or review status. Review events are append-only evidence of platform decisions. Historical self-service activation may remain stored for continuity but grants no current coach authority.
 
 ### Coach profile and training locations
 

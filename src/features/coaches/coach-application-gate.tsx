@@ -145,8 +145,10 @@ export function CoachApplicationGate({
 
 export function CoachApplicationBanner({
   access,
+  hasProfile,
 }: {
   access: CoachAccessProjection;
+  hasProfile: boolean;
 }) {
   if (access.status !== "pending" && access.status !== "rejected") return null;
   return (
@@ -154,12 +156,16 @@ export function CoachApplicationBanner({
       <div>
         <strong>
           {access.status === "pending"
-            ? "Application pending review"
+            ? hasProfile
+              ? "Application pending review"
+              : "Complete your application"
             : "Application changes requested"}
         </strong>
         <p>
           {access.status === "pending"
-            ? "This profile remains a private draft until MovX approves the application."
+            ? hasProfile
+              ? "Your application is under review. You can still edit and save changes here. It remains private until approval."
+              : "Complete the required details below and submit your application for review. You can edit it after submission."
             : (access.decisionReason ??
               "Update the private profile and resubmit it for review.")}
         </p>

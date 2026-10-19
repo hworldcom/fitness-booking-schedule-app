@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { useActionState, useState } from "react";
-import { Check, Eye, EyeOff, MapPin, Save, ShieldCheck } from "lucide-react";
+import {
+  Check,
+  Eye,
+  EyeOff,
+  MapPin,
+  Save,
+  Send,
+  ShieldCheck,
+} from "lucide-react";
 import type {
   CoachAccessProjection,
   CoachGymOption,
@@ -55,6 +63,7 @@ export function CoachProfileEditor({
   const initialDisciplines = new Set(coach?.disciplines ?? []);
   const publicationAllowed =
     coachAccess.status === "approved" || coachAccess.status === "demo";
+  const firstApplicationSubmission = coachAccess.status === "pending" && !coach;
   const activeLocations =
     coach?.locations.filter((location) => location.status === "active") ?? [];
 
@@ -71,24 +80,29 @@ export function CoachProfileEditor({
           <span className="eyebrow">
             {publicationAllowed
               ? "APPROVED COACH PROFILE"
-              : "PRIVATE COACH APPLICATION DRAFT"}
+              : "PRIVATE COACH APPLICATION"}
           </span>
           <h2>
             {coach && publicationAllowed
               ? "Edit your public coach profile."
-              : coach
-                ? "Edit your private coach profile draft."
-                : "Become discoverable as a coach."}
+              : firstApplicationSubmission
+                ? "Submit your coach application."
+                : "Edit your coach application."}
           </h2>
           <p>
             {publicationAllowed
               ? "Choose what athletes may see. MovX approval is separate from profile visibility and gives no gym control over your profile."
-              : "Prepare the profile MovX will review. It remains private until the application is approved."}
+              : firstApplicationSubmission
+                ? "Send your coaching details to MovX for review. You can edit your application after submission."
+                : "Update your application details below. They remain private until MovX approves your application."}
           </p>
         </div>
       </header>
 
-      <CoachApplicationBanner access={coachAccess} />
+      <CoachApplicationBanner
+        access={coachAccess}
+        hasProfile={Boolean(coach)}
+      />
       {coach && (
         <CoachWebsiteEditor
           key={coach.profileId}
@@ -397,7 +411,13 @@ export function CoachProfileEditor({
                 role={state.status === "saved" ? "status" : "alert"}
                 aria-live="polite"
               >
-                <strong>{state.message}</strong>
+                <strong>
+                  {state.status !== "saved" || publicationAllowed
+                    ? state.message
+                    : coachAccess.status === "pending"
+                      ? "Application details saved for review. You can continue editing while you wait."
+                      : "Application changes saved. Resubmit when you are ready for another review."}
+                </strong>
                 {state.errors.length > 0 && (
                   <ul>
                     {state.errors.map((error) => (
@@ -405,11 +425,13 @@ export function CoachProfileEditor({
                     ))}
                   </ul>
                 )}
-                {state.status === "saved" && state.slug && (
-                  <Link href={`/coaches/${state.slug}`}>
-                    Open public profile
-                  </Link>
-                )}
+                {state.status === "saved" &&
+                  publicationAllowed &&
+                  state.slug && (
+                    <Link href={`/coaches/${state.slug}`}>
+                      Open public profile
+                    </Link>
+                  )}
               </div>
             )}
 
@@ -417,14 +439,32 @@ export function CoachProfileEditor({
               <div>
                 <ShieldCheck size={20} aria-hidden="true" />
                 <span>
-                  {coach
-                    ? "Profile details save separately from the explicit location controls below."
-                    : "Saving confirms this first place. It does not publish availability."}
+                  {publicationAllowed
+                    ? coach
+                      ? "Profile details save separately from the explicit location controls below."
+                      : "Saving confirms this first place. It does not publish availability."
+                    : firstApplicationSubmission
+                      ? "Submitting confirms your first training place. You can edit your application after submission."
+                      : coachAccess.status === "pending"
+                        ? "You can keep editing your application while it is under review."
+                        : "Save your changes, then resubmit your application for review."}
                 </span>
               </div>
               <button className="button dark" type="submit" disabled={pending}>
-                <Save size={16} aria-hidden="true" />
-                {pending ? "Saving…" : "Save coach profile"}
+                {firstApplicationSubmission ? (
+                  <Send size={16} aria-hidden="true" />
+                ) : (
+                  <Save size={16} aria-hidden="true" />
+                )}
+                {pending
+                  ? firstApplicationSubmission
+                    ? "Submitting…"
+                    : "Saving…"
+                  : publicationAllowed
+                    ? "Save coach profile"
+                    : firstApplicationSubmission
+                      ? "Submit application"
+                      : "Save application changes"}
               </button>
             </div>
           </form>

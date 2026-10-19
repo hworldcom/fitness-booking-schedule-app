@@ -10,6 +10,7 @@ import {
 import { submitOwnedCoachApplicationRecord } from "@/server/db/coaches/application-repository";
 import {
   CoachProfileConflictError,
+  currentOwnedCoachProfileRecord,
   publicCoachProfileRecord,
   upsertOwnedCoachProfileRecord,
 } from "@/server/db/coaches/repository";
@@ -172,6 +173,35 @@ test("submission is pending and isolated until an owner approves a complete draf
   firstCoachSlug = await withActorDatabaseContext(firstActor, (transaction) =>
     upsertOwnedCoachProfileRecord(transaction, hiddenCoachProfile),
   );
+  const beforeEdit = await withActorDatabaseContext(firstActor, (transaction) =>
+    currentActorProjection(transaction, firstActor),
+  );
+  const editedBio =
+    "Updated application: patient boxing coaching, adaptable sessions and clear technical feedback for developing athletes.";
+  const editedSlug = await withActorDatabaseContext(firstActor, (transaction) =>
+    upsertOwnedCoachProfileRecord(transaction, {
+      ...hiddenCoachProfile,
+      displayName: "Application Owner Updated",
+      bio: editedBio,
+    }),
+  );
+  const afterEdit = await withActorDatabaseContext(
+    firstActor,
+    async (transaction) => ({
+      actor: await currentActorProjection(transaction, firstActor),
+      coach: await currentOwnedCoachProfileRecord(transaction, firstActor),
+    }),
+  );
+  assert.equal(editedSlug, firstCoachSlug);
+  assert.equal(afterEdit.coach?.displayName, "Application Owner Updated");
+  assert.equal(afterEdit.coach?.bio, editedBio);
+  assert.equal(afterEdit.coach?.visibility, "hidden");
+  assert.equal(afterEdit.actor.coachAccess.status, "pending");
+  assert.equal(
+    afterEdit.actor.coachAccess.submittedAt,
+    beforeEdit.coachAccess.submittedAt,
+  );
+  assert.equal(await publicCoachProfileRecord(firstCoachSlug), null);
   await assert.rejects(
     withActorDatabaseContext(firstActor, (transaction) =>
       upsertOwnedCoachProfileRecord(transaction, {
