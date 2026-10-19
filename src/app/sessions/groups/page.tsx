@@ -17,6 +17,10 @@ import {
   EventsUnavailable,
 } from "@/features/events/event-ui";
 import { ParticipationForm } from "@/features/events/participation-form";
+import {
+  MySessionsHeading,
+  MySessionsNavigation,
+} from "@/features/profile/my-sessions-navigation";
 import { protectedPageAccess } from "@/server/authorization/page-access";
 import { athleteGroupHistory } from "@/server/group-sessions/athlete-service";
 import "@/features/events/events.css";
@@ -33,7 +37,8 @@ export default async function Page({
   const access = await protectedPageAccess(href);
   if (access.status === "preview")
     return (
-      <div className="events-page">
+      <div className="events-page my-session-recovery">
+        <MySessionsNavigation active="group" />
         <section className="events-state">
           <h1>My group sessions</h1>
           <p>
@@ -48,13 +53,15 @@ export default async function Page({
     );
   if (access.status === "unavailable")
     return (
-      <div className="events-page">
+      <div className="events-page my-session-recovery">
+        <MySessionsNavigation active="group" />
         <EventsUnavailable href={href} />
       </div>
     );
   if (cursor === false)
     return (
-      <div className="events-page">
+      <div className="events-page my-session-recovery">
+        <MySessionsNavigation active="group" />
         <section className="events-state" role="alert">
           <h1>Invalid registration page</h1>
           <Link href="/sessions/groups">Return to the first page</Link>
@@ -66,20 +73,7 @@ export default async function Page({
     redirect(signInHref(href));
   return (
     <div className="events-page group-history-page">
-      <header className="events-heading">
-        <span className="eyebrow">YOUR TRAINING</span>
-        <h1>My group sessions</h1>
-        <p>
-          Your seat reservations and retained registration history. A seat
-          reservation alone does not confirm a session.
-        </p>
-        <nav aria-label="My sessions sections">
-          <Link href="/sessions">Private sessions</Link>
-          <Link href="/sessions/groups" aria-current="page">
-            Group sessions
-          </Link>
-        </nav>
-      </header>
+      <MySessionsHeading active="group" />
       <Link href="/events" className="button dark">
         Discover group sessions
       </Link>

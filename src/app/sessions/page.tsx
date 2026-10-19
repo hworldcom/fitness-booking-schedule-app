@@ -6,6 +6,10 @@ import { BriefcaseBusiness } from "lucide-react";
 import { signInHref } from "@/auth/return-to";
 import { ProtectedAccessUnavailable } from "@/features/auth/protected-access";
 import { ClientBookingRequests } from "@/features/profile/client-booking-requests";
+import {
+  MySessionsHeading,
+  MySessionsNavigation,
+} from "@/features/profile/my-sessions-navigation";
 import { ConnectionWorkspace } from "@/features/connections/connection-workspace";
 import { loadConnectionPagesAction } from "@/app/connections/actions";
 import "@/features/connections/connections.css";
@@ -18,26 +22,34 @@ export const metadata: Metadata = { title: "My sessions" };
 export default async function Page() {
   const access = await protectedPageAccess("/sessions");
   if (access.status === "unavailable") {
-    return <ProtectedAccessUnavailable />;
+    return (
+      <div className="my-session-recovery">
+        <MySessionsNavigation active="private" />
+        <ProtectedAccessUnavailable />
+      </div>
+    );
   }
   if (access.status === "preview") {
     return (
-      <section className="protected-access-state">
-        <span className="eyebrow">MY SESSIONS</span>
-        <h1>Sign in to see your future sessions.</h1>
-        <p>
-          MovX shows only bookings owned by the verified account. Public coach
-          discovery remains available without signing in.
-        </p>
-        <div className="protected-access-actions">
-          <Link className="button dark" href={signInHref("/sessions")}>
-            Go to sign-in
-          </Link>
-          <Link className="button secondary" href="/explore">
-            Find a coach
-          </Link>
-        </div>
-      </section>
+      <div className="my-session-recovery">
+        <MySessionsNavigation active="private" />
+        <section className="protected-access-state">
+          <span className="eyebrow">MY SESSIONS</span>
+          <h1>Sign in to see your future sessions.</h1>
+          <p>
+            MovX shows only bookings owned by the verified account. Public coach
+            discovery remains available without signing in.
+          </p>
+          <div className="protected-access-actions">
+            <Link className="button dark" href={signInHref("/sessions")}>
+              Go to sign-in
+            </Link>
+            <Link className="button secondary" href="/explore">
+              Find a coach
+            </Link>
+          </div>
+        </section>
+      </div>
     );
   }
 
@@ -52,7 +64,12 @@ export default async function Page() {
     redirect(`${signInHref("/sessions")}&reason=forbidden`);
   }
   if (bookingState.status !== "authorized") {
-    return <ProtectedAccessUnavailable />;
+    return (
+      <div className="my-session-recovery">
+        <MySessionsNavigation active="private" />
+        <ProtectedAccessUnavailable />
+      </div>
+    );
   }
 
   const connectionPages = await loadConnectionPagesAction("athlete");
@@ -62,21 +79,16 @@ export default async function Page() {
 
   return (
     <div className="client-session-workspace">
-      <header className="client-session-page-heading">
-        <span className="eyebrow">YOUR TRAINING</span>
-        <h1>My sessions</h1>
-        <p>
-          Track requests awaiting a decision, upcoming confirmed training and
-          your retained session history.
-        </p>
-        <nav aria-label="My sessions sections">
+      <div>
+        <MySessionsHeading active="private" />
+        <nav
+          className="client-session-section-links"
+          aria-label="My sessions sections"
+        >
           <a href="#booking-requests">Booking requests</a>
           <a href="#my-sessions">Confirmed sessions</a>
         </nav>
-        <p>
-          <Link href="/sessions/groups">Open my group sessions →</Link>
-        </p>
-      </header>
+      </div>
       {coachCanOpenWorkspace && (
         <aside className="client-session-coach-context">
           <BriefcaseBusiness size={20} aria-hidden="true" />

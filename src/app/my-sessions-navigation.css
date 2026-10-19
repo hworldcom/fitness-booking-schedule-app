@@ -1,0 +1,92 @@
+nav.my-session-types {
+  display: grid;
+  width: 100%;
+  max-width: 760px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0 0;
+}
+
+nav.my-session-types a.my-session-type {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 88px;
+  align-items: center;
+  gap: 13px;
+  border: 1px solid #d8ded3;
+  border-radius: 16px;
+  background: #fff;
+  padding: 18px;
+  color: #365137;
+  text-decoration: none;
+}
+
+nav.my-session-types a.my-session-type:hover {
+  border-color: #547448;
+  background: #f0f4e9;
+}
+
+nav.my-session-types a.my-session-type[aria-current="page"] {
+  border-color: #294b35;
+  background: #294b35;
+  color: #fff;
+}
+
+nav.my-session-types a.my-session-type:focus-visible {
+  outline: 3px solid #687e35;
+  outline-offset: 4px;
+}
+
+.my-session-type > svg {
+  flex-shrink: 0;
+}
+
+.my-session-type-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 5px;
+}
+
+.my-session-type-copy strong {
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.my-session-type-copy > span {
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.group-history-page > .client-session-page-heading {
+  margin-bottom: 24px;
+}
+
+.my-session-recovery > .my-session-types {
+  margin-bottom: 24px;
+}
+
+@media (max-width: 620px) {
+  nav.my-session-types {
+    gap: 10px;
+  }
+
+  nav.my-session-types a.my-session-type {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px 13px;
+  }
+
+  .my-session-type-check {
+    position: absolute;
+    top: 16px;
+    right: 13px;
+  }
+
+  .my-session-type-copy strong {
+    font-size: 13px;
+  }
+}
