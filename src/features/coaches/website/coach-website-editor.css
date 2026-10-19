@@ -325,3 +325,44 @@
     padding: 18px;
   }
 }
+
+.website-content-errors {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid #a43a34;
+  border-radius: 12px;
+  background: #fff3f0;
+  color: #812c27;
+  scroll-margin-top: 24px;
+}
+.website-content-errors h4 {
+  margin: 0;
+}
+.website-content-errors ul {
+  padding-left: 22px;
+}
+.website-content-errors li + li {
+  margin-top: 8px;
+}
+.website-content-errors a {
+  color: inherit;
+  text-decoration: underline;
+}
+.website-field-errors {
+  display: grid;
+  gap: 4px;
+  color: #a02f29;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.coach-website-editor [aria-invalid="true"] {
+  border-color: #a43a34;
+}
+.coach-website-editor :is(input, textarea, h4)[id] {
+  scroll-margin-top: 24px;
+}
+.website-content-errors:focus,
+.website-content-errors a:focus-visible {
+  outline: 3px solid #497c64;
+  outline-offset: 4px;
+}

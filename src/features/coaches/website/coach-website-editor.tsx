@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useId,
   useRef,
   useState,
   useSyncExternalStore,
@@ -14,6 +15,8 @@ import type { CoachProjection } from "@/domain/coaches";
 import {
   COACH_BANNER_MAX_SOURCE_BYTES,
   parseCoachWebsiteContent,
+  validateCoachWebsiteContent,
+  type CoachWebsiteContentIssue,
   type CoachWebsite,
   type CoachWebsiteContent,
 } from "@/domain/coach-website";
@@ -30,6 +33,11 @@ import {
   type RateDraft,
 } from "./website-client";
 import { CoachWebsitePreview } from "./coach-website-preview";
+import {
+  WebsiteContentErrorSummary,
+  WebsiteFieldErrors,
+  websiteContentFieldId,
+} from "./website-content-errors";
 import "./coach-website-editor.css";
 
 const WEBSITE_API = "/api/coach/website";
@@ -120,7 +128,11 @@ function TextField({
   limit,
   rows,
   onChange,
+  id,
+  issues = [],
 }: {
+  id?: string;
+  issues?: readonly CoachWebsiteContentIssue[];
   label: string;
   value: string;
   limit: number;
@@ -133,21 +145,34 @@ function TextField({
       <span>{label}</span>
       {rows ? (
         <textarea
+          id={id}
+          aria-describedby={
+            id
+              ? `${id}-count${issues.length ? ` ${id}-errors` : ""}`
+              : undefined
+          }
           rows={rows}
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          aria-invalid={count > limit || undefined}
+          aria-invalid={issues.length > 0 || count > limit || undefined}
         />
       ) : (
         <input
+          id={id}
+          aria-describedby={
+            id
+              ? `${id}-count${issues.length ? ` ${id}-errors` : ""}`
+              : undefined
+          }
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          aria-invalid={count > limit || undefined}
+          aria-invalid={issues.length > 0 || count > limit || undefined}
         />
       )}
-      <small>
+      <small id={id ? `${id}-count` : undefined}>
         {count} / {limit} characters
       </small>
+      {id && <WebsiteFieldErrors id={`${id}-errors`} issues={issues} />}
     </label>
   );
 }
@@ -180,6 +205,20 @@ function ScopedWebsiteEditor({
   );
   const [preview, setPreview] = useState<"saved" | "draft" | null>(null);
   const mounted = useRef(false);
+  const fieldPrefix = `website-content-${useId()}`;
+  const errorSummary = useRef<HTMLDivElement>(null);
+  const [validationAttempted, setValidationAttempted] = useState(false);
+  const [validationAttempt, setValidationAttempt] = useState(0);
+  const contentIssues =
+    validationAttempted && contentState.editing
+      ? validateCoachWebsiteContent(contentState.draft).issues
+      : [];
+  const fieldId = (field: string) => websiteContentFieldId(fieldPrefix, field);
+  const issuesFor = (field: string) =>
+    contentIssues.filter((issue) => issue.field === field);
+  useEffect(() => {
+    if (validationAttempt > 0) errorSummary.current?.focus();
+  }, [validationAttempt]);
   useEffect(() => {
     mounted.current = true;
     void website.load(readWebsite);
@@ -228,11 +267,11 @@ function ScopedWebsiteEditor({
     if (draft) website.change({ ...draft, [key]: value });
   }
   async function saveContent() {
-    const content = parseCoachWebsiteContent(draft);
+    const { content } = validateCoachWebsiteContent(draft);
+    setValidationAttempted(true);
     if (!content) {
-      website.notice(
-        "Check the field limits, remove duplicate focus labels, complete each FAQ/link and use a full HTTPS address. Your draft is retained.",
-      );
+      setValidationAttempt((attempt) => attempt + 1);
+      website.notice("");
       return;
     }
     await website.mutate((expectedRevision) =>
@@ -350,7 +389,10 @@ function ScopedWebsiteEditor({
                 className="button secondary"
                 type="button"
                 disabled={blocked}
-                onClick={() => website.edit()}
+                onClick={() => {
+                  setValidationAttempted(false);
+                  website.edit();
+                }}
               >
                 Edit website content
               </button>
@@ -358,11 +400,19 @@ function ScopedWebsiteEditor({
           )}
           {contentState.editing && draft && (
             <form
+              noValidate
+              id={fieldId("content")}
+              tabIndex={-1}
               onSubmit={(event) => {
                 event.preventDefault();
                 void saveContent();
               }}
             >
+              <WebsiteContentErrorSummary
+                prefix={fieldPrefix}
+                issues={contentIssues}
+                summaryRef={errorSummary}
+              />
               <fieldset
                 disabled={contentState.busy}
                 className="website-editor-fields"
@@ -370,12 +420,16 @@ function ScopedWebsiteEditor({
                 <legend className="sr-only">Website content</legend>
                 <TextField
                   label="Brand label (optional)"
+                  id={fieldId("brandLabel")}
+                  issues={issuesFor("brandLabel")}
                   value={draft.brandLabel}
                   limit={80}
                   onChange={(value) => change("brandLabel", value)}
                 />
                 <TextField
                   label="Short introduction (optional)"
+                  id={fieldId("introduction")}
+                  issues={issuesFor("introduction")}
                   value={draft.introduction}
                   limit={220}
                   rows={3}
@@ -383,6 +437,8 @@ function ScopedWebsiteEditor({
                 />
                 <TextField
                   label="Your approach (optional)"
+                  id={fieldId("approach")}
+                  issues={issuesFor("approach")}
                   value={draft.approach}
                   limit={2000}
                   rows={5}
@@ -390,6 +446,8 @@ function ScopedWebsiteEditor({
                 />
                 <TextField
                   label="Experience & qualifications (optional)"
+                  id={fieldId("experience")}
+                  issues={issuesFor("experience")}
                   value={draft.experience}
                   limit={2000}
                   rows={5}
@@ -402,6 +460,11 @@ function ScopedWebsiteEditor({
                 <label className="coach-field">
                   <span>Focus &amp; levels (one per line, up to 8)</span>
                   <textarea
+                    id={fieldId("focusLabels")}
+                    aria-invalid={
+                      issuesFor("focusLabels").length > 0 || undefined
+                    }
+                    aria-describedby={`${fieldId("focusLabels")}-help${issuesFor("focusLabels").length ? ` ${fieldId("focusLabels")}-errors` : ""}`}
                     rows={4}
                     value={draft.focusLabels.join("\n")}
                     onChange={(event) =>
@@ -413,16 +476,28 @@ function ScopedWebsiteEditor({
                       )
                     }
                   />
-                  <small>
+                  <small id={`${fieldId("focusLabels")}-help`}>
                     Up to 60 characters each. Remove empty lines before saving.
                   </small>
+                  <WebsiteFieldErrors
+                    id={`${fieldId("focusLabels")}-errors`}
+                    issues={issuesFor("focusLabels")}
+                  />
                 </label>
-                <h4>Frequently asked questions</h4>
+                <h4 id={fieldId("faqs")} tabIndex={-1}>
+                  Frequently asked questions
+                </h4>
+                <WebsiteFieldErrors
+                  id={`${fieldId("faqs")}-errors`}
+                  issues={issuesFor("faqs")}
+                />
                 {draft.faqs.map((faq, index) => (
                   <fieldset className="website-editor-row" key={index}>
                     <legend>Question {index + 1}</legend>
                     <TextField
                       label={`FAQ ${index + 1} question`}
+                      id={fieldId(`faqs.${index}.question`)}
+                      issues={issuesFor(`faqs.${index}.question`)}
                       value={faq.question}
                       limit={160}
                       onChange={(question) =>
@@ -436,6 +511,8 @@ function ScopedWebsiteEditor({
                     />
                     <TextField
                       label={`FAQ ${index + 1} answer`}
+                      id={fieldId(`faqs.${index}.answer`)}
+                      issues={issuesFor(`faqs.${index}.answer`)}
                       value={faq.answer}
                       limit={1000}
                       rows={3}
@@ -475,12 +552,20 @@ function ScopedWebsiteEditor({
                 >
                   Add question
                 </button>
-                <h4>External links</h4>
+                <h4 id={fieldId("links")} tabIndex={-1}>
+                  External links
+                </h4>
+                <WebsiteFieldErrors
+                  id={`${fieldId("links")}-errors`}
+                  issues={issuesFor("links")}
+                />
                 {draft.links.map((link, index) => (
                   <fieldset className="website-editor-row" key={index}>
                     <legend>Link {index + 1}</legend>
                     <TextField
                       label={`Link ${index + 1} label`}
+                      id={fieldId(`links.${index}.label`)}
+                      issues={issuesFor(`links.${index}.label`)}
                       value={link.label}
                       limit={60}
                       onChange={(label) =>
@@ -496,6 +581,16 @@ function ScopedWebsiteEditor({
                       <span>Link {index + 1} HTTPS address</span>
                       <input
                         type="url"
+                        id={fieldId(`links.${index}.url`)}
+                        aria-invalid={
+                          issuesFor(`links.${index}.url`).length > 0 ||
+                          undefined
+                        }
+                        aria-describedby={
+                          issuesFor(`links.${index}.url`).length
+                            ? `${fieldId(`links.${index}.url`)}-errors`
+                            : undefined
+                        }
                         value={link.url}
                         maxLength={2048}
                         onChange={(event) =>
@@ -508,6 +603,10 @@ function ScopedWebsiteEditor({
                             ),
                           )
                         }
+                      />
+                      <WebsiteFieldErrors
+                        id={`${fieldId(`links.${index}.url`)}-errors`}
+                        issues={issuesFor(`links.${index}.url`)}
                       />
                     </label>
                     <button
@@ -543,7 +642,10 @@ function ScopedWebsiteEditor({
                   type="button"
                   className="button secondary"
                   disabled={blocked}
-                  onClick={() => website.cancel()}
+                  onClick={() => {
+                    setValidationAttempted(false);
+                    website.cancel();
+                  }}
                 >
                   Cancel content edits
                 </button>

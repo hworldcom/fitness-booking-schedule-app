@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   parseCoachWebsiteContent,
+  validateCoachWebsiteContent,
   projectCoachWebsite,
 } from "@/domain/coach-website";
 
@@ -106,4 +107,108 @@ test("owner/public banner projections expose versioned app routes without object
     JSON.stringify(publicView),
     /storage|avatar|authUser|runId/,
   );
+});
+
+test("website diagnostics identify every blank FAQ field and incomplete link without dropping rows", () => {
+  const draft = {
+    brandLabel: "My coaching",
+    faqs: [
+      { question: "Where?", answer: "Berlin" },
+      { question: " ", answer: "" },
+    ],
+    links: [{ label: "", url: "" }],
+  };
+  const original = structuredClone(draft);
+  const { content, issues } = validateCoachWebsiteContent(draft);
+  assert.equal(content, null);
+  assert.deepEqual(
+    issues.map((issue) => issue.field),
+    ["faqs.1.question", "faqs.1.answer", "links.0.label", "links.0.url"],
+  );
+  assert.match(issues[0].message, /FAQ 2 question is empty.*remove FAQ 2/);
+  assert.match(issues[1].message, /FAQ 2 answer is empty.*remove FAQ 2/);
+  assert.match(issues[3].message, /Link 1 address is empty/);
+  assert.deepEqual(draft, original);
+  assert.equal(parseCoachWebsiteContent(draft), null);
+  assert.ok(
+    validateCoachWebsiteContent({ ...draft, faqs: [draft.faqs[0]], links: [] })
+      .content,
+  );
+  assert.ok(
+    validateCoachWebsiteContent({
+      ...draft,
+      faqs: [
+        ...draft.faqs.slice(0, 1),
+        { question: "Who?", answer: "Beginners" },
+      ],
+      links: [{ label: "Site", url: "https://example.com" }],
+    }).content,
+  );
+});
+
+test("website diagnostics combine normalized duplicates, line numbers, character limits and unsafe URLs", () => {
+  const result = validateCoachWebsiteContent({
+    brandLabel: "😀".repeat(81),
+    introduction: "one\ntwo",
+    approach: "<b>unsafe</b>",
+    focusLabels: [" Beginners ", "Beginners", "", "x".repeat(61)],
+    faqs: [{ question: "Question", answer: "x".repeat(1001) }],
+    links: [{ label: "Site", url: "http://example.com" }],
+  });
+  assert.equal(result.content, null);
+  assert.deepEqual(
+    result.issues.map((issue) => issue.field),
+    [
+      "brandLabel",
+      "introduction",
+      "approach",
+      "focusLabels",
+      "focusLabels",
+      "focusLabels",
+      "faqs.0.answer",
+      "links.0.url",
+    ],
+  );
+  assert.match(result.issues[0].message, /80.*currently 81/);
+  assert.match(result.issues[3].message, /line 2 duplicates line 1/);
+  assert.match(result.issues[4].message, /line 3 is empty/);
+  assert.match(result.issues[5].message, /line 4.*60/);
+  assert.match(result.issues[6].message, /FAQ 1 answer.*1,000/);
+  assert.match(result.issues[7].message, /Link 1 address.*HTTPS/);
+});
+
+test("valid website diagnostics preserve optional sections, Unicode normalization and accepted parsing", () => {
+  const value = {
+    brandLabel: "  " + "😀".repeat(80) + "  ",
+    approach: "First\r\nSecond",
+    focusLabels: ["  Beginner  "],
+    links: [{ label: " Site ", url: "https://EXAMPLE.com" }],
+  };
+  const result = validateCoachWebsiteContent(value);
+  assert.deepEqual(result.issues, []);
+  assert.equal(result.content?.brandLabel, "😀".repeat(80));
+  assert.equal(result.content?.approach, "First\nSecond");
+  assert.deepEqual(result.content?.focusLabels, ["Beginner"]);
+  assert.equal(result.content?.links[0].url, "https://example.com/");
+  assert.deepEqual(parseCoachWebsiteContent(value), result.content);
+  assert.deepEqual(validateCoachWebsiteContent({}).issues, []);
+});
+
+test("malformed website diagnostics fail closed with bounded field references", () => {
+  for (const value of [
+    null,
+    [],
+    { privateAvatar: "secret" },
+    { focusLabels: null },
+    { faqs: [{ question: "Q", answer: "A", secret: true }] },
+    { links: [{ label: "Site", url: "https://user:secret@example.com" }] },
+  ]) {
+    const result = validateCoachWebsiteContent(value);
+    assert.equal(result.content, null);
+    assert.ok(result.issues.length);
+    assert.doesNotMatch(
+      JSON.stringify(result.issues),
+      /secret|privateAvatar|user:/,
+    );
+  }
 });
