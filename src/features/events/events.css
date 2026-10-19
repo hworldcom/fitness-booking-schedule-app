@@ -214,6 +214,28 @@
   margin: 6px 0 0;
   color: #53675a;
 }
+.event-card-enrollment {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #e3dce9;
+  border-radius: 12px;
+  background: #faf7fc;
+  color: #625c69;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.event-card-enrollment strong {
+  display: block;
+  color: #2d2933;
+  font-size: 13px;
+}
+.event-card-enrollment p {
+  margin: 5px 0 0;
+}
+.event-card-enrollment .event-card-invite {
+  margin-top: 8px;
+  color: #61417b;
+}
 .events-pagination {
   display: flex;
   flex-wrap: wrap;

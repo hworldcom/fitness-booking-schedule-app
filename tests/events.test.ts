@@ -203,6 +203,89 @@ test("public event presentation escapes titles and exposes aggregate capacity wi
   assert.ok(!terms.includes("paid successfully"));
 });
 
+test("open event cards explain the minimum and exact remaining participants before coach confirmation", () => {
+  for (const [minimum, count, expected] of [
+    [1, 0, "1 more participant needed before coach confirmation."],
+    [4, 1, "3 more participants needed before coach confirmation."],
+  ] as const) {
+    const html = renderToStaticMarkup(
+      createElement(EventCard, {
+        session: {
+          ...event,
+          minimumParticipants: minimum,
+          participantCount: count,
+        },
+      }),
+    );
+    assert.ok(
+      html.includes(
+        `Minimum ${minimum} ${minimum === 1 ? "participant" : "participants"}`,
+      ),
+    );
+    assert.ok(html.includes(expected));
+    assert.match(html, /Invite a friend to help this class happen/);
+    assert.match(html, /Waiting for coach confirmation/);
+    assert.doesNotMatch(html, /Minimum reached|Confirmed by coach/);
+  }
+});
+
+test("reaching or exceeding a group minimum never presents automatic confirmation", () => {
+  for (const count of [2, 3]) {
+    const html = renderToStaticMarkup(
+      createElement(EventCard, {
+        session: { ...event, participantCount: count },
+      }),
+    );
+    assert.match(html, /Minimum 2 participants/);
+    assert.match(html, /Minimum reached\. Awaiting coach confirmation\./);
+    assert.match(html, /Training is better together\. Invite a friend\./);
+    assert.doesNotMatch(html, /more participants? needed|Confirmed by coach/);
+  }
+});
+
+test("a confirmed group remains confirmed below its initial minimum after withdrawals", () => {
+  const html = renderToStaticMarkup(
+    createElement(EventCard, {
+      session: {
+        ...event,
+        minimumParticipants: 4,
+        participantCount: 1,
+        status: "confirmed",
+        displayStatus: "confirmed",
+      },
+    }),
+  );
+  assert.match(html, /Initial minimum 4 participants/);
+  assert.match(html, /Confirmed by coach/);
+  assert.match(html, /Training is better together\. Invite a friend\./);
+  assert.doesNotMatch(
+    html,
+    /more participants? needed|Minimum reached|Awaiting coach confirmation|help this class happen/,
+  );
+});
+
+test("full, non-joinable and terminal event cards do not encourage new invitations", () => {
+  const variants: Partial<GroupSession>[] = [
+    { participantCount: 8 },
+    { participantCount: 0, canJoin: false },
+    { status: "confirmed", displayStatus: "confirmed", canJoin: false },
+    { status: "cancelled", displayStatus: "cancelled" },
+    { status: "not-confirmed", displayStatus: "not-confirmed" },
+    { status: "confirmed", displayStatus: "ended" },
+    { status: "draft", displayStatus: "draft" },
+  ];
+  for (const variant of variants) {
+    const session = { ...event, ...variant };
+    const html = renderToStaticMarkup(createElement(EventCard, { session }));
+    assert.doesNotMatch(html, /Invite a friend|event-card-invite/);
+    if (session.displayStatus !== "open")
+      assert.doesNotMatch(
+        html,
+        /more participants? needed|Minimum reached|Awaiting coach confirmation/,
+      );
+  }
+});
+
 test("registration issue URLs cannot invent success or reflect arbitrary text", () => {
   for (const issue of [
     "joined",

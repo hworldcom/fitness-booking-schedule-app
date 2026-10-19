@@ -17,6 +17,15 @@ export function EventStatus({ session }: { session: GroupSession }) {
   );
 }
 export function EventCard({ session }: { session: GroupSession }) {
+  const participantsNeeded = Math.max(
+    0,
+    session.minimumParticipants - session.participantCount,
+  );
+  const waitingForCoach = session.displayStatus === "open";
+  const canInvite =
+    session.canJoin &&
+    session.participantCount < session.maximumParticipants &&
+    (waitingForCoach || session.displayStatus === "confirmed");
   return (
     <article className="event-card">
       <div className="event-card-top">
@@ -60,6 +69,30 @@ export function EventCard({ session }: { session: GroupSession }) {
       {session.priceCents > 0 && (
         <p className="event-price-note">Pay at session</p>
       )}
+      <div className="event-card-enrollment">
+        <strong>
+          {session.displayStatus === "confirmed" ||
+          session.displayStatus === "ended"
+            ? "Initial minimum"
+            : "Minimum"}{" "}
+          {session.minimumParticipants}{" "}
+          {session.minimumParticipants === 1 ? "participant" : "participants"}
+        </strong>
+        {waitingForCoach && (
+          <p>
+            {participantsNeeded > 0
+              ? `${participantsNeeded} more ${participantsNeeded === 1 ? "participant" : "participants"} needed before coach confirmation.`
+              : "Minimum reached. Awaiting coach confirmation."}
+          </p>
+        )}
+        {canInvite && (
+          <p className="event-card-invite">
+            {waitingForCoach && participantsNeeded > 0
+              ? "Invite a friend to help this class happen."
+              : "Training is better together. Invite a friend."}
+          </p>
+        )}
+      </div>
     </article>
   );
 }
