@@ -1567,6 +1567,10 @@
   padding: clamp(22px, 4vw, 35px);
 }
 
+.coach-editor-panel > .coach-field {
+  align-self: start;
+}
+
 .coach-editor-section-title,
 .coach-discipline-fieldset,
 .coach-location-mode,
