@@ -14,3 +14,13 @@ export function publicScheduleActorMatches(
       expected.actorIdentity
   );
 }
+
+export function publicScheduleDateLabel(date: string, short = false) {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC",
+    weekday: short ? "short" : "long",
+    day: "numeric",
+    month: short ? "short" : "long",
+    ...(short ? {} : { year: "numeric" }),
+  }).format(new Date(`${date}T12:00:00Z`));
+}

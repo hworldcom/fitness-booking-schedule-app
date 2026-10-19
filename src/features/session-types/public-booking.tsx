@@ -35,7 +35,7 @@ export function TypeFirstBooking({
   selectedDate?: string;
 }) {
   return (
-    <SessionActorBoundary publicWhenSignedOut>
+    <SessionActorBoundary>
       {(identity) => (
         <BookingForm
           key={`${identity}:${slug}:${selectedDate ?? ""}`}

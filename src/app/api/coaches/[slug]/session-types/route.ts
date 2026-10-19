@@ -24,7 +24,16 @@ export async function GET(
   }
   const status = (result as { status: string }).status;
   return Response.json(result, {
-    status: status === "ready" ? 200 : status === "invalid" ? 400 : 503,
-    headers: { "cache-control": "no-store" },
+    status:
+      status === "ready"
+        ? 200
+        : status === "invalid"
+          ? 400
+          : status === "signed-out"
+            ? 401
+            : status === "forbidden"
+              ? 403
+              : 503,
+    headers: { "cache-control": "private, no-store", vary: "Cookie" },
   });
 }

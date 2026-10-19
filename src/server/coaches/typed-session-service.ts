@@ -45,10 +45,20 @@ export async function publicSessionTimes(
   )
     return { status: "invalid" as const };
   try {
-    return {
+    const result = await withAuthorizedActor(async () => ({
       status: "ready" as const,
+      // Keep the public availability projection on its own connection: an
+      // owner's transaction context permits overrides that this view must not.
       times: await typedSessionTimesRecord(slug, typeId, locationId, date),
-    };
+    }));
+    return result.status === "authorized"
+      ? result.value
+      : {
+          status:
+            result.status === "preview"
+              ? ("forbidden" as const)
+              : result.status,
+        };
   } catch {
     return { status: "unavailable" as const };
   }

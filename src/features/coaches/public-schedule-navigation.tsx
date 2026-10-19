@@ -6,15 +6,8 @@ import {
   type publicScheduleSelection,
 } from "@/domain/public-coach-schedule";
 
-export function publicScheduleDateLabel(date: string, short = false) {
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone: "UTC",
-    weekday: short ? "short" : "long",
-    day: "numeric",
-    month: short ? "short" : "long",
-    ...(short ? {} : { year: "numeric" }),
-  }).format(new Date(`${date}T12:00:00Z`));
-}
+import { publicScheduleDateLabel } from "./public-schedule-model";
+export { publicScheduleDateLabel } from "./public-schedule-model";
 
 export function PublicScheduleNavigation({
   slug,

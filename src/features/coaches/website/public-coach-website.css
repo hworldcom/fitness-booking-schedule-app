@@ -393,6 +393,122 @@
   border-color: #d3c6de;
   color: #61417b;
 }
+
+/* Match Home's pale lavender/mint surfaces, scoped to public scheduling. */
+.coach-personal-website .coach-private-schedule-preview,
+.coach-personal-website .coach-marketplace,
+.coach-personal-website .typed-public-booking {
+  border: 1px solid var(--website-line);
+  border-radius: 18px;
+  padding: clamp(20px, 3vw, 32px);
+  background:
+    radial-gradient(ellipse at 8% 0%, #eee7fa, transparent 65%),
+    radial-gradient(ellipse at 95% 100%, #def5ed, transparent 65%), #f7f5fb;
+  color: var(--website-ink);
+  min-width: 0;
+}
+.coach-private-schedule-preview > .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.coach-private-schedule-preview h2 {
+  font-size: clamp(24px, 3vw, 30px);
+  line-height: 1.2;
+  margin: 14px 0 22px;
+}
+.coach-private-schedule-preview > p {
+  line-height: 1.7;
+  font-size: 14px;
+}
+.coach-private-schedule-preview .coach-private-schedule-count {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 24px 0;
+  color: var(--website-purple);
+}
+.coach-private-schedule-count strong {
+  font-family: var(--font-display), sans-serif;
+  font-size: 54px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.coach-private-schedule-count span {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 700;
+}
+.coach-private-schedule-preview .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 48px;
+  margin: 8px 0;
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+}
+.coach-private-schedule-retry {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 13px;
+  color: var(--website-purple);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.coach-personal-website .public-schedule {
+  border-color: var(--website-line);
+  background: #ffffffc9;
+}
+.coach-personal-website
+  :is(.public-schedule-window, .coach-marketplace > p, .public-schedule > p) {
+  color: var(--website-muted);
+}
+.coach-personal-website .public-schedule-pages a {
+  color: var(--website-purple);
+}
+.coach-personal-website .public-schedule-dates a {
+  border-color: #cde4da;
+  background: #eaf7f1;
+  color: var(--website-ink);
+}
+.coach-personal-website .public-schedule-dates a[aria-current="date"] {
+  border-color: #9276ab;
+  background: #eee7fa;
+  color: #54316f;
+  box-shadow: inset 0 0 0 1px #9276ab;
+  font-weight: 800;
+}
+.coach-personal-website
+  :is(
+    .public-schedule-date-form input,
+    .session-type-editor,
+    .session-type-editor input,
+    .session-type-editor select
+  ) {
+  border-color: #d3c6de;
+  color: var(--website-ink);
+}
+.coach-personal-website .session-type-time input {
+  accent-color: var(--website-purple);
+}
+.coach-personal-website .session-type-editor .session-type-time {
+  border-color: #cde4da;
+  background: #eaf7f1;
+}
+.coach-personal-website .session-type-time:has(input:checked) {
+  border-color: #9276ab;
+  background: #eee7fa;
+  box-shadow: inset 0 0 0 1px #9276ab;
+}
+.coach-personal-website .coach-bookable-slot-list li {
+  border-color: var(--website-line);
+  background: #fff;
+}
 @media (min-width: 1024px) and (max-height: 800px) {
   .coach-website-contact {
     position: static;

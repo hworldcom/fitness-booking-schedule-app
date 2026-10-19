@@ -99,3 +99,7 @@ Runtime remains Draft. Core page DEV0317 and remaining DEV0318 public-review int
 ### 2026-10-19 prerequisite checkpoint
 
 DEV0317 is Completed locally and supplies its own core-page authoring/public privacy, booking/date, public review reading/retry and five-width evidence, with exact temporary cleanup. The real username `#reviews` destination is now available. DEV0318 still owns its remaining private-author/public-result evidence; this rehearsal remains Draft and must prove the combined core loop independently of individual ticket assertions. No hosted deployment or gallery/video completion is implied.
+
+### 2026-10-19 private-schedule access amendment
+
+Independent [DEV0366](../../archive/frontend/DEV0366-require-login-for-private-coach-schedules.md) changes the public schedule boundary: guests retain seven daily date/count boxes and their total, while individual private times/calendar selection require verified login. Include guest payload/API exclusion, day-box login return and authenticated typed/legacy behavior in the combined proof. Published group details keep their existing public contract. DEV0317 remains the completed historical baseline.

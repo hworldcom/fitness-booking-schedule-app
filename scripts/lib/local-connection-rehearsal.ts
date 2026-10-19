@@ -70,7 +70,8 @@ export async function localConnectionRehearsal(
     | "DEV0317"
     | "DEV0315"
     | "DEV0321"
-    | "DEV0331",
+    | "DEV0331"
+    | "DEV0366",
 ): Promise<LocalConnectionRehearsal> {
   if (
     ticket !== "DEV0222" &&
@@ -83,7 +84,8 @@ export async function localConnectionRehearsal(
     ticket !== "DEV0317" &&
     ticket !== "DEV0315" &&
     ticket !== "DEV0321" &&
-    ticket !== "DEV0331"
+    ticket !== "DEV0331" &&
+    ticket !== "DEV0366"
   )
     throw new Error("Unsupported local connection rehearsal marker.");
   // Private CLI values stay in memory; this script can only use the repository's
@@ -98,7 +100,8 @@ export async function localConnectionRehearsal(
   if (
     base !== "http://localhost:3100" &&
     base !== "http://localhost:3113" &&
-    !(ticket === "DEV0317" && base === "http://localhost:3117")
+    !(ticket === "DEV0317" && base === "http://localhost:3117") &&
+    !(ticket === "DEV0366" && base === "http://localhost:3166")
   )
     throw new Error(
       "Connection rehearsals require an approved loopback preview.",
@@ -264,7 +267,7 @@ export async function localConnectionRehearsal(
       }[]
     >`select u.id,p.id as profile_id,p.avatar_storage_path,case when c.portrait_source='storage' then c.portrait_path else null end as coach_portrait_path from auth.users u left join app.profiles p on p.auth_user_id=u.id left join app.coach_profiles c on c.profile_id=p.id
     where u.raw_app_meta_data->>'movx_test_ticket'=${ticket} and u.raw_app_meta_data->>'temporary'='true' and u.email like ${ticket.toLowerCase() + "-connections-%@users.movx.test"}
-      and (${ticket} not in ('DEV0313','DEV0315','DEV0317','DEV0321','DEV0331') or u.id=any(${people.map((entry) => entry.id)}::uuid[]))`;
+      and (${ticket} not in ('DEV0313','DEV0315','DEV0317','DEV0321','DEV0331','DEV0366') or u.id=any(${people.map((entry) => entry.id)}::uuid[]))`;
     for (const row of owned)
       if (row.avatar_storage_path) {
         assert.ok(
@@ -325,12 +328,12 @@ export async function localConnectionRehearsal(
         await tx`delete from app.coach_private_bookings where coach_profile_id=any(${ids}::uuid[]) or client_profile_id=any(${ids}::uuid[])`;
         await tx`delete from app.coach_availability_slots where profile_id=any(${ids}::uuid[])`;
         await tx`delete from app.coach_availability_rules where profile_id=any(${ids}::uuid[])`;
-        if (ticket === "DEV0317") {
+        if (ticket === "DEV0317" || ticket === "DEV0366") {
           await tx`select app.group_session_flags(true)`;
           await tx`delete from app.coach_group_sessions where coach_profile_id=any(${ids}::uuid[])`;
           await tx`select app.group_session_flags(false)`;
         }
-        if (ticket === "DEV0317") {
+        if (ticket === "DEV0317" || ticket === "DEV0366") {
           await tx`delete from app.coach_session_type_commands where coach_profile_id=any(${ids}::uuid[])`;
           await tx`delete from app.coach_session_types where coach_profile_id=any(${ids}::uuid[])`;
         }

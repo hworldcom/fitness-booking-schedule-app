@@ -7,7 +7,7 @@ This directory records planned changes, task status and implementation evidence.
 - A **development ticket** is a small implementable task named `# Ticket DEVNNNN` with a `DEVNNNN-short-title.md` filename. It owns implementation and validation evidence, and its DEV ID is used in commits. Start one from [TEMPLATE.md](TEMPLATE.md).
 - A **coordination record** is a non-implementation umbrella named `# Coordination CORNNNN` with a `CORNNNN-short-title.md` filename. It maps a flat set of peer development tickets and is never used as a commit reference. Start one from [COORDINATION_TEMPLATE.md](COORDINATION_TEMPLATE.md).
 
-DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0365 and COR0031.
+DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0367 and COR0031.
 
 Every DEV record declares its direct coordination membership near the top: one linked COR, or `None — independent development ticket`. Direct membership is limited to one COR and must match that COR's work map. Dependencies, downstream consumers and historical links remain separate relationships.
 
@@ -101,6 +101,8 @@ DEV0351–DEV0358 and COR0030 are allocated to independent public-discovery and 
 
 DEV0363 is allocated to independent core coach website planning and is excluded from the DEV0359/DEV0361/DEV0362/DEV0364 checkpoint.
 
+DEV0365 remains allocated to the independent How it works page implementation and is excluded from the DEV0366 schedule-access checkpoint.
+
 ## Ticket index
 
 ### Current records
@@ -165,6 +167,7 @@ DEV0363 is allocated to independent core coach website planning and is excluded 
 
 | Record                                                                                                                                               | Area         | Milestone                                  | Status    | Outcome                                                                                                                                                                                                                  |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [DEV0366 — Require login for private coach schedules](archive/frontend/DEV0366-require-login-for-private-coach-schedules.md) | Frontend | M10 — Coach website refinement | Completed | Seven daily guest counts; authenticated private schedule, lavender/mint styling; 342 unit/64 server, build/types, migration, desktop/phone keyboard and exact cleanup/preservation checks pass. |
 | [DEV0317 — Build shareable personal coach websites](archive/frontend/DEV0317-build-shareable-personal-coach-websites.md) | Frontend | M10 — Core public coach websites | Completed | Saved public website, real services/groups/reviews, canonical sharing and booking date return; 336 unit/61 server tests, five-width native/failure checks, production build and exact 61-hash preservation/cleanup pass. |
 | [DEV0363 — Refresh core coach website delivery plan](archive/organisatory/DEV0363-refresh-core-coach-website-delivery-plan.md) | Organisatory | M10 — Coach marketplace website planning | Completed | Separate the core public-page/combined-proof scope from later media and align the plan with session-type booking. |
 | [DEV0359 — Preview athlete and coach How it works](archive/frontend/DEV0359-preview-athlete-and-coach-how-it-works.md) | Frontend | Public marketplace design review | Completed | Standalone white/purple athlete/coach proposal, truthful private/group guidance and retained 100-person cap; Safari desktop/tablet/phone/keyboard and 23 static checks pass. |

@@ -14,6 +14,8 @@ import {
   publicCoachWebsiteGroups,
 } from "@/server/coaches/public-website-page";
 import { publicCoachReviews } from "@/server/coaches/review-service";
+import { publicPrivateScheduleSummary } from "@/server/coaches/private-schedule-summary-service";
+import { PrivateScheduleAccess } from "@/features/coaches/private-schedule-access";
 import { calendarDate } from "@/domain/coach-calendar";
 import { coachRedirectHref } from "@/domain/coach-public-url";
 import {
@@ -41,9 +43,15 @@ export async function PublicCoachPage({
   } catch {
     catalogUnavailable = true;
   }
-  const [reviews, groups] = await Promise.all([
+  const [reviews, groups, summary] = await Promise.all([
     publicCoachReviews(slug, null),
     publicCoachWebsiteGroups(slug),
+    publicPrivateScheduleSummary(
+      slug,
+      catalog ?? null,
+      state.slots,
+      state.databaseTime,
+    ),
   ]);
   const query = await searchParams;
   const selection = publicScheduleSelection(query.date, state.databaseTime);
@@ -70,7 +78,7 @@ export async function PublicCoachPage({
       : bookingState;
   return (
     <CoachProfileView
-      state={state}
+      state={{ ...state, slots: [] }}
       catalog={catalog ?? null}
       reviews={reviews}
       groups={groups}
@@ -80,8 +88,19 @@ export async function PublicCoachPage({
         actor.actorProfileId === state.coach.profileId
       }
       marketplace={
-        <>
-          {catalogUnavailable ? (
+        <PrivateScheduleAccess
+          expected={
+            actor.status === "authorized"
+              ? { subject: actor.subject, actorIdentity: actor.actorIdentity }
+              : null
+          }
+          summary={summary}
+          returnTo={coachRedirectHref(
+            state.coach.publicPath ?? `/coaches/${slug}`,
+            { date: selection.date, section: "private-schedule" },
+          )}
+        >
+          {actor.status !== "authorized" ? null : catalogUnavailable ? (
             <section
               id="private-schedule"
               className="coach-open-slots public-schedule"
@@ -125,7 +144,7 @@ export async function PublicCoachPage({
             </section>
           ) : (
             <CoachMarketplace
-              key={`${slug}:${selection.date}:${actor.status === "authorized" ? actor.subject + actor.actorIdentity : actor.status}`}
+              key={`${slug}:${selection.date}:${actor.subject + actor.actorIdentity}`}
               coachProfileId={state.coach.profileId}
               coachDisplayName={state.coach.displayName}
               coachSlug={state.coach.slug}
@@ -136,7 +155,7 @@ export async function PublicCoachPage({
               selectedDate={query.date}
             />
           )}
-        </>
+        </PrivateScheduleAccess>
       }
     />
   );
