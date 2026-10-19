@@ -32,6 +32,8 @@ Deliver DEV0356 first, then DEV0357 and DEV0358 against its stable contract. Own
 
 ## Progress and integration record
 
+2026-10-19 independent QA supplement: [DEV0367](../../archive/organisatory/DEV0367-audit-athlete-coach-responsive-journeys.md) records Firefox 375 px owner banner upload/reload/remove, public image 200→404 with unchanged session terms, and phone 20→24 paging/focus, List/Map retention, co-located keyboard selection, empty-filter reset and native Back; desktop cards/map and a configured Chrome mobile map-failure case also passed. DEV0357/DEV0358 link this evidence and state the remaining phone replacement/stale/unavailable/Chrome-specific cases. Both peers remain Blocked and COR0030 stays In progress. DEV0367 is an independent audit, not an additional direct implementation member. Its final exact cleanup and 55 original-record fingerprints passed.
+
 2026-10-19: User requested Chrome rerun. DEV0357/DEV0358 validation resumes in a separate Incognito window after native control reconnected; earlier blocked results remain history pending actual checks and exact fixture cleanup.
 
 Chrome retry added real desktop owner upload/reload/replace/remove/invalid/keyboard-removal evidence and public uploaded/replacement/coach-fallback observations. Production build and API assertions passed again; native Load more reached 23 and focused the first appended article. The 375 px owner picker then stalled, and subsequent native observations lost page content. DEV0357 AC1 is now met; remaining phone/recovery and public keyboard/filter-reset integration keep both frontend peers Blocked. Their records separate observed passes from attempted checks; no runtime code or hosted migration changed in this retry.

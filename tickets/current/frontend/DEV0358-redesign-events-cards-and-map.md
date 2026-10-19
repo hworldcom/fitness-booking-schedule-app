@@ -82,6 +82,12 @@ Layout default: widen only Events results to a 1600 px maximum so cards and map 
 
 ## Validation results
 
+### Supplemental responsive audit — 19 October 2026
+
+[DEV0367](../../archive/organisatory/DEV0367-audit-athlete-coach-responsive-journeys.md) adds native Firefox phone proof with 24 published groups owned only by a tagged temporary coach. Northside/Boxing initially showed 20; Load more appended four without duplicates and focused the first new card. Selecting a newly appended session's Map link retained all 24 results and the venue filter. Keyboard Shift+Tab reached co-located markers; Enter selected another session and focused its correct preview. An empty venue filter removed old cards/markers; native browser Back restored Northside and its bounded first page. Desktop inspection showed cards beside the map. The configured Chrome suite separately passed mobile provider-failure full-list recovery.
+
+The same audit records phone banner upload/reload/remove with real public image 200→404, exact session-term preservation, and complete temporary-data cleanup with 55 original fingerprints unchanged. These are supplemental observations, not a claim that every earlier Chrome/retry/replacement/recovery criterion has passed. AC2–AC4 and Blocked status remain open pending a focused review and the outstanding cases. DEV0367 is independent of COR0030; no runtime source changed.
+
 2026-10-19 commit verification: the exact staged source passed 51 frontend/domain and 16 backend regressions on Node 24.21.0, scoped ESLint/Prettier, isolated typecheck and production webpack build. Shared contract/index changes exclude unrelated work; 655 local links resolve, with the two intentionally private credential-journal links excluded from version control. DEV0358 records commands, snapshot and remaining native acceptance; committing does not complete DEV0357/DEV0358 or deploy the feature.
 
 2026-10-19 Chrome retry: user requested Chrome. Native control connected after a reset; use a separate Incognito window and new temporary fixtures in the production-mode port-3158 preview. Finish combined owner upload/public-card/fallback plus keyboard/filter-reset acceptance, then exact cleanup. No retained account changes, migration, commit or hosted rollout are included.

@@ -51,7 +51,7 @@ type LocalConnectionRehearsal = {
     action: ConnectionDecision,
   ) => Promise<ConnectionProjection>;
   cookieHeader: (person: LocalPerson) => string;
-  cleanup: () => Promise<void>;
+  cleanup: (recoveryAuthIds?: readonly string[]) => Promise<void>;
   approveCoach: (person: LocalPerson) => Promise<void>;
   cancelDirectPrivateBookingRecord: typeof import("../../src/server/db/coaches/booking-repository").cancelDirectPrivateBookingRecord;
   bookingConnectionContextRecord: typeof import("../../src/server/db/connections/repository").bookingConnectionContextRecord;
@@ -72,7 +72,8 @@ export async function localConnectionRehearsal(
     | "DEV0321"
     | "DEV0331"
     | "DEV0358"
-    | "DEV0366",
+    | "DEV0366"
+    | "DEV0367",
 ): Promise<LocalConnectionRehearsal> {
   if (
     ticket !== "DEV0222" &&
@@ -87,7 +88,8 @@ export async function localConnectionRehearsal(
     ticket !== "DEV0321" &&
     ticket !== "DEV0331" &&
     ticket !== "DEV0358" &&
-    ticket !== "DEV0366"
+    ticket !== "DEV0366" &&
+    ticket !== "DEV0367"
   )
     throw new Error("Unsupported local connection rehearsal marker.");
   // Private CLI values stay in memory; this script can only use the repository's
@@ -260,7 +262,18 @@ export async function localConnectionRehearsal(
       .map(({ name, value }) => name + "=" + value)
       .join("; ");
   }
-  async function cleanup() {
+  async function cleanup(recoveryAuthIds?: readonly string[]) {
+    if (recoveryAuthIds) {
+      assert.equal(
+        ticket,
+        "DEV0367",
+        "Recovery is limited to the full QA audit.",
+      );
+      assert.ok(recoveryAuthIds.length > 0 && recoveryAuthIds.length <= 16);
+      assert.equal(new Set(recoveryAuthIds).size, recoveryAuthIds.length);
+      assert.ok(recoveryAuthIds.every((id) => /^[a-f0-9-]{36}$/i.test(id)));
+    }
+    const cleanupIds = recoveryAuthIds ?? people.map((entry) => entry.id);
     const owned = await database<
       {
         id: string;
@@ -270,7 +283,13 @@ export async function localConnectionRehearsal(
       }[]
     >`select u.id,p.id as profile_id,p.avatar_storage_path,case when c.portrait_source='storage' then c.portrait_path else null end as coach_portrait_path from auth.users u left join app.profiles p on p.auth_user_id=u.id left join app.coach_profiles c on c.profile_id=p.id
     where u.raw_app_meta_data->>'movx_test_ticket'=${ticket} and u.raw_app_meta_data->>'temporary'='true' and u.email like ${ticket.toLowerCase() + "-connections-%@users.movx.test"}
-      and (${ticket} not in ('DEV0313','DEV0315','DEV0317','DEV0321','DEV0331','DEV0358','DEV0366') or u.id=any(${people.map((entry) => entry.id)}::uuid[]))`;
+      and (${ticket} not in ('DEV0313','DEV0315','DEV0317','DEV0321','DEV0331','DEV0358','DEV0366','DEV0367') or u.id=any(${cleanupIds}::uuid[]))`;
+    if (recoveryAuthIds)
+      assert.equal(
+        owned.length,
+        recoveryAuthIds.length,
+        "Every recovery identity must still be an exact tagged QA account.",
+      );
     for (const row of owned)
       if (row.avatar_storage_path) {
         assert.ok(
@@ -302,7 +321,8 @@ export async function localConnectionRehearsal(
       (ticket === "DEV0321" ||
         ticket === "DEV0315" ||
         ticket === "DEV0317" ||
-        ticket === "DEV0358") &&
+        ticket === "DEV0358" ||
+        ticket === "DEV0367") &&
       ids.length
     ) {
       // Admin cleanup is confined to exact tagged temporary owners, including
@@ -330,6 +350,10 @@ export async function localConnectionRehearsal(
         }
         await tx`delete from app.coach_athlete_connection_attempts where pair_id in(select id from app.coach_athlete_connection_pairs where coach_profile_id=any(${ids}::uuid[]) or athlete_profile_id=any(${ids}::uuid[]))`;
         await tx`delete from app.coach_athlete_connection_pairs where coach_profile_id=any(${ids}::uuid[]) or athlete_profile_id=any(${ids}::uuid[])`;
+        if (ticket === "DEV0367") {
+          await tx`delete from app.session_booking_changes where booking_id in (select id from app.coach_private_bookings where coach_profile_id=any(${ids}::uuid[]) or client_profile_id=any(${ids}::uuid[]))`;
+          await tx`delete from app.session_booking_commands where actor_profile_id=any(${ids}::uuid[])`;
+        }
         await tx`delete from app.coach_booking_requests where coach_profile_id=any(${ids}::uuid[]) or client_profile_id=any(${ids}::uuid[])`;
         await tx`delete from app.coach_private_bookings where coach_profile_id=any(${ids}::uuid[]) or client_profile_id=any(${ids}::uuid[])`;
         await tx`delete from app.coach_availability_slots where profile_id=any(${ids}::uuid[])`;
@@ -337,13 +361,23 @@ export async function localConnectionRehearsal(
         if (
           ticket === "DEV0358" ||
           ticket === "DEV0317" ||
-          ticket === "DEV0366"
+          ticket === "DEV0366" ||
+          ticket === "DEV0367"
         ) {
           await tx`select app.group_session_flags(true)`;
+          if (ticket === "DEV0367")
+            // A cascading delete runs as app_owner and intentionally cannot
+            // erase registration history. Delete exact test children directly
+            // as the local administrator before deleting their test sessions.
+            await tx`delete from app.coach_group_registrations where session_id in (select id from app.coach_group_sessions where coach_profile_id=any(${ids}::uuid[]))`;
           await tx`delete from app.coach_group_sessions where coach_profile_id=any(${ids}::uuid[])`;
           await tx`select app.group_session_flags(false)`;
         }
-        if (ticket === "DEV0317" || ticket === "DEV0366") {
+        if (
+          ticket === "DEV0317" ||
+          ticket === "DEV0366" ||
+          ticket === "DEV0367"
+        ) {
           await tx`delete from app.coach_session_type_commands where coach_profile_id=any(${ids}::uuid[])`;
           await tx`delete from app.coach_session_types where coach_profile_id=any(${ids}::uuid[])`;
         }

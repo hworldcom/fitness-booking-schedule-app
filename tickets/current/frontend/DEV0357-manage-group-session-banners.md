@@ -66,6 +66,12 @@ Consumes DEV0356 EventBannerResult and GET/POST/DELETE /api/coach/events/[id]/ba
 
 ## Validation results
 
+### Supplemental responsive audit — 19 October 2026
+
+[DEV0367](../../archive/organisatory/DEV0367-audit-athlete-coach-responsive-journeys.md) adds native Firefox evidence at 375 px using a fresh tagged coach and published group. The native picker uploaded a synthetic PNG, the saved 8:3 preview survived a full reload, and an unauthenticated image read returned HTTP 200 with an 800×300 WebP. Native removal restored fallback wording and the same version URL returned 404. Exact SQL checks retained the group's open status, Free price and 1–2 capacity. The temporary identity, group and media were removed; the final full 55-record preservation comparison passed.
+
+This supersedes the missing phone upload/reload/remove observation below for Firefox. Phone replacement, invalid/stale/unavailable recovery and the remaining keyboard/Chrome-specific cases were not repeated; AC2/AC3 and Blocked status remain open. DEV0367 is independent QA evidence, not a direct member of COR0030. No runtime implementation changed.
+
 2026-10-19 commit verification: the exact staged source passed 51 frontend/domain and 16 backend regressions on Node 24.21.0, scoped ESLint/Prettier, isolated typecheck and production webpack build. Shared contract/index changes exclude unrelated work; 655 local links resolve, with the two intentionally private credential-journal links excluded from version control. DEV0358 records commands, snapshot and remaining native acceptance; committing does not complete DEV0357/DEV0358 or deploy the feature.
 
 2026-10-19 Chrome retry: user requested the outstanding checks in Chrome. A fresh native-control connection and separate Incognito window are available. Resume only the tagged temporary-fixture owner desktop/375 px file-picker/reload/replace/remove/invalid/stale/unavailable/keyboard cases; preserve earlier results and blockers as history until superseded by observed evidence.
@@ -87,7 +93,7 @@ Rerun outcome: the isolated production preview built successfully and its real A
 
 ## Risks, limitations, and follow-ups
 
-Blocked on phone upload/replace/remove and stale/unavailable UI recovery, plus remaining phone keyboard coverage. Desktop file-picker, reload/replacement/removal, invalid feedback and keyboard removal now have observed Chrome evidence. Finish the remaining cases before completing or archiving; no commit or deployment was requested.
+Blocked on phone replacement, stale/unavailable UI recovery and remaining phone keyboard/Chrome-specific coverage. Desktop file-picker, reload/replacement/removal, invalid feedback and keyboard removal have observed Chrome evidence; the supplemental audit adds Firefox phone upload/reload/remove. Finish the remaining cases before completing or archiving. This supplemental audit includes no commit or deployment.
 
 ## Completion and review references
 
