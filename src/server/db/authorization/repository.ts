@@ -196,7 +196,10 @@ export async function currentActorProjection(
   if (hasCoachPortrait) {
     if (
       (row.coachPortraitSource !== "fixture" &&
-        row.coachPortraitSource !== "storage") ||
+        row.coachPortraitSource !== "storage" &&
+        row.coachPortraitSource !== "account") ||
+      (row.coachPortraitSource === "account" &&
+        row.coachPortraitPath !== actor.profileId) ||
       row.coachPortraitPath === null ||
       row.coachPortraitUpdatedAt === null ||
       row.coachPublicSlug === null ||

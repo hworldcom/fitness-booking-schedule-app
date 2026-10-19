@@ -96,7 +96,7 @@ export type EventMediaRow = {
   session_id: string;
   coach_profile_id: string;
   coach_slug: string;
-  portrait_source: "fixture" | "storage" | null;
+  portrait_source: "fixture" | "storage" | "account" | null;
   portrait_path: string | null;
   portrait_updated_at: string | Date | null;
   event_revision: number;
@@ -148,11 +148,13 @@ export async function publicEventMediaRecords(ids: readonly string[]) {
         !Number.isFinite(Date.parse(String(row.portrait_updated_at))) ||
         (row.portrait_source === "fixture"
           ? row.portrait_path !== `/images/coaches/${row.coach_slug}.webp`
-          : row.portrait_source !== "storage" ||
-            !isOwnedProfileImageStoragePath(
-              row.portrait_path,
-              row.coach_profile_id,
-            ))
+          : row.portrait_source === "account"
+            ? row.portrait_path !== row.coach_profile_id
+            : row.portrait_source !== "storage" ||
+              !isOwnedProfileImageStoragePath(
+                row.portrait_path,
+                row.coach_profile_id,
+              ))
       )
         throw new Error("Invalid public portrait.");
     }

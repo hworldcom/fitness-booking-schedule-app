@@ -38,6 +38,7 @@
     "test:client-requests": "node scripts/rehearse-local-client-booking-requests.mjs",
     "test:profile-images": "node scripts/rehearse-local-profile-images.mjs",
     "test:profile-storage": "node --import tsx --conditions=react-server scripts/rehearse-local-storage-adapter.ts",
+    "test:shared-coach-picture": "node --import tsx --conditions=react-server scripts/rehearse-local-shared-coach-picture.ts",
     "test:coach-website-db": "node scripts/rehearse-coach-website-database.mjs",
     "test:coach-website": "node --import tsx --conditions=react-server scripts/rehearse-local-coach-website.ts",
     "test:coach-starting-rates-db": "node scripts/rehearse-coach-starting-rates-database.mjs",

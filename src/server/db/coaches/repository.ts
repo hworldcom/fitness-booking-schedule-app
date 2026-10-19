@@ -208,7 +208,10 @@ function mapCoach(row: CoachProjectionRow): CoachProjection {
   ) {
     if (
       (row.portrait_source !== "fixture" &&
-        row.portrait_source !== "storage") ||
+        row.portrait_source !== "storage" &&
+        row.portrait_source !== "account") ||
+      (row.portrait_source === "account" &&
+        row.portrait_path !== row.profile_id) ||
       row.portrait_path === null ||
       row.portrait_updated_at === null ||
       (row.portrait_source === "fixture" &&

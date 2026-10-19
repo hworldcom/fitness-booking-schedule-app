@@ -73,7 +73,8 @@ export async function localConnectionRehearsal(
     | "DEV0331"
     | "DEV0358"
     | "DEV0366"
-    | "DEV0367",
+    | "DEV0367"
+    | "DEV0382",
 ): Promise<LocalConnectionRehearsal> {
   if (
     ticket !== "DEV0222" &&
@@ -89,7 +90,8 @@ export async function localConnectionRehearsal(
     ticket !== "DEV0331" &&
     ticket !== "DEV0358" &&
     ticket !== "DEV0366" &&
-    ticket !== "DEV0367"
+    ticket !== "DEV0367" &&
+    ticket !== "DEV0382"
   )
     throw new Error("Unsupported local connection rehearsal marker.");
   // Private CLI values stay in memory; this script can only use the repository's
@@ -106,7 +108,8 @@ export async function localConnectionRehearsal(
     base !== "http://localhost:3113" &&
     !(ticket === "DEV0317" && base === "http://localhost:3117") &&
     !(ticket === "DEV0358" && base === "http://localhost:3158") &&
-    !(ticket === "DEV0366" && base === "http://localhost:3166")
+    !(ticket === "DEV0366" && base === "http://localhost:3166") &&
+    !(ticket === "DEV0382" && base === "http://localhost:3182")
   )
     throw new Error(
       "Connection rehearsals require an approved loopback preview.",
@@ -283,7 +286,7 @@ export async function localConnectionRehearsal(
       }[]
     >`select u.id,p.id as profile_id,p.avatar_storage_path,case when c.portrait_source='storage' then c.portrait_path else null end as coach_portrait_path from auth.users u left join app.profiles p on p.auth_user_id=u.id left join app.coach_profiles c on c.profile_id=p.id
     where u.raw_app_meta_data->>'movx_test_ticket'=${ticket} and u.raw_app_meta_data->>'temporary'='true' and u.email like ${ticket.toLowerCase() + "-connections-%@users.movx.test"}
-      and (${ticket} not in ('DEV0313','DEV0315','DEV0317','DEV0321','DEV0331','DEV0358','DEV0366','DEV0367') or u.id=any(${cleanupIds}::uuid[]))`;
+      and (${ticket} not in ('DEV0313','DEV0315','DEV0317','DEV0321','DEV0331','DEV0358','DEV0366','DEV0367','DEV0382') or u.id=any(${cleanupIds}::uuid[]))`;
     if (recoveryAuthIds)
       assert.equal(
         owned.length,

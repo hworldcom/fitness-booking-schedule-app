@@ -20,7 +20,7 @@ export type ProfileImageMutationSnapshot = Readonly<{
 }>;
 
 export type CoachPortraitReference = Readonly<{
-  source: "fixture" | "storage";
+  source: "fixture" | "storage" | "account";
   path: string;
   updatedAt: string;
 }>;
@@ -31,6 +31,15 @@ const STORAGE_PATH_PATTERN = new RegExp(
   `^(${UUID_PATTERN})/(${UUID_PATTERN})[.]webp$`,
   "i",
 );
+
+export function sharedCoachPictureUrl(profileId: string, updatedAt: string) {
+  if (
+    !new RegExp(`^${UUID_PATTERN}$`, "i").test(profileId) ||
+    !Number.isFinite(Date.parse(updatedAt))
+  )
+    return null;
+  return `/api/coaches/portraits/${profileId}?v=${encodeURIComponent(updatedAt)}`;
+}
 
 export function profileImageStoragePath(profileId: string, objectId: string) {
   const path = `${profileId}/${objectId}.webp`;

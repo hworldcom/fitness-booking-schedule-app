@@ -104,7 +104,10 @@ function coachPortraitUrl(row: BookingRow) {
   const updatedAt = isoTimestamp(row.coach_portrait_updated_at);
   if (
     (row.coach_portrait_source !== "fixture" &&
-      row.coach_portrait_source !== "storage") ||
+      row.coach_portrait_source !== "storage" &&
+      row.coach_portrait_source !== "account") ||
+    (row.coach_portrait_source === "account" &&
+      row.coach_portrait_path !== row.coach_profile_id) ||
     row.coach_portrait_path === null ||
     updatedAt === null ||
     (row.coach_portrait_source === "fixture" &&

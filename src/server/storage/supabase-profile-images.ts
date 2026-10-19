@@ -1,7 +1,10 @@
 import "server-only";
 
 import { supabasePublicConfig } from "@/auth/config";
-import { isOwnedProfileImageStoragePath } from "@/profile-images/contracts";
+import {
+  isOwnedProfileImageStoragePath,
+  sharedCoachPictureUrl,
+} from "@/profile-images/contracts";
 import { serverAuthClient } from "@/server/auth/client";
 import type {
   ProfileImageObject,
@@ -87,6 +90,8 @@ export function createSupabaseProfileImageStorage(
     publicPortraitUrl(reference) {
       if (!reference) return null;
       if (reference.source === "fixture") return reference.path;
+      if (reference.source === "account")
+        return sharedCoachPictureUrl(reference.path, reference.updatedAt);
       const object = { scope: "coach-portrait" as const, path: reference.path };
       if (!validObject(object)) return null;
       const origin = dependencies.publicOrigin();

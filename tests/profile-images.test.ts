@@ -121,3 +121,25 @@ test("account Profile prefers its private avatar and detects an owned coach port
     source: null,
   });
 });
+
+test("shared coach picture URLs expose only a profile marker and checked version, never an object path", async () => {
+  const { sharedCoachPictureUrl } = await import("@/profile-images/contracts");
+  const id = "97000000-0000-4000-8000-000000000001";
+  const version = "2026-10-19T20:00:00.001Z";
+  const url = sharedCoachPictureUrl(id, version);
+  assert.equal(
+    url,
+    `/api/coaches/portraits/${id}?v=${encodeURIComponent(version)}`,
+  );
+  assert.equal(isPublicCoachPortraitUrl(url), true);
+  for (const invalid of [
+    url + "&other=1",
+    url + "#fragment",
+    `/api/coaches/portraits/${id}?v=bad`,
+    "https://other.example" + url,
+    `/api/coaches/portraits/../${id}?v=${version}`,
+  ])
+    assert.equal(isPublicCoachPortraitUrl(invalid), false);
+  assert.equal(sharedCoachPictureUrl("../other", version), null);
+  assert.equal(sharedCoachPictureUrl(id, "invalid"), null);
+});

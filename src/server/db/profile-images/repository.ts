@@ -6,6 +6,7 @@ import { isOwnedProfileImageStoragePath } from "@/profile-images/contracts";
 import type { AuthorizedActor } from "@/server/authorization/contracts";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
 import { coachProfiles, profiles } from "@/server/db/schema";
+import { withDatabaseConnection } from "@/server/db/client";
 
 export type AccountAvatarReference = Readonly<{
   path: string | null;
@@ -13,7 +14,7 @@ export type AccountAvatarReference = Readonly<{
 }>;
 
 export type OwnedCoachPortraitReference = Readonly<{
-  source: "fixture" | "storage" | null;
+  source: "fixture" | "storage" | "account" | null;
   path: string | null;
   updatedAt: string | null;
 }>;
@@ -164,7 +165,8 @@ export async function currentCoachPortraitReference(
   if (
     row.source !== null &&
     row.source !== "fixture" &&
-    row.source !== "storage"
+    row.source !== "storage" &&
+    row.source !== "account"
   ) {
     throw new ProfileImageReferenceConflictError();
   }
@@ -241,4 +243,59 @@ export async function setCurrentCoachPortraitReference(
     }
     throw error;
   }
+}
+
+export async function setCurrentCoachAccountPicture(
+  transaction: ActorDatabaseTransaction,
+  enabled: boolean,
+  expected: OwnedCoachPortraitReference,
+) {
+  try {
+    const rows = await transaction.execute<{
+      previous_source: string | null;
+      previous_path: string | null;
+      media_updated_at: string | Date | null;
+    }>(sql`select * from app.set_current_coach_account_picture(
+      ${enabled}::boolean,${expected.source}::text,${expected.path}::text)`);
+    if (rows.length !== 1 || !rows[0])
+      throw new ProfileImageReferenceConflictError();
+    return {
+      previousSource: rows[0].previous_source,
+      previousPath: rows[0].previous_path,
+      updatedAt: isoTimestamp(rows[0].media_updated_at),
+    };
+  } catch (error) {
+    if (isReferenceConflict(error))
+      throw new ProfileImageReferenceConflictError(undefined, { cause: error });
+    throw error;
+  }
+}
+
+export async function publicSharedCoachPictureReference(
+  profileId: string,
+  version: string,
+) {
+  return withDatabaseConnection(async ({ db }) => {
+    const rows = await db.execute<{
+      profile_id: string;
+      avatar_storage_path: string;
+      avatar_updated_at: string | Date;
+      portrait_updated_at: string | Date;
+    }>(
+      sql`select * from app.public_shared_coach_picture_reference(${profileId}::uuid,${version}::timestamptz)`,
+    );
+    const row = rows[0];
+    if (!row) return null;
+    if (
+      rows.length !== 1 ||
+      row.profile_id !== profileId ||
+      !isOwnedProfileImageStoragePath(row.avatar_storage_path, profileId)
+    )
+      throw new Error("Invalid shared picture reference.");
+    return {
+      path: row.avatar_storage_path,
+      version: new Date(row.portrait_updated_at).toISOString(),
+      avatarVersion: new Date(row.avatar_updated_at).toISOString(),
+    };
+  });
 }

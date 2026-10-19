@@ -97,7 +97,11 @@ function mapConnection(value: unknown): ConnectionProjection {
   if (r.coachPortrait !== null) {
     const portrait = row(r.coachPortrait);
     if (portrait.source !== null) {
-      if (portrait.source !== "fixture" && portrait.source !== "storage")
+      if (
+        portrait.source !== "fixture" &&
+        portrait.source !== "storage" &&
+        portrait.source !== "account"
+      )
         throw new ConnectionConflictError();
       const reference: CoachPortraitReference = {
         source: portrait.source,
@@ -105,8 +109,9 @@ function mapConnection(value: unknown): ConnectionProjection {
         updatedAt: timestamp(portrait.updatedAt),
       };
       if (
-        reference.source === "storage" &&
-        !isOwnedProfileImageStoragePath(reference.path, coachProfileId)
+        (reference.source === "account" && reference.path !== coachProfileId) ||
+        (reference.source === "storage" &&
+          !isOwnedProfileImageStoragePath(reference.path, coachProfileId))
       )
         throw new ConnectionConflictError();
       coachPortraitUrl = profileImageStorage.publicPortraitUrl(reference);

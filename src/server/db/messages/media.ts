@@ -39,9 +39,12 @@ export function materializeMessageMedia(
       throw Error("Invalid message media reference.");
     if (record.role === "athlete" && media.kind === "coach-portrait") {
       if (
-        (media.source !== "fixture" && media.source !== "storage") ||
+        (media.source !== "fixture" &&
+          media.source !== "storage" &&
+          media.source !== "account") ||
         typeof media.path !== "string" ||
         typeof record.coachProfileId !== "string" ||
+        (media.source === "account" && media.path !== record.coachProfileId) ||
         (media.source === "storage" &&
           !isOwnedProfileImageStoragePath(media.path, record.coachProfileId))
       )
