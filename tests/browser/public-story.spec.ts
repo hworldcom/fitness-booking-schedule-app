@@ -178,31 +178,54 @@ test("home marketplace remains usable at the adopted review widths", async ({
   }
 });
 
-test("how it works explains authoritative scheduling transitions", async ({
+test("how it works guides athletes and coaches through real training choices", async ({
   page,
 }, testInfo) => {
   await page.goto("/how-it-works");
   await expect(page).toHaveTitle(/How it works/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Good coaching.More personal.",
+  );
+  const navigation = page.getByRole("navigation", { name: "On this page" });
+  await expect(navigation.getByRole("link")).toHaveCount(3);
+  await navigation
+    .getByRole("link", { name: "For coaches", exact: true })
+    .focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/#coaches$/);
+  await expect(page.locator("#coaches")).toBeFocused();
   await expect(
-    page.getByRole("heading", {
-      name: "Published time in. Coach-confirmed session out.",
-    }),
-  ).toBeVisible();
+    page.getByRole("link", { name: "Become a coach", exact: true }),
+  ).toHaveAttribute(
+    "href",
+    "/sign-in?intent=coach&returnTo=%2Fprofile%2Fcoach",
+  );
+  await navigation.getByRole("link", { name: "Common questions" }).click();
+  const confirmation = page
+    .locator("summary")
+    .filter({ hasText: "When is my session confirmed?" });
+  await confirmation.focus();
+  await page.keyboard.press("Enter");
   await expect(
-    page.getByRole("heading", {
-      name: "One occurrence has one active booking.",
-    }),
+    page.getByText(
+      /Reaching the minimum does not confirm the class automatically/,
+    ),
   ).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(confirmation.locator("..")).not.toHaveAttribute("open");
   await expect(
-    page.getByText(/Cancellation reopens a future occurrence/),
-  ).toBeVisible();
+    page.getByRole("link", { name: "Find a coach", exact: true }),
+  ).toHaveAttribute("href", "/explore");
+  await expect(
+    page.getByRole("link", { name: "Explore group classes", exact: true }),
+  ).toHaveAttribute("href", "/events");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
   await page.screenshot({
-    path: testInfo.outputPath("scheduling-how-it-works.png"),
+    path: testInfo.outputPath("athlete-coach-how-it-works.png"),
     fullPage: true,
   });
 });

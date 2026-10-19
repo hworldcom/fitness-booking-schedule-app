@@ -4,7 +4,6 @@ import {
   ArrowRight,
   CalendarCheck2,
   CalendarDays,
-  Clock3,
   UserRoundSearch,
   UsersRound,
 } from "lucide-react";
@@ -18,37 +17,6 @@ type StoryStep = Readonly<{
   description: string;
   Icon: typeof UserRoundSearch;
 }>;
-
-const schedulingSteps = [
-  {
-    number: "01",
-    title: "Find your coach",
-    description:
-      "Compare fictional coaches by discipline, profile and coach-selected public training place.",
-    Icon: UserRoundSearch,
-  },
-  {
-    number: "02",
-    title: "See real open hours",
-    description:
-      "Review one-hour occurrences published from that coach’s recurring weekly schedule.",
-    Icon: CalendarDays,
-  },
-  {
-    number: "03",
-    title: "Request coach confirmation",
-    description:
-      "Sign in by email and request any published hour before training starts.",
-    Icon: CalendarCheck2,
-  },
-  {
-    number: "04",
-    title: "Keep the schedule clear",
-    description:
-      "Athletes or coaches can cancel future sessions, and coaches complete elapsed sessions.",
-    Icon: Clock3,
-  },
-] as const satisfies readonly StoryStep[];
 
 const homeSchedulingSteps = [
   {
@@ -75,7 +43,7 @@ const homeSchedulingSteps = [
 ] as const satisfies readonly StoryStep[];
 
 function StoryStepGrid({
-  steps = schedulingSteps,
+  steps = homeSchedulingSteps,
   headingLevel = 3,
 }: {
   steps?: readonly StoryStep[];
@@ -165,60 +133,6 @@ export function CoachStoryHome({
           href="/sign-in?intent=coach&returnTo=%2Fprofile%2Fcoach"
         >
           Become a coach <ArrowRight size={16} aria-hidden="true" />
-        </Link>
-      </section>
-    </div>
-  );
-}
-
-export function HowItWorksStory() {
-  return (
-    <div className="coach-story">
-      <section className="coach-story-section coach-how-hero">
-        <div className="coach-section-heading">
-          <span className="eyebrow">HOW MOVX SCHEDULING WORKS</span>
-          <h1>Published time in. Coach-confirmed session out.</h1>
-          <p>
-            Approved coaches own their profiles and recurring schedules.
-            Athletes request eligible future occurrences, and the coach chooses
-            whether to confirm one athlete.
-          </p>
-        </div>
-        <StoryStepGrid headingLevel={2} />
-      </section>
-      <section className="coach-pass-story">
-        <div className="coach-pass-story-copy">
-          <span className="eyebrow">TRUTHFUL SCHEDULE STATE</span>
-          <h2>One occurrence has one active booking.</h2>
-          <p>
-            Coach acceptance is atomic: one session becomes confirmed while its
-            time becomes booked. Cancellation reopens a future occurrence.
-            Completion is available only to the owning coach after the session
-            begins.
-          </p>
-        </div>
-        <div className="coach-pass-options" aria-label="Booking lifecycle">
-          <article>
-            <span>1×</span>
-            <div>
-              <h3>Confirmed</h3>
-              <p>The exact hour is confirmed for one athlete.</p>
-            </div>
-          </article>
-          <article>
-            <span>✓</span>
-            <div>
-              <h3>Cancelled or completed</h3>
-              <p>Terminal outcomes remain visible after reload.</p>
-            </div>
-          </article>
-        </div>
-      </section>
-      <section className="coach-final-cta">
-        <span className="eyebrow">TRY THE PREVIEW</span>
-        <h2>Browse without signing in. Request with email.</h2>
-        <Link className="button lime" href="/explore">
-          Explore coaches <ArrowRight size={17} aria-hidden="true" />
         </Link>
       </section>
     </div>

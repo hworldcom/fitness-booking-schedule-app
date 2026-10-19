@@ -247,6 +247,10 @@ The following steps describe the delivered discovery baseline. [Section 19](#19-
 6. A coach profile shows bounded public details, an optional public portrait, every confirmed active training location with the primary one labelled, and type-first available intervals grouped or labelled by actual location; untouched legacy coaches retain dated one-hour occurrences. One provider-neutral map fits all active locations; distinct matching marker/list colors and numeric labels aid comparison without replacing names and addresses, and map failure leaves the list usable. Missing portraits use initials rather than a fabricated image.
 7. No placeholder coach, location or time is shown when persistent directory or availability data is empty or unavailable.
 
+#### 4.2.1 How it works
+
+The live `/how-it-works` page adopts the approved athlete/coach design under [DEV0365](../tickets/archive/frontend/DEV0365-implement-how-it-works-page.md). Use white surfaces, purple emphasis, pale green group accents and decorative training illustrations within the existing public header/footer. One section navigation bar links to For athletes, For coaches and Common questions; omit duplicate hero audience controls. Explain one-to-one attention, smaller group options, the athlete discovery/request/confirmation steps and the coach approval/setup/management steps. Class sizes vary; suggest checking each class’s minimum and maximum without stating a numeric maximum or promising every class is small. Explain reserved group seats, minimum enrollment, explicit coach confirmation and the decision deadline; encourage inviting friends without adding a sharing or invitation feature. Native FAQs also explain browsing, payment at the venue and cancellation. Link actions to actual coach discovery, group discovery and the existing coach application entry. Preserve keyboard focus, native disclosures and readable section targets below sticky navigation at phone and desktop widths.
+
 ### 4.3 Request a private session
 
 1. A signed-in athlete selects one open future occurrence belonging to another visible coach. No fixed minimum-notice interval applies.
@@ -735,7 +739,7 @@ This is the adopted M7 target. DEV0237/DEV0238 deliver its backend data/lifecycl
 
 Confirmed by the user: coaches create dated sessions with minimum/maximum participants; athletes discover and join; the initial model supports Free and paid-at-session sessions; joining reserves a seat directly, while the owning coach confirms or cancels manually. Reaching the minimum never confirms automatically.
 
-On 19 October 2026 the user requested that the How it works explanation describe minimum group enrollment, that Events cards disclose the minimum needed and that the interface encourage inviting others. [DEV0362](../tickets/archive/frontend/DEV0362-explain-group-minimums-and-invite-friends.md) owns the preview explanation and real card presentation; live How it works adoption remains separate. The existing 100-person maximum remains unchanged and is omitted from public explanatory copy at the user's request.
+On 19 October 2026 the user requested that the How it works explanation describe minimum group enrollment, that Events cards disclose the minimum needed and that the interface encourage inviting others. [DEV0362](../tickets/archive/frontend/DEV0362-explain-group-minimums-and-invite-friends.md) owns the preview explanation and real card presentation; [DEV0365](../tickets/archive/frontend/DEV0365-implement-how-it-works-page.md) owns live How it works adoption. The existing 100-person maximum remains unchanged and is omitted from public explanatory copy at the user's request.
 
 The following are adopted implementation defaults, not additional user decisions:
 

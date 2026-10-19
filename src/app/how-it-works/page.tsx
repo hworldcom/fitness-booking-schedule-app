@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
-import { HowItWorksStory } from "@/features/public/coach-story";
+import { HowItWorksStory } from "@/features/public/how-it-works";
+
+import "@/features/public/how-it-works.css";
 
 export const metadata: Metadata = {
   title: "How it works",
   description:
-    "See how MovX connects coach discovery, recurring availability and coach-confirmed capacity-one private sessions.",
+    "Find private coaching or a group class that feels right for you. Learn how to train with MovX or offer sessions as a coach.",
 };
 
 export default function Page() {
