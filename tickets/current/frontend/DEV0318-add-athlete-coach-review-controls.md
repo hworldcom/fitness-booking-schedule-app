@@ -2,10 +2,10 @@
 
 - Status: In progress
 - Created: 2026-10-17
-- Last updated: 2026-10-18
+- Last updated: 2026-10-19
 - Milestone: M10 — Coach marketplace websites (planned)
 - Coordination: [COR0028 — Coach marketplace cards and personal websites](../organisatory/COR0028-coach-marketplace-cards-and-personal-websites.md)
-- Related records: Peer dependencies/consumers: [DEV0320](../../archive/organisatory/DEV0320-adopt-coach-marketplace-website-contract.md), [DEV0314](../../archive/backend/DEV0314-persist-booking-linked-coach-reviews.md), [DEV0317](DEV0317-build-shareable-personal-coach-websites.md), [DEV0319](../backend/DEV0319-rehearse-coach-marketplace-websites.md). External media: [DEV0297](../backend/DEV0297-add-coach-profile-photos-and-mux-video.md). Amendment: [DEV0330](../../archive/organisatory/DEV0330-refine-coach-marketplace-pricing-reviews-and-urls.md); username routing: [DEV0331](../../archive/backend/DEV0331-enable-username-based-public-coach-urls.md).
+- Related records: Peer dependencies/consumers: [DEV0320](../../archive/organisatory/DEV0320-adopt-coach-marketplace-website-contract.md), [DEV0314](../../archive/backend/DEV0314-persist-booking-linked-coach-reviews.md), [DEV0317](../../archive/frontend/DEV0317-build-shareable-personal-coach-websites.md), [DEV0319](../backend/DEV0319-rehearse-coach-marketplace-websites.md). External media: [DEV0297](../backend/DEV0297-add-coach-profile-photos-and-mux-video.md). Amendment: [DEV0330](../../archive/organisatory/DEV0330-refine-coach-marketplace-pricing-reviews-and-urls.md); username routing: [DEV0331](../../archive/backend/DEV0331-enable-username-based-public-coach-urls.md).
 
 ## Objective and context
 
@@ -122,3 +122,7 @@ Handoff: private controls and the local review foundation are implemented. Keep 
 - Commit: User authorized the DEV0314/DEV0318 review checkpoint on 2026-10-18. This commit preserves In progress status and the unmet public-integration criteria; see Git history for its hash.
 - Review: Local implementation/acceptance self-review and the recorded tests/browser observations; no independent review.
 - Deployment or release: None.
+
+### 2026-10-19 public-page handoff
+
+DEV0317 completed the real canonical public `#reviews` destination, including populated, empty and unavailable states, 20-item cursor paging and retry. Its native/real API record verifies reading and withdrawal visibility. The destination dependency is satisfied; this does not complete this ticket's remaining private controls, multi-tab/error/rename checks or its own author-to-public navigation evidence. Resume those checks against the delivered page, then hand the combined result to DEV0319.

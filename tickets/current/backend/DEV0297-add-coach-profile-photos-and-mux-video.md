@@ -5,7 +5,7 @@
 - Last updated: 2026-10-19
 - Milestone: M3 — Coach profile media extension (planned)
 - Coordination: None — independent development ticket
-- Related records: Independent Storage boundary work [DEV0292](../../archive/backend/DEV0292-isolate-profile-image-storage-adapter.md); independent recovery rehearsal [DEV0293](DEV0293-rehearse-database-auth-and-file-recovery.md); historical coach Profile interface [DEV0207](../../archive/frontend/DEV0207-redesign-account-and-coach-profiles.md); core public-template dependency for later public composition [DEV0317](../frontend/DEV0317-build-shareable-personal-coach-websites.md); core-first planning amendment [DEV0363](../../archive/organisatory/DEV0363-refresh-core-coach-website-delivery-plan.md).
+- Related records: Independent Storage boundary work [DEV0292](../../archive/backend/DEV0292-isolate-profile-image-storage-adapter.md); independent recovery rehearsal [DEV0293](DEV0293-rehearse-database-auth-and-file-recovery.md); historical coach Profile interface [DEV0207](../../archive/frontend/DEV0207-redesign-account-and-coach-profiles.md); core public-template dependency for later public composition [DEV0317](../../archive/frontend/DEV0317-build-shareable-personal-coach-websites.md); core-first planning amendment [DEV0363](../../archive/organisatory/DEV0363-refresh-core-coach-website-delivery-plan.md).
 
 ## Objective and context
 

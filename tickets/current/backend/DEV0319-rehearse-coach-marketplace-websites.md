@@ -5,7 +5,7 @@
 - Last updated: 2026-10-19
 - Milestone: M10 — Coach marketplace websites (planned)
 - Coordination: [COR0028 — Coach marketplace cards and personal websites](../organisatory/COR0028-coach-marketplace-cards-and-personal-websites.md)
-- Related records: Peer dependencies/consumers: [DEV0320](../../archive/organisatory/DEV0320-adopt-coach-marketplace-website-contract.md), [DEV0321](../../archive/backend/DEV0321-persist-coach-website-content-and-banners.md), [DEV0313](../../archive/backend/DEV0313-manage-coach-starting-prices-and-visibility.md), [DEV0314](../../archive/backend/DEV0314-persist-booking-linked-coach-reviews.md), [DEV0315](../../archive/frontend/DEV0315-edit-and-preview-coach-websites.md), [DEV0316](../../archive/frontend/DEV0316-redesign-coach-directory-cards.md), [DEV0317](../frontend/DEV0317-build-shareable-personal-coach-websites.md), [DEV0318](../frontend/DEV0318-add-athlete-coach-review-controls.md). Independent later media follow-up: [DEV0297](../backend/DEV0297-add-coach-profile-photos-and-mux-video.md). Amendment: [DEV0330](../../archive/organisatory/DEV0330-refine-coach-marketplace-pricing-reviews-and-urls.md); username routing: [DEV0331](../../archive/backend/DEV0331-enable-username-based-public-coach-urls.md).
+- Related records: Peer dependencies/consumers: [DEV0320](../../archive/organisatory/DEV0320-adopt-coach-marketplace-website-contract.md), [DEV0321](../../archive/backend/DEV0321-persist-coach-website-content-and-banners.md), [DEV0313](../../archive/backend/DEV0313-manage-coach-starting-prices-and-visibility.md), [DEV0314](../../archive/backend/DEV0314-persist-booking-linked-coach-reviews.md), [DEV0315](../../archive/frontend/DEV0315-edit-and-preview-coach-websites.md), [DEV0316](../../archive/frontend/DEV0316-redesign-coach-directory-cards.md), [DEV0317](../../archive/frontend/DEV0317-build-shareable-personal-coach-websites.md), [DEV0318](../frontend/DEV0318-add-athlete-coach-review-controls.md). Independent later media follow-up: [DEV0297](../backend/DEV0297-add-coach-profile-photos-and-mux-video.md). Amendment: [DEV0330](../../archive/organisatory/DEV0330-refine-coach-marketplace-pricing-reviews-and-urls.md); username routing: [DEV0331](../../archive/backend/DEV0331-enable-username-based-public-coach-urls.md).
 
 ## Objective and context
 
@@ -95,3 +95,7 @@ Runtime remains Draft. Core page DEV0317 and remaining DEV0318 public-review int
 - Commit: Not created; ticket creation does not authorize a commit.
 - Review: Planning scope/ownership self-review under DEV0320 and amended DEV0330 only; no independent or runtime review.
 - Deployment or release: None.
+
+### 2026-10-19 prerequisite checkpoint
+
+DEV0317 is Completed locally and supplies its own core-page authoring/public privacy, booking/date, public review reading/retry and five-width evidence, with exact temporary cleanup. The real username `#reviews` destination is now available. DEV0318 still owns its remaining private-author/public-result evidence; this rehearsal remains Draft and must prove the combined core loop independently of individual ticket assertions. No hosted deployment or gallery/video completion is implied.

@@ -1,3 +1,4 @@
+import { publicCoachWebsiteMetadata } from "@/server/coaches/public-website-page";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import {
@@ -9,7 +10,23 @@ import { publicCoachHandleRecord } from "@/server/db/coaches/public-url-reposito
 import { CoachProfileUnavailable } from "@/features/coaches/coach-discovery";
 import { PublicCoachPage } from "@/app/_coaches/public-coach-page";
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Coach profile" };
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ handle: string }>;
+}): Promise<Metadata> {
+  const username = publicCoachHandle((await params).handle);
+  if (!username)
+    return { title: "Coach profile unavailable", robots: { index: false } };
+  try {
+    const canonical = await publicCoachHandleRecord(username);
+    return canonical
+      ? publicCoachWebsiteMetadata(canonical.slug)
+      : { title: "Coach profile unavailable", robots: { index: false } };
+  } catch {
+    return { title: "Coach profile unavailable", robots: { index: false } };
+  }
+}
 export default async function Page({
   params,
   searchParams,

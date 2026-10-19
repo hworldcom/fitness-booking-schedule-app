@@ -5,7 +5,7 @@
 - Last updated: 2026-10-19
 - Milestone: M10 — Coach marketplace website planning
 - Coordination: [COR0028 — Coach marketplace cards and personal websites](../../current/organisatory/COR0028-coach-marketplace-cards-and-personal-websites.md)
-- Related records: Amended core page [DEV0317](../../current/frontend/DEV0317-build-shareable-personal-coach-websites.md), combined proof [DEV0319](../../current/backend/DEV0319-rehearse-coach-marketplace-websites.md), independent later media [DEV0297](../../current/backend/DEV0297-add-coach-profile-photos-and-mux-video.md), completed booking baseline [COR0029](COR0029-session-types-and-flexible-bookings.md).
+- Related records: Amended core page [DEV0317](../frontend/DEV0317-build-shareable-personal-coach-websites.md), combined proof [DEV0319](../../current/backend/DEV0319-rehearse-coach-marketplace-websites.md), independent later media [DEV0297](../../current/backend/DEV0297-add-coach-profile-photos-and-mux-video.md), completed booking baseline [COR0029](COR0029-session-types-and-flexible-bookings.md).
 
 ## Objective and context
 
@@ -59,7 +59,7 @@ DEV0317, DEV0319 and DEV0297 retain Draft status and unchecked runtime criteria.
 
 | File | Role |
 | --- | --- |
-| [DEV0317](../../current/frontend/DEV0317-build-shareable-personal-coach-websites.md) | Actionable core public-template/data/booking/share plan, dependencies, edge cases and AC1–AC5; runtime remains unstarted. |
+| [DEV0317](../frontend/DEV0317-build-shareable-personal-coach-websites.md) | Actionable core public-template/data/booking/share plan, dependencies, edge cases and AC1–AC5; runtime remains unstarted. |
 | [COR0028](../../current/organisatory/COR0028-coach-marketplace-cards-and-personal-websites.md) | Twelve-member flat work map, start order, explicit media follow-up and core completion criteria. |
 | [DEV0319](../../current/backend/DEV0319-rehearse-coach-marketplace-websites.md) | Combined core/privacy/review/URL/current-booking proof, with gallery/video excluded as a gate. |
 | [DEV0297](../../current/backend/DEV0297-add-coach-profile-photos-and-mux-video.md) | Later media/public-composition ownership and core-template dependency, preserving confirmed selections/open questions. |

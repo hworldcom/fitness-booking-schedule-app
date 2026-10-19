@@ -116,15 +116,13 @@ export async function publicCoachProfile(
     const path = await publicCoachHandleRecord(slug, true);
     const schedule = await publicCoachAvailabilitySnapshot(coach.profileId);
     const website = await publicCoachWebsite(slug);
-    if (website.status !== "ready")
-      return Object.freeze({
-        status: website.status === "not-found" ? "not-found" : "unavailable",
-      });
+    // The verified public profile establishes publication eligibility. Optional
+    // website content must not hide that profile when its separate read fails.
     return Object.freeze({
       status: "ready",
       coach: { ...coach, ...(path ? { publicPath: path.publicPath } : {}) },
       ...schedule,
-      website: website.website,
+      ...(website.status === "ready" ? { website: website.website } : {}),
     });
   } catch {
     return Object.freeze({ status: "unavailable" });

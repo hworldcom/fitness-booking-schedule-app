@@ -18,6 +18,7 @@ import "./account-settings.css";
 import "./authentication.css";
 import "./public-marketplace-accessibility.css";
 import "./coach-directory-cards.css";
+import "@/features/coaches/website/public-coach-website.css";
 import { ActorProvider } from "@/auth/client/actor-provider";
 import { AuthSessionProvider } from "@/auth/client/session-provider";
 import { Shell } from "@/components/shell";

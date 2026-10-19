@@ -5,7 +5,7 @@
 - Last updated: 2026-10-18
 - Milestone: M10 — Coach marketplace websites (planned)
 - Coordination: [COR0028 — Coach marketplace cards and personal websites](../../current/organisatory/COR0028-coach-marketplace-cards-and-personal-websites.md)
-- Related records: Amendment [DEV0330](../organisatory/DEV0330-refine-coach-marketplace-pricing-reviews-and-urls.md); implemented username enrollment [DEV0325](DEV0325-collect-registration-names-and-unique-username.md); existing Account username [DEV0295](../../current/frontend/DEV0295-refine-account-names-and-section-navigation.md); independent remaining username policy [DEV0296](../../current/organisatory/DEV0296-define-username-login-and-profile-url-contract.md); card/page/editor consumers [DEV0316](../frontend/DEV0316-redesign-coach-directory-cards.md), [DEV0317](../../current/frontend/DEV0317-build-shareable-personal-coach-websites.md), [DEV0315](../frontend/DEV0315-edit-and-preview-coach-websites.md).
+- Related records: Amendment [DEV0330](../organisatory/DEV0330-refine-coach-marketplace-pricing-reviews-and-urls.md); implemented username enrollment [DEV0325](DEV0325-collect-registration-names-and-unique-username.md); existing Account username [DEV0295](../../current/frontend/DEV0295-refine-account-names-and-section-navigation.md); independent remaining username policy [DEV0296](../../current/organisatory/DEV0296-define-username-login-and-profile-url-contract.md); card/page/editor consumers [DEV0316](../frontend/DEV0316-redesign-coach-directory-cards.md), [DEV0317](../frontend/DEV0317-build-shareable-personal-coach-websites.md), [DEV0315](../frontend/DEV0315-edit-and-preview-coach-websites.md).
 
 ## Objective and context
 

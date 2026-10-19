@@ -1,3 +1,4 @@
+import { publicCoachWebsiteMetadata } from "@/server/coaches/public-website-page";
 import { redirect } from "next/navigation";
 import {
   coachRedirectHref,
@@ -8,11 +9,13 @@ import { CoachProfileUnavailable } from "@/features/coaches/coach-discovery";
 import { PublicCoachPage } from "@/app/_coaches/public-coach-page";
 import type { Metadata } from "next";
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
-  title: "Coach profile",
-  description:
-    "A fictional MovX coach profile with disciplines and a coach-confirmed public training place.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  return publicCoachWebsiteMetadata((await params).slug);
+}
 
 export default async function Page({
   params,

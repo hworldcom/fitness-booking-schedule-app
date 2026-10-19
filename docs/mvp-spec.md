@@ -1079,6 +1079,8 @@ Adopted rename safety: current canonical usernames remain in the existing Accoun
 
 DEV0317 composes the existing section 18.6 booking authority: actual enabled private types at 60/75/90 minutes, a truthful enabled-empty catalog, booking-only unavailable/retry for an installed but invalid/unavailable catalog, and the existing DEV0348 legacy path only when that catalog capability is absent. The verified profile remains visible during booking failure; reads never create defaults or alter retained offers. Keep actual venue/full-fit/horizon/overlap, safe guest return and published-group rules unchanged. View available times reaches a stable `#private-schedule` target; `#reviews` remains available for DEV0318 with populated, empty and unavailable public states. Service text creates no inventory, and Message coach/copy/share never submit automatically.
 
+A valid in-horizon date from a public coach link initializes the typed booking form. Explicit guest sign-in carries the currently selected date and `#private-schedule` back to the canonical public path; this restores form context without selecting a type/time or automatically submitting a request.
+
 DEV0317 owns canonical metadata/share previews and copy/share of the public username URL, with no invitation/signup/request/message side effect. Use `View available times`, `Message coach` and real upcoming group links. Preserve Berlin time, thirty-date horizon, actual venues, coach-confirmed private requests, safe guest sign-in returns and original message/group authority. Section/action navigation stays keyboard/mobile usable and does not obscure content/focus.
 
 ### 19.7 Ownership and required evidence

@@ -1,0 +1,496 @@
+.coach-personal-website {
+  --website-ink: #2d2933;
+  --website-muted: #625c69;
+  --website-purple: #61417b;
+  --website-line: #e3dce9;
+  max-width: 1200px;
+  margin: 0 auto 64px;
+  color: var(--website-ink);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.coach-website-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 18px;
+  font-size: 12px;
+  color: var(--website-muted);
+}
+.coach-website-topline a {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 700;
+}
+.coach-website-topline > span {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+.coach-website-banner {
+  aspect-ratio: 8/3;
+  max-height: 390px;
+  overflow: hidden;
+  border-radius: 24px;
+  background: #eee7f5;
+}
+.coach-website-banner img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+.coach-website-banner-fallback {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 8%;
+  background:
+    radial-gradient(ellipse at 85% 100%, #e0d3ec 0, transparent 65%), #f1ebf7;
+  color: #61417b;
+}
+.coach-website-banner-fallback > span {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  font-weight: 800;
+}
+.coach-website-banner-fallback p {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(24px, 4vw, 48px);
+  line-height: 1.1;
+  max-width: 360px;
+  margin: 0;
+}
+.coach-website-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 0 28px 24px;
+  margin-top: -44px;
+  position: relative;
+}
+.coach-website-identity .avatar {
+  width: 128px;
+  height: 128px;
+  flex: 0 0 128px;
+  border: 5px solid #fff;
+  border-radius: 24px;
+  background: #eae0f2;
+  color: #61417b;
+  font-size: 40px;
+  box-shadow: 0 5px 20px #2d293310;
+}
+.coach-website-identity .avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 19px;
+}
+.coach-website-name {
+  min-width: 0;
+  padding-top: 60px;
+}
+.coach-website-name h1 {
+  font-size: clamp(30px, 3.6vw, 48px);
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+  margin: 4px 0 10px;
+}
+.coach-website-trust {
+  font-size: 12px;
+  color: var(--website-muted);
+  margin: 0 0 15px;
+}
+.coach-personal-website .eyebrow {
+  color: var(--website-purple);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+.coach-website-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 12px 0;
+}
+.coach-website-tags span {
+  background: #f1ebf7;
+  color: #61417b;
+  border-radius: 999px;
+  font-size: 12px;
+  padding: 5px 11px;
+  font-weight: 700;
+}
+.coach-website-facts {
+  display: flex;
+  gap: 14px 20px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--website-muted);
+}
+.coach-website-facts a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.coach-website-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-block: 1px solid var(--website-line);
+  padding: 10px 0;
+  margin-bottom: 30px;
+}
+.coach-website-navigation a {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 9px 12px;
+  border-radius: 8px;
+}
+.coach-website-navigation a:hover {
+  background: #f1ebf7;
+}
+.coach-website-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 44px;
+  align-items: start;
+}
+.coach-website-main {
+  min-width: 0;
+}
+.coach-website-section {
+  padding: 4px 0 32px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--website-line);
+  scroll-margin-top: 100px;
+  overflow-wrap: anywhere;
+}
+.coach-website-section h2 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 26px;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+  margin: 8px 0 17px;
+}
+.coach-website-section h3 {
+  font-size: 17px;
+  margin: 8px 0;
+}
+.coach-website-section p {
+  line-height: 1.8;
+  white-space: pre-line;
+  color: var(--website-muted);
+  margin: 12px 0;
+}
+.coach-website-section p.coach-website-intro {
+  font-size: 19px;
+  line-height: 1.7;
+  color: var(--website-ink);
+}
+.coach-personal-website .coach-website-note {
+  font-size: 12px;
+  color: var(--website-muted);
+  line-height: 1.7;
+}
+.coach-website-contact {
+  position: sticky;
+  top: 90px;
+  border: 1px solid var(--website-line);
+  background: #faf8fc;
+  box-shadow: 0 10px 36px #61417b09;
+  border-radius: 20px;
+  padding: 25px;
+  min-width: 0;
+}
+.coach-website-contact h2 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+  margin: 12px 0 20px;
+}
+.coach-website-contact > p {
+  font-size: 14px;
+  line-height: 1.7;
+}
+.coach-website-rate {
+  display: block;
+  font-size: 18px;
+  margin: 16px 0;
+}
+.coach-website-primary,
+.coach-website-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  min-height: 48px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  margin-top: 12px;
+}
+.coach-website-primary {
+  background: #61417b;
+  color: #fff;
+}
+.coach-website-secondary {
+  background: #fff;
+  color: #61417b;
+  border: 1px solid #d3c6de;
+  justify-content: center;
+}
+.coach-website-services,
+.coach-website-groups {
+  display: grid;
+  gap: 14px;
+}
+.coach-website-services > div,
+.coach-website-groups > article {
+  padding: 20px;
+  border: 1px solid var(--website-line);
+  border-radius: 14px;
+  background: #fff;
+}
+.coach-website-services a,
+.coach-website-groups a,
+.coach-website-external-links a,
+.coach-website-browse-events {
+  font-size: 13px;
+  font-weight: 800;
+  color: #61417b;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.coach-website-browse-events {
+  display: inline-block;
+  margin-top: 18px;
+}
+.coach-public-review {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--website-line);
+}
+.coach-public-review > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 13px;
+}
+.coach-public-review > div > span {
+  color: #61417b;
+  letter-spacing: 2px;
+}
+.coach-public-review time {
+  font-size: 11px;
+  color: var(--website-muted);
+}
+.coach-personal-website button {
+  border: 1px solid #d3c6de;
+  background: #fff;
+  color: #61417b;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 9px;
+  min-height: 44px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+.coach-personal-website button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.coach-website-section > button {
+  margin-top: 20px;
+}
+.coach-personal-website details {
+  border-bottom: 1px solid var(--website-line);
+  padding: 14px 0;
+}
+.coach-personal-website summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  min-height: 24px;
+}
+.coach-website-external-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.coach-website-share {
+  border-top: 1px solid var(--website-line);
+  padding-top: 20px;
+  margin-top: 20px;
+}
+.coach-website-share > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.coach-website-share summary {
+  font-size: 11px;
+}
+.coach-website-share input {
+  width: 100%;
+  min-width: 0;
+  padding: 9px;
+  margin-top: 10px;
+  background: #fff;
+  color: var(--website-ink);
+  border: 1px solid var(--website-line);
+  border-radius: 6px;
+  font-size: 12px;
+}
+.coach-website-share p {
+  font-size: 12px;
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+.coach-website-booking {
+  min-width: 0;
+}
+.coach-personal-website :is(#private-schedule, #locations) {
+  scroll-margin-top: 100px;
+}
+.coach-website-booking :is(.public-schedule, .typed-public-booking) {
+  padding: 24px;
+  border: 1px solid var(--website-line);
+  border-radius: 16px;
+  background: #faf8fc;
+  min-width: 0;
+}
+.coach-personal-website .public-coach-locations {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+.coach-personal-website .public-coach-location-map {
+  border-color: var(--website-line);
+}
+.coach-personal-website
+  :is(a, button, summary, input, select, textarea):focus-visible {
+  outline: 3px solid #61417b;
+  outline-offset: 4px;
+}
+.coach-personal-website :is(section, div)[tabindex="-1"]:focus-visible {
+  outline: 2px solid #9d85b1;
+  outline-offset: 6px;
+}
+.coach-website-booking .button.dark {
+  background: #61417b;
+  color: #fff;
+}
+.coach-website-booking .button.secondary {
+  background: #fff;
+  border-color: #d3c6de;
+  color: #61417b;
+}
+@media (min-width: 1024px) and (max-height: 800px) {
+  .coach-website-contact {
+    position: static;
+  }
+}
+@media (max-width: 1023px) {
+  .coach-website-layout {
+    gap: 25px;
+    grid-template-columns: minmax(0, 1fr) 265px;
+  }
+  .coach-website-contact {
+    position: static;
+    padding: 20px;
+  }
+  .coach-website-identity {
+    padding-inline: 18px;
+  }
+}
+@media (max-width: 767px) {
+  .coach-website-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+  .coach-website-contact {
+    order: -1;
+    width: 100%;
+  }
+  .coach-website-contact h2 br {
+    display: none;
+  }
+  .coach-website-contact h2 {
+    font-size: 26px;
+  }
+  .coach-website-banner {
+    border-radius: 16px;
+    aspect-ratio: 2.4;
+  }
+  .coach-website-identity {
+    display: block;
+    padding: 0 8px 20px;
+    margin-top: -34px;
+  }
+  .coach-website-identity .avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 20px;
+    font-size: 30px;
+  }
+  .coach-website-name {
+    padding-top: 16px;
+  }
+  .coach-website-name h1 {
+    font-size: 34px;
+  }
+  .coach-website-topline > span {
+    display: none;
+  }
+  .coach-website-navigation {
+    margin-bottom: 24px;
+    gap: 0;
+  }
+  .coach-website-navigation a {
+    padding: 10px;
+    font-size: 11px;
+  }
+  .coach-website-section {
+    padding-bottom: 24px;
+    margin-bottom: 24px;
+  }
+  .coach-website-section h2 {
+    font-size: 25px;
+  }
+  .coach-website-booking :is(.public-schedule, .typed-public-booking) {
+    padding: 16px;
+  }
+  .coach-website-facts {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .coach-website-topline {
+    margin-bottom: 14px;
+  }
+  .coach-website-banner-fallback {
+    padding: 9%;
+  }
+  .coach-website-banner-fallback p {
+    font-size: 27px;
+  }
+  .coach-website-share > div button {
+    flex: 1;
+  }
+}
+
+.coach-website-booking :is(.typed-public-booking, .public-schedule) > h2 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1.2;
+  margin-bottom: 20px;
+  color: var(--website-ink);
+}

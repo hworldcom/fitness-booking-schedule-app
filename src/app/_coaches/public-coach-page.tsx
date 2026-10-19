@@ -8,7 +8,12 @@ import {
 } from "@/features/coaches/coach-discovery";
 import { CoachMarketplace } from "@/features/coaches/coach-marketplace";
 import { currentClientCoachMarketplaceWorkspace } from "@/server/coaches/booking-request-service";
-import { publicCoachProfile } from "@/server/coaches/service";
+import {
+  publicWebsiteProfile,
+  publicWebsiteOrigin,
+  publicCoachWebsiteGroups,
+} from "@/server/coaches/public-website-page";
+import { publicCoachReviews } from "@/server/coaches/review-service";
 import { calendarDate } from "@/domain/coach-calendar";
 import { coachRedirectHref } from "@/domain/coach-public-url";
 import {
@@ -23,7 +28,7 @@ export async function PublicCoachPage({
   slug: string;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const state = await publicCoachProfile(slug);
+  const state = await publicWebsiteProfile(slug);
   if (state.status !== "ready") {
     if (state.status === "not-found") notFound();
     return <CoachProfileUnavailable />;
@@ -36,6 +41,10 @@ export async function PublicCoachPage({
   } catch {
     catalogUnavailable = true;
   }
+  const [reviews, groups] = await Promise.all([
+    publicCoachReviews(slug, null),
+    publicCoachWebsiteGroups(slug),
+  ]);
   const query = await searchParams;
   const selection = publicScheduleSelection(query.date, state.databaseTime);
   const daySlots = publicScheduleSlots(state.slots, state.databaseTime).filter(
@@ -62,25 +71,16 @@ export async function PublicCoachPage({
   return (
     <CoachProfileView
       state={state}
+      catalog={catalog ?? null}
+      reviews={reviews}
+      groups={groups}
+      origin={publicWebsiteOrigin()}
+      ownProfile={
+        actor.status === "authorized" &&
+        actor.actorProfileId === state.coach.profileId
+      }
       marketplace={
         <>
-          {!(
-            actor.status === "authorized" &&
-            actor.actorProfileId === state.coach.profileId
-          ) && (
-            <section className="coach-contact-action">
-              <div>
-                <strong>Have a question first?</strong>
-                <p>Message the coach before choosing a session.</p>
-              </div>
-              <Link
-                className="button dark"
-                href={`/messages?coach=${state.coach.profileId}`}
-              >
-                Message coach
-              </Link>
-            </section>
-          )}
           {catalogUnavailable ? (
             <section
               id="private-schedule"
@@ -104,16 +104,25 @@ export async function PublicCoachPage({
               </Link>
             </section>
           ) : catalog?.enabled ? (
-            <TypeFirstBooking
-              catalog={catalog}
-              slug={slug}
-              ownProfile={
-                actor.status === "authorized" &&
-                actor.actorProfileId === state.coach.profileId
-              }
-              referenceTime={state.databaseTime}
-              returnTo={state.coach.publicPath ?? `/coaches/${slug}`}
-            />
+            <section
+              id="private-schedule"
+              tabIndex={-1}
+              aria-label="Private session booking"
+            >
+              <TypeFirstBooking
+                catalog={catalog}
+                selectedDate={
+                  typeof query.date === "string" ? query.date : undefined
+                }
+                slug={slug}
+                ownProfile={
+                  actor.status === "authorized" &&
+                  actor.actorProfileId === state.coach.profileId
+                }
+                referenceTime={state.databaseTime}
+                returnTo={state.coach.publicPath ?? `/coaches/${slug}`}
+              />
+            </section>
           ) : (
             <CoachMarketplace
               key={`${slug}:${selection.date}:${actor.status === "authorized" ? actor.subject + actor.actorIdentity : actor.status}`}

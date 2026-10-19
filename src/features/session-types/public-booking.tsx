@@ -5,6 +5,8 @@ import { useState } from "react";
 import { useActor } from "@/auth/client/actor-provider";
 import { useAuthSession } from "@/auth/client/session-provider";
 import { signInHref } from "@/auth/return-to";
+import { coachRedirectHref } from "@/domain/coach-public-url";
+import { publicScheduleSelection } from "@/domain/public-coach-schedule";
 import type {
   SessionCatalog,
   SessionTime,
@@ -23,23 +25,26 @@ export function TypeFirstBooking({
   ownProfile,
   referenceTime,
   returnTo,
+  selectedDate,
 }: {
   catalog: SessionCatalog;
   slug: string;
   ownProfile: boolean;
   referenceTime: string;
   returnTo: string;
+  selectedDate?: string;
 }) {
   return (
     <SessionActorBoundary publicWhenSignedOut>
       {(identity) => (
         <BookingForm
-          key={`${identity}:${slug}`}
+          key={`${identity}:${slug}:${selectedDate ?? ""}`}
           catalog={catalog}
           slug={slug}
           ownProfile={ownProfile}
           referenceTime={referenceTime}
           returnTo={returnTo}
+          selectedDate={selectedDate}
         />
       )}
     </SessionActorBoundary>
@@ -51,12 +56,14 @@ function BookingForm({
   ownProfile,
   referenceTime,
   returnTo,
+  selectedDate,
 }: {
   catalog: SessionCatalog;
   slug: string;
   ownProfile: boolean;
   referenceTime: string;
   returnTo: string;
+  selectedDate?: string;
 }) {
   const { actor } = useActor();
   const { session } = useAuthSession();
@@ -64,7 +71,12 @@ function BookingForm({
   const [typeId, setTypeId] = useState("");
   const type = types.find((t) => t.id === typeId);
   const [locationId, setLocationId] = useState("");
-  const [date, setDate] = useState("");
+  const selection = publicScheduleSelection(selectedDate, referenceTime);
+  const [date, setDate] = useState(
+    selectedDate && selection.inHorizon && !selection.invalid
+      ? selection.date
+      : "",
+  );
   const [times, setTimes] = useState<readonly SessionTime[] | null>(null);
   const [selected, setSelected] = useState<SessionTime | null>(null);
   const [busy, setBusy] = useState(false);
@@ -317,7 +329,15 @@ function BookingForm({
                       : "Request session"}
                 </button>
               ) : (
-                <Link className="button dark" href={signInHref(returnTo)}>
+                <Link
+                  className="button dark"
+                  href={signInHref(
+                    coachRedirectHref(returnTo, {
+                      date,
+                      section: "private-schedule",
+                    }),
+                  )}
+                >
                   Sign in to request
                 </Link>
               )}
