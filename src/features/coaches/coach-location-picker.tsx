@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   CheckCircle2,
-  Dumbbell,
+  Building2,
   LocateFixed,
   MapPin,
   MapPinOff,
@@ -87,8 +87,8 @@ export function CoachLocationPicker({
   const startsWithSearch =
     searchConfiguration.status === "ready" &&
     (!existing || existing.source === "permanent-geocoding");
-  const [entryMode, setEntryMode] = useState<"gym" | "address" | "manual">(
-    startsWithSearch ? "gym" : "manual",
+  const [entryMode, setEntryMode] = useState<"facility" | "address" | "manual">(
+    startsWithSearch ? "facility" : "manual",
   );
   const [draft, setDraft] = useState<LocationDraft | null>(existing);
   const [confirmed, setConfirmed] = useState(Boolean(existing));
@@ -124,7 +124,7 @@ export function CoachLocationPicker({
     );
   };
 
-  const chooseSearch = (mode: "gym" | "address") => {
+  const chooseSearch = (mode: "facility" | "address") => {
     if (searchConfiguration.status !== "ready") return;
     requestRef.current?.abort();
     setEntryMode(mode);
@@ -152,7 +152,7 @@ export function CoachLocationPicker({
       const nextCandidates = await searchLocations(
         query,
         searchConfiguration.apiKey,
-        entryMode === "gym" ? "gym" : "place",
+        entryMode === "facility" ? "facility" : "place",
         request.signal,
       );
       if (request.signal.aborted) return;
@@ -160,8 +160,8 @@ export function CoachLocationPicker({
       setSearchStatus(nextCandidates.length === 0 ? "empty" : "idle");
       setSearchMessage(
         nextCandidates.length === 0
-          ? entryMode === "gym"
-            ? "No gym or fitness facility matched in Berlin. Refine the gym name or choose Own address."
+          ? entryMode === "facility"
+            ? "No facility matched in Berlin. Refine the facility name or choose Own address."
             : "No address matched in Berlin. Refine the address or enter coordinates manually."
           : "",
       );
@@ -230,16 +230,16 @@ export function CoachLocationPicker({
         >
           <button
             type="button"
-            className={entryMode === "gym" ? "active" : ""}
-            aria-pressed={entryMode === "gym"}
-            onClick={() => chooseSearch("gym")}
+            className={entryMode === "facility" ? "active" : ""}
+            aria-pressed={entryMode === "facility"}
+            onClick={() => chooseSearch("facility")}
           >
-            <Dumbbell size={15} aria-hidden="true" /> Gym search
+            <Building2 size={15} aria-hidden="true" /> Facility search
           </button>
           <button
             type="button"
-            className={entryMode !== "gym" ? "active" : ""}
-            aria-pressed={entryMode !== "gym"}
+            className={entryMode !== "facility" ? "active" : ""}
+            aria-pressed={entryMode !== "facility"}
             onClick={() => chooseSearch("address")}
           >
             <MapPin size={15} aria-hidden="true" /> Own address
@@ -253,8 +253,8 @@ export function CoachLocationPicker({
         >
           <MapPinOff size={18} aria-hidden="true" />
           <span>
-            Gym and address search is not configured. Manual coordinates remain
-            available and are stored without a provider claim.
+            Facility and address search is not configured. Manual coordinates
+            remain available and are stored without a provider claim.
           </span>
         </div>
       )}
@@ -263,8 +263,8 @@ export function CoachLocationPicker({
         <div className="coach-location-search">
           <label className="coach-field coach-field-wide">
             <span>
-              {entryMode === "gym"
-                ? "Search for a gym or fitness facility in Berlin"
+              {entryMode === "facility"
+                ? "Search for a facility in Berlin"
                 : "Find your training address in Berlin"}
             </span>
             <div className="coach-location-search-row">
@@ -278,8 +278,8 @@ export function CoachLocationPicker({
                 }}
                 maxLength={160}
                 placeholder={
-                  entryMode === "gym"
-                    ? "For example: Chimosa"
+                  entryMode === "facility"
+                    ? "For example: Chimosa or Futurium"
                     : "For example: Linienstraße 127, Berlin"
                 }
                 autoComplete={
@@ -297,8 +297,8 @@ export function CoachLocationPicker({
               </button>
             </div>
             <small>
-              {entryMode === "gym"
-                ? "Search by name for gyms, dojos and sports facilities within Berlin. If yours is missing, choose Own address."
+              {entryMode === "facility"
+                ? "Search by name for any facility within Berlin. If yours is missing, choose Own address."
                 : "Search for your own meeting address within Berlin, then select and confirm it. You can also enter coordinates manually."}
             </small>
             <small>
@@ -343,16 +343,16 @@ export function CoachLocationPicker({
                   }
                   onClick={() => chooseCandidate(candidate)}
                 >
-                  {candidate.kind === "gym" ? (
-                    <Dumbbell size={16} aria-hidden="true" />
+                  {candidate.kind === "facility" ? (
+                    <Building2 size={16} aria-hidden="true" />
                   ) : (
                     <MapPin size={16} aria-hidden="true" />
                   )}
                   <span>
                     <strong>{candidate.label}</strong>
                     <small>
-                      {candidate.kind === "gym"
-                        ? "Gym or sports facility"
+                      {candidate.kind === "facility"
+                        ? "Facility"
                         : "Address or public place"}
                       {" · "}
                       {candidate.latitude.toFixed(6)},{" "}

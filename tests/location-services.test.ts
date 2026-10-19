@@ -4,10 +4,9 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import {
-  GEOAPIFY_GYM_CATEGORIES,
   LocationSearchError,
   buildGeoapifyGeocodingUrl,
-  buildGeoapifyGymSearchRequest,
+  buildGeoapifyFacilitySearchUrl,
   parseGeoapifyResponse,
   resolveLocationSearchConfiguration,
   searchLocations,
@@ -28,7 +27,7 @@ function feature(
       formatted: "Chimosa, Linienstraße 127, 10115 Berlin, Germany",
       country_code: "de",
       city: "Berlin",
-      categories: ["sport", "sport.sports_centre"],
+      result_type: "amenity",
       ...properties,
     },
   };
@@ -59,47 +58,49 @@ test("location search configuration accepts only a bounded public key", () => {
   });
 });
 
-test("gym and address requests constrain the same Berlin city boundary", () => {
+test("facility and address requests constrain Berlin while only facilities request named amenities", () => {
   const address = buildGeoapifyGeocodingUrl(
     "  Linienstraße  127, Berlin ",
     apiKey,
   );
-  const gym = buildGeoapifyGymSearchRequest("  Chimosa  Berlin ", apiKey);
-  assert.equal(address.origin, "https://api.geoapify.com");
-  assert.equal(address.pathname, "/v1/geocode/search");
+  const facility = buildGeoapifyFacilitySearchUrl("  McFIT  Berlin ", apiKey);
+  assert.equal(facility.origin, "https://api.geoapify.com");
+  assert.equal(facility.pathname, "/v1/geocode/search");
+  assert.equal(facility.searchParams.get("text"), "McFIT Berlin");
+  assert.equal(facility.searchParams.get("type"), "amenity");
+  assert.equal(address.searchParams.has("type"), false);
   assert.equal(address.searchParams.get("text"), "Linienstraße 127, Berlin");
-  assert.equal(gym.url.pathname, "/v2/places");
-  assert.equal(gym.body.name, "Chimosa Berlin");
-  assert.equal(gym.body.filter.type, "place");
-  assert.equal(
-    address.searchParams.get("filter"),
-    `place:${gym.body.filter.id}|countrycode:de`,
+  assert.match(
+    facility.searchParams.get("filter")!,
+    /^place:.+\|countrycode:de$/,
   );
-  assert.equal(address.searchParams.get("bias"), "proximity:13.405,52.52");
-  assert.equal(gym.body.bias.type, "proximity");
-  assert.deepEqual(gym.body.categories, GEOAPIFY_GYM_CATEGORIES);
-  for (const category of [
-    "sport.fitness.gym",
-    "sport.fitness.fitness_centre",
-    "sport.dojo",
-    "sport.sports_centre",
-    "activity.sport_club",
-  ]) {
-    assert.ok(gym.body.categories.some((value) => value === category));
-  }
-  assert.equal(address.searchParams.get("limit"), "5");
-  assert.equal(gym.body.limit, 5);
+  assert.equal(
+    facility.searchParams.get("filter"),
+    address.searchParams.get("filter"),
+  );
+  assert.equal(facility.searchParams.get("bias"), "proximity:13.405,52.52");
+  assert.equal(facility.searchParams.get("limit"), "5");
+  assert.equal(facility.searchParams.has("categories"), false);
 });
 
-test("gym parsing keeps Berlin fitness facilities and rejects general/outside/malformed results", () => {
+test("facility parsing accepts non-fitness categories and rejects unnamed, generic, outside or malformed results", () => {
   const response = collection(
     feature(),
-    feature({ name: "Cafe", categories: ["catering.cafe"] }),
+    feature({
+      place_id: "museum",
+      name: "Futurium",
+      formatted: "Futurium, Alexanderufer 2, Berlin",
+      category: "entertainment.museum",
+    }),
+    feature({ name: "", formatted: "Berlin, Germany" }),
+    feature({ result_type: "street" }),
+    feature({ result_type: "city" }),
+    feature({ result_type: "building" }),
+    feature({ result_type: undefined }),
     feature({ city: "Potsdam" }),
     feature({ country_code: "us" }),
     feature({ city: undefined }),
     feature({ country_code: undefined }),
-    feature({ categories: undefined }),
     feature({}, [11.576, 48.137]),
     feature({}, [181, 95]),
     feature({}, ["13.389507", "52.526682"]),
@@ -112,37 +113,35 @@ test("gym parsing keeps Berlin fitness facilities and rejects general/outside/ma
     },
     null,
   );
-  assert.deepEqual(parseGeoapifyResponse(response, "gym"), [
-    {
-      id: "gym:chimosa",
-      label: "Chimosa, Linienstraße 127, 10115 Berlin, Germany",
-      latitude: 52.526682,
-      longitude: 13.389507,
-      kind: "gym",
-      provider: "geoapify",
-    },
-  ]);
+  const results = parseGeoapifyResponse(response, "facility");
+  assert.deepEqual(
+    results.map(({ id, kind, provider }) => ({ id, kind, provider })),
+    [
+      { id: "facility:chimosa", kind: "facility", provider: "geoapify" },
+      { id: "facility:museum", kind: "facility", provider: "geoapify" },
+    ],
+  );
+  assert.equal(
+    results[0]?.label,
+    "Chimosa, Linienstraße 127, 10115 Berlin, Germany",
+  );
+  assert.equal(results[0]?.latitude, 52.526682);
+  assert.equal(results[0]?.longitude, 13.389507);
+  // A missing or non-fitness category cannot hide a valid named amenity.
   assert.equal(
     parseGeoapifyResponse(
-      collection(feature({ categories: ["sport.dojo.karate"] })),
-      "gym",
+      collection(feature({ category: "catering.cafe" })),
+      "facility",
     ).length,
     1,
   );
-  assert.equal(
-    parseGeoapifyResponse(
-      collection(feature({ categories: ["sport.dojo_other"] })),
-      "gym",
-    ).length,
-    0,
-  );
 });
 
-test("own-address parsing needs Berlin country/city evidence, not a fitness category", () => {
+test("own-address parsing accepts Berlin address results without requiring a named amenity", () => {
   const address = feature({
     name: "",
     formatted: "Linienstraße 127, 10115 Berlin, Germany",
-    categories: undefined,
+    result_type: "building",
   });
   const results = parseGeoapifyResponse(
     collection(
@@ -156,7 +155,7 @@ test("own-address parsing needs Berlin country/city evidence, not a fitness cate
   assert.equal(results[0]?.kind, "place");
   assert.equal(results[0]?.label, "Linienstraße 127, 10115 Berlin, Germany");
   assert.throws(
-    () => parseGeoapifyResponse({ results: [] }, "gym"),
+    () => parseGeoapifyResponse({ results: [] }, "facility"),
     reason("response"),
   );
 });
@@ -177,13 +176,13 @@ test("candidate parsing deduplicates and caps accepted results after rejecting i
       ),
     ),
   ];
-  const results = parseGeoapifyResponse(collection(...features), "gym");
+  const results = parseGeoapifyResponse(collection(...features), "facility");
   assert.equal(results.length, 5);
-  assert.equal(results[0]?.id, "gym:chimosa");
-  assert.equal(results[4]?.id, "gym:venue-3");
+  assert.equal(results[0]?.id, "facility:chimosa");
+  assert.equal(results[4]?.id, "facility:venue-3");
 });
 
-test("gym-first lookup calls only Places; own-address lookup calls only Geocoding", async () => {
+test("facility-first and own-address lookup each call one geocoder request with distinct result scope", async () => {
   const originalFetch = globalThis.fetch;
   const calls: Array<{ url: string; init?: RequestInit }> = [];
   globalThis.fetch = async (input, init) => {
@@ -191,18 +190,28 @@ test("gym-first lookup calls only Places; own-address lookup calls only Geocodin
     return Response.json(collection(feature()));
   };
   try {
-    assert.equal((await searchLocations("Chimosa", apiKey))[0]?.kind, "gym");
+    assert.equal(
+      (await searchLocations("McFIT Berlin", apiKey))[0]?.kind,
+      "facility",
+    );
     assert.equal(calls.length, 1);
-    assert.equal(new URL(calls[0]!.url).pathname, "/v2/places");
-    assert.equal(calls[0]!.init?.method, "POST");
-    assert.equal(JSON.parse(String(calls[0]!.init?.body)).filter.type, "place");
+    const facility = new URL(calls[0]!.url);
+    assert.equal(facility.pathname, "/v1/geocode/search");
+    assert.equal(facility.searchParams.get("type"), "amenity");
+    assert.equal(calls[0]!.init?.method ?? "GET", "GET");
+    assert.equal(calls[0]!.init?.body, undefined);
     assert.equal(
       (await searchLocations("Linienstraße 127", apiKey, "place"))[0]?.kind,
       "place",
     );
     assert.equal(calls.length, 2);
-    assert.equal(new URL(calls[1]!.url).pathname, "/v1/geocode/search");
-    assert.equal(calls[1]!.init?.method ?? "GET", "GET");
+    const address = new URL(calls[1]!.url);
+    assert.equal(address.pathname, "/v1/geocode/search");
+    assert.equal(address.searchParams.has("type"), false);
+    assert.equal(
+      address.searchParams.get("filter"),
+      facility.searchParams.get("filter"),
+    );
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -219,7 +228,7 @@ test("invalid queries and configuration fail before consuming provider requests"
     for (const query of [
       "ab",
       "x".repeat(161),
-      Array(21).fill("gym").join(" "),
+      Array(21).fill("facility").join(" "),
     ]) {
       await assert.rejects(
         () => searchLocations(query, apiKey),
@@ -285,7 +294,7 @@ test("cancellation propagates and ignores a response completed after its request
       return Response.json(collection(feature()));
     };
     await assert.rejects(
-      () => searchLocations("Chimosa", apiKey, "gym", controller.signal),
+      () => searchLocations("Chimosa", apiKey, "facility", controller.signal),
       { name: "AbortError" },
     );
     globalThis.fetch = async () => {

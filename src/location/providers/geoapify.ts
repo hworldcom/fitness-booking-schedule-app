@@ -20,14 +20,6 @@ const BERLIN_BOUNDS = {
 };
 const RESULT_LIMIT = 5;
 
-export const GEOAPIFY_GYM_CATEGORIES = Object.freeze([
-  "sport.fitness.gym",
-  "sport.fitness.fitness_centre",
-  "sport.dojo",
-  "sport.sports_centre",
-  "activity.sport_club",
-] as const);
-
 function trimmedApiKey(value: string | undefined) {
   return value?.trim() ?? "";
 }
@@ -84,27 +76,11 @@ export function buildGeoapifyGeocodingUrl(query: string, apiKey: string) {
   return url;
 }
 
-export function buildGeoapifyGymSearchRequest(query: string, apiKey: string) {
-  const url = new URL("https://api.geoapify.com/v2/places");
-  url.searchParams.set("apiKey", validatedApiKey(apiKey));
-  return Object.freeze({
-    url,
-    body: Object.freeze({
-      categories: GEOAPIFY_GYM_CATEGORIES,
-      name: validatedQuery(query),
-      filter: Object.freeze({
-        type: "place" as const,
-        id: BERLIN_PLACE_ID,
-      }),
-      bias: Object.freeze({
-        type: "proximity" as const,
-        lon: BERLIN_CENTER.longitude,
-        lat: BERLIN_CENTER.latitude,
-      }),
-      limit: RESULT_LIMIT,
-      lang: "en",
-    }),
-  });
+export function buildGeoapifyFacilitySearchUrl(query: string, apiKey: string) {
+  const url = buildGeoapifyGeocodingUrl(query, apiKey);
+  // Named points of interest across categories, rather than fitness-only Places.
+  url.searchParams.set("type", "amenity");
+  return url;
 }
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -169,16 +145,8 @@ export function parseGeoapifyResponse(
       longitude > BERLIN_BOUNDS.east ||
       text(properties.country_code).toLowerCase() !== "de" ||
       text(properties.city).toLowerCase() !== "berlin" ||
-      (kind === "gym" &&
-        (!Array.isArray(properties.categories) ||
-          !properties.categories.some(
-            (category) =>
-              typeof category === "string" &&
-              GEOAPIFY_GYM_CATEGORIES.some(
-                (accepted) =>
-                  category === accepted || category.startsWith(`${accepted}.`),
-              ),
-          )))
+      (kind === "facility" &&
+        (!text(properties.name) || properties.result_type !== "amenity"))
     ) {
       continue;
     }
@@ -229,24 +197,16 @@ function isAbortError(error: unknown) {
 export async function searchLocations(
   query: string,
   apiKey: string,
-  kind: LocationCandidate["kind"] = "gym",
+  kind: LocationCandidate["kind"] = "facility",
   signal?: AbortSignal,
 ): Promise<readonly LocationCandidate[]> {
-  const gymRequest =
-    kind === "gym" ? buildGeoapifyGymSearchRequest(query, apiKey) : null;
-  const url = gymRequest?.url ?? buildGeoapifyGeocodingUrl(query, apiKey);
+  const url =
+    kind === "facility"
+      ? buildGeoapifyFacilitySearchUrl(query, apiKey)
+      : buildGeoapifyGeocodingUrl(query, apiKey);
   try {
     const response = await fetch(url, {
-      ...(gymRequest
-        ? {
-            method: "POST",
-            headers: {
-              Accept: "application/geo+json",
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(gymRequest.body),
-          }
-        : { headers: { Accept: "application/geo+json" } }),
+      headers: { Accept: "application/geo+json" },
       signal,
     });
     const value = await responseJson(response);

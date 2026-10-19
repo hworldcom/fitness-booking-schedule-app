@@ -11,8 +11,7 @@ export {
 } from "./contracts";
 export {
   buildGeoapifyGeocodingUrl,
-  buildGeoapifyGymSearchRequest,
-  GEOAPIFY_GYM_CATEGORIES,
+  buildGeoapifyFacilitySearchUrl,
   parseGeoapifyResponse,
   resolveLocationSearchConfiguration,
   searchLocations,

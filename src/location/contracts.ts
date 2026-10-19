@@ -25,7 +25,7 @@ export type LocationCandidate = Readonly<{
   label: string;
   latitude: number;
   longitude: number;
-  kind: "gym" | "place";
+  kind: "facility" | "place";
   provider: typeof CURRENT_LOCATION_PROVIDER;
 }>;
 

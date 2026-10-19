@@ -7,7 +7,7 @@ This directory records planned changes, task status and implementation evidence.
 - A **development ticket** is a small implementable task named `# Ticket DEVNNNN` with a `DEVNNNN-short-title.md` filename. It owns implementation and validation evidence, and its DEV ID is used in commits. Start one from [TEMPLATE.md](TEMPLATE.md).
 - A **coordination record** is a non-implementation umbrella named `# Coordination CORNNNN` with a `CORNNNN-short-title.md` filename. It maps a flat set of peer development tickets and is never used as a commit reference. Start one from [COORDINATION_TEMPLATE.md](COORDINATION_TEMPLATE.md).
 
-DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0378 and COR0032.
+DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0379 and COR0032.
 
 Every DEV record declares its direct coordination membership near the top: one linked COR, or `None — independent development ticket`. Direct membership is limited to one COR and must match that COR's work map. Dependencies, downstream consumers and historical links remain separate relationships.
 
@@ -111,6 +111,7 @@ DEV0374–DEV0375 remain allocated to independent completed UAT operations whose
 | [DEV0369 — Refresh public and availability QA baselines](current/frontend/DEV0369-refresh-public-and-availability-qa-baselines.md) | Frontend | QA follow-up | Draft | Finding and next action recorded by DEV0367; implementation pending. |
 | [DEV0370 — Investigate group scheduling contention proof](current/backend/DEV0370-investigate-group-scheduling-contention-proof.md) | Backend | QA follow-up | Draft | Finding and next action recorded by DEV0367; implementation pending. |
 | [DEV0371 — Isolate quality checks from local evidence](current/backend/DEV0371-isolate-quality-checks-from-local-evidence.md) | Backend | QA follow-up | Draft | Finding and next action recorded by DEV0367; implementation pending. |
+| [DEV0378 — Broaden Berlin facility search](current/frontend/DEV0378-broaden-berlin-facility-search.md) | Frontend | UAT coach onboarding | In progress | Replace fitness-only lookup with named facilities across categories, preserving Berlin and own-address recovery. |
 | [COR0030 — Events cards, banners and map](current/organisatory/COR0030-events-cards-banners-and-map.md) | Organisatory | Public group-session discovery | In progress | Coordinate media persistence, owner banner controls and public cards/map/paging integration. |
 | [DEV0357 — Manage group-session banners](current/frontend/DEV0357-manage-group-session-banners.md) | Frontend | Public group-session discovery | Blocked | Chrome desktop upload/reload/replace/remove/invalid and keyboard removal passed; phone picker/recovery checks remain blocked by native control. |
 | [DEV0358 — Redesign Events cards and map](current/frontend/DEV0358-redesign-events-cards-and-map.md) | Frontend | Public group-session discovery | Blocked | Chrome verified owner/public media and 23-card paging/focus; remaining phone/recovery/map-keyboard/filter-reset acceptance needs working native control. |
