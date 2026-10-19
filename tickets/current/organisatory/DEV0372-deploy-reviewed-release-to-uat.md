@@ -1,6 +1,6 @@
 # Ticket DEV0372: Deploy reviewed release to UAT
 
-- Status: In progress
+- Status: Blocked
 - Created: 2026-10-19
 - Last updated: 2026-10-19
 - Milestone: Hosted user acceptance testing (UAT)
@@ -42,8 +42,8 @@ UAT serves the committed Next.js application at the exact HTTPS origin with host
 
 ## Acceptance criteria
 
-- [ ] AC1: The QA checkpoint and release source are committed with correct DEV subjects; unrelated changes remain outside the commits/deployment.
-- [ ] AC2: UAT uses only hosted-dev restricted settings and reviewed compatible migrations/Auth configuration, with exact retained-data preservation evidence.
+- [x] AC1: The QA checkpoint and release source are committed with correct DEV subjects; unrelated changes remain outside the commits/deployment.
+- [x] AC2: UAT uses only hosted-dev restricted settings and reviewed compatible migrations/Auth configuration, with exact retained-data preservation evidence.
 - [ ] AC3: `https://uat.movx.club` resolves with valid TLS to the intended successful Vercel deployment and current application.
 - [ ] AC4: Public/guest/private-route smoke and responsive checks are recorded with actual results; remaining QA/provider limitations and rollback path are explicit.
 
@@ -55,7 +55,7 @@ Use exact committed-source lint/type/build validation (reuse unchanged DEV0367 u
 
 ### Changes and rationale
 
-QA is committed as `c65b850`. Dedicated Vercel UAT project and four Preview variables are configured. All twenty reviewed missing hosted-dev migrations applied; an exact final dry-run has no pending migrations/seeds/roles. All old-field fingerprints of 64 original rows across 42 tables matched; six retained demo coaches remain hidden. Auth templates/origin/password settings were narrowly updated and verified, preserving SMTP and disabled Google. Provider HTTP 402 refused the managed time box and leaked-password check on the Free plan; no subscription or plan change was made. Deployment/DNS/smoke remains in progress.
+QA is committed as `c65b850`. Dedicated Vercel UAT project and four Preview variables are configured. All twenty reviewed missing hosted-dev migrations applied; an exact final dry-run has no pending migrations/seeds/roles. All old-field fingerprints of 64 original rows across 42 tables matched; six retained demo coaches remain hidden. Auth templates/origin/password settings were narrowly updated and verified, preserving SMTP and disabled Google. Provider HTTP 402 refused the managed time box and leaked-password check on the Free plan; no subscription or plan change was made. The release preparation is committed as `351b5f3`. Exact-source lint/typecheck passed. Vercel CLI 64.3.1 built a READY Preview deployment in hosted-runtime mode at `movx-club-j26zoy12h-hoangworldcoms-projects.vercel.app` (`dpl_9iCAdz7gGLhUqU7WHwHPHUvgg5XB`), with release SHA metadata and actual function region `fra1`. DNS/TLS/custom-alias and final smoke remain in progress.
 
 ### Affected files
 
@@ -79,22 +79,44 @@ Four core application variables are server-only `DATABASE_URL` plus public Supab
 
 - QA scoped ESLint and staged whitespace checks passed before `c65b850`.
 - Existing Vercel project/domain/environment inventory and actual UAT/staging DNS inspected read-only.
-- Remaining checks pending.
+- Exact-source lint/typecheck, actual hosted build, 20 runtime checks, 16 meaningful deployed HTTP probes and 16 JS asset checks passed. UAT DNS/TLS and native UAT responsive checks remain blocked, not passed.
 
 | Criterion | Evidence | Result |
 | --- | --- | --- |
-| AC1 | QA checkpoint `c65b850`; release operation pending | In progress |
-| AC2 | Hosted inventory pending | Not run |
-| AC3 | Parking DNS, no alias at preflight | Not run |
-| AC4 | Deployed smoke pending | Not run |
+| AC1 | QA `c65b850`, release `351b5f3`; exact committed export and metadata; unrelated edits preserved | Passed |
+| AC2 | 20 migrations installed, 24-version exact ledger, 20 runtime checks, original 64-row/42-table preservation and Auth patch verification; paid limits explicitly recorded | Passed for bounded rollout; full hosted Auth acceptance remains separate |
+| AC3 | Vercel READY; alias/certificate attempt failed while DNS still points to parking | Blocked — authoritative DNS record required |
+| AC4 | 16 meaningful deployed HTTP smoke checks and 16 referenced JS chunks passed; no DB credential in served HTML/chunks; native UAT and real-host TLS pending | Partial — finish after DNS |
 
 ## Risks, limitations, and follow-ups
 
-Known local QA findings remain open; no production readiness, live Google, physical-device or full hosted authentication claim. If access is missing, preserve the successful prepared result and identify the exact remaining operator action. Next action: hosted ledger/Auth read-only inspection and UAT DNS access.
+Known local QA findings remain open; no production readiness, live Google, physical-device or full hosted authentication claim. The current blocker is authoritative DNS access: Cloudflare is signed out, while Porkbun is the registrar and the domain delegates DNS to Cloudflare. Add only an unproxied/DNS-only `A` record `uat → 76.76.21.21`; do not switch nameservers or alter unrelated records. Then rerun the final alias command, verify actual UAT DNS/TLS and native desktop/phone routes, repeat preservation checks and complete/archive this ticket. The READY source/configuration and all completed checks remain usable; no rebuild is needed unless source or build-time settings change.
 
 ## Completion and review references
 
 - Completed: Not completed.
-- Commit: QA dependency `c65b850`; this ticket's release commits pending.
+- Commit: QA dependency `c65b850`; deployed release `351b5f3` (`[DEV0372] Prepare the hosted UAT release`). This final handoff is committed separately as `[DEV0372] Record Vercel release and DNS blocker`. No remote Git push was performed; deployment uploaded the exact committed snapshot through the CLI.
 - Review: Initial scope/self-review; no independent review.
-- Deployment or release: Not yet deployed.
+- Deployment or release: Vercel Preview READY at [the inspected release](https://vercel.com/hoangworldcoms-projects/movx-club-uat/9iCAdz7gGLhUqU7WHwHPHUvgg5XB). `uat.movx.club` activation remains Blocked on DNS/TLS; do not claim the requested hostname is live.
+
+## Deployment journal — 19 October 2026
+
+- QA commit: `c65b850`; release-source commit: `351b5f3eb4aead6e638ca840bd466f3710698337`. The release is an exact `git archive` of that commit at `/private/tmp/movx-dev0372-release-kxdydaif`; no populated environment file, ignored evidence or unrelated worktree edit was uploaded.
+- Exact-source `npm run lint` and `npm run typecheck` passed. Unchanged application behavior retains DEV0367's local 406 unit/server and 208 database passes with recorded failures/limits; a new all-green browser claim is not made.
+- The installed CLI 48.1.6 initialized this new project's first deployment as Production despite the Preview request, with no Production variables and therefore public-preview mode. It did not connect to a database. This is not the accepted UAT deployment. CLI 64.3.1 from the official npm package then produced the correctly configured READY Preview above; the guard explicitly logged `Validated preview Vercel build in hosted-runtime mode`. A redundant same-source Preview request from CLI 48 also exists but is not selected for the UAT alias. The repository's dependencies/CLI installation and runtime source were not changed.
+- Vercel project ID: `prj_CPYcoaAzkLOxWrb6Q9lOaDgtQQPA`, team `team_nyqiT81rIoWAGMpA5SnTvtSm`, Node 24.x, four Preview variables, function region `fra1`. Existing Vercel authentication remains on generated URLs (`all_except_custom_domains`); no protection was disabled.
+- `vercel domains add uat.movx.club --cwd <private-link-dir>` registered the hostname on the UAT project. The final CLI alias request reached certificate issuance but returned `Response Error`; the chosen deployment still had no alias at inspection. Public `uat` resolves to Porkbun parking. Both live Vercel discovery and a direct `dig NS movx.club +time=2 +tries=1 +short` report `art.ns.cloudflare.com` and `erin.ns.cloudflare.com`. No nameserver or unrelated DNS record was changed. The concrete required record is `A uat 76.76.21.21` in the authoritative zone. Cloudflare is signed out; the user was asked to add this record or sign in, with registrar/DNS/hosting responsibilities explained.
+- Hosted migration evidence: private SHA manifest, rollback-only candidate result, reviewed dry-run/apply/final empty dry-run, 24-version ledger and five selected installed owner/SECURITY DEFINER/runtime-grant/anon-denial checks under ignored `work/dev0372/`. All 64 original rows across 42 existing tables matched on their original fields; bucket additions are only private `coach-banners` and `event-banners`. Existing Auth identities, profile content, history and object bytes were not modified. Six retained demo coaches remain hidden.
+- Narrow Auth configuration was reread and matched the exact patch. SMTP host/user/password/sender/port, email cap, confirmation requirement and disabled Google matched their before values. Managed session time-box and leaked-password settings each returned HTTP 402 (Pro required), leaving them unchanged. No email, account reset or plan upgrade occurred. Full hosted authentication readiness remains separate.
+
+### Final smoke and handoff
+
+Final record review checked all 481 relative links in the release guidance/specification/index/ticket, staged whitespace and the exact two-file handoff scope. Pre-existing specification edits (apart from the authorized origin replacement), browser-test deletions and unrelated index edits still match the initial QA snapshot and remain uncommitted. This ticket stays under `current/` with status Blocked because AC3 and native UAT proof are unfinished; next IDs remain DEV0373/COR0031.
+
+`npx --yes vercel@64.3.1 curl <path> --deployment https://movx-club-j26zoy12h-hoangworldcoms-projects.vercel.app -- <curl-options>` ran from the exact release directory using the CLI's authenticated protection access. Seven public/Auth routes (Home, Explore, Events, How it works, Sign in, Register, Forgot password) returned 200; four private pages (Account, Coach, My sessions, Messages) returned 307 to the expected sign-in destination; five valid protected API probes returned 401 signed-out (session types, Messages, Auth methods, detailed private times and booking options). An initial malformed booking-detail query returned 400; it did not test time privacy, which the corrected `/api/coaches/daniel-park/session-types?typeId=…&locationId=…&date=2026-10-20` probe subsequently verified. The first smoke wrapper failed because placing global `--cwd` after the curl subcommand passed it to curl; running the command with the child process's working directory fixed the harness without product changes.
+
+Rendered Explore and Events showed truthful empty inventory rather than hidden fictional coaches or an unavailable fallback; Sign in explicitly reported Google unavailable. Sixteen unique Next.js immutable client chunks referenced by these pages downloaded with HTTP 200. Actual restricted database connection/password strings were absent from the rendered responses and these chunks. No broader bundle or provider certification is inferred. Local supporting evidence: `work/dev0372/smoke-results.json`, `supplement-smoke-results.json`, `asset-results.json`, private HTTP responses/headers and provider inventories.
+
+The final independent data comparison again passed: 64 original rows across 42 existing tables, all previous fields unchanged, seven retained Auth users and zero temporary accounts created. Only the two intended private banner buckets were added. No local server was started or original server stopped; old staging, production, nameservers, other DNS records and retained logins/content remain unchanged. Native UAT desktop/phone and actual hostname TLS checks are not run while the hostname resolves to parking. Preserve DEV0368–DEV0371 and the provider HTTP-402 limitations; this is not an all-green QA or full hosted authentication sign-off.
+
+Resume command after the DNS record is active: `npx --yes vercel@64.3.1 alias set movx-club-j26zoy12h-hoangworldcoms-projects.vercel.app uat.movx.club --cwd /private/tmp/movx-dev0372-release-kxdydaif`. Verify final certificate/alias via actual HTTPS and Vercel inspection, then native responsive navigation and the fixed 42-table fingerprint projection. Rollback before activation is to leave/remove only this new UAT alias/domain; do not repoint old staging or roll back the additive schema/credential state. After activation, use a tested compatible deployment retaining the new application-session authority; this project has no earlier hosted-runtime production release to treat as a known-good rollback. Rebuilding `351b5f3` with the same reviewed Preview settings is the reproducible release baseline.
