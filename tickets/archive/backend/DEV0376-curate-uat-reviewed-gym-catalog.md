@@ -1,6 +1,6 @@
 # Ticket DEV0376: Curate UAT reviewed gym catalog
 
-- Status: In progress
+- Status: Completed
 - Created: 2026-10-19
 - Last updated: 2026-10-19
 - Milestone: UAT coach onboarding
@@ -48,7 +48,7 @@ Removal means retiring selectable choices, because profile/location foreign keys
 
 - [x] AC1: Chimosa is the sole active reviewed gym in the named UAT dataset with verified address, coordinates and honest provenance.
 - [x] AC2: All seven exact old rows retain original fields except status/updated_at; all unrelated data and references are preserved.
-- [ ] AC3: Rollback rehearsal and committed operation pass; independent SQL and actual UAT selector agree, with no local/production/seed/account changes.
+- [x] AC3: Rollback rehearsal and committed operation pass; independent SQL and actual UAT selector agree, with no local/production/seed/account changes.
 
 ## Validation plan
 
@@ -74,13 +74,13 @@ No schema, API, dependency, environment, Auth or startup change. Rollback can de
 
 ## Validation results
 
-2026-10-19 hosted dev: `supabase db query --linked --project-ref mdzidiqosxbghmfyxphb --file work/dev0376/dry-run.sql -o json` passed with rollback at 20:35:20 UTC; the same guarded apply.sql committed at 20:36:39 UTC. Both reported 57 preserved tables, all unrelated row hashes unchanged, seven inactive gyms, sole active Chimosa and five unchanged references of each kind. Independent verify.sql reread agrees. The initial read-only inventory query used a nonexistent demo_runs.record_source column, failed without writes, and was corrected before the operation. Actual UAT selector verification remains pending.
+2026-10-19 hosted dev: `supabase db query --linked --project-ref mdzidiqosxbghmfyxphb --file work/dev0376/dry-run.sql -o json` passed with rollback at 20:35:20 UTC; the same guarded apply.sql committed at 20:36:39 UTC. Both reported 57 preserved tables, all unrelated row hashes unchanged, seven inactive gyms, sole active Chimosa and five unchanged references of each kind. Independent verify.sql reread agrees. The initial read-only inventory query used a nonexistent demo_runs.record_source column, failed without writes, and was corrected before the operation. Native Chrome UAT desktop (1390×775) and emulated phone (375×568) selectors both showed only the placeholder and Chimosa at Linienstraße 127; none of the seven retired entries appeared. QA performed no profile Save.
 
 | Criterion | Evidence | Result |
 | --- | --- | --- |
 | AC1 | Official website, real Geoapify response and independent final catalog readback | Passed |
 | AC2 | Rollback and apply stable-field assertions plus 57-table fingerprint equality | Passed |
-| AC3 | Rollback, committed operation and independent readback passed; native selector pending | In progress |
+| AC3 | Rollback/apply/readback and actual desktop/phone selectors agree | Passed |
 
 ## Risks, limitations, and follow-ups
 
@@ -88,7 +88,11 @@ Old gym-linked locations may no longer be eligible for new availability while th
 
 ## Completion and review references
 
-- Completed: Not completed.
-- Commit: Not created.
-- Review: Planning self-review; final review pending.
+- Completed: 2026-10-19 — sole active Chimosa, exact old-row preservation, rollback/apply/readback and both responsive selectors passed.
+- Commit: c8fc13a032ecf8656699e44987526ed5d5caba94 — `[DEV0376] [DEV0377] Curate UAT gyms and separate Berlin location search`; final evidence/archive follows in a documentation checkpoint.
+- Review: Self-review of exact manifest, stable-field assertions, 57-table preservation and final desktop/phone selector; no independent review.
 - Deployment or release: Catalog committed live in UAT at 20:36:39 UTC; no app deployment needed for the catalog alone.
+
+### Final integration and preservation review
+
+The catalog was checked again through the actual hosted app after DEV0377 source deployment. Desktop and 375×568 emulated phone dropdowns each show only Choose a gym and Chimosa. QA never submitted a coach profile. The original user draft window was not reloaded or saved; only a temporary window was used and closed. Existing five linked locations remain attached to hidden demo coaches and were not reassigned. Production/local seeds and accounts were untouched. Exact comparisons against the pre-QA private snapshot confirm unrelated specification/index/browser-test edits are preserved after removing only this task’s additions. No schema/application runtime edit belongs to this data ticket.

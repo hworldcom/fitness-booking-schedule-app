@@ -1,6 +1,6 @@
 # Coordination COR0031: Berlin training-location onboarding
 
-- Status: In progress
+- Status: Completed
 - Created: 2026-10-19
 - Last updated: 2026-10-19
 - Milestone: UAT coach onboarding
@@ -35,7 +35,7 @@ The catalog operation can finish independently of source changes. Perform its ro
 
 ## Validation results
 
-Work map and links reviewed at creation. Final integration pending; ticket-specific evidence belongs to each DEV record.
+Work map and links reviewed at creation and completion. Both direct DEV members are Completed. Actual UAT desktop and 375×568 emulated phone each show Chimosa as the sole reviewed gym and pass gym-first/separate-address/manual paths; the phone Potsdam query is rejected. Exact commit c8fc13a is live on a verified READY fra1 Preview; release/configuration/preservation details remain in the DEV records.
 
 ## Risks, limitations, and follow-ups
 
@@ -43,8 +43,8 @@ Provider coverage is incomplete and outside MovX control. Retired catalog record
 
 ## Completion and review references
 
-- Completed: Not completed.
-- Direct development tickets: Both In progress.
+- Completed: 2026-10-19 — Chimosa-only UAT catalog and separate Berlin gym/address onboarding validated together.
+- Direct development tickets: DEV0376 and DEV0377 both Completed.
 - Commit: Not applicable — coordination IDs never appear in commit subjects.
-- Review: Planning self-review; final integration pending.
-- Deployment or release: Pending.
+- Review: Final integration self-review; both direct members and their acceptance evidence checked, no independent review.
+- Deployment or release: UAT live on dpl_HStLKxxxqj5iwbpXvdioSxUsU8iC, source c8fc13a, Preview/fra1.
