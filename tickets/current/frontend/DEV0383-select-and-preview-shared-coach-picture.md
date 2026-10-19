@@ -45,15 +45,18 @@ Use native Chrome desktop and 375×568 for settings, preview, keyboard and truth
 
 ## Implementation record
 
-Pending implementation.
+Implemented locally; hosted migration/release and native desktop/mobile evidence remain in progress.
 
 ### Changes and rationale
 
-Pending.
+A Coach picture panel is available during application. Owners explicitly choose their current account picture, see private-until-approved/published guidance and use the personal Profile link to change it. Stop sharing preserves account bytes. Approved/demo owners retain separate portrait uploads. Successful selection/upload/removal updates an owner-bound local portrait override used by both profile-card and website previews, without remounting their editors or discarding unsaved text. New server image/owner state expires stale overrides. Account upload/removal copy explains the linked effect and avoids falling back to the same removed shared image.
 
 ### Affected files
 
-Pending.
+- [Picture settings](../../../src/features/coaches/coach-picture-settings.tsx): explicit opt-in/revocation, missing-image guidance, pending privacy, changed-account and truthful error states; preserves approved separate uploader.
+- [Coach editor](../../../src/features/coaches/coach-profile-editor.tsx), [portrait override](../../../src/features/coaches/coach-portrait-preview.ts) and [tests](../../../tests/coach-portrait-preview.test.ts): update only the matching owner's photo in both previews and preserve other draft properties; discard override when fresh server state differs.
+- [Image uploader](../../../src/features/profile/profile-image-uploader.tsx): successful image-change callback and shared-account copy/fallback.
+- Ticket/index/coordination records: integrated release, preservation and native evidence.
 
 ### Decisions and deviations
 
@@ -65,7 +68,9 @@ Consumes DEV0382's opt-in API; rollout and rollback details pending. No new envi
 
 ## Validation results
 
-Pending.
+Local integrated source: 422 unit/server tests (354 + 68), clean-source lint/types and scoped Prettier passed. Three preview helper tests prove unchanged unrelated draft references, different-owner isolation and newer-server/removal behavior. DEV0382's fresh production build plus seven real HTTP/Storage groups and six legacy database tests passed; its record discloses pre-existing broad database-lint failures. No original draft tab has been altered.
+
+UAT rollout and native checks remain pending. Backend compatible checkpoint: `4649717` (DEV0382). The old DEV0381 runtime is not a safe rollback after new account-source opt-ins; retain the backend checkpoint's parsers/API if rolling back UI.
 
 | Criterion | Evidence | Result |
 | --- | --- | --- |

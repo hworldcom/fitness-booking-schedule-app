@@ -26,8 +26,11 @@ import { CoachLocationPicker } from "./coach-location-picker";
 import { CoachApplicationBanner } from "./coach-application-gate";
 import { CoachProfileLocations } from "./coach-profile-locations";
 import { CoachProfilePreview } from "./coach-profile-preview";
-import { ProfileImageUploader } from "@/features/profile/profile-image-uploader";
-import { profileInitials } from "@/auth/profile-presentation";
+import { CoachPictureSettings } from "./coach-picture-settings";
+import {
+  coachWithPortraitOverride,
+  type CoachPortraitOverride,
+} from "./coach-portrait-preview";
 import { CoachWorkspaceHeader } from "./coach-workspace-header";
 import { CoachTrainingLocationManager } from "./coach-training-location-manager";
 import { CoachPublicUrlSettings } from "./coach-public-url-settings";
@@ -60,6 +63,9 @@ export function CoachProfileEditor({
   const [locationMode, setLocationMode] = useState<"gym" | "independent">(
     coach?.location.kind ?? "gym",
   );
+  const [portraitOverride, setPortraitOverride] =
+    useState<CoachPortraitOverride | null>(null);
+  const previewCoach = coachWithPortraitOverride(coach, portraitOverride);
   const initialDisciplines = new Set(coach?.disciplines ?? []);
   const publicationAllowed =
     coachAccess.status === "approved" || coachAccess.status === "demo";
@@ -103,10 +109,24 @@ export function CoachProfileEditor({
         access={coachAccess}
         hasProfile={Boolean(coach)}
       />
+      {previewCoach && (
+        <CoachPictureSettings
+          key={previewCoach.profileId}
+          coach={previewCoach}
+          publicationAllowed={publicationAllowed}
+          onImageChange={(imageUrl) =>
+            setPortraitOverride({
+              profileId: previewCoach.profileId,
+              baseImageUrl: coach!.portraitUrl,
+              imageUrl,
+            })
+          }
+        />
+      )}
       {coach && (
         <CoachWebsiteEditor
           key={coach.profileId}
-          coach={coach}
+          coach={previewCoach!}
           publicationAllowed={publicationAllowed}
         />
       )}
@@ -124,16 +144,6 @@ export function CoachProfileEditor({
 
       <div className={`coach-profile-layout${coach ? "" : " no-preview"}`}>
         <div className="coach-profile-editor-column">
-          {publicationAllowed && coach && (
-            <ProfileImageUploader
-              endpoint="/api/coach/portrait"
-              currentImageUrl={coach.portraitUrl}
-              displayName={coach.displayName}
-              initials={profileInitials(coach.displayName)}
-              kind="coach"
-            />
-          )}
-
           <form className="coach-editor-form" action={formAction}>
             <section className="coach-editor-panel">
               <div className="coach-editor-section-title">
@@ -471,7 +481,7 @@ export function CoachProfileEditor({
         </div>
         {coach && (
           <CoachProfilePreview
-            coach={coach}
+            coach={previewCoach!}
             publicationAllowed={publicationAllowed}
           />
         )}

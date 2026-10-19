@@ -24,6 +24,7 @@ export function ProfileImageUploader({
   initials,
   kind,
   onBusyChange,
+  onImageChange,
 }: {
   endpoint: "/api/profile/avatar" | "/api/coach/portrait";
   currentImageUrl: string | null;
@@ -32,21 +33,32 @@ export function ProfileImageUploader({
   initials: string;
   kind: "account" | "coach";
   onBusyChange?: (working: boolean) => void;
+  onImageChange?: (imageUrl: string | null) => void;
 }) {
-  const { refreshActor } = useActor();
+  const { actor, refreshActor } = useActor();
   const inputRef = useRef<HTMLInputElement>(null);
   const [imageUrl, setImageUrl] = useState(currentImageUrl);
   const [status, setStatus] = useState<UploadStatus>("idle");
   const [message, setMessage] = useState("");
   const working = status === "working";
   const coach = kind === "coach";
+  const sharedAccountPicture =
+    !coach &&
+    actor.status === "authorized" &&
+    Boolean(
+      actor.profile.coachPortraitUrl?.startsWith("/api/coaches/portraits/"),
+    );
   const presentation = coach
     ? { imageUrl, source: imageUrl ? ("coach" as const) : null }
-    : accountProfileImagePresentation(imageUrl, fallbackImageUrl);
+    : accountProfileImagePresentation(
+        imageUrl,
+        sharedAccountPicture ? null : fallbackImageUrl,
+      );
   const detectedCoachPortrait = !coach && presentation.source === "coach";
 
   async function reconcileSuccess(nextImageUrl: string | null) {
     setImageUrl(nextImageUrl);
+    onImageChange?.(nextImageUrl);
     await refreshActor();
   }
 
@@ -76,7 +88,11 @@ export function ProfileImageUploader({
       await reconcileSuccess(value.imageUrl);
       setStatus("saved");
       setMessage(
-        coach ? "Public coach portrait saved." : "Account avatar saved.",
+        coach
+          ? "Public coach portrait saved."
+          : sharedAccountPicture
+            ? "Account and shared coach picture saved."
+            : "Account avatar saved.",
       );
     } catch (error) {
       setStatus("error");
@@ -109,9 +125,11 @@ export function ProfileImageUploader({
       setMessage(
         coach
           ? "Public coach portrait removed. Initials are shown instead."
-          : fallbackImageUrl
-            ? "Account avatar removed. Your public coach portrait is shown instead."
-            : "Account avatar removed. Initials are shown instead.",
+          : sharedAccountPicture
+            ? "Account and shared coach picture removed. Initials are shown instead."
+            : fallbackImageUrl
+              ? "Account avatar removed. Your public coach portrait is shown instead."
+              : "Account avatar removed. Initials are shown instead.",
       );
     } catch {
       setStatus("error");
@@ -141,7 +159,11 @@ export function ProfileImageUploader({
       </div>
       <div className="profile-image-uploader-content">
         <span className="eyebrow">
-          {coach ? "PUBLIC COACH PORTRAIT" : "PRIVATE ACCOUNT AVATAR"}
+          {coach
+            ? "PUBLIC COACH PORTRAIT"
+            : sharedAccountPicture
+              ? "ACCOUNT & COACH PICTURE"
+              : "PRIVATE ACCOUNT AVATAR"}
         </span>
         <h2 id={`${kind}-image-title`}>
           {coach
@@ -151,9 +173,11 @@ export function ProfileImageUploader({
         <p>
           {coach
             ? "Shown publicly in coach discovery while your coach profile is visible. It is separate from your private account avatar."
-            : detectedCoachPortrait
-              ? "Your public coach portrait was detected and is shown here as a fallback. Choosing an account picture creates a separate private avatar."
-              : "Shown only on signed-in account surfaces. It is not reused as your public coach portrait."}
+            : sharedAccountPicture
+              ? "This picture is also used for your coach profile. It stays private during application review and becomes public when your approved coach profile is published."
+              : detectedCoachPortrait
+                ? "Your public coach portrait was detected and is shown here as a fallback. Choosing an account picture creates a separate private avatar."
+                : "Shown only on signed-in account surfaces. It is not reused as your public coach portrait."}
         </p>
         <small>
           JPEG, PNG or WebP up to 8 MB. MovX center-crops, compresses and stores
