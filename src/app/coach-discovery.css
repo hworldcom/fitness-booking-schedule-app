@@ -2576,33 +2576,40 @@
 
 @media (max-width: 980px) {
   .mobile-explore-view-switch {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
-    margin-bottom: 16px;
-    border: 1px solid #dfe5da;
-    border-radius: 15px;
-    background: #edf1e9;
-    padding: 5px;
+    display: flex;
+    width: fit-content;
+    max-width: 100%;
+    margin-bottom: 20px;
+    border: 1px solid #d6cddd;
+    border-radius: 12px;
+    background: #fff;
   }
 
   .mobile-explore-view-switch > a,
   .mobile-explore-view-disabled {
-    display: flex;
-    min-height: 48px;
+    display: inline-flex;
+    min-width: 96px;
+    min-height: 44px;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    padding-inline: 12px;
     border-radius: 11px;
-    color: #63705f;
-    font-size: 11px;
-    font-weight: 800;
+    color: var(--public-purple, #61417b);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
   }
 
   .mobile-explore-view-switch > a.active {
-    background: var(--coach-forest);
-    box-shadow: 0 6px 16px rgb(25 49 38 / 14%);
-    color: var(--coach-lime);
+    background: #f4eef9;
+    box-shadow: inset 0 0 0 1px #aa91be;
+  }
+
+  .coach-discovery .mobile-explore-view-switch > a:focus-visible,
+  .coach-discovery .mobile-map-back:focus-visible {
+    outline: 3px solid var(--public-purple, #61417b);
+    outline-offset: 3px;
   }
 
   .mobile-explore-view-switch small {
@@ -2611,13 +2618,13 @@
     height: 21px;
     place-items: center;
     border-radius: 999px;
-    background: rgb(255 255 255 / 14%);
-    font-size: 8px;
+    background: #eee5f5;
+    font-size: 10px;
   }
 
   .mobile-explore-view-disabled {
     cursor: not-allowed;
-    opacity: 0.62;
+    color: var(--public-muted, #625c69);
   }
 
   .mobile-map-recovery {
@@ -2701,16 +2708,17 @@
     align-items: center;
     gap: 7px;
     justify-self: start;
-    border-radius: 999px;
-    background: #edf3e5;
+    border: 1px solid #d6cddd;
+    border-radius: 12px;
+    background: #fff;
     padding: 9px 13px;
-    color: #405838;
-    font-size: 10px;
-    font-weight: 850;
+    color: var(--public-purple, #61417b);
+    font-size: 14px;
+    font-weight: 700;
   }
 
   .mobile-view-map .coach-map-detail:focus {
-    outline: 3px solid #91ad61;
+    outline: 3px solid var(--public-purple, #61417b);
     outline-offset: -3px;
   }
 

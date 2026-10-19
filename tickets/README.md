@@ -7,7 +7,7 @@ This directory records planned changes, task status and implementation evidence.
 - A **development ticket** is a small implementable task named `# Ticket DEVNNNN` with a `DEVNNNN-short-title.md` filename. It owns implementation and validation evidence, and its DEV ID is used in commits. Start one from [TEMPLATE.md](TEMPLATE.md).
 - A **coordination record** is a non-implementation umbrella named `# Coordination CORNNNN` with a `CORNNNN-short-title.md` filename. It maps a flat set of peer development tickets and is never used as a commit reference. Start one from [COORDINATION_TEMPLATE.md](COORDINATION_TEMPLATE.md).
 
-DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0351 and COR0030.
+DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0363 and COR0031.
 
 Every DEV record declares its direct coordination membership near the top: one linked COR, or `None — independent development ticket`. Direct membership is limited to one COR and must match that COR's work map. Dependencies, downstream consumers and historical links remain separate relationships.
 
@@ -98,6 +98,8 @@ DEV0349 is reserved for the newly requested local-only fictional coach/UAT retir
 
 DEV0350 is allocated to independent public-theme/Home-banner work in the shared workspace; its implementation is excluded from the DEV0316 checkpoint.
 
+DEV0351–DEV0359, DEV0361–DEV0362 and COR0030 are allocated to independent public-discovery, Events and How it works work in the shared workspace. They remain reserved while awaiting their own commits; DEV0360 excludes those implementations.
+
 ## Ticket index
 
 ### Current records
@@ -162,6 +164,7 @@ DEV0350 is allocated to independent public-theme/Home-banner work in the shared 
 
 | Record                                                                                                                                               | Area         | Milestone                                  | Status    | Outcome                                                                                                                                                                                                                  |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [DEV0360 — Align Explore controls with public colors](archive/frontend/DEV0360-align-explore-controls-with-public-colors.md) | Frontend | M3 — Public discovery visual polish | Completed | White/lavender List–Map and purple card/map-preview focus; 28 isolated tests, production build/types and native responsive/keyboard/fallback checks pass. |
 | [DEV0315 — Edit and preview coach websites](archive/frontend/DEV0315-edit-and-preview-coach-websites.md) | Frontend | M10 — Coach marketplace websites | Completed | Core owner content/banner/rate/URL editor; native desktop/mobile recovery and exact cleanup passed; later gallery controls/public composition remain separate. |
 | [DEV0329 — Remove requested registration account again](archive/backend/DEV0329-remove-requested-registration-account-again.md)                        | Backend      | Registration test preparation        | Completed   | Exact local account/pending application removed; target sessions absent and 46-table non-target fingerprints preserved.                                                                                                                                         |
 | [DEV0328 — Offer optional registration profile picture](archive/frontend/DEV0328-offer-optional-registration-profile-picture.md)                       | Frontend     | Authentication quality before UAT    | Completed   | Optional private picture, skip/later editing and reliable Auth continuation; 271 tests, 8 real phases, browser/build checks pass.                                                                                                                               |

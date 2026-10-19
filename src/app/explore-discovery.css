@@ -95,14 +95,15 @@
   min-height: 0;
 }
 .coach-discovery .compact-coach-card.result.selected {
-  outline: 2px solid #91ad61;
-  outline-offset: 7px;
-  border-radius: 12px;
+  border-color: #86609f;
+  outline: 2px solid #aa91be;
+  outline-offset: 3px;
+  border-radius: 20px;
   box-shadow: none;
 }
 .coach-discovery .compact-coach-card.result:focus {
-  outline: 3px solid #46611b;
-  outline-offset: 7px;
+  outline: 3px solid var(--public-purple, #61417b);
+  outline-offset: 3px;
 }
 .coach-discovery .compact-coach-card.result > header {
   display: block;
