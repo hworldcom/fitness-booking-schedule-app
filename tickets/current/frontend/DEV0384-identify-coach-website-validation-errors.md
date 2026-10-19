@@ -60,6 +60,8 @@ The shared domain validator now collects structured field/message issues in the 
 
 ### Decisions and deviations
 
+2026-10-20 native review: FAQ field feedback, summary focus, keyboard navigation and correction passed on UAT. The HTTPS field still grouped several URL rules in one message; refine it to report the actual protocol, missing address, length, spaces/backslashes, login-details or domain/parse cause before final release, preserving acceptance rules.
+
 2026-10-20: Preserve every existing acceptance/rejection and normalization rule; do not silently discard empty rows. All diagnostics omit raw input values, including unsafe URL login details. Native QA will cancel every temporary draft without submitting valid content.
 
 ### Contracts, configuration, and operations
@@ -68,9 +70,13 @@ No migration, new dependency, environment setting or API response change planned
 
 ## Validation results
 
-- `npx tsx --test tests/coach-website.test.ts tests/coach-website-editor.test.ts tests/coach-website-errors.test.ts`: 16 passed. Covers the reported empty extra FAQ, four concurrent missing fields, correction/removal without input mutation, exact normalized duplicate line numbers, Unicode character bounds, invalid characters, HTTPS constraints, malformed content and summary/inline ARIA targets. Existing revision/conflict/recovery tests passed unchanged.
-- `npm test`: 359 unit and 68 server tests passed (427 total).
-- `npm run lint` passed in a clean tracked-source export with owned overlays; `npm run typecheck` passed there after capturing the narrowed input in a stable record for a nested helper (initial type check caught that narrowing issue). Scoped Prettier and source `git diff --check` passed. Hosted build, native responsive/keyboard and release/preservation checks remain in progress.
+- `npx tsx --test tests/coach-website.test.ts tests/coach-website-editor.test.ts tests/coach-website-errors.test.ts`: 17 passed after the URL-cause refinement. Covers the reported empty extra FAQ, four concurrent missing fields, seven individual URL causes, correction/removal without input mutation, exact normalized duplicate line numbers, Unicode character bounds, invalid characters, HTTPS constraints, malformed content and summary/inline ARIA targets. Existing revision/conflict/recovery tests passed unchanged.
+- `npm test`: 360 unit and 68 server tests passed after refinement (428 total).
+- `npm run lint` passed in a clean tracked-source export with owned overlays; `npm run typecheck` passed there after capturing the narrowed input in a stable record for a nested helper (initial type check caught that narrowing issue). Scoped Prettier and source `git diff --check` passed. Final refined-source clean lint/types and scoped formatting passed again; hosted build and final URL-message verification remain in progress.
+- Local production build: `npm run prebuild` followed by `npx next build --webpack` passed in the clean-source export before the URL-only refinement. Hosted source `aeca996` also built successfully; its READY Preview/fra1 deployment `dpl_CZ2wtdDiy6WDFT1qYjqxyv9n7LkN` was verified before aliasing UAT. Vercel initially stayed in Initializing for several minutes; one exact-source forced retry `dpl_CUsUisRXNdpq4LsQRytxi6WM54fQ` was created, but the original completed first and was the deployment selected. Final URL-refinement release is still pending.
+- Native Chrome desktop 1390×775 and phone emulation 375×568: in a disposable `?qa=DEV0384` tab, added empty FAQ 2 after the owner's valid FAQ 1 and attempted Save. Both actual fields appeared in the summary and inline; desktop summary received focus. Tab twice + Return focused the missing answer. Filling the two temporary fields removed their errors without saving; valid FAQ 1 and all other text remained. Added a blank link, checked simultaneous label/address errors and HTTP rejection. On phone both numbered messages wrapped within the viewport, summary link reached the missing answer, and explicit removal of FAQ 2 cleared the errors. Cancelled every draft, closed DevTools and only the disposable tab; all original tabs remain. Evidence: ignored desktop-summary.png, desktop-inline.png, mobile-summary.png and mobile-inline.png under `work/dev0384/`.
+- `node work/dev0384/verify-preservation.mjs`: all 57 complete UAT table fingerprints, website revision 2 and migration version matched exactly before/after unsaved desktop/phone QA. Five environment metadata entries and the root staging project linkage were unchanged.
+- Native environment limitation: a new one-tab window showed stale/blank page rendering and focus switched to another window. After the owner confirmed Chrome was free, closed only that blank QA window and used a new disposable tab in the existing working window; this resolved the browser rendering issue. No original draft tab was reloaded or edited.
 - No database migration or persistence interface change; database integration mutation tests are not required for this presentation/diagnostics change. Existing server tests and parser-bound tests verify the shared validation path.
 
 | Criterion | Evidence | Result  |

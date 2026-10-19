@@ -76,22 +76,52 @@ export function isWebsiteRevision(value: unknown): value is number {
     Number(value) <= 2147483647
   );
 }
-function externalUrl(value: unknown): string | null {
-  if (typeof value !== "string" || value.length > 2048 || /[\s\\]/u.test(value))
+function externalUrl(
+  value: unknown,
+  problem: (message: string) => void,
+): string | null {
+  if (typeof value !== "string") {
+    problem("address must be text.");
     return null;
+  }
+  if (!value.trim()) {
+    problem("address is empty. Add a full HTTPS address or remove this link.");
+    return null;
+  }
+  let invalid = false;
+  const reject = (message: string) => {
+    invalid = true;
+    problem(message);
+  };
+  if (value.length > 2048)
+    reject("address is too long. Use 2,048 characters or fewer.");
+  if (/\s/u.test(value))
+    reject("address contains spaces or line breaks. Remove them from the URL.");
+  if (/\\/u.test(value))
+    reject(
+      "address contains a backslash. Remove it or use a forward slash (/).",
+    );
+  if (invalid) return null;
   try {
     const url = new URL(value);
-    if (
-      url.protocol !== "https:" ||
-      url.username ||
-      url.password ||
-      !url.hostname.includes(".") ||
-      url.hostname.endsWith(".localhost")
-    )
-      return null;
+    if (url.protocol !== "https:")
+      reject("address must use HTTPS. Start it with https://.");
+    if (url.username || url.password)
+      reject(
+        "address contains login details. Remove the username and password from the URL.",
+      );
+    if (!url.hostname.includes(".") || url.hostname.endsWith(".localhost"))
+      reject(
+        "address needs a public domain, such as example.com. Localhost addresses are not supported.",
+      );
     const normalized = url.toString();
-    return normalized.length <= 2048 ? normalized : null;
+    if (normalized.length > 2048 && !invalid)
+      reject("address is too long. Use 2,048 characters or fewer.");
+    return invalid ? null : normalized;
   } catch {
+    problem(
+      "address is not a complete URL. Use a full address such as https://example.com.",
+    );
     return null;
   }
 }
@@ -276,14 +306,9 @@ export function validateCoachWebsiteContent(value: unknown): {
       false,
       `Link ${i + 1} label is empty. Add a label or remove link ${i + 1}.`,
     );
-    const url = externalUrl(raw.url);
-    if (!url)
-      issue(
-        `${field}.url`,
-        typeof raw.url === "string" && !raw.url.trim()
-          ? `Link ${i + 1} address is empty. Add a full HTTPS address or remove link ${i + 1}.`
-          : `Link ${i + 1} address must be a valid HTTPS URL with a public domain, no login details, spaces or backslashes, and at most 2,048 characters (for example https://example.com).`,
-      );
+    const url = externalUrl(raw.url, (message) =>
+      issue(`${field}.url`, `Link ${i + 1} ${message}`),
+    );
     return Object.freeze({ label, url: url ?? "" });
   });
   return {

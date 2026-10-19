@@ -212,3 +212,27 @@ test("malformed website diagnostics fail closed with bounded field references", 
     );
   }
 });
+
+test("external-link diagnostics identify the actual invalid URL rule without a checklist", () => {
+  for (const [url, expected] of [
+    ["http://example.com", /must use HTTPS/],
+    ["https://user:secret@example.com", /contains login details/],
+    ["https://localhost", /needs a public domain/],
+    ["example.com", /not a complete URL/],
+    ["https://example.com/a b", /contains spaces/],
+    ["https://example.com\\path", /contains a backslash/],
+    ["https://example.com/" + "a".repeat(2048), /too long/],
+  ] as const) {
+    const result = validateCoachWebsiteContent({
+      links: [{ label: "Site", url }],
+    });
+    assert.equal(result.content, null);
+    assert.equal(result.issues.length, 1, url);
+    assert.equal(result.issues[0].field, "links.0.url");
+    assert.match(result.issues[0].message, expected);
+    assert.doesNotMatch(
+      result.issues[0].message,
+      /secret|Check the field limits/,
+    );
+  }
+});
