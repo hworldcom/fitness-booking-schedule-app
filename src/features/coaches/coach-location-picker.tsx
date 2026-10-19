@@ -68,12 +68,12 @@ function searchFailureMessage(error: unknown) {
     return "Location search could not be completed. Try again.";
   }
   if (error.reason === "configuration") {
-    return "The public place-search key was rejected or is not allowed for this origin.";
+    return "Location search is not configured for this site. Use manual coordinates or try again later.";
   }
   if (error.reason === "quota") {
-    return "Place search has reached its current request limit. Try again later or use manual coordinates.";
+    return "Location search has reached its current request limit. Try again later or use manual coordinates.";
   }
-  return "Place search is temporarily unavailable. Try again or use manual coordinates.";
+  return "Location search is temporarily unavailable. Try again or use manual coordinates.";
 }
 
 export function CoachLocationPicker({
@@ -87,8 +87,8 @@ export function CoachLocationPicker({
   const startsWithSearch =
     searchConfiguration.status === "ready" &&
     (!existing || existing.source === "permanent-geocoding");
-  const [entryMode, setEntryMode] = useState<"search" | "manual">(
-    startsWithSearch ? "search" : "manual",
+  const [entryMode, setEntryMode] = useState<"gym" | "address" | "manual">(
+    startsWithSearch ? "gym" : "manual",
   );
   const [draft, setDraft] = useState<LocationDraft | null>(existing);
   const [confirmed, setConfirmed] = useState(Boolean(existing));
@@ -124,13 +124,16 @@ export function CoachLocationPicker({
     );
   };
 
-  const chooseSearch = () => {
+  const chooseSearch = (mode: "gym" | "address") => {
     if (searchConfiguration.status !== "ready") return;
-    setEntryMode("search");
+    requestRef.current?.abort();
+    setEntryMode(mode);
+    setQuery("");
+    setCandidates(Object.freeze([]));
+    setSearchStatus("idle");
+    setSearchMessage("");
     setConfirmed(false);
-    setDraft((current) =>
-      current?.source === "permanent-geocoding" ? current : null,
-    );
+    setDraft(null);
   };
 
   const runSearch = useCallback(async () => {
@@ -149,6 +152,7 @@ export function CoachLocationPicker({
       const nextCandidates = await searchLocations(
         query,
         searchConfiguration.apiKey,
+        entryMode === "gym" ? "gym" : "place",
         request.signal,
       );
       if (request.signal.aborted) return;
@@ -156,16 +160,19 @@ export function CoachLocationPicker({
       setSearchStatus(nextCandidates.length === 0 ? "empty" : "idle");
       setSearchMessage(
         nextCandidates.length === 0
-          ? "No gym or public place matched that search. Refine the query or use manual coordinates."
+          ? entryMode === "gym"
+            ? "No gym or fitness facility matched in Berlin. Refine the gym name or choose Own address."
+            : "No address matched in Berlin. Refine the address or enter coordinates manually."
           : "",
       );
     } catch (error) {
+      if (request.signal.aborted) return;
       if (error instanceof DOMException && error.name === "AbortError") return;
       setCandidates(Object.freeze([]));
       setSearchStatus("error");
       setSearchMessage(searchFailureMessage(error));
     }
-  }, [query, searchConfiguration]);
+  }, [entryMode, query, searchConfiguration]);
 
   const chooseCandidate = (candidate: LocationCandidate) => {
     setDraft(
@@ -223,19 +230,19 @@ export function CoachLocationPicker({
         >
           <button
             type="button"
-            className={entryMode === "search" ? "active" : ""}
-            aria-pressed={entryMode === "search"}
-            onClick={chooseSearch}
+            className={entryMode === "gym" ? "active" : ""}
+            aria-pressed={entryMode === "gym"}
+            onClick={() => chooseSearch("gym")}
           >
-            <Search size={15} aria-hidden="true" /> Gym and place search
+            <Dumbbell size={15} aria-hidden="true" /> Gym search
           </button>
           <button
             type="button"
-            className={entryMode === "manual" ? "active" : ""}
-            aria-pressed={entryMode === "manual"}
-            onClick={chooseManual}
+            className={entryMode !== "gym" ? "active" : ""}
+            aria-pressed={entryMode !== "gym"}
+            onClick={() => chooseSearch("address")}
           >
-            <LocateFixed size={15} aria-hidden="true" /> Manual coordinates
+            <MapPin size={15} aria-hidden="true" /> Own address
           </button>
         </div>
       ) : (
@@ -246,16 +253,20 @@ export function CoachLocationPicker({
         >
           <MapPinOff size={18} aria-hidden="true" />
           <span>
-            Gym and place search is not configured. Manual coordinates remain
+            Gym and address search is not configured. Manual coordinates remain
             available and are stored without a provider claim.
           </span>
         </div>
       )}
 
-      {entryMode === "search" && searchConfiguration.status === "ready" ? (
+      {entryMode !== "manual" && searchConfiguration.status === "ready" ? (
         <div className="coach-location-search">
           <label className="coach-field coach-field-wide">
-            <span>Search for a gym, dojo, sports club or public place</span>
+            <span>
+              {entryMode === "gym"
+                ? "Search for a gym or fitness facility in Berlin"
+                : "Find your training address in Berlin"}
+            </span>
             <div className="coach-location-search-row">
               <input
                 value={query}
@@ -266,8 +277,14 @@ export function CoachLocationPicker({
                   void runSearch();
                 }}
                 maxLength={160}
-                placeholder="For example: Groundline MMA or Tempelhofer Damm 104"
-                autoComplete="street-address"
+                placeholder={
+                  entryMode === "gym"
+                    ? "For example: Chimosa"
+                    : "For example: Linienstraße 127, Berlin"
+                }
+                autoComplete={
+                  entryMode === "address" ? "street-address" : "off"
+                }
               />
               <button
                 className="button secondary"
@@ -280,13 +297,25 @@ export function CoachLocationPicker({
               </button>
             </div>
             <small>
-              Search runs only when requested and checks both named fitness
-              facilities and general places around Berlin.
+              {entryMode === "gym"
+                ? "Search by name for gyms, dojos and sports facilities within Berlin. If yours is missing, choose Own address."
+                : "Search for your own meeting address within Berlin, then select and confirm it. You can also enter coordinates manually."}
             </small>
             <small>
               <LocationSearchAttribution />
             </small>
           </label>
+
+          {entryMode === "address" && (
+            <button
+              className="button secondary"
+              type="button"
+              onClick={chooseManual}
+            >
+              <LocateFixed size={15} aria-hidden="true" /> Enter coordinates
+              manually
+            </button>
+          )}
 
           {searchMessage && (
             <p
@@ -428,7 +457,7 @@ export function CoachLocationPicker({
         name="locationSource"
         value={
           draft?.source ??
-          (entryMode === "search" ? "permanent-geocoding" : "manual")
+          (entryMode !== "manual" ? "permanent-geocoding" : "manual")
         }
       />
       <input

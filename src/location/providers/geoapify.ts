@@ -7,7 +7,17 @@ import {
 } from "../contracts";
 
 const BERLIN_CENTER = Object.freeze({ longitude: 13.405, latitude: 52.52 });
-const BERLIN_SEARCH_RADIUS_METERS = 50_000;
+// Geoapify city lookup for Berlin, DE (OSM relation 62422), checked 2026-10-19.
+// A place filter constrains the city boundary; proximity only ranks its results.
+const BERLIN_PLACE_ID =
+  "513147ea984eca2a4059cb694fc939424a40f00101f901d6f3000000000000c002089203064265726c696e";
+// Outer bounds rounded outward from the existing official Berlin reference.
+const BERLIN_BOUNDS = {
+  west: 13.0883,
+  south: 52.3382,
+  east: 13.7612,
+  north: 52.6756,
+};
 const RESULT_LIMIT = 5;
 
 export const GEOAPIFY_GYM_CATEGORIES = Object.freeze([
@@ -64,7 +74,7 @@ export function buildGeoapifyGeocodingUrl(query: string, apiKey: string) {
   url.searchParams.set("text", validatedQuery(query));
   url.searchParams.set("apiKey", validatedApiKey(apiKey));
   url.searchParams.set("format", "geojson");
-  url.searchParams.set("filter", "countrycode:de");
+  url.searchParams.set("filter", `place:${BERLIN_PLACE_ID}|countrycode:de`);
   url.searchParams.set(
     "bias",
     `proximity:${BERLIN_CENTER.longitude},${BERLIN_CENTER.latitude}`,
@@ -83,10 +93,8 @@ export function buildGeoapifyGymSearchRequest(query: string, apiKey: string) {
       categories: GEOAPIFY_GYM_CATEGORIES,
       name: validatedQuery(query),
       filter: Object.freeze({
-        type: "circle" as const,
-        lon: BERLIN_CENTER.longitude,
-        lat: BERLIN_CENTER.latitude,
-        radius: BERLIN_SEARCH_RADIUS_METERS,
+        type: "place" as const,
+        id: BERLIN_PLACE_ID,
       }),
       bias: Object.freeze({
         type: "proximity" as const,
@@ -145,25 +153,39 @@ export function parseGeoapifyResponse(
     ) {
       continue;
     }
-    const longitude = Number(coordinates[0]);
-    const latitude = Number(coordinates[1]);
+    const longitude = coordinates[0];
+    const latitude = coordinates[1];
     const label = candidateLabel(properties);
+    if (
+      !label ||
+      label.length > 240 ||
+      typeof latitude !== "number" ||
+      !Number.isFinite(latitude) ||
+      latitude < BERLIN_BOUNDS.south ||
+      latitude > BERLIN_BOUNDS.north ||
+      typeof longitude !== "number" ||
+      !Number.isFinite(longitude) ||
+      longitude < BERLIN_BOUNDS.west ||
+      longitude > BERLIN_BOUNDS.east ||
+      text(properties.country_code).toLowerCase() !== "de" ||
+      text(properties.city).toLowerCase() !== "berlin" ||
+      (kind === "gym" &&
+        (!Array.isArray(properties.categories) ||
+          !properties.categories.some(
+            (category) =>
+              typeof category === "string" &&
+              GEOAPIFY_GYM_CATEGORIES.some(
+                (accepted) =>
+                  category === accepted || category.startsWith(`${accepted}.`),
+              ),
+          )))
+    ) {
+      continue;
+    }
     const providerId =
       text(properties.place_id) ||
       text(feature?.id) ||
       `${latitude.toFixed(6)}:${longitude.toFixed(6)}`;
-    if (
-      !label ||
-      label.length > 240 ||
-      !Number.isFinite(latitude) ||
-      latitude < -90 ||
-      latitude > 90 ||
-      !Number.isFinite(longitude) ||
-      longitude < -180 ||
-      longitude > 180
-    ) {
-      continue;
-    }
     const key = `${label.toLocaleLowerCase()}|${latitude.toFixed(6)}|${longitude.toFixed(6)}`;
     if (seen.has(key)) continue;
     seen.add(key);
@@ -194,7 +216,8 @@ async function responseJson(response: Response) {
   if (!response.ok) throw searchError("provider");
   try {
     return await response.json();
-  } catch {
+  } catch (error) {
+    if (isAbortError(error)) throw error;
     throw searchError("response");
   }
 }
@@ -203,79 +226,35 @@ function isAbortError(error: unknown) {
   return error instanceof DOMException && error.name === "AbortError";
 }
 
-function preferredFailure(errors: readonly unknown[]) {
-  const reasons = errors
-    .filter((error): error is LocationSearchError =>
-      Boolean(error instanceof LocationSearchError),
-    )
-    .map((error) => error.reason);
-  if (reasons.includes("configuration")) return searchError("configuration");
-  if (reasons.includes("quota")) return searchError("quota");
-  if (reasons.includes("response")) return searchError("response");
-  return searchError("provider");
-}
-
-function deduplicateCandidates(
-  candidates: readonly LocationCandidate[],
-): readonly LocationCandidate[] {
-  const deduplicated: LocationCandidate[] = [];
-  const seen = new Set<string>();
-  for (const candidate of candidates) {
-    const key = `${candidate.label.toLocaleLowerCase()}|${candidate.latitude.toFixed(6)}|${candidate.longitude.toFixed(6)}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    deduplicated.push(candidate);
-    if (deduplicated.length === RESULT_LIMIT) break;
-  }
-  return Object.freeze(deduplicated);
-}
-
 export async function searchLocations(
   query: string,
   apiKey: string,
+  kind: LocationCandidate["kind"] = "gym",
   signal?: AbortSignal,
 ): Promise<readonly LocationCandidate[]> {
-  const geocodingUrl = buildGeoapifyGeocodingUrl(query, apiKey);
-  const gymRequest = buildGeoapifyGymSearchRequest(query, apiKey);
-
-  const settled = await Promise.allSettled([
-    fetch(geocodingUrl, {
-      headers: { Accept: "application/geo+json" },
+  const gymRequest =
+    kind === "gym" ? buildGeoapifyGymSearchRequest(query, apiKey) : null;
+  const url = gymRequest?.url ?? buildGeoapifyGeocodingUrl(query, apiKey);
+  try {
+    const response = await fetch(url, {
+      ...(gymRequest
+        ? {
+            method: "POST",
+            headers: {
+              Accept: "application/geo+json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(gymRequest.body),
+          }
+        : { headers: { Accept: "application/geo+json" } }),
       signal,
-    })
-      .then(responseJson)
-      .then((value) => parseGeoapifyResponse(value, "place")),
-    fetch(gymRequest.url, {
-      method: "POST",
-      headers: {
-        Accept: "application/geo+json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(gymRequest.body),
-      signal,
-    })
-      .then(responseJson)
-      .then((value) => parseGeoapifyResponse(value, "gym")),
-  ]);
-
-  const rejected = settled
-    .filter(
-      (result): result is PromiseRejectedResult => result.status === "rejected",
-    )
-    .map((result) => result.reason);
-  const aborted = rejected.find(isAbortError);
-  if (aborted) throw aborted;
-
-  const candidates: LocationCandidate[] = [];
-  const geocoding = settled[0];
-  if (geocoding.status === "fulfilled") {
-    candidates.push(...geocoding.value);
+    });
+    const value = await responseJson(response);
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+    return parseGeoapifyResponse(value, kind);
+  } catch (error) {
+    if (isAbortError(error) || error instanceof LocationSearchError)
+      throw error;
+    throw searchError("provider");
   }
-  const gyms = settled[1];
-  if (gyms.status === "fulfilled") {
-    candidates.unshift(...gyms.value);
-  }
-  const result = deduplicateCandidates(candidates);
-  if (result.length > 0 || rejected.length === 0) return result;
-  throw preferredFailure(rejected);
 }

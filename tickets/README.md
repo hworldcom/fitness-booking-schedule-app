@@ -7,7 +7,7 @@ This directory records planned changes, task status and implementation evidence.
 - A **development ticket** is a small implementable task named `# Ticket DEVNNNN` with a `DEVNNNN-short-title.md` filename. It owns implementation and validation evidence, and its DEV ID is used in commits. Start one from [TEMPLATE.md](TEMPLATE.md).
 - A **coordination record** is a non-implementation umbrella named `# Coordination CORNNNN` with a `CORNNNN-short-title.md` filename. It maps a flat set of peer development tickets and is never used as a commit reference. Start one from [COORDINATION_TEMPLATE.md](COORDINATION_TEMPLATE.md).
 
-DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0374 and COR0031.
+DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0378 and COR0032.
 
 Every DEV record declares its direct coordination membership near the top: one linked COR, or `None — independent development ticket`. Direct membership is limited to one COR and must match that COR's work map. Dependencies, downstream consumers and historical links remain separate relationships.
 
@@ -99,6 +99,8 @@ DEV0363 is allocated to independent core coach website planning and is excluded 
 
 DEV0365 remains allocated to the independent How it works page implementation and is excluded from the DEV0366 schedule-access checkpoint.
 
+DEV0374–DEV0375 remain allocated to independent completed UAT operations whose records are present in the shared workspace; the DEV0376/DEV0377 source checkpoint does not include those records.
+
 ## Ticket index
 
 ### Current records
@@ -109,6 +111,9 @@ DEV0365 remains allocated to the independent How it works page implementation an
 | [DEV0369 — Refresh public and availability QA baselines](current/frontend/DEV0369-refresh-public-and-availability-qa-baselines.md) | Frontend | QA follow-up | Draft | Finding and next action recorded by DEV0367; implementation pending. |
 | [DEV0370 — Investigate group scheduling contention proof](current/backend/DEV0370-investigate-group-scheduling-contention-proof.md) | Backend | QA follow-up | Draft | Finding and next action recorded by DEV0367; implementation pending. |
 | [DEV0371 — Isolate quality checks from local evidence](current/backend/DEV0371-isolate-quality-checks-from-local-evidence.md) | Backend | QA follow-up | Draft | Finding and next action recorded by DEV0367; implementation pending. |
+| [COR0031 — Berlin training-location onboarding](current/organisatory/COR0031-berlin-training-location-onboarding.md) | Organisatory | UAT coach onboarding | In progress | Coordinate Chimosa-only reviewed catalog and gym-first/separate Berlin address lookup. |
+| [DEV0376 — Curate UAT reviewed gym catalog](current/backend/DEV0376-curate-uat-reviewed-gym-catalog.md) | Backend | UAT coach onboarding | In progress | Retire seven exact fictional choices, add Chimosa and preserve unrelated UAT data/history. |
+| [DEV0377 — Separate Berlin gym and address search](current/frontend/DEV0377-separate-berlin-gym-and-address-search.md) | Frontend | UAT coach onboarding | In progress | Gym-first and own-address modes, Berlin limits, responsive proof and UAT release. |
 | [COR0030 — Events cards, banners and map](current/organisatory/COR0030-events-cards-banners-and-map.md) | Organisatory | Public group-session discovery | In progress | Coordinate media persistence, owner banner controls and public cards/map/paging integration. |
 | [DEV0357 — Manage group-session banners](current/frontend/DEV0357-manage-group-session-banners.md) | Frontend | Public group-session discovery | Blocked | Chrome desktop upload/reload/replace/remove/invalid and keyboard removal passed; phone picker/recovery checks remain blocked by native control. |
 | [DEV0358 — Redesign Events cards and map](current/frontend/DEV0358-redesign-events-cards-and-map.md) | Frontend | Public group-session discovery | Blocked | Chrome verified owner/public media and 23-card paging/focus; remaining phone/recovery/map-keyboard/filter-reset acceptance needs working native control. |
