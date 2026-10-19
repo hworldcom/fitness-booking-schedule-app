@@ -1,25 +1,18 @@
 import Link from "next/link";
-import { ArrowRight, SearchX, UserRoundSearch } from "lucide-react";
+import { SearchX, UserRoundSearch } from "lucide-react";
 import type { CoachDirectoryState } from "@/domain/coaches";
 import { CompactCoachCard } from "./compact-coach-card";
 import {
-  homeCoachDirectoryPage,
+  homeCoachDirectoryPreview,
   homeDirectoryHref,
 } from "./home-marketplace-contract";
-import { HomeLoadMore } from "./home-load-more";
+import { HomeExploreMore } from "./home-load-more";
 
-export function HomeCoachDiscovery({
-  state,
-  page = 1,
-}: {
-  state: CoachDirectoryState;
-  page?: number;
-}) {
-  const result = homeCoachDirectoryPage(
+export function HomeCoachDiscovery({ state }: { state: CoachDirectoryState }) {
+  const result = homeCoachDirectoryPreview(
     state.status === "ready" ? state.entries : [],
-    page,
   );
-  const filtered = Boolean(state.filters.discipline || state.filters.location);
+  const filtered = Boolean(state.filters.discipline);
   return (
     <section
       className="home-coach-discovery"
@@ -33,25 +26,12 @@ export function HomeCoachDiscovery({
               {state.filters.discipline ?? "All disciplines"} · Showing{" "}
               {result.entries.length} of {result.total} coach
               {result.total === 1 ? "" : "es"}
-              {state.filters.location ? " · " + state.filters.location : ""}
             </p>
           )}
         </div>
-        {filtered ? (
+        {filtered && (
           <Link className="text-link" href="/" prefetch={false}>
             Clear filters
-          </Link>
-        ) : (
-          <Link
-            className="text-link"
-            href="/explore?view=map"
-            aria-label="Explore with a map"
-          >
-            <span className="home-map-link-wide">Explore with a map</span>
-            <span className="home-map-link-short" aria-hidden="true">
-              Map
-            </span>
-            <ArrowRight size={16} aria-hidden="true" />
           </Link>
         )}
       </div>
@@ -82,7 +62,7 @@ export function HomeCoachDiscovery({
             </h3>
             <p>
               {filtered
-                ? "Try another discipline or training place."
+                ? "Try another discipline or explore all coaches."
                 : "There are no visible coach profiles to show right now."}
             </p>
           </div>
@@ -98,14 +78,9 @@ export function HomeCoachDiscovery({
               />
             ))}
           </div>
-          <HomeLoadMore
-            filters={state.filters}
-            page={result.page}
-            hasMore={result.hasMore}
-            key={homeDirectoryHref(state.filters)}
-          />
         </>
       )}
+      <HomeExploreMore filters={state.filters} />
     </section>
   );
 }

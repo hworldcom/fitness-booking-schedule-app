@@ -162,3 +162,33 @@
     gap: 0;
   }
 }
+.event-banner-editor {
+  margin-block: 24px;
+  display: grid;
+  gap: 14px;
+}
+.event-banner-editor-preview {
+  display: block;
+  width: min(100%, 800px);
+  height: auto;
+  aspect-ratio: 8 / 3;
+  object-fit: cover;
+  border: 1px solid #e3dce9;
+  border-radius: 16px;
+}
+.event-banner-file {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.event-banner-file input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+}
+.event-banner-editor > .button {
+  justify-self: start;
+}
+.event-banner-editor p {
+  overflow-wrap: anywhere;
+}

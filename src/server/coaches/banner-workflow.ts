@@ -3,6 +3,8 @@ import type { CoachWebsiteFailure } from "@/domain/coach-website";
 import type { ProfileImageStorage } from "@/server/storage/contracts";
 import type { StorageReadResult } from "@/server/storage/contracts";
 
+type BannerScope = "coach-banner" | "event-banner";
+
 type BannerReadReference =
   | Readonly<{ status: "ready"; path: string | null; revision: number }>
   | CoachWebsiteFailure;
@@ -11,6 +13,7 @@ export async function readCurrentCoachBanner(
   revision: number,
   reference: () => Promise<BannerReadReference>,
   storage: Pick<ProfileImageStorage, "download">,
+  scope: BannerScope = "coach-banner",
 ): Promise<StorageReadResult | CoachWebsiteFailure> {
   try {
     const before = await reference();
@@ -18,7 +21,7 @@ export async function readCurrentCoachBanner(
     if (!before.path || before.revision !== revision)
       return { status: "not-found" };
     const image = await storage.download({
-      scope: "coach-banner",
+      scope,
       path: before.path,
     });
     if (image.status !== "ready") return image;
@@ -35,10 +38,11 @@ export async function readCurrentCoachBanner(
 export async function cleanupCoachBanner(
   storage: ProfileImageStorage,
   paths: readonly string[],
+  scope: BannerScope = "coach-banner",
 ) {
   let pending = false;
   for (const path of paths) {
-    const result = await storage.remove({ scope: "coach-banner", path });
+    const result = await storage.remove({ scope, path });
     if (result.status !== "ready") pending = true;
   }
   return pending;
@@ -53,15 +57,16 @@ export async function storeAndAttachCoachBanner<T>(
     | Readonly<{ status: "saved"; value: T; previousPaths: readonly string[] }>
     | CoachWebsiteFailure
   >,
+  scope: BannerScope = "coach-banner",
 ) {
   const paths = variants.map((variant) => variant.path);
   for (const variant of variants) {
     const uploaded = await storage.upload(
-      { scope: "coach-banner", path: variant.path },
+      { scope, path: variant.path },
       variant.bytes,
     );
     if (uploaded.status !== "ready") {
-      await cleanupCoachBanner(storage, paths);
+      await cleanupCoachBanner(storage, paths, scope);
       return { status: "unavailable" as const };
     }
   }
@@ -72,12 +77,13 @@ export async function storeAndAttachCoachBanner<T>(
     result = { status: "unavailable" };
   }
   if (result.status !== "saved") {
-    await cleanupCoachBanner(storage, paths);
+    await cleanupCoachBanner(storage, paths, scope);
     return result;
   }
   const cleanupPending = await cleanupCoachBanner(
     storage,
     result.previousPaths,
+    scope,
   );
   return { status: "saved" as const, value: result.value, cleanupPending };
 }

@@ -16,6 +16,9 @@ import {
   groupSessionCommandRecord,
   GroupSessionConflictError,
 } from "@/server/db/group-sessions/repository";
+import { ownedEventBannerRecord } from "@/server/db/group-sessions/banner-repository";
+import { cleanupCoachBanner } from "@/server/coaches/banner-workflow";
+import { profileImageStorage } from "@/server/storage/profile-images";
 
 async function withOwner<T>(
   work: (
@@ -115,12 +118,25 @@ export async function changeOwnedGroupEvent(
   )
     return { status: "invalid" as const };
   const mutation = parsed as OwnerMutation;
-  return withOwner(async (tx, context) => {
+  let bannerPaths: string[] = [];
+  const result = await withOwner(async (tx, context) => {
     if (
       (mutation.action === "save-draft" && !context.canDraft) ||
       (["publish", "confirm"].includes(mutation.action) && !context.canPublish)
     )
       return { outcome: "forbidden" as const };
+    if (mutation.action === "delete-draft" && context.canDraft) {
+      const banner = await ownedEventBannerRecord(tx, mutation.args.id);
+      bannerPaths = [banner.card_path, banner.hero_path].filter(
+        (path): path is string => path !== null,
+      );
+    }
     return groupSessionCommandRecord(tx, mutation);
   }, scope);
+  if (result.status === "ready" && result.value.outcome === "deleted") {
+    // Best effort after the deletion commits. Storage refuses to delete any
+    // object that another current reference still uses, even after a race.
+    await cleanupCoachBanner(profileImageStorage, bannerPaths, "event-banner");
+  }
+  return result;
 }

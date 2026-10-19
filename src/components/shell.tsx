@@ -473,7 +473,7 @@ export function Shell({ children }: { children: ReactNode }) {
           id="main-content"
           className={`page-content ${
             publicShell ? "" : "authenticated-page-content"
-          } ${path === "/" ? "home-page-content" : ""}`}
+          } ${path === "/" ? "home-page-content" : ""} ${path === "/explore" ? "explore-page-content" : ""} ${path === "/events" ? "events-page-content" : ""}`}
           tabIndex={-1}
         >
           {children}

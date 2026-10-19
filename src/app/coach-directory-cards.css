@@ -14,13 +14,13 @@ body:has(.public-app-main),
       rgb(255 255 255 / 50%) 50%,
       rgb(255 255 255 / 0%) 100%
     ),
-    radial-gradient(ellipse at 0% 85%, rgb(153 69 255 / 28%), transparent 65%),
+    radial-gradient(ellipse at 0% 85%, rgb(153 69 255 / 8%), transparent 65%),
     radial-gradient(
       ellipse at 100% 100%,
-      rgb(20 241 149 / 34%),
+      rgb(20 241 149 / 9%),
       transparent 65%
     ),
-    #faf8ff;
+    #fdfcfe;
 }
 
 .coach-story-home .home-discipline-shortcut {
@@ -160,8 +160,8 @@ body:has(.public-app-main),
   overflow: hidden;
   border-radius: inherit;
   background:
-    radial-gradient(ellipse at 8% 0%, #c9afff, transparent 65%),
-    radial-gradient(ellipse at 95% 100%, #77ebc2, transparent 65%), #e9e5ff;
+    radial-gradient(ellipse at 8% 0%, #eee7fa, transparent 65%),
+    radial-gradient(ellipse at 95% 100%, #def5ed, transparent 65%), #f7f5fb;
 }
 
 .compact-coach-card .coach-card-banner {

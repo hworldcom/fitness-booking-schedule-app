@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { getImageProps } from "next/image";
 import {
   ArrowRight,
   CalendarCheck2,
@@ -10,6 +9,7 @@ import {
 import { type CoachDirectoryState } from "@/domain/coaches";
 import { HomeCoachDiscovery } from "@/features/coaches/home-coach-discovery";
 import { HomeMarketplaceSearch } from "@/features/coaches/home-marketplace-search";
+import { MarketplaceHero } from "./marketplace-hero";
 
 type StoryStep = Readonly<{
   number: string;
@@ -66,38 +66,21 @@ function StoryStepGrid({
 
 export function CoachStoryHome({
   directory,
-  page = 1,
 }: {
   directory: CoachDirectoryState;
-  page?: number;
 }) {
-  const { props: heroImageProps } = getImageProps({
-    src: "/images/home-training-collage.png",
-    alt: "Outdoor training collage with agility, a kick against red pads, battle ropes, pad coaching and a helping hand.",
-    fill: true,
-    sizes: "(max-width: 480px) 480px, 100vw",
-    quality: 95,
-    loading: "eager",
-    fetchPriority: "high",
-    className: "marketplace-home-hero-image",
-  });
   return (
     <div className="coach-story coach-story-home">
-      <section
-        className="marketplace-home-hero"
-        aria-labelledby="coach-hero-title"
+      <MarketplaceHero
+        image="/images/home-battle-ropes.jpg"
+        alt="Athlete training with battle ropes in a covered outdoor space."
+        titleId="coach-hero-title"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element -- getImageProps supplies Next.js optimized responsive sources */}
-        <img {...heroImageProps} alt={heroImageProps.alt} />
-        <div className="marketplace-home-hero-copy">
-          <h1 id="coach-hero-title">
-            <span>Find your coach.</span> <span>Achieve your goals.</span>
-          </h1>
-        </div>
-      </section>
+        <span>Find your coach.</span> <span>Achieve your goals.</span>
+      </MarketplaceHero>
       <HomeMarketplaceSearch filters={directory.filters} />
 
-      <HomeCoachDiscovery state={directory} page={page} />
+      <HomeCoachDiscovery state={directory} />
 
       <section className="coach-story-section" aria-labelledby="loop-title">
         <div className="coach-section-heading">

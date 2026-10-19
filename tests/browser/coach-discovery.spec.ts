@@ -9,7 +9,7 @@ test("desktop guest browses and filters the persistent coach directory", async (
   await expect(page).toHaveTitle(/Explore martial-arts coaches/);
   await expect(
     page.getByRole("heading", {
-      name: "Explore coaches in Berlin.",
+      name: "Find your discipline. Meet your coach.",
     }),
   ).toBeVisible();
   await expect(page.getByText("5 coaches", { exact: true })).toBeVisible();
@@ -114,14 +114,12 @@ test("desktop guest browses and filters the persistent coach directory", async (
     await expect(page.getByText(/public map could not load/)).toBeVisible();
   }
 
-  const discipline = page.getByRole("combobox", {
-    name: "Discipline",
-    exact: true,
-  });
+  const discipline = page
+    .getByRole("navigation", { name: "Browse coaches by discipline" })
+    .getByRole("link", { name: "Muay Thai", exact: true });
   await discipline.focus();
   await expect(discipline).toBeFocused();
-  await discipline.fill("Muay Thai");
-  await page.getByRole("button", { name: "Search coaches" }).click();
+  await page.keyboard.press("Enter");
 
   await expect(page).toHaveURL(/discipline=Muay(\+|%20)Thai/);
   const filteredCards = page.locator(".compact-coach-card.result");

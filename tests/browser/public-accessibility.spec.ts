@@ -103,8 +103,8 @@ test("Home reveals a selected discipline and retains keyboard focus during filte
   await expect(page).toHaveURL(/\/\?discipline=Boxing$/);
   await expect(boxing).toHaveAttribute("aria-current", "page");
   await expect(boxing).toBeFocused();
-  await expect(page.getByLabel("Discipline", { exact: true })).toHaveValue(
-    "Boxing",
+  await expect(page.getByRole("form", { name: "Search coaches" })).toHaveCount(
+    0,
   );
   await expect(boxing).toHaveCSS("outline-style", "solid");
   await page.reload();

@@ -137,3 +137,29 @@ export const coachGroupRegistrations = app.table(
     ),
   ],
 );
+
+export const groupSessionBanners = app.table(
+  "group_session_banners",
+  {
+    runId: uuid("run_id").notNull(),
+    sessionId: uuid("session_id").primaryKey(),
+    coachProfileId: uuid("coach_profile_id").notNull(),
+    revision: integer("revision").default(0).notNull(),
+    cardPath: text("card_path"),
+    heroPath: text("hero_path"),
+    updatedAt: instant("updated_at")
+      .default(sql`statement_timestamp()`)
+      .notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.runId, table.sessionId],
+      foreignColumns: [coachGroupSessions.runId, coachGroupSessions.id],
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.runId, table.coachProfileId],
+      foreignColumns: [coachProfiles.runId, coachProfiles.profileId],
+    }),
+    check("group_banner_revision", sql`${table.revision} >= 0`),
+  ],
+);

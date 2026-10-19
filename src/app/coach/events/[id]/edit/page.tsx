@@ -12,6 +12,8 @@ import {
   CoachEventsState,
 } from "@/features/coach-events/screens";
 import { ownedGroupEvent } from "@/server/group-sessions/owner-service";
+import { currentEventBanner } from "@/server/group-sessions/banner-service";
+import { EventBannerEditor } from "@/features/coach-events/banner-editor";
 
 export const metadata = { title: "Edit group draft" };
 export default async function Page({
@@ -39,6 +41,7 @@ export default async function Page({
   const session = state.value.session;
   if (session.status !== "draft" || !session.canEdit || !state.context.canDraft)
     redirect(coachEventHref(id));
+  const banner = await currentEventBanner(id);
   return (
     <CoachEventsFrame>
       <CoachEventsAccess
@@ -58,6 +61,7 @@ export default async function Page({
           initial={draftValues(session)}
           permalink={permalink}
         />
+        <EventBannerEditor eventId={id} initial={banner} />
       </CoachEventsAccess>
     </CoachEventsFrame>
   );

@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("unavailable Explore retains compact search, view and retry without substitute inventory", async ({
   page,
 }, testInfo) => {
-  await page.goto("/explore?view=map");
+  await page.goto("/explore?discipline=Boxing&view=map");
   const unavailable = page.getByRole("heading", {
     name: "Coach discovery is temporarily unavailable.",
   });
@@ -16,12 +16,13 @@ test("unavailable Explore retains compact search, view and retry without substit
     height: 1040,
   });
   await expect(
-    page.getByRole("heading", { name: "Explore coaches in Berlin." }),
+    page.getByRole("heading", {
+      name: "Find your discipline. Meet your coach.",
+    }),
   ).toBeVisible();
   const search = page.getByRole("form", { name: "Search coaches" });
   await expect(search).toBeVisible();
   await search.getByLabel("Search coach or focus").fill("patient footwork");
-  await search.getByLabel("Discipline").fill("boxing");
   await search.getByLabel("Where in Berlin?").press("Enter");
   await expect(page).toHaveURL(
     /q=patient\+footwork&discipline=Boxing&view=map$/,

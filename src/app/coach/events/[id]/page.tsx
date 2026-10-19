@@ -15,6 +15,8 @@ import {
   CoachEventsState,
 } from "@/features/coach-events/screens";
 import { ownedGroupEvent } from "@/server/group-sessions/owner-service";
+import { currentEventBanner } from "@/server/group-sessions/banner-service";
+import { EventBannerEditor } from "@/features/coach-events/banner-editor";
 
 export const metadata = { title: "Manage group session" };
 export default async function Page({
@@ -44,6 +46,11 @@ export default async function Page({
       </CoachEventsFrame>
     );
   const message = ownerIssueMessage(search.issue);
+  const banner = await currentEventBanner(id);
+  const bannerKey =
+    banner.status === "ready" || banner.status === "saved"
+      ? `${id}:${banner.eventBanner.revision}:${banner.eventBanner.editable}`
+      : `${id}:${banner.status}`;
   return (
     <CoachEventsFrame>
       <CoachEventsAccess
@@ -62,6 +69,9 @@ export default async function Page({
           roster={state.value.roster}
           context={state.context}
           after={!!after}
+          bannerEditor={
+            <EventBannerEditor key={bannerKey} eventId={id} initial={banner} />
+          }
         />
       </CoachEventsAccess>
     </CoachEventsFrame>

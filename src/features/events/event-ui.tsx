@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { CalendarDays, MapPin, UsersRound, ArrowUpRight } from "lucide-react";
 import type { GroupSession } from "@/domain/group-sessions";
+import type { Ref } from "react";
+import type { EventCardPresentation } from "@/domain/event-banners";
+import { Avatar } from "@/components/ui";
+import { profileInitials } from "@/auth/profile-presentation";
+import { EventCardCover } from "./event-card-cover";
 import {
   eventDate,
   eventHref,
@@ -16,7 +21,19 @@ export function EventStatus({ session }: { session: GroupSession }) {
     </span>
   );
 }
-export function EventCard({ session }: { session: GroupSession }) {
+export function EventCard({
+  session,
+  presentation,
+  selected = false,
+  cardRef,
+  onShowOnMap,
+}: {
+  session: GroupSession;
+  presentation?: EventCardPresentation;
+  selected?: boolean;
+  cardRef?: Ref<HTMLElement>;
+  onShowOnMap?: () => void;
+}) {
   const participantsNeeded = Math.max(
     0,
     session.minimumParticipants - session.participantCount,
@@ -27,7 +44,42 @@ export function EventCard({ session }: { session: GroupSession }) {
     session.participantCount < session.maximumParticipants &&
     (waitingForCoach || session.displayStatus === "confirmed");
   return (
-    <article className="event-card">
+    <article
+      className={`event-card${selected ? " selected" : ""}`}
+      ref={cardRef}
+      tabIndex={-1}
+      aria-label={session.title}
+    >
+      <Link
+        className="event-card-banner-link"
+        href={eventHref(session)}
+        aria-label={`View ${session.title}`}
+        tabIndex={-1}
+      >
+        <EventCardCover
+          event={presentation?.eventBanner ?? null}
+          coach={presentation?.coachBanner ?? null}
+        />
+      </Link>
+      <Link
+        className="event-card-coach"
+        href={presentation?.coachHref ?? `/coaches/${session.coach.slug}`}
+      >
+        <Avatar
+          initials={profileInitials(session.coach.name)}
+          imageUrl={presentation?.portraitUrl ?? null}
+        />
+        <span>
+          <strong>{session.coach.name}</strong>
+          <small>
+            {session.coach.trustKind === "verified"
+              ? "Verified coach"
+              : session.coach.trustKind === "demo"
+                ? "Demo coach"
+                : "Coach"}
+          </small>
+        </span>
+      </Link>
       <div className="event-card-top">
         <span className="event-discipline">{session.discipline}</span>
         <EventStatus session={session} />
@@ -37,20 +89,12 @@ export function EventCard({ session }: { session: GroupSession }) {
         <time dateTime={session.startsAt}>{eventDate(session.startsAt)}</time>
         <span>– {eventTime(session.endsAt)}</span>
       </p>
-      <h2>
+      <h3>
         <Link href={eventHref(session)}>
           {session.title}
           <ArrowUpRight size={21} aria-hidden="true" />
         </Link>
-      </h2>
-      <p className="event-coach">
-        With {session.coach.name} ·{" "}
-        {session.coach.trustKind === "verified"
-          ? "Verified coach"
-          : session.coach.trustKind === "demo"
-            ? "Demo coach"
-            : "Coach"}
-      </p>
+      </h3>
       <p className="event-card-place">
         <MapPin size={17} aria-hidden="true" />
         <span>
@@ -93,6 +137,17 @@ export function EventCard({ session }: { session: GroupSession }) {
           </p>
         )}
       </div>
+      {onShowOnMap && (
+        <button
+          className="event-show-map"
+          type="button"
+          onClick={onShowOnMap}
+          aria-pressed={selected}
+        >
+          <MapPin size={16} aria-hidden="true" /> Show on map
+          <span className="sr-only">: {session.title}</span>
+        </button>
+      )}
     </article>
   );
 }

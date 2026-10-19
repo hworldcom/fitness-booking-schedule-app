@@ -20,7 +20,7 @@ import { PublicMarketplaceSearch } from "@/features/coaches/public-marketplace-s
 import { fitnessDemoCoachSeedSql } from "../scripts/lib/demo-coach-fixtures";
 import { seedBeforeFitness } from "../scripts/lib/seed-compatibility.mjs";
 
-test("Fitness works across typed search, canonical filtering, shortcuts and owner validation", () => {
+test("Fitness works across canonical filtering, shortcut selection and owner validation", () => {
   assert.ok(COACH_DISCIPLINES.includes("Fitness"));
   assert.equal(marketplaceDiscipline("  fItNeSs "), "Fitness");
   assert.equal(marketplaceDiscipline("Yoga"), null);
@@ -40,7 +40,7 @@ test("Fitness works across typed search, canonical filtering, shortcuts and owne
       filters: normalizeCoachDirectoryFilters({ discipline: "Fitness" }),
     }),
   );
-  assert.match(html, /<option value="Fitness"/);
+  assert.match(html, /type="hidden" name="discipline" value="Fitness"/);
   assert.match(
     html,
     /aria-current="page"[^>]*href="\/explore\?discipline=Fitness"/,

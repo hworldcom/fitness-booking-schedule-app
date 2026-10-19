@@ -25,19 +25,16 @@ test("Explore typed filters, shortcuts and clear preserve the active view throug
 }) => {
   await page.goto("/explore?q=footwork&location=Berlin&view=map");
   const search = page.getByRole("form", { name: "Search coaches" });
-  const discipline = search.getByRole("combobox", {
-    name: "Discipline",
-    exact: true,
+  const shortcuts = page.getByRole("navigation", {
+    name: "Browse coaches by discipline",
   });
-  await discipline.fill("boxing");
+  await shortcuts.getByRole("link", { name: "Boxing", exact: true }).click();
   await search.getByLabel("Where in Berlin?").press("Enter");
   await expect(page).toHaveURL(
     /q=footwork&discipline=Boxing&location=Berlin&view=map$/,
   );
+  const discipline = search.locator('input[type="hidden"][name="discipline"]');
   await expect(discipline).toHaveValue("Boxing");
-  const shortcuts = page.getByRole("navigation", {
-    name: "Browse coaches by discipline",
-  });
   await shortcuts.getByRole("link", { name: "Muay Thai", exact: true }).click();
   await expect(page).toHaveURL(
     /q=footwork&discipline=Muay\+Thai&location=Berlin&view=map$/,
@@ -46,7 +43,7 @@ test("Explore typed filters, shortcuts and clear preserve the active view throug
   await expect(discipline).toHaveValue("Muay Thai");
   await page.getByRole("link", { name: "Clear search" }).click();
   await expect(page).toHaveURL(/\/explore\?view=map$/);
-  await expect(discipline).toHaveValue("");
+  await expect(discipline).toHaveCount(0);
   await expect(search.getByLabel("Search coach or focus")).toHaveValue("");
   await page.goBack();
   await expect(discipline).toHaveValue("Muay Thai");
@@ -55,18 +52,6 @@ test("Explore typed filters, shortcuts and clear preserve the active view throug
   );
   await page.goForward();
   await expect(page).toHaveURL(/\/explore\?view=map$/);
-  await discipline.fill("Yoga");
-  await search.getByRole("button", { name: "Search coaches" }).click();
-  await expect(page).toHaveURL(/\/explore\?view=map$/);
-  expect(
-    await discipline.evaluate(
-      (input: HTMLInputElement) => input.validity.valid,
-    ),
-  ).toBe(false);
-  await shortcuts
-    .getByRole("link", { name: "All disciplines", exact: true })
-    .click();
-  await expect(discipline).toHaveValue("");
   await search
     .getByLabel("Search coach or focus")
     .fill("no-such-coach-dev0236");
@@ -92,10 +77,6 @@ test("Explore shares Home's search and cards without introducing a Home query fi
     const search = page.getByRole("form", { name: "Search coaches" });
     const query = search.getByLabel("Search coach or focus");
     await query.focus();
-    await page.keyboard.press("Tab");
-    await expect(
-      search.getByRole("combobox", { name: "Discipline", exact: true }),
-    ).toBeFocused();
     await page.keyboard.press("Tab");
     await expect(search.getByLabel("Where in Berlin?")).toBeFocused();
     await page.keyboard.press("Tab");
@@ -167,7 +148,7 @@ test("Explore shares Home's search and cards without introducing a Home query fi
   }
 });
 
-test("Explore typed aliases and explicit view submit without JavaScript", async ({
+test("Explore discipline aliases and explicit view survive query GET without JavaScript", async ({
   browser,
 }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop");
@@ -177,10 +158,9 @@ test("Explore typed aliases and explicit view submit without JavaScript", async 
   });
   const page = await context.newPage();
   try {
-    await page.goto("/explore?view=list");
+    await page.goto("/explore?discipline=bjj&view=list");
     const search = page.getByRole("form", { name: "Search coaches" });
     await search.getByLabel("Search coach or focus").fill("escapes");
-    await search.getByLabel("Discipline").fill("bjj");
     await search.getByLabel("Where in Berlin?").fill(" Berlin ");
     await search
       .getByRole("button", { name: "Search coaches" })
@@ -188,9 +168,9 @@ test("Explore typed aliases and explicit view submit without JavaScript", async 
     await expect(page).toHaveURL(
       /q=escapes&discipline=Brazilian\+Jiu-Jitsu&location=Berlin&view=list$/,
     );
-    await expect(search.getByLabel("Discipline")).toHaveValue(
-      "Brazilian Jiu-Jitsu",
-    );
+    await expect(
+      search.locator('input[type="hidden"][name="discipline"]'),
+    ).toHaveValue("Brazilian Jiu-Jitsu");
     await expect(
       page.getByRole("heading", { name: "Idris Malik", exact: true }),
     ).toBeVisible();

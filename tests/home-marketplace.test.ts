@@ -11,10 +11,10 @@ import { CompactCoachCard } from "@/features/coaches/compact-coach-card";
 import { CoachDirectory } from "@/features/coaches/coach-discovery";
 import { CoachStoryHome } from "@/features/public/coach-story";
 import {
-  HOME_COACH_PAGE_SIZE,
+  HOME_COACH_PREVIEW_SIZE,
   HOME_DISCIPLINE_PATTERN,
   homeDiscipline,
-  homeCoachDirectoryPage,
+  homeCoachDirectoryPreview,
   homeDirectoryHref,
   isCanonicalHomeSearch,
   normalizeHomeSearch,
@@ -34,78 +34,62 @@ const entries = Object.freeze([
   directoryEntry(4, "Dario Diaz"),
 ]);
 
-test("Home pagination expands in four-coach increments and clamps to available rows", () => {
+test("Home preview stays bounded to four without mutating the full directory", () => {
   const rows = Object.freeze(
     Array.from({ length: 31 }, (_, index) =>
       directoryEntry(index + 1, "Coach " + String(index + 1).padStart(3, "0")),
     ),
   );
   for (const count of [0, 1, 3, 4, 5, 8, 31]) {
-    for (const page of [1, 2, 3, Number.MAX_SAFE_INTEGER, 0, NaN]) {
-      const slice = homeCoachDirectoryPage(rows.slice(0, count), page);
-      const expectedPage = Math.min(
-        Number.isSafeInteger(page) && page > 0 ? page : 1,
-        Math.max(1, Math.ceil(count / HOME_COACH_PAGE_SIZE)),
-      );
-      assert.equal(slice.page, expectedPage);
-      assert.equal(
-        slice.entries.length,
-        Math.min(count, expectedPage * HOME_COACH_PAGE_SIZE),
-      );
-      assert.equal(slice.hasMore, slice.entries.length < count);
-      assert.deepEqual(
-        slice.entries.map((row) => row.coach.profileId),
-        rows.slice(0, slice.entries.length).map((row) => row.coach.profileId),
-      );
-      assert.ok(Object.isFrozen(slice.entries));
-    }
+    const preview = homeCoachDirectoryPreview(rows.slice(0, count));
+    assert.equal(preview.total, count);
+    assert.equal(preview.entries.length, Math.min(count, 4));
+    assert.deepEqual(
+      preview.entries.map((row) => row.coach.profileId),
+      rows.slice(0, Math.min(count, 4)).map((row) => row.coach.profileId),
+    );
+    assert.ok(Object.isFrozen(preview.entries));
   }
-  assert.equal(HOME_COACH_PAGE_SIZE, 4);
+  assert.equal(HOME_COACH_PREVIEW_SIZE, 4);
   assert.equal(rows.length, 31);
 });
 
-test("Home URLs normalize only discipline, location and safe pagination", () => {
+test("Home URLs retain only discipline and reject retired query, location and pagination", () => {
   const search = normalizeHomeSearch({
     q: "ignored",
     discipline: " bjj ",
-    location: " Mitte   Berlin ",
+    location: " Mitte Berlin ",
     page: "2",
     view: "map",
   });
   assert.equal(
-    homeDirectoryHref(search.filters, search.page),
-    "/?discipline=Brazilian+Jiu-Jitsu&location=Mitte+Berlin&page=2",
+    homeDirectoryHref(search.filters),
+    "/?discipline=Brazilian+Jiu-Jitsu",
   );
   assert.equal(search.filters.query, "");
+  assert.equal(search.filters.location, "");
   assert.equal(
     isCanonicalHomeSearch(
-      {
-        discipline: "Brazilian Jiu-Jitsu",
-        location: "Mitte Berlin",
-        page: "2",
-      },
+      { discipline: "Brazilian Jiu-Jitsu" },
       search.filters,
-      search.page,
     ),
     true,
   );
-  assert.equal(
-    isCanonicalHomeSearch(
-      { q: "", page: "1" },
-      normalizeHomeSearch({}).filters,
-      1,
-    ),
-    false,
-  );
-  for (const page of [
-    "0",
-    "-1",
-    "1.5",
-    "Infinity",
-    "9007199254740992",
-    ["2", "3"],
+  for (const params of [
+    { q: "footwork" },
+    { location: "Mitte" },
+    { page: "2" },
+    { page: ["2", "3"] },
+    { view: "map" },
+    { discipline: "bjj" },
+    { discipline: ["Boxing", "MMA"] },
   ]) {
-    assert.equal(normalizeHomeSearch({ page }).page, 1);
+    const { filters: normalized } = normalizeHomeSearch(params);
+    assert.equal(isCanonicalHomeSearch(params, normalized), false);
+    assert.doesNotMatch(
+      homeDirectoryHref(normalized),
+      /[?&](?:q|location|page|view)=/,
+    );
   }
   assert.equal(homeDirectoryHref(normalizeHomeSearch({}).filters), "/");
   assert.equal(homeDiscipline("constructor"), null);
@@ -117,7 +101,7 @@ test("Home URLs normalize only discipline, location and safe pagination", () => 
   assert.equal(pattern.test("Yoga"), false);
 });
 
-test("Home renders one paginated grid and one card for a multi-discipline coach", () => {
+test("Home renders one four-coach preview and a discipline-preserving Explore destination", () => {
   const rows = Object.freeze(
     Array.from({ length: 31 }, (_, index) =>
       directoryEntry(index + 1, "Coach " + String(index + 1).padStart(3, "0"), {
@@ -125,22 +109,39 @@ test("Home renders one paginated grid and one card for a multi-discipline coach"
       }),
     ),
   );
-  for (const page of [1, 2, 8]) {
+  const selected = normalizeHomeSearch({
+    discipline: "Boxing",
+    q: "ignored",
+    location: "Mitte",
+  }).filters;
+  for (const count of [0, 3, 31]) {
     const html = renderToStaticMarkup(
       createElement(HomeCoachDiscovery, {
-        state: { status: "ready", filters, entries: rows },
-        page,
+        state: {
+          status: "ready",
+          filters: selected,
+          entries: rows.slice(0, count),
+        },
       }),
     );
     assert.equal(
       [...html.matchAll(/class="compact-coach-card marketplace/g)].length,
-      Math.min(31, page * 4),
+      Math.min(count, 4),
     );
-    assert.equal([...html.matchAll(/id="home-coach-grid"/g)].length, 1);
-    assert.equal([...html.matchAll(/<h3>Coach 001<\/h3>/g)].length, 1);
-    if (page < 8)
-      assert.match(html, new RegExp('href="/\\?page=' + (page + 1) + '"'));
-    else assert.doesNotMatch(html, /Load more/);
+    assert.equal(
+      [...html.matchAll(/id="home-coach-grid"/g)].length,
+      count ? 1 : 0,
+    );
+    assert.equal(
+      [...html.matchAll(/<h3>Coach 001<\/h3>/g)].length,
+      count ? 1 : 0,
+    );
+    assert.match(html, /href="\/explore\?discipline=Boxing"/);
+    assert.match(html, />Explore more<\/a>/);
+    assert.doesNotMatch(
+      html,
+      /Load more|Explore with a map|[?&](?:amp;)?(?:page|location|q|view)=/,
+    );
   }
 });
 
@@ -247,7 +248,9 @@ test("home orders working discovery before the concise confirmation flow", () =>
       directory: Object.freeze({ status: "ready", entries, filters }),
     }),
   );
-  const searchIndex = markup.indexOf('aria-label="Search coaches"');
+  const searchIndex = markup.indexOf(
+    'aria-label="Browse coaches by discipline"',
+  );
   const previewIndex = markup.indexOf("Discover coaches in Berlin");
   const explanationIndex = markup.indexOf(
     "Three steps from search to a clear answer.",
@@ -258,10 +261,9 @@ test("home orders working discovery before the concise confirmation flow", () =>
   assert.match(markup, /request stays pending until the coach accepts it/i);
   assert.match(markup, /not an instant booking/i);
   assert.match(markup, /All disciplines/);
-  assert.match(markup, /action="\/"/);
-  assert.match(markup, /list="home-discipline-suggestions"/);
-  assert.match(markup, /name="discipline"/);
-  assert.match(markup, /name="location"/);
+  assert.match(markup, /href="\/\?discipline=Boxing"/);
+  assert.match(markup, /Explore more/);
+  assert.doesNotMatch(markup, /<form|<input|Explore with a map|Load more/);
   assert.doesNotMatch(markup, /name="q"|Search coach or focus|by name, focus/);
   assert.doesNotMatch(markup, /name="when"|near you|rating|price/i);
 });

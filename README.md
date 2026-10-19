@@ -94,6 +94,12 @@ node scripts/rehearse-typed-sessions-database.mjs
 
 It creates disposable fresh and upgrade databases, checks retained-row fingerprints and legacy compatibility, exercises type management/private bookings/group integration, and removes its own databases afterward. It does not reset or seed the retained application database. [DEV0346](tickets/archive/backend/DEV0346-rehearse-session-types-and-flexible-bookings.md) records the separate browser-copy setup and final evidence.
 
+### Events banners and directory validation
+
+Group-session banners, public card fallbacks, cursor Load more and the loaded-session venue map follow [the Events contract](docs/mvp-spec.md#151-confirmed-choices-and-implementation-defaults). The local launcher applies the additive event-banner migration while preserving existing sessions; hosted rollout is separate. Coaches add an optional event image from a saved group session’s detail or draft editor.
+
+`node scripts/rehearse-event-banners-database.mjs` proves fresh/upgrade media boundaries in disposable databases. With local Supabase running, `node --import tsx --conditions=react-server scripts/rehearse-local-event-directory.ts` starts a separate preview on port 3158 with newly tagged temporary coaches, sessions and synthetic images for native browser checks. It prints fixture-only sign-in details and accepts `cleanup` on stdin to remove its own records and stop its preview; it never provisions or changes retained accounts. See [DEV0358](tickets/current/frontend/DEV0358-redesign-events-cards-and-map.md) for required checks and evidence.
+
 ## Local registration and sign-in
 
 Public browsing does not require sign-in. Normal development uses local Supabase Auth and captures email in Mailpit:

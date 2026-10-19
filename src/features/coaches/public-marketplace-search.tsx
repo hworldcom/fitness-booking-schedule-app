@@ -6,19 +6,16 @@ import {
   coachDirectoryHref,
   type CoachExploreView,
 } from "./marketplace-search-contract";
-import { MarketplaceDisciplineInput } from "./marketplace-discipline-input";
 import { MarketplaceDisciplineNavigation } from "./marketplace-discipline-navigation";
 
 export function PublicMarketplaceSearch({
   filters,
-  includeQuery = true,
   view = null,
 }: {
   filters: CoachDirectoryFilters;
-  includeQuery?: boolean;
   view?: CoachExploreView | null;
 }) {
-  const searchFilters = includeQuery ? filters : { ...filters, query: "" };
+  const searchFilters = filters;
   const hasActiveFilters = Boolean(
     searchFilters.query || searchFilters.discipline || searchFilters.location,
   );
@@ -29,35 +26,34 @@ export function PublicMarketplaceSearch({
   );
   return (
     <div
-      className="marketplace-search explore-marketplace-search"
+      className="marketplace-search home-marketplace-search explore-marketplace-search"
       key={coachDirectoryHref(searchFilters, {}, view)}
     >
       <Form
         action="/explore"
-        className={`home-coach-search explore-coach-search${includeQuery ? " has-query" : ""}`}
+        id="explore-search-form"
+        className="home-coach-search explore-coach-search"
         aria-label="Search coaches"
         scroll={false}
       >
-        {includeQuery && (
-          <label htmlFor="explore-query">
-            <span>Search coach or focus</span>
-            <input
-              id="explore-query"
-              type="search"
-              name="q"
-              defaultValue={searchFilters.query}
-              placeholder="Name, fundamentals, footwork…"
-              maxLength={80}
-            />
-          </label>
-        )}
-        <label htmlFor="explore-discipline">
-          <span>Discipline</span>
-          <MarketplaceDisciplineInput
-            discipline={searchFilters.discipline}
-            prefix="explore"
+        <label htmlFor="explore-query">
+          <span>Search coach or focus</span>
+          <input
+            id="explore-query"
+            type="search"
+            name="q"
+            defaultValue={searchFilters.query}
+            placeholder="Name, fundamentals, footwork…"
+            maxLength={80}
           />
         </label>
+        {searchFilters.discipline && (
+          <input
+            type="hidden"
+            name="discipline"
+            value={searchFilters.discipline}
+          />
+        )}
         <label htmlFor="explore-location">
           <span>Where in Berlin?</span>
           <input
@@ -70,8 +66,12 @@ export function PublicMarketplaceSearch({
           />
         </label>
         {view && <input type="hidden" name="view" value={view} />}
-        <button className="button dark" type="submit">
-          <Search size={17} aria-hidden="true" /> Search coaches
+        <button
+          className="button dark"
+          type="submit"
+          aria-label="Search coaches"
+        >
+          <Search size={17} aria-hidden="true" /> <span>Search coaches</span>
         </button>
       </Form>
       <MarketplaceDisciplineNavigation

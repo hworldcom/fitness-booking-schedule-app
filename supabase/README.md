@@ -74,6 +74,10 @@ DATABASE_URL=postgresql://repx_runtime_login:postgres@127.0.0.1:55322/postgres
 
 The local integration suite connects as the disposable PostgreSQL administrator so it can create and clean fixtures, then exercises application repositories through the restricted runtime login. Browser code never receives `DATABASE_URL`.
 
+### Group-session banner migration
+
+`20261018001000_group_session_banners.sql` adds independently revisioned optional event images and the private `event-banners` bucket. Existing sessions receive no copied image or changed terms. Apply it after the preceding forward migrations, using the existing local/hosted migration procedure; deploy consumers only after its functions and Storage policies exist. The local database has been advanced through this migration with unchanged prior-row fingerprints; hosted rollout remains separate. Do not reset or reseed an existing environment. See [DEV0356](../tickets/archive/backend/DEV0356-persist-group-session-banners.md) for ownership/current-reference policies, exact local evidence and rollback considerations. `node scripts/rehearse-event-banners-database.mjs` validates fresh and upgrade disposable databases without resetting retained data.
+
 ## Local email Auth
 
 Normal `npm run dev` already prepares the Auth-enabled services and restricted login. If you previously selected the database-only profile, switch to the Auth-enabled profile before rehearsing sign-in:

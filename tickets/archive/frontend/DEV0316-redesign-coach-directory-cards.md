@@ -203,4 +203,4 @@ Card-only local acceptance is complete. Full personal websites (DEV0317), owner-
 
 ### 2026-10-18 independent visual follow-up
 
-DEV0350 owns the later user request to soften both green/purple decorative tints, apply white surfaces to Events/How it works and replace Home's hero with the supplied photograph at the same size. Its evidence does not complete this record's remaining discovery/navigation checks.
+[DEV0350](DEV0350-soften-public-page-colors-and-replace-home-banner.md) owns the later user request to soften both green/purple decorative tints, apply white surfaces to Events/How it works and replace Home's hero with the supplied photograph at the same size. Its evidence does not complete this record's remaining discovery/navigation checks.

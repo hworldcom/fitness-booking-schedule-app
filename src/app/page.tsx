@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import {
-  homeCoachDirectoryPage,
   homeDirectoryHref,
   isCanonicalHomeSearch,
   normalizeHomeSearch,
@@ -24,14 +23,9 @@ export default async function Page({
 }) {
   await connection();
   const rawSearchParams = await searchParams;
-  const { filters, page } = normalizeHomeSearch(rawSearchParams);
-  if (!isCanonicalHomeSearch(rawSearchParams, filters, page))
-    redirect(homeDirectoryHref(filters, page));
+  const { filters } = normalizeHomeSearch(rawSearchParams);
+  if (!isCanonicalHomeSearch(rawSearchParams, filters))
+    redirect(homeDirectoryHref(filters));
   const directory = await publicCoachDirectory(filters);
-  const actualPage =
-    directory.status === "ready"
-      ? homeCoachDirectoryPage(directory.entries, page).page
-      : 1;
-  if (actualPage !== page) redirect(homeDirectoryHref(filters, actualPage));
-  return <CoachStoryHome directory={directory} page={actualPage} />;
+  return <CoachStoryHome directory={directory} />;
 }

@@ -1,16 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Search } from "lucide-react";
 import { COACH_DISCIPLINES } from "@/domain/coaches";
-import { parseGroupSessionResult } from "@/domain/group-sessions";
 import {
-  eventListQuery,
   eventPageHref,
-  parseEventFilters,
   type EventSearch,
 } from "@/features/events/event-contract";
-import { EventCard, EventsUnavailable } from "@/features/events/event-ui";
-import { publicGroupSessions } from "@/server/group-sessions/service";
+import { EventsUnavailable } from "@/features/events/event-ui";
+import { MarketplaceHero } from "@/features/public/marketplace-hero";
+import { publicEventDirectory } from "@/server/group-sessions/directory-service";
+import {
+  eventDirectoryHref,
+  parseEventDirectory,
+} from "@/features/events/directory-contract";
+import { EventResults } from "@/features/events/event-results";
 import "@/features/events/events.css";
+import "@/features/events/event-directory.css";
 
 export const metadata: Metadata = {
   title: "Group training in Berlin",
@@ -23,137 +28,113 @@ export default async function Page({
 }: {
   searchParams: Promise<EventSearch>;
 }) {
-  const filters = parseEventFilters(await searchParams);
-  const result = filters
-    ? await publicGroupSessions(eventListQuery(filters))
-    : null;
-  const page =
-    result?.status === "ready"
-      ? parseGroupSessionResult("public-list", result.value)
-      : null;
+  const directory = parseEventDirectory(await searchParams);
+  const filters = directory?.filters;
+  const result = filters ? await publicEventDirectory(filters) : null;
   return (
-    <div className="events-page">
-      <header className="events-heading">
-        <span className="eyebrow">GROUP TRAINING · BERLIN</span>
-        <h1>Train together.</h1>
-        <p>
-          Find your next group session. Reserve a seat and check the coach’s
-          confirmation before you go.
-        </p>
-        <Link href="/sessions/groups">My group sessions →</Link>
-      </header>
-      <form
-        action="/events"
-        method="get"
-        className="events-filters"
-        aria-label="Filter group sessions"
+    <div className="events-page events-discovery-page">
+      <MarketplaceHero
+        image="/images/events-tug-of-war.jpg"
+        alt="Lower-body view of a group tug-of-war on a grass field."
+        titleId="events-hero-title"
+        className="marketplace-events-hero"
+        imageFrameClassName="marketplace-events-image-frame"
       >
-        {filters?.sessionTypeId && (
-          <>
+        <span>Find your small group session.</span> <span>Train together.</span>
+      </MarketplaceHero>
+      <div className="home-marketplace-search events-marketplace-search">
+        <form
+          key={filters ? eventPageHref(filters, null) : "invalid-filters"}
+          action="/events"
+          method="get"
+          className="home-coach-search events-coach-search"
+          aria-label="Filter group sessions"
+        >
+          {directory?.explicitView && (
+            <input type="hidden" name="view" value={directory.view} />
+          )}
+          {filters?.sessionTypeId && (
             <input
               type="hidden"
               name="sessionType"
               value={filters.sessionTypeId}
             />
-            <p>
-              Showing this coach’s session type.{" "}
-              <Link href="/events">Show all group sessions</Link>
-            </p>
-          </>
-        )}
-        <label>
-          Discipline
-          <select name="discipline" defaultValue={filters?.discipline ?? ""}>
-            <option value="">All disciplines</option>
-            {COACH_DISCIPLINES.map((discipline) => (
-              <option key={discipline} value={discipline}>
-                {discipline}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Training place
-          <input
-            name="location"
-            type="search"
-            maxLength={160}
-            placeholder="Venue or neighbourhood"
-            defaultValue={filters?.location ?? ""}
-          />
-        </label>
-        <button className="button dark" type="submit">
-          Find sessions
-        </button>
-        <Link href="/events">Clear filters</Link>
-      </form>
-      {!filters ? (
-        <section className="events-state" role="alert">
-          <h2>These filters or page details are invalid</h2>
-          <p>
-            Choose a discipline and a training place, or return to the first
-            page.
-          </p>
-          <Link href="/events">Reset search</Link>
-        </section>
-      ) : !page ? (
-        <EventsUnavailable href={eventPageHref(filters, filters.after)} />
-      ) : (
-        <>
-          <div className="events-results-heading">
-            <h2>
-              {filters.after
-                ? "More group sessions"
-                : "Upcoming group sessions"}
-            </h2>
-            <span>
-              {page.items.length} on this page · Times in Europe/Berlin
-            </span>
-          </div>
-          {page.items.length ? (
-            <div className="events-grid">
-              {page.items.map((session) => (
-                <EventCard key={session.id} session={session} />
-              ))}
-            </div>
-          ) : (
-            <section className="events-state">
-              <h3>No upcoming sessions here yet</h3>
-              <p>
-                Try another discipline or training place. You can also discover
-                coaches for a private session.
-              </p>
-              <div className="events-state-actions">
-                <Link href="/events" className="button secondary">
-                  Show all group sessions
-                </Link>
-                <Link href="/explore">Find a coach</Link>
-              </div>
-            </section>
           )}
-          <nav className="events-pagination" aria-label="Group session pages">
-            {filters.after && (
-              <Link href={eventPageHref(filters, null)}>
-                Back to first page
-              </Link>
+          <label>
+            <span>Discipline</span>
+            <select name="discipline" defaultValue={filters?.discipline ?? ""}>
+              <option value="">All disciplines</option>
+              {COACH_DISCIPLINES.map((discipline) => (
+                <option key={discipline} value={discipline}>
+                  {discipline}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Training place</span>
+            <input
+              name="location"
+              type="search"
+              maxLength={160}
+              placeholder="Venue or neighbourhood"
+              defaultValue={filters?.location ?? ""}
+            />
+          </label>
+          <button
+            className="button dark"
+            type="submit"
+            aria-label="Find sessions"
+          >
+            <Search size={17} aria-hidden="true" /> <span>Find sessions</span>
+          </button>
+        </form>
+        <nav
+          className="events-directory-navigation"
+          aria-label="Group session navigation"
+        >
+          <Link href="/events">Clear filters</Link>
+          <Link href="/sessions/groups">My group sessions →</Link>
+        </nav>
+        {filters?.sessionTypeId && (
+          <p className="events-session-type-notice">
+            Showing this coach’s session type.{" "}
+            <Link href="/events">Show all group sessions</Link>
+          </p>
+        )}
+      </div>
+      <div className="events-discovery-content">
+        {!filters ? (
+          <section className="events-state" role="alert">
+            <h2>These filters or page details are invalid</h2>
+            <p>
+              Choose a discipline and a training place, or return to the first
+              page.
+            </p>
+            <Link href="/events">Reset search</Link>
+          </section>
+        ) : !directory || result?.status !== "ready" ? (
+          <EventsUnavailable
+            href={eventDirectoryHref(
+              filters,
+              filters.after,
+              directory?.explicitView ? directory.view : undefined,
             )}
-            {page.nextCursor && (
-              <Link
-                className="button secondary"
-                href={eventPageHref(filters, page.nextCursor)}
-              >
-                Next sessions →
-              </Link>
-            )}
-          </nav>
-        </>
-      )}
-      <p className="events-footnote">
-        A reservation and coach confirmation are separate. Status is shown here
-        in MovX; email or push notifications are not provided. For paid
-        sessions, the coach collects at the venue. MovX does not collect or
-        verify payment.
-      </p>
+          />
+        ) : (
+          <EventResults
+            key={eventPageHref(filters, filters.after)}
+            initial={result}
+            directory={directory}
+          />
+        )}
+        <p className="events-footnote">
+          A reservation and coach confirmation are separate. Status is shown
+          here in MovX; email or push notifications are not provided. For paid
+          sessions, the coach collects at the venue. MovX does not collect or
+          verify payment.
+        </p>
+      </div>
     </div>
   );
 }

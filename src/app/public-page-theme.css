@@ -1,0 +1,353 @@
+/* Public-only white surfaces. Status text/error cues keep their own meaning. */
+.public-app-main {
+  --public-purple: #61417b;
+  --public-border: #e3dce9;
+  --public-text: #2d2933;
+  --public-muted: #625c69;
+}
+
+.public-app-main .public-primary-navigation a.active {
+  text-decoration-color: #a18bb3;
+}
+
+:is(.coach-story-home, .coach-discovery, .events-discovery-page)
+  .marketplace-home-hero {
+  background: #fff;
+  color: #2d2933;
+}
+
+:is(.coach-story-home, .coach-discovery, .events-discovery-page)
+  .marketplace-home-hero-image {
+  object-position: center 35%;
+}
+
+:is(.coach-story-home, .coach-discovery, .events-discovery-page)
+  .marketplace-home-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    90deg,
+    rgb(255 255 255 / 85%),
+    rgb(255 255 255 / 55%) 35%,
+    rgb(255 255 255 / 0%) 65%
+  );
+  pointer-events: none;
+}
+
+:is(.coach-story-home, .coach-discovery, .events-discovery-page)
+  .marketplace-home-hero-copy {
+  width: 44%;
+  margin-left: 6%;
+  padding: 0;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+/* Shared full-bleed banners and centered discovery controls. */
+.page-content.explore-page-content,
+.page-content.events-page-content {
+  max-width: none;
+  padding: 0;
+}
+
+.explore-page-content .coach-discovery {
+  max-width: none;
+  padding: 0 0 48px;
+}
+
+.coach-discovery > :not(.marketplace-home-hero) {
+  width: calc(100% - 72px);
+  margin-inline: auto;
+}
+
+.coach-discovery > .explore-marketplace-search,
+.events-discovery-page > .events-marketplace-search {
+  width: calc(100% - 72px);
+  max-width: 880px;
+  margin: 12px auto 14px;
+}
+
+.coach-discovery > .explore-directory-content {
+  max-width: 1180px;
+}
+
+.coach-discovery .marketplace-explore-hero .marketplace-home-hero-image {
+  object-position: center 10%;
+}
+
+:is(.marketplace-explore-hero, .marketplace-events-hero)
+  .marketplace-home-hero-copy
+  p {
+  max-width: 340px;
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.events-page.events-discovery-page {
+  width: 100%;
+  margin: 0;
+  padding: 0 0 48px;
+}
+
+/* Start the visible band at this photograph's midpoint on every screen.
+   Next.js keeps its normal fill sizing inside the double-height frame. */
+.marketplace-events-image-frame {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: -2;
+  height: 200%;
+}
+
+.marketplace-events-image-frame .marketplace-home-hero-image {
+  object-position: center center;
+}
+
+.events-discovery-content {
+  width: calc(100% - 72px);
+  max-width: 1180px;
+  margin: 12px auto 0;
+}
+
+.events-directory-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0 16px;
+  margin-top: 8px;
+  font-size: 11px;
+}
+
+.events-directory-navigation a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.events-session-type-notice {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.events-coach-search select {
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  border: 0;
+  border-radius: 4px;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+
+.events-discovery-page .events-coach-search .button {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+.coach-discovery .home-discipline-navigation {
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.coach-discovery .home-discipline-shortcut {
+  flex: 0 0 auto;
+  flex-direction: row;
+  min-height: 44px;
+  gap: 7px;
+  padding: 8px 12px;
+  background: #fff;
+}
+
+.coach-discovery .home-discipline-shortcut svg {
+  width: 19px;
+  height: 19px;
+}
+
+.coach-discovery .home-discipline-shortcut:is(.active, :hover) {
+  border-color: #9c7ab9;
+  background: #fff;
+  color: #583378;
+}
+
+.coach-discovery .home-discipline-shortcut.active {
+  box-shadow: inset 0 0 0 1px #9c7ab9;
+}
+
+.coach-discovery .home-discipline-track {
+  padding-bottom: 6px;
+  scrollbar-color: #d6cddd transparent;
+}
+
+.coach-discovery :is(a, button, input):focus-visible {
+  outline-color: #754399;
+}
+
+:is(.coach-discovery, .events-discovery-page)
+  :is(.explore-coach-search, .events-coach-search)
+  label {
+  padding-inline: 14px;
+}
+
+.coach-story-home .home-marketplace-search > .home-discipline-navigation {
+  margin-top: 0;
+}
+
+@media (max-width: 760px) {
+  .events-discovery-page .marketplace-home-hero-copy {
+    width: 88%;
+  }
+
+  .events-discovery-page .marketplace-home-hero::after {
+    background: linear-gradient(
+      90deg,
+      rgb(255 255 255 / 88%),
+      rgb(255 255 255 / 70%) 65%,
+      rgb(255 255 255 / 0%)
+    );
+  }
+
+  .coach-discovery > :not(.marketplace-home-hero),
+  .events-discovery-page > .events-marketplace-search,
+  .events-discovery-content {
+    width: calc(100% - 36px);
+  }
+
+  :is(.marketplace-explore-hero, .marketplace-events-hero)
+    .marketplace-home-hero-copy
+    p {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+}
+
+@media (max-width: 560px) {
+  :is(.coach-discovery, .events-discovery-page)
+    :is(.explore-coach-search, .events-coach-search)
+    label {
+    padding-inline: 9px;
+  }
+
+  .events-coach-search select {
+    min-height: 40px;
+    font-size: 16px;
+  }
+}
+
+.public-app-main :is(.events-page, .how-it-works-page) {
+  --event-ink: var(--public-text);
+  --story-paper: #fff;
+  color: var(--public-text);
+}
+
+.public-app-main
+  :is(.events-page, .how-it-works-page)
+  :is(a, button, input, select):focus-visible {
+  outline-color: var(--public-purple);
+}
+
+.public-app-main .events-page a:not(.button),
+.public-app-main .events-page .event-discipline,
+.public-app-main .how-it-works-page .eyebrow,
+.public-app-main .how-it-works-page .coach-step-card > svg {
+  color: var(--public-purple);
+}
+
+.public-app-main
+  .events-page
+  :is(
+    .events-filters,
+    .event-card,
+    .events-state,
+    .event-booking-panel,
+    .event-action-result
+  ),
+.public-app-main
+  .how-it-works-page
+  :is(
+    .coach-step-card,
+    .coach-pass-story,
+    .coach-pass-options article,
+    .coach-final-cta
+  ) {
+  border: 1px solid var(--public-border);
+  background: #fff;
+}
+
+.public-app-main .events-page .events-state[role="alert"] {
+  border-color: #d6b0a7;
+}
+
+.public-app-main .events-page :is(input, select) {
+  border-color: #cfc6d7;
+  background: #fff;
+  color: var(--public-text);
+}
+
+.public-app-main
+  .events-page
+  :is(
+    .events-heading p,
+    .events-results-heading > span,
+    .events-footnote,
+    .event-card-date,
+    .event-coach,
+    .event-card-place small,
+    .event-price-note
+  ),
+.public-app-main
+  .how-it-works-page
+  :is(
+    .coach-section-heading > p,
+    .coach-step-card p,
+    .coach-pass-story-copy > p
+  ) {
+  color: var(--public-muted);
+}
+
+.public-app-main :is(.events-page, .how-it-works-page) .button {
+  border: 1px solid #a18bb3;
+  background: #fff;
+  color: var(--public-purple);
+}
+
+.public-app-main :is(.events-page, .how-it-works-page) .button:hover {
+  border-color: var(--public-purple);
+  background: #fff;
+  text-decoration: underline;
+}
+
+.public-app-main .events-page .event-status-confirmed {
+  border: 1px solid var(--public-border);
+  background: #fff;
+  color: var(--public-purple);
+}
+
+.public-app-main .how-it-works-page .coach-pass-options article > span {
+  border: 1px solid var(--public-border);
+  background: #fff;
+  color: var(--public-purple);
+}
+
+.public-app-main .how-it-works-page .coach-final-cta {
+  margin-top: 32px;
+  border-radius: 20px;
+  padding: clamp(22px, 4vw, 40px);
+}
+
+.public-app-main .how-it-works-page .coach-final-cta h2 {
+  margin: 10px 0 22px;
+}
+
+@media (max-width: 640px) {
+  .public-app-main .how-it-works-page .coach-section-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+}

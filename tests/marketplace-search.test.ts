@@ -125,6 +125,17 @@ test("shared search renders one GET contract and supported discipline links", ()
   assert.doesNotMatch(html, /method="post"/);
   assert.match(html, /aria-label="Search coaches"/);
   assert.match(html, /name="q"/);
+  assert.match(html, /<form[^>]*id="explore-search-form"/);
+  assert.match(
+    html,
+    /<form[^>]*>[\s\S]*<input[^>]*id="explore-query"[^>]*name="q"[\s\S]*<\/form>/,
+  );
+  assert.equal([...html.matchAll(/name="q"/g)].length, 1);
+  assert.match(html, /type="hidden" name="discipline" value="Muay Thai"/);
+  assert.doesNotMatch(
+    html,
+    /id="explore-discipline"|<datalist|explore-query-refinement/,
+  );
   assert.match(html, /name="discipline"/);
   assert.match(html, /name="location"/);
   assert.match(html, /aria-label="Browse coaches by discipline"/);
@@ -135,8 +146,6 @@ test("shared search renders one GET contract and supported discipline links", ()
   );
   assert.equal(disciplineLinks.length, COACH_DISCIPLINES.length + 1);
   assert.match(html, /aria-current="page"[^>]*>[\s\S]*?Muay Thai/);
-  assert.match(html, /id="explore-discipline"/);
-  assert.match(html, /list="explore-discipline-suggestions"/);
   assert.match(
     html,
     /href="\/explore\?q=patient\+footwork&amp;discipline=Boxing&amp;location=Kreuzberg"/,
@@ -145,33 +154,24 @@ test("shared search renders one GET contract and supported discipline links", ()
   assert.doesNotMatch(html, /name="when"|price|rating|distance/i);
 });
 
-test("Home search omits coach query controls and query-bearing discipline links", () => {
+test("Explore has one coach/focus search and no empty hidden discipline", () => {
   const html = renderToStaticMarkup(
     createElement(PublicMarketplaceSearch, {
-      filters: FILTERS,
-      includeQuery: false,
+      filters: normalizeCoachDirectoryFilters({
+        q: "footwork",
+        location: "Berlin",
+      }),
     }),
   );
-  assert.match(html, /action="\/explore"/);
-  assert.doesNotMatch(html, /method="post"/);
-  assert.match(html, /name="discipline"/);
-  assert.match(html, /name="location"[^>]*value="Kreuzberg"/);
-  assert.match(
+  assert.equal([...html.matchAll(/name="q"/g)].length, 1);
+  assert.match(html, /name="q"[^>]*value="footwork"/);
+  assert.match(html, /name="location"[^>]*value="Berlin"/);
+  assert.match(html, /Search coach or focus/);
+  assert.doesNotMatch(
     html,
-    /href="\/explore\?discipline=Boxing&amp;location=Kreuzberg"/,
+    /name="discipline"|id="explore-discipline"|<datalist/,
   );
-  assert.match(html, /href="\/explore\?location=Kreuzberg"/);
-  assert.doesNotMatch(html, /name="q"|Search coach or focus|[?&](?:amp;)?q=/);
-  assert.equal(FILTERS.query, "patient footwork");
-
-  const queryOnly = renderToStaticMarkup(
-    createElement(PublicMarketplaceSearch, {
-      filters: normalizeCoachDirectoryFilters({ q: "footwork" }),
-      includeQuery: false,
-    }),
-  );
-  assert.doesNotMatch(queryOnly, /Clear search|name="q"|[?&](?:amp;)?q=/);
-  assert.match(queryOnly, /aria-current="page"[^>]*>[\s\S]*?All disciplines/);
+  assert.match(html, /href="\/explore"/);
 });
 
 test("Explore typed disciplines use Home's aliases without accepting unsupported values", () => {

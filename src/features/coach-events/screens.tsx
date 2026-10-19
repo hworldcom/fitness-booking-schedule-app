@@ -49,11 +49,13 @@ export function CoachEventDetail({
   roster,
   context,
   after,
+  bannerEditor,
 }: {
   session: GroupSession;
   roster: GroupPage<GroupRosterItem>;
   context: CoachEventContext;
   after: boolean;
+  bannerEditor?: ReactNode;
 }) {
   const selectedType = session.sessionType
     ? context.sessionTypes?.find((t) => t.id === session.sessionType?.id)
@@ -76,6 +78,7 @@ export function CoachEventDetail({
             : "These are the published terms. Corrections require cancelling this session and creating a new draft; registrations never transfer."}
         </p>
       </header>
+      {bannerEditor}
       <div className="coach-event-detail-grid">
         <section className="coach-event-panel" aria-label="Session terms">
           <h2>

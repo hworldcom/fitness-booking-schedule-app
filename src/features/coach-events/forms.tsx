@@ -309,6 +309,9 @@ export function CoachEventDraftForm({
         <Link href="/coach/events">Back to Events</Link>
       </div>
       <p>Saving a draft does not publish it or reserve your time.</p>
+      {revision === null && (
+        <p>After saving the draft, you can add its optional event banner.</p>
+      )}
     </form>
   );
 }
