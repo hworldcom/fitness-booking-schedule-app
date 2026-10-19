@@ -7,7 +7,7 @@ This directory records planned changes, task status and implementation evidence.
 - A **development ticket** is a small implementable task named `# Ticket DEVNNNN` with a `DEVNNNN-short-title.md` filename. It owns implementation and validation evidence, and its DEV ID is used in commits. Start one from [TEMPLATE.md](TEMPLATE.md).
 - A **coordination record** is a non-implementation umbrella named `# Coordination CORNNNN` with a `CORNNNN-short-title.md` filename. It maps a flat set of peer development tickets and is never used as a commit reference. Start one from [COORDINATION_TEMPLATE.md](COORDINATION_TEMPLATE.md).
 
-DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0385 and COR0033.
+DEV and COR have independent four-digit sequences. Allocate the next unused number within the relevant prefix after checking current, archived, retired and reserved records. The next available IDs are DEV0386 and COR0033.
 
 Every DEV record declares its direct coordination membership near the top: one linked COR, or `None — independent development ticket`. Direct membership is limited to one COR and must match that COR's work map. Dependencies, downstream consumers and historical links remain separate relationships.
 
@@ -107,6 +107,7 @@ DEV0374–DEV0375 remain allocated to independent completed UAT operations whose
 
 | Record                                                                                                                                                | Area         | Milestone                                  | Status      | Outcome                                                                                                                                                    |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [DEV0385 — Separate coach identity from banner](current/frontend/DEV0385-separate-coach-identity-from-banner.md) | Frontend | UAT coach website readability | In progress | Opaque identity below bounded banner in public pages and previews. |
 | [DEV0368 — Investigate public availability read latency](current/backend/DEV0368-investigate-public-availability-read-latency.md) | Backend | QA follow-up | Draft | Finding and next action recorded by DEV0367; implementation pending. |
 | [DEV0369 — Refresh public and availability QA baselines](current/frontend/DEV0369-refresh-public-and-availability-qa-baselines.md) | Frontend | QA follow-up | Draft | Finding and next action recorded by DEV0367; implementation pending. |
 | [DEV0370 — Investigate group scheduling contention proof](current/backend/DEV0370-investigate-group-scheduling-contention-proof.md) | Backend | QA follow-up | Draft | Finding and next action recorded by DEV0367; implementation pending. |
