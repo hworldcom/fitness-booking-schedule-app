@@ -1,6 +1,6 @@
 # Ticket DEV0381: Clarify editable coach application submission
 
-- Status: In progress
+- Status: Completed
 - Created: 2026-10-19
 - Last updated: 2026-10-19
 - Milestone: UAT coach onboarding polish
@@ -33,10 +33,10 @@ Existing onboarding already creates a pending application before profile details
 
 ## Acceptance criteria
 
-- [ ] AC1: Initial pending application completion uses Submit application; later applicant edits use Save application changes, with truthful progress/success/help text.
-- [ ] AC2: Pending applications remain owner-editable, retaining identity and pending review status; publication and approved/rejected controls keep their existing authority.
-- [ ] AC3: Desktop/mobile UAT controls are readable and keyboard accessible; required-field validation still prevents incomplete submission without modifying real user data.
-- [ ] AC4: Relevant checks and hosted build pass, exact UAT source/region/alias are verified, and unrelated edits/configuration/data are preserved.
+- [x] AC1: Initial pending application completion uses Submit application; later applicant edits use Save application changes, with truthful progress/success/help text.
+- [x] AC2: Pending applications remain owner-editable, retaining identity and pending review status; publication and approved/rejected controls keep their existing authority.
+- [x] AC3: Desktop/mobile UAT controls are readable and keyboard accessible; required-field validation still prevents incomplete submission without modifying real user data.
+- [x] AC4: Relevant checks and hosted build pass, exact UAT source/region/alias are verified, and unrelated edits/configuration/data are preserved.
 
 ## Validation plan
 
@@ -44,7 +44,7 @@ Extend `tests/database/coach-application.test.ts` to save edited private details
 
 ## Implementation record
 
-Implemented locally; UAT visual checks and release verification remain outstanding.
+Implemented and verified locally and on UAT; all acceptance criteria passed.
 
 ### Changes and rationale
 
@@ -63,7 +63,7 @@ None.
 
 ### Contracts, configuration, and operations
 
-Presentation clarification and regression evidence only; no database schema, action interface, review authority, dependency or environment changes. Existing pending application records remain compatible. UAT rollback re-aliases the preceding ready Preview deployment.
+Presentation clarification and regression evidence only. The internal banner now receives a `hasProfile` boolean derived from the existing owner projection. No database schema, server action interface, review authority, dependency or environment changes. Existing pending application records remain compatible. UAT rollback re-aliases the preceding ready Preview deployment.
 
 ## Validation results
 
@@ -75,22 +75,26 @@ Presentation clarification and regression evidence only; no database schema, act
 - `npm run lint` / `npm run typecheck`: passed in a clean tracked-source export with only DEV0381 source/test overlays, excluding unrelated working-tree edits and ignored scratch files.
 - Scoped `npx prettier --check` passed for both changed components, the database test and ticket. `git diff --check` passed for source/test changes.
 - Reviewed render conditions: pending review does not disable any form field; only an in-flight action disables submission. Required constraints and existing server action/revalidation remain unchanged. Approved/demo labels and rejected resubmission behavior are preserved.
-- Hosted build, live desktop/mobile labels, keyboard/native validation and final preservation checks pending.
+- `npx --yes vercel@64.3.1 inspect movx-club-l7xylw4d2-hoangworldcoms-projects.vercel.app --logs --wait`: hosted build passed. Deployment API verified READY, Preview target, `fra1` and exact source commit `b146d54569740c88ec8ef1612cfc5e6f43f774ab` before alias assignment.
+- Native Chrome desktop 1390×775: Submit your coach application heading, complete-application banner and explicit after-submission editing text rendered. The Submit application button and explanatory footer fit. Coordinate focus on display name followed by Tab moved to Biography. Submitting the untouched incomplete QA form scrolled to and focused required empty Biography without a saved result.
+- Native Chrome responsive 375×568: reloaded only the owned single-tab QA page to reset emulation zoom; heading/help text fit, footer stacked and Submit application occupied the available width. Tapping it on the untouched incomplete form returned focus to empty Biography. Existing form fields remained editable. No profile, location or application details were submitted; the original multi-tab draft was not refreshed/changed, and the QA window was closed.
+- `node work/dev0381/live-check.mjs`: seven unauthenticated UAT HTTP probes passed; staging returned HTTP 200. Alias verified to the new deployment. Before/after metadata for all five Preview environment entries match exactly.
+- Final ticket links and unrelated working-tree preservation checks passed. Successful post-submission editing persistence is proved by the isolated local database test; no real user's application was completed for a live success-state rehearsal.
 
-| Criterion | Evidence | Result  |
-| --------- | -------- | ------- |
-| AC1       | Pending  | Not run |
-| AC2       | Pending  | Not run |
-| AC3       | Pending  | Not run |
-| AC4       | Pending  | Not run |
+| Criterion | Evidence                                                                                                                                                                                      | Result |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| AC1       | Desktop/mobile initial action, heading and editability copy observed; state-aware later-edit/progress/success render conditions reviewed.                                                     | Passed |
+| AC2       | Three local integration tests pass, including edited name/bio, stable slug/submission time, pending state and null public read; approved/rejected/suspended authority remains correct.        | Passed |
+| AC3       | Desktop and phone action/help text fit; name-to-Biography Tab focus and native empty-Biography validation observed; inputs remain editable.                                                   | Passed |
+| AC4       | 414 unit/server tests plus three database tests, clean-source lint/types, formatting and hosted build pass; exact UAT source/region/alias, environment metadata and unrelated edits verified. | Passed |
 
 ## Risks, limitations, and follow-ups
 
-No known blocker. UI validation must not complete, overwrite or submit the real owner's unfinished application. Review-outage scenarios will be inspected in code rather than induced on shared UAT.
+Live visual checks used the existing pending owner without saved coach details. Later applicant button/success states and approved/rejected controls were reviewed in code; the local integration test proves post-submission editing persistence and preserved authority. No real application was completed or overwritten for QA, and no shared UAT outage was induced. Local synthetic fixtures were removed and the eight recorded table fingerprints match their starting state. No Git push was performed; unrelated edits and independent DEV0374/DEV0375 records remain outside this ticket.
 
 ## Completion and review references
 
-- Completed: Not completed.
-- Commit: Not created.
-- Review: Self-review pending; no independent review requested.
-- Deployment or release: Pending.
+- Completed: 2026-10-19 — clear first submission and later-edit actions, persistent editability copy and regression proof delivered.
+- Commit: `b146d54` — `[DEV0381] Clarify editable coach application submission`. Final release record commit is documentation only.
+- Review: Self-reviewed changed source, tests and staged documentation against all criteria. No independent review or pull request created.
+- Deployment or release: Live at `https://uat.movx.club`; alias verified to `dpl_4bgeA5WkZnbVqBeRXJjn4H7qcdzS` (`movx-club-l7xylw4d2-hoangworldcoms-projects.vercel.app`), Preview in Frankfurt (`fra1`), source `b146d54569740c88ec8ef1612cfc5e6f43f774ab`. Rollback re-aliases previous ready deployment `dpl_Cc5aC7X2TvEyb7xHbf7ZwfjcNhf8`.
