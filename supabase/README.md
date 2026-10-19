@@ -188,7 +188,7 @@ The guarded Vercel build requires the complete database/Auth group whenever host
 
 ### UAT rollout on 19 October 2026
 
-The user selected `https://uat.movx.club`, replacing the formerly planned test hostname. [DEV0372](../tickets/current/organisatory/DEV0372-deploy-reviewed-release-to-uat.md) owns the dedicated Vercel `movx-club-uat` Preview deployment, exact-origin Auth configuration, DNS/TLS and final smoke evidence. Preview intentionally uses `movx-dev`; production and the historical staging app remain separate. Public Supabase/site values must be supplied at build time as well as runtime. Startup and deployment create no demonstration accounts.
+[UAT is live](https://uat.movx.club), replacing the formerly planned test hostname. [DEV0372](../tickets/archive/organisatory/DEV0372-deploy-reviewed-release-to-uat.md) owns the dedicated Vercel `movx-club-uat` Preview deployment, exact-origin Auth configuration, DNS/TLS and final smoke evidence. Preview intentionally uses `movx-dev`; production and the historical staging app remain separate. Public Supabase/site values must be supplied at build time as well as runtime. Startup and deployment create no demonstration accounts.
 
 Hosted dev now has all 24 committed migration versions through `20261019000100`. The twenty previously missing forward migrations passed an actual rollback-only rehearsal and an exact dry-run before applying, without seed/role/vault work. All previous fields of 64 original rows across 42 tables matched after rollout; two new private banner buckets were the only intended reference additions. Six retained fictional coach profiles remain hidden. The existing runtime verifier passed all 20 least-privilege checks.
 

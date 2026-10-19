@@ -180,6 +180,8 @@ One explicit search checks Geoapify's Geocoding and Places APIs for bounded Berl
 
 ## Vercel deployment
 
+[UAT is live](https://uat.movx.club) on the dedicated Vercel `movx-club-uat` Preview project using hosted dev. [DEV0372](tickets/archive/organisatory/DEV0372-deploy-reviewed-release-to-uat.md) records the release, responsive smoke, preservation proof and remaining QA/Auth limitations. Vercel now manages DNS; the former root/survey sites are retired from the new routing, with cache propagation documented in [DEV0373](tickets/archive/organisatory/DEV0373-move-domain-dns-to-vercel.md); Porkbun remains the registrar and email provider.
+
 [vercel.json](vercel.json) selects native Next.js and runs `npm run build:vercel`, which validates hosted settings without printing values before `next build`. Select Node.js 24.x in Vercel, keep the project root at the repository root and do not set a custom output directory.
 
 A configuration-free deployment provides public preview pages. Hosted identity/scheduling requires all four values in the same environment:
