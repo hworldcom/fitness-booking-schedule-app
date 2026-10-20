@@ -176,6 +176,8 @@ Explore uses MapLibre GL JS with OpenFreeMap's public style and requires no map 
 
 To enable coach-facing facility and separate own-address search, set `NEXT_PUBLIC_GEOAPIFY_API_KEY` in the ignored environment file before building. Create separate browser keys for local, preview and production use and restrict each key to the approved origins in Geoapify. Public browser keys are intentionally visible; never commit a populated value or record it in logs or tickets.
 
+UAT search is enabled on the dedicated `movx-club-uat` Preview deployment. [DEV0375](tickets/archive/backend/DEV0375-enable-uat-gym-and-place-search.md) records the build-time configuration repair and real desktop/phone search proof. Changing this public setting requires rebuilding the Preview before reassigning the UAT alias.
+
 Facility search is the first option and calls Geoapify Geocoding for named amenities across categories, including gyms and other facilities. Own address separately looks up a Berlin meeting address and offers manual coordinate entry. Both queries use Berlin’s administrative boundary; returned city/country/coordinates are checked, and facility results need a name and amenity classification. [DEV0378](tickets/archive/frontend/DEV0378-broaden-berlin-facility-search.md) records the broader lookup and UAT validation. MovX stores only the result the coach explicitly selects and confirms; Geoapify permits storage with required attribution. Search consumes the account's daily credits, while map browsing uses OpenFreeMap independently. Existing fictional gym coordinates and manual fallback coordinates call neither search API.
 
 ## Vercel deployment
