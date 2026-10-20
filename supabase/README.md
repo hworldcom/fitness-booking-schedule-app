@@ -74,6 +74,12 @@ DATABASE_URL=postgresql://repx_runtime_login:postgres@127.0.0.1:55322/postgres
 
 The local integration suite connects as the disposable PostgreSQL administrator so it can create and clean fixtures, then exercises application repositories through the restricted runtime login. Browser code never receives `DATABASE_URL`.
 
+### Scheduling time-zone validation performance
+
+[DEV0396](../tickets/archive/backend/DEV0396-avoid-repeated-timezone-catalog-scans.md) adds `20261020000200_fast_scheduling_timezone_validation.sql`. It avoids repeated catalog enumeration for exact `Europe/Berlin`/`UTC` names while retaining the current daylight-saving gap/overlap checks and catalog-backed validation for all other names. It changes one function body, with no row/table/API or cache-policy change.
+
+Run `node scripts/rehearse-scheduling-timezone-database.mjs` with the existing local Docker stack and runtime login. It creates uniquely named fresh/upgrade scratch databases, compares 149 pre/post time results, checks row/function-contract preservation and runs scheduling/booking regressions, then removes only its scratch databases. It never migrates, resets or seeds the retained local/hosted database. Local validation does not apply the migration to UAT; use the existing explicit hosted migration procedure for a reviewed rollout. Rollback restores the preceding function body from the immutable baseline through a reviewed forward operation, preserving its identity/owner/privileges. JavaScript deployment alone does not apply it.
+
 ### Group-session banner migration
 
 `20261018001000_group_session_banners.sql` adds independently revisioned optional event images and the private `event-banners` bucket. Existing sessions receive no copied image or changed terms. Apply it after the preceding forward migrations, using the existing local/hosted migration procedure; deploy consumers only after its functions and Storage policies exist. The local database has been advanced through this migration with unchanged prior-row fingerprints; hosted rollout remains separate. Do not reset or reseed an existing environment. See [DEV0356](../tickets/archive/backend/DEV0356-persist-group-session-banners.md) for ownership/current-reference policies, exact local evidence and rollback considerations. `node scripts/rehearse-event-banners-database.mjs` validates fresh and upgrade disposable databases without resetting retained data.
