@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Search, UserRoundSearch } from "lucide-react";
 import { MarketplaceHero } from "@/features/public/marketplace-hero";
 import { type CoachDirectoryState } from "@/domain/coaches";
+import type { StaticImageData } from "next/image";
 import { CoachExploreResults } from "./coach-explore-results";
 import { PublicMarketplaceSearch } from "./public-marketplace-search";
 import {
@@ -11,17 +12,19 @@ import {
 
 export function CoachDirectory({
   state,
+  background,
   view = "list",
   searchView = null,
 }: {
   state: CoachDirectoryState;
+  background: StaticImageData;
   view?: CoachExploreView;
   searchView?: CoachExploreView | null;
 }) {
   return (
     <div className="coach-discovery">
       <MarketplaceHero
-        image="/images/explore-training.jpg"
+        image={background}
         alt="Two athletes greeting each other beside training sleds and ropes."
         titleId="explore-hero-title"
         className="marketplace-explore-hero"

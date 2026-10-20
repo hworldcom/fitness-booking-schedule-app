@@ -1,4 +1,4 @@
-import { getImageProps } from "next/image";
+import { getImageProps, type StaticImageData } from "next/image";
 import type { ReactNode } from "react";
 
 export function MarketplaceHero({
@@ -8,22 +8,24 @@ export function MarketplaceHero({
   children,
   description,
   imageFrameClassName,
+  sizes = "100vw",
   className = "",
 }: {
-  image: string;
+  image: StaticImageData;
   alt: string;
   titleId: string;
   children: ReactNode;
   description?: string;
   imageFrameClassName?: string;
+  sizes?: string;
   className?: string;
 }) {
   const { props } = getImageProps({
     src: image,
     alt,
     fill: true,
-    sizes: "(max-width: 480px) 480px, 100vw",
-    quality: 95,
+    sizes,
+    quality: 85,
     loading: "eager",
     fetchPriority: "high",
     className: "marketplace-home-hero-image",

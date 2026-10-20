@@ -9,6 +9,7 @@ import {
 } from "@/features/coaches/home-marketplace-contract";
 import { CoachStoryHome } from "@/features/public/coach-story";
 import { publicCoachDirectory } from "@/server/coaches/service";
+import homeBackground from "../../public/images/home-battle-ropes.jpg";
 
 export const metadata: Metadata = {
   title: "Discover coaches and request private sessions",
@@ -27,5 +28,5 @@ export default async function Page({
   if (!isCanonicalHomeSearch(rawSearchParams, filters))
     redirect(homeDirectoryHref(filters));
   const directory = await publicCoachDirectory(filters);
-  return <CoachStoryHome directory={directory} />;
+  return <CoachStoryHome directory={directory} background={homeBackground} />;
 }
