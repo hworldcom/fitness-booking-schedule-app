@@ -2,7 +2,7 @@
 
 - Status: Draft
 - Created: 2026-10-08
-- Last updated: 2026-10-08
+- Last updated: 2026-10-20
 - Milestone: Post-separation internal operations
 - Coordination: None — independent development ticket
 - Related records: depends on completed [DEV0147 — Separate client onboarding and verified coach access](../../archive/backend/DEV0147-separate-client-onboarding-and-verified-coach-access.md); reuses the email identity and protected-access foundations from [DEV0046](../../archive/backend/DEV0046-email-otp-registration-and-application-profiles.md) and [DEV0040](../../archive/backend/DEV0040-protected-access-and-database-context.md)
@@ -12,6 +12,8 @@
 Replace DEV0147's guarded manual coach-review operation with a small internal interface for authorized MovX staff. Reviewers need a safe queue and application detail screen that can approve, request changes, reject or suspend a coach while preserving the same server-authoritative lifecycle and immutable audit trail.
 
 This ticket is intentionally lower priority than client/coach separation. DEV0147's application/review contracts are now implemented and stable, but this record remains `Draft` until the user reprioritizes the admin panel and its staff-authorization plan is reviewed.
+
+2026-10-20 planning amendment: the user selected `https://admin.movx.club` for the future panel, recorded in [specification C52 and the platform-reviewer contract](../../../docs/mvp-spec.md#platform-reviewer) under independent [DEV0398](../../archive/organisatory/DEV0398-record-admin-subdomain-target.md). This record remains Draft pending scope/staff-authorization review; its current `/admin/coaches` route proposal does not decide the final path on that hostname. Separate hosting versus host-based routing, the admin UAT hostname and data-environment mapping remain open. Future rollout needs sign-in return/session-scope validation and the existing server/database staff checks. No DNS, Auth, hosting or runtime changes have been made by the hostname amendment.
 
 ## Scope and non-goals
 
@@ -94,6 +96,7 @@ Not implemented.
 
 - 2026-10-08: The user explicitly deprioritized the admin panel. The record remains Draft and downstream of DEV0147 rather than blocking the urgent separation work.
 - 2026-10-08: DEV0147 completed with owner-only expected-state decisions and append-only audit events. This removes the backend lifecycle dependency but does not authorize or prioritize panel implementation.
+- 2026-10-20: Confirmed `admin.movx.club` as the future deployment target under DEV0398. Existing owner-assigned staff authority remains required; the hostname grants no permission and does not select a database environment. Runtime implementation remains pending.
 
 ### Contracts, configuration, and operations
 

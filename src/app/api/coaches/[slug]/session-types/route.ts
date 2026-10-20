@@ -1,6 +1,7 @@
 import {
   publicSessionCatalog,
   publicSessionTimes,
+  publicSessionWeek,
 } from "@/server/coaches/typed-session-service";
 export const dynamic = "force-dynamic";
 export async function GET(
@@ -11,14 +12,23 @@ export async function GET(
   const q = new URL(request.url).searchParams;
   let result: unknown;
   try {
-    result = q.has("typeId")
-      ? await publicSessionTimes(
-          slug,
-          q.get("typeId") ?? "",
-          q.get("locationId") ?? "",
-          q.get("date") ?? "",
-        )
-      : { status: "ready", catalog: await publicSessionCatalog(slug) };
+    result = q.has("weekOf")
+      ? q.has("date") || q.getAll("weekOf").length !== 1
+        ? { status: "invalid" }
+        : await publicSessionWeek(
+            slug,
+            q.get("typeId") ?? "",
+            q.get("locationId") ?? "",
+            q.get("weekOf") ?? "",
+          )
+      : q.has("typeId")
+        ? await publicSessionTimes(
+            slug,
+            q.get("typeId") ?? "",
+            q.get("locationId") ?? "",
+            q.get("date") ?? "",
+          )
+        : { status: "ready", catalog: await publicSessionCatalog(slug) };
   } catch {
     result = { status: "unavailable" };
   }

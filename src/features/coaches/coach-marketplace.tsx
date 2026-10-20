@@ -1,7 +1,7 @@
 "use client";
 import { coachProfileHref } from "@/domain/coach-public-url";
 
-import { CalendarCheck2, Clock3, RotateCcw } from "lucide-react";
+import { Clock3, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -26,10 +26,10 @@ import {
   publicScheduleSelection,
   publicScheduleSlots,
 } from "@/domain/public-coach-schedule";
-import {
-  PublicScheduleNavigation,
-  publicScheduleDateLabel,
-} from "./public-schedule-navigation";
+import { SevenDaySchedule } from "./seven-day-schedule";
+import { SessionRequestReview } from "./session-request-review";
+import { publicScheduleTimeRange } from "./public-schedule-model";
+import "./public-schedule.css";
 
 const BERLIN_TIMEZONE = "Europe/Berlin";
 
@@ -92,7 +92,7 @@ function dateTimeParts(timestamp: string, timeZone: string) {
 function slotDay(slot: PublicCoachAvailabilitySlot) {
   const values = Object.fromEntries(
     new Intl.DateTimeFormat("en-GB", {
-      timeZone: slot.coachTimezone,
+      timeZone: BERLIN_TIMEZONE,
       weekday: "long",
       day: "numeric",
       month: "short",
@@ -103,26 +103,8 @@ function slotDay(slot: PublicCoachAvailabilitySlot) {
   return values.weekday + " " + values.day + " " + values.month;
 }
 
-function clockTime(timestamp: string, timeZone: string) {
-  const values = Object.fromEntries(
-    new Intl.DateTimeFormat("en-GB", {
-      timeZone,
-      hour: "2-digit",
-      minute: "2-digit",
-      hourCycle: "h23",
-    })
-      .formatToParts(new Date(timestamp))
-      .map((part) => [part.type, part.value]),
-  );
-  return values.hour + ":" + values.minute;
-}
-
 function slotTime(slot: PublicCoachAvailabilitySlot) {
-  return (
-    clockTime(slot.startsAt, slot.coachTimezone) +
-    "–" +
-    clockTime(slot.endsAt, slot.coachTimezone)
-  );
+  return publicScheduleTimeRange(slot.startsAt, slot.endsAt);
 }
 
 function requestState(slot: PublicCoachAvailabilitySlot) {
@@ -173,19 +155,23 @@ export function CoachMarketplace(props: CoachMarketplaceProps) {
 
 function CoachMarketplaceContent(props: CoachMarketplaceProps) {
   const router = useRouter();
-  const selection = publicScheduleSelection(
+  const requestedSelection = publicScheduleSelection(
     props.selectedDate,
     props.referenceTime,
   );
-  const eligible = publicScheduleSlots(props.slots, props.referenceTime);
-  const slots = selection.inHorizon
-    ? eligible.filter((slot) => calendarDate(slot.startsAt) === selection.date)
-    : [];
-  const counts = new Map<string, number>();
-  for (const slot of eligible) {
-    const date = calendarDate(slot.startsAt);
-    counts.set(date, (counts.get(date) ?? 0) + 1);
-  }
+  const selection = requestedSelection.inHorizon
+    ? requestedSelection
+    : publicScheduleSelection(undefined, props.referenceTime);
+  const eligible =
+    props.actor.status === "authorized"
+      ? publicScheduleSlots(props.slots, props.referenceTime)
+      : [];
+  const slots = eligible.filter((slot) =>
+    selection.dates.includes(calendarDate(slot.startsAt)),
+  );
+  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const selectedSlot = slots.find((slot) => slot.id === selectedSlotId);
   const signIn =
     "/sign-in?returnTo=" +
     encodeURIComponent(
@@ -270,22 +256,12 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
       });
     } finally {
       setBusyKey(null);
+      setReviewOpen(false);
     }
   }
 
   return (
     <aside className="public-coach-next coach-marketplace">
-      <header className="coach-marketplace-heading">
-        <CalendarCheck2 size={25} aria-hidden="true" />
-        <div>
-          <span className="eyebrow">PRIVATE SCHEDULING</span>
-          <h2>Choose one open hour.</h2>
-        </div>
-      </header>
-      <p>
-        Sessions with {props.coachDisplayName} require coach confirmation. A
-        request remains unconfirmed until the coach accepts it.
-      </p>
       {result && (
         <div
           className={
@@ -378,40 +354,49 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
       <section
         id="private-schedule"
         className="coach-open-slots public-schedule"
-        aria-labelledby="open-slots-title"
+        aria-label="Private session booking"
       >
-        <PublicScheduleNavigation
-          slug={props.coachSlug}
-          publicPath={props.publicPath}
+        <SevenDaySchedule
           selection={selection}
-          counts={counts}
+          items={slots.map((slot) => ({
+            id: slot.id,
+            startsAt: slot.startsAt,
+            endsAt: slot.endsAt,
+            venue: slot.location.name,
+            pending: pendingBySlot.has(slot.id),
+          }))}
+          selectedId={selectedSlot?.id}
+          disabled={busyKey !== null}
+          status={
+            props.actor.status === "authorized"
+              ? "ready"
+              : props.actor.status === "unavailable"
+                ? "unavailable"
+                : "unselected"
+          }
+          unselectedCopy="Sign in to see the times under each day."
+          onRetry={() => router.refresh()}
+          onNavigate={(date) =>
+            router.push(
+              publicScheduleHref(props.coachSlug, date, props.publicPath),
+              { scroll: false },
+            )
+          }
+          onSelect={(id) => {
+            setSelectedSlotId(id);
+            setResult(null);
+          }}
         />
-        {selection.invalid && (
-          <p role="status">That date was invalid. Showing today’s schedule.</p>
+        {(requestedSelection.invalid || !requestedSelection.inHorizon) && (
+          <p role="status">
+            {requestedSelection.invalid
+              ? "That date is invalid. Showing this week."
+              : "That date is outside the current schedule. Showing this week."}
+          </p>
         )}
-        <div className="coach-section-heading">
-          <div>
-            <span className="eyebrow">NEXT 30 DAYS</span>
-            <h3 id="open-slots-title">
-              {publicScheduleDateLabel(selection.date)}
-            </h3>
-          </div>
-          <Clock3 size={23} aria-hidden="true" />
-        </div>
-        {!selection.inHorizon ? (
-          <p role="status">
-            This date is outside the current 30-day request window. Choose a
-            date between {publicScheduleDateLabel(selection.today, true)} and{" "}
-            {publicScheduleDateLabel(selection.through, true)}.
-          </p>
-        ) : slots.length === 0 ? (
-          <p role="status">
-            No open hours on this date. Choose another date to see available
-            times.
-          </p>
-        ) : (
+        {selectedSlot ? (
           <ol className="coach-bookable-slot-list">
-            {slots.map((slot) => {
+            {[selectedSlot].map((slot) => {
               const pendingRequest = pendingBySlot.get(slot.id);
               return (
                 <li key={slot.id} data-slot-id={slot.id}>
@@ -467,15 +452,11 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
                       type="button"
                       className="button secondary"
                       disabled={busyKey !== null}
-                      onClick={() =>
-                        void runAction("request:" + slot.id, () =>
-                          actions.request(slot.id),
-                        )
-                      }
+                      onClick={() => setReviewOpen(true)}
                     >
                       {busyKey === "request:" + slot.id
                         ? "Saving request…"
-                        : "Request session"}
+                        : "Review request"}
                     </button>
                   ) : props.actor.status === "unavailable" ? (
                     <button type="button" className="button secondary" disabled>
@@ -490,7 +471,43 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
               );
             })}
           </ol>
+        ) : (
+          <p className="seven-day-notice">
+            Choose a time above to review the session and its training place.
+          </p>
         )}
+        <SessionRequestReview
+          open={reviewOpen && !!selectedSlot}
+          onClose={() => setReviewOpen(false)}
+          busy={busyKey !== null}
+          onSubmit={() => {
+            if (
+              selectedSlot &&
+              props.actor.status === "authorized" &&
+              !isOwnSchedule &&
+              !pendingBySlot.has(selectedSlot.id)
+            )
+              void runAction("request:" + selectedSlot.id, () =>
+                actions.request(selectedSlot.id),
+              );
+          }}
+        >
+          {selectedSlot && (
+            <>
+              <p>
+                <strong>Private session · 60 minutes</strong>
+              </p>
+              <p>
+                {slotDay(selectedSlot)} · {slotTime(selectedSlot)} Berlin time
+              </p>
+              <p>
+                {selectedSlot.location.name}
+                <br />
+                {selectedSlot.location.label}
+              </p>
+            </>
+          )}
+        </SessionRequestReview>
         <form
           action={coachProfileHref({
             slug: props.coachSlug,

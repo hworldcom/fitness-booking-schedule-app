@@ -16,6 +16,7 @@ import {
 import { publicCoachReviews } from "@/server/coaches/review-service";
 import { publicPrivateScheduleSummary } from "@/server/coaches/private-schedule-summary-service";
 import { PrivateScheduleAccess } from "@/features/coaches/private-schedule-access";
+import "@/features/coaches/public-schedule.css";
 import { calendarDate } from "@/domain/coach-calendar";
 import { coachRedirectHref } from "@/domain/coach-public-url";
 import {
@@ -55,11 +56,11 @@ export async function PublicCoachPage({
   ]);
   const query = await searchParams;
   const selection = publicScheduleSelection(query.date, state.databaseTime);
-  const daySlots = publicScheduleSlots(state.slots, state.databaseTime).filter(
-    (slot) => calendarDate(slot.startsAt) === selection.date,
+  const weekSlots = publicScheduleSlots(state.slots, state.databaseTime).filter(
+    (slot) => selection.dates.includes(calendarDate(slot.startsAt)),
   );
   const bookingState = await currentClientCoachMarketplaceWorkspace(
-    daySlots.map((slot) => slot.id),
+    catalog?.enabled ? [] : weekSlots.map((slot) => slot.id),
   );
   const actor =
     bookingState.status === "authorized"
@@ -130,9 +131,7 @@ export async function PublicCoachPage({
             >
               <TypeFirstBooking
                 catalog={catalog}
-                selectedDate={
-                  typeof query.date === "string" ? query.date : undefined
-                }
+                selectedDate={query.date}
                 slug={slug}
                 ownProfile={
                   actor.status === "authorized" &&
