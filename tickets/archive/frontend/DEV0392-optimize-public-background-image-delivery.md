@@ -5,7 +5,7 @@
 - Last updated: 2026-10-20
 - Milestone: M3 public discovery performance maintenance
 - Coordination: None — independent development ticket
-- Related records: Historical asset preservation: [DEV0391](DEV0391-remove-unused-public-images.md). Independent server-latency investigation: [DEV0368](../../current/backend/DEV0368-investigate-public-availability-read-latency.md). Independent data-cache policy: [DEV0393](../../current/backend/DEV0393-control-public-directory-cache-freshness.md). UAT Events dependency for complete live-page validation: [DEV0394](../backend/DEV0394-restore-uat-events-directory-reads.md).
+- Related records: Historical asset preservation: [DEV0391](DEV0391-remove-unused-public-images.md). Independent server-latency investigation: [DEV0368](../backend/DEV0368-investigate-public-availability-read-latency.md). Independent data-cache policy: [DEV0393](../../current/backend/DEV0393-control-public-directory-cache-freshness.md). UAT Events dependency for complete live-page validation: [DEV0394](../backend/DEV0394-restore-uat-events-directory-reads.md).
 
 ## Objective and context
 

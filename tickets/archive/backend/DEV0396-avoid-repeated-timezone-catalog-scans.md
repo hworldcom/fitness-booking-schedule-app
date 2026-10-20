@@ -5,7 +5,7 @@
 - Last updated: 2026-10-20
 - Milestone: M3 public discovery performance maintenance
 - Coordination: None — independent development ticket
-- Related records: Profiling dependency: [DEV0368](../../current/backend/DEV0368-investigate-public-availability-read-latency.md). Downstream cache-policy decision: [DEV0393](../../current/backend/DEV0393-control-public-directory-cache-freshness.md). Existing scheduling behavior is defined by the specification links below.
+- Related records: Profiling dependency: [DEV0368](DEV0368-investigate-public-availability-read-latency.md). Downstream cache-policy decision: [DEV0393](../../current/backend/DEV0393-control-public-directory-cache-freshness.md). Existing scheduling behavior is defined by the specification links below.
 
 ## Objective and context
 
@@ -66,7 +66,7 @@ The source database and application JavaScript are unchanged. The repair reduces
 | [Database rehearsal](../../../scripts/rehearse-scheduling-timezone-database.mjs)                                                                         | Creates/removes only owned local scratch databases; compares 149 before/after outcomes, all row hashes/function metadata and actual scheduling/booking behavior for fresh/upgrade paths. Upgrade includes a synthetic claimed identity as well as seed coaches. |
 | [Request-origin regression](../../../tests/database/request-booking-rescheduling.test.ts)                                                                | Permits the exact DEV0396 scratch-name pattern in addition to DEV0388; existing loopback/port restrictions and test assertions remain intact.                                                                                                                   |
 | [Database guide](../../../supabase/README.md#scheduling-time-zone-validation-performance), [index](../../README.md)                                      | Describe the migration, local rehearsal, rollback and separate hosted rollout.                                                                                                                                                                                  |
-| [DEV0368](../../current/backend/DEV0368-investigate-public-availability-read-latency.md), [DEV0393](../../current/backend/DEV0393-control-public-directory-cache-freshness.md) | Record attribution and the distinction between this repair and still-unselected shared caching.                                                                                                                                                                 |
+| [DEV0368](DEV0368-investigate-public-availability-read-latency.md), [DEV0393](../../current/backend/DEV0393-control-public-directory-cache-freshness.md) | Record attribution and the distinction between this repair and still-unselected shared caching.                                                                                                                                                                 |
 
 ### Decisions and deviations
 
