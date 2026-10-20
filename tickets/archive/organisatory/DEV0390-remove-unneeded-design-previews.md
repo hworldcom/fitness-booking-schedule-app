@@ -81,3 +81,9 @@ Unpublished main commit IDs changed as recorded in the map. The two verified ign
 - Commit: Filtered removal checkpoint `cde121ef9f114f46052f5e1800ba0e2fc27b77d6` (`[DEV0390] Remove unneeded standalone design previews`); final record/map included in `[DEV0390] Record preview history cleanup verification`.
 - Review: Self-review; no independent review.
 - Deployment or release: None.
+
+### Post-commit push verification — 2026-10-20
+
+At committed cleanup tip `b4d8cc7`, a streamed local `git pack-objects --revs --stdout --thin --delta-base-offset --threads=2` comparison excluding known origin refs produced 46,098,008 bytes before cleanup and 20,097,504 bytes after (43.96 → 19.17 MiB; 26,000,504 transfer-pack bytes removed). Actual network packing can vary. Private result: work/dev0390/pack-size-comparison.json.
+
+`git -c core.sshCommand='ssh -o ConnectTimeout=10 -o BatchMode=yes' push --dry-run origin main` exited 0 and reported `e14966c..b4d8cc7 main -> main`; no ref was published. Final clean-worktree, unchanged application/active-migration/SQL-history/image SHA256 values, preserved other branch refs and fast-forward ancestry checks passed. This final evidence-only commit adds no application or prototype artifact changes.
