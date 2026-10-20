@@ -36,10 +36,31 @@ function isLoopback(hostname) {
   return ["127.0.0.1", "localhost", "::1"].includes(hostname);
 }
 
-function validateCoreEnvironment(vercelEnvironment) {
+function hostedEnvironment(vercelEnvironment) {
+  const explicit = value("MOVX_HOSTED_ENVIRONMENT");
+  if (explicit && !["dev", "prod"].includes(explicit)) {
+    fail("MOVX_HOSTED_ENVIRONMENT must be dev or prod when set.");
+  }
+  const target =
+    explicit || (vercelEnvironment === "production" ? "prod" : "dev");
+  if (target === "prod" && vercelEnvironment !== "production") {
+    fail("The production database requires a Vercel Production deployment.");
+  }
+  return target;
+}
+
+function validateCoreEnvironment(vercelEnvironment, target) {
   if (
     !validateCompleteGroup(CORE_VARIABLES, "Hosted database/Auth configuration")
   ) {
+    if (
+      vercelEnvironment === "production" ||
+      value("MOVX_HOSTED_ENVIRONMENT")
+    ) {
+      fail(
+        "Hosted database/Auth configuration is required for Production or explicitly hosted builds; configuration-free public preview is limited to non-production builds.",
+      );
+    }
     return "public-preview";
   }
 
@@ -115,10 +136,19 @@ function validateCoreEnvironment(vercelEnvironment) {
   ) {
     fail("NEXT_PUBLIC_SITE_URL must be an exact root HTTPS origin.");
   }
-  hostedRuntimeConfiguration(
-    process.env,
-    vercelEnvironment === "production" ? "prod" : "dev",
-  );
+  const canonicalTargets = {
+    "https://uat.movx.club": "dev",
+    "https://movx.club": "prod",
+  };
+  if (
+    canonicalTargets[siteUrl.origin] &&
+    canonicalTargets[siteUrl.origin] !== target
+  ) {
+    fail(
+      "NEXT_PUBLIC_SITE_URL does not match the selected hosted environment.",
+    );
+  }
+  hostedRuntimeConfiguration(process.env, target);
   return "hosted-runtime";
 }
 
@@ -147,7 +177,8 @@ function main() {
   ) {
     fail("VERCEL_ENV must be production, preview or development when set.");
   }
-  const runtimeMode = validateCoreEnvironment(vercelEnvironment);
+  const target = hostedEnvironment(vercelEnvironment);
+  const runtimeMode = validateCoreEnvironment(vercelEnvironment, target);
   const geoapifyEnabled = validateGeoapifyEnvironment();
   console.log(
     `Validated ${vercelEnvironment} Vercel build in ${runtimeMode} mode (OpenFreeMap enabled; Geoapify search ${geoapifyEnabled ? "configured" : "disabled"}) without printing environment values.`,

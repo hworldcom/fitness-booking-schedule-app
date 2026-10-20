@@ -40,6 +40,69 @@ test("Vercel validation accepts configuration-free public preview mode", () => {
   assert.match(output, /OpenFreeMap enabled; Geoapify search disabled/);
 });
 
+test("Vercel validation prevents unconfigured Production and explicitly hosted deployments", () => {
+  for (const environment of [
+    { ...baseEnvironment, VERCEL_ENV: "production" },
+    { ...baseEnvironment, MOVX_HOSTED_ENVIRONMENT: "dev" },
+  ]) {
+    const result = run(environment);
+    assert.notEqual(result.status, 0);
+    assert.match(
+      result.stderr,
+      /configuration is required for Production or explicitly hosted builds/,
+    );
+  }
+});
+
+test("Vercel Production can serve UAT only with an explicit dev target and matching runtime", () => {
+  const uat = {
+    ...validEnvironment,
+    VERCEL_ENV: "production",
+    MOVX_HOSTED_ENVIRONMENT: "dev",
+    NEXT_PUBLIC_SITE_URL: "https://uat.movx.club",
+  };
+  const result = run(uat);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /production Vercel build in hosted-runtime mode/);
+  assert.doesNotMatch(
+    result.stdout + result.stderr,
+    /test-only|geoapify_test_key/,
+  );
+  for (const changes of [
+    { MOVX_HOSTED_ENVIRONMENT: undefined },
+    { MOVX_HOSTED_ENVIRONMENT: "prod" },
+    { MOVX_HOSTED_ENVIRONMENT: "staging" },
+    { DATABASE_URL: undefined },
+    { NEXT_PUBLIC_SITE_URL: "https://movx.club" },
+  ]) {
+    assert.notEqual(run({ ...uat, ...changes }).status, 0);
+  }
+});
+
+test("Vercel validation rejects a production database in Preview or on the UAT domain", () => {
+  const production = {
+    ...validEnvironment,
+    VERCEL_ENV: "production",
+    MOVX_HOSTED_ENVIRONMENT: "prod",
+    DATABASE_URL: validEnvironment
+      .DATABASE_URL!.replaceAll("mdzidiqosxbghmfyxphb", "yltijwebedkraypgkqmc")
+      .replace("movx_dev_runtime_login", "movx_prod_runtime_login"),
+    NEXT_PUBLIC_SUPABASE_URL: "https://yltijwebedkraypgkqmc.supabase.co",
+    NEXT_PUBLIC_SITE_URL: "https://movx.club",
+  };
+  assert.equal(run(production).status, 0);
+  assert.notEqual(run({ ...production, VERCEL_ENV: "preview" }).status, 0);
+  assert.notEqual(
+    run({ ...production, NEXT_PUBLIC_SITE_URL: "https://uat.movx.club" })
+      .status,
+    0,
+  );
+  assert.notEqual(
+    run({ ...production, MOVX_HOSTED_ENVIRONMENT: "dev" }).status,
+    0,
+  );
+});
+
 test("Vercel validation accepts complete scheduling configuration without leaking values", () => {
   const output = execFileSync(process.execPath, [script], {
     cwd: root,

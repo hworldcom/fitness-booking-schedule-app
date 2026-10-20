@@ -4,6 +4,12 @@
 
 2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../tickets/archive/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
 
+## Current background delivery
+
+[DEV0392](../../tickets/current/frontend/DEV0392-optimize-public-background-image-delivery.md) step 1 imports the three original JPEGs as static image data. Next.js includes each file's content hash in its generated static media URL (`/_next/static/media/` locally, `/_next/static/immutable/media/` in the verified UAT build), and the optimizer uses that versioned source for its responsive URLs. Unchanged images can remain fresh in the browser's immutable cache; changing image bytes and rebuilding generates a new URL. Browser eviction, force reload and a changed optimizer variant can still require a request. UAT serves these optimized images with `Cache-Control: public,max-age=31536000,immutable` (one year); the local production optimizer returned `public, max-age=315360000, immutable` (ten years). Actual browser reuse and replacement checks are recorded in the ticket; neither duration guarantees the browser will retain a cached file.
+
+Quality remains 95 and `sizes` remains `(max-width: 480px) 480px, 100vw` in step 1. The optimizer width/quality allowlist, source image bytes, eager/high-priority loading, banner dimensions and CSS crops are unchanged. Compression and responsive sizing are later steps; this change does not reduce the first optimized response's body size. Public background caching does not change uploaded/profile-image authorization or caching, and no broad cache override is added.
+
 ## Events tug-of-war photograph
 
 `events-tug-of-war.jpg` is the user-supplied photograph, copied unchanged from `amari-shutters-S1Xo-Ygp_q0-unsplash.jpg` under [DEV0353](../../tickets/archive/frontend/DEV0353-add-face-free-events-banner.md). The local original is 7680 × 5120, 7,166,194 bytes, visually matching the supplied attachment at a higher resolution. SHA-256: `aba1e97d807452f71bd6cd8ec999790bd992df5d404e4c8230bdbb8d2ffb3728`. The filename credits Amari Shutters / Unsplash. It illustrates group activity and does not identify a MovX session, coach or confirmed venue.

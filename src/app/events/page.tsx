@@ -14,6 +14,7 @@ import {
   parseEventDirectory,
 } from "@/features/events/directory-contract";
 import { EventResults } from "@/features/events/event-results";
+import eventsBackground from "../../../public/images/events-tug-of-war.jpg";
 import "@/features/events/events.css";
 import "@/features/events/event-directory.css";
 
@@ -34,7 +35,7 @@ export default async function Page({
   return (
     <div className="events-page events-discovery-page">
       <MarketplaceHero
-        image="/images/events-tug-of-war.jpg"
+        image={eventsBackground}
         alt="Lower-body view of a group tug-of-war on a grass field."
         titleId="events-hero-title"
         className="marketplace-events-hero"

@@ -22,6 +22,11 @@ import {
 import { directoryEntry } from "./fixtures/coach-directory";
 
 const filters = normalizeCoachDirectoryFilters({});
+const background = {
+  src: "/_next/static/media/test-background.01234567.jpg",
+  width: 1500,
+  height: 1000,
+};
 
 const entries = Object.freeze([
   directoryEntry(1, "Amina Ali", {
@@ -198,6 +203,7 @@ test("compact result card exposes truthful comparison and selection boundaries",
 test("Explore keeps explicit empty and unavailable directory states", () => {
   const empty = renderToStaticMarkup(
     createElement(CoachDirectory, {
+      background,
       state: Object.freeze({
         status: "ready" as const,
         entries: Object.freeze([]),
@@ -211,6 +217,7 @@ test("Explore keeps explicit empty and unavailable directory states", () => {
 
   const unavailable = renderToStaticMarkup(
     createElement(CoachDirectory, {
+      background,
       state: Object.freeze({ status: "unavailable" as const, filters }),
     }),
   );
@@ -245,6 +252,7 @@ test("home discovery keeps empty and unavailable data states honest", () => {
 test("home orders working discovery before the concise confirmation flow", () => {
   const markup = renderToStaticMarkup(
     createElement(CoachStoryHome, {
+      background,
       directory: Object.freeze({ status: "ready", entries, filters }),
     }),
   );

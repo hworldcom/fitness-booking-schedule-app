@@ -9,6 +9,7 @@ import {
 import { type CoachDirectoryState } from "@/domain/coaches";
 import { HomeCoachDiscovery } from "@/features/coaches/home-coach-discovery";
 import { HomeMarketplaceSearch } from "@/features/coaches/home-marketplace-search";
+import type { StaticImageData } from "next/image";
 import { MarketplaceHero } from "./marketplace-hero";
 
 type StoryStep = Readonly<{
@@ -66,13 +67,15 @@ function StoryStepGrid({
 
 export function CoachStoryHome({
   directory,
+  background,
 }: {
   directory: CoachDirectoryState;
+  background: StaticImageData;
 }) {
   return (
     <div className="coach-story coach-story-home">
       <MarketplaceHero
-        image="/images/home-battle-ropes.jpg"
+        image={background}
         alt="Athlete training with battle ropes in a covered outdoor space."
         titleId="coach-hero-title"
       >

@@ -1,4 +1,4 @@
-import { getImageProps } from "next/image";
+import { getImageProps, type StaticImageData } from "next/image";
 import type { ReactNode } from "react";
 
 export function MarketplaceHero({
@@ -10,7 +10,7 @@ export function MarketplaceHero({
   imageFrameClassName,
   className = "",
 }: {
-  image: string;
+  image: StaticImageData;
   alt: string;
   titleId: string;
   children: ReactNode;
