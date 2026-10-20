@@ -96,6 +96,8 @@ node scripts/rehearse-typed-sessions-database.mjs
 
 It creates disposable fresh and upgrade databases, checks retained-row fingerprints and legacy compatibility, exercises type management/private bookings/group integration, and removes its own databases afterward. It does not reset or seed the retained application database. [DEV0346](tickets/archive/backend/DEV0346-rehearse-session-types-and-flexible-bookings.md) records the separate browser-copy setup and final evidence.
 
+For the accepted-request rescheduling regression, run `node scripts/rehearse-request-booking-rescheduling-database.mjs`. It checks the current migration chain in fresh and upgrade scratch databases, including an accepted request created before the fix, exact retained-row hashes and existing typed/legacy suites, then removes its own databases. It never migrates or resets the retained local or hosted database.
+
 ### Events banners and directory validation
 
 Group-session banners, public card fallbacks, cursor Load more and the loaded-session venue map follow [the Events contract](docs/mvp-spec.md#151-confirmed-choices-and-implementation-defaults). The local launcher applies the additive event-banner migration while preserving existing sessions; hosted rollout is separate. Coaches add an optional event image from a saved group session’s detail or draft editor.
