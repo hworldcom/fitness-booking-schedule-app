@@ -5,7 +5,7 @@
 - Last updated: 2026-10-20
 - Milestone: M3 public discovery performance maintenance
 - Coordination: None — independent development ticket
-- Related records: Profiling dependency: [DEV0368](DEV0368-investigate-public-availability-read-latency.md). Separate image delivery: [DEV0392](../frontend/DEV0392-optimize-public-background-image-delivery.md). Events-read dependency: [DEV0394](../../archive/backend/DEV0394-restore-uat-events-directory-reads.md). Existing calendar profiling, outside this scope: [DEV0277](DEV0277-profile-and-reduce-coach-calendar-latency.md).
+- Related records: Profiling dependency: [DEV0368](DEV0368-investigate-public-availability-read-latency.md). Separate image delivery: [DEV0392](../../archive/frontend/DEV0392-optimize-public-background-image-delivery.md). Events-read dependency: [DEV0394](../../archive/backend/DEV0394-restore-uat-events-directory-reads.md). Existing calendar profiling, outside this scope: [DEV0277](DEV0277-profile-and-reduce-coach-calendar-latency.md).
 
 ## Objective and context
 

@@ -5,7 +5,7 @@
 - Last updated: 2026-10-20
 - Milestone: M4 hosted rehearsal / M7 group-training reliability
 - Coordination: None — independent development ticket
-- Related records: Existing Events interface and remaining QA: [DEV0358](../../current/frontend/DEV0358-redesign-events-cards-and-map.md). Hosted lifecycle rehearsal: [DEV0241](../../current/backend/DEV0241-rehearse-group-training-and-event-loop.md). Consumers of restored UAT reads: [DEV0392](../../current/frontend/DEV0392-optimize-public-background-image-delivery.md), [DEV0393](../../current/backend/DEV0393-control-public-directory-cache-freshness.md).
+- Related records: Existing Events interface and remaining QA: [DEV0358](../../current/frontend/DEV0358-redesign-events-cards-and-map.md). Hosted lifecycle rehearsal: [DEV0241](../../current/backend/DEV0241-rehearse-group-training-and-event-loop.md). Consumers of restored UAT reads: [DEV0392](../frontend/DEV0392-optimize-public-background-image-delivery.md), [DEV0393](../../current/backend/DEV0393-control-public-directory-cache-freshness.md).
 
 ## Objective and context
 

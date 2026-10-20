@@ -5,7 +5,7 @@
 - Last updated: 2026-10-20
 - Milestone: QA follow-up
 - Coordination: None — independent development ticket
-- Related records: Historical baseline: [DEV0367 responsive QA](../../archive/organisatory/DEV0367-audit-athlete-coach-responsive-journeys.md). Separate image delivery: [DEV0392](../frontend/DEV0392-optimize-public-background-image-delivery.md). Downstream cache policy: [DEV0393](DEV0393-control-public-directory-cache-freshness.md). Hosted configuration baseline: [DEV0394](../../archive/backend/DEV0394-restore-uat-events-directory-reads.md).
+- Related records: Historical baseline: [DEV0367 responsive QA](../../archive/organisatory/DEV0367-audit-athlete-coach-responsive-journeys.md). Separate image delivery: [DEV0392](../../archive/frontend/DEV0392-optimize-public-background-image-delivery.md). Downstream cache policy: [DEV0393](DEV0393-control-public-directory-cache-freshness.md). Hosted configuration baseline: [DEV0394](../../archive/backend/DEV0394-restore-uat-events-directory-reads.md).
 
 ## Objective and context
 

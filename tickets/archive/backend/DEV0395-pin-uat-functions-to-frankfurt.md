@@ -5,7 +5,7 @@
 - Last updated: 2026-10-20
 - Milestone: Hosted UAT performance maintenance
 - Coordination: None — independent development ticket
-- Related records: Investigation: [DEV0368](../../current/backend/DEV0368-investigate-public-availability-read-latency.md). Independent image delivery: [DEV0392](../../current/frontend/DEV0392-optimize-public-background-image-delivery.md). Independent cache policy: [DEV0393](../../current/backend/DEV0393-control-public-directory-cache-freshness.md). Hosted target guard: [DEV0394](DEV0394-restore-uat-events-directory-reads.md).
+- Related records: Investigation: [DEV0368](../../current/backend/DEV0368-investigate-public-availability-read-latency.md). Independent image delivery: [DEV0392](../frontend/DEV0392-optimize-public-background-image-delivery.md). Independent cache policy: [DEV0393](../../current/backend/DEV0393-control-public-directory-cache-freshness.md). Hosted target guard: [DEV0394](DEV0394-restore-uat-events-directory-reads.md).
 
 ## Objective and context
 

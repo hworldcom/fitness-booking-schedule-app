@@ -8,6 +8,7 @@ export function MarketplaceHero({
   children,
   description,
   imageFrameClassName,
+  sizes = "100vw",
   className = "",
 }: {
   image: StaticImageData;
@@ -16,14 +17,15 @@ export function MarketplaceHero({
   children: ReactNode;
   description?: string;
   imageFrameClassName?: string;
+  sizes?: string;
   className?: string;
 }) {
   const { props } = getImageProps({
     src: image,
     alt,
     fill: true,
-    sizes: "(max-width: 480px) 480px, 100vw",
-    quality: 95,
+    sizes,
+    quality: 85,
     loading: "eager",
     fetchPriority: "high",
     className: "marketplace-home-hero-image",

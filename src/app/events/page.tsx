@@ -40,6 +40,7 @@ export default async function Page({
         titleId="events-hero-title"
         className="marketplace-events-hero"
         imageFrameClassName="marketplace-events-image-frame"
+        sizes="(max-width: 480px) 480px, 100vw"
       >
         <span>Find your small group session.</span> <span>Train together.</span>
       </MarketplaceHero>
