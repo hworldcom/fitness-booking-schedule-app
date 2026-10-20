@@ -1,11 +1,11 @@
 # Ticket DEV0389: Review pending documentation and browser-test edits
 
-- Status: In progress
+- Status: Completed
 - Created: 2026-10-20
 - Last updated: 2026-10-20
 - Milestone: Repository maintenance
 - Coordination: None — independent development ticket
-- Related records: [DEV0388](../../archive/backend/DEV0388-preserve-accepted-requests-when-rescheduling.md) (separate completed booking fix); [DEV0326](../../archive/frontend/DEV0326-separate-profile-from-workspace-navigation.md) (historical profile behavior)
+- Related records: [DEV0388](../backend/DEV0388-preserve-accepted-requests-when-rescheduling.md) (separate completed booking fix); [DEV0326](DEV0326-separate-profile-from-workspace-navigation.md) (historical profile behavior)
 
 ## Objective and context
 
@@ -34,7 +34,7 @@ The explicit request to commit all changes authorizes including this existing te
 
 - [x] AC1: Existing unassigned edits are reviewed and accurately described, including the two removed browser cases and unchanged runtime/product requirements.
 - [x] AC2: Remaining public-story tests collect; applicable static checks and documentation consistency checks pass with limitations recorded.
-- [ ] AC3: Every pending tracked/untracked source or record is included in a ticket-bearing commit; generated private work/secrets remain ignored, and the final worktree is clean.
+- [x] AC3: Every pending tracked/untracked source or record is included in a ticket-bearing commit; generated private work/secrets remain ignored, and the final worktree is clean.
 
 ## Validation plan
 
@@ -53,9 +53,8 @@ No API, schema, dependency, environment or setup contract changes under DEV0389.
 - `node_modules/.bin/playwright test tests/browser/public-story.spec.ts --list`: passed; three remaining scenarios collect in desktop and mobile projects (six cases total). This is collection, not execution. Two removed scenarios would have supplied four additional project cases.
 - `node_modules/.bin/eslint scripts/rehearse-request-booking-rescheduling-database.mjs tests/database/request-booking-rescheduling.test.ts tests/browser/public-story.spec.ts`: passed.
 - Full `npm run lint` and `npm run typecheck` on a fresh `git archive HEAD` snapshot overlaid with every pending tracked/untracked source/record: passed, exit 0. Snapshot path/logs are ignored under work/dev0389. This excludes ignored work/tmp copies known to interfere with root checks (DEV0371); it contains the actual pending source, including the browser deletions. No configuration changes hide failures.
-- Normalized comparison confirms the exact same specification requirement-line multiset. All 43 local links/anchors across the seven new work records resolved before commit preparation. Source SHA256 comparisons confirm README, specification, browser test and all three DEV0388 source files exactly match the initially requested pending bytes. Staged source scopes and unique ticket paths were reviewed, and `git diff --check` passed. Final committed-source/clean-worktree verification remains before AC3 closure.
+- Normalized comparison confirms the exact same specification requirement-line multiset. All 43 local links/anchors across the seven new work records resolved before commit preparation. Source SHA256 comparisons confirm README, specification, browser test and all three DEV0388 source files exactly match the initially requested pending bytes. Staged source scopes and unique ticket paths were reviewed, and `git diff --check` passed. After commit `2665ae0`, `git status --porcelain` was empty. All 13 initially pending paths are tracked; committed SHA256 values for the six source/document files match their initial bytes, and the full committed diff includes no work/tmp/environment/Vercel-link/generated paths. AC3 passed.
 - DEV0388's unchanged migration/regression already passed 428 unit/server tests, 23 database checks and hosted desktop/phone lifecycle/cleanup proof in its own record. No hosted mutations or full browser execution were repeated solely to commit files.
-
 
 ## Risks, limitations, and follow-ups
 
@@ -63,11 +62,13 @@ Removed cases reduce automated assertions for public header navigation/keyboard/
 
 ## Completion and review references
 
-- Completed: Not completed.
-- Commit: `[DEV0389] Record pending documentation and browser-test edits` contains the reviewed maintenance source and this in-progress record; a final evidence checkpoint will archive the record after committed-source and clean-worktree verification.
+- Completed: 2026-10-20 — source/static/link review and committed-source preservation passed; clean worktree verified after the five source/evidence checkpoints.
+- Commit: `2665ae0` — `[DEV0389] Record pending documentation and browser-test edits`; this final record is included in `[DEV0389] Record final commit verification`.
 - Review: Self-review; no independent reviewer.
 - Deployment or release: None under this ticket.
 
 ### Commit progress — 2026-10-20
 
-Completed checkpoints: `ae0a5e2` (DEV0374), `af47753` (DEV0375), `65426b3` (DEV0386/DEV0387 and original Draft DEV0388 finding), `c270df0` (DEV0388 implementation/validation and archive). No push or deployment was performed for this commit request. The maintenance source checkpoint is next; AC3 stays open until its actual commit and clean-worktree verification pass.
+Completed checkpoints: `ae0a5e2` (DEV0374), `af47753` (DEV0375), `65426b3` (DEV0386/DEV0387 and original Draft DEV0388 finding), `c270df0` (DEV0388 implementation/validation and archive). No push or deployment was performed for this commit request. Maintenance source checkpoint `2665ae0` then committed the supplied documentation/index/browser edits. Its worktree was verified clean, all initial files were present in Git, and exact committed source hashes passed. AC3 is complete. This final documentation checkpoint archives DEV0389 and updates only its index row; no runtime source changes are introduced.
+
+Final review: the final record/index diff was checked for link/identifier/status consistency and whitespace before committing; private evidence remains ignored. Git source commits are local only; no remote push is claimed.
