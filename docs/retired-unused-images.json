@@ -1,0 +1,38 @@
+{
+  "ticket": "DEV0391",
+  "retiredAt": "2026-10-20",
+  "originalPublishedMain": "125a36c5f73ad846bb4932b580b0c828d169f026",
+  "reason": "No runtime/seed/script/test/stored-UAT consumer; run-club was referenced only by the uncalled Artwork export removed in this change. Published history is preserved.",
+  "files": [
+    {
+      "path": "public/images/club-friends-hero.webp",
+      "bytes": 99632,
+      "sha256": "ab5ac22ce5d925e2e53212503224838a8b03bead65315de8e611a56fb63d8ad9"
+    },
+    {
+      "path": "public/images/muay-thai-studio.webp",
+      "bytes": 79128,
+      "sha256": "184132b0c8ccf20ff78aa1790ba0f2158c7c8f68735f761b1e2fef17571d8645"
+    },
+    {
+      "path": "public/images/strength-studio.webp",
+      "bytes": 134050,
+      "sha256": "baddd4772df04c6c3a6303baec8b76cb3b03652f15f74dc64a8a123305ccd98a"
+    },
+    {
+      "path": "public/images/home-coaching-banner.png",
+      "bytes": 1875807,
+      "sha256": "7072b19d6bfe749bd67d45d5fdaa84826a92031315d9a00ec216a47dd0d9a45f"
+    },
+    {
+      "path": "public/images/home-training-collage.png",
+      "bytes": 2577090,
+      "sha256": "243bca5cc00d3e0e40da7c11e38fc45b7dfa01e6969315bfe3ffbdb8e07bb275"
+    },
+    {
+      "path": "public/images/run-club.webp",
+      "bytes": 268314,
+      "sha256": "82eed6edc3ecba49689c1866a158b5b3a59fc7d02769c0d6987aa1e998cca5e1"
+    }
+  ]
+}

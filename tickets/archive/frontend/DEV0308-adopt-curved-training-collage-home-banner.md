@@ -1,5 +1,7 @@
 # Ticket DEV0308: Adopt the curved training collage Home banner
 
+2026-10-20 image retirement: [DEV0391](DEV0391-remove-unused-public-images.md) removes unused public pictures and moves their banner provenance into docs/design. Earlier image-generation and validation records below remain historical; retired binaries are available in published Git history.
+
 2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
 
 - Status: Completed
@@ -54,7 +56,7 @@ Actual Home now uses the exact approved 2170 × 725 B3 artwork in a new producti
 
 - [Home story](../../../src/features/public/coach-story.tsx): new local image URL and accessible description, retaining the documented Next.js `getImageProps` responsive/eager-loading integration and exact HTML slogan.
 - [Home CSS](../../../src/app/coach-story.css): scoped bright-area copy placement, top/center crop, dark-green text, pale fallback and compact phone layout; removes old rooftop-only grid, overlay and phone crop.
-- [Production artwork](../../../public/images/home-training-collage.png) and [asset guide](../../../public/images/README.md): byte-identical selected image and complete preview/prompt/provenance links; earlier rooftop image retained as history.
+- Production artwork (retired file: `public/images/home-training-collage.png`) and [asset guide](../../../public/images/README.md): byte-identical selected image and complete preview/prompt/provenance links; earlier rooftop image retained as history.
 - [Specification C44 and section 4.2](../../../docs/mvp-spec.md#42-discover-a-coach-and-time): current selected curved visual, preserving the established search/grid and truthful inventory requirements.
 - Preview guide (retired artifact: `previews/home-banner-collages/README.md`) and refinement handoff (retired artifact: `previews/home-banner-collages/REFINEMENTS.md`): record subsequent B3 adoption without rewriting archived preview records or removing alternatives.
 - This ticket and the root index track the adoption. No unrelated authentication planning or app/DB scheduling files are changed by this ticket.

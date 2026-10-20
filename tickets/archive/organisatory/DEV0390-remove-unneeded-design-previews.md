@@ -1,5 +1,7 @@
 # Ticket DEV0390: Remove unneeded design previews
 
+2026-10-20 image retirement: [DEV0391](../frontend/DEV0391-remove-unused-public-images.md) removes unused public pictures and moves their banner provenance into docs/design. Earlier image-generation and validation records below remain historical; retired binaries are available in published Git history.
+
 - Status: Completed
 - Created: 2026-10-20
 - Last updated: 2026-10-20
@@ -69,7 +71,7 @@ Initial read-only checks passed. The preview prefixes contain 64 currently track
 
 ### Where files changed
 
-[Retirement manifest](../../../docs/retired-design-previews.json) records all 64 removed current files with bytes/SHA256. [Retained banner provenance](../../../public/images/retained-banner-provenance.json) keeps the source/prompt evidence for adopted public images. `.gitignore` excludes both prototype prefixes. Existing preview ticket prose/validation is retained, with dated retirement notices and non-clickable historical artifact paths; the incomplete DEV0235 is explicitly cancelled/archived. Current/index links reflect that cancellation and this completed cleanup. No API, schema, dependency, environment or application contract changed.
+[Retirement manifest](../../../docs/retired-design-previews.json) records all 64 removed current files with bytes/SHA256. [Retained banner provenance](../../../docs/design/retired-banner-provenance.json) keeps the source/prompt evidence for adopted public images. `.gitignore` excludes both prototype prefixes. Existing preview ticket prose/validation is retained, with dated retirement notices and non-clickable historical artifact paths; the incomplete DEV0235 is explicitly cancelled/archived. Current/index links reflect that cancellation and this completed cleanup. No API, schema, dependency, environment or application contract changed.
 
 ## Risks, limitations, and follow-ups
 

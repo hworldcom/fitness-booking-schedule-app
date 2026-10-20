@@ -1,5 +1,7 @@
 # Public banner assets
 
+2026-10-20 image retirement: [DEV0391](../../tickets/archive/frontend/DEV0391-remove-unused-public-images.md) removes unused public pictures and moves their banner provenance into docs/design. Earlier image-generation and validation records below remain historical; retired binaries are available in published Git history.
+
 2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../tickets/archive/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
 
 ## Events tug-of-war photograph
@@ -16,9 +18,9 @@ The displayed hero always uses only the photograph's lower half: a centered, cov
 
 `home-battle-ropes.jpg` is the user-selected 4161 × 2779 photograph, copied byte-for-byte from their local `karsten-winegeart-eGSBVVtVCCw-unsplash.jpg` source. It visually matches the attachment approved on 18 October 2026 under [DEV0350](../../tickets/archive/frontend/DEV0350-soften-public-page-colors-and-replace-home-banner.md). SHA-256: `31913577cd4c7a24c3b7d0ba79c77c11f23c75cc785e9a4c984c11e2d5c96b58`.
 
-Source attribution: [Karsten Winegeart / Unsplash photo eGSBVVtVCCw](https://unsplash.com/photos/eGSBVVtVCCw); [Unsplash license](https://unsplash.com/license). The photo is illustrative and does not identify a MovX coach or confirmed training venue. The original bytes are unedited. Next.js supplies optimized responsive delivery with the existing quality-95/size hints. CSS crops the image into the unchanged panoramic banner height, with a left fade for readable selectable slogan text; no generated content or stretching is introduced. Previous banner artwork is retained below as history.
+Source attribution: [Karsten Winegeart / Unsplash photo eGSBVVtVCCw](https://unsplash.com/photos/eGSBVVtVCCw); [Unsplash license](https://unsplash.com/license). The photo is illustrative and does not identify a MovX coach or confirmed training venue. The original bytes are unedited. Next.js supplies optimized responsive delivery with the existing quality-95/size hints. CSS crops the image into the unchanged panoramic banner height, with a left fade for readable selectable slogan text; no generated content or stretching is introduced. Previous banner provenance is recorded below as history; unused binaries were retired under DEV0391.
 
-## Earlier curved training collage — retained history
+## Earlier curved training collage — retired
 
 `home-training-collage.png` was the approved B3 banner, copied byte-for-byte from the 2170 × 725 preview artwork (retired artifact: `previews/home-banner-collages/assets/banner-b3-ropes-kick.png`). The user selected it for actual Home under [DEV0308](../../tickets/archive/frontend/DEV0308-adopt-curved-training-collage-home-banner.md). Battle ropes fill the middle; the kicking image replaces the high-knees group, while the other curved photo windows remain.
 
@@ -28,10 +30,10 @@ This AI-assisted composite was made with built-in imagegen under [DEV0307](../..
 
 [DEV0310](../../tickets/archive/frontend/DEV0310-improve-home-banner-image-quality.md) raises only this banner's responsive delivery quality from 75 to 95. The bounded Next.js allowlist retains 75 for other images. A minimum 480 CSS-pixel `sizes` hint accounts for the 160 px-tall phone crop, preventing an undersized request at high pixel densities. This preserves more of the PNG's existing detail without changing its bytes or claiming detail beyond its 2170 × 725 native resolution; downloaded images are larger than the former quality-75 variants.
 
-## Earlier rooftop banner — retained history
+## Earlier rooftop banner — retired
 
 `home-coaching-banner.png` is the 2172 × 724 pixel approved banner, copied byte-for-byte from the rooftop preview asset (retired artifact: `previews/home-banner/assets/rooftop-coach-athlete-banner-v8.png`). It is an original fictional coaching scene, created with built-in imagegen under [DEV0301](../../tickets/archive/frontend/DEV0301-preview-coached-boxing-banner.md); the scene prompt (retired artifact: `previews/home-banner/image-prompt-rooftop-v7.txt`) and framing prompt (retired artifact: `previews/home-banner/image-edit-prompt-rooftop-v8.txt`) preserve provenance. No stock-reference photograph is shipped.
 
-The user initially selected this image and “Find your coach. Achieve your goals.” for actual Home under [DEV0303](../../tickets/archive/frontend/DEV0303-adopt-compact-photographic-home.md). It illustrates coaching and is not a directory coach portrait or documented real training venue. DEV0308 replaces its Home use with B3; this original asset remains as history.
+The user initially selected this image and “Find your coach. Achieve your goals.” for actual Home under [DEV0303](../../tickets/archive/frontend/DEV0303-adopt-compact-photographic-home.md). It illustrates coaching and is not a directory coach portrait or documented real training venue. DEV0308 replaces its Home use with B3; this original asset was subsequently retired under DEV0391 and remains available in published Git history.
 
-Retained source manifests and generation/edit prompts for the two earlier production banners are available in [retained banner provenance](retained-banner-provenance.json). The removed preview inventory and original file hashes are recorded in [the retirement manifest](../../docs/retired-design-previews.json).
+Retained source manifests and generation/edit prompts for the two earlier production banners are available in [retained banner provenance](../../docs/design/retired-banner-provenance.json). The removed preview inventory and original file hashes are recorded in [the retirement manifest](../../docs/retired-design-previews.json).

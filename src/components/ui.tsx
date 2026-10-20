@@ -1,21 +1,8 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- private avatars require cookie-forwarding that the image optimizer does not provide */
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import {
-  ArrowUpRight,
-  X,
-  ArrowRight,
-  Timer,
-  Zap,
-  Flame,
-  Flower2,
-  Footprints,
-  MoonStar,
-  RefreshCcw,
-  Shield,
-} from "lucide-react";
+import { ArrowUpRight, X, ArrowRight, Timer, Footprints } from "lucide-react";
 
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (
@@ -106,67 +93,6 @@ export function SectionTitle({
           <ArrowUpRight size={16} />
         </Link>
       )}
-    </div>
-  );
-}
-export function Artwork({
-  kind,
-  className = "",
-  title = "",
-  large = false,
-}: {
-  kind: string;
-  className?: string;
-  title?: string;
-  large?: boolean;
-}) {
-  if (kind === "run")
-    return (
-      <div className={`artwork photo ${className}`}>
-        <Image
-          src="/images/run-club.webp"
-          alt="Friends running together on an urban track"
-          fill
-          sizes={
-            large
-              ? "(max-width: 800px) 100vw, 800px"
-              : "(max-width: 700px) 100vw, 450px"
-          }
-          priority={large}
-        />
-        <span className="photo-shade" />
-      </div>
-    );
-  const Icon =
-    kind === "strength"
-      ? Flame
-      : kind === "fight"
-        ? Zap
-        : kind === "ground"
-          ? Shield
-          : kind === "recovery"
-            ? RefreshCcw
-            : kind === "night"
-              ? MoonStar
-              : Flower2;
-  const word =
-    kind === "strength"
-      ? "SHOW UP."
-      : kind === "fight"
-        ? "FIND YOUR FIRE."
-        : kind === "ground"
-          ? "FIND YOUR BASE."
-          : kind === "recovery"
-            ? "RESET WELL."
-            : kind === "night"
-              ? "MOVE AFTER DARK."
-              : "MAKE SPACE.";
-  return (
-    <div className={`artwork graphic ${kind} ${className}`} aria-hidden="true">
-      <span className="graphic-rings" />
-      <Icon className="graphic-icon" strokeWidth={1} />
-      <span className="graphic-word">{title || word}</span>
-      <span className="graphic-meta">MOVX CLUB / MOVEMENT FOR EVERYONE</span>
     </div>
   );
 }

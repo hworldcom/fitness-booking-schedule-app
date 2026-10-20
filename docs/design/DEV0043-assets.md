@@ -1,12 +1,14 @@
 # DEV0043 visual assets
 
+2026-10-20 image retirement: [DEV0391](../../tickets/archive/frontend/DEV0391-remove-unused-public-images.md) removes unused public pictures and moves their banner provenance into docs/design. Earlier image-generation and validation records below remain historical; retired binaries are available in published Git history.
+
 The [current MVP decisions](../mvp-spec.md#2-confirmed-target-and-decisions) remain the product contract. This file preserves source provenance for the retained visual assets after the superseded delivery ticket was pruned.
 
 The platform was renamed to MovX Club without regenerating these assets. The verbatim historical prompt below retains the former product name as generation provenance; none of the generated images contains branding or text.
 
 - the original design reference, removed under DEV0225: first generated homepage mockup accepted by the user. This is a design reference, never rendered as the application UI. Features pictured in it do not override the specification.
-- Existing [running-club image](../../public/images/run-club.webp): generated 19 September 2026 for the original preview; reused without changing the original file. CSS crops it responsively.
-- [Strength studio](../../public/images/strength-studio.webp) and [Muay Thai studio](../../public/images/muay-thai-studio.webp): generated 21 September 2026 using the built-in image-generation tool. Fictional illustrative interiors, not photographs of the named example businesses. Exported as 1000-pixel-wide WebP at quality 82 using Sharp for local delivery. Original generated PNGs remain in the generation output directory.
+- Existing running-club image (retired file: `public/images/run-club.webp`): generated 19 September 2026 for the original preview; reused without changing the original file. CSS crops it responsively.
+- Strength studio (retired file: `public/images/strength-studio.webp`) and Muay Thai studio (retired file: `public/images/muay-thai-studio.webp`): generated 21 September 2026 using the built-in image-generation tool. Fictional illustrative interiors, not photographs of the named example businesses. Exported as 1000-pixel-wide WebP at quality 82 using Sharp for local delivery. Original generated PNGs remain in the generation output directory.
 - Small hero spark: inline decorative SVG; underline and sticker treatment use CSS. No rasterized text or interactive controls.
 - Display headings: `@fontsource-variable/bricolage-grotesque` pinned at 5.3.0, locally served. Body text retains Manrope. Font licenses are distributed with their installed packages.
 
