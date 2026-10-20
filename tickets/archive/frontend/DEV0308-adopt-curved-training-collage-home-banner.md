@@ -1,8 +1,10 @@
 # Ticket DEV0308: Adopt the curved training collage Home banner
 
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+
 - Status: Completed
 - Created: 2026-10-17
-- Last updated: 2026-10-17
+- Last updated: 2026-10-20
 - Milestone: M3 — Public discovery refinement
 - Coordination: None — independent development ticket
 - Related records: selected B3 preview [DEV0307](../../archive/frontend/DEV0307-preview-curved-banner-with-ropes-and-kick.md); compact Home baseline [DEV0303](../../archive/frontend/DEV0303-adopt-compact-photographic-home.md)
@@ -54,7 +56,7 @@ Actual Home now uses the exact approved 2170 × 725 B3 artwork in a new producti
 - [Home CSS](../../../src/app/coach-story.css): scoped bright-area copy placement, top/center crop, dark-green text, pale fallback and compact phone layout; removes old rooftop-only grid, overlay and phone crop.
 - [Production artwork](../../../public/images/home-training-collage.png) and [asset guide](../../../public/images/README.md): byte-identical selected image and complete preview/prompt/provenance links; earlier rooftop image retained as history.
 - [Specification C44 and section 4.2](../../../docs/mvp-spec.md#42-discover-a-coach-and-time): current selected curved visual, preserving the established search/grid and truthful inventory requirements.
-- [Preview guide](../../../previews/home-banner-collages/README.md) and [refinement handoff](../../../previews/home-banner-collages/REFINEMENTS.md): record subsequent B3 adoption without rewriting archived preview records or removing alternatives.
+- Preview guide (retired artifact: `previews/home-banner-collages/README.md`) and refinement handoff (retired artifact: `previews/home-banner-collages/REFINEMENTS.md`): record subsequent B3 adoption without rewriting archived preview records or removing alternatives.
 - This ticket and the root index track the adoption. No unrelated authentication planning or app/DB scheduling files are changed by this ticket.
 
 ### Decisions and deviations

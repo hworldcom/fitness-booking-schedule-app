@@ -1,8 +1,10 @@
 # Ticket DEV0338: Preview a personal coach page
 
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+
 - Status: Completed
 - Created: 2026-10-18
-- Last updated: 2026-10-18
+- Last updated: 2026-10-20
 - Milestone: M10 design review before coach website editing
 - Coordination: None — independent development ticket
 - Related records: Downstream editor [DEV0315](DEV0315-edit-and-preview-coach-websites.md), cards [DEV0316](DEV0316-redesign-coach-directory-cards.md), full public page [DEV0317](DEV0317-build-shareable-personal-coach-websites.md); context [COR0028](../../current/organisatory/COR0028-coach-marketplace-cards-and-personal-websites.md). Historical standalone design approach: [DEV0304](../../archive/frontend/DEV0304-preview-photo-collage-banners.md).
@@ -55,11 +57,11 @@ The preview uses existing unchanged image/font files rather than generating or u
 
 | File | Role |
 | --- | --- |
-| [index.html](../../../previews/coach-page/index.html) | Semantic, explicitly fictional public coach-page composition, local controls and native dialogs/FAQ disclosures. |
-| [styles.css](../../../previews/coach-page/styles.css) | Existing local font references, cream/forest styling, responsive layout, sticky navigation/actions, focus and reduced-motion support. |
-| [preview.js](../../../previews/coach-page/preview.js) | Local-only state comparisons, sample day/time selection, dialog/focus return and section highlighting; no API or persistent storage. |
-| [serve.mjs](../../../previews/coach-page/serve.mjs) | Loopback-only exact eight-route static allowlist, restrictive content policy, rejected writes and no repository directory serving. |
-| [Preview guide](../../../previews/coach-page/README.md) | Launch command, source-image/font provenance, disconnected controls and proposal boundaries. |
+| index.html (retired artifact: `previews/coach-page/index.html`) | Semantic, explicitly fictional public coach-page composition, local controls and native dialogs/FAQ disclosures. |
+| styles.css (retired artifact: `previews/coach-page/styles.css`) | Existing local font references, cream/forest styling, responsive layout, sticky navigation/actions, focus and reduced-motion support. |
+| preview.js (retired artifact: `previews/coach-page/preview.js`) | Local-only state comparisons, sample day/time selection, dialog/focus return and section highlighting; no API or persistent storage. |
+| serve.mjs (retired artifact: `previews/coach-page/serve.mjs`) | Loopback-only exact eight-route static allowlist, restrictive content policy, rejected writes and no repository directory serving. |
+| Preview guide (retired artifact: `previews/coach-page/README.md`) | Launch command, source-image/font provenance, disconnected controls and proposal boundaries. |
 | This record, [ticket index](../../README.md) and [DEV0315](DEV0315-edit-and-preview-coach-websites.md) | Plan, evidence, archive and the explicit preview-first/editor-later handoff. |
 
 ### Decisions and deviations

@@ -1,8 +1,10 @@
 # Ticket DEV0304: Preview photo collage banners
 
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+
 - Status: Completed
 - Created: 2026-10-17
-- Last updated: 2026-10-17
+- Last updated: 2026-10-20
 - Milestone: M3 — Public discovery design exploration
 - Coordination: None — independent development ticket
 - Related records: current Home baseline [DEV0303](../../archive/frontend/DEV0303-adopt-compact-photographic-home.md); earlier banner exploration [DEV0301](../../archive/frontend/DEV0301-preview-coached-boxing-banner.md)
@@ -52,10 +54,10 @@ The comparison page defaults to B, with all three options visible below a full-s
 
 ### Affected files
 
-- [Comparison page](../../../previews/home-banner-collages/index.html): semantic native controls, banner stage, all three concept cards and direct image downloads, including a JavaScript-free comparison path.
-- [Preview styles](../../../previews/home-banner-collages/styles.css): local project fonts, shallow desktop crops, deliberate phone crops, readable dark/light fallback, focus rings and responsive layout.
-- [Local interactions](../../../previews/home-banner-collages/preview.js): concept/device selection, slogan visibility, asset download target and failed-image recovery; no persistence or external services.
-- [Artwork and provenance guide](../../../previews/home-banner-collages/README.md): links to the three local PNGs, complete prompt files, font licenses and selected source IDs. [Provenance manifest](../../../previews/home-banner-collages/provenance.json) records the exact input order and source/output hashes.
+- Comparison page (retired artifact: `previews/home-banner-collages/index.html`): semantic native controls, banner stage, all three concept cards and direct image downloads, including a JavaScript-free comparison path.
+- Preview styles (retired artifact: `previews/home-banner-collages/styles.css`): local project fonts, shallow desktop crops, deliberate phone crops, readable dark/light fallback, focus rings and responsive layout.
+- Local interactions (retired artifact: `previews/home-banner-collages/preview.js`): concept/device selection, slogan visibility, asset download target and failed-image recovery; no persistence or external services.
+- Artwork and provenance guide (retired artifact: `previews/home-banner-collages/README.md`): links to the three local PNGs, complete prompt files, font licenses and selected source IDs. Provenance manifest (retired artifact: `previews/home-banner-collages/provenance.json`) records the exact input order and source/output hashes.
 - Ticket index: reserved DEV0304 before image/page implementation and records its preview-only completion. No application files, database records, other planning tickets or old preview assets were edited under this ticket.
 
 ### Decisions and deviations

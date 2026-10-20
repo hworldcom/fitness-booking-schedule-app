@@ -2,11 +2,11 @@
 
 - Status: In progress
 - Created: 2026-10-15
-- Last updated: 2026-10-16
+- Last updated: 2026-10-20
 - Milestone: M7 — Group training and events
 - Converted from: Not applicable — DEV0233 already has committed planning evidence and retains its identity/scope
 - Tracked development tickets: [DEV0233](../../archive/organisatory/DEV0233-define-group-training-and-events-growth-scope.md), [DEV0237](../../archive/backend/DEV0237-persist-group-session-registration.md), [DEV0238](../../archive/backend/DEV0238-integrate-group-session-scheduling-conflicts.md), [DEV0239](../../archive/frontend/DEV0239-add-coach-group-session-management.md), [DEV0240](../../archive/frontend/DEV0240-add-group-event-discovery-and-joining.md), [DEV0241](../backend/DEV0241-rehearse-group-training-and-event-loop.md)
-- Related records: independent Explore preview [DEV0235](../frontend/DEV0235-preview-home-aligned-explore.md), independent Explore implementation [DEV0236](../../archive/frontend/DEV0236-align-explore-with-home-discovery.md); existing private scheduling and connection contracts are compatibility baselines, not group implementation
+- Related records: independent Explore preview [DEV0235](../../archive/frontend/DEV0235-preview-home-aligned-explore.md), independent Explore implementation [DEV0236](../../archive/frontend/DEV0236-align-explore-with-home-discovery.md); existing private scheduling and connection contracts are compatibility baselines, not group implementation
 
 ## Objective and boundaries
 

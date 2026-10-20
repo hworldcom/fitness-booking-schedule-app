@@ -1,8 +1,10 @@
 # Ticket DEV0306: Refine the light collage banner gap
 
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+
 - Status: Completed
 - Created: 2026-10-17
-- Last updated: 2026-10-17
+- Last updated: 2026-10-20
 - Milestone: M3 — Public discovery design exploration
 - Coordination: None — independent development ticket
 - Related records: original light collage [DEV0304](../../archive/frontend/DEV0304-preview-photo-collage-banners.md); parallel diagonal refinements [DEV0305](DEV0305-refine-diagonal-banner-gap.md); actual Home [DEV0303](../../archive/frontend/DEV0303-adopt-compact-photographic-home.md)
@@ -52,9 +54,9 @@ The dedicated light comparison defaults to B2 and retains native option/device c
 
 ### Affected files
 
-- [Light comparison](../../../previews/home-banner-collages/light-banner.html): preferred two-option page, default central slogan, desktop/phone controls and downloads.
-- [Shared selection script](../../../previews/home-banner-collages/preview.js) and [scoped styles](../../../previews/home-banner-collages/styles.css): B1/B2 configuration, shared lower photo-fill headline, pale/green central treatment and explicit centered mobile crops for refinement pages.
-- [Refinement guide](../../../previews/home-banner-collages/REFINEMENTS.md) and [light manifest](../../../previews/home-banner-collages/provenance-b-refinements.json): four local refinement assets/prompt links, clear light-first preference, source roles and exact B output/input hashes. The original comparison, diagonal page and README retain clear cross-navigation.
+- Light comparison (retired artifact: `previews/home-banner-collages/light-banner.html`): preferred two-option page, default central slogan, desktop/phone controls and downloads.
+- Shared selection script (retired artifact: `previews/home-banner-collages/preview.js`) and scoped styles (retired artifact: `previews/home-banner-collages/styles.css`): B1/B2 configuration, shared lower photo-fill headline, pale/green central treatment and explicit centered mobile crops for refinement pages.
+- Refinement guide (retired artifact: `previews/home-banner-collages/REFINEMENTS.md`) and light manifest (retired artifact: `previews/home-banner-collages/provenance-b-refinements.json`): four local refinement assets/prompt links, clear light-first preference, source roles and exact B output/input hashes. The original comparison, diagonal page and README retain clear cross-navigation.
 - Ticket/index: record the user-confirmed visual target and independent completed preview scope. No application code, public Home asset, configuration or persistent-data work was performed under this ticket.
 
 ### Decisions and deviations

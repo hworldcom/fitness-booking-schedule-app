@@ -1,8 +1,10 @@
 # Ticket DEV0302: Preview a goal slogan over the banner photo
 
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+
 - Status: Completed
 - Created: 2026-10-17
-- Last updated: 2026-10-17
+- Last updated: 2026-10-20
 - Milestone: M3 — Public discovery design exploration
 - Coordination: None — independent development ticket
 - Related records: historical warm banner [DEV0301](../../archive/frontend/DEV0301-preview-coached-boxing-banner.md); original preview [DEV0298](../../archive/frontend/DEV0298-preview-photographic-home-banner.md)
@@ -52,9 +54,9 @@ The README now describes the all-screen overlay and explicitly marks both the di
 
 ### Affected files
 
-- [Preview page](../../../previews/home-banner/index.html): new H1 wording and responsive overlay/crop rules; removes tablet/mobile solid copy panels and adds the mobile contrast gradient.
-- [Preview README](../../../previews/home-banner/README.md): proposed copy/alternative, responsive display description and validation handoff.
-- This record and [ticket index](../../README.md): plan, evidence and completion. The existing [rooftop asset](../../../previews/home-banner/assets/rooftop-coach-athlete-banner-v8.png) is unchanged. No application, product-specification, image, data or configuration edits belong to DEV0302.
+- Preview page (retired artifact: `previews/home-banner/index.html`): new H1 wording and responsive overlay/crop rules; removes tablet/mobile solid copy panels and adds the mobile contrast gradient.
+- Preview README (retired artifact: `previews/home-banner/README.md`): proposed copy/alternative, responsive display description and validation handoff.
+- This record and [ticket index](../../README.md): plan, evidence and completion. The existing rooftop asset (retired artifact: `previews/home-banner/assets/rooftop-coach-athlete-banner-v8.png`) is unchanged. No application, product-specification, image, data or configuration edits belong to DEV0302.
 
 ### Decisions and deviations
 

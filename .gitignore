@@ -82,3 +82,7 @@ lerna-debug.log*
 *~
 .DS_Store
 Thumbs.db
+
+# Retired standalone design prototypes (DEV0390)
+/previews/
+/docs/previews/

@@ -1,15 +1,17 @@
 # Ticket DEV0361: Simplify How it works preview navigation
 
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+
 - Status: Completed
 - Created: 2026-10-19
-- Last updated: 2026-10-19
+- Last updated: 2026-10-20
 - Milestone: Public marketplace design review
 - Coordination: None — independent development ticket
 - Related records: Historical preview [DEV0359](../../archive/frontend/DEV0359-preview-athlete-and-coach-how-it-works.md).
 
 ## Objective and context
 
-The user likes the standalone How it works direction but requests removal of the sentence “Each coach sets a participant limit, up to 100 people” and the repeated audience navigation. Simplify the [existing preview](../../../previews/how-it-works/README.md) while following the current [public presentation](../../../docs/mvp-spec.md#42-discover-a-coach-and-time) and [group behavior](../../../docs/mvp-spec.md#15-group-training-and-events). This is a preview refinement, not live-page adoption.
+The user likes the standalone How it works direction but requests removal of the sentence “Each coach sets a participant limit, up to 100 people” and the repeated audience navigation. Simplify the existing preview (retired artifact: `previews/how-it-works/README.md`) while following the current [public presentation](../../../docs/mvp-spec.md#42-discover-a-coach-and-time) and [group behavior](../../../docs/mvp-spec.md#15-group-training-and-events). This is a preview refinement, not live-page adoption.
 
 ## Scope and non-goals
 
@@ -53,9 +55,9 @@ Shortened the group-size FAQ to the planned answer beginning “Class sizes vary
 
 | File                                                      | Role                                                            |
 | --------------------------------------------------------- | --------------------------------------------------------------- |
-| [index.html](../../../previews/how-it-works/index.html)   | Removed duplicate hero links and the specified FAQ sentence.    |
-| [styles.css](../../../previews/how-it-works/styles.css)   | Removed unused hero-action rules at every breakpoint.           |
-| [Preview guide](../../../previews/how-it-works/README.md) | Updated navigation/copy description and linked this refinement. |
+| index.html (retired artifact: `previews/how-it-works/index.html`)   | Removed duplicate hero links and the specified FAQ sentence.    |
+| styles.css (retired artifact: `previews/how-it-works/styles.css`)   | Removed unused hero-action rules at every breakpoint.           |
+| Preview guide (retired artifact: `previews/how-it-works/README.md`) | Updated navigation/copy description and linked this refinement. |
 | This record and [index](../../README.md)                  | Scope, evidence and completed archive entry.                    |
 
 ### Decisions and deviations

@@ -1,0 +1,328 @@
+{
+  "ticket": "DEV0390",
+  "retiredAt": "2026-10-20",
+  "reason": "Owner requested removing unneeded standalone design previews. Application preview functionality and public assets are retained.",
+  "originalMain": "2f5226915724b7ba210de97c4808578e05c7433e",
+  "files": [
+    {
+      "path": "docs/previews/movx-explore-preview.html",
+      "bytes": 188939,
+      "sha256": "635d34300a7d8e2eeb66ccbab1163b450583625197b7f5427db90c60fd88215c"
+    },
+    {
+      "path": "previews/coach-page/README.md",
+      "bytes": 2559,
+      "sha256": "977d39d062bee6cc7f06d3483011d453eccff79694241a13881385a28e5fe203"
+    },
+    {
+      "path": "previews/coach-page/index.html",
+      "bytes": 22546,
+      "sha256": "8a9a0f64246d66996a9222d2de52a636abcc51f43a4bc0695d6d4f7e26a578c6"
+    },
+    {
+      "path": "previews/coach-page/preview.js",
+      "bytes": 5647,
+      "sha256": "1a6df7bf49df9b2fa1b3ab001be5954f6ef27656246e6874bff59ead87307065"
+    },
+    {
+      "path": "previews/coach-page/serve.mjs",
+      "bytes": 2175,
+      "sha256": "1d659e0dc75a224f446f30b37b3729f4bcac133bca69c647e03d27f8addd0246"
+    },
+    {
+      "path": "previews/coach-page/styles.css",
+      "bytes": 25331,
+      "sha256": "399c5a0e76fddd81e1754bfa5b66e5fac27f1fe18887025b68d89570860269de"
+    },
+    {
+      "path": "previews/home-banner-collages/README.md",
+      "bytes": 6035,
+      "sha256": "ab432e5b3a42ccfc2b89174dc87f91b479e59021c318ff26bf8788cb58fd3ec0"
+    },
+    {
+      "path": "previews/home-banner-collages/REFINEMENTS.md",
+      "bytes": 6025,
+      "sha256": "3cc6cd27ca38247db0a0f7501be6a68fda425626a031c8b4599362bd1646ef9a"
+    },
+    {
+      "path": "previews/home-banner-collages/assets/banner-a-diagonal.png",
+      "bytes": 2452954,
+      "sha256": "24624c8aa328982362164dd72cb9b285f69c85df16bb232b55e1c26fe2ba8f6e"
+    },
+    {
+      "path": "previews/home-banner-collages/assets/banner-a1-photo-filled.png",
+      "bytes": 2499316,
+      "sha256": "700d5353993b50ca9f44a0d02d4fc52eb7aef1d1a5a7c24237edcf6cb5114bf7"
+    },
+    {
+      "path": "previews/home-banner-collages/assets/banner-a2-slogan-center.png",
+      "bytes": 2440569,
+      "sha256": "912065deac7d3d81bb8f9db40ec311bb95b41e868dfca9d08fbe70d5f6a98b46"
+    },
+    {
+      "path": "previews/home-banner-collages/assets/banner-b-together.png",
+      "bytes": 2586966,
+      "sha256": "bef773ab24f76e7f3f28341a375c319a8094d4fb7c7ed61cfd01fcd2ac181c59"
+    },
+    {
+      "path": "previews/home-banner-collages/assets/banner-b1-photo-filled.png",
+      "bytes": 2576373,
+      "sha256": "2f1d030abe1e836a85451805ab7f2151659515b201901873e1dbba45f99c79f0"
+    },
+    {
+      "path": "previews/home-banner-collages/assets/banner-b2-slogan-center.png",
+      "bytes": 2488340,
+      "sha256": "289f3587ebd731e0fe68605c1e00f21231e79bce2647c103b47fc3097537684a"
+    },
+    {
+      "path": "previews/home-banner-collages/assets/banner-b3-ropes-kick.png",
+      "bytes": 2577090,
+      "sha256": "243bca5cc00d3e0e40da7c11e38fc45b7dfa01e6969315bfe3ffbdb8e07bb275"
+    },
+    {
+      "path": "previews/home-banner-collages/assets/banner-c-editorial.png",
+      "bytes": 2315029,
+      "sha256": "e333a86a08abedd59f031e2134f1ec0cd3db7fbf1e6445e5db62d35d8129c957"
+    },
+    {
+      "path": "previews/home-banner-collages/assets/bricolage-grotesque-latin.woff2",
+      "bytes": 131548,
+      "sha256": "a756882d8a7802ebd4663b4544a62ebedafc7227c1c159ab95eea61393af3f8e"
+    },
+    {
+      "path": "previews/home-banner-collages/assets/bricolage-grotesque-license.txt",
+      "bytes": 4401,
+      "sha256": "923f4ddf0fd39f9b7794ab0df7332f3d95dc43e8ad7ec2289d6d9e8491177f51"
+    },
+    {
+      "path": "previews/home-banner-collages/assets/favicon.svg",
+      "bytes": 197,
+      "sha256": "99c964a238f1abf8d66cff6053cc274206cd4b26ed193488d016d18d787f8ab5"
+    },
+    {
+      "path": "previews/home-banner-collages/assets/manrope-latin.woff2",
+      "bytes": 24836,
+      "sha256": "a30ddcd349703aff7464c34bef3fffdff405ee50c113440d7c8693c02d210972"
+    },
+    {
+      "path": "previews/home-banner-collages/assets/manrope-license.txt",
+      "bytes": 4383,
+      "sha256": "d826ab6583b12c26807d8716a545bdbbb672df04f48608a364ba9efdbe501c30"
+    },
+    {
+      "path": "previews/home-banner-collages/first-banner.html",
+      "bytes": 7776,
+      "sha256": "981c142cbef9ee3d1445b614d70e36c121118afa0231ec69814702064f41e4b6"
+    },
+    {
+      "path": "previews/home-banner-collages/index.html",
+      "bytes": 8856,
+      "sha256": "64a678c41ada0e4dbda9363df892cbf6f1610a0e37b9469bc89f0847595990db"
+    },
+    {
+      "path": "previews/home-banner-collages/light-banner.html",
+      "bytes": 7891,
+      "sha256": "bee02118311d7e60ea3db546585579d66d54978d9346821bc5f465b9b7508033"
+    },
+    {
+      "path": "previews/home-banner-collages/preview.js",
+      "bytes": 4645,
+      "sha256": "0d1c834810d0855cc7af63a27899889974f54e331bdb3a9f67b7f9a4bc442bfe"
+    },
+    {
+      "path": "previews/home-banner-collages/prompts/a-diagonal-energy.txt",
+      "bytes": 2018,
+      "sha256": "8f2c4fcddc23c128013878227558c53d3308cde9924e0eecd03a23a91a9eed18"
+    },
+    {
+      "path": "previews/home-banner-collages/prompts/a1-gap-refinement.txt",
+      "bytes": 1626,
+      "sha256": "fdf8635b7c3a1850617713060d16c7f635f9fae1a6359823002536e8829609bb"
+    },
+    {
+      "path": "previews/home-banner-collages/prompts/a2-gap-refinement.txt",
+      "bytes": 1788,
+      "sha256": "8de37ebcf36cfd975df7be292887227558a38d1d22f5a6f96de78257f4b2412e"
+    },
+    {
+      "path": "previews/home-banner-collages/prompts/b-better-together.txt",
+      "bytes": 2141,
+      "sha256": "b0b6bf9a37c96fd5313491635b28cc6f1f144b1405695bbfa26c550eeb89e3a1"
+    },
+    {
+      "path": "previews/home-banner-collages/prompts/b1-gap-refinement.txt",
+      "bytes": 1880,
+      "sha256": "c8ebcff5137443d9cb54bc9f79dbbb2a5aaa5a2c6ba002c0b2ee1bc7f9faa643"
+    },
+    {
+      "path": "previews/home-banner-collages/prompts/b2-gap-refinement.txt",
+      "bytes": 1685,
+      "sha256": "85cf0cbd8d8b3076ee3371d4726a2654a33327f3f04e6685f2351472d0403b4a"
+    },
+    {
+      "path": "previews/home-banner-collages/prompts/b3-ropes-kick.txt",
+      "bytes": 2902,
+      "sha256": "d85f7c4bc45490dd9cba2052248235ddd285dd2e9f1d5d4cd78b40031c92bb75"
+    },
+    {
+      "path": "previews/home-banner-collages/prompts/c-training-stories.txt",
+      "bytes": 2099,
+      "sha256": "79be9e34ec46dbca4f7d6ae2a2b239b988d61b742aeccd8e8b2dc5b7152910c7"
+    },
+    {
+      "path": "previews/home-banner-collages/provenance-a-refinements.json",
+      "bytes": 1086,
+      "sha256": "93bc9bfe454076afa172fdbf00ab87d7c747070f340d697cae6ccb97da7c09b0"
+    },
+    {
+      "path": "previews/home-banner-collages/provenance-b-refinements.json",
+      "bytes": 1198,
+      "sha256": "d4e855433fe634e736b1c35abee4532d3074e381e11087555c41ef1f05e04f66"
+    },
+    {
+      "path": "previews/home-banner-collages/provenance-b3-ropes-kick.json",
+      "bytes": 1057,
+      "sha256": "a26f22f7d80b1e0406410055ac3cfcbc71046525b7d368157022efd33b42a217"
+    },
+    {
+      "path": "previews/home-banner-collages/provenance.json",
+      "bytes": 3813,
+      "sha256": "bcc29d503ab207823e985a789a61cd7d7d1387f86b26c08e5b89bc09567c7d35"
+    },
+    {
+      "path": "previews/home-banner-collages/ropes-banner.html",
+      "bytes": 7944,
+      "sha256": "0cea28e94f49fb1bdcb97c1ce46746178b7303328359170bfd0842248efed08c"
+    },
+    {
+      "path": "previews/home-banner-collages/styles.css",
+      "bytes": 17823,
+      "sha256": "3ff8614698c2f333709bf44828a5f87d251242cabffb3850a963597bd4e06222"
+    },
+    {
+      "path": "previews/home-banner/README.md",
+      "bytes": 4787,
+      "sha256": "4b523361f653b1002c84a50bff199fa9e56365b6105ad3673df3eac0c48f9411"
+    },
+    {
+      "path": "previews/home-banner/assets/bricolage-grotesque-latin.woff2",
+      "bytes": 131548,
+      "sha256": "a756882d8a7802ebd4663b4544a62ebedafc7227c1c159ab95eea61393af3f8e"
+    },
+    {
+      "path": "previews/home-banner/assets/bricolage-grotesque-license.txt",
+      "bytes": 4401,
+      "sha256": "923f4ddf0fd39f9b7794ab0df7332f3d95dc43e8ad7ec2289d6d9e8491177f51"
+    },
+    {
+      "path": "previews/home-banner/assets/lucide-license.txt",
+      "bytes": 3208,
+      "sha256": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57"
+    },
+    {
+      "path": "previews/home-banner/assets/manrope-latin.woff2",
+      "bytes": 24836,
+      "sha256": "a30ddcd349703aff7464c34bef3fffdff405ee50c113440d7c8693c02d210972"
+    },
+    {
+      "path": "previews/home-banner/assets/manrope-license.txt",
+      "bytes": 4383,
+      "sha256": "d826ab6583b12c26807d8716a545bdbbb672df04f48608a364ba9efdbe501c30"
+    },
+    {
+      "path": "previews/home-banner/assets/rooftop-coach-athlete-banner-v8.png",
+      "bytes": 1875807,
+      "sha256": "7072b19d6bfe749bd67d45d5fdaa84826a92031315d9a00ec216a47dd0d9a45f"
+    },
+    {
+      "path": "previews/home-banner/assets/tempelhofer-feld-coached-pairs-v5.png",
+      "bytes": 2163516,
+      "sha256": "713c202c6418947f0f7ac9c500362a898c46e8e20d4d146683a4013b4b8da5c9"
+    },
+    {
+      "path": "previews/home-banner/assets/tempelhofer-feld-coached-training-v4.png",
+      "bytes": 2064935,
+      "sha256": "8f510864759553de08dd7b5ffe537932735b2c9a6c9fd920729ef0fcec50f085"
+    },
+    {
+      "path": "previews/home-banner/assets/tempelhofer-feld-sky-group-v3.png",
+      "bytes": 2086088,
+      "sha256": "1f3f98002ee275f2dece892e60f6b5a1a9efaf38a3941b1fcda03ed975175bcf"
+    },
+    {
+      "path": "previews/home-banner/assets/tempelhofer-feld-social-banner-v2.png",
+      "bytes": 2359159,
+      "sha256": "0d91262b80e835e523aa623ecc5c0f7faf600f8b744eab7bf22ac1c0be158454"
+    },
+    {
+      "path": "previews/home-banner/assets/tempelhofer-feld-tony-webster.jpg",
+      "bytes": 313318,
+      "sha256": "f7955619a0902ae268d416b4f170e5bfba599f5a2c72d08f10da54763ab31132"
+    },
+    {
+      "path": "previews/home-banner/image-edit-prompt-rooftop-v8.txt",
+      "bytes": 1903,
+      "sha256": "27f9e7bc96160741ecdd5b298f86da74ca612c8adda150bb3c6f10114e1a99ef"
+    },
+    {
+      "path": "previews/home-banner/image-edit-prompt-v3.txt",
+      "bytes": 2457,
+      "sha256": "a212f556b026d11af0020ae08531d86a0de449473e6e0b35bcb02181e36b9b06"
+    },
+    {
+      "path": "previews/home-banner/image-edit-prompt-v4-initial.txt",
+      "bytes": 2906,
+      "sha256": "42d8bfc8860115418af427b97f4c29411184f65e24ea2f8733fca2548daaef85"
+    },
+    {
+      "path": "previews/home-banner/image-edit-prompt-v4.txt",
+      "bytes": 2789,
+      "sha256": "3793f5fe74867e69229941d681a44794f31e0b9266137405dfdd2d4004b6c9de"
+    },
+    {
+      "path": "previews/home-banner/image-edit-prompt-v5.txt",
+      "bytes": 2805,
+      "sha256": "42904bbc9ec2aea076fe831167843ca4bad81b9da166f8ce3544e3a9592f663f"
+    },
+    {
+      "path": "previews/home-banner/image-edit-prompt.txt",
+      "bytes": 2369,
+      "sha256": "ae5a0e41dd8338cd49d04ced160dc70f822249c06703eddd5159a24528dd3987"
+    },
+    {
+      "path": "previews/home-banner/image-prompt-rooftop-v7.txt",
+      "bytes": 2647,
+      "sha256": "7df8f4b354587d1a75caa284bd7757069744d23e1baa095bac9359db0773dc3e"
+    },
+    {
+      "path": "previews/home-banner/index.html",
+      "bytes": 40522,
+      "sha256": "7313f178a08cdc6d97706119fe6e4e6af890d57dd4ff8036c6abe58c4083afab"
+    },
+    {
+      "path": "previews/how-it-works/README.md",
+      "bytes": 2780,
+      "sha256": "2fe976f494ea1f688c2e01c914845bcc080186870e149c32ff5bd9937b6cb045"
+    },
+    {
+      "path": "previews/how-it-works/index.html",
+      "bytes": 19141,
+      "sha256": "975475ee70c0cdf323569ffb76d557021d667fb82ec91ee99fa1265d09f4998d"
+    },
+    {
+      "path": "previews/how-it-works/preview.js",
+      "bytes": 1772,
+      "sha256": "54d0c172027e77e5aa02e2404ee639ac1720da449a5d4b85ee155c49432bb955"
+    },
+    {
+      "path": "previews/how-it-works/serve.mjs",
+      "bytes": 2000,
+      "sha256": "4d65e471c5cc0f5fef9f4f323af4a21c82ed0f8572a5f21f3578db90d8c7c61b"
+    },
+    {
+      "path": "previews/how-it-works/styles.css",
+      "bytes": 24817,
+      "sha256": "20e7ef1fd773407a821ba6a2506e980c89a0e81ca74301bbbeb0c98496029eac"
+    }
+  ]
+}

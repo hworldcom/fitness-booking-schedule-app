@@ -1,0 +1,181 @@
+{
+  "retainedBy": "DEV0390",
+  "note": "Source documents from retired standalone previews. Paths inside original manifests are historical paths, not current file links. Public banner binaries remain unchanged.",
+  "home-training-collage.png": {
+    "originalManifest": {
+      "ticket": "DEV0304",
+      "date": "2026-10-17",
+      "mode": "Built-in imagegen compositing, one call per concept; no CLI fallback",
+      "suppliedSourceCount": 16,
+      "selectedSourceCount": 10,
+      "sourceNote": "User-supplied Downloads photographs; originals unchanged and not redistributed in this preview. Composites are AI-assisted design concepts, not documentary single-event photographs.",
+      "variants": {
+        "a": [
+          "gabin-vallet-J154nEkpzlQ-unsplash.jpg",
+          "michael-demoya-EwHtQ2I-Vd0-unsplash.jpg",
+          "eser-goat-NHwbTSxSSbU-unsplash.jpg",
+          "karsten-winegeart-eGSBVVtVCCw-unsplash.jpg"
+        ],
+        "b": [
+          "gabin-vallet-YxCrQm9XNgg-unsplash.jpg",
+          "declan-sun-KrTGzQUmTBY-unsplash.jpg",
+          "ryan-hall-_b1xzqZ1UBQ-unsplash.jpg",
+          "gabin-vallet-J154nEkpzlQ-unsplash.jpg"
+        ],
+        "c": [
+          "mark-adriane-FH6JcaCrYJ0-unsplash.jpg",
+          "shlomi-glantz-dxKzGwDY6FM-unsplash.jpg",
+          "michael-starkie--ktNaNqbomw-unsplash.jpg",
+          "gabin-vallet-J154nEkpzlQ-unsplash.jpg"
+        ]
+      },
+      "selectedSources": [
+        {
+          "suppliedFilename": "declan-sun-KrTGzQUmTBY-unsplash.jpg",
+          "bytes": 2405991,
+          "sha256": "b956d57f4347b4dce0c14af15b214b86376aadd30de172b33d1285f64e1a6d46",
+          "usedIn": [
+            "b"
+          ]
+        },
+        {
+          "suppliedFilename": "eser-goat-NHwbTSxSSbU-unsplash.jpg",
+          "bytes": 1962070,
+          "sha256": "e55967f8a4503a1b0086207456038b1b366b99e3be4a1c5fd2512c613f27b3cd",
+          "usedIn": [
+            "a"
+          ]
+        },
+        {
+          "suppliedFilename": "gabin-vallet-J154nEkpzlQ-unsplash.jpg",
+          "bytes": 4630489,
+          "sha256": "0d61bf99ae0389f3a530131d358705b14e030bd382afeca8cea02c3943d62916",
+          "usedIn": [
+            "a",
+            "b",
+            "c"
+          ]
+        },
+        {
+          "suppliedFilename": "gabin-vallet-YxCrQm9XNgg-unsplash.jpg",
+          "bytes": 3633237,
+          "sha256": "6f5212d3ba57f3ed6a564b93f986bbf92c1e50548ac99de3962fe8527e5367ca",
+          "usedIn": [
+            "b"
+          ]
+        },
+        {
+          "suppliedFilename": "karsten-winegeart-eGSBVVtVCCw-unsplash.jpg",
+          "bytes": 2157917,
+          "sha256": "31913577cd4c7a24c3b7d0ba79c77c11f23c75cc785e9a4c984c11e2d5c96b58",
+          "usedIn": [
+            "a"
+          ]
+        },
+        {
+          "suppliedFilename": "mark-adriane-FH6JcaCrYJ0-unsplash.jpg",
+          "bytes": 4306295,
+          "sha256": "78eb98789f4bd7ed1cf7b59ea248b5a56f4f916963ea9f71ced2027766076f5d",
+          "usedIn": [
+            "c"
+          ]
+        },
+        {
+          "suppliedFilename": "michael-demoya-EwHtQ2I-Vd0-unsplash.jpg",
+          "bytes": 1551940,
+          "sha256": "7d3061706334765302642e9d40918c8c03241c83cdc29e4ef9f39225792d9961",
+          "usedIn": [
+            "a"
+          ]
+        },
+        {
+          "suppliedFilename": "michael-starkie--ktNaNqbomw-unsplash.jpg",
+          "bytes": 6955167,
+          "sha256": "b17216ed2e0158ba4dd9c0371b9a6a2748464560c5d0c94206b0d0f54addf4ab",
+          "usedIn": [
+            "c"
+          ]
+        },
+        {
+          "suppliedFilename": "ryan-hall-_b1xzqZ1UBQ-unsplash.jpg",
+          "bytes": 4993602,
+          "sha256": "7ca9b0c659845f28ebbd96b1ca2f03b24cf8d16fff3aac3044b78e99f2673ed6",
+          "usedIn": [
+            "b"
+          ]
+        },
+        {
+          "suppliedFilename": "shlomi-glantz-dxKzGwDY6FM-unsplash.jpg",
+          "bytes": 3680808,
+          "sha256": "4ea2b41284422b2389e144f12ffad8d0a9a2679b7b958713caa11b1acbfbac72",
+          "usedIn": [
+            "c"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "file": "assets/banner-a-diagonal.png",
+          "width": 2172,
+          "height": 724,
+          "bytes": 2452954,
+          "sha256": "24624c8aa328982362164dd72cb9b285f69c85df16bb232b55e1c26fe2ba8f6e"
+        },
+        {
+          "file": "assets/banner-b-together.png",
+          "width": 2172,
+          "height": 724,
+          "bytes": 2586966,
+          "sha256": "bef773ab24f76e7f3f28341a375c319a8094d4fb7c7ed61cfd01fcd2ac181c59"
+        },
+        {
+          "file": "assets/banner-c-editorial.png",
+          "width": 2172,
+          "height": 724,
+          "bytes": 2315029,
+          "sha256": "e333a86a08abedd59f031e2134f1ec0cd3db7fbf1e6445e5db62d35d8129c957"
+        }
+      ]
+    },
+    "finalEditManifest": {
+      "ticket": "DEV0307",
+      "date": "2026-10-17",
+      "mode": "Built-in imagegen edit/composite, one call; no CLI fallback",
+      "inputs": [
+        {
+          "file": "assets/banner-b-together.png",
+          "role": "edit target",
+          "sha256": "bef773ab24f76e7f3f28341a375c319a8094d4fb7c7ed61cfd01fcd2ac181c59"
+        },
+        {
+          "suppliedFilename": "karsten-winegeart-eGSBVVtVCCw-unsplash.jpg",
+          "role": "central ropes photograph and bright slogan area",
+          "sha256": "31913577cd4c7a24c3b7d0ba79c77c11f23c75cc785e9a4c984c11e2d5c96b58"
+        },
+        {
+          "suppliedFilename": "shlomi-glantz-dxKzGwDY6FM-unsplash.jpg",
+          "role": "kick replacing the high-knees group window",
+          "sha256": "4ea2b41284422b2389e144f12ffad8d0a9a2679b7b958713caa11b1acbfbac72"
+        }
+      ],
+      "prompts": {
+        "b3": "prompts/b3-ropes-kick.txt"
+      },
+      "outputs": [
+        {
+          "file": "assets/banner-b3-ropes-kick.png",
+          "width": 2170,
+          "height": 725,
+          "bytes": 2577090,
+          "sha256": "243bca5cc00d3e0e40da7c11e38fc45b7dfa01e6969315bfe3ffbdb8e07bb275"
+        }
+      ]
+    },
+    "finalEditPrompt": "Use image 1 as the precise edit target: the light, airy MovX banner with organic CURVED photo windows. Create ONE new version of that same banner, not a diagonal collage. Wide 3:1 banner, approximately 2172 x 724. It will be displayed as a shallow website hero. NO text, letters, logos or watermarks in the output; the exact slogan will be real HTML over the finished artwork.\n\nMake only these two intentional photo changes:\n1. Fill the empty ivory/sage CENTER of image 1 with the actual battle-ropes photograph from image 2. Give it a generous organic curved window, roughly x33\u201374% of the full banner. Keep the bright open sky/light architectural opening from the LEFT of source image 2 around the CENTER of the banner (roughly x38\u201356%, y25\u201365%) as an uncluttered, naturally photographed light area for two lines of dark-green slogan. Keep photographic detail; do not replace this area with a blank solid color, ivory paper panel, haze blob or rectangular text plate. Put the recognizable rope athlete to the RIGHT of this bright center (about x61\u201369%) with the undulating ropes visibly connecting across the lower center. Crop the dark overhead concrete roof to a restrained top strip so it does not occupy the intended slogan area. The central photo must genuinely fill the previous gap.\n2. REPLACE the curved upper-left window containing the GROUP DOING HIGH KNEES in image 1 with the KICKING photo from image 3. Remove that high-knees group completely. Preserve the kicking man's recognizable face, raised kicking leg and red padded post, framed together in a sensibly cropped curved photo window about x13\u201336%, upper-left/left-middle. It is fine to enlarge this window slightly and crop his standing lower leg; the kicking action must remain clear. Do not add the kicker as an extra unrelated sixth window.\n\nPreserve the other three existing photo scenes from image 1: lime-shirt agility woman at far left, the coach holding white pads for the athlete wearing green gloves on the right, and the warm helping-hand/friendship scene in the upper-right. Keep their recognizable subjects, natural faces, limbs, gestures and photographic texture. Refine the right coaching window slightly narrower if needed to fit the ropes athlete without hiding him. Retain thin pale organic curved separators and the flowing airy visual language. Light source color grading and careful crops are welcome. Keep natural scene separation: these are different real photographs in a designed collage, not a fabricated single place. No new people, duplicated people, changed sports equipment, synthetic facial smoothing or invented skyline.\n\nComposition priority: the wide hero should show actual ropes photography in the middle, bright central room for editable slogan, kick replacing high knees, and preserved curved photo windows with a coherent photographic feel. No empty central gap and no baked slogan.\n"
+  },
+  "home-coaching-banner.png": {
+    "originalPrompt": "Use case: photorealistic-natural.\nAsset type: an ORIGINAL photographic website hero/banner for MovX, inspired by the ATMOSPHERE and SETTING of the user's attached reference, not a reproduction.\nReference role: mood/setting reference only. Create different fictional adults, clothing, camera composition and background. Do not recreate the exact people, face identities or photograph; do not edit or clean the reference image.\n\nScene: a relaxed candid moment between ONE adult boxing coach and ONE adult athlete between rounds, in an outdoor rooftop boxing ring at golden hour. The athlete wears ordinary boxing gloves, casually resting one forearm near a ring rope, looking toward the coach with a small warm natural smile. The coach wears a plain muted dark-green training shirt and has attentive friendly posture, talking with the athlete as if giving a simple helpful tip. Show both faces in natural three-quarter views and a waist/upper-body crop, with believable facial features, skin texture, hair and normal body types. Avoid model physiques and artificial perfect smiles. They should seem comfortable with each other, like a real coach and regular client, not posing for a sports advert.\nSetting and atmosphere: warm hazy evening sunlight and subtle rim light; neutral muted taupe, cream and forest-green tones; soft shallow depth of field. A believable low-rise European/Berlin-like city rooftop backdrop recedes into creamy photographic bokeh. Flat urban horizon, understated rooftops, no mountains or invented famous landmarks. A couple of ordinary muted off-white / dark-forest ring ropes establish the boxing setting without dominating. No busy gym crowd, flashy equipment, staged high-five, fist-bump or active punch. Focus on human trust and easy conversation after training.\nComposition: VERY WIDE SHALLOW horizontal banner, ideally about 5:1. Put the two adults together on the LEFT third/left 40 percent, keeping both heads and upper bodies fully inside the frame with natural breathing room. Give the CENTER and RIGHT 60 percent generous softly blurred warm sky/city negative space for a two-line white website slogan added separately in HTML. The image should feel like one real candid photograph through a portrait lens, not separate subjects pasted onto an AI panorama. Preserve real-looking lens falloff and small imperfections. No glossy skin, excessive sharpening or cinematic orange/teal grading.\nNo text, lettering, logos, watermarks, graphics or UI. Do not copy the reference's branding, repeated markings, exact poses, identities or skyline. New original scene with the same warm, reassuring coach-athlete atmosphere.\n",
+    "finalFramingPrompt": "Use case: precise-object-edit.\nThe input is the EDIT TARGET: our original warm rooftop boxing coach/athlete photograph. Keep these SAME TWO fictional adults, facial appearance, relaxed conversation, clothes, boxing gloves, soft warm sunset city backdrop and ordinary ring ropes. Change FRAMING ONLY.\n\nThis must work as a VERY WIDE shallow 5:1 website banner. The people in the current frame nearly touch the top and bottom; give them much more breathing room so BOTH FACES AND BOXING GLOVES fit comfortably in a shallow panoramic crop. Pull back modestly and extend the scene around them, without changing their body proportions or interaction. Keep the two adults together on the LEFT 35\u201340 percent of the image, and leave the right 60\u201365 percent as soft warm sky and distant city bokeh.\nIMPORTANT COMPOSITION: keep all meaningful human content \u2014 the top of the coach's hair, both faces, the coach's talking hand, and the athlete's gloves \u2014 inside the MIDDLE 55\u201360 percent of the image's vertical height (approximately y=18% to y=76%), with open background above and below. This lets the website crop the surrounding headroom for a shallow banner without cutting faces/gloves. The upper-body/waist-level framing should remain clear, just less pressed against the edges. No need to show legs or feet.\nPhotographic authenticity: natural three-quarter faces, skin texture, imperfect hair, shallow portrait-lens depth of field, soft warm light, genuine quiet connection. Preserve the understated ring, flat European city mood, muted neutral/forest clothing and gentle sunset. No new foreground people, ropes across faces, invented landmark, mountain, extra equipment, text, lettering, logos, watermark or UI.\nPrefer an actual 5:1 output if possible; if retaining a 3:1 canvas, obey the middle-strip composition above so it can display correctly as 5:1. No squeezing, stretching or cutting heads.\n",
+    "originalDescription": "Original fictional coach/athlete rooftop scene; source photograph was a mood/setting reference only and is not distributed."
+  }
+}

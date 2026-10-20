@@ -1,8 +1,10 @@
 # Ticket DEV0364: Isolate group minimum styles for commit
 
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+
 - Status: Completed
 - Created: 2026-10-19
-- Last updated: 2026-10-19
+- Last updated: 2026-10-20
 - Milestone: Public marketplace commit preparation
 - Coordination: None — independent development ticket
 - Related records: [DEV0359](../../archive/frontend/DEV0359-preview-athlete-and-coach-how-it-works.md), [DEV0361](../../archive/frontend/DEV0361-simplify-how-it-works-preview-navigation.md), [DEV0362](../../archive/frontend/DEV0362-explain-group-minimums-and-invite-friends.md); independently queued Events redesign DEV0358 in [reserved work](../../README.md#reserved-identifiers).
@@ -59,7 +61,7 @@ Dated annotations on DEV0359/DEV0361/DEV0362 preserve their original evidence an
 | [Events stylesheet](../../../src/features/events/events.css)                                                                                                                                  | Owns the unchanged minimum-panel rules on baseline and current card layouts.                                              |
 | Independently queued `src/features/events/event-directory.css`                                                                                                                                | Removed only the four rules previously introduced by DEV0362; this untracked file is excluded from the commit.            |
 | [DEV0359](DEV0359-preview-athlete-and-coach-how-it-works.md), [DEV0361](DEV0361-simplify-how-it-works-preview-navigation.md), [DEV0362](DEV0362-explain-group-minimums-and-invite-friends.md) | Dated packaging/context annotations and authorized commit subject, retaining historical validation.                       |
-| [Preview guide](../../../previews/how-it-works/README.md)                                                                                                                                     | Links this focused packaging/verification record.                                                                         |
+| Preview guide (retired artifact: `previews/how-it-works/README.md`)                                                                                                                                     | Links this focused packaging/verification record.                                                                         |
 | [Work index](../../README.md)                                                                                                                                                                 | Owned entries, next ID and explicit reservation of concurrent DEV0363; unrelated pending rows/formatting remain unstaged. |
 
 ### Decisions and deviations

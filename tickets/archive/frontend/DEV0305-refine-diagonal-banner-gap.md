@@ -1,8 +1,10 @@
 # Ticket DEV0305: Refine the diagonal banner gap
 
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+
 - Status: Completed
 - Created: 2026-10-17
-- Last updated: 2026-10-17
+- Last updated: 2026-10-20
 - Milestone: M3 — Public discovery design exploration
 - Coordination: None — independent development ticket
 - Related records: original photo concepts [DEV0304](../../archive/frontend/DEV0304-preview-photo-collage-banners.md); actual Home [DEV0303](../../archive/frontend/DEV0303-adopt-compact-photographic-home.md)
@@ -52,9 +54,9 @@ The dedicated diagonal comparison defaults to A2 and supplies both options, exac
 
 ### Affected files
 
-- [Diagonal comparison](../../../previews/home-banner-collages/first-banner.html): two native-selectable options, contextual header/search and accessible downloads; no application service behavior.
-- [Shared selection script](../../../previews/home-banner-collages/preview.js) and [scoped styles](../../../previews/home-banner-collages/styles.css): A1/A2 entries, photographic lower text, central message placement and responsive/fallback/focus behavior. Light additions remain DEV0306's scope.
-- [Refinement guide](../../../previews/home-banner-collages/REFINEMENTS.md) and [manifest](../../../previews/home-banner-collages/provenance-a-refinements.json): local artwork links, complete A1/A2 prompts, source roles, dimensions and source/output SHA-256 records. Original comparison/README link to refinements without overwriting earlier assets.
+- Diagonal comparison (retired artifact: `previews/home-banner-collages/first-banner.html`): two native-selectable options, contextual header/search and accessible downloads; no application service behavior.
+- Shared selection script (retired artifact: `previews/home-banner-collages/preview.js`) and scoped styles (retired artifact: `previews/home-banner-collages/styles.css`): A1/A2 entries, photographic lower text, central message placement and responsive/fallback/focus behavior. Light additions remain DEV0306's scope.
+- Refinement guide (retired artifact: `previews/home-banner-collages/REFINEMENTS.md`) and manifest (retired artifact: `previews/home-banner-collages/provenance-a-refinements.json`): local artwork links, complete A1/A2 prompts, source roles, dimensions and source/output SHA-256 records. Original comparison/README link to refinements without overwriting earlier assets.
 - Ticket/index: documented the initial interpretation, explicit user clarification and authorized preservation of the diagonal alternatives. No `src/`, public application asset, app configuration or data change under this ticket.
 
 ### Decisions and deviations

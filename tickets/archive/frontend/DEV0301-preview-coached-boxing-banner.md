@@ -1,8 +1,10 @@
 # Ticket DEV0301: Preview a warm coached boxing banner
 
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+
 - Status: Completed
 - Created: 2026-10-17
-- Last updated: 2026-10-17
+- Last updated: 2026-10-20
 - Milestone: M3 — Public discovery design exploration
 - Coordination: None — independent development ticket
 - Related records: historical banner variants [DEV0298](../../archive/frontend/DEV0298-preview-photographic-home-banner.md) and [DEV0300](../../archive/frontend/DEV0300-refine-sky-and-group-banner-framing.md)
@@ -54,11 +56,11 @@ The footer identifies the current scene as an original generated concept and lin
 
 ### Affected files
 
-- [Preview page](../../../previews/home-banner/index.html): new source/alt text, wide desktop composition, responsive photo/copy framing, contrast overlay, search spacing and accurate fictional-scene disclosure; removed the obsolete Tempelhofer Feld place label.
-- [Current rooftop image](../../../previews/home-banner/assets/rooftop-coach-athlete-banner-v8.png): original generated scene with a subsequent framing edit; no stock-reference asset is shipped.
-- [Original scene prompt](../../../previews/home-banner/image-prompt-rooftop-v7.txt) and [final framing prompt](../../../previews/home-banner/image-edit-prompt-rooftop-v8.txt): exact built-in generation/edit instructions and input roles.
-- [Preview README](../../../previews/home-banner/README.md): current image provenance, native/display ratios, viewing instructions, retained draft links and separate earlier-photo attribution.
-- Intermediate [v4 training](../../../previews/home-banner/assets/tempelhofer-feld-coached-training-v4.png), [v5 coaching pairs](../../../previews/home-banner/assets/tempelhofer-feld-coached-pairs-v5.png), their `image-edit-prompt-v4-initial.txt`, `image-edit-prompt-v4.txt`, `image-edit-prompt-v5.txt` files, and previous v2/v3/base assets are preserved in the same preview folder.
+- Preview page (retired artifact: `previews/home-banner/index.html`): new source/alt text, wide desktop composition, responsive photo/copy framing, contrast overlay, search spacing and accurate fictional-scene disclosure; removed the obsolete Tempelhofer Feld place label.
+- Current rooftop image (retired artifact: `previews/home-banner/assets/rooftop-coach-athlete-banner-v8.png`): original generated scene with a subsequent framing edit; no stock-reference asset is shipped.
+- Original scene prompt (retired artifact: `previews/home-banner/image-prompt-rooftop-v7.txt`) and final framing prompt (retired artifact: `previews/home-banner/image-edit-prompt-rooftop-v8.txt`): exact built-in generation/edit instructions and input roles.
+- Preview README (retired artifact: `previews/home-banner/README.md`): current image provenance, native/display ratios, viewing instructions, retained draft links and separate earlier-photo attribution.
+- Intermediate v4 training (retired artifact: `previews/home-banner/assets/tempelhofer-feld-coached-training-v4.png`), v5 coaching pairs (retired artifact: `previews/home-banner/assets/tempelhofer-feld-coached-pairs-v5.png`), their `image-edit-prompt-v4-initial.txt`, `image-edit-prompt-v4.txt`, `image-edit-prompt-v5.txt` files, and previous v2/v3/base assets are preserved in the same preview folder.
 - This record and [ticket index](../../README.md): scope/refinement history, validation and completion. No application source, product specification, database, environment or dependency changes belong to DEV0301.
 
 ### Decisions and deviations

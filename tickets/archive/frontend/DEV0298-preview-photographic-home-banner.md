@@ -1,8 +1,10 @@
 # Ticket DEV0298: Preview a photographic Home banner
 
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+
 - Status: Completed
 - Created: 2026-10-17
-- Last updated: 2026-10-17
+- Last updated: 2026-10-20
 - Milestone: M3 — Public discovery design exploration
 - Coordination: None — independent development ticket
 - Related records: delivered Home [DEV0228](../../archive/frontend/DEV0228-build-home-coach-grid-with-discipline-filter.md); public accessibility [DEV0201](../../archive/frontend/DEV0201-polish-public-marketplace-accessibility.md)
@@ -56,10 +58,10 @@ Tony Webster's original licensed photograph is preserved beside the final deriva
 
 ### Affected files
 
-- [Preview page](../../../previews/home-banner/index.html): self-contained HTML/CSS/local JavaScript for layout, framing, sample filters, accessible controls and image fallback.
-- [Final banner](../../../previews/home-banner/assets/tempelhofer-feld-social-banner-v2.png): 1746 × 901 pixel built-in imagegen edit of the real location photograph.
-- [Unaltered base photograph](../../../previews/home-banner/assets/tempelhofer-feld-tony-webster.jpg): 1920 × 988 pixel Wikimedia derivative retained for provenance.
-- [Preview README](../../../previews/home-banner/README.md) and [executed edit prompt](../../../previews/home-banner/image-edit-prompt.txt): launch instructions, source/author/license, edit disclosure and exact final generation instructions/mode.
+- Preview page (retired artifact: `previews/home-banner/index.html`): self-contained HTML/CSS/local JavaScript for layout, framing, sample filters, accessible controls and image fallback.
+- Final banner (retired artifact: `previews/home-banner/assets/tempelhofer-feld-social-banner-v2.png`): 1746 × 901 pixel built-in imagegen edit of the real location photograph.
+- Unaltered base photograph (retired artifact: `previews/home-banner/assets/tempelhofer-feld-tony-webster.jpg`): 1920 × 988 pixel Wikimedia derivative retained for provenance.
+- Preview README (retired artifact: `previews/home-banner/README.md`) and executed edit prompt (retired artifact: `previews/home-banner/image-edit-prompt.txt`): launch instructions, source/author/license, edit disclosure and exact final generation instructions/mode.
 - `previews/home-banner/assets/`: local Manrope/Bricolage Grotesque fonts and font/Lucide license files.
 - This development record and [ticket index](../../README.md): scope, refinements, validation and completion. No `src`, database, environment or product-specification edits belong to DEV0298; concurrent account/settings changes remain separate.
 

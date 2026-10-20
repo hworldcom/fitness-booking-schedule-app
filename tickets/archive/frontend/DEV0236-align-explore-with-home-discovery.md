@@ -2,10 +2,10 @@
 
 - Status: Completed
 - Created: 2026-10-15
-- Last updated: 2026-10-15
+- Last updated: 2026-10-20
 - Milestone: M3 — Scheduling interface / public discovery refinement
 - Coordination: None — independent development ticket
-- Related records: delivered Home baseline [DEV0228](DEV0228-build-home-coach-grid-with-discipline-filter.md); delivered desktop Explore [DEV0199](DEV0199-redesign-desktop-coach-explore.md) and mobile Explore [DEV0200](DEV0200-add-mobile-explore-map-list-state.md); illustrative proposal [DEV0235](../../current/frontend/DEV0235-preview-home-aligned-explore.md); independent deferred Home query search [DEV0227](../../current/frontend/DEV0227-reintroduce-home-search-after-client-feedback.md)
+- Related records: delivered Home baseline [DEV0228](DEV0228-build-home-coach-grid-with-discipline-filter.md); delivered desktop Explore [DEV0199](DEV0199-redesign-desktop-coach-explore.md) and mobile Explore [DEV0200](DEV0200-add-mobile-explore-map-list-state.md); illustrative proposal [DEV0235](DEV0235-preview-home-aligned-explore.md); independent deferred Home query search [DEV0227](../../current/frontend/DEV0227-reintroduce-home-search-after-client-feedback.md)
 
 ## Objective and context
 

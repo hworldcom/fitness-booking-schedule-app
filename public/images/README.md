@@ -1,5 +1,7 @@
 # Public banner assets
 
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../tickets/current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+
 ## Events tug-of-war photograph
 
 `events-tug-of-war.jpg` is the user-supplied photograph, copied unchanged from `amari-shutters-S1Xo-Ygp_q0-unsplash.jpg` under [DEV0353](../../tickets/archive/frontend/DEV0353-add-face-free-events-banner.md). The local original is 7680 × 5120, 7,166,194 bytes, visually matching the supplied attachment at a higher resolution. SHA-256: `aba1e97d807452f71bd6cd8ec999790bd992df5d404e4c8230bdbb8d2ffb3728`. The filename credits Amari Shutters / Unsplash. It illustrates group activity and does not identify a MovX session, coach or confirmed venue.
@@ -18,9 +20,9 @@ Source attribution: [Karsten Winegeart / Unsplash photo eGSBVVtVCCw](https://uns
 
 ## Earlier curved training collage — retained history
 
-`home-training-collage.png` was the approved B3 banner, copied byte-for-byte from the [2170 × 725 preview artwork](../../previews/home-banner-collages/assets/banner-b3-ropes-kick.png). The user selected it for actual Home under [DEV0308](../../tickets/archive/frontend/DEV0308-adopt-curved-training-collage-home-banner.md). Battle ropes fill the middle; the kicking image replaces the high-knees group, while the other curved photo windows remain.
+`home-training-collage.png` was the approved B3 banner, copied byte-for-byte from the 2170 × 725 preview artwork (retired artifact: `previews/home-banner-collages/assets/banner-b3-ropes-kick.png`). The user selected it for actual Home under [DEV0308](../../tickets/archive/frontend/DEV0308-adopt-curved-training-collage-home-banner.md). Battle ropes fill the middle; the kicking image replaces the high-knees group, while the other curved photo windows remain.
 
-This AI-assisted composite was made with built-in imagegen under [DEV0307](../../tickets/archive/frontend/DEV0307-preview-curved-banner-with-ropes-and-kick.md). The [exact edit prompt](../../previews/home-banner-collages/prompts/b3-ropes-kick.txt) and [input/output hashes and roles](../../previews/home-banner-collages/provenance-b3-ropes-kick.json) preserve its source trail. Separate source photographs do not depict a single MovX event, coach or venue. Next.js `getImageProps` supplies optimized responsive images. The dark-green slogan remains selectable HTML positioned over the photograph's bright opening, with a pale fallback when the image is unavailable.
+This AI-assisted composite was made with built-in imagegen under [DEV0307](../../tickets/archive/frontend/DEV0307-preview-curved-banner-with-ropes-and-kick.md). The exact edit prompt (retired artifact: `previews/home-banner-collages/prompts/b3-ropes-kick.txt`) and input/output hashes and roles (retired artifact: `previews/home-banner-collages/provenance-b3-ropes-kick.json`) preserve its source trail. Separate source photographs do not depict a single MovX event, coach or venue. Next.js `getImageProps` supplies optimized responsive images. The dark-green slogan remains selectable HTML positioned over the photograph's bright opening, with a pale fallback when the image is unavailable.
 
 [DEV0309](../../tickets/archive/frontend/DEV0309-lower-home-banner-slogan-and-expand-framing.md) refines the actual page's CSS framing: a modestly taller desktop/tablet banner and lower slogan clear the kicking window and reveal more of the lower-right coaching scene. The artwork bytes stay unchanged; retained preview comparisons show earlier layout choices.
 
@@ -28,6 +30,8 @@ This AI-assisted composite was made with built-in imagegen under [DEV0307](../..
 
 ## Earlier rooftop banner — retained history
 
-`home-coaching-banner.png` is the 2172 × 724 pixel approved banner, copied byte-for-byte from the [rooftop preview asset](../../previews/home-banner/assets/rooftop-coach-athlete-banner-v8.png). It is an original fictional coaching scene, created with built-in imagegen under [DEV0301](../../tickets/archive/frontend/DEV0301-preview-coached-boxing-banner.md); the [scene prompt](../../previews/home-banner/image-prompt-rooftop-v7.txt) and [framing prompt](../../previews/home-banner/image-edit-prompt-rooftop-v8.txt) preserve provenance. No stock-reference photograph is shipped.
+`home-coaching-banner.png` is the 2172 × 724 pixel approved banner, copied byte-for-byte from the rooftop preview asset (retired artifact: `previews/home-banner/assets/rooftop-coach-athlete-banner-v8.png`). It is an original fictional coaching scene, created with built-in imagegen under [DEV0301](../../tickets/archive/frontend/DEV0301-preview-coached-boxing-banner.md); the scene prompt (retired artifact: `previews/home-banner/image-prompt-rooftop-v7.txt`) and framing prompt (retired artifact: `previews/home-banner/image-edit-prompt-rooftop-v8.txt`) preserve provenance. No stock-reference photograph is shipped.
 
 The user initially selected this image and “Find your coach. Achieve your goals.” for actual Home under [DEV0303](../../tickets/archive/frontend/DEV0303-adopt-compact-photographic-home.md). It illustrates coaching and is not a directory coach portrait or documented real training venue. DEV0308 replaces its Home use with B3; this original asset remains as history.
+
+Retained source manifests and generation/edit prompts for the two earlier production banners are available in [retained banner provenance](retained-banner-provenance.json). The removed preview inventory and original file hashes are recorded in [the retirement manifest](../../docs/retired-design-previews.json).

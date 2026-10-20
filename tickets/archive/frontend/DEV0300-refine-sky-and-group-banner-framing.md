@@ -1,8 +1,10 @@
 # Ticket DEV0300: Refine sky and group banner framing
 
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+
 - Status: Completed
 - Created: 2026-10-17
-- Last updated: 2026-10-17
+- Last updated: 2026-10-20
 - Milestone: M3 — Public discovery design exploration
 - Coordination: None — independent development ticket
 - Related records: historical preview baseline [DEV0298](../../archive/frontend/DEV0298-preview-photographic-home-banner.md)
@@ -52,10 +54,10 @@ The standalone page now loads the wider v3 image. Its desktop heading occupies t
 
 ### Affected files
 
-- [Preview page](../../../previews/home-banner/index.html): v3 asset reference, actual dimensions/alt text, desktop text placement, responsive crop/overlay and updated edit disclosure.
-- [Sky/group image](../../../previews/home-banner/assets/tempelhofer-feld-sky-group-v3.png): new built-in imagegen derivative; the previous [v2 image](../../../previews/home-banner/assets/tempelhofer-feld-social-banner-v2.png) is retained.
-- [Executed v3 prompt](../../../previews/home-banner/image-edit-prompt-v3.txt): complete instructions and input roles, alongside the unchanged [previous prompt](../../../previews/home-banner/image-edit-prompt.txt).
-- [Preview README](../../../previews/home-banner/README.md): current/previous version links, source/license and edit provenance, viewing instructions and validation handoff.
+- Preview page (retired artifact: `previews/home-banner/index.html`): v3 asset reference, actual dimensions/alt text, desktop text placement, responsive crop/overlay and updated edit disclosure.
+- Sky/group image (retired artifact: `previews/home-banner/assets/tempelhofer-feld-sky-group-v3.png`): new built-in imagegen derivative; the previous v2 image (retired artifact: `previews/home-banner/assets/tempelhofer-feld-social-banner-v2.png`) is retained.
+- Executed v3 prompt (retired artifact: `previews/home-banner/image-edit-prompt-v3.txt`): complete instructions and input roles, alongside the unchanged previous prompt (retired artifact: `previews/home-banner/image-edit-prompt.txt`).
+- Preview README (retired artifact: `previews/home-banner/README.md`): current/previous version links, source/license and edit provenance, viewing instructions and validation handoff.
 - This record and [ticket index](../../README.md): scope, evidence and archived completion. No source/application, product specification, database, environment or dependency changes belong to DEV0300.
 
 ### Decisions and deviations

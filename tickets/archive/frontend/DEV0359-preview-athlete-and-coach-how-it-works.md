@@ -1,8 +1,10 @@
 # Ticket DEV0359: Preview athlete and coach How it works
 
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+
 - Status: Completed
 - Created: 2026-10-19
-- Last updated: 2026-10-19
+- Last updated: 2026-10-20
 - Milestone: Public marketplace design review
 - Coordination: None — independent development ticket
 - Related records: Independently queued palette DEV0350 in the [reservation register](../../README.md#reserved-identifiers); historical standalone preview [DEV0338](DEV0338-preview-a-personal-coach-page.md); commit packaging [DEV0364](DEV0364-isolate-group-minimum-styles-for-commit.md).
@@ -58,11 +60,11 @@ The design reuses the adopted white/purple palette and installed local fonts, wi
 
 | File                                                      | Role                                                                                                                             |
 | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| [index.html](../../../previews/how-it-works/index.html)   | Labelled proposal, native section links, audience journeys, both formats, FAQs and local modal.                                  |
-| [styles.css](../../../previews/how-it-works/styles.css)   | Exact current palette, reused fonts, original illustrations, responsive layouts, keyboard focus and reduced-motion overrides.    |
-| [preview.js](../../../previews/how-it-works/preview.js)   | Local action messages, native modal close/Escape support and explicit trigger-focus restoration. No requests or persisted state. |
-| [serve.mjs](../../../previews/how-it-works/serve.mjs)     | Loopback-only server for six exact routes; rejects unknown paths and write methods.                                              |
-| [Preview guide](../../../previews/how-it-works/README.md) | Launch/stop instructions, font provenance, local-action boundaries and proposal status.                                          |
+| index.html (retired artifact: `previews/how-it-works/index.html`)   | Labelled proposal, native section links, audience journeys, both formats, FAQs and local modal.                                  |
+| styles.css (retired artifact: `previews/how-it-works/styles.css`)   | Exact current palette, reused fonts, original illustrations, responsive layouts, keyboard focus and reduced-motion overrides.    |
+| preview.js (retired artifact: `previews/how-it-works/preview.js`)   | Local action messages, native modal close/Escape support and explicit trigger-focus restoration. No requests or persisted state. |
+| serve.mjs (retired artifact: `previews/how-it-works/serve.mjs`)     | Loopback-only server for six exact routes; rejects unknown paths and write methods.                                              |
+| Preview guide (retired artifact: `previews/how-it-works/README.md`) | Launch/stop instructions, font provenance, local-action boundaries and proposal status.                                          |
 | This record and [root index](../../README.md)             | Scope, validation evidence and completed archive entry.                                                                          |
 
 ### Decisions and deviations

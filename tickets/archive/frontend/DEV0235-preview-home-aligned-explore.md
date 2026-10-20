@@ -1,11 +1,13 @@
 # Ticket DEV0235: Preview Home-aligned Explore
 
-- Status: Blocked
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+
+- Status: Cancelled
 - Created: 2026-10-15
-- Last updated: 2026-10-15
+- Last updated: 2026-10-20
 - Milestone: Discovery design exploration
 - Coordination: None — independent development ticket
-- Related records: Home baseline [DEV0228](../../archive/frontend/DEV0228-build-home-coach-grid-with-discipline-filter.md); Explore baseline [DEV0199](../../archive/frontend/DEV0199-redesign-desktop-coach-explore.md); independent deferred Home coach/focus search [DEV0227](DEV0227-reintroduce-home-search-after-client-feedback.md)
+- Related records: Home baseline [DEV0228](DEV0228-build-home-coach-grid-with-discipline-filter.md); Explore baseline [DEV0199](DEV0199-redesign-desktop-coach-explore.md); independent deferred Home coach/focus search [DEV0227](../../current/frontend/DEV0227-reintroduce-home-search-after-client-feedback.md)
 
 ## Objective and context
 
@@ -59,7 +61,7 @@ Embedded Manrope and Bricolage Grotesque from the installed project packages, th
 | File or component                                                   | Change and purpose                                                                                          |
 | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | This ticket and [index](../../README.md)                            | Own the bounded preview and reserve its development identifier.                                             |
-| [Explore preview](../../../docs/previews/movx-explore-preview.html) | Offline HTML, embedded assets/licenses, local filters and selection, responsive list/map and mobile viewer. |
+| Explore preview (retired artifact: `docs/previews/movx-explore-preview.html`) | Offline HTML, embedded assets/licenses, local filters and selection, responsive list/map and mobile viewer. |
 
 ### Decisions and deviations
 
@@ -95,7 +97,9 @@ The map is a schematic illustration and the records are local examples. Real inv
 
 2026-10-15 commit checkpoint: the user requested committing all current changes. `python3 /tmp/dev0235-check-preview.py` passed JavaScript syntax, 52 unique HTML IDs/anchors/references, embedded font/portrait/license and offline checks for the 188,939-byte artifact, 180 local documentation links/anchors and current identifier reservations. Targeted Prettier and whitespace checks pass. This is an unfinished preview checkpoint; the blocked mobile/keyboard/native-browser criteria above are not claimed complete. Its commit owns only the HTML, this record and its index entry.
 
-- Completed: Not completed.
+- Completed: Cancelled 2026-10-20 — owner retired the standalone artifact under DEV0390. Unfinished mobile/keyboard acceptance was not completed and is not claimed passed.
 - Commit: User-authorized checkpoint — `[DEV0235] Checkpoint the Home-aligned Explore preview`.
 - Review: Static/source and earlier desktop self-review performed; final manual checks pending. No independent review.
 - Deployment or release: Not applicable — local design preview only.
+
+2026-10-20 cancellation: DEV0390 removes this unneeded offline proposal at the owner’s request. The earlier partial observations and unmet acceptance criteria remain historical evidence; no runtime Explore behavior is changed.

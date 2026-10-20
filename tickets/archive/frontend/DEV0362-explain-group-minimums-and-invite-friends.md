@@ -1,8 +1,10 @@
 # Ticket DEV0362: Explain group minimums and invite friends
 
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+
 - Status: Completed
 - Created: 2026-10-19
-- Last updated: 2026-10-19
+- Last updated: 2026-10-20
 - Milestone: M7 — Group training presentation
 - Coordination: None — independent development ticket
 - Related records: Historical How it works preview [DEV0359](DEV0359-preview-athlete-and-coach-how-it-works.md), navigation refinement [DEV0361](DEV0361-simplify-how-it-works-preview-navigation.md); independently queued Events cards/map baseline DEV0358 in the [reservation register](../../README.md#reserved-identifiers); commit packaging [DEV0364](DEV0364-isolate-group-minimum-styles-for-commit.md).
@@ -66,7 +68,7 @@ Updated the standalone How it works athlete callout, group-size checklist, coach
 | [EventCard](../../../src/features/events/event-ui.tsx)                                                     | Minimum, remaining/met count and joinability/status-gated invitation text using existing aggregate fields.                                            |
 | [Events CSS](../../../src/features/events/events.css)                                                      | White/purple enrollment panel; moved unchanged from queued `event-directory.css` under DEV0364 for independent delivery.                              |
 | [Events tests](../../../tests/events.test.ts)                                                              | Rendered singular/plural, below/at/above minimum, confirmed withdrawal, full/non-joinable/terminal behavior. Existing privacy/term assertions remain. |
-| [Preview](../../../previews/how-it-works/index.html) and [guide](../../../previews/how-it-works/README.md) | Minimum/confirmation/deadline explanation and invitation encouragement, with proposal boundaries.                                                     |
+| Preview (retired artifact: `previews/how-it-works/index.html`) and guide (retired artifact: `previews/how-it-works/README.md`) | Minimum/confirmation/deadline explanation and invitation encouragement, with proposal boundaries.                                                     |
 | [Specification section 15](../../../docs/mvp-spec.md#15-group-training-and-events)                         | User request and adopted minimum/progress/invitation state contract.                                                                                  |
 | This record and [index](../../README.md)                                                                   | Scope, verification evidence and lifecycle status.                                                                                                    |
 

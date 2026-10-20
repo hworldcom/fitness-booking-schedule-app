@@ -1,8 +1,10 @@
 # Ticket DEV0307: Preview the curved banner with ropes and a kick
 
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+
 - Status: Completed
 - Created: 2026-10-17
-- Last updated: 2026-10-17
+- Last updated: 2026-10-20
 - Milestone: M3 — Public discovery design exploration
 - Coordination: None — independent development ticket
 - Related records: original collage [DEV0304](../../archive/frontend/DEV0304-preview-photo-collage-banners.md); preferred light refinements [DEV0306](../../archive/frontend/DEV0306-refine-light-collage-banner-gap.md); actual Home [DEV0303](../../archive/frontend/DEV0303-adopt-compact-photographic-home.md)
@@ -52,10 +54,10 @@ The new comparison defaults to B3 and includes unchanged B2 beside it. The exact
 
 ### Affected files
 
-- [B3 comparison](../../../previews/home-banner-collages/ropes-banner.html): new standalone B3/B2 comparison with editable slogan, native controls, preview context and downloads.
-- [B3 artwork](../../../previews/home-banner-collages/assets/banner-b3-ropes-kick.png), [exact prompt](../../../previews/home-banner-collages/prompts/b3-ropes-kick.txt) and [provenance](../../../previews/home-banner-collages/provenance-b3-ropes-kick.json): versioned output, three ordered source roles/hashes and output metadata.
-- [Shared script](../../../previews/home-banner-collages/preview.js): adds only the B3 concept configuration to existing behavior. [Shared styles](../../../previews/home-banner-collages/styles.css): B3-only copy position, bright fallback and responsive typography; earlier concept selectors retain their behavior.
-- [Original comparison](../../../previews/home-banner-collages/index.html), [light comparison](../../../previews/home-banner-collages/light-banner.html), [README](../../../previews/home-banner-collages/README.md) and [refinement guide](../../../previews/home-banner-collages/REFINEMENTS.md): latest-version navigation, source boundaries and complete artifact/prompt references.
+- B3 comparison (retired artifact: `previews/home-banner-collages/ropes-banner.html`): new standalone B3/B2 comparison with editable slogan, native controls, preview context and downloads.
+- B3 artwork (retired artifact: `previews/home-banner-collages/assets/banner-b3-ropes-kick.png`), exact prompt (retired artifact: `previews/home-banner-collages/prompts/b3-ropes-kick.txt`) and provenance (retired artifact: `previews/home-banner-collages/provenance-b3-ropes-kick.json`): versioned output, three ordered source roles/hashes and output metadata.
+- Shared script (retired artifact: `previews/home-banner-collages/preview.js`): adds only the B3 concept configuration to existing behavior. Shared styles (retired artifact: `previews/home-banner-collages/styles.css`): B3-only copy position, bright fallback and responsive typography; earlier concept selectors retain their behavior.
+- Original comparison (retired artifact: `previews/home-banner-collages/index.html`), light comparison (retired artifact: `previews/home-banner-collages/light-banner.html`), README (retired artifact: `previews/home-banner-collages/README.md`) and refinement guide (retired artifact: `previews/home-banner-collages/REFINEMENTS.md`): latest-version navigation, source boundaries and complete artifact/prompt references.
 - This ticket and the root ticket index record the new preview slice. No application code, Home asset, auth record or database work is owned or changed by this ticket.
 
 ### Decisions and deviations

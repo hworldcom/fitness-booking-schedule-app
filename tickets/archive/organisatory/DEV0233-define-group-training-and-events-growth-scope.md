@@ -2,10 +2,10 @@
 
 - Status: Completed
 - Created: 2026-10-14
-- Last updated: 2026-10-15
+- Last updated: 2026-10-20
 - Milestone: M7 — Group training and events
 - Coordination: [COR0021 — Group training and events](../../current/organisatory/COR0021-group-training-and-events.md)
-- Related records: independent Explore preview [DEV0235](../../current/frontend/DEV0235-preview-home-aligned-explore.md) and Explore implementation [DEV0236](../frontend/DEV0236-align-explore-with-home-discovery.md); peer runtime tickets DEV0237–DEV0241 are mapped by COR0021; excluded-product documentary pruning [DEV0225](DEV0225-remove-blockchain-historical-evidence.md)
+- Related records: independent Explore preview [DEV0235](../frontend/DEV0235-preview-home-aligned-explore.md) and Explore implementation [DEV0236](../frontend/DEV0236-align-explore-with-home-discovery.md); peer runtime tickets DEV0237–DEV0241 are mapped by COR0021; excluded-product documentary pruning [DEV0225](DEV0225-remove-blockchain-historical-evidence.md)
 
 ## Objective and context
 
@@ -17,7 +17,7 @@ The user confirmed Free/pay-at-session pricing and direct joining with manual co
 
 | Record                                                                    | Owned outcome                                                                    | Relationship to group events                                                                                          |
 | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| [DEV0235](../../current/frontend/DEV0235-preview-home-aligned-explore.md) | Offline illustrative Explore preview and its own browser validation              | Independent; incomplete preview checks do not block the group backend                                                 |
+| [DEV0235](../frontend/DEV0235-preview-home-aligned-explore.md) | Offline illustrative Explore preview and its own browser validation              | Independent; incomplete preview checks do not block the group backend                                                 |
 | [DEV0236](../frontend/DEV0236-align-explore-with-home-discovery.md)       | Home-aligned Explore coach discovery, shared controls and existing real map/URLs | Independent visual baseline; group pages may reuse stable components but never change its owned Home/Explore behavior |
 | DEV0233                                                                   | Adopted group contract and flat delivery work map                                | Documentation only; runtime and its new Events navigation belong to the mapped peers                                  |
 

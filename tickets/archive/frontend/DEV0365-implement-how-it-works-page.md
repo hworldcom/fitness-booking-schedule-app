@@ -1,8 +1,10 @@
 # Ticket DEV0365: Implement How it works page
 
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+
 - Status: Completed
 - Created: 2026-10-19
-- Last updated: 2026-10-19
+- Last updated: 2026-10-20
 - Milestone: Public marketplace presentation
 - Coordination: None — independent development ticket
 - Related records: Historical design baselines [DEV0359](../../archive/frontend/DEV0359-preview-athlete-and-coach-how-it-works.md), [DEV0361](../../archive/frontend/DEV0361-simplify-how-it-works-preview-navigation.md) and [DEV0362](../../archive/frontend/DEV0362-explain-group-minimums-and-invite-friends.md).
@@ -64,7 +66,7 @@ The server component needs no new client state, authentication read or data quer
 | [Home story module](../../../src/features/public/coach-story.tsx)                                                                                               | Removes the obsolete How it works export, its unused technical steps and icon. Preserves independent pending Home changes; Home still uses its existing three steps.                                                                                                                                            |
 | [Rendering tests](../../../tests/how-it-works.test.ts)                                                                                                          | Four contract regressions cover audience targets, real destinations, minimum/confirmation semantics and native payment/cancellation guidance.                                                                                                                                                                   |
 | [Browser scenario](../../../tests/browser/public-story.spec.ts)                                                                                                 | Replaces only the obsolete How it works scenario with audience links, keyboard anchor/FAQ, real destinations and overflow expectations; independent Home scenarios remain.                                                                                                                                      |
-| [Product specification](../../../docs/mvp-spec.md#421-how-it-works), [preview guide](../../../previews/how-it-works/README.md), [ticket index](../../README.md) | Record live adoption and maintain navigation/history without changing the standalone preview behavior.                                                                                                                                                                                                          |
+| [Product specification](../../../docs/mvp-spec.md#421-how-it-works), preview guide (retired artifact: `previews/how-it-works/README.md`), [ticket index](../../README.md) | Record live adoption and maintain navigation/history without changing the standalone preview behavior.                                                                                                                                                                                                          |
 
 ### Decisions and deviations
 

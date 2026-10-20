@@ -1,8 +1,10 @@
 # Ticket DEV0303: Adopt the compact photographic Home
 
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+
 - Status: Completed
 - Created: 2026-10-17
-- Last updated: 2026-10-17
+- Last updated: 2026-10-20
 - Milestone: M3 — Public discovery refinement
 - Coordination: None — independent development ticket
 - Related records: approved banner/copy previews [DEV0301](../../archive/frontend/DEV0301-preview-coached-boxing-banner.md) and [DEV0302](../../archive/frontend/DEV0302-preview-goal-slogan-over-banner-photo.md); existing Home grid [DEV0228](../../archive/frontend/DEV0228-build-home-coach-grid-with-discipline-filter.md)
@@ -63,7 +65,7 @@ The Home search is a single 64 px row with visible field labels, 44 px controls 
 - [Home CSS](../../../src/app/coach-story.css) scopes the full-width hero, compact form/shortcuts, phone crop and initial-row density to Home. [Global CSS](../../../src/app/globals.css) styles the footer disclosure control.
 - [Shared shell](../../../src/components/shell.tsx) removes the strip, adds the Home container class and relocates its existing information dialog trigger to the public footer.
 - [Home search](../../../src/features/coaches/home-marketplace-search.tsx) retains native submission and labels while allowing the phone search icon. [Home discovery](../../../src/features/coaches/home-coach-discovery.tsx) retains the map destination and accessible name with a shorter phone label.
-- [Production asset/provenance](../../../public/images/README.md) identifies the unchanged approved PNG and its fictional illustrative purpose. [Preview handoff](../../../previews/home-banner/README.md) distinguishes retained design history from adopted Home behavior.
+- [Production asset/provenance](../../../public/images/README.md) identifies the unchanged approved PNG and its fictional illustrative purpose. Preview handoff (retired artifact: `previews/home-banner/README.md`) distinguishes retained design history from adopted Home behavior.
 - [Public-story browser checks](../../../tests/browser/public-story.spec.ts) cover new copy/chrome, hero bounds, compact search, initial coach names and existing public/filter/keyboard behavior. [Explore checks](../../../tests/browser/explore-redesign.spec.ts) and [Auth checks](../../../tests/browser/auth.spec.ts) only update their expected Home headline.
 - [MVP specification](../../../docs/mvp-spec.md#42-discover-a-coach-and-time) records the adopted Home contract and C44; the ticket index tracks this independent implementation. No data services/schema changes.
 
