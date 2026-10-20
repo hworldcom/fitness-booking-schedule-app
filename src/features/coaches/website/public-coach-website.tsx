@@ -333,7 +333,6 @@ export function PublicCoachWebsite({
                 </div>
               </section>
             )}
-            <div className="coach-website-booking">{marketplace}</div>
           </div>
           <aside
             className="coach-website-contact"
@@ -384,6 +383,7 @@ export function PublicCoachWebsite({
             />
           </aside>
         </div>
+        <div className="coach-website-booking">{marketplace}</div>
       </article>
     </PublicReviewsProvider>
   );

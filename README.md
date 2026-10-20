@@ -96,6 +96,8 @@ node scripts/rehearse-typed-sessions-database.mjs
 
 It creates disposable fresh and upgrade databases, checks retained-row fingerprints and legacy compatibility, exercises type management/private bookings/group integration, and removes its own databases afterward. It does not reset or seed the retained application database. [DEV0346](tickets/archive/backend/DEV0346-rehearse-session-types-and-flexible-bookings.md) records the separate browser-copy setup and final evidence.
 
+Run `node scripts/rehearse-public-coach-schedule-ui.mjs --production` for the [seven-day booking refinement](docs/mvp-spec.md#196-cards-username-urls-and-scheduling-compatibility). It builds an isolated source copy and checks typed/legacy booking with explicit interface fixtures, without environment files, real accounts or database writes. Add `--serve` to keep its loopback review server on port 3199 after the checks; enter `cleanup` to stop it and remove only its temporary checkout. Set `PUBLIC_SCHEDULE_UI_PORT` to another unused port from 3100–3999 if necessary. The normal application routes and Auth checks are not replaced outside that temporary copy.
+
 For the accepted-request rescheduling regression, run `node scripts/rehearse-request-booking-rescheduling-database.mjs`. It checks the current migration chain in fresh and upgrade scratch databases, including an accepted request created before the fix, exact retained-row hashes and existing typed/legacy suites, then removes its own databases. It never migrates or resets the retained local or hosted database.
 
 ### Events banners and directory validation

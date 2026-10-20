@@ -359,6 +359,7 @@
 }
 .coach-website-booking {
   min-width: 0;
+  margin-top: 28px;
 }
 .coach-personal-website :is(#private-schedule, #locations) {
   scroll-margin-top: 100px;

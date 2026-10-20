@@ -1,0 +1,486 @@
+.seven-day-schedule {
+  --schedule-purple: #61417b;
+  --schedule-muted: #625c69;
+  color: #2d2933;
+  min-width: 0;
+}
+.seven-day-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 22px;
+  margin-bottom: 22px;
+}
+.seven-day-heading .eyebrow {
+  color: var(--schedule-purple);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+}
+.seven-day-heading h2 {
+  font-family: var(--font-display);
+  font-size: clamp(25px, 2.4vw, 33px);
+  line-height: 1.18;
+  letter-spacing: -0.04em;
+  margin: 10px 0;
+}
+.seven-day-heading > div > p {
+  color: var(--schedule-muted);
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 0;
+}
+.seven-day-total {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+  margin: 8px 0 0;
+}
+.seven-day-total strong {
+  color: var(--schedule-purple);
+  font-family: var(--font-display);
+  font-size: 49px;
+  line-height: 1;
+  letter-spacing: -0.06em;
+}
+.seven-day-total span {
+  color: var(--schedule-muted);
+  font-size: 10px;
+  line-height: 1.6;
+  max-width: 100px;
+}
+.seven-day-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  align-items: center;
+  margin: 22px 0 17px;
+}
+.seven-day-range {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 650;
+  margin: 0;
+}
+.seven-day-timezone {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: var(--schedule-muted);
+  font-size: 10px;
+  margin: 5px 0 0;
+}
+.seven-day-pages {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.seven-day-schedule .seven-day-pages button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 44px;
+  border: 1px solid #d9cfe4;
+  border-radius: 9px;
+  background: white;
+  color: var(--schedule-purple);
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.seven-day-schedule .seven-day-pages .seven-day-today {
+  background: transparent;
+  border-color: transparent;
+}
+.seven-day-schedule .seven-day-pages button:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+.seven-day-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 9px;
+}
+.seven-day-card {
+  border: 1px solid #ded9e8;
+  border-radius: 12px;
+  min-width: 0;
+  background: #ffffffd6;
+  overflow: hidden;
+}
+.seven-day-card.is-today {
+  border-color: #c3b1d6;
+}
+.seven-day-card > header {
+  padding: 12px 10px 10px;
+  border-bottom: 1px solid #eeebf3;
+}
+.seven-day-card > header > div {
+  display: flex;
+  gap: 4px;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--schedule-muted);
+  font-size: 10px;
+}
+.seven-day-card > header small {
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: #ede6f6;
+  color: var(--schedule-purple);
+  font-size: 8px;
+}
+.seven-day-card h3 {
+  font-family: var(--font-display);
+  font-size: 21px;
+  letter-spacing: -0.04em;
+  margin: 4px 0 1px;
+  line-height: 1.4;
+}
+.seven-day-card > header p {
+  color: var(--schedule-muted);
+  margin: 0;
+  font-size: 10px;
+}
+.seven-day-times {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 9px;
+}
+.seven-day-schedule .seven-day-times button {
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid #d6e6dd;
+  border-radius: 8px;
+  background: #eef6f1;
+  color: #3e5f4c;
+  padding: 7px 3px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.seven-day-schedule .seven-day-times button:hover:not(:disabled) {
+  background: #dbece2;
+  border-color: #9ebaab;
+}
+.seven-day-schedule .seven-day-times button[aria-pressed="true"] {
+  background: var(--schedule-purple);
+  border-color: var(--schedule-purple);
+  color: white;
+}
+.seven-day-schedule .seven-day-times button:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+.seven-day-schedule .seven-day-times button small {
+  display: block;
+  font-size: 9px;
+  line-height: 1.5;
+  font-weight: 500;
+  margin-top: 3px;
+}
+.seven-day-empty {
+  font-size: 10px;
+  text-align: center;
+  line-height: 1.7;
+  padding: 20px 9px;
+  color: #817787;
+}
+.seven-day-state {
+  padding: 32px 18px;
+  text-align: center;
+  border: 1px dashed #d7cbe3;
+  border-radius: 13px;
+  background: #ffffffa8;
+  color: var(--schedule-muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.seven-day-state h3 {
+  font-family: var(--font-display);
+  margin: 0 0 8px;
+  font-size: 23px;
+  color: #2d2933;
+}
+.seven-day-state > .button {
+  width: auto;
+  margin: 12px auto 0;
+  display: inline-flex;
+  gap: 6px;
+}
+.seven-day-caption {
+  color: var(--schedule-muted);
+  font-size: 10px;
+  line-height: 1.7;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin: 14px 0 0;
+}
+.seven-day-schedule :is(button, select):focus-visible,
+.seven-day-range:focus-visible {
+  outline: 3px solid var(--schedule-purple);
+  outline-offset: 4px;
+}
+@media (max-width: 1100px) {
+  .seven-day-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .seven-day-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .seven-day-heading {
+    flex-direction: column;
+    gap: 15px;
+  }
+  .seven-day-heading h2 {
+    font-size: 28px;
+  }
+  .seven-day-total {
+    margin: 0;
+  }
+  .seven-day-total strong {
+    font-size: 39px;
+  }
+  .seven-day-total span {
+    max-width: none;
+  }
+  .seven-day-heading > div > p {
+    font-size: 11px;
+  }
+  .seven-day-range {
+    font-size: 18px;
+  }
+  .seven-day-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .seven-day-pages {
+    width: 100%;
+    gap: 4px;
+  }
+  .seven-day-schedule .seven-day-pages button {
+    padding: 8px 6px;
+    font-size: 10px;
+  }
+  .seven-day-schedule .seven-day-pages .seven-day-today {
+    margin: 0 auto;
+  }
+  .seven-day-pages svg {
+    width: 11px;
+  }
+  .seven-day-schedule .seven-day-times button {
+    font-size: 12px;
+  }
+  .seven-day-caption {
+    flex-direction: column;
+    gap: 5px;
+    font-size: 9px;
+  }
+}
+
+.seven-day-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding: 17px;
+  border: 1px solid #e4ddec;
+  border-radius: 14px;
+  background: #ffffffb3;
+}
+.seven-day-filters label {
+  display: grid;
+  gap: 7px;
+  color: #554b5e;
+  font-size: 11px;
+  font-weight: 750;
+  min-width: 0;
+}
+.seven-day-filters select {
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 10px 32px 10px 12px;
+  border: 1px solid #dcd3e5;
+  border-radius: 9px;
+  color: #2d2933;
+  font: inherit;
+  font-weight: 500;
+  background: white;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #7c6b89 50%),
+    linear-gradient(135deg, #7c6b89 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 50%,
+    calc(100% - 13px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+.seven-day-filters > p {
+  grid-column: 1 / -1;
+  color: #625c69;
+  font-size: 11px;
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.seven-day-review-bar {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #ded4e8;
+  border-radius: 13px;
+  background: white;
+  padding: 18px;
+  margin-top: 22px;
+}
+.seven-day-review-bar h3 {
+  font-size: 13px;
+  margin: 0 0 5px;
+}
+.seven-day-review-bar p,
+.seven-day-notice {
+  font-size: 11px;
+  line-height: 1.7;
+  color: #625c69;
+  margin: 0;
+}
+.seven-day-review-bar > .button {
+  flex-shrink: 0;
+  min-height: 44px;
+  width: auto;
+  margin: 0;
+}
+.seven-day-notice {
+  margin: 15px 0;
+}
+.seven-day-confirmation {
+  padding: 20px;
+  margin-top: 22px;
+  border: 1px solid #c3dfcd;
+  border-radius: 13px;
+  background: #edf6f0;
+  color: #31573c;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.seven-day-confirmation h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+.seven-day-confirmation .button {
+  display: inline-flex;
+  width: auto;
+  margin: 5px 8px 0 0;
+  min-height: 44px;
+}
+.session-request-review {
+  margin: auto;
+  inset: 0;
+  width: min(480px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: 27px;
+  border: 1px solid #e3dce9;
+  border-radius: 20px;
+  background: #fefcff;
+  color: #2d2933;
+  box-shadow: 0 20px 100px #25132e40;
+}
+.session-request-review::backdrop {
+  background: #24152f65;
+  backdrop-filter: blur(3px);
+}
+.session-request-review h2 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  margin: 0 0 18px;
+}
+.session-request-review p {
+  font-size: 12px;
+  line-height: 1.8;
+  margin: 12px 0;
+  overflow-wrap: anywhere;
+}
+.session-request-review-actions {
+  display: flex;
+  gap: 9px;
+  justify-content: flex-end;
+  margin-top: 22px;
+}
+.session-request-review-actions .button {
+  min-height: 44px;
+  width: auto;
+  margin: 0;
+}
+.session-request-review :focus-visible {
+  outline: 3px solid #61417b;
+  outline-offset: 4px;
+}
+@media (max-width: 600px) {
+  .seven-day-filters {
+    grid-template-columns: 1fr;
+    padding: 13px;
+    gap: 12px;
+  }
+  .seven-day-filters select {
+    min-height: 45px;
+  }
+  .seven-day-review-bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 15px;
+  }
+  .seven-day-review-bar > .button {
+    width: 100%;
+  }
+  .seven-day-confirmation .button {
+    width: 100%;
+    margin-right: 0;
+    justify-content: center;
+  }
+  .session-request-review {
+    padding: 23px 20px;
+  }
+  .session-request-review-actions .button {
+    flex: 1;
+  }
+}
+
+/* Keep profile-wide button defaults from changing the compact time controls. */
+.seven-day-schedule .seven-day-pages button {
+  white-space: nowrap;
+}
+.seven-day-schedule .seven-day-times button > span {
+  white-space: nowrap;
+}
+.seven-day-schedule .seven-day-times .is-ambiguous-time {
+  grid-column: 1 / -1;
+}
+.seven-day-schedule .seven-day-times .is-ambiguous-time > span {
+  font-size: 10px;
+}
+.seven-day-card {
+  container-type: inline-size;
+}
+@container (max-width: 120px) {
+  .seven-day-times {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 370px) {
+  .seven-day-schedule .seven-day-pages button {
+    font-size: 9px;
+    padding-inline: 4px;
+  }
+}

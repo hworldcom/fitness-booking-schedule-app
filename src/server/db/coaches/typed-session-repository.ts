@@ -1,7 +1,12 @@
 import "server-only";
 import { sql } from "drizzle-orm";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
-import { withDatabaseConnection } from "@/server/db/client";
+import {
+  withDatabaseConnection,
+  type DatabaseConnection,
+} from "@/server/db/client";
+import { publicScheduleSelection } from "@/domain/public-coach-schedule";
+import { parseSessionWeek } from "@/domain/session-week";
 import type {
   SessionTime,
   TypedSessionRequest,
@@ -10,6 +15,40 @@ import type {
 } from "@/domain/typed-sessions";
 import { sessionUuid } from "@/domain/session-types";
 import { sessionMutationError } from "./session-type-repository";
+
+export async function typedSessionWeekRecord(
+  slug: string,
+  typeId: string,
+  locationId: string,
+  weekOf: string,
+  connection?: DatabaseConnection,
+) {
+  return withDatabaseConnection(async ({ db }) => {
+    const [clock] = await db.execute<{ reference_time: string }>(
+      sql`select clock_timestamp()::text as reference_time`,
+    );
+    const referenceTime = new Date(clock.reference_time).toISOString();
+    const selection = publicScheduleSelection(weekOf, referenceTime);
+    // One bounded statement/connection, rather than seven authenticated HTTP reads.
+    // Keep this outside the owner's actor transaction so owner overrides cannot
+    // enter the ordinary public availability projection.
+    const days = await db.execute<{ date: string; times: SessionTime[] }>(sql`
+      select to_char(day.date, 'YYYY-MM-DD') as date,
+        app.public_session_type_times(${slug}, ${typeId}::uuid,
+          ${locationId}::uuid, day.date) as times
+      from (values ${sql.join(
+        selection.dates.map((date) => sql`(${date}::date)`),
+        sql`, `,
+      )}) as day(date)
+      order by day.date
+    `);
+    return parseSessionWeek(
+      { referenceTime, resetToCurrent: !selection.inHorizon, days },
+      weekOf,
+    );
+  }, connection);
+}
+
 export async function typedSessionTimesRecord(
   slug: string,
   typeId: string,

@@ -14,6 +14,7 @@ import {
   mutateSessionType,
 } from "@/server/db/coaches/session-type-repository";
 import { saveOwnedEffectiveAvailabilityRecord } from "@/server/db/coaches/effective-availability-repository";
+import { typedSessionWeekRecord } from "@/server/db/coaches/typed-session-repository";
 const url = process.env.DATABASE_TEST_URL;
 test(
   "typed private booking full fit, snapshots, archival and overlapping acceptance",
@@ -108,6 +109,36 @@ test(
       };
       const candidates = await times();
       assert.equal(candidates.length, 16);
+      await t.test(
+        "weekly repository retains the database's actual full-fit starts and clock window",
+        async () => {
+          const week = await typedSessionWeekRecord(
+            c.public_slug,
+            type.id,
+            venue.id,
+            target,
+          );
+          assert.equal(week.days.length, 7);
+          assert.equal(week.resetToCurrent, false);
+          assert.deepEqual(
+            week.days.find((day) => day.date === target)?.times,
+            candidates,
+          );
+          const outside = new Date(`${target}T12:00:00Z`);
+          outside.setUTCDate(outside.getUTCDate() + 30);
+          const corrected = await typedSessionWeekRecord(
+            c.public_slug,
+            type.id,
+            venue.id,
+            outside.toISOString().slice(0, 10),
+          );
+          assert.equal(corrected.resetToCurrent, true);
+          assert.deepEqual(
+            corrected.days.map((day) => day.date),
+            week.days.map((day) => day.date),
+          );
+        },
+      );
       assert.ok(
         candidates.every(
           (x) => Date.parse(x.endsAt) - Date.parse(x.startsAt) === 75 * 60000,
@@ -190,6 +221,25 @@ test(
       const [booking] =
         await admin`select b.id,s.session_type_snapshot from app.coach_private_bookings b join app.coach_availability_slots s on s.id=b.slot_id where b.coach_profile_id=${coach.profileId}::uuid and b.status='confirmed'`;
       assert.equal(booking.session_type_snapshot.name, "Private class 75 min");
+      await t.test(
+        "weekly repository removes accepted overlaps using the same availability authority",
+        async () => {
+          const week = await typedSessionWeekRecord(
+            c.public_slug,
+            type.id,
+            venue.id,
+            target,
+          );
+          assert.deepEqual(
+            week.days.find((day) => day.date === target)?.times,
+            await times(),
+          );
+          assert.ok(
+            (week.days.find((day) => day.date === target)?.times.length ?? 0) <
+              candidates.length,
+          );
+        },
+      );
       await t.test(
         "coach booking and one-booking override retain identity and template",
         async () => {

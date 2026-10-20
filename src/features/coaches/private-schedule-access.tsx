@@ -78,7 +78,7 @@ export function PrivateScheduleAccess({
           })}
         </nav>
       )}
-      <p>Sign in to see the calendar and choose a time.</p>
+      <p>Sign in to see the times under each day and choose your session.</p>
       <Link
         className="button dark"
         href={signedIn ? returnTo : signInHref(returnTo)}

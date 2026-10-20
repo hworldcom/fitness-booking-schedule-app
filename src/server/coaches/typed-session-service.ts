@@ -21,6 +21,7 @@ import {
 import { connectionPageRecord } from "@/server/db/connections/repository";
 import {
   typedSessionTimesRecord,
+  typedSessionWeekRecord,
   typedSessionCommandRecord,
   sessionBookingDetailRecord,
 } from "@/server/db/coaches/typed-session-repository";
@@ -63,6 +64,38 @@ export async function publicSessionTimes(
     return { status: "unavailable" as const };
   }
 }
+
+export async function publicSessionWeek(
+  slug: string,
+  typeId: string,
+  locationId: string,
+  weekOf: string,
+) {
+  if (
+    !isCoachPublicSlug(slug) ||
+    !sessionUuid(typeId) ||
+    !sessionUuid(locationId) ||
+    !isAvailabilityDate(weekOf)
+  )
+    return { status: "invalid" as const };
+  try {
+    const result = await withAuthorizedActor(async () => ({
+      status: "ready" as const,
+      week: await typedSessionWeekRecord(slug, typeId, locationId, weekOf),
+    }));
+    return result.status === "authorized"
+      ? result.value
+      : {
+          status:
+            result.status === "preview"
+              ? ("forbidden" as const)
+              : result.status,
+        };
+  } catch {
+    return { status: "unavailable" as const };
+  }
+}
+
 export async function typedSessionCommand(value: unknown, coach = false) {
   const input = parseTypedRequest(value, coach);
   if (!input) return { status: "invalid" as const };
