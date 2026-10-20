@@ -1,6 +1,6 @@
 # Ticket DEV0301: Preview a warm coached boxing banner
 
-2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
 
 - Status: Completed
 - Created: 2026-10-17

@@ -1,6 +1,6 @@
 # Public banner assets
 
-2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../tickets/current/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
+2026-10-20 artifact retirement: the owner removed standalone design previews under [DEV0390](../../tickets/archive/organisatory/DEV0390-remove-unneeded-design-previews.md). The record below preserves the original design/validation history; backticked preview paths identify retired artifacts. Runtime images/code are retained, with banner source/prompt provenance in public/images/retained-banner-provenance.json.
 
 ## Events tug-of-war photograph
 

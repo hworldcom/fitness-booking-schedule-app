@@ -34,83 +34,61 @@
           "suppliedFilename": "declan-sun-KrTGzQUmTBY-unsplash.jpg",
           "bytes": 2405991,
           "sha256": "b956d57f4347b4dce0c14af15b214b86376aadd30de172b33d1285f64e1a6d46",
-          "usedIn": [
-            "b"
-          ]
+          "usedIn": ["b"]
         },
         {
           "suppliedFilename": "eser-goat-NHwbTSxSSbU-unsplash.jpg",
           "bytes": 1962070,
           "sha256": "e55967f8a4503a1b0086207456038b1b366b99e3be4a1c5fd2512c613f27b3cd",
-          "usedIn": [
-            "a"
-          ]
+          "usedIn": ["a"]
         },
         {
           "suppliedFilename": "gabin-vallet-J154nEkpzlQ-unsplash.jpg",
           "bytes": 4630489,
           "sha256": "0d61bf99ae0389f3a530131d358705b14e030bd382afeca8cea02c3943d62916",
-          "usedIn": [
-            "a",
-            "b",
-            "c"
-          ]
+          "usedIn": ["a", "b", "c"]
         },
         {
           "suppliedFilename": "gabin-vallet-YxCrQm9XNgg-unsplash.jpg",
           "bytes": 3633237,
           "sha256": "6f5212d3ba57f3ed6a564b93f986bbf92c1e50548ac99de3962fe8527e5367ca",
-          "usedIn": [
-            "b"
-          ]
+          "usedIn": ["b"]
         },
         {
           "suppliedFilename": "karsten-winegeart-eGSBVVtVCCw-unsplash.jpg",
           "bytes": 2157917,
           "sha256": "31913577cd4c7a24c3b7d0ba79c77c11f23c75cc785e9a4c984c11e2d5c96b58",
-          "usedIn": [
-            "a"
-          ]
+          "usedIn": ["a"]
         },
         {
           "suppliedFilename": "mark-adriane-FH6JcaCrYJ0-unsplash.jpg",
           "bytes": 4306295,
           "sha256": "78eb98789f4bd7ed1cf7b59ea248b5a56f4f916963ea9f71ced2027766076f5d",
-          "usedIn": [
-            "c"
-          ]
+          "usedIn": ["c"]
         },
         {
           "suppliedFilename": "michael-demoya-EwHtQ2I-Vd0-unsplash.jpg",
           "bytes": 1551940,
           "sha256": "7d3061706334765302642e9d40918c8c03241c83cdc29e4ef9f39225792d9961",
-          "usedIn": [
-            "a"
-          ]
+          "usedIn": ["a"]
         },
         {
           "suppliedFilename": "michael-starkie--ktNaNqbomw-unsplash.jpg",
           "bytes": 6955167,
           "sha256": "b17216ed2e0158ba4dd9c0371b9a6a2748464560c5d0c94206b0d0f54addf4ab",
-          "usedIn": [
-            "c"
-          ]
+          "usedIn": ["c"]
         },
         {
           "suppliedFilename": "ryan-hall-_b1xzqZ1UBQ-unsplash.jpg",
           "bytes": 4993602,
           "sha256": "7ca9b0c659845f28ebbd96b1ca2f03b24cf8d16fff3aac3044b78e99f2673ed6",
-          "usedIn": [
-            "b"
-          ]
+          "usedIn": ["b"]
         },
         {
           "suppliedFilename": "shlomi-glantz-dxKzGwDY6FM-unsplash.jpg",
           "bytes": 3680808,
           "sha256": "4ea2b41284422b2389e144f12ffad8d0a9a2679b7b958713caa11b1acbfbac72",
-          "usedIn": [
-            "c"
-          ]
+          "usedIn": ["c"]
         }
       ],
       "outputs": [
