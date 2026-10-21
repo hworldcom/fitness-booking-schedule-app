@@ -1,5 +1,7 @@
 # AGENTS.md instructions for Social Fitness
 
+> **Work tracking is in [Linear, team MOV](https://linear.app/movx/team/MOV/all).** Use live issues/projects for planning and evidence; find historical Markdown through the [work-record guide](docs/work-records.md). The [ticket categories](#ticket-categories) include `database` as a separate primary area.
+
 ## Document ownership and project context
 
 - Read [README.md](README.md) for navigation and [the MVP specification](docs/mvp-spec.md) for the single current product contract, including scope, behavior, architecture, [milestones](docs/mvp-spec.md#12-delivery-milestones), and [acceptance scenarios](docs/mvp-spec.md#13-acceptance-matrix).
@@ -18,11 +20,26 @@
 - Keep work flat by default: at most one coordination-project-to-development-issue level. Peer issues may depend on one another; avoid child implementation hierarchies. Record a concrete reason before using a deeper hierarchy as an exception.
 - Review a proposed development issue before implementation. If delivering its outcome requires several implementation issues, preserve its planning history, create a coordination project with a `Converted from` issue link and fresh peer issues, then cancel the unimplemented original with its replacement links. Never reuse its identifier. If implementation evidence or a commit already exists, preserve the original issue and its owned scope; create a separate project and peers instead of rewriting implementation history.
 - A coordination project must map every implementation part, boundary or deliverable to exactly one direct development issue. Label other links as dependencies, downstream consumers, follow-ups or historical baselines; a flat `Related records` list is insufficient when the relationship affects ownership or delivery. State delivery order, start conditions, independent branches, blockers and completion conditions. Identify required issues not yet created; do not implement their scope under the project as a substitute.
-- Choose one primary implementation-area label: `frontend` for routes, browser behavior and interface work; `backend` for server code, authentication, data, services and jobs; `organisatory` for contributor workflow, repository/document structure and cross-cutting consolidation. Use `blockchain` only for separately authorized chain-specific work. Link cross-cutting dependencies instead of duplicating issues.
+- Choose exactly one primary implementation-area label using the [ticket categories](#ticket-categories). Link cross-cutting dependencies instead of duplicating issues.
 - Before implementation, write the objective, scope, non-goals, expected behavior, edge cases, assumptions, dependencies, implementation plan, testable acceptance criteria, and validation plan. Include status, dates, milestone, Coordination and Related records metadata. Link the relevant specification section and milestone when applicable. The [preserved templates](https://github.com/hworldcom/movx-work-records/tree/main/originals/tickets) supply record fields; adapt their old filesystem/ID examples to this external workflow.
 - An implementation plan in chat, a milestone heading, a commit message, or a pull request is not a substitute for the issue.
 - Update the issue's scope and plan **before** implementing a material change of approach or behavior. Preserve the reason in its implementation record. Create linked issues for unrelated work.
 - Mark the issue `In Progress` when implementation starts. Mark a project `In Progress` when active coordination begins. Keep an accurate handoff record if work stops partway through.
+
+### Ticket categories
+
+Use these Linear area labels for future development issues:
+
+| Category       | Primary scope                                                                                                                              |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `frontend`     | Screens, routes, navigation, browser behavior, accessibility and interface validation.                                                     |
+| `backend`      | Application APIs, authentication, server services, integrations, jobs and data-access adapters consuming database contracts.               |
+| `database`     | Schema and migrations, SQL queries/functions, constraints, indexes, database permissions, seed data, query tuning and database validation. |
+| `organisatory` | Contributor workflow, documentation/repository structure and cross-cutting consolidation.                                                  |
+
+Choose by the main deliverable rather than its directory. For example, a new index, row-level security policy or SQL query optimization is `database`; an API endpoint or service consuming an unchanged database contract is `backend`. Keep one primary area for a small cross-cutting issue, explain the choice, and create linked peer issues when the work needs separate reviewable scopes. Use `blockchain` only for separately authorized chain-specific work.
+
+Preserve legacy identifiers and archived records. Reclassify an existing open issue only after reviewing its scope and recording the category decision in the development issue that owns the review. Category changes do not change product requirements.
 
 ## Ticket lifecycle and continuity
 

@@ -13,6 +13,8 @@ Live development work is in [Linear workspace movx](https://linear.app/movx), [t
 
 New development issues receive native `MOV-<number>` identifiers automatically. Create one before implementation and write its plan/acceptance criteria; use a Linear project for coordination. The preserved [development template](https://github.com/hworldcom/movx-work-records/blob/main/originals/tickets/TEMPLATE.md) and [coordination template](https://github.com/hworldcom/movx-work-records/blob/main/originals/tickets/COORDINATION_TEMPLATE.md) provide record fields, with their old path/numbering examples adapted to Linear.
 
+For future issues, select exactly one primary area: `frontend`, `backend`, `database` or `organisatory`. The [category definitions and backend/database boundary](../AGENTS.md#ticket-categories) are maintained in AGENTS.md. Review and record the scope before reclassifying existing open issues; preserve legacy identifiers and archived records.
+
 DEV and COR allocation is frozen after DEV0408 and COR0035. All legacy identifiers, including retired/pruned/reserved numbers and gaps, are unavailable for new allocation. Existing imported work retains its legacy identity and `[DEVNNNN]` commit subject until finished; new work uses `[MOV-<number>]`. Coordination identifiers never belong in commit subjects. Include the live issue URL in pull requests and finish its evidence before committing.
 
 ## Preservation and recovery
