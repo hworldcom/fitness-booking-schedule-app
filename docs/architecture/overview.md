@@ -45,9 +45,9 @@ Drizzle schema mappings are not the complete database contract. Follow repositor
 
 ## Dependencies: enforced rules and current exceptions
 
-[Boundary tests](../../tests/boundaries.test.ts) restrict database packages to `server/db`, domain imports to domain modules, shared components from importing features/server, and feature or Client Component imports of server modules. They also check Auth SDK and Storage adapter boundaries. This is not a complete dependency-graph validator.
+[Boundary tests](../../tests/boundaries.test.ts) restrict database packages to `server/db`, domain imports to domain modules, shared components from importing features/server, and feature or Client Component imports of server modules. Scoped rules also prevent the availability service from importing features and constrain its shared contracts to domain dependencies. They check Auth SDK and Storage adapter boundaries. This is not a complete dependency-graph validator.
 
-The intended separation keeps domain contracts independent and composes services at application entry points. Current server-to-feature dependencies still exist: [availability service](../../src/server/coaches/availability-editor-service.ts) imports an editor model, and [Events directory service](../../src/server/group-sessions/directory-service.ts) imports feature contracts. Tests currently permit this direction. These are observations to account for during changes; relocating contracts requires separate refactoring scope.
+The [availability service](../../src/server/coaches/availability-editor-service.ts) and editor share [neutral result/action contracts](../../src/availability/contracts.ts), with the Berlin-date helper in the [availability domain](../../src/domain/effective-availability.ts). Remaining exceptions include the [availability Server Action](../../src/app/coach/availability-actions.ts) using the feature model's payload parser and the [Events directory service](../../src/server/group-sessions/directory-service.ts) importing feature contracts. Tests permit those dependencies. Relocating them requires separate refactoring scope.
 
 ## Validation navigation
 

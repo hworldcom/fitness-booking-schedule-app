@@ -1,11 +1,11 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { isAvailabilityDate } from "@/domain/effective-availability";
-import {
-  parseAvailabilityCommand,
-  type AvailabilityActionResult,
-  type AvailabilityLoadResult,
-} from "@/features/coaches/availability-editor-model";
+import { parseAvailabilityCommand } from "@/features/coaches/availability-editor-model";
+import type {
+  AvailabilityActionResult,
+  AvailabilityLoadResult,
+} from "@/availability/contracts";
 import {
   changeAvailabilityEditor,
   loadAvailabilityEditor,

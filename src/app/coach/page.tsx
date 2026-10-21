@@ -8,11 +8,11 @@ import {
   loadAvailabilityEditorAction,
 } from "./availability-actions";
 import { AvailabilityWorkspaceEditor } from "@/features/coaches/availability-workspace-editor";
+import { availabilityMonth } from "@/features/coaches/availability-editor-model";
 import {
-  availabilityMonth,
   berlinAvailabilityDate,
-} from "@/features/coaches/availability-editor-model";
-import { isAvailabilityDate } from "@/domain/effective-availability";
+  isAvailabilityDate,
+} from "@/domain/effective-availability";
 import { loadAvailabilityEditor } from "@/server/coaches/availability-editor-service";
 import { CoachAvailabilityPanel } from "@/features/coaches/coach-availability-panel";
 import { CoachApplicationGate } from "@/features/coaches/coach-application-gate";

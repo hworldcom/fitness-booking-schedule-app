@@ -2,6 +2,10 @@
 import Link from "next/link";
 import { coachEventHref } from "@/features/coach-events/contract";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type {
+  AvailabilityEditorActions,
+  AvailabilityEditorData,
+} from "@/availability/contracts";
 import {
   ArrowLeft,
   ArrowRight,
@@ -31,8 +35,6 @@ import {
   weeklyHours,
   weeklyRanges,
   copyAvailabilityDay,
-  type AvailabilityEditorActions,
-  type AvailabilityEditorData,
   type AvailabilityRange,
   type WeeklyRangeDraft,
 } from "./availability-editor-model";

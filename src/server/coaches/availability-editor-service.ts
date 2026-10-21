@@ -7,12 +7,14 @@ import {
   saveOwnedEffectiveAvailabilityRecord,
 } from "@/server/db/coaches/effective-availability-repository";
 import { CoachAvailabilityConflictError } from "@/server/db/coaches/availability-repository";
+import type {
+  AvailabilityLoadResult,
+  AvailabilityActionResult,
+} from "@/availability/contracts";
 import {
   berlinAvailabilityDate,
-  type AvailabilityLoadResult,
-  type AvailabilityActionResult,
-} from "@/features/coaches/availability-editor-model";
-import type { EffectiveAvailabilityCommand } from "@/domain/effective-availability";
+  type EffectiveAvailabilityCommand,
+} from "@/domain/effective-availability";
 
 export async function loadAvailabilityEditor(
   from: string,
