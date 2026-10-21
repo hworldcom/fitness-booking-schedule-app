@@ -1,6 +1,6 @@
 # DEV0043 visual assets
 
-2026-10-20 image retirement: [DEV0391](../../tickets/archive/frontend/DEV0391-remove-unused-public-images.md) removes unused public pictures and moves their banner provenance into docs/design. Earlier image-generation and validation records below remain historical; retired binaries are available in published Git history.
+2026-10-20 image retirement: [DEV0391](https://github.com/hworldcom/movx-work-records/blob/b49f60b2454b3de9345c395acbc08f324bcdabb3/originals/tickets/archive/frontend/DEV0391-remove-unused-public-images.md) removes unused public pictures and moves their banner provenance into docs/design. Earlier image-generation and validation records below remain historical; retired binaries are available in published Git history.
 
 The [current MVP decisions](../mvp-spec.md#2-confirmed-target-and-decisions) remain the product contract. This file preserves source provenance for the retained visual assets after the superseded delivery ticket was pruned.
 
@@ -22,4 +22,4 @@ Create a photorealistic editorial photograph for a fictional Berlin neighborhood
 
 Photorealistic editorial architectural photo only for an illustrative fictional neighborhood Muay Thai studio in Berlin. Landscape 3:2 frame. Welcoming airy renovated warehouse with tall windows, warm cream walls and some brick, two charcoal heavy punching bags on the right, tidy dark training mats, small wooden bench and a large green plant near the left window. Natural soft daytime light, warm neutral colours, lived-in but clean, professional accessible local gym rather than luxurious resort. No people, no words, no logos or signs, no watermarks, no UI. Compose for a small website studio thumbnail; clear recognizable bags and inviting daylight, restrained contrast. Not a photograph of any real named business.
 
-> Documentary pruning — 2026-10-14: obsolete interface screenshots and the original design-reference PNG were removed under [DEV0225](../../tickets/archive/organisatory/DEV0225-remove-blockchain-historical-evidence.md). The independent photo-generation prompts, delivered photo files and truthful fictional-image provenance remain unchanged.
+> Documentary pruning — 2026-10-14: obsolete interface screenshots and the original design-reference PNG were removed under [DEV0225](https://github.com/hworldcom/movx-work-records/blob/b49f60b2454b3de9345c395acbc08f324bcdabb3/originals/tickets/archive/organisatory/DEV0225-remove-blockchain-historical-evidence.md). The independent photo-generation prompts, delivered photo files and truthful fictional-image provenance remain unchanged.
