@@ -39,6 +39,12 @@ export async function loadCoachCalendar(
       mayEditAvailability:
         coach.visibility === "visible" &&
         ["approved", "demo"].includes(owner.coachAccess.status),
+      availabilityPausedReason:
+        owner.coachAccess.status === "suspended"
+          ? ("coach-suspended" as const)
+          : coach.visibility === "hidden"
+            ? ("profile-hidden" as const)
+            : null,
       query,
       page,
     };

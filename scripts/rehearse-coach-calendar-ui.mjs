@@ -47,6 +47,20 @@ await cp(
   path.join(checkout, "src/tests-fixtures"),
   { recursive: true },
 );
+// Render the actual profile editor at the notice link's destination without
+// loading account data or submitting any changes in this isolated checkout.
+await writeFile(
+  path.join(checkout, "src/app/profile/coach/page.tsx"),
+  `import {CoachProfileEditor} from "@/features/coaches/coach-profile-editor";
+import {AVAILABILITY_COACH} from "@/tests-fixtures/availability-editor-data";
+import {resolveLocationSearchConfiguration} from "@/location";
+export default function Page() {return <CoachProfileEditor
+  coach={{...AVAILABILITY_COACH,visibility:"hidden"}}
+  gyms={[]} ownerDisplayName="Schedule Coach"
+  coachAccess={{status:"approved",submittedAt:null,decisionReason:null,verificationPolicyVersion:null}}
+  locationSearchConfiguration={resolveLocationSearchConfiguration(undefined)}
+/>;}`,
+);
 // The real owner route/forms remain intact. Only its existing account/service
 // boundaries are replaced with DEV0239's explicit fixtures in this checkout.
 for (const name of ["src/app/layout.tsx", "src/app/api/auth/actor/route.ts"]) {
@@ -195,7 +209,9 @@ try {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   const open = async (query = "") => {
-    await page.goto(`${base}/coach?date=2026-10-16${query}`);
+    await page.goto(`${base}/coach?date=2026-10-16${query}`, {
+      waitUntil: "domcontentloaded",
+    });
     await page
       .getByRole("heading", { name: "Calendar", exact: true })
       .waitFor();
@@ -249,7 +265,10 @@ try {
   await page.locator(".coach-calendar-month-day").first().waitFor();
   assert.equal(await page.locator(".coach-calendar-month-day").count(), 42);
   const day = page.locator(".coach-calendar-month-day").filter({
-    has: page.getByRole("link", { name: /Open Friday,? 16 Oct/, exact: true }),
+    has: page.getByRole("link", {
+      name: /Open Friday,? 16 Oct/,
+      exact: true,
+    }),
   });
   assert.equal(await day.locator(".coach-calendar-item").count(), 3);
   assert.equal(
@@ -415,7 +434,10 @@ try {
     await cookie("actor", actor);
     await page.goto(`${base}${ownerHref}`);
     await page
-      .getByRole("heading", { name: "Winter technical workshop", exact: true })
+      .getByRole("heading", {
+        name: "Winter technical workshop",
+        exact: true,
+      })
       .waitFor();
     assert.equal(
       await page
@@ -685,17 +707,132 @@ try {
     });
     await page.keyboard.press("Escape");
   }
-  await open("&historyOnly=1");
-  assert.equal(
-    await page.getByRole("link", { name: /Edit availability for/ }).count(),
-    0,
-  );
-  await page
-    .getByText("Availability publishing is paused", { exact: false })
-    .waitFor();
   record(
-    "375/430px agenda/month/details, long venues, keyboard dialog focus and history-only presentation",
+    "375/430px agenda/month/details, long venues and keyboard dialog focus",
   );
+  for (const width of [1440, 430, 375]) {
+    await page.setViewportSize({ width, height: 1040 });
+    await open();
+    assert.equal(await page.locator(".coach-calendar-feedback").count(), 0);
+    if (width === 1440) {
+      assert.ok(
+        (await page
+          .getByRole("link", { name: /Edit availability for/ })
+          .count()) > 0,
+      );
+    }
+    await open("&historyOnly=1");
+    const notice = page.locator(".coach-calendar-feedback");
+    await notice.filter({ hasText: "Your coach profile is hidden." }).waitFor();
+    assert.match(
+      await notice.innerText(),
+      /Make it public to publish availability/,
+    );
+    assert.match(
+      await notice.innerText(),
+      /choose Visible under Discovery visibility and save your coach profile/,
+    );
+    assert.match(
+      await notice.innerText(),
+      /Existing sessions and history are still available/,
+    );
+    assert.equal(
+      await page.getByRole("link", { name: /Edit availability for/ }).count(),
+      0,
+    );
+    assert.ok((await agenda().getByRole("button").count()) > 0);
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      true,
+    );
+    await page.screenshot({
+      path: path.join(output, `${width}-hidden-profile.png`),
+      fullPage: true,
+    });
+    await page.reload({ waitUntil: "domcontentloaded" });
+    const profileLink = page.getByRole("link", {
+      name: "Review profile visibility",
+      exact: true,
+    });
+    await profileLink.waitFor();
+    assert.equal(
+      await profileLink.getAttribute("href"),
+      "/profile/coach#coach-profile-visibility",
+    );
+    // Reach the action through the actual Tab order, then activate it with Enter.
+    await page
+      .getByRole("button", { name: "Reload calendar", exact: true })
+      .focus();
+    await page.keyboard.press("Tab");
+    assert.equal(
+      await profileLink.evaluate((node) => node === document.activeElement),
+      true,
+    );
+    await page.keyboard.press("Enter");
+    await page.waitForURL(/\/profile\/coach#coach-profile-visibility$/, {
+      waitUntil: "domcontentloaded",
+    });
+    const heading = page.getByRole("heading", {
+      name: "Discovery visibility",
+      exact: true,
+    });
+    await heading.waitFor();
+    await page.waitForFunction(
+      () => document.activeElement?.id === "coach-profile-visibility",
+    );
+    await page.waitForFunction(() => {
+      const bounds = document
+        .getElementById("coach-profile-visibility")
+        ?.getBoundingClientRect();
+      return bounds && bounds.top >= 0 && bounds.bottom <= innerHeight;
+    });
+    const bounds = await heading.boundingBox();
+    assert.ok(bounds && bounds.y >= 0 && bounds.y + bounds.height <= 1040);
+    assert.equal(
+      await page
+        .getByRole("radio", { name: /Hidden Save the profile/ })
+        .isChecked(),
+      true,
+    );
+    await page.screenshot({
+      path: path.join(output, `${width}-visibility-setting.png`),
+      fullPage: true,
+    });
+    await open("&suspended=1");
+    await notice
+      .filter({ hasText: "Your coach access is suspended" })
+      .waitFor();
+    assert.match(
+      await notice.innerText(),
+      /Existing sessions and history are still available/,
+    );
+    assert.equal(
+      await page
+        .getByRole("link", { name: "Review profile visibility" })
+        .count(),
+      0,
+    );
+    assert.equal(
+      await page.getByRole("link", { name: /Edit availability for/ }).count(),
+      0,
+    );
+    assert.ok((await agenda().getByRole("button").count()) > 0);
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      true,
+    );
+    await page.screenshot({
+      path: path.join(output, `${width}-suspended-coach.png`),
+      fullPage: true,
+    });
+    record(
+      `${width}px visible/hidden/suspended notices, retained history, reload and keyboard profile-setting navigation`,
+    );
+  }
   assert.deepEqual(errors, [], "no browser runtime errors");
   await writeFile(
     path.join(output, "results.json"),

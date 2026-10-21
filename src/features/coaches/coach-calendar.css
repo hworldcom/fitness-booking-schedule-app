@@ -594,6 +594,11 @@
   font-size: 20px;
   margin-bottom: 10px;
 }
+.coach-calendar-feedback a {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .coach-calendar-unavailable .button {
   margin-top: 14px;
 }

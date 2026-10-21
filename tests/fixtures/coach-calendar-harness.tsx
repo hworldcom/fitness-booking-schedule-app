@@ -34,7 +34,12 @@ export function CoachCalendarHarness({
     () => true,
     () => false,
   );
-  const historyOnly = params.historyOnly === "1";
+  const pausedReason =
+    params.suspended === "1"
+      ? "coach-suspended"
+      : params.historyOnly === "1"
+        ? "profile-hidden"
+        : null;
   const load = useMemo<CoachCalendarLoader>(
     () => async (query) => {
       await new Promise((resolve) => setTimeout(resolve, 20));
@@ -51,10 +56,10 @@ export function CoachCalendarHarness({
       }
       return {
         status: "ready",
-        data: calendarFixture(query, epoch.current, historyOnly),
+        data: calendarFixture(query, epoch.current, pausedReason),
       };
     },
-    [historyOnly],
+    [pausedReason],
   );
   if (params.section === "availability")
     return (
@@ -102,7 +107,11 @@ export function CoachCalendarHarness({
         </label>
       </aside>
       <CoachAvailabilityPanel
-        coach={AVAILABILITY_COACH}
+        coach={
+          pausedReason
+            ? { ...AVAILABILITY_COACH, visibility: "hidden" }
+            : AVAILABILITY_COACH
+        }
         view="schedule"
         ownerDisplayName="Schedule Coach"
         allowScheduleHistory
@@ -111,7 +120,7 @@ export function CoachCalendarHarness({
             <CoachScheduleNavigation active="calendar" date={selection.date} />
             <CoachCalendar
               key={calendarQueryKey(query)}
-              initial={calendarFixture(query, 0, historyOnly)}
+              initial={calendarFixture(query, 0, pausedReason)}
               selection={selection}
               load={load}
             />

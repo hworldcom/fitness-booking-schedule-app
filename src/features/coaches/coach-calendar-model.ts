@@ -13,6 +13,7 @@ export type CoachCalendarData = Readonly<{
   actorIdentity: string;
   locations: readonly CoachTrainingLocation[];
   mayEditAvailability: boolean;
+  availabilityPausedReason: "profile-hidden" | "coach-suspended" | null;
   page: CalendarPage;
   query: CalendarQuery;
 }>;

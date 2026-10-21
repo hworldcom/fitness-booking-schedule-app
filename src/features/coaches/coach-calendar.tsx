@@ -473,8 +473,22 @@ export function CoachCalendar({
       )}
       {!data.mayEditAvailability && (
         <p className="coach-calendar-feedback">
-          Existing sessions and history are available. Availability publishing
-          is paused.
+          {data.availabilityPausedReason === "profile-hidden" ? (
+            <>
+              Your coach profile is hidden. Make it public to publish
+              availability: choose Visible under Discovery visibility and save
+              your coach profile. Existing sessions and history are still
+              available.{" "}
+              <Link href="/profile/coach#coach-profile-visibility">
+                Review profile visibility
+              </Link>
+            </>
+          ) : (
+            <>
+              Your coach access is suspended, so availability publishing is
+              paused. Existing sessions and history are still available.
+            </>
+          )}
         </p>
       )}
       {!stale && (

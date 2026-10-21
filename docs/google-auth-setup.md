@@ -1,6 +1,6 @@
 # Google sign-in setup
 
-Implementation and remaining live evidence belong to [DEV0287](../tickets/current/backend/DEV0287-integrate-google-authentication.md). The current product contract is [MVP specification section 4.1](mvp-spec.md#41-register-as-an-athlete-or-apply-to-coach). Apple remains deferred.
+Implementation and remaining live evidence belong to [DEV0287](https://linear.app/movx/issue/MOV-16/dev0287-integrate-google-authentication). The current product contract is [MVP specification section 4.1](mvp-spec.md#41-register-as-an-athlete-or-apply-to-coach). Apple remains deferred.
 
 ## Check existing access first
 
@@ -29,7 +29,7 @@ Use controlled accounts and record exact subjects/profile IDs and private-data c
 - Password-first verified email → same-email Google → original subject/profile/private names/settings/media/roles/bookings/messages. Distinct Google email → independent registration. Unconfirmed/conflicting identities never acquire the other account's data.
 - Google-first → verified Set a password/recovery → original identity; old sessions are revoked and the existing recovery restrictions remain effective. Starting or returning to Google during recovery cannot upgrade that session.
 - Cancel/deny, missing/expired proof, bad callback, unavailable provider, changed browser session, safe/hostile returns and explicit coach intent. Supabase may return denial details in a browser fragment that the server cannot read; this receives the bounded retry message rather than displaying provider text.
-- Mobile/desktop, keyboard, errors and provider-branded control, then the combined [DEV0289](../tickets/current/backend/DEV0289-rehearse-multi-method-authentication-for-uat.md) rehearsal. Deterministic SDK/callback fixtures are supplementary evidence, not real Google sign-in proof.
+- Mobile/desktop, keyboard, errors and provider-branded control, then the combined [DEV0289](https://linear.app/movx/issue/MOV-17/dev0289-rehearse-multi-method-authentication-for-uat) rehearsal. Deterministic SDK/callback fixtures are supplementary evidence, not real Google sign-in proof.
 
 ## Disable or rotate
 

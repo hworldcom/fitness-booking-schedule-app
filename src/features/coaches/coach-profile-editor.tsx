@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import {
   Check,
   Eye,
@@ -65,6 +65,16 @@ export function CoachProfileEditor({
   );
   const [portraitOverride, setPortraitOverride] =
     useState<CoachPortraitOverride | null>(null);
+  const visibilityHeading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (window.location.hash === "#coach-profile-visibility") {
+      visibilityHeading.current?.focus({ preventScroll: true });
+      visibilityHeading.current?.scrollIntoView({
+        behavior: "instant",
+        block: "start",
+      });
+    }
+  }, []);
   const previewCoach = coachWithPortraitOverride(coach, portraitOverride);
   const initialDisciplines = new Set(coach?.disciplines ?? []);
   const publicationAllowed =
@@ -366,7 +376,14 @@ export function CoachProfileEditor({
               <div className="coach-editor-section-title">
                 <span>03</span>
                 <div>
-                  <h2>Discovery visibility</h2>
+                  <h2
+                    ref={visibilityHeading}
+                    id="coach-profile-visibility"
+                    tabIndex={-1}
+                    style={{ scrollMarginTop: 110 }}
+                  >
+                    Discovery visibility
+                  </h2>
                   <p>Hidden profiles remain available only to their owner.</p>
                 </div>
               </div>
