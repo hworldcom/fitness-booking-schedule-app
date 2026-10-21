@@ -57,6 +57,28 @@ test(
       return a;
     }
     try {
+      const [hasReference] =
+        await admin`select to_regprocedure('app.dev0402_reference_times(text,uuid,uuid,date)') is not null installed`;
+      if (hasReference.installed)
+        await t.test(
+          "seed availability matches original candidates across venues, 30 dates and DST",
+          async () => {
+            const rows =
+              await admin`select c.public_slug,t.id,l.id venue from app.coach_profiles c join app.coach_session_types t on t.coach_profile_id=c.profile_id and t.format='private' join app.coach_training_locations l on l.profile_id=c.profile_id and l.status='active' where c.is_demo order by c.public_slug limit 2`;
+            let checked = 0;
+            for (const row of rows)
+              for (let offset = 0; offset < 30; offset++) {
+                const [comparison] =
+                  await admin`select app.public_session_type_times(${row.public_slug},${row.id}::uuid,${row.venue}::uuid,(clock_timestamp() at time zone 'Europe/Berlin')::date+${offset}::int) actual,app.dev0402_reference_times(${row.public_slug},${row.id}::uuid,${row.venue}::uuid,(clock_timestamp() at time zone 'Europe/Berlin')::date+${offset}::int) reference`;
+                assert.deepEqual(comparison.actual, comparison.reference);
+                checked++;
+              }
+            assert.ok(checked >= 30);
+            console.log(
+              `Reference-equivalent populated/date/DST reads: ${checked}`,
+            );
+          },
+        );
       const coach = await actor("Typed booking coach", true),
         athlete = await actor("Typed athlete"),
         second = await actor("Second typed athlete");
@@ -67,6 +89,63 @@ test(
       const [clock] =
         await admin`select ((clock_timestamp() at time zone 'Europe/Berlin')::date+3)::text target`;
       const target = clock.target;
+      const [reference] =
+        await admin`select to_regprocedure('app.dev0402_reference_times(text,uuid,uuid,date)') is not null installed`;
+      if (reference.installed)
+        await t.test(
+          "unconfigured private week is empty and matches the original generator",
+          async () => {
+            const [offer] =
+              await admin`select id from app.coach_session_types where coach_profile_id=${coach.profileId}::uuid and format='private' limit 1`;
+            const started = performance.now();
+            const week = await typedSessionWeekRecord(
+              c.public_slug,
+              offer.id,
+              venue.id,
+              target,
+            );
+            assert.equal(week.days.flatMap((day) => day.times).length, 0);
+            const optimizedMs = performance.now() - started;
+            const baselineStart = performance.now();
+            for (const day of week.days) {
+              const [old] =
+                await admin`select app.dev0402_reference_times(${c.public_slug},${offer.id}::uuid,${venue.id}::uuid,${day.date}::date) times`;
+              assert.deepEqual(day.times, old.times);
+            }
+            console.log(
+              JSON.stringify({
+                case: "unconfigured week",
+                optimizedMs,
+                referenceMs: performance.now() - baselineStart,
+              }),
+            );
+            let unlock!: () => void, locked!: () => void;
+            const acquired = new Promise<void>((resolve) => (locked = resolve));
+            const held = new Promise<void>((resolve) => (unlock = resolve));
+            const holder = admin.begin(async (tx) => {
+              await tx`select pg_advisory_xact_lock(hashtextextended(${coach.runId}::text||':'||${coach.profileId}::text,0))`;
+              locked();
+              await held;
+            });
+            await acquired;
+            try {
+              await assert.rejects(
+                typedSessionWeekRecord(
+                  c.public_slug,
+                  offer.id,
+                  venue.id,
+                  target,
+                ),
+                (error: unknown) =>
+                  (error as { cause?: { code?: string } })?.cause?.code ===
+                  "55P03",
+              );
+            } finally {
+              unlock();
+              await holder;
+            }
+          },
+        );
       const hours = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"].map(
         (localStartTime) => ({
           localStartTime,
@@ -105,10 +184,57 @@ test(
       const times = async () => {
         const [r] =
           await admin`select app.public_session_type_times(${c.public_slug},${type.id}::uuid,${venue.id}::uuid,${target}::date) as times`;
+        if (reference.installed) {
+          const [old] =
+            await admin`select app.dev0402_reference_times(${c.public_slug},${type.id}::uuid,${venue.id}::uuid,${target}::date) times`;
+          assert.deepEqual(
+            r.times,
+            old.times,
+            "actual-hours candidates must equal the original whole-day generator",
+          );
+        }
         return r.times as { startsAt: string; endsAt: string }[];
       };
       const candidates = await times();
       assert.equal(candidates.length, 16);
+      if (reference.installed)
+        await t.test(
+          "60/75/90-minute and wrong-venue results match the original generator",
+          async () => {
+            for (const durationMinutes of [60, 90] as const) {
+              const id = randomUUID();
+              await withActorDatabaseContext(coach, (tx) =>
+                mutateSessionType(tx, {
+                  commandId: randomUUID(),
+                  action: "save",
+                  id,
+                  expectedRevision: -1,
+                  format: "private",
+                  name: `Reference ${durationMinutes}`,
+                  description: "Disposable equivalence case",
+                  color: "#123456",
+                  durationMinutes,
+                  defaultLocationId: durationMinutes === 90 ? venue.id : null,
+                  bookable: true,
+                }),
+              );
+              for (const location of [venue.id, randomUUID()]) {
+                const [row] =
+                  await admin`select app.public_session_type_times(${c.public_slug},${id}::uuid,${location}::uuid,${target}::date) actual,app.dev0402_reference_times(${c.public_slug},${id}::uuid,${location}::uuid,${target}::date) reference`;
+                assert.deepEqual(row.actual, row.reference);
+                assert.equal(
+                  row.actual.length,
+                  location === venue.id
+                    ? durationMinutes === 60
+                      ? 18
+                      : 14
+                    : 0,
+                );
+              }
+            }
+          },
+        );
+
       await t.test(
         "weekly repository retains the database's actual full-fit starts and clock window",
         async () => {

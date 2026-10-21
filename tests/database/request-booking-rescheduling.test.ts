@@ -16,7 +16,7 @@ const allowed =
   selected &&
   ["127.0.0.1", "localhost"].includes(selected.hostname) &&
   selected.port === "55322" &&
-  /^\/dev0342_[a-f0-9]+_dev(?:0388|0396)_(fresh|upgrade)$/.test(
+  /^\/dev0342_[a-f0-9]+_dev(?:0388|0396|0402)_(fresh|upgrade)$/.test(
     selected.pathname,
   );
 type Fixture = {

@@ -115,7 +115,14 @@ export function SevenDayBookingHarness({
         // Deliberately ignore abort in this fixture so late results exercise the
         // component's independent response fence, not just AbortController.
         void signal;
-        await delay(scenario === "slow" && input.typeId === type90 ? 900 : 25);
+        if (scenario === "hang") await new Promise(() => {});
+        await delay(
+          scenario === "late"
+            ? 16_000
+            : scenario === "slow" && input.typeId === type90
+              ? 900
+              : 25,
+        );
         if (scenario === "error" || scenario === "retry") {
           if (scenario === "retry") readSetting.current = "available";
           return { status: "unavailable" };
@@ -324,11 +331,18 @@ export function SevenDayBookingHarness({
               setReadMode(event.target.value);
             }}
           >
-            {["available", "empty", "error", "retry", "malformed", "slow"].map(
-              (value) => (
-                <option key={value}>{value}</option>
-              ),
-            )}
+            {[
+              "available",
+              "empty",
+              "error",
+              "retry",
+              "malformed",
+              "slow",
+              "hang",
+              "late",
+            ].map((value) => (
+              <option key={value}>{value}</option>
+            ))}
           </select>
         </label>
         <label>

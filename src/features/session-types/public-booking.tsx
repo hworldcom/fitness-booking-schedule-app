@@ -187,6 +187,13 @@ function BookingForm({
     if (!typeId || !locationId) return;
     const controller = new AbortController();
     let active = true;
+    // The transport may ignore abort or never settle. Fence it independently so
+    // a deadline cannot later become a stale success (including after Retry).
+    const deadline = window.setTimeout(() => {
+      active = false;
+      controller.abort();
+      setLoaded({ key, status: "unavailable" });
+    }, 15_000);
     transport
       .week({ slug, typeId, locationId, weekOf: weekDate }, controller.signal)
       .then((value) => {
@@ -210,9 +217,11 @@ function BookingForm({
       })
       .catch(() => {
         if (active) setLoaded({ key, status: "unavailable" });
-      });
+      })
+      .finally(() => window.clearTimeout(deadline));
     return () => {
       active = false;
+      window.clearTimeout(deadline);
       controller.abort();
     };
   }, [
