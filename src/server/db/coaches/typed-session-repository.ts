@@ -23,16 +23,23 @@ export async function typedSessionWeekRecord(
   weekOf: string,
   connection?: DatabaseConnection,
 ) {
-  return withDatabaseConnection(async ({ db }) => {
-    const [clock] = await db.execute<{ reference_time: string }>(
-      sql`select clock_timestamp()::text as reference_time`,
-    );
-    const referenceTime = new Date(clock.reference_time).toISOString();
-    const selection = publicScheduleSelection(weekOf, referenceTime);
-    // One bounded statement/connection, rather than seven authenticated HTTP reads.
-    // Keep this outside the owner's actor transaction so owner overrides cannot
-    // enter the ordinary public availability projection.
-    const days = await db.execute<{ date: string; times: SessionTime[] }>(sql`
+  return withDatabaseConnection(
+    ({ db }) =>
+      db.transaction(async (tx) => {
+        await tx.execute(sql`set local statement_timeout = '8s'`);
+        await tx.execute(sql`set local lock_timeout = '1s'`);
+        const [clock] = await tx.execute<{ reference_time: string }>(
+          sql`select clock_timestamp()::text as reference_time`,
+        );
+        const referenceTime = new Date(clock.reference_time).toISOString();
+        const selection = publicScheduleSelection(weekOf, referenceTime);
+        // One bounded statement/connection, rather than seven authenticated HTTP reads.
+        // Keep this outside the owner's actor transaction so owner overrides cannot
+        // enter the ordinary public availability projection.
+        const days = await tx.execute<{
+          date: string;
+          times: SessionTime[];
+        }>(sql`
       select to_char(day.date, 'YYYY-MM-DD') as date,
         app.public_session_type_times(${slug}, ${typeId}::uuid,
           ${locationId}::uuid, day.date) as times
@@ -42,11 +49,13 @@ export async function typedSessionWeekRecord(
       )}) as day(date)
       order by day.date
     `);
-    return parseSessionWeek(
-      { referenceTime, resetToCurrent: !selection.inHorizon, days },
-      weekOf,
-    );
-  }, connection);
+        return parseSessionWeek(
+          { referenceTime, resetToCurrent: !selection.inHorizon, days },
+          weekOf,
+        );
+      }),
+    connection,
+  );
 }
 
 export async function typedSessionTimesRecord(

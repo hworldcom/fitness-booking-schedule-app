@@ -14,10 +14,15 @@ test("a weekly read uses the database clock, one bounded availability statement 
     const dates = publicScheduleSelection(date, now).dates;
     const connection = {
       db: {
-        execute: async () =>
-          ++statements === 1
-            ? [{ reference_time: now }]
-            : dates.map((day) => ({ date: day, times: [] })),
+        transaction: async (work: (tx: unknown) => Promise<unknown>) =>
+          work({
+            execute: async () =>
+              ++statements <= 2
+                ? []
+                : statements === 3
+                  ? [{ reference_time: now }]
+                  : dates.map((day) => ({ date: day, times: [] })),
+          }),
       },
       queryClient: {
         end: async () => {
@@ -40,7 +45,7 @@ test("a weekly read uses the database clock, one bounded availability statement 
       result.resetToCurrent,
       date < "2026-10-25" || date > "2026-11-23",
     );
-    assert.equal(statements, 2);
+    assert.equal(statements, 4);
     assert.equal(closed, 1);
   }
 });
@@ -55,11 +60,15 @@ test("missing/malformed days or a query failure cannot become a ready empty week
       closed = 0;
     const connection = {
       db: {
-        execute: async () => {
-          if (++statements === 1) return [{ reference_time: now }];
-          if (outcome === "throw") throw new Error("Database unavailable");
-          return outcome;
-        },
+        transaction: async (work: (tx: unknown) => Promise<unknown>) =>
+          work({
+            execute: async () => {
+              if (++statements <= 2) return [];
+              if (statements === 3) return [{ reference_time: now }];
+              if (outcome === "throw") throw new Error("Database unavailable");
+              return outcome;
+            },
+          }),
       },
       queryClient: {
         end: async () => {
