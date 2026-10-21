@@ -289,5 +289,8 @@ test("calendar history allows suspended owners but clears another account/run or
     calendarActorAccess(session, { status: "unavailable" }, data),
     "pending",
   );
-  assert.equal(calendarFixture(query, 0, true).mayEditAvailability, false);
+  assert.equal(
+    calendarFixture(query, 0, "profile-hidden").mayEditAvailability,
+    false,
+  );
 });

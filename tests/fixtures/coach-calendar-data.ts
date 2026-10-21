@@ -104,7 +104,7 @@ function version(items: readonly CalendarItem[], epoch: number) {
 export function calendarFixture(
   query: CalendarQuery,
   epoch = 0,
-  historyOnly = false,
+  pausedReason: CoachCalendarData["availabilityPausedReason"] = null,
 ): CoachCalendarData {
   const items = CALENDAR_FIXTURE_ITEMS.filter(
     (i) =>
@@ -114,7 +114,7 @@ export function calendarFixture(
         (query.type === "group") === (i.source === "group")) &&
       (!query.venueId || i.locationId === query.venueId) &&
       (query.history || !["cancelled", "withdrawn"].includes(i.status)) &&
-      (!historyOnly || i.status !== "available"),
+      (!pausedReason || i.status !== "available"),
   ).sort(
     (a, b) =>
       Date.parse(a.startsAt) - Date.parse(b.startsAt) ||
@@ -142,7 +142,8 @@ export function calendarFixture(
     scope: "fixture-user:fixture-profile:fixture-run:member",
     actorIdentity: "schedule-coach:fixture-run:member",
     locations: CALENDAR_FIXTURE_LOCATIONS,
-    mayEditAvailability: !historyOnly,
+    mayEditAvailability: !pausedReason,
+    availabilityPausedReason: pausedReason,
     query,
     page: parseCalendarPage(
       {
