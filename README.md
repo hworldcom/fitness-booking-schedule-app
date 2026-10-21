@@ -21,6 +21,7 @@ Start with the [MVP specification](docs/mvp-spec.md), the single current product
 | [docs/mvp-spec.md](docs/mvp-spec.md)         | Current scheduling behavior and delivery contract.         |
 | [AGENTS.md](AGENTS.md)                       | Contributor workflow, ticket, validation and commit rules. |
 | [docs/work-records.md](docs/work-records.md) | Linear workflow and private historical record archive.     |
+| [Architecture navigation](docs/architecture/overview.md) | Source layers, feature entry points and focused checks.    |
 | [supabase/README.md](supabase/README.md)     | Local database and hosted migration operations.            |
 
 Google sign-in activation and remaining live checks: [provider setup](docs/google-auth-setup.md).

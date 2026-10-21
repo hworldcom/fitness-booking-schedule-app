@@ -4,12 +4,21 @@
 
 ## Document ownership and project context
 
-- Read [README.md](README.md) for navigation and [the MVP specification](docs/mvp-spec.md) for the single current product contract, including scope, behavior, architecture, [milestones](docs/mvp-spec.md#12-delivery-milestones), and [acceptance scenarios](docs/mvp-spec.md#13-acceptance-matrix).
+- Use [README.md](README.md) for setup and commands and the [task-focused discovery sequence](#task-focused-discovery) for source navigation. Consult the relevant sections of [the MVP specification](docs/mvp-spec.md), the single current product contract for scope, behavior, architecture, [milestones](docs/mvp-spec.md#12-delivery-milestones), and [acceptance scenarios](docs/mvp-spec.md#13-acceptance-matrix), together with all applicable cross-cutting requirements below.
 - This `AGENTS.md` is the authoritative contributor/workflow policy. The [work-record guide](docs/work-records.md) links to these rules; archived templates supply record fields, not a separate policy.
 - The [work-record guide](docs/work-records.md) links to live Linear development issues/coordination projects and the preserved Markdown archive. Development issues record the scope and evidence for individual changes; projects group peers without authorizing implementation. Neither is an alternative product contract. Update the specification in the same change when a development ticket changes overall product behavior or design.
 - Keep confirmed user constraints distinct from proposed implementation defaults as described in the specification. Record adopted choices and reasons in the relevant ticket; do not silently treat proposals as user decisions.
 - The [completed ticket archive](https://github.com/hworldcom/movx-work-records/tree/b49f60b2454b3de9345c395acbc08f324bcdabb3/originals/tickets/archive) is historical context and does not override the current specification or workflow. Preserve completed records; use a new current ticket for changes. The user-authorized documentary pruning in [DEV0225](https://github.com/hworldcom/movx-work-records/blob/b49f60b2454b3de9345c395acbc08f324bcdabb3/originals/tickets/archive/organisatory/DEV0225-remove-blockchain-historical-evidence.md) is a specific exception for its recorded removal manifest; removed IDs remain permanently unavailable.
 - README is navigation and future setup instructions. Link to current requirements instead of copying them into README, agent instructions, or a new plan.
+
+## Task-focused discovery
+
+1. Read the live Linear issue and these contributor rules. For unfamiliar architecture, use the [overview](docs/architecture/overview.md); otherwise start with the relevant [feature-map entry](docs/architecture/feature-map.md).
+2. Inspect the linked source and tests. Determine whether requested behavior already exists, distinguish static evidence from runtime proof, and verify that the map is current.
+3. Read and apply the relevant MVP-specification sections and applicable security, authorization, data-integrity, acceptance and recovery requirements. The map does not replace the specification or relax any policy below. Expand discovery when dependencies, uncertainty or risk cross the initial capability.
+4. Record affected components/contracts and meaningful validation in the issue before editing; follow the existing framework/SDK and bundled Next.js documentation requirements when changing integration code.
+
+When a change moves a documented entry point, ownership/SQL boundary, validation command or prerequisite, update the affected architecture-map entries in the same change. Keep these guides concise; product requirements remain in the specification and implementation evidence remains in Linear.
 
 ## Ticket before implementation
 
