@@ -250,6 +250,39 @@ try {
     "verified empty, loading failure, corrupt week and explicit retry remain distinct",
   );
 
+  // Real component deadline; fixture deliberately ignores AbortSignal.
+  await page.clock.install();
+  for (const scenario of ["hang", "late"]) {
+    await page
+      .getByLabel("Fixture availability", { exact: true })
+      .selectOption(scenario);
+    await page.clock.runFor(100);
+    await page.clock.fastForward(15_000);
+    await expect(
+      area().getByRole("heading", { name: "We couldn’t load the times" }),
+    ).toBeVisible();
+    await expect(area().locator(".seven-day-total strong")).toHaveText("—");
+    await expect(times()).toHaveCount(0);
+    await page.clock.fastForward(2_000);
+    await expect(
+      area().getByRole("heading", { name: "We couldn’t load the times" }),
+    ).toBeVisible();
+    await control("Try again").focus();
+    await page.keyboard.press("Enter");
+    await page.clock.runFor(100);
+    await page
+      .getByLabel("Fixture availability", { exact: true })
+      .selectOption("available");
+    await page.clock.runFor(100);
+    await expect(times()).toHaveCount(18);
+    await page.clock.fastForward(20_000);
+    await expect(times()).toHaveCount(18);
+  }
+  await page.clock.resume();
+  record(
+    "15-second hanging/late-read deadline, no false zero or late success, keyboard retry and timer cleanup",
+  );
+
   await times().first().click();
   const reviewButton = area().getByRole("button", {
     name: "Review request",
@@ -543,6 +576,7 @@ try {
       process.once("SIGINT", resolve);
       process.once("SIGTERM", resolve);
     });
+    process.stdin.pause();
   }
 } catch (error) {
   await writeFile(path.join(output, "server.log"), log);
