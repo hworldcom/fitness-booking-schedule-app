@@ -3,6 +3,17 @@ import test from "node:test";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import ts from "typescript";
+import {
+  createDependencyGraph,
+  resolveSourceImport,
+  sourcePath,
+} from "./helpers/dependency-graph";
+import { dependencyExceptions } from "./helpers/dependency-exceptions";
+import {
+  dependencyViolations,
+  importSpecifiers,
+} from "./helpers/dependency-policy";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const src = path.join(root, "src");
@@ -15,21 +26,29 @@ function sourceFiles(directory: string): string[] {
   });
 }
 
+const graph = createDependencyGraph(
+  Object.fromEntries(
+    sourceFiles(src).map((file) => [
+      sourcePath(path.relative(root, file)),
+      readFileSync(file, "utf8"),
+    ]),
+  ),
+);
+const graphFiles = new Set(graph.keys());
+
 function imports(file: string): string[] {
-  const contents = readFileSync(file, "utf8");
-  const pattern =
-    /(?:import|export)\s+(?:type\s+)?(?:[^"']*?\s+from\s*)?["']([^"']+)["']|import\s*\(\s*["']([^"']+)["']/g;
-  return Array.from(
-    contents.matchAll(pattern),
-    (match) => match[1] || match[2],
+  return importSpecifiers(
+    graph.get(sourcePath(path.relative(root, file)))!.imports,
   );
 }
 
 function resolveImport(file: string, specifier: string): string | undefined {
-  if (specifier.startsWith("@/")) return path.resolve(src, specifier.slice(2));
-  if (specifier.startsWith("."))
-    return path.resolve(path.dirname(file), specifier);
-  return undefined;
+  const target = resolveSourceImport(
+    sourcePath(path.relative(root, file)),
+    specifier,
+    graphFiles,
+  );
+  return target ? path.join(root, target) : undefined;
 }
 
 function within(target: string, directory: string) {
@@ -83,16 +102,20 @@ test("Storage I/O, request client and provider URLs stay behind the image adapte
       assert.doesNotMatch(specifier, /^@supabase\/storage-js/, relative);
       if (!relative.startsWith("src/server/auth/")) {
         const target = resolveImport(file, specifier);
-        assert.notEqual(target, path.join(src, "server/auth/client"), relative);
+        assert.notEqual(
+          target,
+          path.join(src, "server/auth/client.ts"),
+          relative,
+        );
         if (
           relative.startsWith("src/server/") &&
           relative !== "src/server/authorization/config.ts"
         )
-          assert.notEqual(target, path.join(src, "auth/config"), relative);
+          assert.notEqual(target, path.join(src, "auth/config.ts"), relative);
         if (relative !== "src/server/storage/profile-images.ts")
           assert.notEqual(
             target,
-            path.join(src, "server/storage/supabase-profile-images"),
+            path.join(src, "server/storage/supabase-profile-images.ts"),
             relative,
           );
       }
@@ -118,57 +141,22 @@ test("Storage I/O, request client and provider URLs stay behind the image adapte
 });
 
 test("source imports respect domain, client, server and feature boundaries", () => {
-  const domain = path.join(src, "domain");
-  const components = path.join(src, "components");
-  const features = path.join(src, "features");
-  const server = path.join(src, "server");
-  const database = path.join(server, "db");
-  const violations: string[] = [];
-
-  for (const file of sourceFiles(src)) {
-    const contents = readFileSync(file, "utf8");
-    const isClientModule = /^\s*["']use client["'];/m.test(contents);
-    for (const specifier of imports(file)) {
-      const target = resolveImport(file, specifier);
-      const relativeFile = path.relative(root, file);
-      if (
-        !within(file, database) &&
-        [
-          "postgres",
-          "drizzle-orm",
-          "drizzle-orm/pg-core",
-          "drizzle-orm/postgres-js",
-        ].includes(specifier)
-      ) {
-        violations.push(
-          `${relativeFile} imports database package ${specifier} outside src/server/db`,
-        );
-      }
-      if (!target) continue;
-      if (isClientModule && within(target, server)) {
-        violations.push(
-          `${relativeFile} is a client module importing ${specifier} from src/server`,
-        );
-      }
-      if (within(file, domain) && !within(target, domain)) {
-        violations.push(
-          `${relativeFile} imports ${specifier} outside src/domain`,
-        );
-      }
-      if (
-        within(file, components) &&
-        (within(target, features) || within(target, server))
-      ) {
-        violations.push(
-          `${relativeFile} imports ${specifier} from a feature/server module`,
-        );
-      }
-      if (within(file, features) && within(target, server)) {
-        violations.push(`${relativeFile} imports ${specifier} from src/server`);
-      }
-    }
-  }
-  assert.deepEqual(violations, []);
+  const config = ts.readConfigFile(
+    path.join(root, "tsconfig.json"),
+    ts.sys.readFile,
+  );
+  assert.equal(config.error, undefined);
+  assert.equal(
+    config.config.extends,
+    undefined,
+    "Resolve inherited aliases before extending tsconfig",
+  );
+  assert.deepEqual(
+    config.config.compilerOptions.paths,
+    { "@/*": ["./src/*"] },
+    "Update the dependency resolver when the repository's source aliases change",
+  );
+  assert.deepEqual(dependencyViolations(graph, dependencyExceptions), []);
 });
 
 test("availability service and shared contracts preserve their dependency boundaries", () => {

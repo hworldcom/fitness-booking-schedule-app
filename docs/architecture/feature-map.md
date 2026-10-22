@@ -2,6 +2,8 @@
 
 Use one relevant entry, verify its source and follow additional dependencies only as needed. Booking, availability and Events have detailed paths; the other entries are starting references, not complete impact analyses. Requirements remain in the linked MVP specification.
 
+For import ownership changes, consult the [enforced dependency rules and exact exception owners](overview.md#dependencies-enforced-rules-and-current-exceptions), then run the [source boundary suite](../../tests/boundaries.test.ts) and [isolated graph cases](../../tests/dependency-graph.test.ts). The capability's extraction issue owns removal of its temporary entries.
+
 | Capability                         | Entry                                                         |
 | ---------------------------------- | ------------------------------------------------------------- |
 | Private booking and session types  | [Detailed path](#private-booking-and-session-types)           |

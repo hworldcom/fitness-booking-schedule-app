@@ -16,13 +16,13 @@ Start with the [MVP specification](docs/mvp-spec.md), the single current product
 
 ## Repository guide
 
-| Location                                     | Responsibility                                             |
-| -------------------------------------------- | ---------------------------------------------------------- |
-| [docs/mvp-spec.md](docs/mvp-spec.md)         | Current scheduling behavior and delivery contract.         |
-| [AGENTS.md](AGENTS.md)                       | Contributor workflow, ticket, validation and commit rules. |
-| [docs/work-records.md](docs/work-records.md) | Linear workflow and private historical record archive.     |
+| Location                                                 | Responsibility                                             |
+| -------------------------------------------------------- | ---------------------------------------------------------- |
+| [docs/mvp-spec.md](docs/mvp-spec.md)                     | Current scheduling behavior and delivery contract.         |
+| [AGENTS.md](AGENTS.md)                                   | Contributor workflow, ticket, validation and commit rules. |
+| [docs/work-records.md](docs/work-records.md)             | Linear workflow and private historical record archive.     |
 | [Architecture navigation](docs/architecture/overview.md) | Source layers, feature entry points and focused checks.    |
-| [supabase/README.md](supabase/README.md)     | Local database and hosted migration operations.            |
+| [supabase/README.md](supabase/README.md)                 | Local database and hosted migration operations.            |
 
 Google sign-in activation and remaining live checks: [provider setup](docs/google-auth-setup.md).
 
@@ -267,6 +267,8 @@ npm run format:check
 npm run build
 npm run test:e2e
 ```
+
+For source dependency checks, run `node --import tsx --test tests/boundaries.test.ts tests/dependency-graph.test.ts`. The [architecture guide](docs/architecture/overview.md#dependencies-enforced-rules-and-current-exceptions) describes enforced rules, temporary exception owners and static-analysis limits. These checks are also part of `npm test`.
 
 `npm run test:calendar-hosted -- --environment dev --check` checks the same exact hosted-dev ledger/runtime without fixtures. `--run` serves a pinned committed-source production build at localhost port 3156 and reuses the full availability/public suite with independently tagged DEV0256 accounts. The same coach/athlete/group records are checked in Day/Week/Month before and after custom hours, a day off/cancellation and restoration, including original destinations, exact Month/More, privacy, concurrency and desktop/375/430 layouts. It sends no email, migration or reset. Success requires exact own-fixture cleanup and preservation of existing application/Auth/Storage row hashes. Evidence is under ignored `test-results/dev0256-hosted/<run-id>/`; recover only its private manifest with `npm run test:calendar-hosted -- --environment dev --cleanup /absolute/private/recovery-ids.json`. Results and performance limitations are recorded in [DEV0256](https://github.com/hworldcom/movx-work-records/blob/b49f60b2454b3de9345c395acbc08f324bcdabb3/originals/tickets/archive/backend/DEV0256-rehearse-calendar-and-availability.md).
 
