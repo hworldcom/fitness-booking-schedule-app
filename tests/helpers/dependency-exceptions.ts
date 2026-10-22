@@ -12,15 +12,6 @@ export type DependencyException = Readonly<{
 /** Exact temporary edges. Extraction owners delete their entries; unused entries fail. */
 export const dependencyExceptions: readonly DependencyException[] = [
   {
-    source: "src/server/coaches/calendar-service.ts",
-    target: "src/features/coaches/coach-calendar-model.ts",
-    kind: "type",
-    owner: "MOV-71",
-    issue: "https://linear.app/movx/issue/MOV-71",
-    reason:
-      "Calendar service results still belong to the frontend layout/access model.",
-  },
-  {
     source: "src/server/coaches/public-website-page.ts",
     target: "src/features/coaches/website/public-website-model.ts",
     kind: "runtime",

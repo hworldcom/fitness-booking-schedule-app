@@ -1,29 +1,8 @@
-import type { CoachTrainingLocation } from "@/domain/coaches";
 import type { ActorSnapshot } from "@/auth/actor-contracts";
 import type { AuthSessionSnapshot } from "@/auth/contracts";
 import { coachEventHref } from "@/features/coach-events/contract";
-import type {
-  CalendarItem,
-  CalendarPage,
-  CalendarQuery,
-} from "@/domain/coach-calendar";
-export type CoachCalendarData = Readonly<{
-  sessionTypes?: readonly import("@/domain/session-types").SessionType[];
-  scope: string;
-  actorIdentity: string;
-  locations: readonly CoachTrainingLocation[];
-  mayEditAvailability: boolean;
-  availabilityPausedReason: "profile-hidden" | "coach-suspended" | null;
-  page: CalendarPage;
-  query: CalendarQuery;
-}>;
-export type CoachCalendarResult =
-  | Readonly<{ status: "ready"; data: CoachCalendarData }>
-  | Readonly<{ status: "unavailable" | "denied" | "invalid"; message: string }>;
-export type CoachCalendarLoader = (
-  query: CalendarQuery,
-  scope: string,
-) => Promise<CoachCalendarResult>;
+import type { CalendarItem } from "@/domain/coach-calendar";
+import type { CoachCalendarData } from "@/calendar/contracts";
 export function calendarActorAccess(
   session: AuthSessionSnapshot,
   actor: ActorSnapshot,

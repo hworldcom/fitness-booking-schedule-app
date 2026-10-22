@@ -1,7 +1,7 @@
 import "server-only";
 import { ownedSessionTypes } from "@/server/db/coaches/session-type-repository";
 import { parseCalendarQuery } from "@/domain/coach-calendar";
-import type { CoachCalendarResult } from "@/features/coaches/coach-calendar-model";
+import type { CoachCalendarResult } from "@/calendar/contracts";
 import { withAuthorizedActor } from "@/server/authorization/service";
 import { currentActorProjection } from "@/server/db/authorization/repository";
 import { currentOwnedCoachProfileRecord } from "@/server/db/coaches/repository";

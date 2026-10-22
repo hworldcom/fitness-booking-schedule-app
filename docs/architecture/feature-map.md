@@ -37,6 +37,8 @@ The existing [component/browser rehearsal](../../scripts/rehearse-public-coach-s
 
 **Start:** [coach page](../../src/app/coach/page.tsx), Schedule → Availability, wires [actor-bound editor](../../src/features/coaches/availability-workspace-editor.tsx) and [AvailabilityEditor](../../src/features/coaches/availability-editor.tsx). The sibling [calendar workspace](../../src/features/coaches/coach-calendar-workspace.tsx) uses [calendar actions](../../src/app/coach/calendar-actions.ts), [service](../../src/server/coaches/calendar-service.ts) and [repository](../../src/server/db/coaches/calendar-repository.ts).
 
+Calendar data/results/loader types belong to [shared Calendar contracts](../../src/calendar/contracts.ts), consumed directly by its service, action and UI. The [calendar feature model](../../src/features/coaches/coach-calendar-model.ts) retains actor presentation gates, links, Berlin time labels and overlap lanes. Server/SQL owner and dataset checks remain authoritative.
+
 **Trace:** editor preview/save → [availability actions](../../src/app/coach/availability-actions.ts) → [availability-editor-service](../../src/server/coaches/availability-editor-service.ts) → authorized actor/scope and approved/demo visible-owner checks → [effective-availability repository](../../src/server/db/coaches/effective-availability-repository.ts). Preview and save share command validation but select different SQL entry points. Review is explicit in the UI; it is not a persisted server preview token.
 
 **Contracts/data:** [shared availability contracts](../../src/availability/contracts.ts) own service/editor data, results and action signatures. The [effective-availability domain](../../src/domain/effective-availability.ts) owns weekly/date commands, revisions, impact results and the Berlin-date helper. The [editor model](../../src/features/coaches/availability-editor-model.ts) retains draft transformations, access checks and the payload parser used by Server Actions; the service has no feature dependency. [Effective-availability SQL](../../supabase/migrations/20261016000200_effective_coach_availability.sql) owns `save_owned_effective_coach_availability` and its rollback-only `preview_owned_effective_coach_availability`; preview calls the actual save in a rolled-back subtransaction. Follow later [typed-session reconciliation](../../supabase/migrations/20261018000800_typed_private_sessions.sql) when requests span longer durations. SQL rechecks actor/dataset, locking, revisions, venues and exact retries; impact includes pending closures and retained confirmed sessions. The preview count is not a reservation against subsequent request changes.
@@ -48,6 +50,13 @@ The existing [component/browser rehearsal](../../scripts/rehearse-public-coach-s
 ```sh
 node --import tsx --test tests/availability-editor.test.ts tests/effective-availability.test.ts tests/boundaries.test.ts
 node --import tsx --conditions=react-server --test tests/server/availability-editor-actions.test.ts
+```
+
+For Calendar contract/access/layout work, also run:
+
+```sh
+node --import tsx --test tests/coach-calendar.test.ts tests/boundaries.test.ts
+node --import tsx --conditions=react-server --test tests/server/coach-calendar-actions.test.ts
 ```
 
 `node scripts/rehearse-availability-editor-ui.mjs` ([script](../../scripts/rehearse-availability-editor-ui.mjs)) checks fixture preview/review/recovery; it needs dependencies, Chrome and port 3137. [Database assertions](../../tests/database/effective-availability.test.ts) require an explicit loopback `DATABASE_TEST_URL`, migrations and runtime role; the current [weekly scratch rehearsal](../../scripts/rehearse-session-week-database.mjs) includes them. Use it for isolated database coverage rather than assuming a fixture proves rollback/authority. [README checks](../../README.md#checks) distinguish hosted `--check` readiness from `--run` rehearsal and describe exact fixture cleanup. Keep retained data under [§8](../mvp-spec.md#8-identity-data-and-demo-integrity).

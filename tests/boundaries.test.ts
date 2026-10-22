@@ -230,6 +230,57 @@ test("Events services cannot restore any of their former frontend dependencies",
   }
 });
 
+test("Calendar contracts stay type-only and its service cannot regain feature dependencies", () => {
+  const file = "src/server/coaches/calendar-service.ts";
+  const target = "src/features/coaches/coach-calendar-model.ts";
+  const service = graph.get(file)!;
+  assert.ok(service);
+  assert.ok(!dependencyExceptions.some((entry) => entry.source === file));
+  assert.ok(
+    service.imports.every((edge) => !edge.target?.startsWith("src/features/")),
+  );
+
+  const contracts = "src/calendar/contracts.ts";
+  const source = ts.createSourceFile(
+    contracts,
+    readFileSync(path.join(root, contracts), "utf8"),
+    ts.ScriptTarget.Latest,
+    true,
+  );
+  for (const statement of source.statements) {
+    assert.ok(
+      ts.isTypeAliasDeclaration(statement) ||
+        (ts.isImportDeclaration(statement) &&
+          statement.importClause?.isTypeOnly),
+      "Calendar contracts may only contain type declarations and type imports",
+    );
+  }
+  for (const edge of graph.get(contracts)!.imports) {
+    assert.equal(edge.kind, "type");
+    assert.ok(edge.target?.startsWith("src/domain/"));
+  }
+
+  const changed = new Map(graph);
+  changed.set(file, {
+    ...service,
+    imports: [
+      ...service.imports,
+      {
+        specifier: "@/features/coaches/coach-calendar-model",
+        target,
+        kind: "type",
+        syntax: "import",
+        line: 1,
+        external: false,
+        asset: false,
+      },
+    ],
+  });
+  assert.deepEqual(dependencyViolations(changed, dependencyExceptions), [
+    `[reverse] ${file}:1 imports unapproved ${file} -> ${target} (type)`,
+  ]);
+});
+
 test("privileged scheduling entry points carry the server-only marker", () => {
   for (const relative of [
     "src/server/db/client.ts",
