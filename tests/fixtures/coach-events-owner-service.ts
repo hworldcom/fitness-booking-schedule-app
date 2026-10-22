@@ -1,10 +1,7 @@
 // Explicit UI-only service fixture. This is not database/Auth validation.
 import "server-only";
 import { readFileSync, writeFileSync } from "node:fs";
-import type {
-  CoachEventContext,
-  OwnerMutation,
-} from "@/features/coach-events/contract";
+import type { CoachEventContext, OwnerMutation } from "@/events/contracts";
 import type {
   GroupCursor,
   GroupSession,

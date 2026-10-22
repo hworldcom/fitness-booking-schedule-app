@@ -9,12 +9,12 @@ import {
 import {
   coachEventHref,
   ownerIssueMessage,
-  type CoachEventContext,
   type DraftFormState,
   type DraftValues,
   berlinLocalInstant,
   berlinLocalInput,
 } from "./contract";
+import type { CoachEventContext } from "@/events/contracts";
 
 function Submit({ children }: { children: string }) {
   const { pending } = useFormStatus();

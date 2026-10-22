@@ -5,14 +5,16 @@ import { renderToStaticMarkup } from "react-dom/server";
 import type { GroupSession } from "@/domain/group-sessions";
 import {
   appendEventPage,
-  compareEventCursors,
   eventDirectoryHref,
   eventMapPoints,
   fetchEventPage,
+} from "@/features/events/directory-contract";
+import {
+  compareEventCursors,
   parseEventDirectory,
   parseEventDirectoryPage,
-  type EventDirectoryPage,
-} from "@/features/events/directory-contract";
+} from "@/events/parsers";
+import type { EventDirectoryPage } from "@/events/contracts";
 import { visibleEventCover } from "@/features/events/event-card-cover";
 import { EventCard } from "@/features/events/event-ui";
 import { layoutLocationMapMarkers } from "@/location/marker-layout";

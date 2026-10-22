@@ -7,9 +7,9 @@ import { parseGroupSessionResult } from "@/domain/group-sessions";
 import {
   eventHref,
   eventIssueMessage,
-  eventIdFromSlug,
   unavailableJoinReason,
 } from "@/features/events/event-contract";
+import { eventIdFromSlug } from "@/events/parsers";
 import {
   EventStatus,
   EventTerms,

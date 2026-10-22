@@ -182,6 +182,54 @@ test("availability service and shared contracts preserve their dependency bounda
   }
 });
 
+test("Events services cannot restore any of their former frontend dependencies", () => {
+  for (const entry of dependencyExceptions) {
+    assert.ok(
+      !entry.source.startsWith("src/server/group-sessions/"),
+      `Events services must not regain a feature exception: ${entry.source}`,
+    );
+  }
+  for (const [file, source] of graph) {
+    if (!file.startsWith("src/server/group-sessions/")) continue;
+    for (const edge of source.imports)
+      assert.ok(!edge.target?.startsWith("src/features/"), file);
+  }
+
+  // Mutate only the in-memory graph. Each former edge must independently fail
+  // against the actual source and remaining non-Events exceptions.
+  const formerEdges = [
+    ["directory-service", "events/event-contract", "runtime"],
+    ["directory-service", "events/directory-contract", "runtime"],
+    ["banner-service", "events/event-contract", "runtime"],
+    ["participation-action", "events/event-contract", "runtime"],
+    ["owner-service", "coach-events/contract", "type"],
+  ] as const;
+  for (const [service, feature, kind] of formerEdges) {
+    const file = `src/server/group-sessions/${service}.ts`;
+    const target = `src/features/${feature}.ts`;
+    const changed = new Map(graph);
+    const source = graph.get(file)!;
+    changed.set(file, {
+      ...source,
+      imports: [
+        ...source.imports,
+        {
+          specifier: `@/features/${feature}`,
+          target,
+          kind,
+          syntax: "import",
+          line: 1,
+          external: false,
+          asset: false,
+        },
+      ],
+    });
+    assert.deepEqual(dependencyViolations(changed, dependencyExceptions), [
+      `[reverse] ${file}:1 imports unapproved ${file} -> ${target} (${kind})`,
+    ]);
+  }
+});
+
 test("privileged scheduling entry points carry the server-only marker", () => {
   for (const relative of [
     "src/server/db/client.ts",

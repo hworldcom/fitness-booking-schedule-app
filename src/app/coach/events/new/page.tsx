@@ -2,7 +2,7 @@ import Link from "next/link";
 import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { signInHref } from "@/auth/return-to";
-import type { EventSearch } from "@/features/events/event-contract";
+import type { EventSearch } from "@/events/contracts";
 import { draftValues, ownerEventId } from "@/features/coach-events/contract";
 import { CoachEventsAccess } from "@/features/coach-events/access";
 import { CoachEventDraftForm } from "@/features/coach-events/forms";

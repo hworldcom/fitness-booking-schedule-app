@@ -9,8 +9,8 @@ import {
   groupHistoryCursor,
   groupHistoryHref,
   registrationStatus,
-  type EventSearch,
 } from "@/features/events/event-contract";
+import type { EventSearch } from "@/events/contracts";
 import {
   EventStatus,
   EventTerms,

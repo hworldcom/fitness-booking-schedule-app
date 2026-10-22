@@ -7,11 +7,8 @@ import type {
 } from "@/domain/group-sessions";
 import { EventStatus, EventTerms } from "@/features/events/event-ui";
 import { eventDate, eventHref } from "@/features/events/event-contract";
-import {
-  coachEventHref,
-  ownerPageHref,
-  type CoachEventContext,
-} from "./contract";
+import { coachEventHref, ownerPageHref } from "./contract";
+import type { CoachEventContext } from "@/events/contracts";
 import { CoachEventDecisionForm } from "./forms";
 import "@/features/events/events.css";
 import "./coach-events.css";

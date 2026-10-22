@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signInHref } from "@/auth/return-to";
-import { eventDate, type EventSearch } from "@/features/events/event-contract";
+import { eventDate } from "@/features/events/event-contract";
+import type { EventSearch } from "@/events/contracts";
 import { EventStatus } from "@/features/events/event-ui";
 import {
   coachEventHref,
