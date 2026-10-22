@@ -9,11 +9,11 @@ import {
 } from "react";
 import { CoachAvailabilityPanel } from "@/features/coaches/coach-availability-panel";
 import { AvailabilityEditor } from "@/features/coaches/availability-editor";
-import {
-  applyAvailabilityCommand,
-  type AvailabilityEditorActions,
-  type AvailabilityEditorData,
-} from "@/features/coaches/availability-editor-model";
+import { applyAvailabilityCommand } from "@/features/coaches/availability-editor-model";
+import type {
+  AvailabilityEditorActions,
+  AvailabilityEditorData,
+} from "@/availability/contracts";
 import type {
   EffectiveAvailabilityCommand,
   EffectiveAvailabilityResult,

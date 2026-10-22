@@ -1,96 +1,56 @@
 # AGENTS.md instructions for Social Fitness
 
-> **Work tracking is in [Linear, team MOV](https://linear.app/movx/team/MOV/all).** Use live issues/projects for planning and evidence; find historical Markdown through the [work-record guide](docs/work-records.md). The [ticket categories](#ticket-categories) include `database` as a separate primary area.
+> **Work tracking is in [Linear, team MOV](https://linear.app/movx/team/MOV/all).** Product requirements are in the [MVP specification](docs/mvp-spec.md).
 
 ## Document ownership and project context
 
-- Use [README.md](README.md) for setup and commands and the [task-focused discovery sequence](#task-focused-discovery) for source navigation. Consult the relevant sections of [the MVP specification](docs/mvp-spec.md), the single current product contract for scope, behavior, architecture, [milestones](docs/mvp-spec.md#12-delivery-milestones), and [acceptance scenarios](docs/mvp-spec.md#13-acceptance-matrix), together with all applicable cross-cutting requirements below.
-- This `AGENTS.md` is the authoritative contributor/workflow policy. The [work-record guide](docs/work-records.md) links to these rules; archived templates supply record fields, not a separate policy.
-- The [work-record guide](docs/work-records.md) links to live Linear development issues/coordination projects and the preserved Markdown archive. Development issues record the scope and evidence for individual changes; projects group peers without authorizing implementation. Neither is an alternative product contract. Update the specification in the same change when a development ticket changes overall product behavior or design.
-- Keep confirmed user constraints distinct from proposed implementation defaults as described in the specification. Record adopted choices and reasons in the relevant ticket; do not silently treat proposals as user decisions.
-- The [completed ticket archive](https://github.com/hworldcom/movx-work-records/tree/b49f60b2454b3de9345c395acbc08f324bcdabb3/originals/tickets/archive) is historical context and does not override the current specification or workflow. Preserve completed records; use a new current ticket for changes. The user-authorized documentary pruning in [DEV0225](https://github.com/hworldcom/movx-work-records/blob/b49f60b2454b3de9345c395acbc08f324bcdabb3/originals/tickets/archive/organisatory/DEV0225-remove-blockchain-historical-evidence.md) is a specific exception for its recorded removal manifest; removed IDs remain permanently unavailable.
-- README is navigation and future setup instructions. Link to current requirements instead of copying them into README, agent instructions, or a new plan.
+This file is the authoritative contributor/workflow policy. It delegates mandatory procedures to [docs/work-records.md](docs/work-records.md#when-these-procedures-apply): read the relevant section **before its triggering action**. References do not weaken obligations; archives/guides cannot override current policy or product requirements.
+
+Use [README](README.md) for setup/commands and the [feature map](docs/architecture/feature-map.md) for discovery. The MVP specification is the single product contract; update it with behavior/design changes. Distinguish confirmed user constraints from proposed defaults; record adopted choices/reasons in the issue. Issues own scope/evidence; coordination projects group peers without authorizing implementation.
 
 ## Task-focused discovery
 
-1. Read the live Linear issue and these contributor rules. For unfamiliar architecture, use the [overview](docs/architecture/overview.md); otherwise start with the relevant [feature-map entry](docs/architecture/feature-map.md).
-2. Inspect the linked source and tests. Determine whether requested behavior already exists, distinguish static evidence from runtime proof, and verify that the map is current.
-3. Read and apply the relevant MVP-specification sections and applicable security, authorization, data-integrity, acceptance and recovery requirements. The map does not replace the specification or relax any policy below. Expand discovery when dependencies, uncertainty or risk cross the initial capability.
-4. Record affected components/contracts and meaningful validation in the issue before editing; follow the existing framework/SDK and bundled Next.js documentation requirements when changing integration code.
-
-When a change moves a documented entry point, ownership/SQL boundary, validation command or prerequisite, update the affected architecture-map entries in the same change. Keep these guides concise; product requirements remain in the specification and implementation evidence remains in Linear.
+1. Read the live Linear issue and these rules. Start with the relevant feature-map entry, source and tests; consult the overview if needed.
+2. Determine whether requested behavior already exists. Distinguish static evidence from runtime proof and verify the map is current.
+3. Apply relevant MVP requirements and all applicable security, authorization, data-integrity, acceptance and recovery rules. Expand discovery when risk, uncertainty or dependencies cross the initial capability.
+4. Record affected components/contracts, the plan and meaningful validation before editing. Update the affected map entries when entry points, ownership/SQL boundaries, test commands or prerequisites move.
 
 ## Ticket before implementation
 
-- Every implementation must have a **development issue** in the [movx Linear team](https://linear.app/movx/team/MOV/all) **before the first implementation edit**. This includes scaffolding, features, fixes, refactors, dependencies, configuration, migrations, tests, and documentation changes. Read-only investigation may precede an issue. Use the connected Linear tools to search, read, create and update records; verify the workspace/team before writing. If write access is unavailable, record the blocker and continue only independent read-only work.
-- Search for an existing issue by its MOV identifier, legacy DEV identifier or scope before creating one. A development issue owns one small, reviewable task or vertical slice, its implementation/validation evidence and commit reference. New work uses Linear's native `MOV-<number>` identifier. Do not create new repository Markdown tickets or allocate new DEV/COR numbers; see [work-record navigation and ID continuity](docs/work-records.md).
-- Use a **Linear project** for non-implementation coordination. It groups peer development issues, maps work and records integration evidence; it does not authorize implementation independently and its identifier is never used in commit subjects. Existing imported coordination projects retain their COR IDs in their titles.
-- Put a `Coordination` field in the opening issue metadata: one linked Linear project when the issue directly implements that project, otherwise `None — independent development issue`. Set the native project membership to the same project. An issue belongs directly to at most one project. Dependencies, downstream consumers, follow-ups and historical baselines go in `Related records` and do not imply membership. The project's work map and each direct issue's field must agree.
-- Keep work flat by default: at most one coordination-project-to-development-issue level. Peer issues may depend on one another; avoid child implementation hierarchies. Record a concrete reason before using a deeper hierarchy as an exception.
-- Review a proposed development issue before implementation. If delivering its outcome requires several implementation issues, preserve its planning history, create a coordination project with a `Converted from` issue link and fresh peer issues, then cancel the unimplemented original with its replacement links. Never reuse its identifier. If implementation evidence or a commit already exists, preserve the original issue and its owned scope; create a separate project and peers instead of rewriting implementation history.
-- A coordination project must map every implementation part, boundary or deliverable to exactly one direct development issue. Label other links as dependencies, downstream consumers, follow-ups or historical baselines; a flat `Related records` list is insufficient when the relationship affects ownership or delivery. State delivery order, start conditions, independent branches, blockers and completion conditions. Identify required issues not yet created; do not implement their scope under the project as a substitute.
-- Choose exactly one primary implementation-area label using the [ticket categories](#ticket-categories). Link cross-cutting dependencies instead of duplicating issues.
-- Before implementation, write the objective, scope, non-goals, expected behavior, edge cases, assumptions, dependencies, implementation plan, testable acceptance criteria, and validation plan. Include status, dates, milestone, Coordination and Related records metadata. Link the relevant specification section and milestone when applicable. The [preserved templates](https://github.com/hworldcom/movx-work-records/tree/main/originals/tickets) supply record fields; adapt their old filesystem/ID examples to this external workflow.
-- An implementation plan in chat, a milestone heading, a commit message, or a pull request is not a substitute for the issue.
-- Update the issue's scope and plan **before** implementing a material change of approach or behavior. Preserve the reason in its implementation record. Create linked issues for unrelated work.
-- Mark the issue `In Progress` when implementation starts. Mark a project `In Progress` when active coordination begins. Keep an accurate handoff record if work stops partway through.
+Every implementation, including documentation/tests/configuration/refactors, needs a live MOV development issue **before the first edit**; read-only investigation may precede it. Use connected Linear tools, verify workspace/team before writing and search by MOV/legacy ID or scope before creating issues. If writes are unavailable, record the blocker and continue only independent read-only work. Chat plans, milestones, commits and PRs are not substitutes.
+
+Before editing, confirm the issue has complete planning metadata, scope/plan and acceptance/validation criteria. Read [issue creation and scope](docs/work-records.md#issue-creation-and-scope) before creating/rescoping issues or filling missing/uncertain planning details. Keep one issue per scope and preserve completed history; later changes need new linked issues. No repository Markdown tickets or new DEV/COR IDs.
 
 ### Ticket categories
 
-Use these Linear area labels for future development issues:
+Choose exactly one primary area by deliverable: `frontend`, `backend`, `database` or `organisatory`. Read the [category definitions](docs/work-records.md#ticket-categories) before classification/reclassification. Before projects, dependency links, splits, conversions or coordination membership changes, follow [coordination and conversion](docs/work-records.md#coordination-and-conversion); project IDs never substitute for development issue IDs.
 
-| Category       | Primary scope                                                                                                                              |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `frontend`     | Screens, routes, navigation, browser behavior, accessibility and interface validation.                                                     |
-| `backend`      | Application APIs, authentication, server services, integrations, jobs and data-access adapters consuming database contracts.               |
-| `database`     | Schema and migrations, SQL queries/functions, constraints, indexes, database permissions, seed data, query tuning and database validation. |
-| `organisatory` | Contributor workflow, documentation/repository structure and cross-cutting consolidation.                                                  |
+## Reference triggers
 
-Choose by the main deliverable rather than its directory. For example, a new index, row-level security policy or SQL query optimization is `database`; an API endpoint or service consuming an unchanged database contract is `backend`. Keep one primary area for a small cross-cutting issue, explain the choice, and create linked peer issues when the work needs separate reviewable scopes. Use `blockchain` only for separately authorized chain-specific work.
+The reading triggers below do not change which rules apply.
 
-Preserve legacy identifiers and archived records. Reclassify an existing open issue only after reviewing its scope and recording the category decision in the development issue that owns the review. Category changes do not change product requirements.
-
-## Ticket lifecycle and continuity
-
-| Workflow meaning | Linear representation              | Completion boundary                                                                                                       |
-| ---------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Draft            | Backlog + `Draft` label            | Planning is incomplete; implementation has not started.                                                                   |
-| Ready            | Todo, without Draft/Blocked labels | Scope and validation are clear, dependencies permit starting, and work is authorized. This is not an extra approval gate. |
-| In progress      | In Progress                        | Implementation or required validation is underway.                                                                        |
-| Blocked          | Todo + `Blocked` label             | Record the specific dependency/decision/environment blocker and next action in the issue.                                 |
-| Completed        | Done                               | All acceptance criteria and required validation passed; implementation/review evidence is complete.                       |
-| Cancelled        | Canceled                           | Preserve the reason, partial changes and replacement links.                                                               |
-
-- Keep the status, workflow labels and last-updated metadata accurate. Remove Draft/Blocked labels when they no longer apply. Keep projects Planned until coordination begins and In Progress until their integration criteria pass. Completion does not imply deployment or independent review; record those separately. A merge alone never establishes Done.
-- Link projects, dependencies, peers and follow-ups with stable Linear URLs; link historical Markdown records through the private archive. Development issues own their implementation/validation evidence. Projects summarize status, decisions and integration evidence without duplicating issue records. Keep a project open until every direct issue is Done or explicitly Canceled/replaced and the project's own integration criteria pass. Downstream work blocks coordination only when its work map assigns part of the required outcome to it.
-- Maintain one live Linear issue per development scope. Do not copy or recreate it because its status or primary area changes. Finished records stay accessible in Linear; completed pre-migration Markdown remains in the private archive. Do not delete old issues to manage the Free-plan quota. Archiving/plan changes require an explicit follow-up if needed.
-- Retain completed evidence as history. Use a new linked issue for later behavior changes and dated corrections; do not reopen or silently rewrite completed historical records. The user-authorized external preservation under DEV0406–DEV0408 relocates the Markdown; it does not discard its evidence.
-- When work pauses, record what exists, what was verified, what is incomplete, and the next action.
-- For a small task, concise entries are enough. Use `Not applicable — <reason>` for irrelevant fields; never omit what changed and how it was verified.
+| Action                                                                          | Read before the action                                                                                                                                                                                            |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Routine start/status or ordinary evidence update                                | Root minimum; detailed guide only for unclear fields/status or nonroutine evidence                                                                                                                                |
+| Missing issue, creation, material rescope or missing/uncertain planning         | [Issue creation/scope](docs/work-records.md#issue-creation-and-scope); [conversion](docs/work-records.md#coordination-and-conversion) if splitting work                                                           |
+| Every completion or cancellation                                                | [Lifecycle/closure](docs/work-records.md#ticket-lifecycle-and-continuity) and [validation/completion](docs/work-records.md#validation-and-completion)                                                             |
+| Projects, dependencies, splits/conversions, coordination or reclassification    | [Coordination](docs/work-records.md#coordination-and-conversion), [categories](docs/work-records.md#ticket-categories) and affected issue metadata                                                                |
+| Failed/blocked checks, unclear fields/status, disputed scope or complex handoff | Relevant [record fields](docs/work-records.md#required-implementation-record), [lifecycle](docs/work-records.md#ticket-lifecycle-and-continuity) and [validation](docs/work-records.md#validation-and-completion) |
+| Booking/availability/authentication/authorization/privacy/retained data         | Relevant MVP sections linked below and the feature-map/source boundaries; database guidance if SQL/data is affected                                                                                               |
+| SQL/migrations, DB fixtures, hosted or destructive operations                   | Applicable [database guide](supabase/README.md) setup/authority/recovery sections and rehearsal target/cleanup instructions                                                                                       |
+| Test selection/execution or framework/SDK integration changes                   | README/package scripts and feature-map prerequisites; installed version and relevant bundled documentation before integration edits                                                                               |
 
 ## Planning and implementation
 
-- Plan first, implement second, and review against acceptance criteria last. These are responsibilities, not separate roles the user must select.
-- Work within the user's requested outcome. A request to implement a change authorizes writing its ticket and performing the necessary work; do not ask again merely because a ticket was created.
-- Resolve routine implementation choices using project context and record significant decisions. If an unresolved product question materially affects behavior or scope, clarify that point while continuing independent work.
-- Keep changes focused on the active ticket. Preserve unrelated edits and prefer existing shared modules and components over duplicated logic.
-- Before changing framework or SDK integration code, inspect the installed version and its documentation. Once Next.js is installed, read relevant bundled documentation when available; verify current Solana APIs when implementing the payment adapter.
-- Use relevant available skills for their intended tasks. Other projects' skills and architecture rules do not automatically apply here.
+Plan, implement, then review against acceptance criteria; the user need not select roles. An implementation request authorizes its ticket and necessary work; do not ask again merely because a ticket exists. Resolve routine choices from context, record significant decisions and clarify material product questions while continuing independent work.
 
-## Required implementation record
+Keep changes within the issue, preserve unrelated edits and prefer existing shared modules/components. Update scope/plan **before** material approach/behavior changes; unrelated work needs linked issues. Use relevant skills; other projects' rules do not automatically apply. Before framework/SDK integration changes, inspect installed versions and relevant documentation, including bundled Next.js guidance below.
 
-Update the development ticket during implementation and finish its record before reporting completion. A developer who has not seen the conversation must be able to determine:
-
-- **What changed:** the previous behavior or missing capability and the resulting behavior, with concrete examples when useful.
-- **Where it changed:** repository-relative links (or stable GitHub links in Linear) to the important files, modules, routes, schemas, migrations, or configuration, with each file's role. Explain relevant behavior, not just a list of filenames.
-- **Why it changed:** the rationale, significant decisions, tradeoffs, and deviations from the original plan. Do not rewrite earlier decisions to hide a change of direction.
-- **What contracts changed:** affected data shapes, interfaces, dependencies, environment variables, setup steps, migration/rollback requirements, and compatibility implications. State when none apply; never record secrets.
-- **How it was verified:** exact commands and results, relevant environment or prerequisites, manual steps and observed outcomes, and evidence mapped to acceptance criteria. Distinguish passed, failed, blocked, and not-run checks; explain omissions.
-- **What remains:** known risks, limitations, unresolved questions, and linked follow-up tickets. A follow-up does not make an unmet acceptance criterion complete.
-
-Use the development ticket's implementation record and validation results as the durable review trail. Supporting screenshots, logs, commits, and pull requests may be linked, but the ticket itself must explain the result. Avoid entries such as “implemented as discussed,” “fixed issues,” or “tests pass” without specifics. A coordination record links these ticket records and adds only cross-ticket status, decisions and integration evidence.
+Preserve actor/owner/dataset permissions, privacy, transaction/retry/idempotency and recovery contracts from the specification. A failed read is not verified empty data; an uncertain write is not proof of failure. Client state/preview grants no server/database authority.
 
 ## Product requirements
+
+Implement against the relevant [scheduling state](docs/mvp-spec.md#5-scheduling-state-model), [booking/recovery](docs/mvp-spec.md#7-requests-booking-and-recovery), [identity/data](docs/mvp-spec.md#8-identity-data-and-demo-integrity) and [permissions](docs/mvp-spec.md#9-scheduling-behavior-and-permissions) requirements. Use the [confirmed decisions](docs/mvp-spec.md#2-confirmed-target-and-decisions), [definition of done](docs/mvp-spec.md#11-definition-of-done) and [acceptance matrix](docs/mvp-spec.md#13-acceptance-matrix). Keep product rules there rather than copying them into navigation or plans.
 
 ### Retained demo coach data
 
@@ -98,33 +58,31 @@ Use the development ticket's implementation record and validation results as the
 - Normal startup performs no demo provisioning. Manual demo setup creates missing fresh accounts only; missing/old initialization markers never authorize changing an existing account or filling its cleared/empty content. Use disposable datasets or uniquely tagged temporary accounts for tests.
 - A future change to retained demo data requires an explicit user request and a development ticket naming the exact records, intended changes and preservation/validation evidence. Owner-requested edits and individual account recovery remain ordinary product behavior. Do not use a reset or credential rotation to repair a login without that authorization.
 
-Implement against the specification's [scheduling state model](docs/mvp-spec.md#5-scheduling-state-model), [booking and recovery](docs/mvp-spec.md#7-requests-booking-and-recovery), [identity, data and demo integrity](docs/mvp-spec.md#8-identity-data-and-demo-integrity), and [scheduling behavior and permissions](docs/mvp-spec.md#9-scheduling-behavior-and-permissions). Use its [confirmed decision register](docs/mvp-spec.md#2-confirmed-target-and-decisions), [definition of done](docs/mvp-spec.md#11-definition-of-done) and [acceptance matrix](docs/mvp-spec.md#13-acceptance-matrix) to select checks. Keep the requirements in that document rather than restating them here.
-
 ## Validation and definition of done
 
-- Choose validation that proves the ticket's acceptance criteria. Add or update meaningful tests for changed logic, state transitions, authorization, concurrency, and recovery; avoid tests that only mirror the implementation.
-- Run relevant existing tests, lint, type checks, and builds as appropriate to the affected code. The application foundation ticket must establish actual commands and document them in the README; do not claim scripts exist before they do.
-- For interface changes, verify the affected flow at mobile and desktop widths, including keyboard use and relevant error states. For database changes, validate migrations and constraints. Payment simulation tests do not replace the required real devnet rehearsal.
-- Documentation-only work normally needs link and consistency checks, not application tests. Record why a check is not applicable.
-- Before completion, review the changed files against the ticket, resolve accidental scope expansion, update the implementation record, and account for every acceptance criterion.
-- Mark a ticket Done (Completed) only when its acceptance criteria and required validation have passed and its implementation record is complete. If required evidence is missing, keep it In Progress or mark it Blocked and state the exact remaining work.
-- Update the Linear issue/project and relevant project documentation in the same change. Follow the commit rule below, include the development-ticket ID in pull requests when created, and add review references to the development ticket when available. Do not commit or publish solely to fill a reference field.
-- Final handoff must link the ticket and summarize the outcome, validation, and material limitations. Do not claim deployment or external review merely because local implementation is complete.
+Prove acceptance criteria with meaningful tests for changed logic, state transitions, authorization, concurrency and recovery; avoid implementation-mirroring tests. Run relevant existing tests, lint, type checks and builds as appropriate, using actual README/package commands and prerequisites. Interface changes require mobile/desktop, keyboard and error-state checks; database changes require migration/constraint validation. Documentation-only changes normally need link/consistency checks; explain inapplicable application checks.
+
+Focused checks are a starting point, not permission to omit required final validation. Select actual checks and prerequisites from README/package scripts and the relevant feature-map entry. Before SQL, migrations, DB fixtures, hosted or destructive operations, read the applicable [database setup/fixtures](supabase/README.md#local-development-and-database-tests), [runtime authority](supabase/README.md#runtime-authority) or [hosted recovery](supabase/README.md#hosted-changes-and-recovery) guidance and the rehearsal's target/cleanup instructions. Establish environment/fixture isolation and preserve retained data. Fixture/static checks do not establish live browser/Auth/SQL proof.
+
+## Required implementation record
+
+Update the issue during implementation and finish evidence before reporting completion. For ordinary entries, this root minimum suffices: explain what changed; files and roles; why/decisions; affected contracts, environment/setup, migration/rollback and compatibility; exact checks/commands, prerequisites and observed outcomes; acceptance coverage and remaining risks/work. Use concise justified `Not applicable` fields. Distinguish passed/failed/blocked/skipped/not-run checks, explain omissions, link evidence and omit secrets. Follow-ups cannot satisfy unmet acceptance criteria. Final handoff links the issue and summarizes outcome, validation and limitations.
+
+Detailed [record fields](docs/work-records.md#required-implementation-record) and [validation/completion rules](docs/work-records.md#validation-and-completion) remain binding. Read them for unclear fields, unusual failed/blocked validation, disputed scope or complex handoffs; ordinary evidence updates do not require rereading the guide.
+
+## Ticket lifecycle and continuity
+
+Routine start/status updates use this root minimum: start implementation as In Progress, keep status/dates/labels accurate and remove obsolete Draft/Blocked labels. On pause, record what exists, verified work, remaining work and next action. Preserve historical evidence/links. Read [lifecycle and continuity](docs/work-records.md#ticket-lifecycle-and-continuity) before unclear/nonroutine state changes, blocking or complex handoffs.
+
+**Every closure or cancellation** requires reading [lifecycle and continuity](docs/work-records.md#ticket-lifecycle-and-continuity) and [validation/completion](docs/work-records.md#validation-and-completion), plus the evidence fields if unclear. Done requires all acceptance criteria, required validation and the full implementation record complete. A merge proves neither Done nor deployment/external review. Project completion also requires its own integration criteria and all direct work resolved.
 
 ## Commit rule
 
-- Create commits when the user asks to commit or earlier user authorization already covers committing the work.
-- **Every commit subject must include the relevant development issue ID.** New issues use `[MOV-<number>] Imperative summary`. Existing imported DEV work keeps `[DEVNNNN] Imperative summary`, preserving the prefix and four digits; also link its MOV issue in the pull request. Mentioning the ID only in the commit body is insufficient. Do not assign a new MOV issue merely to rename existing DEV scope.
-- **Never include a coordination/project identifier in a commit subject.** If a commit updates a coordination record, reference the development ticket that owns the concrete change. A standalone coordination or workflow edit needs its own development ticket before it is committed.
-- Prefer one development ticket per commit. If a commit necessarily covers multiple development tickets, include each implemented ticket number in the subject. Do not add dependencies, downstream tickets or coordination records merely because they are linked.
-- Finish each referenced Linear issue's implementation record and validation results before committing; include the issue URL in the commit body or pull request so its external evidence is reviewable. Before committing, check that the staged changes match only the referenced development tickets and that the subject contains the correct development-ticket IDs.
+Commit only when the user asks or existing authorization covers it. Before committing or preparing a PR, read the [commit procedure](docs/work-records.md#commit-procedure). Each subject includes the owning development ID: `[MOV-<number>] Imperative summary`, or existing imported `[DEVNNNN]` scope. Never use project/coordination IDs. Finish issue evidence first, check staged scope and link the issue in the commit body or PR; do not commit/publish solely to fill a reference.
 
 ## Writing style
 
-- Write direct, concrete notes for future developers. Explain necessary acronyms on first use.
-- Write for readers who have not seen the conversation and do not assume they already know project-specific terminology. Define an unfamiliar term in plain language at first use and distinguish it from likely everyday or technical meanings when confusion is possible; for example, explain that a `demo run` is an isolated demonstration dataset, not a fitness activity or login session. Established code or schema identifiers may remain unchanged when the surrounding text explains them clearly.
-- Keep planning intent distinct from implementation evidence and distinguish facts from assumptions.
-- Maintain enough detail to review or continue the work without reconstructing conversation history.
+Write concrete notes for readers without this conversation. Define unfamiliar terms/acronyms, separate intent from evidence and facts from assumptions, and give enough context to review/continue work. Explain ambiguous project terms; a `demo run` is an isolated demonstration dataset, not a workout or login session. [Writing guidance](docs/work-records.md#writing-for-developers) supplies detailed examples when terminology/record requirements are unclear.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

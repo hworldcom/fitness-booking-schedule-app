@@ -171,6 +171,29 @@ test("source imports respect domain, client, server and feature boundaries", () 
   assert.deepEqual(violations, []);
 });
 
+test("availability service and shared contracts preserve their dependency boundaries", () => {
+  const service = path.join(
+    src,
+    "server/coaches/availability-editor-service.ts",
+  );
+  for (const specifier of imports(service)) {
+    const target = resolveImport(service, specifier);
+    assert.ok(
+      !target || !within(target, path.join(src, "features")),
+      `availability service imports ${specifier} from src/features`,
+    );
+  }
+
+  const contracts = path.join(src, "availability/contracts.ts");
+  for (const specifier of imports(contracts)) {
+    const target = resolveImport(contracts, specifier);
+    assert.ok(
+      target && within(target, path.join(src, "domain")),
+      `availability contracts import ${specifier} outside src/domain`,
+    );
+  }
+});
+
 test("privileged scheduling entry points carry the server-only marker", () => {
   for (const relative of [
     "src/server/db/client.ts",

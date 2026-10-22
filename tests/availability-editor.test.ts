@@ -4,14 +4,16 @@ import {
   applyAvailabilityCommand,
   availabilityActorAccess,
   availabilityMonth,
-  berlinAvailabilityDate,
   copyAvailabilityDay,
   parseAvailabilityCommand,
   rangesFromHours,
   weeklyHours,
   weeklyRanges,
 } from "@/features/coaches/availability-editor-model";
-import type { EffectiveAvailabilityPolicy } from "@/domain/effective-availability";
+import {
+  berlinAvailabilityDate,
+  type EffectiveAvailabilityPolicy,
+} from "@/domain/effective-availability";
 import type { ActorSnapshot } from "@/auth/actor-contracts";
 import type { AuthSessionSnapshot } from "@/auth/contracts";
 

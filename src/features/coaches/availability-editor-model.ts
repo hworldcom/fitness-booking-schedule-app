@@ -1,8 +1,8 @@
 import type {
   CoachAvailabilityIsoWeekday,
   CoachAvailabilityRuleInput,
-  CoachTrainingLocation,
 } from "@/domain/coaches";
+import type { AvailabilityEditorData } from "@/availability/contracts";
 import type { ActorSnapshot } from "@/auth/actor-contracts";
 import type { AuthSessionSnapshot } from "@/auth/contracts";
 import {
@@ -11,7 +11,6 @@ import {
   type AvailabilityHour,
   type EffectiveAvailabilityCommand,
   type EffectiveAvailabilityPolicy,
-  type EffectiveAvailabilityResult,
 } from "@/domain/effective-availability";
 
 export const AVAILABILITY_DAYS = [
@@ -31,13 +30,6 @@ export type AvailabilityRange = Readonly<{
   locationUpdatedAt: string;
 }>;
 export type WeeklyRangeDraft = readonly (readonly AvailabilityRange[])[];
-export type AvailabilityEditorData = Readonly<{
-  scope: string;
-  actorIdentity: string;
-  policy: EffectiveAvailabilityPolicy;
-  locations: readonly CoachTrainingLocation[];
-  today: string;
-}>;
 export function availabilityActorAccess(
   session: AuthSessionSnapshot,
   actor: ActorSnapshot,
@@ -56,35 +48,6 @@ export function availabilityActorAccess(
     ["approved", "demo"].includes(actor.coachAccessStatus)
     ? "allowed"
     : "denied";
-}
-export type AvailabilityLoadResult =
-  | Readonly<{ status: "ready"; data: AvailabilityEditorData }>
-  | Readonly<{ status: "unavailable" | "denied"; message: string }>;
-export type AvailabilityActionResult =
-  | Readonly<{ status: "ready"; result: EffectiveAvailabilityResult }>
-  | Readonly<{ status: "invalid"; message: string }>
-  | Readonly<{ status: "unavailable"; message: string }>
-  | Readonly<{ status: "denied"; message: string }>;
-export type AvailabilityEditorActions = Readonly<{
-  load: (
-    from: string,
-    through: string,
-    scope: string,
-  ) => Promise<AvailabilityLoadResult>;
-  change: (
-    command: EffectiveAvailabilityCommand,
-    scope: string,
-    preview: boolean,
-  ) => Promise<AvailabilityActionResult>;
-}>;
-
-export function berlinAvailabilityDate(now: Date) {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/Berlin",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(now);
 }
 export function availabilityMonth(date: string) {
   const [year, month] = date.split("-").map(Number);
