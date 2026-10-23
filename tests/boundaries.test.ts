@@ -281,6 +281,71 @@ test("Calendar contracts stay type-only and its service cannot regain feature de
   ]);
 });
 
+test("public website ownership rejects the former feature edge and client group loading", () => {
+  const page = "src/server/coaches/public-website-page.ts";
+  const loader = "src/server/coaches/public-website-groups.ts";
+  for (const file of [page, loader]) {
+    assert.ok(!dependencyExceptions.some((entry) => entry.source === file));
+    assert.ok(
+      graph
+        .get(file)!
+        .imports.every((edge) => !edge.target?.startsWith("src/features/")),
+    );
+  }
+  assert.equal(graph.get(loader)!.serverOnly, true);
+
+  const former = "src/features/coaches/website/public-website-model.ts";
+  const changed = new Map(graph);
+  changed.set(page, {
+    ...graph.get(page)!,
+    imports: [
+      ...graph.get(page)!.imports,
+      {
+        specifier: "@/features/coaches/website/public-website-model",
+        target: former,
+        kind: "runtime",
+        syntax: "import",
+        line: 1,
+        external: false,
+        asset: false,
+      },
+    ],
+  });
+  assert.deepEqual(dependencyViolations(changed, dependencyExceptions), [
+    `[reverse] ${page}:1 imports unapproved ${page} -> ${former} (runtime)`,
+  ]);
+
+  const client = "src/features/coaches/website/public-coach-reviews.tsx";
+  assert.equal(graph.get(client)!.client, true);
+  const clientChanged = new Map(graph);
+  clientChanged.set(client, {
+    ...graph.get(client)!,
+    imports: [
+      ...graph.get(client)!.imports,
+      {
+        specifier: "@/server/coaches/public-website-groups",
+        target: loader,
+        kind: "runtime",
+        syntax: "import",
+        line: 1,
+        external: false,
+        asset: false,
+      },
+    ],
+  });
+  const violations = dependencyViolations(clientChanged, dependencyExceptions);
+  assert.ok(
+    violations.includes(
+      `[server] ${client}:1 imports ${loader} from frontend/client code`,
+    ),
+  );
+  assert.ok(
+    violations.includes(
+      `[client-path] ${client} reaches server code: ${client} -> ${loader}`,
+    ),
+  );
+});
+
 test("privileged scheduling entry points carry the server-only marker", () => {
   for (const relative of [
     "src/server/db/client.ts",

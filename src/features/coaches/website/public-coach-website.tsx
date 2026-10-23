@@ -20,7 +20,7 @@ import {
 import {
   publicWebsiteIdentity,
   type CoachPublicGroups,
-} from "./public-website-model";
+} from "@/coaches/public-website";
 
 type State = Omit<
   Extract<PublicCoachProfileState, { status: "ready" }>,

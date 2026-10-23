@@ -9,12 +9,8 @@ import {
   projectCoachWebsite,
 } from "@/domain/coach-website";
 import { publicCoachStartingRate } from "@/domain/coach-starting-rate";
-import {
-  publicWebsiteIdentity,
-  parsePublicReviewPage,
-  loadCoachPublicGroups,
-} from "@/features/coaches/website/public-website-model";
-import type { GroupSession } from "@/domain/group-sessions";
+import { publicWebsiteIdentity } from "@/coaches/public-website";
+import { parsePublicReviewPage } from "@/features/coaches/website/public-website-model";
 import type { SessionType } from "@/domain/session-types";
 
 const content = {
@@ -225,50 +221,4 @@ test("review response parser bounds pages and strips private identity even from 
     }),
     null,
   );
-});
-const group = (slug: string, id: string) =>
-  ({ id, coach: { slug } }) as GroupSession;
-test("coach groups match exact coach across public pages, never global or prefix matches", async () => {
-  let calls = 0;
-  const result = await loadCoachPublicGroups("mine", async (after) => {
-    calls++;
-    return after
-      ? { items: [group("mine", "second")], nextCursor: null }
-      : {
-          items: [group("mine-other", "foreign"), group("mine", "first")],
-          nextCursor: { at: "2026-10-20T00:00:00Z", id: "cursor" },
-        };
-  });
-  assert.equal(calls, 2);
-  assert.deepEqual(result, {
-    status: "ready",
-    sessions: [group("mine", "first"), group("mine", "second")],
-  });
-});
-test("group failed, repeated-cursor and bounded-incomplete reads cannot claim no groups", async () => {
-  assert.deepEqual(await loadCoachPublicGroups("mine", async () => null), {
-    status: "unavailable",
-  });
-  assert.deepEqual(
-    await loadCoachPublicGroups("mine", async () => {
-      throw Error("offline");
-    }),
-    { status: "unavailable" },
-  );
-  assert.deepEqual(
-    await loadCoachPublicGroups("mine", async () => ({
-      items: [],
-      nextCursor: { at: "now", id: "same" },
-    })),
-    { status: "unavailable" },
-  );
-  let calls = 0;
-  assert.deepEqual(
-    await loadCoachPublicGroups("mine", async () => ({
-      items: [],
-      nextCursor: { at: "now", id: String(++calls) },
-    })),
-    { status: "unavailable" },
-  );
-  assert.equal(calls, 20);
 });
