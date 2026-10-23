@@ -2,6 +2,7 @@ import "server-only";
 import postgres from "postgres";
 import { parseDatabaseUrl } from "../config";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
+import { parseBookingNotification } from "@/notifications/bookings";
 import type {
   DeliveryRepository,
   EmailClaim,
@@ -32,22 +33,40 @@ export async function withNotificationWorker<T>(
     await db`set statement_timeout='10s'`;
     const repository: DeliveryRepository = {
       async claim() {
-        const [row] = await db`select app.claim_notification_emails(5) result`;
+        const [row] =
+          await db`select app.claim_all_notification_emails(5) result`;
         if (!Array.isArray(row.result) || row.result.length > 5)
           throw Error("Invalid notification claims.");
         return row.result.map((v: EmailClaim) => {
-          if (!v || !isCanonicalUuid(v.id) || !isCanonicalUuid(v.leaseId))
+          if (
+            !v ||
+            !isCanonicalUuid(v.id) ||
+            !isCanonicalUuid(v.leaseId) ||
+            !["message", "booking"].includes(v.kind ?? "")
+          )
             throw Error("Invalid notification claim.");
-          return { id: v.id, leaseId: v.leaseId };
+          return { id: v.id, leaseId: v.leaseId, kind: v.kind };
         });
       },
       async prepare(claim) {
         const [row] =
-          await db`select app.prepare_notification_email(${claim.id}::uuid,${claim.leaseId}::uuid) result`;
+          claim.kind === "booking"
+            ? await db`select app.prepare_booking_notification_email(${claim.id}::uuid,${claim.leaseId}::uuid) result`
+            : await db`select app.prepare_notification_email(${claim.id}::uuid,${claim.leaseId}::uuid) result`;
         if (row.result === null) return null;
         const payload = row.result as EmailPayload;
+        if (claim.kind === "booking") {
+          if (payload.id !== claim.id || typeof payload.email !== "string")
+            throw Error("Invalid booking email job.");
+          return {
+            ...parseBookingNotification(payload),
+            id: payload.id,
+            email: payload.email,
+          };
+        }
         if (
           payload.id !== claim.id ||
+          !("conversationId" in payload) ||
           !isCanonicalUuid(payload.conversationId) ||
           typeof payload.email !== "string"
         )
@@ -60,7 +79,9 @@ export async function withNotificationWorker<T>(
       },
       async finish(claim, outcome) {
         const [row] =
-          await db`select app.finish_notification_email(${claim.id}::uuid,${claim.leaseId}::uuid,${outcome.status}::text,${outcome.providerId ?? null}::text) result`;
+          claim.kind === "booking"
+            ? await db`select app.finish_booking_notification_email(${claim.id}::uuid,${claim.leaseId}::uuid,${outcome.status}::text,${outcome.providerId ?? null}::text) result`
+            : await db`select app.finish_notification_email(${claim.id}::uuid,${claim.leaseId}::uuid,${outcome.status}::text,${outcome.providerId ?? null}::text) result`;
         return row.result === true;
       },
     };

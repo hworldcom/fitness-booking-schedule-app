@@ -7,17 +7,129 @@ import {
   createEmailTransport,
   dispatchNotificationBatch,
   messageEmail,
+  bookingEmail,
   type DeliveryOutcome,
   type DeliveryRepository,
 } from "@/server/notifications/delivery";
 import { runNotificationWorker } from "@/server/notifications/worker";
 import { GET as cron } from "@/app/api/internal/notifications/dispatch/route";
+import type { BookingNotification } from "@/notifications/bookings";
+import { NOTIFICATION_VERSION_HEADER } from "@/notifications/contracts";
 const site = "http://localhost:3100";
 const payload = {
   id: randomUUID(),
   conversationId: randomUUID(),
   email: "athlete@example.test",
 };
+test("cached message-only clients retain v1 while new clients opt into booking history", async () => {
+  const versions: number[] = [];
+  const handler = notificationHandlers(
+    async (_input, version) => {
+      versions.push(version);
+      return { status: "ready", value: {} };
+    },
+    () => site,
+  );
+  assert.equal(
+    (await handler.GET(new Request(site + "/api/notifications"))).status,
+    200,
+  );
+  assert.equal(
+    (
+      await handler.GET(
+        new Request(site + "/api/notifications", {
+          headers: { [NOTIFICATION_VERSION_HEADER]: "2" },
+        }),
+      )
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await handler.POST(
+        new Request(site + "/api/notifications", {
+          method: "POST",
+          headers: {
+            origin: site,
+            "content-type": "application/json",
+            [NOTIFICATION_VERSION_HEADER]: "2",
+          },
+          body: JSON.stringify({
+            action: "read-all",
+            args: { throughAt: new Date().toISOString() },
+          }),
+        }),
+      )
+    ).status,
+    200,
+  );
+  assert.deepEqual(versions, [1, 2, 2]);
+  assert.equal(
+    (
+      await handler.GET(
+        new Request(site + "/api/notifications", {
+          headers: { [NOTIFICATION_VERSION_HEADER]: "3" },
+        }),
+      )
+    ).status,
+    400,
+  );
+  assert.equal(versions.length, 3);
+});
+test("booking receipts preserve semantic snapshots, escaping and two independent recipient idempotency keys", async () => {
+  const event: BookingNotification = {
+    kind: "booking",
+    event: "requested",
+    sourceKind: "request",
+    sourceId: randomUUID(),
+    slotId: randomUUID(),
+    recipientRole: "athlete",
+    startsAt: "2026-10-26T09:00:00.000Z",
+    endsAt: "2026-10-26T10:15:00.000Z",
+    venueName: "<img src=x onerror=alert(1)> & studio",
+  };
+  const first = { ...event, id: randomUUID(), email: "athlete@example.test" },
+    second = {
+      ...event,
+      id: randomUUID(),
+      email: "coach@example.test",
+      recipientRole: "coach" as const,
+    };
+  const email = bookingEmail(first, site);
+  assert.match(email.subject, /Booking request submitted/);
+  assert.match(email.text, /not a confirmed booking/);
+  assert.match(email.text, /75 min/);
+  assert.ok(email.text.includes("/sessions#booking-requests"));
+  assert.ok(email.html.includes("&lt;img"));
+  assert.ok(!email.html.includes("<img"));
+  assert.equal(email.reply_to, "hello@movx.club");
+  assert.deepEqual(email.to, ["athlete@example.test"]);
+  const requests: RequestInit[] = [];
+  const send = createEmailTransport(
+    { transport: "resend", siteUrl: site, apiKey: "re_fixture" },
+    async (_url, init) => {
+      requests.push(init!);
+      return Response.json({ id: "provider-id" });
+    },
+  );
+  await send(first);
+  await send(first);
+  await send(second);
+  assert.equal(
+    new Headers(requests[0].headers).get("idempotency-key"),
+    new Headers(requests[1].headers).get("idempotency-key"),
+  );
+  assert.notEqual(
+    new Headers(requests[0].headers).get("idempotency-key"),
+    new Headers(requests[2].headers).get("idempotency-key"),
+  );
+  assert.equal(
+    new Headers(requests[0].headers).get("idempotency-key"),
+    `booking-notice/${first.id}`,
+  );
+  assert.ok(!String(requests[0].body).includes("coach@example.test"));
+  assert.throws(() => bookingEmail({ ...first, sourceId: "../hidden" }, site));
+});
 test("invalid notification commands fail before Auth or database work", async () => {
   assert.deepEqual(
     await currentNotificationCommand({

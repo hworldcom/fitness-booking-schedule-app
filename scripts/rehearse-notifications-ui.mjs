@@ -72,7 +72,7 @@ try {
     path.join(checkout, "src/tests-fixtures/controls.tsx"),
     `"use client";
     import {useActor} from "@/auth/client/actor-provider";
-    export function Controls(){const {refreshActor}=useActor();return <button onClick={()=>{document.cookie="mov81-actor=other; path=/";void refreshActor();}}>Switch fixture actor</button>}`,
+    export function Controls(){const {actor,refreshActor}=useActor();return <><span data-testid="fixture-current-actor">{actor.status==="authorized"?actor.profile.slug:actor.status}</span><button onClick={()=>{document.cookie="mov81-actor=other; path=/";void refreshActor();}}>Switch fixture actor</button></>}`,
   );
   for (const route of ["explore", "coach", "messages", "account", "profile"]) {
     await writeFile(
@@ -271,6 +271,41 @@ try {
   );
   await dialog().getByRole("button", { name: "All", exact: true }).click();
   await expect(dialog().getByRole("link")).toHaveCount(20);
+  // MOV-85: mixed booking/text history uses the same controller and recovery.
+  const bookingSlot = randomUUID();
+  items[0] = {
+    id: items[0].id,
+    createdAt: items[0].createdAt,
+    readAt: null,
+    kind: "booking",
+    event: "requested",
+    sourceKind: "request",
+    sourceId: randomUUID(),
+    slotId: bookingSlot,
+    recipientRole: "coach",
+    startsAt: "2026-10-26T09:00:00.000Z",
+    endsAt: "2026-10-26T10:15:00.000Z",
+    venueName: "Berlin training studio",
+  };
+  await page.keyboard.press("Escape");
+  await bell().click();
+  await expect(
+    dialog().getByRole("link", { name: /Booking request submitted/ }),
+  ).toHaveAttribute(
+    "href",
+    `/coach?view=bookings&occurrence=${bookingSlot}#coach-occurrence-${bookingSlot}`,
+  );
+  await expect(dialog()).toContainText("75 min · Berlin training studio");
+  await dialog()
+    .getByRole("button", {
+      name: "Mark booking request submitted notification as read",
+      exact: true,
+    })
+    .click();
+  await expect(bell()).toHaveAttribute("aria-label", "Notifications, 0 unread");
+  console.log(
+    "PASS booking event title/snapshot/safe destination and explicit read in mixed history",
+  );
   await page.screenshot({
     path: path.join(output, "desktop.png"),
     fullPage: true,
@@ -346,6 +381,9 @@ try {
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
   await expect.poll(() => !!releaseOld).toBe(true);
   await page.getByRole("button", { name: "Switch fixture actor" }).click();
+  await expect(page.getByTestId("fixture-current-actor")).toHaveText(
+    "fixture-other",
+  );
   await expect(bell()).toHaveAttribute("aria-label", "Notifications, 0 unread");
   releaseOld();
   await bell().click();

@@ -1,12 +1,25 @@
 import { isCanonicalUuid } from "@/domain/coach-bookings";
+import {
+  bookingNotificationHref,
+  parseBookingNotification,
+  type BookingNotification,
+} from "./bookings";
+export const NOTIFICATION_VERSION_HEADER = "x-movx-notification-version";
 
-export type NotificationItem = Readonly<{
+type NotificationIdentity = Readonly<{
   id: string;
-  conversationId: string;
-  senderName: string;
   createdAt: string;
   readAt: string | null;
 }>;
+export type NotificationItem = NotificationIdentity &
+  (
+    | BookingNotification
+    | Readonly<{
+        kind?: "message";
+        conversationId: string;
+        senderName: string;
+      }>
+  );
 export type NotificationPage = Readonly<{
   items: readonly NotificationItem[];
   unreadCount: number;
@@ -86,7 +99,25 @@ export function parseNotificationPage(value: unknown): NotificationPage {
   return {
     items: page.items.map((value) => {
       const item = object(value);
+      if (item.kind === "booking") {
+        if (
+          !id(item.id) ||
+          !timestamp(item.createdAt) ||
+          (item.readAt !== null && !timestamp(item.readAt))
+        )
+          throw Error("Invalid notification response.");
+        const booking = parseBookingNotification(item);
+        if (booking.recipientRole !== "coach")
+          throw Error("Invalid booking notification recipient.");
+        return {
+          ...booking,
+          id: item.id,
+          createdAt: item.createdAt,
+          readAt: item.readAt,
+        };
+      }
       if (
+        (item.kind !== undefined && item.kind !== "message") ||
         !id(item.id) ||
         !id(item.conversationId) ||
         typeof item.senderName !== "string" ||
@@ -110,8 +141,17 @@ export function parseNotificationPage(value: unknown): NotificationPage {
   };
 }
 export function notificationHref(
-  item: Pick<NotificationItem, "conversationId">,
+  item:
+    | Pick<
+        Extract<NotificationItem, { conversationId: string }>,
+        "conversationId"
+      >
+    | BookingNotification,
 ) {
+  if ("kind" in item && item.kind === "booking")
+    return bookingNotificationHref(item);
+  if (!("conversationId" in item))
+    throw Error("Invalid notification destination.");
   if (!id(item.conversationId))
     throw Error("Invalid notification destination.");
   return `/messages?conversation=${item.conversationId}`;

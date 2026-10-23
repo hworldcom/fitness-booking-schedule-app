@@ -1,8 +1,11 @@
 import "server-only";
-import type { NotificationResult } from "@/notifications/contracts";
+import {
+  NOTIFICATION_VERSION_HEADER,
+  type NotificationResult,
+} from "@/notifications/contracts";
 
 export function notificationHandlers(
-  command: (input: unknown) => Promise<NotificationResult>,
+  command: (input: unknown, version: 1 | 2) => Promise<NotificationResult>,
   siteUrl: () => string | undefined,
 ) {
   function response(result: NotificationResult) {
@@ -22,6 +25,9 @@ export function notificationHandlers(
   }
   return {
     async GET(request: Request) {
+      const version = request.headers.get(NOTIFICATION_VERSION_HEADER) ?? "1";
+      if (version !== "1" && version !== "2")
+        return response({ status: "invalid" });
       const params = new URL(request.url).searchParams;
       if (
         [...params.keys()].some(
@@ -31,10 +37,16 @@ export function notificationHandlers(
       )
         return response({ status: "invalid" });
       return response(
-        await command({ action: "list", args: Object.fromEntries(params) }),
+        await command(
+          { action: "list", args: Object.fromEntries(params) },
+          version === "2" ? 2 : 1,
+        ),
       );
     },
     async POST(request: Request) {
+      const version = request.headers.get(NOTIFICATION_VERSION_HEADER) ?? "1";
+      if (version !== "1" && version !== "2")
+        return response({ status: "invalid" });
       const origin = siteUrl();
       if (!origin || request.headers.get("origin") !== origin)
         return response({ status: "forbidden" });
@@ -81,7 +93,7 @@ export function notificationHandlers(
         )
       )
         return response({ status: "invalid" });
-      return response(await command(input));
+      return response(await command(input, version === "2" ? 2 : 1));
     },
   };
 }

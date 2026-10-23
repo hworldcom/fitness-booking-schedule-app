@@ -8,7 +8,7 @@ import {
 } from "./lib/local-supabase-project.mjs";
 
 assertLocalSupabaseConfiguration(readFileSync("supabase/config.toml", "utf8"));
-const migration = "20261023000100_message_notifications.sql";
+const migration = "20261023000200_private_booking_notifications.sql";
 const files = readdirSync("supabase/migrations")
   .filter((f) => f.endsWith(".sql") && f <= migration)
   .sort();
@@ -44,7 +44,7 @@ const fingerprints = `select jsonb_object_agg(name,hash) from (
  select schemaname||'.'||tablename name,(xpath('/table/row/hash/text()',query_to_xml(format(
  'select md5(coalesce(jsonb_agg(to_jsonb(x) order by to_jsonb(x)::text)::text,''[]'')) hash from %I.%I x',
  schemaname,tablename),false,true,'')))[1]::text hash from pg_tables
- where (schemaname='app' and tablename not in ('notifications','notification_emails'))
+ where (schemaname='app' and tablename not in ('notifications','notification_emails','booking_notification_events','booking_notification_receipts'))
  or (schemaname='auth' and tablename='users')
  or (schemaname='storage' and tablename in ('buckets','objects'))) hashes;`;
 const retained = query("postgres", "set transaction read only;" + fingerprints);
@@ -62,7 +62,9 @@ try {
     docker(["createdb", "-U", "supabase_admin", "-O", "postgres", database]);
     created.push(database);
     query(database, infrastructure + "\nDROP SCHEMA app CASCADE;\n");
-    for (const file of files.filter((f) => f !== migration))
+    for (const file of files.filter(
+      (f) => f < "20261023000100_message_notifications.sql",
+    ))
       query(database, readFileSync(`supabase/migrations/${file}`, "utf8"));
     query(database, readFileSync("supabase/seed.sql", "utf8"));
     if (mode === "upgrade")
@@ -80,6 +82,13 @@ try {
     `,
       );
     const before = query(database, fingerprints);
+    query(
+      database,
+      readFileSync(
+        "supabase/migrations/20261023000100_message_notifications.sql",
+        "utf8",
+      ),
+    );
     query(database, readFileSync(`supabase/migrations/${migration}`, "utf8"));
     assert.equal(
       query(database, fingerprints),

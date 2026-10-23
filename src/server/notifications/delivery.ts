@@ -1,12 +1,25 @@
 import "server-only";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
+import {
+  BOOKING_EVENTS,
+  bookingNotificationHref,
+  bookingNotificationSummary,
+  parseBookingNotification,
+  type BookingNotification,
+} from "@/notifications/bookings";
 
-export type EmailClaim = { id: string; leaseId: string };
-export type EmailPayload = {
+export type EmailClaim = {
+  id: string;
+  leaseId: string;
+  kind?: "message" | "booking";
+};
+export type MessageEmailPayload = {
   id: string;
   conversationId: string;
   email: string;
 };
+export type EmailPayload =
+  MessageEmailPayload | (BookingNotification & { id: string; email: string });
 export type DeliveryOutcome = {
   status: "accepted" | "retry" | "failed" | "unknown";
   providerId?: string;
@@ -54,7 +67,7 @@ export async function dispatchNotificationBatch(
   }
   return result;
 }
-export function messageEmail(payload: EmailPayload, siteUrl: string) {
+export function messageEmail(payload: MessageEmailPayload, siteUrl: string) {
   const site = new URL(siteUrl);
   if (
     site.username ||
@@ -87,6 +100,35 @@ export function messageEmail(payload: EmailPayload, siteUrl: string) {
     subject: "You have unread messages on MovX Club",
     text: `You have unread messages on MovX Club.\n\nOpen your conversation: ${link}\n\nSign in to read and reply.`,
     html: `<p>You have unread messages on MovX Club.</p><p><a href="${escaped}">Open your conversation</a></p><p>Sign in to read and reply.</p>`,
+  };
+}
+export function bookingEmail(
+  payload: BookingNotification & { id: string; email: string },
+  siteUrl: string,
+) {
+  const event = parseBookingNotification(payload);
+  const base = messageEmail(
+    { id: payload.id, email: payload.email, conversationId: event.sourceId },
+    siteUrl,
+  );
+  const title = BOOKING_EVENTS[event.event];
+  const summary = bookingNotificationSummary(event);
+  const link = new URL(bookingNotificationHref(event), siteUrl).href;
+  const explanation =
+    event.event === "requested"
+      ? "The request was submitted for coach confirmation. It was not a confirmed booking."
+      : "This notice records a booking event. Open your bookings for the current status.";
+  const escape = (v: string) =>
+    v
+      .replaceAll("&", "&amp;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  return {
+    ...base,
+    subject: `${title} on MovX Club`,
+    text: `${title}\n\n${summary}\n\n${explanation}\n\nOpen your bookings: ${link}\n\nSign in to view the current details.`,
+    html: `<p>${escape(title)}</p><p>${escape(summary)}</p><p>${escape(explanation)}</p><p><a href="${escape(link)}">Open your bookings</a></p><p>Sign in to view the current details.</p>`,
   };
 }
 export function createEmailTransport(
@@ -124,8 +166,11 @@ export function createEmailTransport(
     config.siteUrl,
   );
   return async (payload: EmailPayload): Promise<DeliveryOutcome> => {
-    const email = messageEmail(payload, config.siteUrl);
-    const key = `message-notice/${payload.id}`;
+    const isBooking = "kind" in payload && payload.kind === "booking";
+    const email = isBooking
+      ? bookingEmail(payload, config.siteUrl)
+      : messageEmail(payload as MessageEmailPayload, config.siteUrl);
+    const key = `${isBooking ? "booking" : "message"}-notice/${payload.id}`;
     const local = config.transport === "mailpit";
     const body = local
       ? {

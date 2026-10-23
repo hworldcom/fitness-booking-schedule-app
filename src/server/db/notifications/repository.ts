@@ -9,9 +9,14 @@ import type { ActorDatabaseTransaction } from "../authorization/repository";
 export async function notificationCommandRecord(
   tx: ActorDatabaseTransaction,
   command: NotificationCommand,
+  version: 1 | 2 = 1,
 ) {
+  const fn =
+    version === 2
+      ? sql`app.notification_command_v2`
+      : sql`app.notification_command`;
   const rows = await tx.execute<{ result: unknown }>(
-    sql`select app.notification_command(${command.action}::text,${JSON.stringify(command.args)}::jsonb) result`,
+    sql`select ${fn}(${command.action}::text,${JSON.stringify(command.args)}::jsonb) result`,
   );
   if (rows.length !== 1) throw Error("Notification unavailable.");
   return command.action === "list" ? parseNotificationPage(rows[0].result) : {};

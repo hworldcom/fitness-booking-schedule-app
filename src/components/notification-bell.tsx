@@ -1,6 +1,10 @@
 "use client";
 import { useEffect, useId, useRef, useState } from "react";
-import { Bell, Check, MessageSquare } from "lucide-react";
+import { Bell, Check, MessageSquare, CalendarCheck } from "lucide-react";
+import {
+  BOOKING_EVENTS,
+  bookingNotificationSummary,
+} from "@/notifications/bookings";
 import Link from "next/link";
 import type { ActorSnapshot } from "@/auth/actor-contracts";
 import {
@@ -234,7 +238,7 @@ function RecipientBell({ actorKey }: { actorKey: string }) {
                       ? "You’re all caught up"
                       : "No notifications yet"}
                   </strong>
-                  <p>New message notifications will appear here.</p>
+                  <p>New notifications will appear here.</p>
                 </div>
               ) : (
                 <ul
@@ -248,15 +252,27 @@ function RecipientBell({ actorKey }: { actorKey: string }) {
                       className={item.readAt ? "" : "is-unread"}
                     >
                       <span className="notification-item-icon">
-                        <MessageSquare size={16} aria-hidden="true" />
+                        {item.kind === "booking" ? (
+                          <CalendarCheck size={16} aria-hidden="true" />
+                        ) : (
+                          <MessageSquare size={16} aria-hidden="true" />
+                        )}
                       </span>
                       <div>
                         <Link
                           href={notificationHref(item)}
                           onClick={() => setOpen(false)}
                         >
-                          <strong>New message from {item.senderName}</strong>
-                          <span>Open your conversation to read and reply.</span>
+                          <strong>
+                            {item.kind === "booking"
+                              ? BOOKING_EVENTS[item.event]
+                              : `New message from ${item.senderName}`}
+                          </strong>
+                          <span>
+                            {item.kind === "booking"
+                              ? bookingNotificationSummary(item)
+                              : "Open your conversation to read and reply."}
+                          </span>
                         </Link>
                         <time dateTime={item.createdAt}>
                           {new Intl.DateTimeFormat("en-GB", {
@@ -274,7 +290,11 @@ function RecipientBell({ actorKey }: { actorKey: string }) {
                             className="notification-mark-read"
                             disabled={working}
                             onClick={() => void mark(item.id)}
-                            aria-label={`Mark message notification from ${item.senderName} as read`}
+                            aria-label={
+                              item.kind === "booking"
+                                ? `Mark ${BOOKING_EVENTS[item.event].toLowerCase()} notification as read`
+                                : `Mark message notification from ${item.senderName} as read`
+                            }
                           >
                             Mark read
                           </button>

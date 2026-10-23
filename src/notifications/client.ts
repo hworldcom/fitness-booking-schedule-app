@@ -1,4 +1,8 @@
-import { parseNotificationPage, type NotificationCommand } from "./contracts";
+import {
+  NOTIFICATION_VERSION_HEADER,
+  parseNotificationPage,
+  type NotificationCommand,
+} from "./contracts";
 
 export class NotificationError extends Error {
   constructor(readonly status: string) {
@@ -24,6 +28,7 @@ export async function notificationList(
       await fetch(`/api/notifications?${new URLSearchParams(args)}`, {
         cache: "no-store",
         credentials: "same-origin",
+        headers: { [NOTIFICATION_VERSION_HEADER]: "2" },
         signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]),
       }),
     ),
@@ -37,7 +42,10 @@ export async function notificationWrite(
     await fetch("/api/notifications", {
       method: "POST",
       credentials: "same-origin",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        [NOTIFICATION_VERSION_HEADER]: "2",
+      },
       body: JSON.stringify(command),
       signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]),
     }),
