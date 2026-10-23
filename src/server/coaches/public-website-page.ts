@@ -3,10 +3,8 @@ import { cache } from "react";
 import type { Metadata } from "next";
 import { publicSiteOrigin } from "@/server/auth/site-origin";
 import { publicCoachProfile } from "./service";
-import {
-  publicWebsiteIdentity,
-  loadCoachPublicGroups,
-} from "@/features/coaches/website/public-website-model";
+import { publicWebsiteIdentity } from "@/coaches/public-website";
+import { loadCoachPublicGroups } from "./public-website-groups";
 import { publicGroupSessions } from "@/server/group-sessions/service";
 
 // React cache is request-scoped: metadata and page agree without caching publication changes.

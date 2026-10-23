@@ -84,6 +84,17 @@ For real directory fixtures/manual browser checks use `node --import tsx --condi
 
 Start with the [owner profile route](../../src/app/profile/coach/page.tsx) and [public page composition](../../src/app/_coaches/public-coach-page.tsx). [Website service](../../src/server/coaches/website-service.ts) owns content operations; [§19](../mvp-spec.md#19-coach-marketplace-cards-and-personal-websites) supplies publication, username, media and disclosure contracts. Booking composition is detailed above.
 
+[Shared website identity and group result types](../../src/coaches/public-website.ts) have a neutral owner used by [website rendering](../../src/features/coaches/website/public-coach-website.tsx) and [metadata/page orchestration](../../src/server/coaches/public-website-page.ts). The latter adapts existing public group-service reads into the [server-only bounded loader](../../src/server/coaches/public-website-groups.ts), preserving exact coach matching, deduplication, six results and a twenty-page scan limit. Failed/incomplete optional group reads remain unavailable without hiding a verified profile. [Review-response parsing](../../src/features/coaches/website/public-website-model.ts) stays frontend-owned and strips private/extra fields.
+
+**First checks:**
+
+```sh
+node --import tsx --test tests/public-coach-website.test.ts tests/boundaries.test.ts
+node --import tsx --conditions=react-server --test tests/server/coach-website-routes.test.ts tests/server/public-coach-website-groups.test.ts
+```
+
+These are rendering/contract, route-rejection and isolated group-read checks; they do not prove live Auth/SQL/Storage behavior. Website database and real-service rehearsals have separate prerequisites and cleanup rules in [README](../../README.md#checks).
+
 ## Authentication and authorization
 
 [Application Auth contracts](../../src/auth/contracts.ts), [server session verification](../../src/server/auth/session.ts), [authorization service](../../src/server/authorization/service.ts) and [§4.1](../mvp-spec.md#41-register-as-an-athlete-or-apply-to-coach) are starting points. Each detailed flow above also identifies its actual session/actor/public-projection boundary; a client identity projection grants no server permission.
