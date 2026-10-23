@@ -12,6 +12,7 @@ For import ownership changes, consult the [enforced dependency rules and exact e
 | Coach profiles and public websites | [Starting references](#coach-profiles-and-public-websites)    |
 | Authentication and authorization   | [Cross-cutting references](#authentication-and-authorization) |
 | Messaging                          | [Starting references](#messaging)                             |
+| Notifications                      | [Message stage and delivery](#notifications)                  |
 | Connections and reviews            | [Starting references](#connections-and-reviews)               |
 
 ## Private booking and session types
@@ -102,6 +103,16 @@ These are rendering/contract, route-rejection and isolated group-read checks; th
 ## Messaging
 
 Start with the [Messages page](../../src/app/messages/page.tsx), [mailbox](../../src/features/messages/mailbox.tsx) and [message service](../../src/server/messages/service.ts). [§16](../mvp-spec.md#16-private-messages-and-session-notes) defines conversation authority, consent, recovery and scheduling context. This entry does not map the full messaging implementation.
+
+## Notifications
+
+**Start:** [shared bell](../../src/components/notification-bell.tsx) in the public/workspace/Messages [shell](../../src/components/shell.tsx) and [Account/Profile shell](../../src/components/account-shell.tsx). [Client requests](../../src/notifications/client.ts) use the [notification API](../../src/app/api/notifications/route.ts), validated [contracts](../../src/notifications/contracts.ts), [actor service](../../src/server/notifications/service.ts) and [repository](../../src/server/db/notifications/repository.ts). Native dialog focus/dismissal is shared with [Modal](../../src/components/ui.tsx). Styles live in [notifications.css](../../src/app/notifications.css).
+
+**Authority/data:** [message-notification migration](../../supabase/migrations/20261023000100_message_notifications.sql) captures only newly inserted user text and maintains email unread periods from authoritative message read-through. Recipient notification read state is independent. Ordinary app logins may execute only the actor-validated command; the separate worker role has only bounded claim/prepare/finish functions. A private Auth-email helper returns only an eligible outbox recipient. No historical backfill, booking events or message bodies in notification payloads.
+
+**Delivery:** [worker](../../src/server/notifications/worker.ts) → [restricted worker repository](../../src/server/db/notifications/worker.ts) → [delivery/transport](../../src/server/notifications/delivery.ts). The [cron route](../../src/app/api/internal/notifications/dispatch/route.ts) requires CRON_SECRET and explicit delivery configuration; [local CLI](../../scripts/dispatch-notifications.ts) uses the same worker. Claims, eligibility and results use short separate transactions; no provider I/O holds a transaction. Five-minute eligibility, suppression/re-arm, attempt leases and Unknown handling are defined in [§20](../mvp-spec.md#20-email-and-in-app-notifications). Credentials and migration/deployment requirements are in [setup](../../supabase/README.md#message-notification-runtime).
+
+**Checks:** `node --import tsx --test tests/notifications.test.ts tests/message-shell.test.ts` and `node --import tsx --conditions=react-server --test tests/server/notifications.test.ts` cover parsing/header gates, HTTP and worker behavior. `npm run test:notifications-db` needs local Docker/PostgreSQL and Mailpit at 55324; it creates fresh/upgrade scratch databases and temporary restricted worker logins, proves real SQL and local capture, then cleans its own fixtures and verifies retained data. `npm run test:notifications-ui` needs dependencies, local Chrome and free port 3168; it runs actual headers/bell against explicit isolated Auth/API fixtures, covering desktop/mobile/keyboard, errors/paging and actor races. Fixture UI evidence does not prove real browser Auth/SQL or external recipient delivery. Screenshots are ignored under test-results/notifications. Full booking/group event coverage remains MOV-82/MOV-77, separate from this message stage.
 
 ## Connections and reviews
 

@@ -296,6 +296,8 @@ For source dependency checks, run `node --import tsx --test tests/boundaries.tes
 
 ## Application structure
 
+Message notifications use a signed-in header bell and a five-minute unread email outbox. The staged contract is [§20](docs/mvp-spec.md#20-email-and-in-app-notifications); booking/group notification capture remains later work. Run `npm run test:notifications-db` for disposable SQL/worker/local-Mailpit proof and `npm run test:notifications-ui` for isolated mounted header/bell fixtures. Neither command migrates retained data or sends external mail. See [notification runtime setup](supabase/README.md#message-notification-runtime) for migration, separate worker login, opt-in transport, cron and recovery. Domain verification alone does not enable delivery.
+
 - `src/app/`: thin App Router pages, server actions and shared styles.
 - `src/features/`: capability-owned screens and browser behavior.
 - `src/domain/`: framework-independent coach, availability and booking rules.

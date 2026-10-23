@@ -30,6 +30,7 @@ import {
 } from "@/auth/workspace-view";
 import { useUnreadMessages } from "@/messages/use-unread-messages";
 import { AccountMenu } from "./account-menu";
+import { NotificationBell } from "./notification-bell";
 import { HeaderAccountControl } from "./header-account-control";
 import { AccountShell } from "@/components/account-shell";
 import { WorkspaceNavigation } from "./workspace-navigation";
@@ -270,6 +271,7 @@ export function MessageShell({
                   {coachWorkspace ? "Coach workspace" : "My sessions"}
                 </span>
               </Link>
+              <NotificationBell actor={actor} />
               <AccountMenu actor={actor} pathname="/messages" />
             </>
           ) : (
@@ -423,6 +425,7 @@ export function Shell({ children }: { children: ReactNode }) {
                     {href === "/messages" && messageBadge}
                   </Link>
                 ))}
+                <NotificationBell actor={actor} />
                 <HeaderAccountControl
                   actor={actor}
                   pathname={path}
@@ -461,6 +464,7 @@ export function Shell({ children }: { children: ReactNode }) {
                   {messageBadge}
                 </Link>
               )}
+              <NotificationBell actor={actor} />
               <HeaderAccountControl
                 actor={actor}
                 pathname={path}
