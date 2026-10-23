@@ -13,7 +13,7 @@ import {
   type EventBanner,
   type EventCardPresentation,
 } from "@/domain/event-banners";
-import { eventIdFromSlug } from "@/features/events/event-contract";
+import { eventIdFromSlug } from "@/events/parsers";
 import { profileImageStoragePath } from "@/profile-images/contracts";
 import { withAuthorizedActor } from "@/server/authorization/service";
 import type { AuthorizedActor } from "@/server/authorization/contracts";

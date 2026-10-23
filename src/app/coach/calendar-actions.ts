@@ -1,6 +1,6 @@
 "use server";
 import { loadCoachCalendar } from "@/server/coaches/calendar-service";
-import type { CoachCalendarResult } from "@/features/coaches/coach-calendar-model";
+import type { CoachCalendarResult } from "@/calendar/contracts";
 export async function loadCoachCalendarAction(
   query: unknown,
   scope: string,

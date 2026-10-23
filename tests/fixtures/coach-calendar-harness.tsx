@@ -8,7 +8,7 @@ import {
 import { CoachAvailabilityPanel } from "@/features/coaches/coach-availability-panel";
 import { CoachCalendar } from "@/features/coaches/coach-calendar";
 import { CoachScheduleNavigation } from "@/features/coaches/coach-schedule-navigation";
-import type { CoachCalendarLoader } from "@/features/coaches/coach-calendar-model";
+import type { CoachCalendarLoader } from "@/calendar/contracts";
 import { AVAILABILITY_COACH } from "./availability-editor-data";
 import { AvailabilityEditorHarness } from "./availability-editor-harness";
 import { calendarFixture } from "./coach-calendar-data";

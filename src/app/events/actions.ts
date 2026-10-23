@@ -1,7 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
 import { signInHref } from "@/auth/return-to";
-import { parseParticipationForm } from "@/features/events/event-contract";
+import { parseParticipationForm } from "@/events/parsers";
 import { changeGroupParticipation } from "@/server/group-sessions/participation-action";
 
 export async function submitGroupParticipationAction(

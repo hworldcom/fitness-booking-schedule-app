@@ -2,6 +2,8 @@
 
 Use one relevant entry, verify its source and follow additional dependencies only as needed. Booking, availability and Events have detailed paths; the other entries are starting references, not complete impact analyses. Requirements remain in the linked MVP specification.
 
+For import ownership changes, consult the [enforced dependency rules and exact exception owners](overview.md#dependencies-enforced-rules-and-current-exceptions), then run the [source boundary suite](../../tests/boundaries.test.ts) and [isolated graph cases](../../tests/dependency-graph.test.ts). The capability's extraction issue owns removal of its temporary entries.
+
 | Capability                         | Entry                                                         |
 | ---------------------------------- | ------------------------------------------------------------- |
 | Private booking and session types  | [Detailed path](#private-booking-and-session-types)           |
@@ -35,6 +37,8 @@ The existing [component/browser rehearsal](../../scripts/rehearse-public-coach-s
 
 **Start:** [coach page](../../src/app/coach/page.tsx), Schedule → Availability, wires [actor-bound editor](../../src/features/coaches/availability-workspace-editor.tsx) and [AvailabilityEditor](../../src/features/coaches/availability-editor.tsx). The sibling [calendar workspace](../../src/features/coaches/coach-calendar-workspace.tsx) uses [calendar actions](../../src/app/coach/calendar-actions.ts), [service](../../src/server/coaches/calendar-service.ts) and [repository](../../src/server/db/coaches/calendar-repository.ts).
 
+Calendar data/results/loader types belong to [shared Calendar contracts](../../src/calendar/contracts.ts), consumed directly by its service, action and UI. The [calendar feature model](../../src/features/coaches/coach-calendar-model.ts) retains actor presentation gates, links, Berlin time labels and overlap lanes. Server/SQL owner and dataset checks remain authoritative.
+
 **Trace:** editor preview/save → [availability actions](../../src/app/coach/availability-actions.ts) → [availability-editor-service](../../src/server/coaches/availability-editor-service.ts) → authorized actor/scope and approved/demo visible-owner checks → [effective-availability repository](../../src/server/db/coaches/effective-availability-repository.ts). Preview and save share command validation but select different SQL entry points. Review is explicit in the UI; it is not a persisted server preview token.
 
 **Contracts/data:** [shared availability contracts](../../src/availability/contracts.ts) own service/editor data, results and action signatures. The [effective-availability domain](../../src/domain/effective-availability.ts) owns weekly/date commands, revisions, impact results and the Berlin-date helper. The [editor model](../../src/features/coaches/availability-editor-model.ts) retains draft transformations, access checks and the payload parser used by Server Actions; the service has no feature dependency. [Effective-availability SQL](../../supabase/migrations/20261016000200_effective_coach_availability.sql) owns `save_owned_effective_coach_availability` and its rollback-only `preview_owned_effective_coach_availability`; preview calls the actual save in a rolled-back subtransaction. Follow later [typed-session reconciliation](../../supabase/migrations/20261018000800_typed_private_sessions.sql) when requests span longer durations. SQL rechecks actor/dataset, locking, revisions, venues and exact retries; impact includes pending closures and retained confirmed sessions. The preview count is not a reservation against subsequent request changes.
@@ -48,23 +52,30 @@ node --import tsx --test tests/availability-editor.test.ts tests/effective-avail
 node --import tsx --conditions=react-server --test tests/server/availability-editor-actions.test.ts
 ```
 
+For Calendar contract/access/layout work, also run:
+
+```sh
+node --import tsx --test tests/coach-calendar.test.ts tests/boundaries.test.ts
+node --import tsx --conditions=react-server --test tests/server/coach-calendar-actions.test.ts
+```
+
 `node scripts/rehearse-availability-editor-ui.mjs` ([script](../../scripts/rehearse-availability-editor-ui.mjs)) checks fixture preview/review/recovery; it needs dependencies, Chrome and port 3137. [Database assertions](../../tests/database/effective-availability.test.ts) require an explicit loopback `DATABASE_TEST_URL`, migrations and runtime role; the current [weekly scratch rehearsal](../../scripts/rehearse-session-week-database.mjs) includes them. Use it for isolated database coverage rather than assuming a fixture proves rollback/authority. [README checks](../../README.md#checks) distinguish hosted `--check` readiness from `--run` rehearsal and describe exact fixture cleanup. Keep retained data under [§8](../mvp-spec.md#8-identity-data-and-demo-integrity).
 
 ## Events and group sessions
 
-**Start:** [Events page](../../src/app/events/page.tsx) → [EventResults](../../src/features/events/event-results.tsx); directory [contracts](../../src/features/events/directory-contract.ts) parse filters/cursors, fetch/append pages and derive venue pins. The existing failed-load branch retains results and allows retry; map-provider recovery is a separate flow. Owner/participation work starts in [coach Events](../../src/app/coach/events/) and [athlete group sessions](../../src/app/sessions/groups/), respectively.
+**Start:** [Events page](../../src/app/events/page.tsx) → [EventResults](../../src/features/events/event-results.tsx); directory [UI helpers](../../src/features/events/directory-contract.ts) compose view links, fetch/append pages and derive venue pins. Shared [query helpers](../../src/events/queries.ts) encode filters/cursors and query identity; [parsers](../../src/events/parsers.ts) validate directory queries, public pages and participation forms. The existing failed-load branch retains results and allows retry; map-provider recovery is a separate flow. Owner/participation work starts in [coach Events](../../src/app/coach/events/) and [athlete group sessions](../../src/app/sessions/groups/), respectively.
 
 **Trace:** `fetchEventPage` → [events GET handler](../../src/app/api/events/route.ts) → [directory service](../../src/server/group-sessions/directory-service.ts) → public session and media projections. [Group service](../../src/server/group-sessions/service.ts) separates public discovery from actor-authorized commands; [group repository](../../src/server/db/group-sessions/repository.ts) calls SQL. Discovery does not require sign-in; owner/participation mutations do. Public SQL/media projection checks protect visibility and participant privacy independently of browser filters.
 
-**Contracts/data:** [group domain](../../src/domain/group-sessions.ts) parses lifecycle/public results; directory contracts enforce query-key, cursor and media consistency. Current `public_group_sessions` is in [group/calendar integration](../../supabase/migrations/20261018000900_group_and_calendar_session_types.sql), replacing the baseline definition; it can reconcile expired Open sessions while serving public data. [Banner SQL](../../supabase/migrations/20261018001000_group_session_banners.sql) guards public media. Loaded cards/pins remain snapshots; a failed read is not verified empty inventory. Private/group conflicts and registration authority remain separate from pagination state.
+**Contracts/data:** [shared Events contracts](../../src/events/contracts.ts) own filters, directory pages and owner context/mutation types; the parsers enforce query-key, cursor and media consistency using the [group domain](../../src/domain/group-sessions.ts), which remains lifecycle/command/result authority. The [coach form model](../../src/features/coach-events/contract.ts) retains draft and local-time/EUR conversion; services revalidate domain commands and actor/owner scope. Current `public_group_sessions` is in [group/calendar integration](../../supabase/migrations/20261018000900_group_and_calendar_session_types.sql), replacing the baseline definition; it can reconcile expired Open sessions while serving public data. [Banner SQL](../../supabase/migrations/20261018001000_group_session_banners.sql) guards public media. Loaded cards/pins remain snapshots; a failed read is not verified empty inventory. Private/group conflicts and registration authority remain separate from pagination state.
 
 **Product contract:** [§15.1 paging/map behavior](../mvp-spec.md#151-confirmed-choices-and-implementation-defaults), [§15.3 privacy](../mvp-spec.md#153-joining-leaving-and-privacy), [§15.4 atomic lifecycle](../mvp-spec.md#154-data-and-atomic-lifecycle), [§15.6 surfaces/ownership](../mvp-spec.md#156-surfaces-and-ownership), [§18.6 type compatibility](../mvp-spec.md#186-session-types-and-flexible-bookings).
 
 **First checks:**
 
 ```sh
-node --import tsx --test tests/event-directory.test.ts tests/events.test.ts
-node --import tsx --conditions=react-server --test tests/server/event-actions.test.ts
+node --import tsx --test tests/event-directory.test.ts tests/events.test.ts tests/coach-events.test.ts tests/boundaries.test.ts
+node --import tsx --conditions=react-server --test tests/server/event-actions.test.ts tests/server/coach-event-actions.test.ts tests/server/event-banners.test.ts
 ```
 
 For real directory fixtures/manual browser checks use `node --import tsx --conditions=react-server scripts/rehearse-local-event-directory.ts` ([script](../../scripts/rehearse-local-event-directory.ts)); it needs migrated local Supabase, dependencies, Chrome for browser checks and port 3158. Follow [README setup/cleanup](../../README.md#events-banners-and-directory-validation). [Banner database rehearsal](../../scripts/rehearse-event-banners-database.mjs) covers owned fresh/upgrade databases. The older [group-discovery rehearsal](../../scripts/rehearse-local-group-discovery.ts) still asserts page replacement/“Next sessions”; its existence does not prove the current appended-results interaction. Helper tests likewise do not replace mounted-control, keyboard/mobile, race or real privacy evidence.

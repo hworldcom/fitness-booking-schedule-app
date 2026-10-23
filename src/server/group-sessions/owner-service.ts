@@ -4,10 +4,7 @@ import {
   parseGroupSessionCommand,
   type GroupCursor,
 } from "@/domain/group-sessions";
-import type {
-  CoachEventContext,
-  OwnerMutation,
-} from "@/features/coach-events/contract";
+import type { CoachEventContext, OwnerMutation } from "@/events/contracts";
 import { withAuthorizedActor } from "@/server/authorization/service";
 import { currentActorProjection } from "@/server/db/authorization/repository";
 import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";

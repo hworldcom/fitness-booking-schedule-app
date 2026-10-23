@@ -16,9 +16,11 @@ import {
   eventDirectoryHref,
   eventMapPoints,
   fetchEventPage,
+} from "./directory-contract";
+import {
   type EventDirectory,
   type EventDirectoryPage,
-} from "./directory-contract";
+} from "@/events/contracts";
 import { EventCard } from "./event-ui";
 
 const subscribe = () => () => {};

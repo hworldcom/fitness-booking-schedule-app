@@ -1,5 +1,5 @@
-import { parseEventDirectory } from "@/features/events/directory-contract";
-import type { EventSearch } from "@/features/events/event-contract";
+import { parseEventDirectory } from "@/events/parsers";
+import type { EventSearch } from "@/events/contracts";
 import { publicEventDirectory } from "@/server/group-sessions/directory-service";
 
 export const dynamic = "force-dynamic";

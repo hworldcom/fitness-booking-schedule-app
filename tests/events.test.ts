@@ -3,17 +3,15 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { parseEventFilters, eventPageHref } from "@/events/queries";
+import { eventIdFromSlug, parseParticipationForm } from "@/events/parsers";
 import {
-  parseEventFilters,
-  eventPageHref,
-  eventIdFromSlug,
   eventPrice,
   eventStatus,
   eventDate,
   eventIssueMessage,
   groupHistoryCursor,
   groupHistoryHref,
-  parseParticipationForm,
   registrationStatus,
 } from "@/features/events/event-contract";
 import { EventCard, EventTerms } from "@/features/events/event-ui";

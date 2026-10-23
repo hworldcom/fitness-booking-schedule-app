@@ -3,6 +3,17 @@ import test from "node:test";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import ts from "typescript";
+import {
+  createDependencyGraph,
+  resolveSourceImport,
+  sourcePath,
+} from "./helpers/dependency-graph";
+import { dependencyExceptions } from "./helpers/dependency-exceptions";
+import {
+  dependencyViolations,
+  importSpecifiers,
+} from "./helpers/dependency-policy";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const src = path.join(root, "src");
@@ -15,21 +26,29 @@ function sourceFiles(directory: string): string[] {
   });
 }
 
+const graph = createDependencyGraph(
+  Object.fromEntries(
+    sourceFiles(src).map((file) => [
+      sourcePath(path.relative(root, file)),
+      readFileSync(file, "utf8"),
+    ]),
+  ),
+);
+const graphFiles = new Set(graph.keys());
+
 function imports(file: string): string[] {
-  const contents = readFileSync(file, "utf8");
-  const pattern =
-    /(?:import|export)\s+(?:type\s+)?(?:[^"']*?\s+from\s*)?["']([^"']+)["']|import\s*\(\s*["']([^"']+)["']/g;
-  return Array.from(
-    contents.matchAll(pattern),
-    (match) => match[1] || match[2],
+  return importSpecifiers(
+    graph.get(sourcePath(path.relative(root, file)))!.imports,
   );
 }
 
 function resolveImport(file: string, specifier: string): string | undefined {
-  if (specifier.startsWith("@/")) return path.resolve(src, specifier.slice(2));
-  if (specifier.startsWith("."))
-    return path.resolve(path.dirname(file), specifier);
-  return undefined;
+  const target = resolveSourceImport(
+    sourcePath(path.relative(root, file)),
+    specifier,
+    graphFiles,
+  );
+  return target ? path.join(root, target) : undefined;
 }
 
 function within(target: string, directory: string) {
@@ -83,16 +102,20 @@ test("Storage I/O, request client and provider URLs stay behind the image adapte
       assert.doesNotMatch(specifier, /^@supabase\/storage-js/, relative);
       if (!relative.startsWith("src/server/auth/")) {
         const target = resolveImport(file, specifier);
-        assert.notEqual(target, path.join(src, "server/auth/client"), relative);
+        assert.notEqual(
+          target,
+          path.join(src, "server/auth/client.ts"),
+          relative,
+        );
         if (
           relative.startsWith("src/server/") &&
           relative !== "src/server/authorization/config.ts"
         )
-          assert.notEqual(target, path.join(src, "auth/config"), relative);
+          assert.notEqual(target, path.join(src, "auth/config.ts"), relative);
         if (relative !== "src/server/storage/profile-images.ts")
           assert.notEqual(
             target,
-            path.join(src, "server/storage/supabase-profile-images"),
+            path.join(src, "server/storage/supabase-profile-images.ts"),
             relative,
           );
       }
@@ -118,57 +141,22 @@ test("Storage I/O, request client and provider URLs stay behind the image adapte
 });
 
 test("source imports respect domain, client, server and feature boundaries", () => {
-  const domain = path.join(src, "domain");
-  const components = path.join(src, "components");
-  const features = path.join(src, "features");
-  const server = path.join(src, "server");
-  const database = path.join(server, "db");
-  const violations: string[] = [];
-
-  for (const file of sourceFiles(src)) {
-    const contents = readFileSync(file, "utf8");
-    const isClientModule = /^\s*["']use client["'];/m.test(contents);
-    for (const specifier of imports(file)) {
-      const target = resolveImport(file, specifier);
-      const relativeFile = path.relative(root, file);
-      if (
-        !within(file, database) &&
-        [
-          "postgres",
-          "drizzle-orm",
-          "drizzle-orm/pg-core",
-          "drizzle-orm/postgres-js",
-        ].includes(specifier)
-      ) {
-        violations.push(
-          `${relativeFile} imports database package ${specifier} outside src/server/db`,
-        );
-      }
-      if (!target) continue;
-      if (isClientModule && within(target, server)) {
-        violations.push(
-          `${relativeFile} is a client module importing ${specifier} from src/server`,
-        );
-      }
-      if (within(file, domain) && !within(target, domain)) {
-        violations.push(
-          `${relativeFile} imports ${specifier} outside src/domain`,
-        );
-      }
-      if (
-        within(file, components) &&
-        (within(target, features) || within(target, server))
-      ) {
-        violations.push(
-          `${relativeFile} imports ${specifier} from a feature/server module`,
-        );
-      }
-      if (within(file, features) && within(target, server)) {
-        violations.push(`${relativeFile} imports ${specifier} from src/server`);
-      }
-    }
-  }
-  assert.deepEqual(violations, []);
+  const config = ts.readConfigFile(
+    path.join(root, "tsconfig.json"),
+    ts.sys.readFile,
+  );
+  assert.equal(config.error, undefined);
+  assert.equal(
+    config.config.extends,
+    undefined,
+    "Resolve inherited aliases before extending tsconfig",
+  );
+  assert.deepEqual(
+    config.config.compilerOptions.paths,
+    { "@/*": ["./src/*"] },
+    "Update the dependency resolver when the repository's source aliases change",
+  );
+  assert.deepEqual(dependencyViolations(graph, dependencyExceptions), []);
 });
 
 test("availability service and shared contracts preserve their dependency boundaries", () => {
@@ -192,6 +180,105 @@ test("availability service and shared contracts preserve their dependency bounda
       `availability contracts import ${specifier} outside src/domain`,
     );
   }
+});
+
+test("Events services cannot restore any of their former frontend dependencies", () => {
+  for (const entry of dependencyExceptions) {
+    assert.ok(
+      !entry.source.startsWith("src/server/group-sessions/"),
+      `Events services must not regain a feature exception: ${entry.source}`,
+    );
+  }
+  for (const [file, source] of graph) {
+    if (!file.startsWith("src/server/group-sessions/")) continue;
+    for (const edge of source.imports)
+      assert.ok(!edge.target?.startsWith("src/features/"), file);
+  }
+
+  // Mutate only the in-memory graph. Each former edge must independently fail
+  // against the actual source and remaining non-Events exceptions.
+  const formerEdges = [
+    ["directory-service", "events/event-contract", "runtime"],
+    ["directory-service", "events/directory-contract", "runtime"],
+    ["banner-service", "events/event-contract", "runtime"],
+    ["participation-action", "events/event-contract", "runtime"],
+    ["owner-service", "coach-events/contract", "type"],
+  ] as const;
+  for (const [service, feature, kind] of formerEdges) {
+    const file = `src/server/group-sessions/${service}.ts`;
+    const target = `src/features/${feature}.ts`;
+    const changed = new Map(graph);
+    const source = graph.get(file)!;
+    changed.set(file, {
+      ...source,
+      imports: [
+        ...source.imports,
+        {
+          specifier: `@/features/${feature}`,
+          target,
+          kind,
+          syntax: "import",
+          line: 1,
+          external: false,
+          asset: false,
+        },
+      ],
+    });
+    assert.deepEqual(dependencyViolations(changed, dependencyExceptions), [
+      `[reverse] ${file}:1 imports unapproved ${file} -> ${target} (${kind})`,
+    ]);
+  }
+});
+
+test("Calendar contracts stay type-only and its service cannot regain feature dependencies", () => {
+  const file = "src/server/coaches/calendar-service.ts";
+  const target = "src/features/coaches/coach-calendar-model.ts";
+  const service = graph.get(file)!;
+  assert.ok(service);
+  assert.ok(!dependencyExceptions.some((entry) => entry.source === file));
+  assert.ok(
+    service.imports.every((edge) => !edge.target?.startsWith("src/features/")),
+  );
+
+  const contracts = "src/calendar/contracts.ts";
+  const source = ts.createSourceFile(
+    contracts,
+    readFileSync(path.join(root, contracts), "utf8"),
+    ts.ScriptTarget.Latest,
+    true,
+  );
+  for (const statement of source.statements) {
+    assert.ok(
+      ts.isTypeAliasDeclaration(statement) ||
+        (ts.isImportDeclaration(statement) &&
+          statement.importClause?.isTypeOnly),
+      "Calendar contracts may only contain type declarations and type imports",
+    );
+  }
+  for (const edge of graph.get(contracts)!.imports) {
+    assert.equal(edge.kind, "type");
+    assert.ok(edge.target?.startsWith("src/domain/"));
+  }
+
+  const changed = new Map(graph);
+  changed.set(file, {
+    ...service,
+    imports: [
+      ...service.imports,
+      {
+        specifier: "@/features/coaches/coach-calendar-model",
+        target,
+        kind: "type",
+        syntax: "import",
+        line: 1,
+        external: false,
+        asset: false,
+      },
+    ],
+  });
+  assert.deepEqual(dependencyViolations(changed, dependencyExceptions), [
+    `[reverse] ${file}:1 imports unapproved ${file} -> ${target} (type)`,
+  ]);
 });
 
 test("privileged scheduling entry points carry the server-only marker", () => {

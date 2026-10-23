@@ -1,22 +1,10 @@
-import type { SessionType } from "@/domain/session-types";
-import type { CoachDiscipline } from "@/domain/coaches";
 import {
   parseGroupSessionCommand,
   type GroupCursor,
   type GroupSession,
-  type GroupSessionCommand,
 } from "@/domain/group-sessions";
-import type { EventSearch } from "@/features/events/event-contract";
+import type { EventSearch, OwnerMutation } from "@/events/contracts";
 
-export type CoachEventContext = Readonly<{
-  scope: string;
-  identity: string;
-  canDraft: boolean;
-  sessionTypes?: readonly SessionType[];
-  canPublish: boolean;
-  disciplines: readonly CoachDiscipline[];
-  locations: readonly { id: string; name: string; label: string }[];
-}>;
 export const DRAFT_FIELDS = [
   "title",
   "description",
@@ -30,14 +18,10 @@ export const DRAFT_FIELDS = [
   "maximumParticipants",
   "price",
 ] as const;
+
 export type DraftValues = Record<(typeof DRAFT_FIELDS)[number], string>;
+
 export type DraftFormState = { issue: string | null; values?: DraftValues };
-export type OwnerMutation =
-  | Extract<
-      GroupSessionCommand,
-      { action: "save-draft" | "delete-draft" | "publish" }
-    >
-  | Readonly<{ action: "confirm" | "cancel"; args: { id: string } }>;
 
 export function ownerEventId(value: string) {
   const command = parseGroupSessionCommand({
@@ -46,9 +30,11 @@ export function ownerEventId(value: string) {
   });
   return command?.action === "detail" ? command.args.id.toLowerCase() : null;
 }
+
 export function coachEventHref(id: string) {
   return `/coach/events/${id}`;
 }
+
 export function ownerPageCursor(
   search: EventSearch,
   detail = false,
@@ -68,9 +54,11 @@ export function ownerPageCursor(
   });
   return parsed?.action === "owner-list" ? (parsed.args.after ?? null) : false;
 }
+
 export function ownerPageHref(href: string, after: GroupCursor) {
   return `${href}?${new URLSearchParams({ afterAt: after.at, afterId: after.id })}`;
 }
+
 export function berlinLocalInput(at: string) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Berlin",
@@ -84,6 +72,7 @@ export function berlinLocalInput(at: string) {
   const get = (name: string) => parts.find((part) => part.type === name)?.value;
   return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
 }
+
 /** Both DST fold instances are rejected, matching the existing database contract. */
 export function berlinLocalInstant(value: string): string | null {
   if (!/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(value)) return null;
@@ -98,12 +87,14 @@ export function berlinLocalInstant(value: string): string | null {
     .filter((at) => berlinLocalInput(at) === value);
   return candidates.length === 1 ? candidates[0] : null;
 }
+
 export function euroCents(value: string): number | null {
   if (!/^(?:0|[1-9]\d{0,7})(?:\.\d{1,2})?$/.test(value)) return null;
   const [euros, fraction = ""] = value.split(".");
   const cents = Number(euros) * 100 + Number(fraction.padEnd(2, "0"));
   return cents <= 2147483647 ? cents : null;
 }
+
 export function draftValues(session?: GroupSession): DraftValues {
   return {
     title: session?.title ?? "",
@@ -121,6 +112,7 @@ export function draftValues(session?: GroupSession): DraftValues {
     price: session ? (session.priceCents / 100).toFixed(2) : "0.00",
   };
 }
+
 export function submittedDraftValues(form: FormData): DraftValues {
   return Object.fromEntries(
     DRAFT_FIELDS.map((key) => [
@@ -131,6 +123,7 @@ export function submittedDraftValues(form: FormData): DraftValues {
     ]),
   ) as DraftValues;
 }
+
 export function parseOwnerForm(
   form: FormData,
 ): { command: OwnerMutation; scope: string } | null {
@@ -231,6 +224,7 @@ export function parseOwnerForm(
     ? { command: command as OwnerMutation, scope }
     : null;
 }
+
 export function ownerIssueMessage(issue: unknown): string | null {
   switch (issue) {
     case "invalid":

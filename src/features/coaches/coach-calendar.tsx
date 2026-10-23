@@ -30,9 +30,11 @@ import {
   calendarItemRange,
   calendarLanes,
   calendarMinutes,
-  type CoachCalendarData,
-  type CoachCalendarLoader,
 } from "./coach-calendar-model";
+import type {
+  CoachCalendarData,
+  CoachCalendarLoader,
+} from "@/calendar/contracts";
 import "./availability-editor.css";
 import "./coach-calendar.css";
 

@@ -8,7 +8,7 @@ import {
   type CalendarItem,
   type CalendarQuery,
 } from "@/domain/coach-calendar";
-import type { CoachCalendarData } from "@/features/coaches/coach-calendar-model";
+import type { CoachCalendarData } from "@/calendar/contracts";
 import { AVAILABILITY_COACH } from "./availability-editor-data";
 export const CALENDAR_FIXTURE_NOW = "2026-10-16T08:30:00Z";
 export const CALENDAR_FIXTURE_LOCATIONS = [

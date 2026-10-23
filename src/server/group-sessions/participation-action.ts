@@ -1,6 +1,6 @@
 import "server-only";
 import { revalidatePath } from "next/cache";
-import { parseParticipationForm } from "@/features/events/event-contract";
+import { parseParticipationForm } from "@/events/parsers";
 import { changeAthleteParticipation } from "./athlete-service";
 
 export async function changeGroupParticipation(form: FormData) {

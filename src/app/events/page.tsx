@@ -2,17 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { COACH_DISCIPLINES } from "@/domain/coaches";
-import {
-  eventPageHref,
-  type EventSearch,
-} from "@/features/events/event-contract";
+import { eventPageHref } from "@/events/queries";
+import type { EventSearch } from "@/events/contracts";
 import { EventsUnavailable } from "@/features/events/event-ui";
 import { MarketplaceHero } from "@/features/public/marketplace-hero";
 import { publicEventDirectory } from "@/server/group-sessions/directory-service";
-import {
-  eventDirectoryHref,
-  parseEventDirectory,
-} from "@/features/events/directory-contract";
+import { eventDirectoryHref } from "@/features/events/directory-contract";
+import { parseEventDirectory } from "@/events/parsers";
 import { EventResults } from "@/features/events/event-results";
 import eventsBackground from "../../../public/images/events-tug-of-war.jpg";
 import "@/features/events/events.css";

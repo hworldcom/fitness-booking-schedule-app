@@ -1,13 +1,7 @@
 import "server-only";
 import { parseGroupSessionResult } from "@/domain/group-sessions";
-import {
-  eventListQuery,
-  type EventFilters,
-} from "@/features/events/event-contract";
-import {
-  eventQueryKey,
-  type EventDirectoryPage,
-} from "@/features/events/directory-contract";
+import { eventListQuery, eventQueryKey } from "@/events/queries";
+import type { EventFilters, EventDirectoryPage } from "@/events/contracts";
 import { publicGroupSessions } from "./service";
 import { publicEventPresentations } from "./banner-service";
 
