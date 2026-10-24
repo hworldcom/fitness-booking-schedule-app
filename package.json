@@ -70,7 +70,9 @@
     "format:check": "prettier --check scripts src tests playwright.config.ts package.json tsconfig.json postcss.config.mjs eslint.config.mjs vercel.json",
     "test:calendar-hosted": "node --env-file=.env.development.local scripts/rehearse-hosted-calendar-integration.mjs",
     "test:coach-public-urls-db": "node scripts/rehearse-coach-public-urls-database.mjs",
-    "test:coach-public-urls": "node --import tsx --conditions=react-server scripts/rehearse-local-coach-public-urls.ts"
+    "test:coach-public-urls": "node --import tsx --conditions=react-server scripts/rehearse-local-coach-public-urls.ts",
+    "test:group-approvals-db": "node scripts/rehearse-group-approvals-database.mjs",
+    "test:group-approvals-integration": "node scripts/rehearse-group-approvals-integration.mjs"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "5.3.0",

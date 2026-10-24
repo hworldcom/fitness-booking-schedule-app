@@ -124,6 +124,7 @@ const ownerFixture = (id, title, startsAt, endsAt, status = "open") => ({
     trustKind: "verified",
   },
   participantCount: status === "cancelled" ? 0 : 2,
+  approvedParticipantCount: status === "cancelled" ? 0 : 2,
   canJoin: false,
   canConfirm: status === "open",
   canCancel: status === "open",

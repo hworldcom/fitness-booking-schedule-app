@@ -44,6 +44,7 @@ function session(n: number): GroupSession {
     minimumParticipants: 2,
     maximumParticipants: 8,
     participantCount: 2,
+    approvedParticipantCount: 2,
     priceCents: 1550,
     currency: "EUR",
     status: "open",

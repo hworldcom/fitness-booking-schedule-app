@@ -36,7 +36,7 @@ export function EventCard({
 }) {
   const participantsNeeded = Math.max(
     0,
-    session.minimumParticipants - session.participantCount,
+    session.minimumParticipants - session.approvedParticipantCount,
   );
   const waitingForCoach = session.displayStatus === "open";
   const canInvite =
@@ -125,8 +125,8 @@ export function EventCard({
         {waitingForCoach && (
           <p>
             {participantsNeeded > 0
-              ? `${participantsNeeded} more ${participantsNeeded === 1 ? "participant" : "participants"} needed before coach confirmation.`
-              : "Minimum reached. Awaiting coach confirmation."}
+              ? `${participantsNeeded} more approved ${participantsNeeded === 1 ? "participant" : "participants"} needed before coach confirmation.`
+              : "Approved minimum reached. Awaiting coach confirmation."}
           </p>
         )}
         {canInvite && (
@@ -191,7 +191,10 @@ export function EventTerms({ session }: { session: GroupSession }) {
         <dd>
           {session.participantCount} of {session.maximumParticipants}
           <small>
-            {`Minimum ${session.minimumParticipants} ${session.minimumParticipants === 1 ? "participant" : "participants"}${session.status === "open" ? " to enable coach confirmation" : ""}`}
+            {session.approvedParticipantCount} individually approved
+          </small>
+          <small>
+            {`Minimum ${session.minimumParticipants} ${session.minimumParticipants === 1 ? "participant" : "participants"}${session.status === "open" ? " approved to enable coach confirmation" : ""}`}
           </small>
         </dd>
       </div>
@@ -201,7 +204,10 @@ export function EventTerms({ session }: { session: GroupSession }) {
           <time dateTime={session.decisionDeadlineAt}>
             {eventDate(session.decisionDeadlineAt)}
           </time>
-          <small>Europe/Berlin · Joining closes at this deadline.</small>
+          <small>
+            Europe/Berlin · Joining and participation approval close at this
+            deadline.
+          </small>
         </dd>
       </div>
       <div>

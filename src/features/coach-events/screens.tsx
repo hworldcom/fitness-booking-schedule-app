@@ -6,7 +6,11 @@ import type {
   GroupRosterItem,
 } from "@/domain/group-sessions";
 import { EventStatus, EventTerms } from "@/features/events/event-ui";
-import { eventDate, eventHref } from "@/features/events/event-contract";
+import {
+  eventDate,
+  eventHref,
+  registrationStatus,
+} from "@/features/events/event-contract";
 import { coachEventHref, ownerPageHref } from "./contract";
 import type { CoachEventContext } from "@/events/contracts";
 import { CoachEventDecisionForm } from "./forms";
@@ -152,7 +156,7 @@ export function CoachEventDetail({
               {session.status === "open" && (
                 <p>
                   Reaching the minimum never confirms automatically. Confirm
-                  only before the deadline with enough current registrations.
+                  only before the deadline with enough approved participants.
                   Otherwise this session becomes Not confirmed.
                 </p>
               )}
@@ -224,18 +228,39 @@ export function CoachEventDetail({
                 <div>
                   <strong>{item.name}</strong>
                   <small>
-                    {item.status === "active"
-                      ? "Seat reserved"
-                      : item.status === "withdrawn"
-                        ? "Withdrew"
-                        : item.status === "session-cancelled"
-                          ? "Session cancelled"
-                          : "Session not confirmed"}{" "}
+                    {item.status === "withdrawn"
+                      ? "Withdrew"
+                      : registrationStatus(item)}{" "}
                     · Registered {eventDate(item.createdAt)}
                     {item.resolvedAt && (
                       <> · Updated {eventDate(item.resolvedAt)}</>
                     )}
                   </small>
+                  {item.decidedAt && (
+                    <small>Coach decision {eventDate(item.decidedAt)}</small>
+                  )}
+                  {item.canDecide && context.canPublish && (
+                    <div className="coach-event-registration-decisions">
+                      <CoachEventDecisionForm
+                        id={session.id}
+                        scope={context.scope}
+                        revision={session.revision}
+                        registrationId={item.id}
+                        intent="approve-registration"
+                        label="Approve participant"
+                        acknowledgement={`Approve ${item.name} for this session. Event confirmation remains separate.`}
+                      />
+                      <CoachEventDecisionForm
+                        id={session.id}
+                        scope={context.scope}
+                        revision={session.revision}
+                        registrationId={item.id}
+                        intent="decline-registration"
+                        label="Decline participant"
+                        acknowledgement={`Decline ${item.name}. They cannot reapply to this event.`}
+                      />
+                    </div>
+                  )}
                 </div>
               </li>
             ))}

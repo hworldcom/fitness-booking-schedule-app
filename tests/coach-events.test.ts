@@ -13,6 +13,31 @@ import {
 
 const id = "00000000-0000-4000-8000-000000000001";
 const scope = Array(3).fill(id).join(":");
+test("individual decision forms require one acknowledged exact registration and reject forged or duplicate fields", () => {
+  for (const intent of ["approve-registration", "decline-registration"]) {
+    const form = new FormData();
+    for (const [key, value] of Object.entries({
+      intent,
+      sessionId: id,
+      registrationId: id,
+      actorScope: scope,
+      acknowledge: "yes",
+    }))
+      form.set(key, value);
+    assert.deepEqual(parseOwnerForm(form)?.command, {
+      action: intent,
+      args: { id, registrationId: id },
+    });
+    form.append("registrationId", id);
+    assert.equal(parseOwnerForm(form), null);
+    form.set("registrationId", id);
+    form.set("athleteId", id);
+    assert.equal(parseOwnerForm(form), null);
+    form.delete("athleteId");
+    form.delete("acknowledge");
+    assert.equal(parseOwnerForm(form), null);
+  }
+});
 function draft() {
   const form = new FormData();
   for (const [key, value] of Object.entries({

@@ -517,3 +517,16 @@
     padding-left: 6px;
   }
 }
+
+@media (max-width: 360px) {
+  .authenticated-topbar {
+    gap: 4px;
+    padding-inline: 12px;
+  }
+  .authenticated-topbar .header-right {
+    gap: 4px;
+  }
+  .authenticated-topbar .brand {
+    font-size: 17px;
+  }
+}

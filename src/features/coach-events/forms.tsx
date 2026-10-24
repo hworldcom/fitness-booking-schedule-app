@@ -322,17 +322,28 @@ export function CoachEventDecisionForm({
   intent,
   label,
   acknowledgement,
+  registrationId,
 }: {
   id: string;
   scope: string;
   revision: number;
-  intent: "publish" | "confirm" | "cancel" | "delete-draft";
+  intent:
+    | "publish"
+    | "confirm"
+    | "cancel"
+    | "delete-draft"
+    | "approve-registration"
+    | "decline-registration";
+  registrationId?: string;
   label: string;
   acknowledgement: string;
 }) {
   return (
     <form action={decideCoachEventAction} className="coach-event-decision">
       <input type="hidden" name="intent" value={intent} />
+      {registrationId && (
+        <input type="hidden" name="registrationId" value={registrationId} />
+      )}
       <input type="hidden" name="sessionId" value={id} />
       <input type="hidden" name="actorScope" value={scope} />
       {(intent === "publish" || intent === "delete-draft") && (
