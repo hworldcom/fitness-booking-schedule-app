@@ -306,6 +306,40 @@ try {
   console.log(
     "PASS booking event title/snapshot/safe destination and explicit read in mixed history",
   );
+  // MOV-86: group notices use the same recipient/read/recovery controller.
+  const groupId = randomUUID();
+  items[0] = {
+    id: items[0].id,
+    createdAt: items[0].createdAt,
+    readAt: null,
+    kind: "group",
+    event: "approval-expired",
+    sessionId: groupId,
+    recipientRole: "coach",
+    title: "Group practice",
+    startsAt: "2026-10-29T17:00:00.000Z",
+    endsAt: "2026-10-29T18:00:00.000Z",
+    venueName: "Berlin studio",
+    eventStatus: "confirmed",
+    participationStatus: null,
+    affectedCount: 12,
+  };
+  await page.keyboard.press("Escape");
+  await bell().click();
+  await expect(
+    dialog().getByRole("link", { name: /Group approval deadline passed/ }),
+  ).toHaveAttribute("href", `/coach/events/${groupId}`);
+  await expect(dialog()).toContainText("Group practice");
+  await dialog()
+    .getByRole("button", {
+      name: "Mark group approval deadline passed notification as read",
+      exact: true,
+    })
+    .click();
+  await expect(bell()).toHaveAttribute("aria-label", "Notifications, 0 unread");
+  console.log(
+    "PASS group title/snapshot/owner destination and explicit read in mixed history",
+  );
   await page.screenshot({
     path: path.join(output, "desktop.png"),
     fullPage: true,

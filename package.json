@@ -71,6 +71,8 @@
     "test:calendar-hosted": "node --env-file=.env.development.local scripts/rehearse-hosted-calendar-integration.mjs",
     "test:coach-public-urls-db": "node scripts/rehearse-coach-public-urls-database.mjs",
     "test:coach-public-urls": "node --import tsx --conditions=react-server scripts/rehearse-local-coach-public-urls.ts",
+    "test:group-notifications-integration": "node scripts/rehearse-group-notifications-integration.mjs",
+    "test:group-notifications-db": "node scripts/rehearse-group-notifications-database.mjs",
     "test:group-approvals-db": "node scripts/rehearse-group-approvals-database.mjs",
     "test:group-approvals-integration": "node scripts/rehearse-group-approvals-integration.mjs"
   },

@@ -1,4 +1,5 @@
 "use client";
+import { GROUP_EVENTS, groupNotificationSummary } from "@/notifications/groups";
 import { useEffect, useId, useRef, useState } from "react";
 import { Bell, Check, MessageSquare, CalendarCheck } from "lucide-react";
 import {
@@ -252,7 +253,7 @@ function RecipientBell({ actorKey }: { actorKey: string }) {
                       className={item.readAt ? "" : "is-unread"}
                     >
                       <span className="notification-item-icon">
-                        {item.kind === "booking" ? (
+                        {item.kind === "booking" || item.kind === "group" ? (
                           <CalendarCheck size={16} aria-hidden="true" />
                         ) : (
                           <MessageSquare size={16} aria-hidden="true" />
@@ -264,14 +265,18 @@ function RecipientBell({ actorKey }: { actorKey: string }) {
                           onClick={() => setOpen(false)}
                         >
                           <strong>
-                            {item.kind === "booking"
-                              ? BOOKING_EVENTS[item.event]
-                              : `New message from ${item.senderName}`}
+                            {item.kind === "group"
+                              ? GROUP_EVENTS[item.event]
+                              : item.kind === "booking"
+                                ? BOOKING_EVENTS[item.event]
+                                : `New message from ${item.senderName}`}
                           </strong>
                           <span>
-                            {item.kind === "booking"
-                              ? bookingNotificationSummary(item)
-                              : "Open your conversation to read and reply."}
+                            {item.kind === "group"
+                              ? groupNotificationSummary(item)
+                              : item.kind === "booking"
+                                ? bookingNotificationSummary(item)
+                                : "Open your conversation to read and reply."}
                           </span>
                         </Link>
                         <time dateTime={item.createdAt}>
@@ -291,9 +296,11 @@ function RecipientBell({ actorKey }: { actorKey: string }) {
                             disabled={working}
                             onClick={() => void mark(item.id)}
                             aria-label={
-                              item.kind === "booking"
-                                ? `Mark ${BOOKING_EVENTS[item.event].toLowerCase()} notification as read`
-                                : `Mark message notification from ${item.senderName} as read`
+                              item.kind === "group"
+                                ? `Mark ${GROUP_EVENTS[item.event].toLowerCase()} notification as read`
+                                : item.kind === "booking"
+                                  ? `Mark ${BOOKING_EVENTS[item.event].toLowerCase()} notification as read`
+                                  : `Mark message notification from ${item.senderName} as read`
                             }
                           >
                             Mark read

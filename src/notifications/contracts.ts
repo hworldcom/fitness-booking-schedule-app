@@ -1,3 +1,8 @@
+import {
+  parseGroupNotification,
+  groupNotificationHref,
+  type GroupNotification,
+} from "./groups";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
 import {
   bookingNotificationHref,
@@ -14,6 +19,7 @@ type NotificationIdentity = Readonly<{
 export type NotificationItem = NotificationIdentity &
   (
     | BookingNotification
+    | GroupNotification
     | Readonly<{
         kind?: "message";
         conversationId: string;
@@ -99,6 +105,23 @@ export function parseNotificationPage(value: unknown): NotificationPage {
   return {
     items: page.items.map((value) => {
       const item = object(value);
+      if (item.kind === "group") {
+        if (
+          !id(item.id) ||
+          !timestamp(item.createdAt) ||
+          (item.readAt !== null && !timestamp(item.readAt))
+        )
+          throw Error("Invalid notification response.");
+        const group = parseGroupNotification(item);
+        if (group.recipientRole !== "coach")
+          throw Error("Invalid group notification recipient.");
+        return {
+          ...group,
+          id: item.id,
+          createdAt: item.createdAt,
+          readAt: item.readAt,
+        };
+      }
       if (item.kind === "booking") {
         if (
           !id(item.id) ||
@@ -146,8 +169,11 @@ export function notificationHref(
         Extract<NotificationItem, { conversationId: string }>,
         "conversationId"
       >
-    | BookingNotification,
+    | BookingNotification
+    | GroupNotification,
 ) {
+  if ("kind" in item && item.kind === "group")
+    return groupNotificationHref(item);
   if ("kind" in item && item.kind === "booking")
     return bookingNotificationHref(item);
   if (!("conversationId" in item))

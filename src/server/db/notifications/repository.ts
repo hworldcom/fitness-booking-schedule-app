@@ -9,12 +9,14 @@ import type { ActorDatabaseTransaction } from "../authorization/repository";
 export async function notificationCommandRecord(
   tx: ActorDatabaseTransaction,
   command: NotificationCommand,
-  version: 1 | 2 = 1,
+  version: 1 | 2 | 3 = 1,
 ) {
   const fn =
-    version === 2
-      ? sql`app.notification_command_v2`
-      : sql`app.notification_command`;
+    version === 3
+      ? sql`app.notification_command_v3`
+      : version === 2
+        ? sql`app.notification_command_v2`
+        : sql`app.notification_command`;
   const rows = await tx.execute<{ result: unknown }>(
     sql`select ${fn}(${command.action}::text,${JSON.stringify(command.args)}::jsonb) result`,
   );

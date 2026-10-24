@@ -1,4 +1,4 @@
-// MOV-77: real Auth/API/SQL/browser/worker QA in a wholly disposable stack.
+// MOV-77/MOV-86: shared real approval/notification QA in a wholly disposable stack.
 import assert from "node:assert/strict";
 import { spawn, spawnSync, execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -15,14 +15,25 @@ const root = process.cwd();
 assert.ok(
   process.argv
     .slice(2)
-    .every((arg) => ["--webpack", "--diagnose-storage"].includes(arg)),
+    .every((arg) =>
+      ["--webpack", "--diagnose-storage", "--group-notifications"].includes(
+        arg,
+      ),
+    ),
 );
+const groupNotifications = process.argv.includes("--group-notifications");
 const diagnoseStorage = process.argv.includes("--diagnose-storage");
 const webpack = process.argv.includes("--webpack");
 const tag = randomUUID().replaceAll("-", "").slice(0, 10);
-const project = `mov77-group-approval-qa-${tag}`;
+const project = `${groupNotifications ? "mov86-group-notification-qa" : "mov77-group-approval-qa"}-${tag}`;
 const checkout = await mkdtemp(path.join(tmpdir(), `${project}-`));
-const output = path.join(root, "test-results/group-approvals-integration", tag);
+const output = path.join(
+  root,
+  groupNotifications
+    ? "test-results/group-notifications-integration"
+    : "test-results/group-approvals-integration",
+  tag,
+);
 const base = "http://localhost:3169";
 const cli = path.join(root, "node_modules/.bin/supabase");
 const cleanEnv = Object.fromEntries(
@@ -316,7 +327,7 @@ try {
       status.PUBLISHABLE_KEY ?? status.ANON_KEY,
     DATABASE_URL: loginUrl("qa_app", appPassword),
     NOTIFICATION_DATABASE_URL: loginUrl("qa_worker", workerPassword),
-    NOTIFICATION_DELIVERY_ENABLED: "false",
+    NOTIFICATION_DELIVERY_ENABLED: groupNotifications ? "true" : "false",
     NOTIFICATION_TRANSPORT: "mailpit",
     NOTIFICATION_MAILPIT_URL: mail,
     CRON_SECRET: cron,
@@ -424,7 +435,10 @@ try {
       email,
       password,
       email_confirm: true,
-      app_metadata: { movx_test_ticket: "MOV-77", temporary: true },
+      app_metadata: {
+        movx_test_ticket: groupNotifications ? "MOV-86" : "MOV-77",
+        temporary: true,
+      },
     });
     assert.ifError(created.error);
     const authId = created.data.user.id;
@@ -737,6 +751,68 @@ try {
   pass(
     "group approvals create no private booking/message notification side effects",
   );
+  if (groupNotifications) {
+    phase = "real group bell, independent reads and Mailpit delivery";
+    await coachPage.goto(base + "/account");
+    const bell = coachPage.getByRole("button", { name: /^Notifications,/ });
+    await expect(bell).toHaveAccessibleName(
+      /^Notifications, [1-9][0-9]* unread$/,
+    );
+    await bell.click();
+    const dialog = coachPage.getByRole("dialog", {
+      name: "Notifications",
+      exact: true,
+    });
+    await expect(
+      dialog.getByRole("link", { name: /Group approval deadline passed/ }),
+    ).toHaveAttribute("href", `/coach/events/${expiringId}`);
+    await dialog
+      .getByRole("button", { name: "Mark all read", exact: true })
+      .click();
+    await expect(bell).toHaveAccessibleName("Notifications, 0 unread");
+    const [queuedBefore] =
+      await database`select count(*)::int n from app.group_notification_receipts where state='queued'`;
+    assert.ok(queuedBefore.n >= 19);
+    for (let n = 0; n < 30; n++) {
+      const r = await fetch(base + "/api/internal/notifications/dispatch", {
+        headers: { authorization: "Bearer " + cron },
+      });
+      assert.equal(r.status, 200);
+      const result = await r.json();
+      assert.equal(result.status, "ready");
+      assert.equal(result.result.failed, 0);
+      assert.equal(result.result.unknown, 0);
+      if (result.result.claimed === 0) break;
+    }
+    const receipts =
+      await database`select r.id,r.provider_id,r.recipient_profile_id,r.participation_status,e.kind,e.session_id from app.group_notification_receipts r join app.group_notification_events e on e.id=r.event_id where r.state='accepted'`;
+    assert.equal(receipts.length, queuedBefore.n);
+    const pendingConfirmation = receipts.find(
+      (r) =>
+        r.kind === "confirmed" && r.recipient_profile_id === stranger.profileId,
+    );
+    assert.ok(pendingConfirmation);
+    assert.equal(pendingConfirmation.participation_status, "pending");
+    const mailMessage = await (
+      await fetch(mail + "/api/v1/message/" + pendingConfirmation.provider_id)
+    ).json();
+    assert.match(mailMessage.Text, /still awaiting coach approval/);
+    assert.equal(mailMessage.To.length, 1);
+    assert.equal(mailMessage.To[0].Address, stranger.email);
+    assert.equal(mailMessage.From.Address, "notification@movx.club");
+    const [summaries] =
+      await database`select count(*)::int n from app.group_notification_receipts r join app.group_notification_events e on e.id=r.event_id where e.session_id=${id}::uuid and e.kind='confirmed' and r.recipient_profile_id=${coach.profileId}::uuid`;
+    assert.equal(summaries.n, 1);
+    await coachPage.screenshot({
+      path: path.join(output, "group-bell.png"),
+      fullPage: true,
+    });
+    await coachPage.keyboard.press("Escape");
+    await expect(bell).toBeFocused();
+    pass(
+      "real group bell/read independence and all canonical individual/summary emails captured once in isolated Mailpit",
+    );
+  }
   assert.deepEqual(errors, []);
   pass("no browser runtime exceptions");
 } catch (error) {
@@ -768,7 +844,10 @@ try {
   await database?.end({ timeout: 1 });
   await writeFile(path.join(output, "server.log"), redact(serverLog));
   if (started) {
-    assert.match(project, /^mov77-group-approval-qa-[a-f0-9]{10}$/);
+    assert.match(
+      project,
+      /^mov(?:77-group-approval|86-group-notification)-qa-[a-f0-9]{10}$/,
+    );
     try {
       await command(cli, [
         "stop",

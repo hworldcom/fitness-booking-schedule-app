@@ -1,3 +1,11 @@
+import {
+  GROUP_EVENTS,
+  parseGroupNotification,
+  groupNotificationHref,
+  groupNotificationSummary,
+  groupNotificationExplanation,
+  type GroupNotification,
+} from "@/notifications/groups";
 import "server-only";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
 import {
@@ -11,7 +19,7 @@ import {
 export type EmailClaim = {
   id: string;
   leaseId: string;
-  kind?: "message" | "booking";
+  kind?: "message" | "booking" | "group";
 };
 export type MessageEmailPayload = {
   id: string;
@@ -19,7 +27,8 @@ export type MessageEmailPayload = {
   email: string;
 };
 export type EmailPayload =
-  MessageEmailPayload | (BookingNotification & { id: string; email: string });
+  | MessageEmailPayload
+  | ((BookingNotification | GroupNotification) & { id: string; email: string });
 export type DeliveryOutcome = {
   status: "accepted" | "retry" | "failed" | "unknown";
   providerId?: string;
@@ -131,6 +140,32 @@ export function bookingEmail(
     html: `<p>${escape(title)}</p><p>${escape(summary)}</p><p>${escape(explanation)}</p><p><a href="${escape(link)}">Open your bookings</a></p><p>Sign in to view the current details.</p>`,
   };
 }
+export function groupEmail(
+  payload: GroupNotification & { id: string; email: string },
+  siteUrl: string,
+) {
+  const event = parseGroupNotification(payload);
+  const base = messageEmail(
+    { id: payload.id, email: payload.email, conversationId: event.sessionId },
+    siteUrl,
+  );
+  const title = GROUP_EVENTS[event.event],
+    summary = groupNotificationSummary(event),
+    explanation = groupNotificationExplanation(event),
+    link = new URL(groupNotificationHref(event), siteUrl).href;
+  const escape = (v: string) =>
+    v
+      .replaceAll("&", "&amp;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  return {
+    ...base,
+    subject: `${title} on MovX Club`,
+    text: `${title}\n\n${summary}\n\n${explanation}\n\nOpen your event: ${link}\n\nSign in to view the current details.`,
+    html: `<p>${escape(title)}</p><p>${escape(summary)}</p><p>${escape(explanation)}</p><p><a href="${escape(link)}">Open your event</a></p><p>Sign in to view the current details.</p>`,
+  };
+}
 export function createEmailTransport(
   config: {
     transport: "resend" | "mailpit";
@@ -166,11 +201,14 @@ export function createEmailTransport(
     config.siteUrl,
   );
   return async (payload: EmailPayload): Promise<DeliveryOutcome> => {
+    const isGroup = "kind" in payload && payload.kind === "group";
     const isBooking = "kind" in payload && payload.kind === "booking";
-    const email = isBooking
-      ? bookingEmail(payload, config.siteUrl)
-      : messageEmail(payload as MessageEmailPayload, config.siteUrl);
-    const key = `${isBooking ? "booking" : "message"}-notice/${payload.id}`;
+    const email = isGroup
+      ? groupEmail(payload, config.siteUrl)
+      : isBooking
+        ? bookingEmail(payload, config.siteUrl)
+        : messageEmail(payload as MessageEmailPayload, config.siteUrl);
+    const key = `${isGroup ? "group" : isBooking ? "booking" : "message"}-notice/${payload.id}`;
     const local = config.transport === "mailpit";
     const body = local
       ? {

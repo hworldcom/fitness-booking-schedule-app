@@ -1,3 +1,4 @@
+import type { GroupNotification } from "@/notifications/groups";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { randomUUID } from "node:crypto";
@@ -8,6 +9,7 @@ import {
   dispatchNotificationBatch,
   messageEmail,
   bookingEmail,
+  groupEmail,
   type DeliveryOutcome,
   type DeliveryRepository,
 } from "@/server/notifications/delivery";
@@ -21,7 +23,7 @@ const payload = {
   conversationId: randomUUID(),
   email: "athlete@example.test",
 };
-test("cached message-only clients retain v1 while new clients opt into booking history", async () => {
+test("cached clients retain v1/v2 while group clients opt into version3", async () => {
   const versions: number[] = [];
   const handler = notificationHandlers(
     async (_input, version) => {
@@ -63,7 +65,6 @@ test("cached message-only clients retain v1 while new clients opt into booking h
     ).status,
     200,
   );
-  assert.deepEqual(versions, [1, 2, 2]);
   assert.equal(
     (
       await handler.GET(
@@ -72,9 +73,20 @@ test("cached message-only clients retain v1 while new clients opt into booking h
         }),
       )
     ).status,
+    200,
+  );
+  assert.deepEqual(versions, [1, 2, 2, 3]);
+  assert.equal(
+    (
+      await handler.GET(
+        new Request(site + "/api/notifications", {
+          headers: { [NOTIFICATION_VERSION_HEADER]: "4" },
+        }),
+      )
+    ).status,
     400,
   );
-  assert.equal(versions.length, 3);
+  assert.equal(versions.length, 4);
 });
 test("booking receipts preserve semantic snapshots, escaping and two independent recipient idempotency keys", async () => {
   const event: BookingNotification = {
@@ -327,4 +339,53 @@ test("delivery is opt-in and cron rejects absent/short/wrong credentials", async
     if (previous === undefined) delete process.env.CRON_SECRET;
     else process.env.CRON_SECRET = previous;
   }
+});
+
+test("group emails preserve pending/event distinction, escape content and fence each recipient idempotency key", async () => {
+  const v: GroupNotification = {
+    kind: "group",
+    event: "confirmed",
+    sessionId: randomUUID(),
+    recipientRole: "athlete",
+    title: "<Group> & practice",
+    startsAt: "2026-10-29T17:00:00.000Z",
+    endsAt: "2026-10-29T18:00:00.000Z",
+    venueName: "<Studio>",
+    eventStatus: "confirmed",
+    participationStatus: "pending",
+    affectedCount: null,
+  };
+  const athlete = { ...v, id: randomUUID(), email: "athlete@example.test" };
+  const coach = {
+    ...v,
+    id: randomUUID(),
+    email: "coach@example.test",
+    recipientRole: "coach" as const,
+    participationStatus: null,
+    affectedCount: 12,
+  };
+  const mail = groupEmail(athlete, site);
+  assert.match(mail.text, /still awaiting coach approval/);
+  assert.match(mail.text, /past event/);
+  assert.ok(mail.html.includes("&lt;Group&gt;"));
+  assert.ok(!mail.html.includes("<Group>"));
+  assert.ok(mail.text.includes("/events/group-"));
+  assert.match(groupEmail(coach, site).text, /12 athletes affected/);
+  assert.ok(
+    groupEmail(coach, site).text.includes(`/coach/events/${v.sessionId}`),
+  );
+  const keys: string[] = [];
+  const sender = createEmailTransport(
+    { transport: "resend", apiKey: "re_fixture", siteUrl: site },
+    async (_url, init) => {
+      keys.push(new Headers(init?.headers).get("Idempotency-Key")!);
+      return Response.json({ id: "provider-id" });
+    },
+  );
+  await sender(athlete);
+  await sender(coach);
+  assert.deepEqual(keys, [
+    `group-notice/${athlete.id}`,
+    `group-notice/${coach.id}`,
+  ]);
 });

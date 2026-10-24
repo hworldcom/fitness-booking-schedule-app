@@ -97,6 +97,10 @@ MOV-77 adds individual athlete approval separately from event confirmation. Run 
 
 Current group consumers require `20261024000100_group_registration_approvals.sql`; do not use older migration-cutoff rehearsals as proof of this feature. The forward migration refuses existing published group inventory/registration history instead of inferring approval; read [database rollout/recovery](supabase/README.md#individual-group-registration-approval) before installing it on an existing target.
 
+### Group notification validation
+
+MOV-86 extends the existing sender, worker and bell to canonical group lifecycle events. `npm run test:group-notifications-db` checks fresh/upgrade preservation, exact recipient/coach-summary counts, approval versus event states, concurrency/retries, v1/v2 isolation, worker recovery and real loopback Mailpit receipts in owned scratch databases. Docker PostgreSQL and Mailpit55324 must be available; run database rehearsals sequentially. `npm run test:group-notifications-integration -- --diagnose-storage` checks the unchanged production app with real Auth/browser/SQL, group bell and cron-handler delivery in its own disposable stack (ports55420–55429/3169), including clean-source checks and exact retained-data/fixture cleanup. Neither installs SQL on retained environments or sends external email. See [group notification setup/recovery](supabase/README.md#group-notification-extension).
+
 ### Session-type validation
 
 With local Supabase running and dependencies installed, run the isolated schema/booking rehearsal:

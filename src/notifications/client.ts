@@ -28,7 +28,7 @@ export async function notificationList(
       await fetch(`/api/notifications?${new URLSearchParams(args)}`, {
         cache: "no-store",
         credentials: "same-origin",
-        headers: { [NOTIFICATION_VERSION_HEADER]: "2" },
+        headers: { [NOTIFICATION_VERSION_HEADER]: "3" },
         signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]),
       }),
     ),
@@ -44,7 +44,7 @@ export async function notificationWrite(
       credentials: "same-origin",
       headers: {
         "content-type": "application/json",
-        [NOTIFICATION_VERSION_HEADER]: "2",
+        [NOTIFICATION_VERSION_HEADER]: "3",
       },
       body: JSON.stringify(command),
       signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]),

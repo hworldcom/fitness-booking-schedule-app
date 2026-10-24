@@ -8,7 +8,7 @@ import { notificationCommandRecord } from "@/server/db/notifications/repository"
 
 export async function currentNotificationCommand(
   command: unknown,
-  version: 1 | 2 = 1,
+  version: 1 | 2 | 3 = 1,
 ): Promise<NotificationResult> {
   if (!validNotificationCommand(command)) return { status: "invalid" };
   const result = await withAuthorizedActor((tx) =>

@@ -121,6 +121,12 @@ try {
       "0\n0\n",
       "Migration backfilled history",
     );
+    // Current shared worker requires the later group-aware boundary; stage migration preservation was checked above.
+    for (const file of [
+      "20261024000100_group_registration_approvals.sql",
+      "20261024000200_group_notifications.sql",
+    ])
+      query(database, readFileSync(`supabase/migrations/${file}`, "utf8"));
     const login = `mov85_worker_${randomUUID().replaceAll("-", "").slice(0, 12)}`;
     const password = randomUUID();
     query(

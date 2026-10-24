@@ -113,6 +113,14 @@ try {
       before,
       "Migration changed existing rows",
     );
+    // Current application adds group capture without changing approval state/locks.
+    query(
+      database,
+      readFileSync(
+        "supabase/migrations/20261024000200_group_notifications.sql",
+        "utf8",
+      ),
+    );
     process.stdout.write(
       execFileSync(
         process.execPath,
