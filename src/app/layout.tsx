@@ -15,6 +15,7 @@ import "./explore-discovery.css";
 import "@/features/messages/messages.css";
 import "@/features/reviews/reviews.css";
 import "./account-menu.css";
+import "./notifications.css";
 import "./account-settings.css";
 import "./authentication.css";
 import "./public-marketplace-accessibility.css";

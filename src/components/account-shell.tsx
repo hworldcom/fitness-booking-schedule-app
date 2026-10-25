@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import type { ActorSnapshot } from "@/auth/actor-contracts";
 import { AccountMenu } from "@/components/account-menu";
 import { Brand } from "@/components/ui";
+import { NotificationBell } from "@/components/notification-bell";
 
 export function AccountShell({
   actor,
@@ -41,6 +42,7 @@ export function AccountShell({
                 <span>Messages</span>
                 {messageBadge}
               </Link>
+              <NotificationBell actor={actor} />
               <AccountMenu actor={actor} pathname={pathname} />
             </>
           ) : (

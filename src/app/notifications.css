@@ -1,0 +1,260 @@
+.notification-bell {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.notification-bell:hover,
+.notification-bell[aria-expanded="true"] {
+  background: var(--lime);
+}
+.notification-count {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 2px solid var(--paper);
+  border-radius: 20px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
+}
+.notification-dialog.dialog {
+  position: fixed;
+  inset: 80px 20px auto auto;
+  margin: 0;
+  padding: 20px 0 0;
+  width: min(390px, calc(100vw - 24px));
+  max-height: calc(100dvh - 100px);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 18px 65px #0002;
+  overflow: auto;
+}
+.notification-dialog::backdrop {
+  background: #0002;
+}
+.notification-dialog .dialog-top,
+.notification-dialog > h2 {
+  margin-inline: 20px;
+}
+.notification-dialog > h2 {
+  font-size: 23px;
+  margin-block: 8px 16px;
+}
+.notification-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px 10px;
+}
+.notification-toolbar > div {
+  display: flex;
+  gap: 2px;
+}
+.notification-toolbar button,
+.notification-mark-read,
+.notification-paging button,
+.notification-retry {
+  min-height: 36px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 8px;
+}
+.notification-toolbar button[aria-pressed="true"] {
+  background: var(--lime);
+  font-weight: 700;
+}
+.notification-mark-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.notification-dialog button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.notification-dialog button:focus-visible,
+.notification-dialog a:focus-visible,
+.notification-bell:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+.notification-status {
+  padding-inline: 20px;
+  font-size: 12px;
+}
+.notification-status:not(:empty) {
+  padding-bottom: 12px;
+}
+.notification-retry {
+  margin: 0 20px 12px;
+  border: 1px solid var(--line);
+}
+.notification-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.notification-items li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-top: 1px solid var(--line);
+}
+.notification-items li.is-unread {
+  background: color-mix(in srgb, var(--lime) 25%, var(--paper));
+}
+.notification-item-icon {
+  flex: 0 0 32px;
+  display: grid;
+  place-items: center;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+.notification-items li > div {
+  flex: 1;
+  min-width: 0;
+}
+.notification-items a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.notification-items strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+.notification-items a span {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.notification-items time {
+  display: block;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.notification-mark-read {
+  padding-left: 0;
+  text-decoration: underline;
+}
+.notification-unread-dot {
+  margin-top: 8px;
+  height: 6px;
+  width: 6px;
+  flex: 0 0 6px;
+  background: var(--ink);
+  border-radius: 50%;
+}
+.notification-empty {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 30px 20px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+.notification-empty strong {
+  font-size: 14px;
+}
+.notification-empty p {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+}
+.notification-paging {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+  padding: 4px 16px;
+}
+.notification-footnote {
+  border-top: 1px solid var(--line);
+  margin: 0;
+  padding: 14px 20px;
+  font-size: 11px;
+  color: var(--muted);
+}
+@media (max-width: 600px) {
+  .notification-dialog.dialog {
+    inset: 72px 12px auto auto;
+    max-height: calc(100dvh - 84px);
+  }
+  .notification-toolbar button,
+  .notification-mark-read,
+  .notification-paging button {
+    min-height: 44px;
+  }
+  .public-header-actions .notification-bell {
+    margin-inline: -2px;
+  }
+  .public-header-actions:has(.notification-bell) .public-account-link {
+    position: relative;
+    flex: 0 0 44px;
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+  }
+  .public-header-actions:has(.notification-bell) .public-account-link svg {
+    display: block;
+  }
+  .public-header-actions:has(.notification-bell)
+    .public-account-link
+    > span:not(.mailbox-nav-badge) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+@media (max-width: 360px) {
+  .public-header-inner:has(.notification-bell) {
+    padding-inline: 12px;
+    column-gap: 8px;
+  }
+  .public-header-actions:has(.notification-bell) {
+    gap: 4px;
+  }
+  .public-header-actions:has(.notification-bell) .public-coach-entry {
+    min-width: 44px;
+    padding-inline: 4px;
+  }
+  .public-header-actions:has(.notification-bell) .account-menu-trigger {
+    width: 44px;
+    padding: 5px;
+    gap: 0;
+  }
+  .public-header-actions:has(.notification-bell) .account-menu-trigger > svg {
+    display: none;
+  }
+}

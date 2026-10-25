@@ -115,7 +115,9 @@ test("group/private scheduling authority, publication and lock recovery", async 
   async function resetSchedule() {
     await db`delete from app.coach_group_registrations where session_id in(select id from app.coach_group_sessions where coach_profile_id=${coach.profileId}::uuid)`;
     await db`delete from app.coach_group_sessions where coach_profile_id=${coach.profileId}::uuid`;
-    // Delete only these generated actors' fixtures, including mail references.
+    // Delete only these generated actors' fixtures, including notification references.
+    await db`delete from app.booking_notification_receipts where event_id in (select id from app.booking_notification_events where coach_profile_id=${coach.profileId}::uuid)`;
+    await db`delete from app.booking_notification_events where coach_profile_id=${coach.profileId}::uuid`;
     await db`delete from app.message_conversations where coach_profile_id=${coach.profileId}::uuid`;
     await db`delete from app.coach_booking_requests where coach_profile_id=${coach.profileId}::uuid`;
     await db`delete from app.coach_private_bookings where coach_profile_id=${coach.profileId}::uuid`;
@@ -618,9 +620,13 @@ test("group/private scheduling authority, publication and lock recovery", async 
       async () => {
         const d = await save();
         await publish(d);
-        await command(athlete, {
+        const joined = await command(athlete, {
           action: "join",
           args: { id: d.id, registrationId: randomUUID() },
+        });
+        await command(coach, {
+          action: "approve-registration",
+          args: { id: d.id, registrationId: joined.registration!.id },
         });
         await command(coach, { action: "confirm", args: { id: d.id } });
         await db`update app.coach_profiles set visibility='hidden' where profile_id=${coach.profileId}::uuid`;
@@ -703,9 +709,13 @@ test("group/private scheduling authority, publication and lock recovery", async 
       async () => {
         const d = await save();
         await publish(d);
-        await command(athlete, {
+        const joined = await command(athlete, {
           action: "join",
           args: { id: d.id, registrationId: randomUUID() },
+        });
+        await command(coach, {
+          action: "approve-registration",
+          args: { id: d.id, registrationId: joined.registration!.id },
         });
         await command(coach, { action: "confirm", args: { id: d.id } });
         const blocked = await save({

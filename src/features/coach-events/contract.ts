@@ -130,9 +130,15 @@ export function parseOwnerForm(
   const intent = form.get("intent");
   if (
     typeof intent !== "string" ||
-    !["save-draft", "publish", "confirm", "cancel", "delete-draft"].includes(
-      intent,
-    )
+    ![
+      "save-draft",
+      "publish",
+      "confirm",
+      "cancel",
+      "delete-draft",
+      "approve-registration",
+      "decline-registration",
+    ].includes(intent)
   )
     return null;
   const typeKeys =
@@ -148,7 +154,9 @@ export function parseOwnerForm(
       ? ["revision", ...DRAFT_FIELDS]
       : intent === "publish" || intent === "delete-draft"
         ? ["revision", "acknowledge"]
-        : ["acknowledge"]),
+        : intent === "approve-registration" || intent === "decline-registration"
+          ? ["registrationId", "acknowledge"]
+          : ["acknowledge"]),
   ];
   if (
     keys.some(
@@ -214,13 +222,21 @@ export function parseOwnerForm(
     args =
       intent === "publish" || intent === "delete-draft"
         ? { id, expectedRevision: Number(form.get("revision")) }
-        : { id };
+        : intent === "approve-registration" || intent === "decline-registration"
+          ? { id, registrationId: form.get("registrationId") }
+          : { id };
   }
   const command = parseGroupSessionCommand({ action: intent, args });
   return command &&
-    ["save-draft", "publish", "confirm", "cancel", "delete-draft"].includes(
-      command.action,
-    )
+    [
+      "save-draft",
+      "publish",
+      "confirm",
+      "cancel",
+      "delete-draft",
+      "approve-registration",
+      "decline-registration",
+    ].includes(command.action)
     ? { command: command as OwnerMutation, scope }
     : null;
 }

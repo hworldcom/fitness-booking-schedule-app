@@ -107,9 +107,15 @@ export async function changeOwnedGroupEvent(
   const parsed = parseGroupSessionCommand(command);
   if (
     !parsed ||
-    !["save-draft", "publish", "confirm", "cancel", "delete-draft"].includes(
-      parsed.action,
-    ) ||
+    ![
+      "save-draft",
+      "publish",
+      "confirm",
+      "cancel",
+      "delete-draft",
+      "approve-registration",
+      "decline-registration",
+    ].includes(parsed.action) ||
     typeof scope !== "string" ||
     !/^[a-f0-9:-]{100,160}$/i.test(scope)
   )
@@ -119,7 +125,13 @@ export async function changeOwnedGroupEvent(
   const result = await withOwner(async (tx, context) => {
     if (
       (mutation.action === "save-draft" && !context.canDraft) ||
-      (["publish", "confirm"].includes(mutation.action) && !context.canPublish)
+      ([
+        "publish",
+        "confirm",
+        "approve-registration",
+        "decline-registration",
+      ].includes(mutation.action) &&
+        !context.canPublish)
     )
       return { outcome: "forbidden" as const };
     if (mutation.action === "delete-draft" && context.canDraft) {

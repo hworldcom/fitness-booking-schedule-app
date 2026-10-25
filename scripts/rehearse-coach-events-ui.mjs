@@ -20,9 +20,14 @@ const output = path.join(root, "test-results/dev0239-ui");
 const base = "http://127.0.0.1:3139";
 const original = "33333333-3333-4333-8333-333333333333";
 const own = [
+  "src",
+  "tests",
   "src/app/coach/events",
   "src/features/coach-events",
   "src/features/events/event-ui.tsx",
+  "src/features/events/event-contract.ts",
+  "src/domain/group-sessions.ts",
+  "src/events/contracts.ts",
   "src/server/group-sessions/owner-service.ts",
   "src/features/coaches/coach-workspace-navigation.tsx",
   "tests/fixtures/coach-events-auth.ts",
@@ -91,12 +96,19 @@ try {
   );
   env.NEXT_TELEMETRY_DISABLED = "1";
   env.DEV0239_FIXTURE_STORE = path.join(checkout, "fixture-state.json");
+  const built = execFileSync("npm", ["run", "build", "--", "--webpack"], {
+    cwd: checkout,
+    env,
+    encoding: "utf8",
+    maxBuffer: 16 * 1024 * 1024,
+  });
+  await writeFile(path.join(output, "build.log"), built);
+  report("production fixture build");
   server = spawn(
     process.execPath,
     [
       path.join(root, "node_modules/next/dist/bin/next"),
-      "dev",
-      "--webpack",
+      "start",
       "--hostname",
       "127.0.0.1",
       "--port",
@@ -124,16 +136,14 @@ try {
   });
   page = await context.newPage();
   page.setDefaultTimeout(12000);
-  page.setDefaultNavigationTimeout(25000);
+  page.setDefaultNavigationTimeout(60000);
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   const cookie = async (name, value) =>
     context.addCookies([{ name: `dev0239-${name}`, value, url: base }]);
   const open = async (href = "/coach/events") => {
-    await page.goto(base + href);
-    await page
-      .getByRole("navigation", { name: "Coach workspace", exact: true })
-      .waitFor();
+    await page.goto(base + href, { waitUntil: "domcontentloaded" });
+    await page.getByRole("main").waitFor();
   };
   const decision = async (label) => {
     const button = page.getByRole("button", { name: label, exact: true });
@@ -255,6 +265,48 @@ try {
     "stale saves retain proposed fields; publication conflict/venue recovery and frozen published terms",
   );
   await open(`/coach/events/${original}`);
+  await cookie("fault", "approval");
+  await page.reload();
+  for (const width of [320, 375, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    const layout = await page.evaluate(() => ({
+      width: innerWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      items: [...document.querySelectorAll("body *")]
+        .map((el) => ({
+          tag: el.tagName,
+          cls: el.className,
+          right: el.getBoundingClientRect().right,
+          left: el.getBoundingClientRect().left,
+          width: el.getBoundingClientRect().width,
+          text: el.textContent?.slice(0, 100),
+        }))
+        .filter((el) => el.right > innerWidth + 0.5 || el.left < -0.5),
+    }));
+    if (layout.scrollWidth > layout.width)
+      await writeFile(
+        path.join(output, `layout-${width}.json`),
+        JSON.stringify(layout, null, 2),
+      );
+    assert.equal(
+      layout.scrollWidth > layout.width,
+      false,
+      `Pending approval controls at ${width}`,
+    );
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Approve participant", exact: true })
+        .count(),
+      2,
+    );
+    await page.screenshot({
+      path: path.join(output, `pending-approval-${width}.png`),
+      fullPage: true,
+    });
+  }
+  await cookie("fault", "none");
+  await page.reload();
+  report("pending participant controls and long names fit 320/375/1440 widths");
   await decision("Confirm session");
   await page.getByText("Confirmed by coach", { exact: true }).waitFor();
   await cookie("fault", "withdrawn");

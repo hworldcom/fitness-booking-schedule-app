@@ -101,11 +101,13 @@ export function Modal({
   eyebrow = "MOVX CLUB / PREVIEW",
   children,
   onClose,
+  className = "",
 }: {
   title: string;
   eyebrow?: string;
   children: ReactNode;
   onClose: () => void;
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -121,7 +123,7 @@ export function Modal({
   return (
     <dialog
       ref={ref}
-      className="dialog"
+      className={className ? `dialog ${className}` : "dialog"}
       aria-labelledby={titleId}
       onCancel={onClose}
       onKeyDown={(event) => {

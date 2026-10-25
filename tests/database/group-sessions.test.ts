@@ -396,7 +396,15 @@ test("group session data, registration, privacy and concurrent lifecycle authori
         const s = await fixture();
         const r = await join(athletes[0], s);
         await assert.rejects(command(coach, "confirm", { id: s.id }));
-        await join(athletes[1], s);
+        const second = await join(athletes[1], s);
+        await command(coach, "approve-registration", {
+          id: s.id,
+          registrationId: r.registration!.id,
+        });
+        await command(coach, "approve-registration", {
+          id: s.id,
+          registrationId: second.registration!.id,
+        });
         const results = await Promise.all([
           command(coach, "confirm", { id: s.id }),
           command(coach, "confirm", { id: s.id }),
@@ -419,7 +427,15 @@ test("group session data, registration, privacy and concurrent lifecycle authori
       async () => {
         const s = await fixture();
         const r = await join(athletes[0], s);
-        await join(athletes[1], s);
+        const second = await join(athletes[1], s);
+        await command(coach, "approve-registration", {
+          id: s.id,
+          registrationId: r.registration!.id,
+        });
+        await command(coach, "approve-registration", {
+          id: s.id,
+          registrationId: second.registration!.id,
+        });
         const [confirmed] = await Promise.allSettled([
           command(coach, "confirm", { id: s.id }),
           command(athletes[0], "withdraw", {
@@ -544,6 +560,28 @@ test("group session data, registration, privacy and concurrent lifecycle authori
         );
         await assert.rejects(join(athletes[1], s));
         await assert.rejects(command(coach, "confirm", { id: s.id }));
+        assert.equal(
+          (
+            await command(coach, "approve-registration", {
+              id: s.id,
+              registrationId: r.registration!.id,
+            })
+          ).outcome,
+          "unavailable",
+        );
+        assert.equal(
+          (
+            await command(coach, "decline-registration", {
+              id: s.id,
+              registrationId: r.registration!.id,
+            })
+          ).outcome,
+          "unavailable",
+        );
+        assert.equal(
+          (await detail(athletes[0], s.id)).registration?.status,
+          "pending",
+        );
         assert.equal(
           (await detail(athletes[0], s.id)).registration?.id,
           r.registration!.id,
@@ -679,13 +717,14 @@ test("group session data, registration, privacy and concurrent lifecycle authori
           locationId,
           true,
         );
-        const registrationId = randomUUID();
-        await db`insert into app.coach_group_registrations(id,run_id,session_id,athlete_profile_id,created_at) values(${registrationId}::uuid,${coach.runId}::uuid,${elapsed.id}::uuid,${athletes[0].profileId}::uuid,${future(-4)})`;
         const own = await detail(athletes[0], elapsed.id);
         assert.equal(own.session.displayStatus, "ended");
-        assert.equal(own.registration?.canWithdraw, false);
+        assert.equal(own.session.canJoin, false);
         await assert.rejects(
-          command(athletes[0], "withdraw", { id: elapsed.id, registrationId }),
+          command(athletes[0], "withdraw", {
+            id: elapsed.id,
+            registrationId: randomUUID(),
+          }),
         );
         assert.equal(
           (await command(coach, "cancel", { id: elapsed.id })).outcome,
@@ -705,6 +744,12 @@ test("group session data, registration, privacy and concurrent lifecycle authori
         await assert.rejects(join(foreign, s));
         await assert.rejects(command(foreign, "registrations", {}));
         await assert.rejects(command(foreign, "owner-list", {}));
+        await assert.rejects(
+          command(foreign, "approve-registration", {
+            id: s.id,
+            registrationId: randomUUID(),
+          }),
+        );
       },
     );
     await t.test(
@@ -722,6 +767,297 @@ test("group session data, registration, privacy and concurrent lifecycle authori
       },
     );
     await t.test(
+      "pending seats reserve capacity but only owner approvals meet the minimum",
+      async () => {
+        const s = await fixture({
+          minimumParticipants: 1,
+          maximumParticipants: 2,
+        });
+        const first = (await join(athletes[0], s)).registration!;
+        const second = (await join(athletes[1], s)).registration!;
+        assert.equal(first.status, "pending");
+        assert.equal(first.decidedAt, null);
+        const pending = (await detail(coach, s.id)).session;
+        assert.equal(pending.participantCount, 2);
+        assert.equal(pending.approvedParticipantCount, 0);
+        assert.equal(pending.canConfirm, false);
+        await assert.rejects(join(athletes[2], s));
+        await assert.rejects(command(coach, "confirm", { id: s.id }));
+        await assert.rejects(
+          command(athletes[0], "approve-registration", {
+            id: s.id,
+            registrationId: first.id,
+          }),
+        );
+        await assert.rejects(
+          command(coach, "approve-registration", {
+            id: randomUUID(),
+            registrationId: first.id,
+          }),
+        );
+        const approved = parseGroupSessionResult(
+          "approve-registration",
+          await command(coach, "approve-registration", {
+            id: s.id,
+            registrationId: first.id,
+          }),
+        );
+        assert.equal(approved.outcome, "approved");
+        assert.equal(approved.registration?.status, "active");
+        assert.ok(approved.registration?.decidedAt);
+        assert.equal(approved.session?.status, "open");
+        assert.equal(approved.session?.approvedParticipantCount, 1);
+        const [audit] =
+          await db`select decided_by_profile_id,decision from app.coach_group_registrations where id=${first.id}::uuid`;
+        assert.equal(audit.decided_by_profile_id, coach.profileId);
+        assert.equal(audit.decision, "approved");
+        const retry = await command(coach, "approve-registration", {
+          id: s.id,
+          registrationId: first.id,
+        });
+        assert.equal(
+          new Date(retry.registration.decidedAt).toISOString(),
+          approved.registration?.decidedAt,
+        );
+        assert.equal(
+          (
+            await command(coach, "decline-registration", {
+              id: s.id,
+              registrationId: first.id,
+            })
+          ).outcome,
+          "unavailable",
+        );
+        await command(coach, "confirm", { id: s.id });
+        assert.equal(
+          (await detail(athletes[1], s.id)).registration?.status,
+          "pending",
+        );
+        assert.equal(
+          (
+            await command(coach, "approve-registration", {
+              id: s.id,
+              registrationId: second.id,
+            })
+          ).outcome,
+          "approved",
+        );
+        assert.equal((await detail(coach, s.id)).session.status, "confirmed");
+      },
+    );
+    await t.test(
+      "decline is final, releases capacity, and exact retries preserve the decision",
+      async () => {
+        const s = await fixture({
+          minimumParticipants: 1,
+          maximumParticipants: 1,
+        });
+        const first = (await join(athletes[0], s)).registration!;
+        const declined = await command(coach, "decline-registration", {
+          id: s.id,
+          registrationId: first.id,
+        });
+        assert.equal(declined.registration.status, "declined");
+        assert.equal(declined.session.participantCount, 0);
+        assert.equal(
+          (
+            await command(coach, "decline-registration", {
+              id: s.id,
+              registrationId: first.id,
+            })
+          ).registration.decidedAt,
+          declined.registration.decidedAt,
+        );
+        assert.equal(
+          (
+            await command(coach, "approve-registration", {
+              id: s.id,
+              registrationId: first.id,
+            })
+          ).outcome,
+          "unavailable",
+        );
+        assert.equal((await join(athletes[0], s)).outcome, "unavailable");
+        assert.equal((await detail(athletes[0], s.id)).session.canJoin, false);
+        assert.equal(
+          (await join(athletes[1], s)).registration?.status,
+          "pending",
+        );
+      },
+    );
+    await t.test(
+      "approval versus decline has one winner; withdrawal/rejoin never inherits approval",
+      async () => {
+        const s = await fixture();
+        const first = (await join(athletes[0], s)).registration!;
+        const results = await Promise.all([
+          command(coach, "approve-registration", {
+            id: s.id,
+            registrationId: first.id,
+          }),
+          command(coach, "decline-registration", {
+            id: s.id,
+            registrationId: first.id,
+          }),
+        ]);
+        assert.equal(
+          results.filter((r) => r.outcome !== "unavailable").length,
+          1,
+        );
+        const next = (await join(athletes[1], s)).registration!;
+        await command(coach, "approve-registration", {
+          id: s.id,
+          registrationId: next.id,
+        });
+        await command(athletes[1], "withdraw", {
+          id: s.id,
+          registrationId: next.id,
+        });
+        const replacement = (await join(athletes[1], s)).registration!;
+        assert.equal(replacement.status, "pending");
+        assert.equal(replacement.decidedAt, null);
+        const replay = await command(coach, "approve-registration", {
+          id: s.id,
+          registrationId: next.id,
+        });
+        assert.equal(replay.registration.status, "withdrawn");
+        assert.equal(
+          (await detail(athletes[1], s.id)).registration?.id,
+          replacement.id,
+        );
+        assert.equal(
+          (await detail(athletes[1], s.id)).registration?.status,
+          "pending",
+        );
+      },
+    );
+    await t.test(
+      "pending approvals expire without undoing a confirmed event, including public reads",
+      async () => {
+        const deadline = new Date(Date.now() + 1600);
+        const s = await fixture(
+          {
+            minimumParticipants: 1,
+            decisionDeadlineAt: deadline.toISOString(),
+          },
+          coach,
+          locationId,
+          true,
+        );
+        const r = (await join(athletes[0], s)).registration!;
+        await new Promise((resolve) =>
+          setTimeout(
+            resolve,
+            Math.max(0, deadline.getTime() - Date.now() + 80),
+          ),
+        );
+        const page = parseGroupSessionResult(
+          "public-list",
+          await publicly("list"),
+        );
+        assert.ok(
+          page.items.every(
+            (x) => x.approvedParticipantCount <= x.participantCount,
+          ),
+        );
+        const publicDetail = parseGroupSessionResult(
+          "public-detail",
+          await publicly("detail", { slug: s.slug }),
+        );
+        assert.equal(publicDetail.session?.participantCount, 0);
+        const [stored] =
+          await db`select status from app.coach_group_registrations where id=${r.id}::uuid`;
+        assert.equal(stored.status, "approval-expired");
+        const expired = await detail(athletes[0], s.id);
+        assert.equal(expired.session.status, "confirmed");
+        assert.equal(expired.registration?.status, "approval-expired");
+        assert.equal(expired.registration?.canWithdraw, false);
+        assert.equal(
+          (
+            await command(coach, "approve-registration", {
+              id: s.id,
+              registrationId: r.id,
+            })
+          ).outcome,
+          "unavailable",
+        );
+      },
+    );
+    await t.test(
+      "approval waiting on a session lock rechecks the deadline and never approves an expired request",
+      async () => {
+        const deadline = new Date(Date.now() + 1000);
+        const s = await fixture(
+          { decisionDeadlineAt: deadline.toISOString() },
+          coach,
+          locationId,
+          true,
+        );
+        const r = (await join(athletes[0], s)).registration!;
+        let locked!: () => void;
+        const ready = new Promise<void>((resolve) => {
+          locked = resolve;
+        });
+        const holder = db.begin(async (tx) => {
+          await tx`select id from app.coach_group_sessions where id=${s.id}::uuid for update`;
+          locked();
+          await new Promise((resolve) =>
+            setTimeout(
+              resolve,
+              Math.max(0, deadline.getTime() - Date.now() + 80),
+            ),
+          );
+        });
+        await ready;
+        const approval = command(coach, "approve-registration", {
+          id: s.id,
+          registrationId: r.id,
+        });
+        await holder;
+        const result = await approval;
+        assert.equal(result.outcome, "unavailable");
+        assert.equal(result.registration.status, "approval-expired");
+        assert.equal(result.registration.decidedAt, null);
+        assert.equal(result.session.status, "confirmed");
+      },
+    );
+    await t.test(
+      "approval serializes with withdrawal and cancellation without reviving terminal attempts",
+      async () => {
+        for (const terminal of ["withdraw", "cancel"] as const) {
+          const s = await fixture();
+          const r = (await join(athletes[0], s)).registration!;
+          await Promise.all([
+            command(coach, "approve-registration", {
+              id: s.id,
+              registrationId: r.id,
+            }),
+            command(
+              terminal === "withdraw" ? athletes[0] : coach,
+              terminal,
+              terminal === "withdraw"
+                ? { id: s.id, registrationId: r.id }
+                : { id: s.id },
+            ),
+          ]);
+          const current = await detail(athletes[0], s.id);
+          assert.equal(
+            current.registration?.status,
+            terminal === "withdraw" ? "withdrawn" : "session-cancelled",
+          );
+          assert.equal(current.session.participantCount, 0);
+          const replay = await command(coach, "approve-registration", {
+            id: s.id,
+            registrationId: r.id,
+          });
+          assert.equal(
+            replay.registration.status,
+            current.registration?.status,
+          );
+        }
+      },
+    );
+    await t.test(
       "suspension blocks new participation and confirmation while retaining owner cancellation",
       async () => {
         const s = await fixture({ minimumParticipants: 1 });
@@ -731,7 +1067,7 @@ test("group session data, registration, privacy and concurrent lifecycle authori
         await assert.rejects(command(coach, "confirm", { id: s.id }));
         assert.equal(
           (await detail(athletes[0], s.id)).registration?.status,
-          "active",
+          "pending",
         );
         assert.equal(
           (await command(coach, "cancel", { id: s.id })).outcome,

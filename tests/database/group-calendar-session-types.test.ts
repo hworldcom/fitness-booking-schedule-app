@@ -18,7 +18,7 @@ import { ownedCoachCalendarRecord } from "@/server/db/coaches/calendar-repositor
 const url = process.env.DATABASE_TEST_URL;
 test(
   "group type snapshots, retained enrollment and calendar filtering",
-  { skip: !url || !new URL(url).pathname.startsWith("/dev0342_") },
+  { skip: !url || !/^\/(dev0342_|mov77_)/.test(new URL(url).pathname) },
   async () => {
     const db = postgres(url!, {
       max: 2,
@@ -195,8 +195,16 @@ test(
         ),
       );
       const [count] =
-        await db`select count(*)::int count from app.coach_group_registrations where session_id=${id}::uuid and status='active'`;
+        await db`select count(*)::int count from app.coach_group_registrations where session_id=${id}::uuid and status in ('pending','active')`;
       assert.equal(count.count, 1);
+      const [registration] =
+        await db`select id from app.coach_group_registrations where session_id=${id}::uuid and status='pending'`;
+      await withActorDatabaseContext(coach, (tx) =>
+        groupSessionCommandRecord(tx, {
+          action: "approve-registration",
+          args: { id, registrationId: registration.id },
+        }),
+      );
       const confirmed = await withActorDatabaseContext(coach, (tx) =>
         groupSessionCommandRecord(tx, { action: "confirm", args: { id } }),
       );

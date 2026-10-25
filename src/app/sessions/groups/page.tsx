@@ -116,7 +116,8 @@ export default async function Page({
                     )}
                   </p>
                   <EventTerms session={session} />
-                  {registration.status === "active" && (
+                  {(registration.status === "active" ||
+                    registration.status === "pending") && (
                     <ParticipationForm
                       session={session}
                       registration={registration}

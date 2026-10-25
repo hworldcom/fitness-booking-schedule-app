@@ -40,6 +40,7 @@ const event: GroupSession = {
   minimumParticipants: 2,
   maximumParticipants: 8,
   participantCount: 2,
+  approvedParticipantCount: 2,
   priceCents: 1550,
   currency: "EUR",
   status: "open",
@@ -203,8 +204,8 @@ test("public event presentation escapes titles and exposes aggregate capacity wi
 
 test("open event cards explain the minimum and exact remaining participants before coach confirmation", () => {
   for (const [minimum, count, expected] of [
-    [1, 0, "1 more participant needed before coach confirmation."],
-    [4, 1, "3 more participants needed before coach confirmation."],
+    [1, 0, "1 more approved participant needed before coach confirmation."],
+    [4, 1, "3 more approved participants needed before coach confirmation."],
   ] as const) {
     const html = renderToStaticMarkup(
       createElement(EventCard, {
@@ -212,6 +213,7 @@ test("open event cards explain the minimum and exact remaining participants befo
           ...event,
           minimumParticipants: minimum,
           participantCount: count,
+          approvedParticipantCount: count,
         },
       }),
     );
@@ -235,10 +237,29 @@ test("reaching or exceeding a group minimum never presents automatic confirmatio
       }),
     );
     assert.match(html, /Minimum 2 participants/);
-    assert.match(html, /Minimum reached\. Awaiting coach confirmation\./);
+    assert.match(
+      html,
+      /Approved minimum reached\. Awaiting coach confirmation\./,
+    );
     assert.match(html, /Training is better together\. Invite a friend\./);
     assert.doesNotMatch(html, /more participants? needed|Confirmed by coach/);
   }
+});
+
+test("a full pending group never claims the approved minimum was reached", () => {
+  const html = renderToStaticMarkup(
+    createElement(EventCard, {
+      session: {
+        ...event,
+        participantCount: 8,
+        approvedParticipantCount: 0,
+        canJoin: false,
+      },
+    }),
+  );
+  assert.match(html, /8 \/ 8 seats/);
+  assert.match(html, /2 more approved participants needed/);
+  assert.doesNotMatch(html, /minimum reached|Invite a friend/);
 });
 
 test("a confirmed group remains confirmed below its initial minimum after withdrawals", () => {
@@ -248,6 +269,7 @@ test("a confirmed group remains confirmed below its initial minimum after withdr
         ...event,
         minimumParticipants: 4,
         participantCount: 1,
+        approvedParticipantCount: 1,
         status: "confirmed",
         displayStatus: "confirmed",
       },

@@ -9,7 +9,10 @@ export const GROUP_SESSION_STATUSES = [
   "not-confirmed",
 ] as const;
 export const GROUP_REGISTRATION_STATUSES = [
+  "pending",
   "active",
+  "declined",
+  "approval-expired",
   "withdrawn",
   "session-cancelled",
   "session-not-confirmed",
@@ -56,6 +59,7 @@ export type GroupSession = Readonly<{
     trustKind: "verified" | "demo" | null;
   }>;
   participantCount: number;
+  approvedParticipantCount: number;
   canJoin: boolean;
   canConfirm: boolean;
   canCancel: boolean;
@@ -67,12 +71,15 @@ export type GroupRegistration = Readonly<{
   createdAt: string;
   resolvedAt: string | null;
   canWithdraw: boolean;
+  decidedAt: string | null;
 }>;
 export type GroupParticipation = Readonly<{
   session: GroupSession;
   registration: GroupRegistration;
 }>;
 export type GroupRosterItem = Readonly<{
+  canDecide: boolean;
+  decidedAt: string | null;
   id: string;
   name: string;
   initials: string;
@@ -111,6 +118,10 @@ export type GroupSessionCommand =
       action: "join" | "withdraw";
       args: { id: string; registrationId: string };
     }>
+  | Readonly<{
+      action: "approve-registration" | "decline-registration";
+      args: { id: string; registrationId: string };
+    }>
   | Readonly<{ action: "detail" | "confirm" | "cancel"; args: { id: string } }>
   | Readonly<{
       action: "roster";
@@ -139,6 +150,8 @@ export type GroupMutationResult = Readonly<{
     | "withdrawn"
     | "confirmed"
     | "cancelled"
+    | "approved"
+    | "declined"
     | "unavailable";
   session?: GroupSession;
   registration?: GroupRegistration | null;
@@ -158,6 +171,8 @@ export type GroupResultMap = {
   "delete-draft": GroupMutationResult;
   join: GroupMutationResult;
   withdraw: GroupMutationResult;
+  "approve-registration": GroupMutationResult;
+  "decline-registration": GroupMutationResult;
   confirm: GroupMutationResult;
   cancel: GroupMutationResult;
   detail: Readonly<{
@@ -342,10 +357,18 @@ export function parseGroupSessionCommand(
         return null;
       return { action: "save-draft", args };
     }
-    if (command.action === "join" || command.action === "withdraw") {
+    if (
+      [
+        "join",
+        "withdraw",
+        "approve-registration",
+        "decline-registration",
+      ].includes(String(command.action))
+    ) {
       const r = object(command.args, ["id", "registrationId"]);
       return {
-        action: command.action,
+        action: command.action as
+          "join" | "withdraw" | "approve-registration" | "decline-registration",
         args: { id: uuid(r.id), registrationId: uuid(r.registrationId) },
       };
     }
@@ -445,6 +468,7 @@ export function parseGroupSession(value: unknown): GroupSession {
       "closedAt",
       "coach",
       "participantCount",
+      "approvedParticipantCount",
       "canJoin",
       "canConfirm",
       "canCancel",
@@ -520,6 +544,7 @@ export function parseGroupSession(value: unknown): GroupSession {
         }
       : {}),
     participantCount: integer(r.participantCount, 0, 100),
+    approvedParticipantCount: integer(r.approvedParticipantCount, 0, 100),
     canJoin: bool(r.canJoin),
     canConfirm: bool(r.canConfirm),
     canCancel: bool(r.canCancel),
@@ -529,6 +554,7 @@ export function parseGroupSession(value: unknown): GroupSession {
     result.slug !== "group-" + result.id.replaceAll("-", "") ||
     result.minimumParticipants > result.maximumParticipants ||
     result.participantCount > result.maximumParticipants ||
+    result.approvedParticipantCount > result.participantCount ||
     result.endsAt <= result.startsAt ||
     result.decisionDeadlineAt >= result.startsAt ||
     (result.displayStatus === "ended" && result.status !== "confirmed")
@@ -543,6 +569,7 @@ function registration(value: unknown): GroupRegistration {
     "createdAt",
     "resolvedAt",
     "canWithdraw",
+    "decidedAt",
   ]);
   return Object.freeze({
     id: uuid(r.id),
@@ -550,6 +577,7 @@ function registration(value: unknown): GroupRegistration {
     createdAt: time(r.createdAt),
     resolvedAt: nullableTime(r.resolvedAt),
     canWithdraw: bool(r.canWithdraw),
+    decidedAt: nullableTime(r.decidedAt),
   });
 }
 function participation(value: unknown): GroupParticipation {
@@ -567,6 +595,8 @@ function roster(value: unknown): GroupRosterItem {
     "status",
     "createdAt",
     "resolvedAt",
+    "decidedAt",
+    "canDecide",
   ]);
   return Object.freeze({
     id: uuid(r.id),
@@ -575,6 +605,8 @@ function roster(value: unknown): GroupRosterItem {
     status: enumeration(r.status, GROUP_REGISTRATION_STATUSES),
     createdAt: time(r.createdAt),
     resolvedAt: nullableTime(r.resolvedAt),
+    decidedAt: nullableTime(r.decidedAt),
+    canDecide: bool(r.canDecide),
   });
 }
 function page<T>(
@@ -655,6 +687,8 @@ export function parseGroupSessionResult<A extends keyof GroupResultMap>(
       "withdrawn",
       "confirmed",
       "cancelled",
+      "approved",
+      "declined",
       "unavailable",
     ] as const);
     if (outcome === "deleted") {
@@ -662,7 +696,14 @@ export function parseGroupSessionResult<A extends keyof GroupResultMap>(
       result = Object.freeze({ outcome });
     } else {
       const session = parseGroupSession(r.session);
-      if (action === "join" || action === "withdraw") {
+      if (
+        [
+          "join",
+          "withdraw",
+          "approve-registration",
+          "decline-registration",
+        ].includes(action)
+      ) {
         object(value, ["outcome", "session", "registration"]);
         result = Object.freeze({
           outcome,

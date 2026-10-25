@@ -23,7 +23,8 @@ export function ParticipationForm({
   history?: boolean;
 }) {
   const permalink = eventHref(session);
-  const active = registration?.status === "active";
+  const active =
+    registration?.status === "active" || registration?.status === "pending";
   const mayWithdraw = active && registration.canWithdraw;
   const mayJoin = !history && !active && session.canJoin;
   return (
@@ -34,20 +35,39 @@ export function ParticipationForm({
           <strong>{registrationStatus(registration)}</strong>
         </p>
       )}
-      {active && (
+      {registration?.status === "pending" && (
+        <p>
+          Your seat is held while the coach reviews your request. Participation
+          approval and event confirmation are separate. Pending requests expire
+          at the registration deadline.
+        </p>
+      )}
+      {registration?.status === "declined" && (
+        <p>
+          The coach declined your participation. You cannot reapply to this
+          event.
+        </p>
+      )}
+      {registration?.status === "approval-expired" && (
+        <p>
+          The coach did not approve your request before the deadline. Your seat
+          has been released.
+        </p>
+      )}
+      {registration?.status === "active" && (
         <p>
           {session.displayStatus === "open"
-            ? "Your seat is reserved. The coach has not yet confirmed this session. Check the status here before travelling."
+            ? "Your participation is approved. The coach has not yet confirmed this session. Check the status here before travelling."
             : session.displayStatus === "confirmed"
-              ? "Your seat is reserved and the coach has confirmed the session."
+              ? "Your participation is approved and the coach has confirmed the session."
               : "Your registration is retained in your history. Ended does not confirm attendance."}
         </p>
       )}
       {mayJoin && (
         <p>
           {session.status === "open"
-            ? "Reserve one seat. The coach will decide whether this session runs; reaching the minimum does not confirm it automatically."
-            : "Reserve one seat in this coach-confirmed session."}
+            ? "Request one seat, subject to individual coach approval. The coach will separately decide whether this session runs; reaching the minimum does not confirm it automatically."
+            : "Request one seat in this coach-confirmed session. You still need individual coach approval."}
         </p>
       )}
       {!history && !active && !mayJoin && (
@@ -102,7 +122,7 @@ function ParticipationButton({ withdraw }: { withdraw: boolean }) {
         ? "Checking registration…"
         : withdraw
           ? "Withdraw my seat"
-          : "Reserve a seat"}
+          : "Request a seat"}
     </button>
   );
 }

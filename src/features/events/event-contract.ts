@@ -73,10 +73,18 @@ export function eventStatus(session: Pick<GroupSession, "displayStatus">) {
   }
 }
 
-export function registrationStatus(registration: GroupRegistration) {
+export function registrationStatus(
+  registration: Pick<GroupRegistration, "status"> & Partial<GroupRegistration>,
+) {
   switch (registration.status) {
+    case "pending":
+      return "Pending coach approval · seat reserved";
     case "active":
-      return "Seat reserved";
+      return "Participation approved";
+    case "declined":
+      return "Participation declined";
+    case "approval-expired":
+      return "Approval deadline passed";
     case "withdrawn":
       return "You withdrew";
     case "session-cancelled":

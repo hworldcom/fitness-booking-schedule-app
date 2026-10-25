@@ -64,7 +64,11 @@ export async function decideCoachEventAction(form: FormData): Promise<void> {
     );
   refreshEvents();
   if (result.value.outcome === "deleted") redirect("/coach/events");
-  if (["published", "confirmed", "cancelled"].includes(result.value.outcome))
+  if (
+    ["published", "confirmed", "cancelled", "approved", "declined"].includes(
+      result.value.outcome,
+    )
+  )
     redirect(coachEventHref(parsed.command.args.id));
   const issue =
     "reason" in result.value && result.value.reason

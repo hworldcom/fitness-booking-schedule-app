@@ -17,6 +17,11 @@ test("owner group adapters reject malformed reads and athlete commands before au
     { action: "join", args: { id, registrationId: id } },
     { action: "owner-list", args: {} },
     { action: "cancel", args: { id, coachProfileId: id } },
+    { action: "approve-registration", args: { id } },
+    {
+      action: "decline-registration",
+      args: { id, registrationId: id, athleteId: id },
+    },
   ])
     assert.equal(
       (

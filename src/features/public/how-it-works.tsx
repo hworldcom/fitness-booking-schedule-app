@@ -226,8 +226,9 @@ export function HowItWorksStory() {
           <CalendarCheck2 className="icon" aria-hidden="true" />
           <p>
             <strong>Help your group get going.</strong> Group classes need a
-            minimum number of participants before the coach can confirm. Invite
-            a friend and check the latest status before heading out.
+            minimum number of approved participants before the coach can
+            confirm. Invite a friend and check the latest status before heading
+            out.
           </p>
         </div>
       </section>
@@ -360,11 +361,12 @@ export function HowItWorksStory() {
             </summary>
             <p>
               A private session is confirmed when the coach accepts your
-              request. Joining a group reserves your seat. The class needs its
-              minimum number of participants before the coach can confirm it.
-              Reaching the minimum does not confirm the class automatically. If
-              the coach has not confirmed by the decision deadline, the class
-              becomes Not confirmed. Check the session’s current status in MovX.
+              request. Joining a group holds your seat while the coach reviews
+              your participation. The class needs its minimum number of approved
+              participants before the coach separately confirms it. Reaching the
+              minimum does not confirm the class automatically. If the coach has
+              not confirmed by the decision deadline, the class becomes Not
+              confirmed. Check the session’s current status in MovX.
             </p>
           </details>
           <details>

@@ -192,3 +192,36 @@
 .event-banner-editor p {
   overflow-wrap: anywhere;
 }
+
+.coach-event-registration-decisions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+.coach-event-registration-decisions .coach-event-decision {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.coach-event-roster li {
+  align-items: flex-start;
+}
+.coach-event-roster li > div {
+  flex: 1;
+  min-width: 0;
+}
+.coach-event-registration-decisions .button {
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.coach-event-registration-decisions .coach-event-ack span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.event-banner-editor input[type="file"] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}

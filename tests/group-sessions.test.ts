@@ -59,6 +59,7 @@ const session = {
     trustKind: "verified",
   },
   participantCount: 1,
+  approvedParticipantCount: 1,
   canJoin: true,
   canConfirm: false,
   canCancel: false,
@@ -239,6 +240,7 @@ test("roster and own terminal attempts stay bounded and distinct from an active 
     createdAt: session.createdAt,
     resolvedAt: session.updatedAt,
     canWithdraw: false,
+    decidedAt: null,
   };
   const recovered = parseGroupSessionResult("join", {
     outcome: "unavailable",
@@ -251,6 +253,8 @@ test("roster and own terminal attempts stay bounded and distinct from an active 
     id: locationId,
     name: "Participant",
     initials: "P",
+    decidedAt: session.createdAt,
+    canDecide: false,
     status: "active",
     createdAt: session.createdAt,
     resolvedAt: null,
@@ -266,4 +270,61 @@ test("roster and own terminal attempts stay bounded and distinct from an active 
       nextCursor: null,
     }),
   );
+});
+
+test("approval commands bind one exact attempt and reject actor or event-confirmation injection", () => {
+  for (const action of [
+    "approve-registration",
+    "decline-registration",
+  ] as const) {
+    const args = { id, registrationId: locationId };
+    assert.deepEqual(parseGroupSessionCommand({ action, args }), {
+      action,
+      args,
+    });
+    assert.equal(parseGroupSessionCommand({ action, args: { id } }), null);
+    assert.equal(
+      parseGroupSessionCommand({ action, args: { ...args, athleteId: id } }),
+      null,
+    );
+    assert.equal(
+      parseGroupSessionCommand({
+        action,
+        args: { ...args, confirmEvent: true },
+      }),
+      null,
+    );
+  }
+});
+
+test("approved count cannot exceed reserved seats and missing approval authority fails closed", () => {
+  assert.throws(() =>
+    parseGroupSessionResult("public-detail", {
+      session: { ...session, approvedParticipantCount: 2 },
+    }),
+  );
+  const { approvedParticipantCount: omitted, ...old } = session;
+  assert.equal(omitted, 1);
+  assert.throws(() =>
+    parseGroupSessionResult("public-detail", { session: old }),
+  );
+  const pending = {
+    id: locationId,
+    status: "pending",
+    createdAt: session.createdAt,
+    resolvedAt: null,
+    canWithdraw: true,
+    decidedAt: null,
+  };
+  const result = parseGroupSessionResult("approve-registration", {
+    outcome: "approved",
+    session,
+    registration: {
+      ...pending,
+      status: "active",
+      decidedAt: session.createdAt,
+    },
+  });
+  assert.equal(result.registration?.status, "active");
+  assert.equal(result.session?.status, "open");
 });

@@ -17,7 +17,7 @@ import type {
   GroupSessionStatus,
   GroupVenue,
 } from "@/domain/group-sessions";
-import { app, demoRunParticipants } from "./foundation";
+import { app, demoRunParticipants, profiles } from "./foundation";
 import { coachProfiles, coachTrainingLocations } from "./coaches";
 
 const instant = (name: string) =>
@@ -106,12 +106,17 @@ export const coachGroupRegistrations = app.table(
     athleteProfileId: uuid("athlete_profile_id").notNull(),
     status: text("status")
       .$type<GroupRegistrationStatus>()
-      .default("active")
+      .default("pending")
       .notNull(),
     createdAt: instant("created_at")
       .default(sql`clock_timestamp()`)
       .notNull(),
     resolvedAt: instant("resolved_at"),
+    decision: text("decision").$type<"approved" | "declined">(),
+    decidedAt: instant("decided_at"),
+    decidedByProfileId: uuid("decided_by_profile_id").references(
+      () => profiles.id,
+    ),
   },
   (table) => [
     foreignKey({
@@ -127,7 +132,7 @@ export const coachGroupRegistrations = app.table(
     }),
     uniqueIndex("coach_group_one_active_registration")
       .on(table.sessionId, table.athleteProfileId)
-      .where(sql`${table.status} = 'active'`),
+      .where(sql`${table.status} in ('pending','active')`),
     index("coach_group_roster").on(table.sessionId, table.createdAt, table.id),
     index("coach_group_athlete_page").on(
       table.runId,

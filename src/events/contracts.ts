@@ -47,4 +47,8 @@ export type OwnerMutation =
       GroupSessionCommand,
       { action: "save-draft" | "delete-draft" | "publish" }
     >
-  | Readonly<{ action: "confirm" | "cancel"; args: { id: string } }>;
+  | Readonly<{ action: "confirm" | "cancel"; args: { id: string } }>
+  | Readonly<{
+      action: "approve-registration" | "decline-registration";
+      args: { id: string; registrationId: string };
+    }>;

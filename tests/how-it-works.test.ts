@@ -55,10 +55,13 @@ test("athlete and coach actions reach real discovery and application routes", ()
 });
 
 test("group explanation distinguishes a reserved seat, minimum and coach decision", () => {
-  assert.match(text, /Joining a group reserves your seat/);
   assert.match(
     text,
-    /minimum number of participants before the coach can confirm/,
+    /Joining a group holds your seat while the coach reviews your participation/,
+  );
+  assert.match(
+    text,
+    /minimum number of approved participants before the coach/,
   );
   assert.match(
     text,

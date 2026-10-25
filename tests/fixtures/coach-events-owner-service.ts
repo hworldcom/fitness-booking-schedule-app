@@ -56,6 +56,7 @@ function session(id: string, title: string): GroupSession {
       trustKind: "verified",
     },
     participantCount: 2,
+    approvedParticipantCount: 2,
     canJoin: false,
     canConfirm: true,
     canCancel: true,
@@ -77,6 +78,7 @@ function read(): Store {
         displayStatus: "draft",
         publishedAt: null,
         participantCount: 0,
+        approvedParticipantCount: 0,
         canEdit: true,
         canConfirm: false,
         canCancel: false,
@@ -93,6 +95,7 @@ function write(store: Store) {
 async function access() {
   const { actor, fault } = await fixtureScenario();
   if (actor === "signed-out") return { status: "signed-out" as const };
+  if (actor === "preview") return { status: "preview" as const };
   if (["athlete", "applicant"].includes(actor))
     return { status: "forbidden" as const };
   if (fault === "unavailable") return { status: "unavailable" as const };
@@ -161,6 +164,7 @@ export async function ownedGroupEvent(
       status: "not-confirmed",
       displayStatus: "not-confirmed",
       participantCount: 0,
+      approvedParticipantCount: 0,
       canConfirm: false,
       canCancel: false,
     };
@@ -168,9 +172,16 @@ export async function ownedGroupEvent(
     write(store);
   }
   if (a.fault === "under-minimum")
-    s = { ...s, participantCount: 1, canConfirm: false };
+    s = {
+      ...s,
+      participantCount: 1,
+      approvedParticipantCount: 1,
+      canConfirm: false,
+    };
+  if (a.fault === "approval")
+    s = { ...s, approvedParticipantCount: 0, canConfirm: false };
   if (a.fault === "withdrawn" && s.status === "confirmed")
-    s = { ...s, participantCount: 1 };
+    s = { ...s, participantCount: 1, approvedParticipantCount: 1 };
   s = {
     ...s,
     canConfirm: s.canConfirm && a.context.canPublish,
@@ -179,16 +190,23 @@ export async function ownedGroupEvent(
   const count = s.status === "draft" ? 0 : a.fault === "long-roster" ? 51 : 2;
   const roster: GroupRosterItem[] = Array.from({ length: count }, (_, n) => ({
     id: `66666666-6666-4666-8666-${String(n + 1).padStart(12, "0")}`,
-    name: `Fixture athlete ${String(n + 1).padStart(3, "0")}`,
+    name:
+      a.fault === "approval" && n === 0
+        ? "Long".repeat(20)
+        : `Fixture athlete ${String(n + 1).padStart(3, "0")}`,
     initials: "FA",
     status:
       s.status === "cancelled"
         ? "session-cancelled"
         : s.status === "not-confirmed"
           ? "session-not-confirmed"
-          : "active",
+          : a.fault === "approval"
+            ? "pending"
+            : "active",
     createdAt: "2026-10-16T00:00:00.000Z",
     resolvedAt: s.closedAt,
+    decidedAt: a.fault === "approval" ? null : "2026-10-16T00:00:00.000Z",
+    canDecide: a.fault === "approval" && a.context.canPublish,
   }));
   const start = after ? 50 : 0,
     items = roster.slice(start, start + 50);
@@ -255,6 +273,7 @@ export async function changeOwnedGroupEvent(
       canConfirm: false,
       publishedAt: null,
       participantCount: 0,
+      approvedParticipantCount: 0,
       revision: (current?.revision ?? 0) + 1,
     };
     store[id] = current;
@@ -302,6 +321,7 @@ export async function changeOwnedGroupEvent(
       canConfirm: false,
       canCancel: false,
       participantCount: 0,
+      approvedParticipantCount: 0,
       closedAt: "2026-10-16T00:00:00.000Z",
     };
   else if (command.action === "delete-draft") {
