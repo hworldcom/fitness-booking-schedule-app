@@ -571,12 +571,15 @@ test("guest opens a coach profile without fabricated availability", async ({
     name: "Show Northside Combat on the map",
   });
   await expect(locationButton).toBeVisible();
+  await expect(
+    locationRow.locator(".public-coach-location-key svg"),
+  ).toBeVisible();
   await expect(locationRow.locator(".public-coach-location-key")).toHaveText(
-    "1",
+    "",
   );
   if (await profileMapCanvas.isVisible()) {
     const locationMarker = profileMap.getByRole("button", {
-      name: /Select training location 1: Northside Combat/,
+      name: /Select training location: Northside Combat/,
     });
     await expect(locationMarker).toBeVisible();
     await expect(locationMarker).toHaveAttribute("aria-pressed", "true");

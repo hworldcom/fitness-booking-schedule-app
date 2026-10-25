@@ -31,6 +31,7 @@ export function LocationResultsMap({
   canvasAriaLabel = "Matching coach locations",
   coincidentItemLabel = "Coach",
   recenterOnSelection = true,
+  markerVariant = "badge",
 }: {
   points: readonly LocationMapPoint[];
   selectedPointId: string | null;
@@ -39,6 +40,7 @@ export function LocationResultsMap({
   canvasAriaLabel?: string;
   coincidentItemLabel?: string;
   recenterOnSelection?: boolean;
+  markerVariant?: "badge" | "pin";
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -118,7 +120,7 @@ export function LocationResultsMap({
       }
       const element = document.createElement("button");
       element.type = "button";
-      element.className = "location-map-marker";
+      element.className = `location-map-marker${markerVariant === "pin" ? " location-map-marker-pin" : ""}`;
       element.setAttribute(
         "aria-label",
         layout.coincidentCount === 1
@@ -143,14 +145,16 @@ export function LocationResultsMap({
         );
         element.dataset.markerColor = point.markerAppearance.accent;
       }
-      const initials = document.createElement("span");
-      initials.className = "location-map-marker-initials";
-      initials.textContent = point.initials;
-      element.append(initials);
+      if (markerVariant === "badge") {
+        const initials = document.createElement("span");
+        initials.className = "location-map-marker-initials";
+        initials.textContent = point.initials;
+        element.append(initials);
+      }
 
       let image: HTMLImageElement | null = null;
       let handleImageError: (() => void) | null = null;
-      if (point.imageUrl) {
+      if (point.imageUrl && markerVariant === "badge") {
         image = document.createElement("img");
         image.className = "location-map-marker-image";
         image.src = point.imageUrl;
@@ -199,7 +203,7 @@ export function LocationResultsMap({
     } else if (!bounds.isEmpty()) {
       map.fitBounds(bounds, { padding: 54, maxZoom: 13, duration: 0 });
     }
-  }, [coincidentItemLabel, points, ready]);
+  }, [coincidentItemLabel, markerVariant, points, ready]);
 
   useEffect(() => {
     for (const [pointId, entry] of markersRef.current) {
@@ -219,7 +223,7 @@ export function LocationResultsMap({
       zoom: Math.max(map.getZoom(), 12.5),
       duration: reducedMotion ? 0 : 450,
     });
-  }, [points, ready, recenterOnSelection, selectedPointId]);
+  }, [markerVariant, points, ready, recenterOnSelection, selectedPointId]);
 
   return <div className="coach-map-canvas" ref={containerRef} />;
 }

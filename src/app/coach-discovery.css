@@ -763,6 +763,67 @@
   outline-offset: 3px;
 }
 
+/* Profile button defaults must not change map marker geometry or contrast. */
+.public-coach-location-map .coach-map-canvas .location-map-marker {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: var(--location-marker-background, #61417b);
+  color: var(--location-marker-foreground, #fff);
+}
+
+.coach-map-canvas .location-map-marker.location-map-marker-pin {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.location-map-marker-pin::before {
+  content: "";
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  left: 8px;
+  top: 5px;
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  background: var(--location-marker-background, #61417b);
+  box-shadow: 0 3px 9px rgb(45 41 51 / 24%);
+  transform: rotate(-45deg);
+}
+
+.location-map-marker-pin::after {
+  content: "";
+  position: absolute;
+  top: 15px;
+  left: 18px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.location-map-marker-pin.selected::before {
+  box-shadow:
+    0 0 0 2px var(--location-marker-accent, #61417b),
+    0 3px 9px rgb(45 41 51 / 24%);
+}
+
+.coach-map-canvas .location-map-marker:focus-visible {
+  outline: 3px solid var(--location-marker-accent, #61417b);
+  outline-offset: 4px;
+}
+
 .coach-directory-state {
   display: grid;
   justify-items: start;
@@ -1033,7 +1094,7 @@
   font-weight: 850;
 }
 
-.public-coach-locations li > button > span,
+.public-coach-locations li > button > span:not(.public-coach-location-key),
 .public-coach-locations li strong,
 .public-coach-locations li small {
   display: block;
