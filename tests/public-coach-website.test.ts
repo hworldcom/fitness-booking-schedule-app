@@ -59,6 +59,36 @@ const reviews = {
   nextCursor: null,
 } as const;
 
+test("training media belongs inside About me before approach and experience with no separate media navigation", () => {
+  const id = "93290000-0000-4000-8000-000000000001";
+  const html = page({
+    media: {
+      status: "ready",
+      media: {
+        photos: [
+          {
+            id,
+            alt: "Partner pad work",
+            width: 1200,
+            height: 800,
+            thumbnailUrl: `/api/coaches/${coach.slug}/media/photos/${id}/thumbnail`,
+            fullUrl: `/api/coaches/${coach.slug}/media/photos/${id}/full`,
+          },
+        ],
+        video: null,
+      },
+    },
+  });
+  assert.ok(
+    html.indexOf(content.introduction) < html.indexOf("Training with me"),
+  );
+  assert.ok(html.indexOf("Training with me") < html.indexOf(content.approach));
+  assert.ok(html.indexOf(content.approach) < html.indexOf(content.experience));
+  assert.match(html, /href="#about"[^>]*>About me/);
+  assert.doesNotMatch(html, /href="#(?:media|approach|experience)"/);
+  assert.match(html, /loading="lazy"/);
+});
+
 test("real public content, optional sections, FAQ, safe external links and bounded trust render", () => {
   const html = page({ reviews });
   for (const text of [

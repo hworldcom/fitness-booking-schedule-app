@@ -3,7 +3,11 @@ import "server-only";
 import type { CoachPortraitReference } from "@/profile-images/contracts";
 
 export type ProfileImageScope =
-  "account-avatar" | "coach-portrait" | "coach-banner" | "event-banner";
+  | "account-avatar"
+  | "coach-portrait"
+  | "coach-banner"
+  | "event-banner"
+  | "coach-gallery";
 export type ProfileImageObject = Readonly<{
   scope: ProfileImageScope;
   path: string;

@@ -17,6 +17,7 @@ const buckets = {
   "coach-portrait": "coach-portraits",
   "coach-banner": "coach-banners",
   "event-banner": "event-banners",
+  "coach-gallery": "coach-gallery",
 } as const;
 const unavailable = Object.freeze({ status: "unavailable" as const });
 const ready = Object.freeze({ status: "ready" as const });
@@ -48,7 +49,11 @@ export function createSupabaseProfileImageStorage(
         const { error } = await client.storage
           .from(buckets[object.scope])
           .upload(object.path, bytes, {
-            cacheControl: object.scope.endsWith("banner") ? "0" : "31536000",
+            cacheControl:
+              object.scope.endsWith("banner") ||
+              object.scope === "coach-gallery"
+                ? "0"
+                : "31536000",
             contentType: "image/webp",
             upsert: false,
           });

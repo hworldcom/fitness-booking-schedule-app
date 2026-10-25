@@ -74,11 +74,16 @@
     "test:group-notifications-integration": "node scripts/rehearse-group-notifications-integration.mjs",
     "test:group-notifications-db": "node scripts/rehearse-group-notifications-database.mjs",
     "test:group-approvals-db": "node scripts/rehearse-group-approvals-database.mjs",
-    "test:group-approvals-integration": "node scripts/rehearse-group-approvals-integration.mjs"
+    "test:group-approvals-integration": "node scripts/rehearse-group-approvals-integration.mjs",
+    "test:coach-media-db": "node scripts/rehearse-coach-media-database.mjs",
+    "test:coach-media-integration": "node scripts/rehearse-coach-media-integration.mjs",
+    "test:coach-media-live": "node scripts/rehearse-coach-media-live-mux.mjs"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "5.3.0",
     "@fontsource-variable/manrope": "5.3.0",
+    "@mux/mux-player-react": "3.14.1",
+    "@mux/upchunk": "3.5.0",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.116.0",
     "drizzle-orm": "0.45.2",

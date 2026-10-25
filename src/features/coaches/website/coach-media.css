@@ -1,0 +1,305 @@
+.coach-about-media {
+  margin: 26px 0;
+  padding-top: 24px;
+  border-top: 1px solid #e3dce9;
+}
+.coach-about-media h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 23px;
+  margin: 0 0 18px;
+}
+.coach-media-gallery {
+  display: grid;
+  gap: 12px;
+}
+.coach-media-gallery.has-video {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  align-items: stretch;
+}
+.coach-media-photos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  align-content: start;
+}
+.coach-media-gallery.has-video .coach-media-photos {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.coach-training-media .coach-media-photo {
+  border: 0;
+  padding: 0;
+  background: #f2eef5;
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 0;
+  text-align: left;
+  color: #39313f;
+  cursor: pointer;
+}
+.coach-media-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+}
+.coach-media-photo > span {
+  display: block;
+  padding: 8px 10px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.coach-training-media .coach-media-video-cover {
+  position: relative;
+  min-height: 250px;
+  background: #263c31;
+  color: white;
+  border: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+}
+.coach-media-video-cover > img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.coach-media-video-cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 20%, #14251ccc);
+  pointer-events: none;
+}
+.coach-media-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #fffffff0;
+  color: #284634;
+  z-index: 1;
+}
+.coach-media-video-label {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  display: grid;
+  gap: 5px;
+  z-index: 1;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.coach-media-video-label small {
+  color: #fff;
+  font-size: 12px;
+}
+.coach-media-full-photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 65dvh;
+  object-fit: contain;
+  background: #19241e;
+}
+.coach-media-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.coach-media-actions > span {
+  margin-right: auto;
+}
+.coach-media-player > img {
+  display: block;
+  width: 100%;
+  max-height: 45dvh;
+  object-fit: contain;
+}
+.coach-media-player mux-player {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16/9;
+}
+.coach-media-help {
+  font-size: 12px;
+  color: #59665e;
+  line-height: 1.6;
+}
+.coach-media-editor {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid #dce0d6;
+  min-width: 0;
+}
+.coach-media-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.coach-media-heading h3 {
+  margin: 0 0 10px;
+}
+.coach-media-heading p {
+  margin: 0;
+  max-width: 510px;
+}
+.coach-media-heading > .button {
+  flex-shrink: 0;
+}
+.coach-media-limits {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 18px 0;
+  font-size: 12px;
+  color: #56645b;
+}
+.coach-media-order,
+.coach-media-pending {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0;
+  display: grid;
+  gap: 10px;
+}
+.coach-media-order li,
+.coach-media-pending li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #e0e4da;
+  padding-bottom: 10px;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.coach-media-order li > span,
+.coach-media-pending li > span {
+  min-width: 0;
+  flex: 1;
+}
+.coach-media-order li > div,
+.coach-media-pending li > div {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.coach-media-order .icon-button {
+  min-width: 40px;
+  min-height: 40px;
+}
+.coach-media-upload-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 22px;
+}
+.coach-media-upload-fields input {
+  max-width: 100%;
+  width: 100%;
+  min-width: 0;
+  font-size: 13px;
+}
+.coach-media-file-draft {
+  margin-top: 18px;
+  padding: 16px;
+  background: #f2f4ec;
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.coach-media-file-draft input {
+  width: 100%;
+}
+.coach-media-progress {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.coach-media-progress label {
+  flex: 1;
+  min-width: 140px;
+}
+.coach-media-progress progress {
+  display: block;
+  width: 100%;
+  height: 6px;
+  margin-top: 8px;
+  accent-color: #284c3b;
+}
+.coach-media-publish {
+  border-top: 1px solid #dce0d6;
+  margin-top: 22px;
+  padding-top: 16px;
+}
+.coach-media-notice {
+  padding: 12px 14px;
+  border-left: 3px solid #849b64;
+  background: #f2f4e9;
+  overflow-wrap: anywhere;
+}
+.coach-website-editor .coach-media-editor .coach-media-photo span {
+  color: #393d35;
+}
+.coach-about-details {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid #e3dce9;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 1fr 1fr;
+}
+.coach-about-details h3 {
+  margin: 0 0 12px;
+  font-size: 22px;
+}
+@media (max-width: 760px) {
+  .coach-media-gallery.has-video,
+  .coach-media-upload-fields,
+  .coach-about-details {
+    grid-template-columns: 1fr;
+  }
+  .coach-training-media .coach-media-video-cover {
+    min-height: 260px;
+  }
+  .coach-media-photos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .coach-media-order li,
+  .coach-media-pending li {
+    align-items: start;
+    flex-direction: column;
+  }
+  .coach-media-order li > div {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .coach-media-order .icon-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .coach-media-editor .button {
+    min-height: 44px;
+  }
+  .coach-media-heading .button {
+    width: 100%;
+  }
+}

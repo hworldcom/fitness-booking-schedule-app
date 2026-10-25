@@ -7,6 +7,8 @@ import type { PublicCoachProfileState } from "@/domain/coaches";
 import { EMPTY_COACH_WEBSITE_CONTENT } from "@/domain/coach-website";
 import type { ReviewPageResult } from "@/domain/coach-reviews";
 import type { SessionCatalog } from "@/domain/typed-sessions";
+import type { CoachMediaResult, PublicCoachMedia } from "@/domain/coach-media";
+import { PublicCoachMediaSection } from "./coach-media-gallery";
 import { CoachProfileLocations } from "../coach-profile-locations";
 import {
   PublicWebsiteBanner,
@@ -34,6 +36,7 @@ export function PublicCoachWebsite({
   reviews = { status: "unavailable" },
   origin = null,
   ownProfile = false,
+  media = { status: "ready", media: { photos: [], video: null } },
 }: {
   state: State;
   marketplace: ReactNode;
@@ -42,6 +45,7 @@ export function PublicCoachWebsite({
   reviews?: ReviewPageResult;
   origin?: string | null;
   ownProfile?: boolean;
+  media?: CoachMediaResult<PublicCoachMedia>;
 }) {
   const { coach, website } = state;
   const content = website?.content ?? EMPTY_COACH_WEBSITE_CONTENT;
@@ -54,10 +58,8 @@ export function PublicCoachWebsite({
     ? catalog.types.filter((type) => type.bookable && !type.archived)
     : [];
   const sections = [
-    ["about", "About"],
+    ["about", "About me"],
     ["services", "Sessions"],
-    ...(content.approach ? [["approach", "Approach"]] : []),
-    ...(content.experience ? [["experience", "Experience"]] : []),
     ...(locations.length ? [["locations", "Locations"]] : []),
     ["groups", "Group sessions"],
     ["reviews", "Reviews"],
@@ -149,6 +151,30 @@ export function PublicCoachWebsite({
                   ? "MovX verification covers identity and application review only. It does not guarantee licensing, competence, safety or presence at this place."
                   : "This fictional profile uses a public discovery point—not live tracking, current presence or a gym endorsement."}
               </p>
+              <PublicCoachMediaSection
+                key={coach.slug}
+                slug={coach.slug}
+                initial={media}
+              />
+              {(content.approach || content.experience) && (
+                <div className="coach-about-details">
+                  {content.approach && (
+                    <div id="approach" tabIndex={-1}>
+                      <h3>My approach</h3>
+                      <p>{content.approach}</p>
+                    </div>
+                  )}
+                  {content.experience && (
+                    <div id="experience" tabIndex={-1}>
+                      <h3>Experience &amp; qualifications</h3>
+                      <p>{content.experience}</p>
+                      <p className="coach-website-note">
+                        Coach-provided information.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </section>
             <section
               id="services"
@@ -194,30 +220,6 @@ export function PublicCoachWebsite({
                 </p>
               )}
             </section>
-            {content.approach && (
-              <section
-                id="approach"
-                tabIndex={-1}
-                className="coach-website-section"
-              >
-                <span className="eyebrow">HOW WE WORK</span>
-                <h2>My approach</h2>
-                <p>{content.approach}</p>
-              </section>
-            )}
-            {content.experience && (
-              <section
-                id="experience"
-                tabIndex={-1}
-                className="coach-website-section"
-              >
-                <h2>Experience &amp; qualifications</h2>
-                <p>{content.experience}</p>
-                <p className="coach-website-note">
-                  Coach-provided information.
-                </p>
-              </section>
-            )}
             {!!locations.length && (
               <div
                 id="locations"
