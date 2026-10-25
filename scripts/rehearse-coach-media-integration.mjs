@@ -821,9 +821,20 @@ try {
     (route) =>
       route.fulfill({ status: 200, contentType: "image/jpeg", body: source }),
   );
+  let playbackReads = 0;
+  let releasePlayback;
+  const delayedPlayback = new Promise((resolve) => {
+    releasePlayback = resolve;
+  });
   await coachPage.route(
     `**/api/coach/media/videos/${videoId}/playback`,
-    (route) => route.fulfill({ status: 503, json: { status: "unavailable" } }),
+    async (route) => {
+      playbackReads++;
+      if (playbackReads === 1) await delayedPlayback;
+      await route
+        .fulfill({ status: 503, json: { status: "unavailable" } })
+        .catch(() => {}); // The first request is deliberately aborted on close.
+    },
   );
   await editor
     .getByRole("button", { name: "Reload media", exact: true })
@@ -832,23 +843,40 @@ try {
     name: "Watch video: Introduction fixture",
     exact: true,
   });
+  assert.equal(
+    playbackReads,
+    0,
+    "A profile view must not request playback access",
+  );
+  assert.equal(await coachPage.locator("mux-player").count(), 0);
   await videoButton.click();
   const videoDialog = coachPage.getByRole("dialog", {
     name: "Meet your coach",
     exact: true,
   });
+  await expect(videoDialog.getByRole("status")).toHaveText("Checking video…");
+  await expect.poll(() => playbackReads).toBe(1);
   await expect(
-    videoDialog.getByRole("button", { name: "Load video", exact: true }),
-  ).toBeVisible();
+    videoDialog.getByRole("button", { name: "Retry video", exact: true }),
+  ).toHaveCount(0);
   assert.equal(await videoDialog.locator("mux-player").count(), 0);
+  await coachPage.keyboard.press("Escape");
+  await expect(videoButton).toBeFocused();
+  await videoButton.click();
+  await expect(videoDialog.getByRole("alert")).toHaveText(
+    "This video is unavailable. Try again to check access.",
+  );
+  assert.equal(playbackReads, 2);
+  releasePlayback();
   await videoDialog
-    .getByRole("button", { name: "Load video", exact: true })
+    .getByRole("button", { name: "Retry video", exact: true })
     .click();
+  await expect.poll(() => playbackReads).toBe(3);
   await expect(videoDialog.getByRole("alert")).toHaveText(
     "This video is unavailable. Try again to check access.",
   );
   await expect(
-    videoDialog.getByRole("button", { name: "Refresh video", exact: true }),
+    videoDialog.getByRole("button", { name: "Retry video", exact: true }),
   ).toBeVisible();
   await coachPage.keyboard.press("Escape");
   await expect(videoButton).toBeFocused();
@@ -920,7 +948,7 @@ try {
     .click();
   await expect(videoButton).toHaveCount(0);
   pass(
-    "explicit HTTP video fixtures: real UpChunk pause/resume/cancel UI settles, no preload, playback error/retry and Escape focus (not live Mux)",
+    "HTTP video fixtures: real UpChunk pause/resume/cancel, cover-triggered access without preload, close/reopen and explicit error retry, Escape focus (not live Mux)",
   );
 
   phase = "truthful failed loads and revocation";

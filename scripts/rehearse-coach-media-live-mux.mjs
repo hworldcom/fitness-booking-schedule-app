@@ -937,12 +937,10 @@ try {
     name: "Meet your coach",
     exact: true,
   });
-  assert.equal(await playerDialog.locator("mux-player").count(), 0);
-  await playerDialog
-    .getByRole("button", { name: "Load video", exact: true })
-    .click();
   const player = playerDialog.locator("mux-player");
   await player.waitFor();
+  assert.equal(await player.evaluate((element) => element.paused), true);
+  assert.equal(await player.getAttribute("preload"), "none");
   await player.evaluate(async (element) => {
     await element.play();
   });
