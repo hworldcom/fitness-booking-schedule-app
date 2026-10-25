@@ -11,7 +11,12 @@ import {
 } from "lucide-react";
 import type { ActorSnapshot } from "@/auth/actor-contracts";
 import { useWorkspaceView } from "@/auth/client/use-workspace-view";
-import { hasCoachWorkspace, workspaceHref } from "@/auth/workspace-view";
+import {
+  hasCoachWorkspace,
+  workspaceHref,
+  workspaceProfileHref,
+  workspaceSwitchHref,
+} from "@/auth/workspace-view";
 import { profileInitials } from "@/auth/profile-presentation";
 import { accountProfileImagePresentation } from "@/profile-images/presentation";
 import { Avatar } from "./ui";
@@ -45,10 +50,7 @@ function AccountDisclosure({
 }) {
   const profile = actor.profile;
   const view = useWorkspaceView(actor, pathname);
-  const profileHref =
-    view === "coach" && actor.coachAccessStatus !== "suspended"
-      ? "/profile/coach"
-      : "/profile";
+  const profileHref = workspaceProfileHref(actor, view);
   const trainingsHref = workspaceHref(view);
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -146,7 +148,11 @@ function AccountDisclosure({
               {view === "coach" ? "Coach view" : "Athlete view"}
             </span>
             <Link
-              href={workspaceHref(view === "coach" ? "athlete" : "coach")}
+              href={workspaceSwitchHref(
+                actor,
+                pathname,
+                view === "coach" ? "athlete" : "coach",
+              )}
               className="account-menu-link"
               onClick={choose}
             >

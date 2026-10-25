@@ -90,7 +90,12 @@ test("authorized athlete and coach headers render only the account dropdown", ()
       );
       assert.equal((html.match(/<button /g) ?? []).length, 1);
       assert.equal((html.match(/href="\/account"/g) ?? []).length, 1);
-      assert.match(html, /href="\/sessions"/);
+      assert.match(
+        html,
+        pathname === "/profile/coach" && coachAccessStatus !== "not-applied"
+          ? /href="\/profile"/
+          : /href="\/sessions"/,
+      );
       assert.doesNotMatch(html, /Auth fallback|href="\/sign-in"/);
     }
 });

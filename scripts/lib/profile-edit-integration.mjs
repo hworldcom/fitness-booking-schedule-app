@@ -73,6 +73,67 @@ export async function rehearseProfileEditing({
   const [record] =
     await database`select public_slug from app.coach_profiles where profile_id=${coach.profileId}::uuid`;
   let publicPath = `/coaches/${record.public_slug}`;
+  const accountTrigger = page.getByRole("button", {
+    name: /^Account menu for /,
+  });
+  const accountPanel = page.locator(".account-menu-panel:not([hidden])");
+  async function openAccountMenu() {
+    if ((await accountTrigger.getAttribute("aria-expanded")) !== "true") {
+      await accountTrigger.focus();
+      await page.keyboard.press("Enter");
+    }
+    await expect(accountTrigger).toHaveAttribute("aria-expanded", "true");
+  }
+  async function accountDestination(label, href) {
+    await openAccountMenu();
+    const link = accountPanel.getByRole("link", { name: label, exact: true });
+    assert.equal(await link.getAttribute("href"), href);
+    await link.focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(base + href);
+  }
+  for (const width of [1440, 375]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto(base + "/profile");
+    await expect(page.locator(".account-profile-workspace")).toBeVisible();
+    await accountDestination("Switch to coach view", "/profile/coach");
+    await expect(canvas).toBeVisible();
+    await page.reload();
+    await expect(canvas).toBeVisible();
+    await accountDestination("Profile", "/profile/coach");
+    await accountDestination("Switch to athlete view", "/profile");
+    await expect(page.locator(".account-profile-workspace")).toBeVisible();
+    await expect(canvas).toHaveCount(0);
+    await page.reload();
+    await accountDestination("Trainings", "/sessions");
+    await accountDestination("Profile", "/profile");
+    await accountDestination("Switch to coach view", "/profile/coach");
+    await accountDestination("Trainings", "/coach");
+    await accountDestination("Profile", "/profile/coach");
+    for (const neutral of ["/account", "/messages", "/"]) {
+      await page.goto(base + neutral);
+      await page.reload();
+      await accountDestination("Profile", "/profile/coach");
+      await expect(canvas).toBeVisible();
+    }
+    await openAccountMenu();
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+      false,
+    );
+    await page.screenshot({
+      path: path.join(output, `profile-view-switch-${width}.png`),
+    });
+    await page.keyboard.press("Escape");
+    await expect(accountTrigger).toBeFocused();
+    await expect(accountPanel).toHaveCount(0);
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  pass(
+    "Profile view switching stays on Profile in both directions; coach Profile entry survives workspace/shared-page navigation and reload at desktop/mobile with keyboard menus",
+  );
   await page.goto(base + "/profile/coach");
   await expect(canvas).toBeVisible();
   await expect.poll(async () => !!(await ownWebsite())).toBe(true);
