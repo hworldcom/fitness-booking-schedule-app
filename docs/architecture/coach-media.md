@@ -12,6 +12,8 @@
 
 Photos do not require Mux settings. If any required video setting is missing, video uploads report unavailable. A configured but unreachable provider or incorrectly privileged worker returns an unavailable/retry state; configuration presence alone is not a health check.
 
+For the existing `movx-club-local` database, follow the [retained-local upgrade procedure](../../supabase/README.md#retained-local-coach-media-upgrade). The explicit helper backs up and verifies retained data/files, installs reviewed pending migrations and adds only the restricted worker connection to ignored `.env.local`. A successful disposable rehearsal alone does not install this schema in the normal local app.
+
 ### Local webhook forwarding
 
 Install the [Mux CLI](https://www.mux.com/docs/integrations/mux-cli), for example `brew install muxinc/tap/mux` on macOS. CLI v3.0.0 forwards the System webhook event stream, so a Video-only app token cannot authorize this command. Create a separate CLI token with **System Read** permission and low priority in the same Mux environment; keep the application's Video Read/Write token in its environment file. The forwarding token does not need System Write, Data or Robots permissions.
