@@ -1,4 +1,8 @@
 import Link from "next/link";
+import {
+  ProfileEditRegion,
+  type ProfileEditField,
+} from "./profile-edit-region";
 import type { ReactNode } from "react";
 import { ArrowLeft, MapPin } from "lucide-react";
 import { Avatar } from "@/components/ui";
@@ -36,9 +40,19 @@ export function PublicCoachWebsite({
   reviews = { status: "unavailable" },
   origin = null,
   ownProfile = false,
+  onEdit,
+  mediaContent,
+  ownerPreview = false,
+  sectionControls,
   media = { status: "ready", media: { photos: [], video: null } },
 }: {
   state: State;
+  onEdit?: (field: ProfileEditField) => void;
+  mediaContent?: ReactNode;
+  ownerPreview?: boolean;
+  sectionControls?: Partial<
+    Record<"services" | "locations" | "groups", ReactNode>
+  >;
   marketplace: ReactNode;
   catalog?: SessionCatalog | null;
   groups?: CoachPublicGroups;
@@ -48,6 +62,21 @@ export function PublicCoachWebsite({
   media?: CoachMediaResult<PublicCoachMedia>;
 }) {
   const { coach, website } = state;
+  const region = (
+    field: ProfileEditField,
+    label: string,
+    children: ReactNode,
+  ) =>
+    onEdit ? (
+      <ProfileEditRegion field={field} label={label} onEdit={onEdit}>
+        {children}
+      </ProfileEditRegion>
+    ) : (
+      children
+    );
+  const placeholder = (label: string) => (
+    <p className="profile-edit-placeholder">{label}</p>
+  );
   const content = website?.content ?? EMPTY_COACH_WEBSITE_CONTENT;
   const locations = coach.locations.filter(
     (location) => location.status === "active",
@@ -63,7 +92,8 @@ export function PublicCoachWebsite({
     ...(locations.length ? [["locations", "Locations"]] : []),
     ["groups", "Group sessions"],
     ["reviews", "Reviews"],
-    ...(content.faqs.length ? [["questions", "FAQs"]] : []),
+    ...(ownerPreview ? [["private-schedule", "Schedule"]] : []),
+    ...(content.faqs.length || onEdit ? [["questions", "FAQs"]] : []),
   ];
   return (
     <PublicReviewsProvider
@@ -81,33 +111,54 @@ export function PublicCoachWebsite({
               : "MOVX CLUB COACH"}
           </span>
         </div>
-        <PublicWebsiteBanner
-          url={website?.banner?.hero.url ?? null}
-          name={coach.displayName}
-        />
+        {region(
+          "banner",
+          "banner image",
+          <PublicWebsiteBanner
+            url={website?.banner?.hero.url ?? null}
+            name={coach.displayName}
+          />,
+        )}
         <header className="coach-website-identity">
-          <Avatar
-            initials={profileInitials(coach.displayName)}
-            imageUrl={coach.portraitUrl}
-            alt={
-              coach.portraitUrl ? `${coach.displayName}'s coach portrait` : ""
-            }
-          />
+          {region(
+            "portrait",
+            "coach picture",
+            <Avatar
+              initials={profileInitials(coach.displayName)}
+              imageUrl={coach.portraitUrl}
+              alt={
+                coach.portraitUrl ? `${coach.displayName}'s coach portrait` : ""
+              }
+            />,
+          )}
           <div className="coach-website-name">
-            {content.brandLabel && (
-              <p className="eyebrow">{content.brandLabel}</p>
+            {(content.brandLabel || onEdit) &&
+              region(
+                "brandLabel",
+                "brand label",
+                <p className="eyebrow">
+                  {content.brandLabel || "Add your brand label"}
+                </p>,
+              )}
+            {region(
+              "displayName",
+              "display name",
+              <h1>{coach.displayName}</h1>,
             )}
-            <h1>{coach.displayName}</h1>
             <p className="coach-website-trust">
               {coach.trustKind === "verified"
                 ? "Verified coach — MovX reviewed this coach's identity and application."
                 : "Demo coach — this fictional profile is not a verified professional."}
             </p>
-            <div className="coach-website-tags">
-              {coach.disciplines.map((discipline) => (
-                <span key={discipline}>{discipline}</span>
-              ))}
-            </div>
+            {region(
+              "disciplines",
+              "disciplines",
+              <div className="coach-website-tags">
+                {coach.disciplines.map((discipline) => (
+                  <span key={discipline}>{discipline}</span>
+                ))}
+              </div>,
+            )}
             <div className="coach-website-facts">
               <a href="#locations">
                 <MapPin size={16} aria-hidden="true" />
@@ -135,44 +186,78 @@ export function PublicCoachWebsite({
             <section id="about" tabIndex={-1} className="coach-website-section">
               <span className="eyebrow">MEET YOUR COACH</span>
               <h2>Training with {coach.displayName}</h2>
-              <p className="coach-website-intro">
-                {content.introduction || coach.bio}
-              </p>
-              {content.introduction && coach.bio && <p>{coach.bio}</p>}
-              {!!content.focusLabels.length && (
-                <div className="coach-website-tags" aria-label="Coaching focus">
-                  {content.focusLabels.map((label) => (
-                    <span key={label}>{label}</span>
-                  ))}
-                </div>
+              {region(
+                "introduction",
+                "introduction",
+                <p className="coach-website-intro">
+                  {content.introduction ||
+                    (onEdit ? "Add a short introduction" : coach.bio)}
+                </p>,
               )}
+              {(content.introduction || onEdit) &&
+                coach.bio &&
+                region("bio", "biography", <p>{coach.bio}</p>)}
+              {(!!content.focusLabels.length || onEdit) &&
+                region(
+                  "focusLabels",
+                  "coaching focus",
+                  <div
+                    className="coach-website-tags"
+                    aria-label="Coaching focus"
+                  >
+                    {content.focusLabels.map((label, index) => (
+                      <span key={index}>{label}</span>
+                    ))}
+                    {!content.focusLabels.length &&
+                      placeholder("Add coaching focus and levels")}
+                  </div>,
+                )}
               <p className="coach-website-note">
                 {coach.trustKind === "verified"
                   ? "MovX verification covers identity and application review only. It does not guarantee licensing, competence, safety or presence at this place."
                   : "This fictional profile uses a public discovery point—not live tracking, current presence or a gym endorsement."}
               </p>
-              <PublicCoachMediaSection
-                key={coach.slug}
-                slug={coach.slug}
-                initial={media}
-              />
-              {(content.approach || content.experience) && (
+              {region(
+                "media",
+                "training photos and video",
+                mediaContent !== undefined ? (
+                  mediaContent
+                ) : (
+                  <PublicCoachMediaSection
+                    key={coach.slug}
+                    slug={coach.slug}
+                    initial={media}
+                  />
+                ),
+              )}
+              {(content.approach || content.experience || onEdit) && (
                 <div className="coach-about-details">
-                  {content.approach && (
-                    <div id="approach" tabIndex={-1}>
-                      <h3>My approach</h3>
-                      <p>{content.approach}</p>
-                    </div>
-                  )}
-                  {content.experience && (
-                    <div id="experience" tabIndex={-1}>
-                      <h3>Experience &amp; qualifications</h3>
-                      <p>{content.experience}</p>
-                      <p className="coach-website-note">
-                        Coach-provided information.
-                      </p>
-                    </div>
-                  )}
+                  {(content.approach || onEdit) &&
+                    region(
+                      "approach",
+                      "approach",
+                      <div id="approach" tabIndex={-1}>
+                        <h3>My approach</h3>
+                        <p>
+                          {content.approach || "Add your coaching approach"}
+                        </p>
+                      </div>,
+                    )}
+                  {(content.experience || onEdit) &&
+                    region(
+                      "experience",
+                      "experience and qualifications",
+                      <div id="experience" tabIndex={-1}>
+                        <h3>Experience &amp; qualifications</h3>
+                        <p>
+                          {content.experience ||
+                            "Add experience and qualifications"}
+                        </p>
+                        <p className="coach-website-note">
+                          Coach-provided information.
+                        </p>
+                      </div>,
+                    )}
                 </div>
               )}
             </section>
@@ -183,6 +268,7 @@ export function PublicCoachWebsite({
             >
               <span className="eyebrow">WAYS TO TRAIN</span>
               <h2>Sessions with me</h2>
+              {sectionControls?.services}
               {types.length ? (
                 <div className="coach-website-services">
                   {types.map((type) => (
@@ -226,6 +312,7 @@ export function PublicCoachWebsite({
                 tabIndex={-1}
                 className="coach-website-section"
               >
+                {sectionControls?.locations}
                 <CoachProfileLocations
                   coachName={coach.displayName}
                   locations={locations}
@@ -239,6 +326,7 @@ export function PublicCoachWebsite({
             >
               <span className="eyebrow">TRAIN TOGETHER</span>
               <h2>Upcoming group sessions</h2>
+              {sectionControls?.groups}
               {groups.status === "unavailable" ? (
                 <>
                   <p role="status">
@@ -303,38 +391,50 @@ export function PublicCoachWebsite({
               slug={coach.slug}
               initial={reviews}
             />
-            {!!content.faqs.length && (
-              <section
-                id="questions"
-                tabIndex={-1}
-                className="coach-website-section"
-              >
-                <h2>Good to know</h2>
-                {content.faqs.map((faq, index) => (
-                  <details key={index}>
-                    <summary>{faq.question}</summary>
-                    <p>{faq.answer}</p>
-                  </details>
-                ))}
-              </section>
-            )}
-            {!!content.links.length && (
-              <section className="coach-website-section">
-                <h2>Find out more</h2>
-                <div className="coach-website-external-links">
-                  {content.links.map((link, index) => (
-                    <a
-                      key={index}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {link.label} ↗
-                    </a>
+            {(!!content.faqs.length || onEdit) &&
+              region(
+                "faqs",
+                "frequently asked questions",
+                <section
+                  id="questions"
+                  tabIndex={-1}
+                  className="coach-website-section"
+                >
+                  <h2>Good to know</h2>
+                  {!content.faqs.length &&
+                    placeholder("Add answers to common questions")}
+                  {content.faqs.map((faq, index) => (
+                    <details key={index}>
+                      <summary>{faq.question}</summary>
+                      <p>{faq.answer}</p>
+                    </details>
                   ))}
-                </div>
-              </section>
-            )}
+                </section>,
+              )}
+            {(!!content.links.length || onEdit) &&
+              region(
+                "links",
+                "external links",
+                <section className="coach-website-section">
+                  <h2>Find out more</h2>
+                  {!content.links.length &&
+                    placeholder("Add your website or social links")}
+                  <div className="coach-website-external-links">
+                    {content.links.map((link, index) => (
+                      <a
+                        key={index}
+                        href={
+                          /^https:\/\//i.test(link.url) ? link.url : undefined
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {link.label} ↗
+                      </a>
+                    ))}
+                  </div>
+                </section>,
+              )}
           </div>
           <aside
             className="coach-website-contact"
@@ -345,18 +445,26 @@ export function PublicCoachWebsite({
               Your next step <br />
               starts here.
             </h2>
-            {website?.startingRate ? (
-              <>
-                <strong className="coach-website-rate">
-                  {website.startingRate.label}
-                </strong>
-                <p className="coach-website-note">
-                  Indicative starting rate. Individual sessions and groups may
-                  differ.
+            {region(
+              "rate",
+              "starting rate",
+              website?.startingRate ? (
+                <>
+                  <strong className="coach-website-rate">
+                    {website.startingRate.label}
+                  </strong>
+                  <p className="coach-website-note">
+                    Indicative starting rate. Individual sessions and groups may
+                    differ.
+                  </p>
+                </>
+              ) : (
+                <p>
+                  {onEdit
+                    ? "Add or edit your starting rate"
+                    : "Get in touch to discuss your training."}
                 </p>
-              </>
-            ) : (
-              <p>Get in touch to discuss your training.</p>
+              ),
             )}
             <a className="coach-website-primary" href="#private-schedule">
               View available times <span aria-hidden="true">↗</span>
@@ -377,12 +485,14 @@ export function PublicCoachWebsite({
             <p className="coach-website-note">
               Choose a session and venue before sending a request.
             </p>
-            <PublicWebsiteShare
-              url={identity.url}
-              path={identity.path}
-              title={identity.title}
-              description={identity.description}
-            />
+            {!ownerPreview && (
+              <PublicWebsiteShare
+                url={identity.url}
+                path={identity.path}
+                title={identity.title}
+                description={identity.description}
+              />
+            )}
           </aside>
         </div>
         <div className="coach-website-booking">{marketplace}</div>

@@ -14,7 +14,13 @@ import { CoachMediaGallery } from "./coach-media-gallery";
 import type { UpChunk } from "@mux/upchunk";
 import "./coach-media.css";
 
-export function CoachMediaEditor() {
+export function CoachMediaEditor({
+  onChange,
+  onPendingChange,
+}: {
+  onChange?: (media: OwnedCoachMedia | null) => void;
+  onPendingChange?: (pending: boolean) => void;
+} = {}) {
   const { actor } = useActor();
   const { session } = useAuthSession();
   const scope =
@@ -26,14 +32,27 @@ export function CoachMediaEditor() {
       ? `${session.subject}:${actor.demoRun.slug}:${actor.profile.slug}:${actor.coachAccessStatus}`
       : null;
   return scope ? (
-    <ScopedCoachMediaEditor key={scope} />
+    <ScopedCoachMediaEditor
+      key={scope}
+      onChange={onChange}
+      onPendingChange={onPendingChange}
+    />
   ) : (
     <p role="status">Reload your profile to verify media editing access.</p>
   );
 }
-function ScopedCoachMediaEditor() {
+function ScopedCoachMediaEditor({
+  onChange,
+  onPendingChange,
+}: {
+  onChange?: (media: OwnedCoachMedia | null) => void;
+  onPendingChange?: (pending: boolean) => void;
+}) {
   const descriptionId = useId();
   const [media, setMedia] = useState<OwnedCoachMedia | null>(null);
+  useEffect(() => {
+    onChange?.(media);
+  }, [media, onChange]);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -62,6 +81,10 @@ function ScopedCoachMediaEditor() {
   const active = !!media?.uploads.some((u) =>
     ["reserved", "creating", "uploading", "processing"].includes(u.status),
   );
+  const pending = !!file || busy || active || !!dirty;
+  useEffect(() => {
+    onPendingChange?.(pending);
+  }, [pending, onPendingChange]);
   function accessLost() {
     upload.current?.abort();
     abort.current?.abort();

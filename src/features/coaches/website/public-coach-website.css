@@ -29,6 +29,7 @@
   letter-spacing: 0.1em;
 }
 .coach-website-banner {
+  width: 100%;
   aspect-ratio: 8/3;
   max-height: 390px;
   overflow: hidden;

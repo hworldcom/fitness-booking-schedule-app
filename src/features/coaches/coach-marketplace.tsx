@@ -1,5 +1,5 @@
 "use client";
-import { coachProfileHref } from "@/domain/coach-public-url";
+import { coachProfileHref, coachRedirectHref } from "@/domain/coach-public-url";
 
 import { Clock3, RotateCcw } from "lucide-react";
 import Link from "next/link";
@@ -51,6 +51,7 @@ type CoachMarketplaceProps = Readonly<{
   coachDisplayName: string;
   coachSlug: string;
   publicPath?: string;
+  schedulePath?: "/profile/coach";
   slots: readonly PublicCoachAvailabilitySlot[];
   actor: MarketplaceActor;
   referenceTime: string;
@@ -378,7 +379,12 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
           onRetry={() => router.refresh()}
           onNavigate={(date) =>
             router.push(
-              publicScheduleHref(props.coachSlug, date, props.publicPath),
+              props.schedulePath
+                ? coachRedirectHref(props.schedulePath, {
+                    date,
+                    section: "private-schedule",
+                  })
+                : publicScheduleHref(props.coachSlug, date, props.publicPath),
               { scroll: false },
             )
           }
@@ -509,10 +515,21 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
           )}
         </SessionRequestReview>
         <form
-          action={coachProfileHref({
-            slug: props.coachSlug,
-            publicPath: props.publicPath,
-          })}
+          action={
+            props.schedulePath ??
+            coachProfileHref({
+              slug: props.coachSlug,
+              publicPath: props.publicPath,
+            })
+          }
+          onSubmit={
+            props.schedulePath
+              ? (event) => {
+                  event.preventDefault();
+                  router.refresh();
+                }
+              : undefined
+          }
         >
           <input type="hidden" name="date" value={selection.date} />
           <button type="submit" className="public-schedule-reload">
