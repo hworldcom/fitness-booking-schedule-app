@@ -53,6 +53,7 @@ type Integration = {
   onSnapshot?: (snapshot: CoachWebsiteEditorSnapshot) => void;
   onMediaChange?: (media: OwnedCoachMedia | null) => void;
   onMediaPendingChange?: (pending: boolean) => void;
+  onMediaAccessLost?: () => void;
   canvas?: boolean;
 };
 
@@ -201,6 +202,7 @@ function ScopedWebsiteEditor({
   onSnapshot,
   onMediaChange,
   onMediaPendingChange,
+  onMediaAccessLost,
   canvas,
 }: Integration & {
   coach: CoachProjection;
@@ -698,6 +700,7 @@ function ScopedWebsiteEditor({
             <CoachMediaEditor
               onChange={onMediaChange}
               onPendingChange={onMediaPendingChange}
+              onAccessLost={onMediaAccessLost}
             />
           </div>
         )}

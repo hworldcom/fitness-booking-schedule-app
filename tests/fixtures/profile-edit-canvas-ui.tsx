@@ -91,7 +91,7 @@ function Canvas() {
                     coachProfileId={coach.profileId}
                     coachDisplayName={coach.displayName}
                     coachSlug={coach.slug}
-              schedulePath="/profile/coach"
+                    schedulePath="/profile/coach"
                     slots={PUBLIC_SCHEDULE_SLOTS}
                     actor={{
                       status: "authorized",

@@ -54,6 +54,7 @@ export function ProfileEditDrawer({
       className="profile-edit-drawer"
       aria-labelledby="profile-edit-drawer-title"
       onCancel={(event) => {
+        if (event.target !== event.currentTarget) return;
         event.preventDefault();
         onClose();
       }}

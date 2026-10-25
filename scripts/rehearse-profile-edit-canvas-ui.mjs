@@ -204,8 +204,17 @@ export const updateCoachTrainingLocationAction=createCoachTrainingLocationAction
     actorReads++;
     return json(route, actorResult);
   });
+  let mediaDenial = null;
   await context.route("**/api/coach/media", (route) =>
-    json(route, { status: "ready", media }),
+    mediaDenial
+      ? mediaDenial.malformed
+        ? route.fulfill({
+            status: mediaDenial.status,
+            contentType: "text/plain",
+            body: "Access denied",
+          })
+        : json(route, { status: "forbidden" }, mediaDenial.status)
+      : json(route, { status: "ready", media }),
   );
   await context.route("**/api/coach/website", async (route) => {
     if (route.request().method() === "GET") {
@@ -468,6 +477,52 @@ export const updateCoachTrainingLocationAction=createCoachTrainingLocationAction
   await dialog
     .getByRole("button", { name: "Clear selection", exact: true })
     .click();
+  const nestedPhoto = {
+    id: "93290000-0000-4000-8000-000000000077",
+    alt: "Nested photo preview",
+    width: 1200,
+    height: 800,
+    thumbnailUrl:
+      "/api/coach/media/photos/93290000-0000-4000-8000-000000000077/thumbnail",
+    fullUrl:
+      "/api/coach/media/photos/93290000-0000-4000-8000-000000000077/full",
+  };
+  media.photos = [nestedPhoto];
+  media.published = { photos: [nestedPhoto], video: null };
+  media.revision++;
+  await context.route("**/api/coach/media/photos/**", (route) =>
+    route.fulfill({
+      contentType: "image/png",
+      body: Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+        "base64",
+      ),
+    }),
+  );
+  await dialog
+    .getByRole("button", { name: "Reload media", exact: true })
+    .click();
+  const ownerDrawer = page.locator("dialog.profile-edit-drawer");
+  const nestedTrigger = ownerDrawer.getByRole("button", {
+    name: "View photo: Nested photo preview",
+    exact: true,
+  });
+  await nestedTrigger.click();
+  await expect(
+    page.getByRole("dialog", { name: "Nested photo preview", exact: true }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(ownerDrawer).toBeVisible();
+  await expect(nestedTrigger).toBeFocused();
+  media.photos = [];
+  media.published = { photos: [], video: null };
+  media.revision++;
+  await ownerDrawer
+    .getByRole("button", { name: "Reload media", exact: true })
+    .click();
+  report(
+    "Escape closes a nested media preview while retaining the editing drawer and restoring focus",
+  );
   await close();
   await page.getByRole("button", { name: "Toggle hidden fixture" }).click();
   await expect(
@@ -572,6 +627,33 @@ export const updateCoachTrainingLocationAction=createCoachTrainingLocationAction
   await slow.close();
   report(
     "A click before the website read finishes opens the requested field and focuses it once saved content arrives",
+  );
+  websiteMode = "ok";
+  for (const denial of [
+    { status: 403 },
+    { status: 401 },
+    { status: 403, malformed: true },
+  ]) {
+    mediaDenial = null;
+    const denied = await context.newPage();
+    denied.on("pageerror", (error) => errors.push(error.message));
+    await denied.goto(`${base}/profile/coach`, { waitUntil: "networkidle" });
+    await denied
+      .getByRole("button", {
+        name: "Edit training photos and video",
+        exact: true,
+      })
+      .click();
+    mediaDenial = denial;
+    await denied
+      .locator(".coach-media-editor")
+      .getByRole("button", { name: "Reload media", exact: true })
+      .click();
+    await expect(denied.locator(".coach-profile-canvas")).toHaveCount(0);
+    await denied.close();
+  }
+  report(
+    "Media 401/403 responses, including a non-JSON denial, conceal the complete owner canvas before the actor snapshot refreshes",
   );
   assert.deepEqual(errors, []);
   await writeFile(

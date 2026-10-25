@@ -17,9 +17,11 @@ import "./coach-media.css";
 export function CoachMediaEditor({
   onChange,
   onPendingChange,
+  onAccessLost,
 }: {
   onChange?: (media: OwnedCoachMedia | null) => void;
   onPendingChange?: (pending: boolean) => void;
+  onAccessLost?: () => void;
 } = {}) {
   const { actor } = useActor();
   const { session } = useAuthSession();
@@ -36,6 +38,7 @@ export function CoachMediaEditor({
       key={scope}
       onChange={onChange}
       onPendingChange={onPendingChange}
+      onAccessLost={onAccessLost}
     />
   ) : (
     <p role="status">Reload your profile to verify media editing access.</p>
@@ -44,9 +47,11 @@ export function CoachMediaEditor({
 function ScopedCoachMediaEditor({
   onChange,
   onPendingChange,
+  onAccessLost,
 }: {
   onChange?: (media: OwnedCoachMedia | null) => void;
   onPendingChange?: (pending: boolean) => void;
+  onAccessLost?: () => void;
 }) {
   const descriptionId = useId();
   const [media, setMedia] = useState<OwnedCoachMedia | null>(null);
@@ -92,14 +97,16 @@ function ScopedCoachMediaEditor({
     setFile(null);
     setDescription("");
     setPendingId(null);
+    onAccessLost?.();
   }
   async function receive(response: Response, request: number) {
-    const value = await response.json();
     if (disposed.current || request !== fence.current) return null;
     if (response.status === 401 || response.status === 403) {
       accessLost();
       throw Error("Media access is no longer available. Reload your profile.");
     }
+    const value = await response.json();
+    if (disposed.current || request !== fence.current) return null;
     if (!response.ok || !["ready", "saved"].includes(value.status))
       throw Error(
         response.status === 409

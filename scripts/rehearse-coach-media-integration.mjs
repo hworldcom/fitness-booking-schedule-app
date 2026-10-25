@@ -10,20 +10,30 @@ import postgres from "postgres";
 import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 import { chromium, expect as baseExpect } from "@playwright/test";
+import { rehearseProfileEditing } from "./lib/profile-edit-integration.mjs";
 
 const expect = baseExpect.configure({ timeout: 20000 });
 const root = process.cwd();
 assert.ok(
   process.argv
     .slice(2)
-    .every((arg) => ["--webpack", "--diagnose-storage"].includes(arg)),
+    .every((arg) =>
+      ["--webpack", "--diagnose-storage", "--profile-editor"].includes(arg),
+    ),
 );
+const profileEditor = process.argv.includes("--profile-editor");
 const diagnoseStorage = process.argv.includes("--diagnose-storage");
 const webpack = process.argv.includes("--webpack");
 const tag = randomUUID().replaceAll("-", "").slice(0, 10);
 const project = `mov19-media-qa-${tag}`;
 const checkout = await mkdtemp(path.join(tmpdir(), `${project}-`));
-const output = path.join(root, "test-results/coach-media-integration", tag);
+const output = path.join(
+  root,
+  profileEditor
+    ? "test-results/profile-edit-integration"
+    : "test-results/coach-media-integration",
+  tag,
+);
 const base = "http://localhost:3169";
 const cli = path.join(root, "node_modules/.bin/supabase");
 const cleanEnv = Object.fromEntries(
@@ -422,7 +432,7 @@ try {
       password,
       email_confirm: true,
       app_metadata: {
-        movx_test_ticket: "MOV-19",
+        movx_test_ticket: profileEditor ? "MOV-101" : "MOV-19",
         temporary: true,
       },
     });
@@ -467,10 +477,31 @@ try {
   await database`select app.review_coach_application(${coach.profileId}::uuid,'pending','approved','Disposable media QA','local-test','movx-identity-application-v1')`;
   await database`update app.coach_profiles set visibility='visible' where profile_id=${coach.profileId}::uuid`;
   pass("two independent real browser password sessions");
+  if (profileEditor) {
+    phase = "production profile editor journeys";
+    await rehearseProfileEditing({
+      base,
+      browser,
+      database,
+      coach,
+      stranger,
+      person,
+      output,
+      pass,
+      errors,
+      tag,
+    });
+  }
 
   phase = "real owner photo upload and private drafts";
   const coachPage = coach.page;
   await coachPage.goto(base + "/profile/coach");
+  await coachPage
+    .getByRole("button", {
+      name: "Edit training photos and video",
+      exact: true,
+    })
+    .click();
   const editor = coachPage.locator(".coach-media-editor");
   await expect(editor.getByText("0 / 6 photos", { exact: true })).toBeVisible();
   await expect(
@@ -917,13 +948,18 @@ try {
   assert.equal((await guest.request.get(base + publicPath)).status(), 404);
   await editor
     .getByRole("button", { name: "Reload media", exact: true })
-    .click();
+    .click({ timeout: 3000 })
+    .catch(async () => {
+      await expect(coachPage.locator(".coach-profile-canvas")).toHaveCount(0);
+    });
   await expect(
-    editor.getByText("Training media could not be loaded.", { exact: true }),
+    coachPage.getByRole("heading", {
+      name: /^(Profile editing access changed|Reload your coach profile)$/,
+    }),
   ).toBeVisible();
-  assert.equal(await editor.locator('input[type="file"]').count(), 0);
+  assert.equal(await coachPage.locator(".coach-profile-canvas").count(), 0);
   pass(
-    "failed reload retains last verified gallery; suspension revokes public bytes and clears owner media controls",
+    "failed reload retains last verified gallery; suspension revokes public media bytes and conceals the entire owner canvas",
   );
   assert.deepEqual(errors, []);
   pass(

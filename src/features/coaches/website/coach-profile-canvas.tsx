@@ -2,6 +2,7 @@
 
 import {
   useActionState,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -156,6 +157,8 @@ function ScopedCanvas({
   );
   const [media, setMedia] = useState<OwnedCoachMedia | null>(null);
   const [mediaPending, setMediaPending] = useState(false);
+  const [mediaAccessLost, setMediaAccessLost] = useState(false);
+  const revokeMediaAccess = useCallback(() => setMediaAccessLost(true), []);
   const [portrait, setPortrait] = useState<CoachPortraitOverride | null>(null);
   const [savedOnly, setSavedOnly] = useState(false);
   const [panel, setPanel] = useState<Panel | null>(null);
@@ -245,7 +248,11 @@ function ScopedCanvas({
       editing: true,
     }));
   }
-  if (website?.content.accessLost || website?.rate.accessLost)
+  if (
+    mediaAccessLost ||
+    website?.content.accessLost ||
+    website?.rate.accessLost
+  )
     return (
       <section role="alert" className="protected-access-state">
         <h1>Profile editing access changed</h1>
@@ -532,6 +539,7 @@ function ScopedCanvas({
               onSnapshot={setWebsite}
               onMediaChange={setMedia}
               onMediaPendingChange={setMediaPending}
+              onMediaAccessLost={revokeMediaAccess}
             />
           </div>
           <div hidden={panel !== "portrait"}>
