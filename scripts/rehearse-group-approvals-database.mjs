@@ -69,7 +69,6 @@ try {
       query(database, readFileSync(`supabase/migrations/${file}`, "utf8"));
     query(database, readFileSync("supabase/seed.sql", "utf8"));
     if (mode === "upgrade") {
-      const baseline = query(database, fingerprints);
       const historical = `insert into app.coach_group_sessions(id,run_id,coach_profile_id,slug,title,description,discipline,intended_level,training_location_id,venue_snapshot,starts_at,ends_at,decision_deadline_at,minimum_participants,maximum_participants,price_cents,status,published_at,created_at)
       select ident.id,c.run_id,c.profile_id,'group-'||replace(ident.id::text,'-',''),'Retained event','Preserved','Boxing','All levels',l.id,
       jsonb_build_object('id',l.id,'name',l.public_name,'label',l.public_location_label,'kind',l.location_kind,'latitude',l.latitude,'longitude',l.longitude),
@@ -77,6 +76,22 @@ try {
       from app.coach_profiles c join app.coach_training_locations l on l.run_id=c.run_id and l.profile_id=c.profile_id and l.status='active' cross join (select gen_random_uuid() id offset 0) ident limit 1 returning id;`;
       const ownedId = query(database, historical).trim();
       assert.match(ownedId, /^[a-f0-9-]{36}$/);
+      // A real old-schema registration must still stop the upgrade. These are
+      // synthetic records in this owned scratch database, never retained data.
+      query(
+        database,
+        `insert into app.coach_group_registrations(id,run_id,session_id,athlete_profile_id)
+        select gen_random_uuid(),s.run_id,s.id,p.profile_id from app.coach_group_sessions s
+        join app.demo_run_participants p on p.run_id=s.run_id and p.profile_id<>s.coach_profile_id
+        where s.id='${ownedId}'::uuid limit 1;`,
+      );
+      assert.equal(
+        query(
+          database,
+          "select count(*) from app.coach_group_registrations;",
+        ).trim(),
+        "1",
+      );
       const beforeRefusal = query(database, fingerprints);
       assert.throws(
         () =>
@@ -84,7 +99,7 @@ try {
             database,
             readFileSync(`supabase/migrations/${migration}`, "utf8"),
           ),
-        /MOV-77 requires reviewed empty published group inventory/,
+        /MOV-77 requires reviewed empty registration history/,
       );
       assert.equal(
         query(database, fingerprints),
@@ -93,14 +108,27 @@ try {
       );
       query(
         database,
-        `delete from app.coach_group_sessions where id='${ownedId}'::uuid;`,
+        `update app.coach_group_registrations set status='withdrawn',resolved_at=clock_timestamp() where session_id='${ownedId}'::uuid;`,
+      );
+      const resolvedHistory = query(database, fingerprints);
+      assert.throws(
+        () =>
+          query(
+            database,
+            readFileSync(`supabase/migrations/${migration}`, "utf8"),
+          ),
+        /MOV-77 requires reviewed empty registration history/,
       );
       assert.equal(
         query(database, fingerprints),
-        baseline,
-        "Historical fixture cleanup changed unrelated rows",
+        resolvedHistory,
+        "Resolved history refusal changed rows",
       );
-      // A retained unpublished draft is compatible and must survive the forward migration.
+      query(
+        database,
+        `delete from app.coach_group_registrations where session_id='${ownedId}'::uuid;`,
+      );
+      // Both the published event and an unpublished draft must survive exactly.
       query(
         database,
         historical.replace("'open',clock_timestamp(),", "'draft',null,"),

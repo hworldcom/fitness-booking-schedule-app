@@ -39,6 +39,7 @@ import {
   websiteContentFieldId,
 } from "./website-content-errors";
 import "./coach-website-editor.css";
+import { CoachMediaEditor } from "./coach-media-editor";
 
 const WEBSITE_API = "/api/coach/website";
 const RATE_API = "/api/coach/starting-rate";
@@ -370,7 +371,7 @@ function ScopedWebsiteEditor({
       </div>
       <div className="website-editor-columns">
         <div className="website-editor-panel">
-          <h3>Website content</h3>
+          <h3>About me</h3>
           <p>
             Content saves independently from your profile details and starting
             rate below.
@@ -653,6 +654,7 @@ function ScopedWebsiteEditor({
             </form>
           )}
           <Recovery editor={website} state={contentState} read={readWebsite} />
+          <CoachMediaEditor />
         </div>
         <div className="website-editor-sidebar">
           <div className="website-editor-panel">

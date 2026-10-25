@@ -42,14 +42,23 @@ export function CoachProfileLocations({
     primaryLocation?.id ?? locations[0]?.id ?? null,
   );
   const [providerUnavailable, setProviderUnavailable] = useState(false);
+  const singleLocation = locations.length === 1;
   const resolvedSelectedLocationId = locations.some(
     ({ id }) => id === selectedLocationId,
   )
     ? selectedLocationId
     : (primaryLocation?.id ?? locations[0]?.id ?? null);
   const colors = useMemo(
-    () => assignCoachProfileLocationColors(locations.map(({ id }) => id)),
-    [locations],
+    () =>
+      singleLocation
+        ? new Map([
+            [
+              locations[0]!.id,
+              { accent: "#61417b", tint: "#f1ebf7", ink: "#432c56" },
+            ],
+          ])
+        : assignCoachProfileLocationColors(locations.map(({ id }) => id)),
+    [locations, singleLocation],
   );
   const points = useMemo(
     () =>
@@ -62,7 +71,7 @@ export function CoachProfileLocations({
           id: location.id,
           name: location.publicName,
           label: location.location.label,
-          ariaLabel: `Select training location ${index + 1}: ${location.publicName}, ${location.location.label}`,
+          ariaLabel: `Select training location${singleLocation ? "" : ` ${index + 1}`}: ${location.publicName}, ${location.location.label}`,
           latitude: location.location.latitude,
           longitude: location.location.longitude,
           initials: String(index + 1),
@@ -74,7 +83,7 @@ export function CoachProfileLocations({
           }),
         });
       }),
-    [colors, locations],
+    [colors, locations, singleLocation],
   );
 
   const markProviderUnavailable = useCallback(
@@ -92,7 +101,6 @@ export function CoachProfileLocations({
           <span className="eyebrow">CONFIRMED PLACES</span>
           <h3 id="public-coach-locations-title">Training locations</h3>
         </div>
-        <MapPin size={21} aria-hidden="true" />
       </div>
       <p>
         These are training options, not the coach&apos;s current position. Each
@@ -125,6 +133,7 @@ export function CoachProfileLocations({
             canvasAriaLabel={`${coachName} training locations`}
             coincidentItemLabel="Location"
             recenterOnSelection={false}
+            markerVariant={singleLocation ? "pin" : "badge"}
           />
         )}
       </div>
@@ -154,7 +163,7 @@ export function CoachProfileLocations({
                 disabled={providerUnavailable}
               >
                 <span className="public-coach-location-key" aria-hidden="true">
-                  {index + 1}
+                  {singleLocation ? <MapPin size={15} /> : index + 1}
                 </span>
                 <span>
                   <strong>{location.publicName}</strong>

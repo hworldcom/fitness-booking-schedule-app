@@ -1,10 +1,12 @@
 -- MOV-77: individual registration approval, independent of event confirmation.
--- No inferred historical approvals. Stop safely if the empty-inventory rollout assumption is false.
-do $$ begin
-  if exists(select 1 from app.coach_group_sessions where status<>'draft') or exists(select 1 from app.coach_group_registrations) then
-    raise exception 'MOV-77 requires reviewed empty published group inventory; preserve existing events and registrations';
+-- MOV-97: unregistered events retain every field. Historical registrations still
+-- require a separately reviewed transition; never infer an approval decision.
+-- One statement keeps the check, locks and DDL atomic in CLI fresh installs too.
+do $mov97_migration$ begin
+  lock table app.coach_group_sessions,app.coach_group_registrations in access exclusive mode;
+  if exists(select 1 from app.coach_group_registrations) then
+    raise exception 'MOV-77 requires reviewed empty registration history; preserve existing events and registrations';
   end if;
-end $$;
 
 alter table app.coach_group_registrations
   alter column status set default 'pending',
@@ -270,7 +272,6 @@ begin
   return result;
 end;
 $$;
-
 CREATE OR REPLACE FUNCTION app.public_group_sessions(action text, args jsonb) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
@@ -309,3 +310,4 @@ begin
   return result;
 end;
 $$;
+end $mov97_migration$;

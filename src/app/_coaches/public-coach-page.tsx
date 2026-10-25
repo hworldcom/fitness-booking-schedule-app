@@ -14,9 +14,11 @@ import {
   publicCoachWebsiteGroups,
 } from "@/server/coaches/public-website-page";
 import { publicCoachReviews } from "@/server/coaches/review-service";
+import { currentPublicCoachMedia } from "@/server/coaches/media-service";
 import { publicPrivateScheduleSummary } from "@/server/coaches/private-schedule-summary-service";
 import { PrivateScheduleAccess } from "@/features/coaches/private-schedule-access";
 import "@/features/coaches/public-schedule.css";
+import "@/features/coaches/website/coach-media.css";
 import { calendarDate } from "@/domain/coach-calendar";
 import { coachRedirectHref } from "@/domain/coach-public-url";
 import {
@@ -44,7 +46,7 @@ export async function PublicCoachPage({
   } catch {
     catalogUnavailable = true;
   }
-  const [reviews, groups, summary] = await Promise.all([
+  const [reviews, groups, summary, media] = await Promise.all([
     publicCoachReviews(slug, null),
     publicCoachWebsiteGroups(slug),
     publicPrivateScheduleSummary(
@@ -53,6 +55,7 @@ export async function PublicCoachPage({
       state.slots,
       state.databaseTime,
     ),
+    currentPublicCoachMedia(slug),
   ]);
   const query = await searchParams;
   const selection = publicScheduleSelection(query.date, state.databaseTime);
@@ -83,6 +86,7 @@ export async function PublicCoachPage({
       catalog={catalog ?? null}
       reviews={reviews}
       groups={groups}
+      media={media}
       origin={publicWebsiteOrigin()}
       ownProfile={
         actor.status === "authorized" &&
