@@ -14,7 +14,15 @@ import { CoachMediaGallery } from "./coach-media-gallery";
 import type { UpChunk } from "@mux/upchunk";
 import "./coach-media.css";
 
-export function CoachMediaEditor() {
+export function CoachMediaEditor({
+  onChange,
+  onPendingChange,
+  onAccessLost,
+}: {
+  onChange?: (media: OwnedCoachMedia | null) => void;
+  onPendingChange?: (pending: boolean) => void;
+  onAccessLost?: () => void;
+} = {}) {
   const { actor } = useActor();
   const { session } = useAuthSession();
   const scope =
@@ -26,14 +34,30 @@ export function CoachMediaEditor() {
       ? `${session.subject}:${actor.demoRun.slug}:${actor.profile.slug}:${actor.coachAccessStatus}`
       : null;
   return scope ? (
-    <ScopedCoachMediaEditor key={scope} />
+    <ScopedCoachMediaEditor
+      key={scope}
+      onChange={onChange}
+      onPendingChange={onPendingChange}
+      onAccessLost={onAccessLost}
+    />
   ) : (
     <p role="status">Reload your profile to verify media editing access.</p>
   );
 }
-function ScopedCoachMediaEditor() {
+function ScopedCoachMediaEditor({
+  onChange,
+  onPendingChange,
+  onAccessLost,
+}: {
+  onChange?: (media: OwnedCoachMedia | null) => void;
+  onPendingChange?: (pending: boolean) => void;
+  onAccessLost?: () => void;
+}) {
   const descriptionId = useId();
   const [media, setMedia] = useState<OwnedCoachMedia | null>(null);
+  useEffect(() => {
+    onChange?.(media);
+  }, [media, onChange]);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -62,6 +86,10 @@ function ScopedCoachMediaEditor() {
   const active = !!media?.uploads.some((u) =>
     ["reserved", "creating", "uploading", "processing"].includes(u.status),
   );
+  const pending = !!file || busy || active || !!dirty;
+  useEffect(() => {
+    onPendingChange?.(pending);
+  }, [pending, onPendingChange]);
   function accessLost() {
     upload.current?.abort();
     abort.current?.abort();
@@ -69,14 +97,16 @@ function ScopedCoachMediaEditor() {
     setFile(null);
     setDescription("");
     setPendingId(null);
+    onAccessLost?.();
   }
   async function receive(response: Response, request: number) {
-    const value = await response.json();
     if (disposed.current || request !== fence.current) return null;
     if (response.status === 401 || response.status === 403) {
       accessLost();
       throw Error("Media access is no longer available. Reload your profile.");
     }
+    const value = await response.json();
+    if (disposed.current || request !== fence.current) return null;
     if (!response.ok || !["ready", "saved"].includes(value.status))
       throw Error(
         response.status === 409

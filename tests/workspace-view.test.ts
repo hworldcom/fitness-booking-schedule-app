@@ -5,6 +5,8 @@ import {
   resolveWorkspaceView,
   workspaceViewForPath,
   workspaceViewStorageKey,
+  workspaceProfileHref,
+  workspaceSwitchHref,
 } from "@/auth/workspace-view";
 const actor: ActorSnapshot = {
   status: "authorized",
@@ -25,22 +27,100 @@ test("explicit private routes override preferences; neutral public pages use onl
     "/sessions",
     "/sessions/groups/one",
     "/my-coaches/history",
+    "/profile",
+    "/profile/details",
   ])
     assert.equal(resolveWorkspaceView(actor, path, "coach"), "athlete");
   for (const path of [
     "/",
     "/account",
-    "/profile",
     "/messages",
     "/coaches/daniel-park",
     "/coach-other",
     "/sessions-other",
+    "/profile-other",
   ]) {
     assert.equal(workspaceViewForPath(path), null);
     assert.equal(resolveWorkspaceView(actor, path, "coach"), "coach");
     for (const bad of [null, undefined, "admin", "COACH", {}, "athlete"])
       assert.equal(resolveWorkspaceView(actor, path, bad), "athlete");
   }
+});
+test("Profile switches keep context in both directions and route selection survives stale preferences", () => {
+  for (const status of ["approved", "demo"] as const) {
+    const coach: ActorSnapshot = { ...actor, coachAccessStatus: status };
+    assert.equal(
+      workspaceSwitchHref(coach, "/profile", "coach"),
+      "/profile/coach",
+    );
+    assert.equal(
+      workspaceSwitchHref(coach, "/profile/coach", "athlete"),
+      "/profile",
+    );
+    assert.equal(
+      workspaceSwitchHref(coach, "/profile/coach/edit", "athlete"),
+      "/profile",
+    );
+    assert.equal(resolveWorkspaceView(coach, "/profile", "coach"), "athlete");
+    assert.equal(
+      resolveWorkspaceView(coach, "/profile/coach", "athlete"),
+      "coach",
+    );
+    for (const path of [
+      "/coach",
+      "/coach/events",
+      "/account",
+      "/messages",
+      "/",
+    ])
+      assert.equal(
+        workspaceProfileHref(coach, resolveWorkspaceView(coach, path, "coach")),
+        "/profile/coach",
+      );
+    assert.equal(workspaceProfileHref(coach, "athlete"), "/profile");
+  }
+});
+test("outside Profile the switch retains workspace defaults and strict segment boundaries", () => {
+  for (const path of [
+    "/coach",
+    "/sessions",
+    "/account",
+    "/messages",
+    "/profile-other",
+    "/coaches/example",
+    "/",
+  ]) {
+    assert.equal(workspaceSwitchHref(actor, path, "coach"), "/coach");
+    assert.equal(workspaceSwitchHref(actor, path, "athlete"), "/sessions");
+  }
+});
+test("Profile destinations do not expose editing to suspended, applicant or unauthorized actors", () => {
+  const suspended: ActorSnapshot = { ...actor, coachAccessStatus: "suspended" };
+  assert.equal(workspaceProfileHref(suspended, "coach"), "/profile");
+  assert.equal(workspaceSwitchHref(suspended, "/profile", "coach"), "/coach");
+  assert.equal(
+    workspaceSwitchHref(suspended, "/profile/coach", "athlete"),
+    "/profile",
+  );
+  for (const status of ["not-applied", "pending", "rejected"] as const) {
+    const ordinary: ActorSnapshot = { ...actor, coachAccessStatus: status };
+    assert.equal(workspaceProfileHref(ordinary, "coach"), "/profile");
+    assert.equal(
+      workspaceSwitchHref(ordinary, "/profile", "coach"),
+      "/profile",
+    );
+    assert.equal(
+      workspaceSwitchHref(ordinary, "/account", "coach"),
+      "/sessions",
+    );
+  }
+  for (const status of [
+    "signed-out",
+    "unavailable",
+    "forbidden",
+    "preview",
+  ] as const)
+    assert.equal(workspaceProfileHref({ status }, "coach"), "/profile");
 });
 test("stored coach preference cannot elevate an ordinary, unapproved or signed-out account", () => {
   for (const status of ["not-applied", "pending", "rejected"] as const) {

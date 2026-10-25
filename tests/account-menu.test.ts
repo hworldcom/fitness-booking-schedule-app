@@ -51,7 +51,13 @@ test("dropdown names Trainings and follows the selected capability-bounded view"
     "suspended",
   ] as const) {
     const value = actor(status);
-    for (const path of ["/", "/sessions/groups", "/coach", "/profile/coach"]) {
+    for (const path of [
+      "/",
+      "/sessions/groups",
+      "/coach",
+      "/profile",
+      "/profile/coach",
+    ]) {
       const view = resolveWorkspaceView(value, path);
       const profileHref =
         view === "coach" && status !== "suspended"
@@ -77,7 +83,13 @@ test("dropdown names Trainings and follows the selected capability-bounded view"
           workspaceHref(view),
           "/account",
           ...(hasCoachWorkspace(value)
-            ? [workspaceHref(view === "coach" ? "athlete" : "coach")]
+            ? [
+                path === "/profile/coach"
+                  ? "/profile"
+                  : path === "/profile" && status !== "suspended"
+                    ? "/profile/coach"
+                    : workspaceHref(view === "coach" ? "athlete" : "coach"),
+              ]
             : []),
         ],
       );
@@ -97,6 +109,37 @@ test("dropdown names Trainings and follows the selected capability-bounded view"
         assert.match(html, /aria-current="page"[^>]*href="\/coach"/);
     }
   }
+});
+
+test("coach Profile entry and Profile view switches use their own pages, while Trainings keeps its workspace", () => {
+  const hrefs = (html: string) =>
+    [...html.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
+  for (const status of ["approved", "demo"] as const) {
+    assert.deepEqual(hrefs(render(actor(status), "/coach")), [
+      "/profile/coach",
+      "/coach",
+      "/account",
+      "/sessions",
+    ]);
+    assert.deepEqual(hrefs(render(actor(status), "/profile/coach")), [
+      "/profile/coach",
+      "/coach",
+      "/account",
+      "/profile",
+    ]);
+    assert.deepEqual(hrefs(render(actor(status), "/profile")), [
+      "/profile",
+      "/sessions",
+      "/account",
+      "/profile/coach",
+    ]);
+  }
+  assert.deepEqual(hrefs(render(actor("suspended"), "/profile")), [
+    "/profile",
+    "/sessions",
+    "/account",
+    "/coach",
+  ]);
 });
 
 test("account trigger preserves private-avatar preference, portrait fallback, initials and escaped identity", () => {

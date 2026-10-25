@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- private revocable media must bypass the public image optimizer */
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Play, Images } from "lucide-react";
 import { Modal } from "@/components/ui";
 import {
@@ -28,30 +28,47 @@ function VideoPlayer({
     token: string;
   } | null>(null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  async function load() {
-    setLoading(true);
-    setError("");
-    try {
-      const response = await fetch(
-        coachMediaVideoUrl(slug, video.id, "playback"),
-        { cache: "no-store", credentials: "same-origin" },
-      );
-      const value = await response.json();
-      if (
-        !response.ok ||
-        value.status !== "ready" ||
-        !/^[a-zA-Z0-9]{8,128}$/.test(value.playbackId) ||
-        typeof value.token !== "string"
-      )
-        throw Error();
-      setAccess({ playbackId: value.playbackId, token: value.token });
-    } catch {
-      setAccess(null);
-      setError("This video is unavailable. Try again to check access.");
-    } finally {
-      setLoading(false);
+  const [loading, setLoading] = useState(true);
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    async function load() {
+      try {
+        const response = await fetch(
+          coachMediaVideoUrl(slug, video.id, "playback"),
+          {
+            cache: "no-store",
+            credentials: "same-origin",
+            signal: controller.signal,
+          },
+        );
+        const value = await response.json();
+        if (controller.signal.aborted) return;
+        if (
+          !response.ok ||
+          value.status !== "ready" ||
+          !/^[a-zA-Z0-9]{8,128}$/.test(value.playbackId) ||
+          typeof value.token !== "string"
+        )
+          throw Error();
+        setAccess({ playbackId: value.playbackId, token: value.token });
+      } catch {
+        if (!controller.signal.aborted) {
+          setAccess(null);
+          setError("This video is unavailable. Try again to check access.");
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
     }
+    void load();
+    return () => controller.abort();
+  }, [slug, video.id, attempt]);
+  function retry() {
+    setAccess(null);
+    setError("");
+    setLoading(true);
+    setAttempt((value) => value + 1);
   }
   return (
     <div className="coach-media-player">
@@ -69,21 +86,18 @@ function VideoPlayer({
           disableCookies
           onError={() => {
             setAccess(null);
-            setError("Video access may have expired. Refresh to try again.");
+            setLoading(false);
+            setError("Video access may have expired. Retry to check access.");
           }}
         />
       ) : (
         <img src={video.posterUrl} alt="Video cover" />
       )}
+      {loading && <p role="status">Checking video…</p>}
       {error && <p role="alert">{error}</p>}
-      {!access && (
-        <button
-          type="button"
-          className="button dark"
-          disabled={loading}
-          onClick={() => void load()}
-        >
-          {loading ? "Checking video…" : error ? "Refresh video" : "Load video"}
+      {error && !loading && (
+        <button type="button" className="button dark" onClick={retry}>
+          Retry video
         </button>
       )}
       <p className="coach-media-help">
@@ -206,7 +220,11 @@ export function CoachMediaGallery({
           eyebrow="COACH INTRODUCTION"
           onClose={() => setVideoOpen(false)}
         >
-          <VideoPlayer key={media.video.id} video={media.video} slug={slug} />
+          <VideoPlayer
+            key={`${slug ?? "owner"}:${media.video.id}`}
+            video={media.video}
+            slug={slug}
+          />
         </Modal>
       )}
     </div>

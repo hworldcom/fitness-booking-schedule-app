@@ -7,10 +7,19 @@ import { signInHref } from "@/auth/return-to";
 import { resolveLocationSearchConfiguration } from "@/location";
 import { currentCoachEditor } from "@/server/coaches/service";
 import { currentCoachPublicHandle } from "@/server/coaches/public-url-service";
+import { CoachProfileCanvas } from "@/features/coaches/website/coach-profile-canvas";
+import { loadCoachPagePresentation } from "@/app/_coaches/public-coach-page";
+import { calendarDate, calendarHref } from "@/domain/coach-calendar";
+import { availabilityHref } from "@/features/coaches/availability-editor-model";
+import { isAvailabilityDate } from "@/domain/effective-availability";
 
 export const metadata: Metadata = { title: "Your coach profile" };
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const state = await currentCoachEditor();
   if (state.status !== "authorized") {
     if (state.status === "signed-out") {
@@ -58,6 +67,53 @@ export default async function Page() {
     state.coachAccess.status === "suspended"
   ) {
     return <CoachApplicationGate access={state.coachAccess} />;
+  }
+  if (state.coach && ["approved", "demo"].includes(state.coachAccess.status)) {
+    const [presentation, publicUrl, query] = await Promise.all([
+      state.coach.visibility === "visible"
+        ? searchParams.then((query) =>
+            loadCoachPagePresentation(
+              state.coach!.slug,
+              query,
+              "/profile/coach",
+            ),
+          )
+        : Promise.resolve(null),
+      currentCoachPublicHandle(),
+      searchParams,
+    ]);
+    // Public data is supplemental, and must belong to this exact owner.
+    const publicProps =
+      presentation?.status === "ready" &&
+      presentation.props?.state.coach.profileId === state.coach.profileId
+        ? presentation.props
+        : null;
+    const date =
+      typeof query.date === "string" && isAvailabilityDate(query.date)
+        ? query.date
+        : calendarDate(new Date());
+    return (
+      <CoachProfileCanvas
+        coach={state.coach}
+        gyms={state.gyms}
+        ownerDisplayName={state.ownerDisplayName}
+        publicUrl={publicUrl}
+        presentation={publicProps}
+        locationSearchConfiguration={resolveLocationSearchConfiguration(
+          process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY,
+        )}
+        scheduleLinks={{
+          availability: availabilityHref(date),
+          calendar: calendarHref({
+            date,
+            view: "week",
+            type: "all",
+            venueId: null,
+            history: false,
+          }),
+        }}
+      />
+    );
   }
   return (
     <CoachProfileEditor

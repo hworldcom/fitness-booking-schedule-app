@@ -26,17 +26,14 @@ import {
   publicScheduleSlots,
 } from "@/domain/public-coach-schedule";
 
-export async function PublicCoachPage({
-  slug,
-  searchParams,
-}: {
-  slug: string;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+export async function loadCoachPagePresentation(
+  slug: string,
+  query: Record<string, string | string[] | undefined> = {},
+  schedulePath?: "/profile/coach",
+) {
   const state = await publicWebsiteProfile(slug);
   if (state.status !== "ready") {
-    if (state.status === "not-found") notFound();
-    return <CoachProfileUnavailable />;
+    return { status: state.status };
   }
   let catalog;
   let catalogUnavailable = false;
@@ -57,7 +54,7 @@ export async function PublicCoachPage({
     ),
     currentPublicCoachMedia(slug),
   ]);
-  const query = await searchParams;
+  const path = schedulePath ?? state.coach.publicPath ?? `/coaches/${slug}`;
   const selection = publicScheduleSelection(query.date, state.databaseTime);
   const weekSlots = publicScheduleSlots(state.slots, state.databaseTime).filter(
     (slot) => selection.dates.includes(calendarDate(slot.startsAt)),
@@ -80,19 +77,19 @@ export async function PublicCoachPage({
           ),
         }
       : bookingState;
-  return (
-    <CoachProfileView
-      state={{ ...state, slots: [] }}
-      catalog={catalog ?? null}
-      reviews={reviews}
-      groups={groups}
-      media={media}
-      origin={publicWebsiteOrigin()}
-      ownProfile={
+  return {
+    status: "ready" as const,
+    props: {
+      state: { ...state, slots: [] },
+      catalog: catalog ?? null,
+      reviews,
+      groups,
+      media,
+      origin: publicWebsiteOrigin(),
+      ownProfile:
         actor.status === "authorized" &&
-        actor.actorProfileId === state.coach.profileId
-      }
-      marketplace={
+        actor.actorProfileId === state.coach.profileId,
+      marketplace: (
         <PrivateScheduleAccess
           expected={
             actor.status === "authorized"
@@ -100,10 +97,10 @@ export async function PublicCoachPage({
               : null
           }
           summary={summary}
-          returnTo={coachRedirectHref(
-            state.coach.publicPath ?? `/coaches/${slug}`,
-            { date: selection.date, section: "private-schedule" },
-          )}
+          returnTo={coachRedirectHref(path, {
+            date: selection.date,
+            section: "private-schedule",
+          })}
         >
           {actor.status !== "authorized" ? null : catalogUnavailable ? (
             <section
@@ -118,10 +115,7 @@ export async function PublicCoachPage({
               </p>
               <Link
                 className="button secondary"
-                href={coachRedirectHref(
-                  state.coach.publicPath ?? `/coaches/${slug}`,
-                  { date: selection.date },
-                )}
+                href={coachRedirectHref(path, { date: selection.date })}
                 prefetch={false}
               >
                 Retry available sessions
@@ -142,7 +136,7 @@ export async function PublicCoachPage({
                   actor.actorProfileId === state.coach.profileId
                 }
                 referenceTime={state.databaseTime}
-                returnTo={state.coach.publicPath ?? `/coaches/${slug}`}
+                returnTo={path}
               />
             </section>
           ) : (
@@ -152,6 +146,7 @@ export async function PublicCoachPage({
               coachDisplayName={state.coach.displayName}
               coachSlug={state.coach.slug}
               publicPath={state.coach.publicPath}
+              schedulePath={schedulePath}
               slots={state.slots}
               actor={actor}
               referenceTime={state.databaseTime}
@@ -159,7 +154,25 @@ export async function PublicCoachPage({
             />
           )}
         </PrivateScheduleAccess>
-      }
-    />
+      ),
+    },
+  };
+}
+
+export async function PublicCoachPage({
+  slug,
+  searchParams,
+}: {
+  slug: string;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const presentation = await loadCoachPagePresentation(
+    slug,
+    await searchParams,
   );
+  if (presentation.status !== "ready" || !presentation.props) {
+    if (presentation.status === "not-found") notFound();
+    return <CoachProfileUnavailable />;
+  }
+  return <CoachProfileView {...presentation.props} />;
 }

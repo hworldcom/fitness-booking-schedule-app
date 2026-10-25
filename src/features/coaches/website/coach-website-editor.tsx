@@ -3,6 +3,7 @@
 import {
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -40,6 +41,21 @@ import {
 } from "./website-content-errors";
 import "./coach-website-editor.css";
 import { CoachMediaEditor } from "./coach-media-editor";
+import type { OwnedCoachMedia } from "@/domain/coach-media";
+
+export type CoachWebsiteEditorSnapshot = {
+  content: EditorSnapshot<CoachWebsite, CoachWebsiteContent>;
+  rate: EditorSnapshot<OwnedCoachStartingRate, RateDraft>;
+  editContent: () => void;
+  editRate: () => void;
+};
+type Integration = {
+  onSnapshot?: (snapshot: CoachWebsiteEditorSnapshot) => void;
+  onMediaChange?: (media: OwnedCoachMedia | null) => void;
+  onMediaPendingChange?: (pending: boolean) => void;
+  onMediaAccessLost?: () => void;
+  canvas?: boolean;
+};
 
 const WEBSITE_API = "/api/coach/website";
 const RATE_API = "/api/coach/starting-rate";
@@ -47,10 +63,12 @@ const readWebsite = () =>
   editorRequest(WEBSITE_API, parseOwnedWebsite, "website");
 const readRate = () => editorRequest(RATE_API, parseOwnedRate, "startingRate");
 
-export function CoachWebsiteEditor(props: {
-  coach: CoachProjection;
-  publicationAllowed: boolean;
-}) {
+export function CoachWebsiteEditor(
+  props: Integration & {
+    coach: CoachProjection;
+    publicationAllowed: boolean;
+  },
+) {
   const { actor } = useActor();
   const { session } = useAuthSession();
   const scope =
@@ -181,7 +199,12 @@ function TextField({
 function ScopedWebsiteEditor({
   coach,
   publicationAllowed,
-}: {
+  onSnapshot,
+  onMediaChange,
+  onMediaPendingChange,
+  onMediaAccessLost,
+  canvas,
+}: Integration & {
   coach: CoachProjection;
   publicationAllowed: boolean;
 }) {
@@ -204,6 +227,22 @@ function ScopedWebsiteEditor({
     rate.getSnapshot,
     rate.getSnapshot,
   );
+  const snapshot = useMemo(
+    () => ({
+      content: contentState,
+      rate: rateState,
+      editContent: () => {
+        if (!website.getSnapshot().editing) website.edit();
+      },
+      editRate: () => {
+        if (!rate.getSnapshot().editing) rate.edit();
+      },
+    }),
+    [contentState, rateState, website, rate],
+  );
+  useEffect(() => {
+    onSnapshot?.(snapshot);
+  }, [onSnapshot, snapshot]);
   const [preview, setPreview] = useState<"saved" | "draft" | null>(null);
   const mounted = useRef(false);
   const fieldPrefix = `website-content-${useId()}`;
@@ -351,7 +390,7 @@ function ScopedWebsiteEditor({
       : rateState.saved;
   return (
     <section
-      className="coach-website-editor"
+      className={`coach-website-editor${canvas ? " website-editor-in-canvas" : ""}`}
       aria-labelledby="website-editor-title"
     >
       <div className="website-editor-heading">
@@ -370,7 +409,7 @@ function ScopedWebsiteEditor({
         </button>
       </div>
       <div className="website-editor-columns">
-        <div className="website-editor-panel">
+        <div className="website-editor-panel" data-website-panel="content">
           <h3>About me</h3>
           <p>
             Content saves independently from your profile details and starting
@@ -654,10 +693,19 @@ function ScopedWebsiteEditor({
             </form>
           )}
           <Recovery editor={website} state={contentState} read={readWebsite} />
-          <CoachMediaEditor />
+          {!canvas && <CoachMediaEditor />}
         </div>
+        {canvas && (
+          <div data-website-panel="media">
+            <CoachMediaEditor
+              onChange={onMediaChange}
+              onPendingChange={onMediaPendingChange}
+              onAccessLost={onMediaAccessLost}
+            />
+          </div>
+        )}
         <div className="website-editor-sidebar">
-          <div className="website-editor-panel">
+          <div className="website-editor-panel" data-website-panel="banner">
             <h3>Banner image</h3>
             <p>
               A separate wide image for your coach page. Your portrait is
@@ -701,8 +749,15 @@ function ScopedWebsiteEditor({
               Banner changes save immediately. Cancel content edits does not
               undo a saved banner change.
             </small>
+            {canvas && (
+              <Recovery
+                editor={website}
+                state={contentState}
+                read={readWebsite}
+              />
+            )}
           </div>
-          <div className="website-editor-panel">
+          <div className="website-editor-panel" data-website-panel="rate">
             <h3>Private-session starting rate</h3>
             <p>
               An optional guide for one-hour private sessions. This does not set

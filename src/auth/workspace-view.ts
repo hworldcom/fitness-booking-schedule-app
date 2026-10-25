@@ -17,7 +17,11 @@ function within(path: string, root: string) {
 
 export function workspaceViewForPath(path: string): WorkspaceView | null {
   if (within(path, "/coach") || within(path, "/profile/coach")) return "coach";
-  if (within(path, "/sessions") || within(path, "/my-coaches"))
+  if (
+    within(path, "/sessions") ||
+    within(path, "/my-coaches") ||
+    within(path, "/profile")
+  )
     return "athlete";
   return null;
 }
@@ -41,4 +45,31 @@ export function workspaceViewStorageKey(actor: ActorSnapshot) {
 
 export function workspaceHref(view: WorkspaceView) {
   return view === "coach" ? "/coach" : "/sessions";
+}
+
+export function workspaceProfileHref(
+  actor: ActorSnapshot,
+  view: WorkspaceView,
+) {
+  return view === "coach" &&
+    actor.status === "authorized" &&
+    (actor.coachAccessStatus === "approved" ||
+      actor.coachAccessStatus === "demo")
+    ? "/profile/coach"
+    : "/profile";
+}
+
+export function workspaceSwitchHref(
+  actor: ActorSnapshot,
+  pathname: string,
+  target: WorkspaceView,
+) {
+  const view = hasCoachWorkspace(actor) ? target : "athlete";
+  const profile = workspaceProfileHref(actor, view);
+  if (
+    within(pathname, "/profile") &&
+    (view === "athlete" || profile === "/profile/coach")
+  )
+    return profile;
+  return workspaceHref(view);
 }

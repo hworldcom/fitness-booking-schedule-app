@@ -10,20 +10,30 @@ import postgres from "postgres";
 import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 import { chromium, expect as baseExpect } from "@playwright/test";
+import { rehearseProfileEditing } from "./lib/profile-edit-integration.mjs";
 
 const expect = baseExpect.configure({ timeout: 20000 });
 const root = process.cwd();
 assert.ok(
   process.argv
     .slice(2)
-    .every((arg) => ["--webpack", "--diagnose-storage"].includes(arg)),
+    .every((arg) =>
+      ["--webpack", "--diagnose-storage", "--profile-editor"].includes(arg),
+    ),
 );
+const profileEditor = process.argv.includes("--profile-editor");
 const diagnoseStorage = process.argv.includes("--diagnose-storage");
 const webpack = process.argv.includes("--webpack");
 const tag = randomUUID().replaceAll("-", "").slice(0, 10);
 const project = `mov19-media-qa-${tag}`;
 const checkout = await mkdtemp(path.join(tmpdir(), `${project}-`));
-const output = path.join(root, "test-results/coach-media-integration", tag);
+const output = path.join(
+  root,
+  profileEditor
+    ? "test-results/profile-edit-integration"
+    : "test-results/coach-media-integration",
+  tag,
+);
 const base = "http://localhost:3169";
 const cli = path.join(root, "node_modules/.bin/supabase");
 const cleanEnv = Object.fromEntries(
@@ -422,7 +432,7 @@ try {
       password,
       email_confirm: true,
       app_metadata: {
-        movx_test_ticket: "MOV-19",
+        movx_test_ticket: profileEditor ? "MOV-101" : "MOV-19",
         temporary: true,
       },
     });
@@ -467,10 +477,31 @@ try {
   await database`select app.review_coach_application(${coach.profileId}::uuid,'pending','approved','Disposable media QA','local-test','movx-identity-application-v1')`;
   await database`update app.coach_profiles set visibility='visible' where profile_id=${coach.profileId}::uuid`;
   pass("two independent real browser password sessions");
+  if (profileEditor) {
+    phase = "production profile editor journeys";
+    await rehearseProfileEditing({
+      base,
+      browser,
+      database,
+      coach,
+      stranger,
+      person,
+      output,
+      pass,
+      errors,
+      tag,
+    });
+  }
 
   phase = "real owner photo upload and private drafts";
   const coachPage = coach.page;
   await coachPage.goto(base + "/profile/coach");
+  await coachPage
+    .getByRole("button", {
+      name: "Edit training photos and video",
+      exact: true,
+    })
+    .click();
   const editor = coachPage.locator(".coach-media-editor");
   await expect(editor.getByText("0 / 6 photos", { exact: true })).toBeVisible();
   await expect(
@@ -790,9 +821,20 @@ try {
     (route) =>
       route.fulfill({ status: 200, contentType: "image/jpeg", body: source }),
   );
+  let playbackReads = 0;
+  let releasePlayback;
+  const delayedPlayback = new Promise((resolve) => {
+    releasePlayback = resolve;
+  });
   await coachPage.route(
     `**/api/coach/media/videos/${videoId}/playback`,
-    (route) => route.fulfill({ status: 503, json: { status: "unavailable" } }),
+    async (route) => {
+      playbackReads++;
+      if (playbackReads === 1) await delayedPlayback;
+      await route
+        .fulfill({ status: 503, json: { status: "unavailable" } })
+        .catch(() => {}); // The first request is deliberately aborted on close.
+    },
   );
   await editor
     .getByRole("button", { name: "Reload media", exact: true })
@@ -801,23 +843,40 @@ try {
     name: "Watch video: Introduction fixture",
     exact: true,
   });
+  assert.equal(
+    playbackReads,
+    0,
+    "A profile view must not request playback access",
+  );
+  assert.equal(await coachPage.locator("mux-player").count(), 0);
   await videoButton.click();
   const videoDialog = coachPage.getByRole("dialog", {
     name: "Meet your coach",
     exact: true,
   });
+  await expect(videoDialog.getByRole("status")).toHaveText("Checking video…");
+  await expect.poll(() => playbackReads).toBe(1);
   await expect(
-    videoDialog.getByRole("button", { name: "Load video", exact: true }),
-  ).toBeVisible();
+    videoDialog.getByRole("button", { name: "Retry video", exact: true }),
+  ).toHaveCount(0);
   assert.equal(await videoDialog.locator("mux-player").count(), 0);
+  await coachPage.keyboard.press("Escape");
+  await expect(videoButton).toBeFocused();
+  await videoButton.click();
+  await expect(videoDialog.getByRole("alert")).toHaveText(
+    "This video is unavailable. Try again to check access.",
+  );
+  assert.equal(playbackReads, 2);
+  releasePlayback();
   await videoDialog
-    .getByRole("button", { name: "Load video", exact: true })
+    .getByRole("button", { name: "Retry video", exact: true })
     .click();
+  await expect.poll(() => playbackReads).toBe(3);
   await expect(videoDialog.getByRole("alert")).toHaveText(
     "This video is unavailable. Try again to check access.",
   );
   await expect(
-    videoDialog.getByRole("button", { name: "Refresh video", exact: true }),
+    videoDialog.getByRole("button", { name: "Retry video", exact: true }),
   ).toBeVisible();
   await coachPage.keyboard.press("Escape");
   await expect(videoButton).toBeFocused();
@@ -889,7 +948,7 @@ try {
     .click();
   await expect(videoButton).toHaveCount(0);
   pass(
-    "explicit HTTP video fixtures: real UpChunk pause/resume/cancel UI settles, no preload, playback error/retry and Escape focus (not live Mux)",
+    "HTTP video fixtures: real UpChunk pause/resume/cancel, cover-triggered access without preload, close/reopen and explicit error retry, Escape focus (not live Mux)",
   );
 
   phase = "truthful failed loads and revocation";
@@ -917,13 +976,18 @@ try {
   assert.equal((await guest.request.get(base + publicPath)).status(), 404);
   await editor
     .getByRole("button", { name: "Reload media", exact: true })
-    .click();
+    .click({ timeout: 3000 })
+    .catch(async () => {
+      await expect(coachPage.locator(".coach-profile-canvas")).toHaveCount(0);
+    });
   await expect(
-    editor.getByText("Training media could not be loaded.", { exact: true }),
+    coachPage.getByRole("heading", {
+      name: /^(Profile editing access changed|Reload your coach profile)$/,
+    }),
   ).toBeVisible();
-  assert.equal(await editor.locator('input[type="file"]').count(), 0);
+  assert.equal(await coachPage.locator(".coach-profile-canvas").count(), 0);
   pass(
-    "failed reload retains last verified gallery; suspension revokes public bytes and clears owner media controls",
+    "failed reload retains last verified gallery; suspension revokes public media bytes and conceals the entire owner canvas",
   );
   assert.deepEqual(errors, []);
   pass(

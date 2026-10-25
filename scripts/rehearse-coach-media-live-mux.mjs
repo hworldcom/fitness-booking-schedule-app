@@ -591,7 +591,7 @@ try {
       password,
       email_confirm: true,
       app_metadata: {
-        movx_test_ticket: "MOV-19",
+        movx_test_ticket: "MOV-102",
         temporary: true,
       },
     });
@@ -758,6 +758,17 @@ try {
   );
   const coachPage = coach.page;
   await coachPage.goto(base + "/profile/coach");
+  await coachPage
+    .getByRole("button", {
+      name: "Edit training photos and video",
+      exact: true,
+    })
+    .click();
+  const mediaDrawer = coachPage.getByRole("dialog", {
+    name: "Training photos & video",
+    exact: true,
+  });
+  await expect(mediaDrawer).toBeVisible();
   const editor = coachPage.locator(".coach-media-editor");
   await expect(
     editor.getByLabel("Training video file", { exact: true }),
@@ -831,6 +842,24 @@ try {
   pass(
     "actual direct upload and real CLI-forwarded verified callback readiness after a lost refresh response",
     { asset: firstRow.mux_asset_id, seconds: Number(firstRow.duration) },
+  );
+  const ownerVideo = editor.getByRole("button", {
+    name: "Watch video: Temporary coach introduction",
+    exact: true,
+  });
+  await ownerVideo.click();
+  await expect(
+    coachPage.getByRole("dialog", { name: "Meet your coach", exact: true }),
+  ).toBeVisible();
+  await coachPage.keyboard.press("Escape");
+  await expect(mediaDrawer).toBeVisible();
+  await expect(ownerVideo).toBeFocused();
+  await coachPage.screenshot({
+    path: path.join(output, "owner-video-ready.png"),
+    fullPage: true,
+  });
+  pass(
+    "profile canvas opens media editing; real video preview Escape preserves its drawer and restores focus",
   );
 
   phase = "real signed public poster/playback and captions";
@@ -908,12 +937,10 @@ try {
     name: "Meet your coach",
     exact: true,
   });
-  assert.equal(await playerDialog.locator("mux-player").count(), 0);
-  await playerDialog
-    .getByRole("button", { name: "Load video", exact: true })
-    .click();
   const player = playerDialog.locator("mux-player");
   await player.waitFor();
+  assert.equal(await player.evaluate((element) => element.paused), true);
+  assert.equal(await player.getAttribute("preload"), "none");
   await player.evaluate(async (element) => {
     await element.play();
   });
