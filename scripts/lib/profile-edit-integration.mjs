@@ -92,14 +92,42 @@ export async function rehearseProfileEditing({
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(base + href);
   }
-  for (const width of [1440, 375]) {
+  async function checkAccountHeader() {
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+      false,
+    );
+    for (const selector of [
+      ".account-messages-link",
+      ".notification-bell",
+      ".account-menu-trigger",
+    ]) {
+      const bounds = await page
+        .locator(".account-shell-header")
+        .locator(selector)
+        .boundingBox();
+      assert.ok(
+        bounds &&
+          bounds.width >= 44 &&
+          bounds.height >= 44 &&
+          bounds.x >= 0 &&
+          bounds.x + bounds.width <= page.viewportSize().width,
+        `Standalone header control must fit with a 44px target: ${selector}`,
+      );
+    }
+  }
+  for (const width of [1440, 375, 320]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto(base + "/profile");
     await expect(page.locator(".account-profile-workspace")).toBeVisible();
+    await checkAccountHeader();
     await accountDestination("Switch to coach view", "/profile/coach");
     await expect(canvas).toBeVisible();
     await page.reload();
     await expect(canvas).toBeVisible();
+    await checkAccountHeader();
     await accountDestination("Profile", "/profile/coach");
     await accountDestination("Switch to athlete view", "/profile");
     await expect(page.locator(".account-profile-workspace")).toBeVisible();
@@ -113,6 +141,7 @@ export async function rehearseProfileEditing({
     for (const neutral of ["/account", "/messages", "/"]) {
       await page.goto(base + neutral);
       await page.reload();
+      if (neutral === "/account") await checkAccountHeader();
       await accountDestination("Profile", "/profile/coach");
       await expect(canvas).toBeVisible();
     }
@@ -132,7 +161,7 @@ export async function rehearseProfileEditing({
   }
   await page.setViewportSize({ width: 1440, height: 1000 });
   pass(
-    "Profile view switching stays on Profile in both directions; coach Profile entry survives workspace/shared-page navigation and reload at desktop/mobile with keyboard menus",
+    "Profile view switching stays on Profile in both directions; coach Profile entry survives navigation/reload with keyboard menus and bounded 44px standalone Profile/Account controls at 1440/375/320px",
   );
   await page.goto(base + "/profile/coach");
   await expect(canvas).toBeVisible();

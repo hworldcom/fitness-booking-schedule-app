@@ -480,7 +480,7 @@ Login & security separately saves a unique **Username**. Saved handles are imple
 
 Language displays English as current and German (Deutsch) as Coming soon, with no switching, persisted preference or translation runtime. The name labels remain English until that localization is delivered. Other Airbnb settings and photo editing are outside this delivery; existing personal `/profile` keeps the photo controls.
 
-At 320px, compact workspace-header spacing and a smaller brand keep Messages, notifications and the account control fully visible while preserving their 44px minimum touch targets and keyboard disclosures (MOV-88).
+At 320px, compact workspace-header spacing and a smaller brand keep Messages, notifications and the account control fully visible while preserving their 44px minimum touch targets and keyboard disclosures (MOV-88). Standalone Profile and Account headers also keep these controls within the viewport, using compact spacing and an avatar-only account trigger on mobile (MOV-112).
 
 All private workspace routes omit “How it works” from the upper-right header, including My sessions, Group sessions, personal Profile and coach workspace/Profile routes. Public pages retain their existing How it works navigation, including for signed-in users. Messages and account controls retain their existing behavior. The user extended this header omission to the entire private workspace on 17 October 2026 under [DEV0282](https://linear.app/movx/issue/MOV-40/dev0282-remove-private-header-help-link). The earlier coach-only omission was delivered under DEV0273; coach workspace routes (`/coach`, nested owner routes such as `/coach/events`, and `/profile/coach`) also continue to omit the sidebar help link.
 
