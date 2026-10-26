@@ -6,6 +6,7 @@ import { HistoricalContact } from "@/features/messages/historical-contact";
 import { validSessionTitle, sessionTitle } from "@/domain/session-titles";
 import {
   parseMessageInbox,
+  parseMessageConversation,
   parseMessageThread,
   validMessageBody,
   validMessageCommand,
@@ -57,6 +58,7 @@ test("historical pending contact stays readable without approval controls or dup
     actorProfileId: id,
     counterpartName: "Earlier coach",
     counterpartImageUrl: null,
+    counterpartProfileHref: null,
     role: "athlete",
     activityAt: "2026-10-17T10:00:00Z",
     canSendGeneral: true,
@@ -150,6 +152,7 @@ const conversation = {
   actorProfileId: id,
   counterpartName: "Coach",
   counterpartImageUrl: null,
+  counterpartProfileHref: null,
   role: "athlete",
   activityAt: "2026-10-15T10:00:00Z",
   canSendGeneral: false,
@@ -159,6 +162,63 @@ const conversation = {
   unread: true,
   consent: null,
 };
+test("message profile links accept only eligible coach, member and legacy relationship routes", () => {
+  assert.equal(
+    parseMessageConversation({
+      ...conversation,
+      counterpartProfileHref: undefined,
+    }).counterpartProfileHref,
+    null,
+  );
+  for (const [role, href] of [
+    ["athlete", "/coaches/test-coach"],
+    ["coach", "/coaches/test-coach"],
+    ["coach", `/members/${id}`],
+    ["athlete", `/members/${id}`],
+    ["coach", `/coach/athletes/${id}`],
+  ]) {
+    assert.equal(
+      parseMessageConversation({
+        ...conversation,
+        role,
+        counterpartProfileHref: href,
+      }).counterpartProfileHref,
+      href,
+    );
+  }
+  for (const href of [
+    "https://example.com/profile",
+    "//example.com/profile",
+    "javascript:alert(1)",
+    "/profile",
+    "/profile/coach",
+    "/members/ac024400-0000-4000-8000-000000000002",
+    `/members/${id}?extra=1`,
+    "/coaches/test-coach?private=1",
+    "/coaches/test-coach#section",
+    "/coaches/%2e%2e",
+    "/coaches/test%2fcoach",
+    `/coach/athletes/${id}`,
+    false,
+  ])
+    assert.throws(() =>
+      parseMessageConversation({
+        ...conversation,
+        counterpartProfileHref: href,
+      }),
+    );
+  for (const href of [
+    "/coach/athletes/not-a-pair",
+    `/coach/athletes/${id}?extra=1`,
+  ])
+    assert.throws(() =>
+      parseMessageConversation({
+        ...conversation,
+        role: "coach",
+        counterpartProfileHref: href,
+      }),
+    );
+});
 test("message Unicode, body and envelope bounds reject invalid input without silently truncating", () => {
   assert.ok(validMessageBody("🥊".repeat(4000)));
   assert.ok(validMessageBody("First line\nSecond line"));

@@ -74,7 +74,7 @@ export function Profile({
   );
 
   const profileImageSummary = actor.profile.avatarUrl
-    ? "Private account avatar set"
+    ? "Member profile photo set"
     : actor.profile.coachPortraitUrl
       ? "Public coach portrait used as fallback"
       : "Initials used until you add an avatar";
@@ -110,11 +110,11 @@ export function Profile({
           <section className="account-profile-privacy-note">
             <ShieldCheck size={22} aria-hidden="true" />
             <div>
-              <h2>Your account image stays private.</h2>
+              <h2>Your photo is visible to signed-in members.</h2>
               <p>
-                It appears only on signed-in account and authorized session
-                surfaces. A separate coach portrait is the only profile image
-                intended for public discovery.
+                Other signed-in MovX members can see your display name and
+                photo. Your account details stay private. Your coach portrait is
+                used separately on your public coach page.
               </p>
             </div>
           </section>

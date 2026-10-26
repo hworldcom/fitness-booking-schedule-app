@@ -9,6 +9,7 @@ import { isCanonicalUuid } from "@/domain/coach-bookings";
 import { sessionTitle } from "@/domain/session-titles";
 import { SessionTitleEditor } from "./session-title-editor";
 import { HistoricalContact } from "./historical-contact";
+import { CounterpartIdentity } from "./counterpart-identity";
 import {
   messageStatusLabel,
   validMessageBody,
@@ -681,19 +682,7 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
           <ArrowLeft size={18} />
           <span>Back</span>
         </button>
-        <Avatar
-          initials={profileInitials(c.counterpartName)}
-          imageUrl={c.counterpartImageUrl}
-          color="blue"
-        />
-        <div>
-          <h2>{c.counterpartName}</h2>
-          <p>
-            {c.role === "coach"
-              ? "You’re the coach in this conversation"
-              : "You’re the athlete in this conversation"}
-          </p>
-        </div>
+        <CounterpartIdentity conversation={c} />
         <button
           className="mailbox-block-control"
           onClick={() =>
