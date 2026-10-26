@@ -2,6 +2,7 @@ import "server-only";
 import { profileImageStorage } from "@/server/storage/profile-images";
 import type { ProfileImageStorage } from "@/server/storage/contracts";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
+import { memberAvatarUrl } from "@/domain/member-profile";
 import { connectionAthleteAvatarUrl } from "@/domain/coach-athlete-connections";
 import {
   isOwnedProfileImageStoragePath,
@@ -37,7 +38,15 @@ export function materializeMessageMedia(
       !Number.isFinite(Date.parse(media.updatedAt))
     )
       throw Error("Invalid message media reference.");
-    if (record.role === "athlete" && media.kind === "coach-portrait") {
+    if (media.kind === "member-avatar") {
+      const counterpartId =
+        record.role === "coach"
+          ? record.athleteProfileId
+          : record.coachProfileId;
+      if (typeof media.id !== "string" || media.id !== counterpartId)
+        throw Error("Invalid message media reference.");
+      imageUrl = memberAvatarUrl(media.id, media.updatedAt);
+    } else if (record.role === "athlete" && media.kind === "coach-portrait") {
       if (
         (media.source !== "fixture" &&
           media.source !== "storage" &&

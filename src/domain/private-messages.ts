@@ -1,6 +1,8 @@
 import { isPublicCoachPortraitUrl } from "./profile-images";
+import { isMemberAvatarUrl } from "./member-profile";
 import { isCanonicalUuid } from "./coach-bookings";
 import { validSessionTitle, type SessionTitleDetails } from "./session-titles";
+import { isCoachPublicSlug } from "./coaches";
 export type MessageConsent = Readonly<{
   id: string;
   senderProfileId: string;
@@ -15,6 +17,7 @@ export type MessageConversation = Readonly<{
   actorProfileId: string;
   counterpartName: string;
   counterpartImageUrl: string | null;
+  counterpartProfileHref: string | null;
   role: "coach" | "athlete";
   activityAt: string;
   canSendGeneral: boolean;
@@ -207,10 +210,10 @@ function consent(v: unknown): MessageConsent | null {
     ]),
   };
 }
-// Only explicit public portraits or existing private relationship endpoints.
+// Only explicit public portraits or authorized member/relationship endpoints.
 function messageImageUrl(value: unknown): string | null {
   if (value === null || value === undefined) return null;
-  if (isPublicCoachPortraitUrl(value)) return value;
+  if (isPublicCoachPortraitUrl(value) || isMemberAvatarUrl(value)) return value;
   if (typeof value === "string") {
     const match =
       /^\/api\/(?:connections\/([^/]+)\/athlete-avatar|coach\/requests\/([^/]+)\/client-avatar)\?v=([^&]+)$/.exec(
@@ -227,6 +230,24 @@ function messageImageUrl(value: unknown): string | null {
 }
 export function parseMessageConversation(v: unknown): MessageConversation {
   const a = object(v);
+  const role = choice(a.role, ["coach", "athlete"]);
+  const href = a.counterpartProfileHref;
+  let counterpartProfileHref: string | null = null;
+  if (href !== null && href !== undefined) {
+    if (typeof href !== "string") throw Error("Invalid message profile link.");
+    const coachSlug = /^\/coaches\/([^/]+)$/.exec(href)?.[1];
+    const pairId = /^\/coach\/athletes\/([^/]+)$/.exec(href)?.[1];
+    const memberId = /^\/members\/([^/]+)$/.exec(href)?.[1];
+    const counterpartId =
+      role === "coach" ? a.athleteProfileId : a.coachProfileId;
+    if (
+      (coachSlug && isCoachPublicSlug(coachSlug)) ||
+      (memberId && isCanonicalUuid(memberId) && memberId === counterpartId) ||
+      (role === "coach" && pairId && isCanonicalUuid(pairId))
+    )
+      counterpartProfileHref = href;
+    else throw Error("Invalid message profile link.");
+  }
   return {
     id: uuid(a.id),
     coachProfileId: uuid(a.coachProfileId),
@@ -234,7 +255,8 @@ export function parseMessageConversation(v: unknown): MessageConversation {
     actorProfileId: uuid(a.actorProfileId),
     counterpartName: text(a.counterpartName),
     counterpartImageUrl: messageImageUrl(a.counterpartImageUrl),
-    role: choice(a.role, ["coach", "athlete"]),
+    counterpartProfileHref,
+    role,
     activityAt: text(a.activityAt),
     canSendGeneral: bool(a.canSendGeneral),
     canRequestGeneral: bool(a.canRequestGeneral),

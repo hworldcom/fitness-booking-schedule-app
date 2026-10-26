@@ -172,12 +172,12 @@ export function ProfileImageUploader({
         </h2>
         <p>
           {coach
-            ? "Shown publicly in coach discovery while your coach profile is visible. It is separate from your private account avatar."
+            ? "Shown publicly in coach discovery while your coach profile is visible. It is separate from your member profile photo."
             : sharedAccountPicture
-              ? "This picture is also used for your coach profile. It stays private during application review and becomes public when your approved coach profile is published."
+              ? "This picture is also used for your coach profile. Signed-in members can see it on your member profile. It becomes public when your approved coach profile is published."
               : detectedCoachPortrait
-                ? "Your public coach portrait was detected and is shown here as a fallback. Choosing an account picture creates a separate private avatar."
-                : "Shown only on signed-in account surfaces. It is not reused as your public coach portrait."}
+                ? "Your public coach portrait was detected and is shown here as a fallback. Choosing an account picture creates a separate photo visible to signed-in members."
+                : "Shown on your profile and in chats to signed-in MovX members. Your coach portrait is managed separately."}
         </p>
         <small>
           JPEG, PNG or WebP up to 8 MB. MovX center-crops, compresses and stores

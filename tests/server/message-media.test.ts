@@ -78,6 +78,26 @@ test("uploaded public portraits use the configured public bucket and preserve th
     `http://127.0.0.1:55321/storage/v1/object/public/coach-portraits/${id}/${id}.webp?v=${encodeURIComponent(updatedAt)}`,
   );
 });
+test("member photos bind to the exact counterpart in either chat direction", () => {
+  for (const role of ["athlete", "coach"]) {
+    const result = project({ kind: "member-avatar", id, updatedAt }, role);
+    assert.equal(
+      result.counterpartImageUrl,
+      `/api/members/${id}/avatar?v=${encodeURIComponent(new Date(updatedAt).toISOString())}`,
+    );
+    assert.ok(!("counterpartMedia" in result));
+    assert.throws(() =>
+      project(
+        {
+          kind: "member-avatar",
+          id: "9a221000-0000-4000-8000-000000000002",
+          updatedAt,
+        },
+        role,
+      ),
+    );
+  }
+});
 test("malformed, wrong-role and arbitrary image references fail closed", () => {
   for (const raw of [
     { kind: "connection-avatar", id, updatedAt },
