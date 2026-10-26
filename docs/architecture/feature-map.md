@@ -14,6 +14,7 @@ For import ownership changes, consult the [enforced dependency rules and exact e
 | Messaging                          | [Starting references](#messaging)                             |
 | Notifications                      | [Message stage and delivery](#notifications)                  |
 | Connections and reviews            | [Starting references](#connections-and-reviews)               |
+| Athlete training calendar          | [Calendar, logs and reminders](#athlete-training-calendar)    |
 
 ## Private booking and session types
 
@@ -159,3 +160,11 @@ Run `node scripts/rehearse-member-profiles-database.mjs` with the local Docker P
 ## Connections and reviews
 
 [My coaches](../../src/app/my-coaches/page.tsx) leads to the [connection service](../../src/server/connections/service.ts); pair reviews have a distinct [review service](../../src/server/coaches/review-service.ts). Consult [§19.4 reviews](../mvp-spec.md#194-reviews-consent-and-public-aggregates) and the specification's connection flows; do not infer review eligibility from a current connection alone.
+
+## Athlete training calendar
+
+**Start:** [Calendar page](../../src/app/sessions/calendar/page.tsx), [mounted calendar/editor](../../src/features/training/training-calendar.tsx) and [shared contracts](../../src/training/contracts.ts). My training defaults to Calendar; private/group routes retain the [shared navigation](../../src/features/profile/my-sessions-navigation.tsx). [API](../../src/app/api/training/route.ts) enforces same-origin bounded JSON, [service](../../src/server/training/service.ts) verifies the current actor and [repository](../../src/server/db/training/repository.ts) calls the bounded owner command.
+
+**SQL/authority:** [personal training migration](../../supabase/migrations/20261026000500_athlete_training.sql) owns rules, exceptions/attendance, preference and exact-retry records. A private helper composes authorized owner/source time ranges without changing source lifecycle. [Reminder migration](../../supabase/migrations/20261026000600_training_reminders.sql) adds restricted discovery/claim/prepare/finish with current-source validation. [Worker](../../src/server/notifications/worker.ts) version5 reserves reminder/legacy lanes; versions3/4 stay compatible. [Reminder payload](../../src/server/notifications/training.ts) excludes logs and uses the existing safe transport. No new runtime/provider secret.
+
+**Contract/validation:** [MVP §21](../mvp-spec.md#21-athlete-training-calendar-and-private-activity-logs), [database setup](../../supabase/README.md#athlete-training-calendar). Run `node scripts/rehearse-athlete-training-database.mjs` sequentially with other DB rehearsals for fresh/upgrade SQL, owner isolation, source/attendance/recurrence/reminder and old-row preservation. It owns only uniquely named mov120 scratch databases. Run `node scripts/rehearse-athlete-training-ui.mjs` with Chrome and port3192 free for mounted desktop/375/320, keyboard, creation/logging/retry/Back/overflow checks. Its explicit Auth/API fixtures prove presentation, not live Auth/SQL. Retained local activation requires separate backed-up, restored and rollback-rehearsed exact migrations; never reset or provision retained accounts.

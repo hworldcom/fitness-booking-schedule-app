@@ -70,7 +70,7 @@ test("authorized athlete and coach headers render only the account dropdown", ()
     "suspended",
   ] as const)
     for (const pathname of [
-      "/sessions",
+      "/sessions/calendar",
       "/profile",
       "/coach",
       "/profile/coach",
@@ -94,7 +94,7 @@ test("authorized athlete and coach headers render only the account dropdown", ()
         html,
         pathname === "/profile/coach" && coachAccessStatus !== "not-applied"
           ? /href="\/profile"/
-          : /href="\/sessions"/,
+          : /href="\/sessions\/calendar"/,
       );
       assert.doesNotMatch(html, /Auth fallback|href="\/sign-in"/);
     }
@@ -110,7 +110,7 @@ test("unauthorized headers preserve recovery and disclose no account menu", () =
     const html = renderToStaticMarkup(
       createElement(HeaderAccountControl, {
         actor: { status },
-        pathname: "/sessions",
+        pathname: "/sessions/calendar",
         authControl: createElement("a", { href: "/sign-in" }, "Auth fallback"),
       }),
     );

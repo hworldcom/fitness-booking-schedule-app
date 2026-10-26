@@ -305,7 +305,7 @@ test("Account has its own settings shell and personal menu across coach states, 
       "/",
       "/messages",
       "/account",
-      "/sessions",
+      "/sessions/calendar",
       "#main-content",
     ])
       assert.ok(html.includes(`href="${href}"`));
@@ -335,7 +335,7 @@ test("Account has its own settings shell and personal menu across coach states, 
     assert.match(html, /href="\/sign-in"/);
     assert.doesNotMatch(
       html,
-      /href="\/messages"|href="\/account"|href="\/sessions"/,
+      /href="\/messages"|href="\/account"|href="\/sessions\/calendar"/,
     );
   }
 });

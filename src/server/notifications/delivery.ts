@@ -7,6 +7,7 @@ import {
   type GroupNotification,
 } from "@/notifications/groups";
 import "server-only";
+import { trainingEmail, type TrainingEmailPayload } from "./training";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
 import {
   parseCoachApplicationEmail,
@@ -23,7 +24,7 @@ import {
 export type EmailClaim = {
   id: string;
   leaseId: string;
-  kind?: "message" | "booking" | "group" | "coach-application";
+  kind?: "message" | "booking" | "group" | "coach-application" | "training";
 };
 export type MessageEmailPayload = {
   id: string;
@@ -32,6 +33,7 @@ export type MessageEmailPayload = {
 };
 export type EmailPayload =
   | MessageEmailPayload
+  | TrainingEmailPayload
   | CoachApplicationEmailPayload
   | ((BookingNotification | GroupNotification) & { id: string; email: string });
 export type DeliveryOutcome = {
@@ -47,8 +49,9 @@ export async function dispatchNotificationBatch(
   repository: DeliveryRepository,
   send: (payload: EmailPayload) => Promise<DeliveryOutcome>,
   now = () => Date.now(),
+  budgetMs = 45000,
 ) {
-  const deadline = now() + 45000;
+  const deadline = now() + budgetMs;
   const claims = await repository.claim();
   const result = {
     claimed: claims.length,
@@ -257,14 +260,17 @@ export function createEmailTransport(
       "kind" in payload && payload.kind === "coach-application";
     const isGroup = "kind" in payload && payload.kind === "group";
     const isBooking = "kind" in payload && payload.kind === "booking";
-    const email = isApplication
-      ? coachApplicationEmail(payload, config.siteUrl)
-      : isGroup
-        ? groupEmail(payload, config.siteUrl)
-        : isBooking
-          ? bookingEmail(payload, config.siteUrl)
-          : messageEmail(payload as MessageEmailPayload, config.siteUrl);
-    const key = `${isApplication ? "coach-application" : isGroup ? "group" : isBooking ? "booking" : "message"}-notice/${payload.id}`;
+    const isTraining = "kind" in payload && payload.kind === "training";
+    const email = isTraining
+      ? trainingEmail(payload, config.siteUrl)
+      : isApplication
+        ? coachApplicationEmail(payload, config.siteUrl)
+        : isGroup
+          ? groupEmail(payload, config.siteUrl)
+          : isBooking
+            ? bookingEmail(payload, config.siteUrl)
+            : messageEmail(payload as MessageEmailPayload, config.siteUrl);
+    const key = `${isTraining ? "training" : isApplication ? "coach-application" : isGroup ? "group" : isBooking ? "booking" : "message"}-notice/${payload.id}`;
     const local = config.transport === "mailpit";
     const body = local
       ? {

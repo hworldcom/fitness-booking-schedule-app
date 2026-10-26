@@ -54,14 +54,14 @@ test("athlete view keeps Home first and unchanged private labels for every accou
     const actor = authorizedActor(status);
     for (const path of [
       "",
-      "/sessions",
+      "/sessions/calendar",
       "/sessions/groups/example",
       "/my-coaches",
       "/my-coaches/history",
     ]) {
       const expected = [
         { label: "Home", href: "/" },
-        { label: "My sessions", href: "/sessions" },
+        { label: "My training", href: "/sessions/calendar" },
         { label: "My coaches", href: "/my-coaches" },
       ];
       assert.deepEqual(
@@ -115,7 +115,7 @@ test("coach view exclusively exposes its existing authorized workspace", () => {
       navigationForActor(authorizedActor(status), "/coach", "coach").map(
         ({ href }) => href,
       ),
-      ["/", "/sessions", "/my-coaches"],
+      ["/", "/sessions/calendar", "/my-coaches"],
     );
   }
 });
@@ -168,7 +168,7 @@ test("public shell mode is restricted to the adopted marketplace routes", () => 
   for (const path of [
     "/coaches",
     "/coaches/daniel-park/schedule",
-    "/sessions",
+    "/sessions/calendar",
     "/sessions/groups",
     "/my-coaches",
     "/events/example/nested",

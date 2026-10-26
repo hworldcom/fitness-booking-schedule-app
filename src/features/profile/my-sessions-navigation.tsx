@@ -1,9 +1,16 @@
 import Link from "next/link";
-import { Check, UserRound, Users } from "lucide-react";
+import { CalendarDays, Check, UserRound, Users } from "lucide-react";
 
-type SessionType = "private" | "group";
+type SessionType = "calendar" | "private" | "group";
 
 const sessionTypes = [
+  {
+    type: "calendar",
+    href: "/sessions/calendar",
+    label: "Calendar",
+    description: "All your training",
+    Icon: CalendarDays,
+  },
   {
     type: "private",
     href: "/sessions",
@@ -52,11 +59,13 @@ export function MySessionsHeading({ active }: { active: SessionType }) {
   return (
     <header className="client-session-page-heading">
       <span className="eyebrow">YOUR TRAINING</span>
-      <h1>My sessions</h1>
+      <h1>My training</h1>
       <p>
-        {active === "private"
-          ? "Your one-to-one coaching: booking requests, confirmed sessions and past training."
-          : "Your group seat reservations and registration history. A seat reservation alone does not confirm a session."}
+        {active === "calendar"
+          ? "Your personal workouts and coaching sessions, together in one calendar."
+          : active === "private"
+            ? "Your one-to-one coaching: booking requests, confirmed sessions and past training."
+            : "Your group seat reservations and registration history. A seat reservation alone does not confirm a session."}
       </p>
       <MySessionsNavigation active={active} />
     </header>

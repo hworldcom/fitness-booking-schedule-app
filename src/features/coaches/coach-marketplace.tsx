@@ -288,7 +288,7 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
             </div>
           )}
           {result.status === "saved" && (
-            <Link href="/sessions#booking-requests">View my sessions</Link>
+            <Link href="/sessions#booking-requests">View my training</Link>
           )}
         </div>
       )}

@@ -855,7 +855,7 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
             {details.bookingId
               ? c.role === "coach"
                 ? "View session"
-                : "View session in My sessions"
+                : "View session in My training"
               : "Review original request"}
             {c.role === "coach" ? " in Coach workspace" : ""}
           </Link>

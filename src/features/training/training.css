@@ -1,0 +1,357 @@
+.training-page {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-width: 0;
+}
+.training-summary {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  justify-content: space-between;
+  background: #eef2e5;
+  border: 1px solid #dce2d4;
+  border-radius: 24px;
+  padding: 28px;
+  margin: 24px 0;
+}
+.training-summary h2 {
+  font-size: clamp(24px, 3vw, 36px);
+  margin: 8px 0;
+}
+.training-summary p {
+  margin-bottom: 0;
+  color: #58634e;
+}
+.training-count {
+  display: grid;
+  gap: 4px;
+  min-width: 95px;
+}
+.training-count strong {
+  font-size: 42px;
+  line-height: 1;
+}
+.training-count span {
+  font-size: 13px;
+  color: #58634e;
+}
+.training-actions,
+.training-item-actions,
+.training-period,
+.training-toolbar,
+.training-zone {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.training-actions {
+  margin: 20px 0 12px;
+}
+.training-preference {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  font-size: 14px;
+}
+.training-preference input,
+.training-checkbox input {
+  width: auto;
+}
+.training-help {
+  font-size: 13px;
+  color: #67665f;
+  max-width: 700px;
+}
+.training-toolbar {
+  justify-content: space-between;
+  padding: 20px;
+}
+.training-period a[aria-current="page"] {
+  font-weight: 800;
+  text-decoration: underline;
+}
+.training-calendar {
+  border: 1px solid #dedbd6;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #fff;
+}
+.training-zone {
+  padding: 0 20px 20px;
+  font-size: 13px;
+}
+.training-zone label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.training-zone input {
+  max-width: 220px;
+}
+.training-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-top: 1px solid #dedbd6;
+}
+.training-day {
+  min-width: 0;
+  min-height: 155px;
+  padding: 8px;
+  border-right: 1px solid #eeeae4;
+  border-bottom: 1px solid #eeeae4;
+}
+.training-day.selected {
+  background: #f6f7f0;
+}
+.training-day-heading {
+  border: 0;
+  background: transparent;
+  padding: 8px 2px;
+  font-size: 12px;
+  font-weight: 700;
+  width: 100%;
+  text-align: left;
+}
+.training-event {
+  display: grid;
+  width: 100%;
+  gap: 3px;
+  text-align: left;
+  padding: 8px;
+  background: #f1edf7;
+  border: 0;
+  border-left: 3px solid #786394;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  overflow-wrap: anywhere;
+}
+.training-event span,
+.training-event small {
+  font-size: 11px;
+}
+.training-event strong {
+  font-size: 12px;
+  line-height: 1.4;
+}
+.training-event-attended {
+  background: #e8f0df;
+  border-left-color: #5d7547;
+}
+.training-event-skipped,
+.training-event-cancelled {
+  background: #f0eeeb;
+  border-left-color: #929089;
+}
+.training-agenda {
+  margin: 28px 0;
+}
+.training-agenda-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.training-agenda-heading h2 {
+  font-size: 23px;
+}
+.training-agenda-heading span {
+  font-size: 13px;
+  color: #686459;
+}
+.training-agenda-item {
+  display: flex;
+  gap: 24px;
+  border-top: 1px solid #e1ddd6;
+  padding: 24px 0;
+}
+.training-agenda-time {
+  font-weight: 700;
+  min-width: 50px;
+}
+.training-agenda-copy {
+  min-width: 0;
+  flex: 1;
+}
+.training-agenda-copy h3 {
+  font-size: 20px;
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+}
+.training-agenda-copy p {
+  font-size: 14px;
+  color: #65635c;
+  overflow-wrap: anywhere;
+}
+.training-notes {
+  white-space: pre-wrap;
+}
+.training-item-actions button,
+.training-zone button,
+.training-error button,
+.training-more button {
+  background: #fff;
+  border: 1px solid #d8d2df;
+  border-radius: 9px;
+  padding: 9px 12px;
+  font-size: 13px;
+}
+.training-item-actions a {
+  font-size: 13px;
+  color: #695080;
+}
+.training-empty,
+.training-more,
+.training-error {
+  background: #f7f5f1;
+  border-radius: 14px;
+  padding: 20px;
+}
+.training-error {
+  border: 1px solid #c47b70;
+}
+.training-error button {
+  margin-right: 10px;
+}
+.training-dialog {
+  max-width: 600px;
+  width: calc(100vw - 32px);
+}
+.training-dialog form {
+  display: grid;
+  gap: 16px;
+}
+.training-dialog label {
+  display: grid;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 0;
+}
+.training-dialog input,
+.training-dialog select,
+.training-dialog textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.training-dialog details {
+  border-top: 1px solid #dedbd6;
+  padding-top: 14px;
+}
+.training-dialog details label {
+  margin-top: 12px;
+}
+.training-dialog summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.training-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.training-dialog .training-checkbox {
+  display: flex;
+  align-items: center;
+}
+.training-dialog .training-checkbox input {
+  width: auto;
+  flex: none;
+}
+.training-page button:focus-visible,
+.training-page a:focus-visible {
+  outline: 3px solid #725a91;
+  outline-offset: 3px;
+}
+.training-page button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+@media (max-width: 750px) {
+  .training-summary {
+    padding: 20px;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .training-summary > div:first-child {
+    width: 100%;
+  }
+  .training-count {
+    flex: 1;
+  }
+  .training-preference {
+    margin-left: 0;
+    width: 100%;
+  }
+  .training-toolbar {
+    padding: 14px;
+    gap: 16px;
+  }
+  .training-toolbar > strong {
+    order: 3;
+    width: 100%;
+    font-size: 13px;
+  }
+  .training-zone {
+    padding: 0 14px 14px;
+  }
+  .training-zone label {
+    flex-wrap: wrap;
+  }
+  .training-grid-week {
+    display: block;
+  }
+  .training-grid-week .training-day {
+    min-height: 70px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .training-grid-week .training-day-heading {
+    width: 100%;
+  }
+  .training-grid-week .training-event {
+    flex: 1;
+    min-width: 130px;
+  }
+  .training-grid-month .training-day {
+    padding: 3px;
+    min-height: 75px;
+  }
+  .training-grid-month .training-day-heading {
+    font-size: 9px;
+    line-height: 1.3;
+  }
+  .training-grid-month .training-event {
+    padding: 3px;
+    border-left-width: 2px;
+  }
+  .training-grid-month .training-event strong {
+    font-size: 9px;
+  }
+  .training-grid-month .training-event span {
+    font-size: 9px;
+  }
+  .training-grid-month .training-event small {
+    display: none;
+  }
+  .training-grid-month .text-link {
+    font-size: 9px;
+  }
+  .training-agenda-item {
+    gap: 12px;
+  }
+  .training-agenda-copy h3 {
+    font-size: 18px;
+  }
+  .training-form-row {
+    gap: 10px;
+  }
+  .training-dialog {
+    padding: 20px;
+  }
+}

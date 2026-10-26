@@ -306,7 +306,7 @@ function BookingForm({
         setPending(null);
         setReviewOpen(false);
         setMessage(
-          "Request sent. Check My sessions for the coach’s confirmation.",
+          "Request sent. Check My training for the coach’s confirmation.",
         );
       } else if (result?.status === "conflict") {
         setPending(null);
@@ -332,14 +332,14 @@ function BookingForm({
       } else {
         setReviewOpen(false);
         setMessage(
-          "We couldn’t verify the request. Retry the same request or check My sessions before choosing another time.",
+          "We couldn’t verify the request. Retry the same request or check My training before choosing another time.",
         );
       }
     } catch {
       if (view === generation.current) {
         setReviewOpen(false);
         setMessage(
-          "We couldn’t verify the request. Retry the same request or check My sessions before choosing another time.",
+          "We couldn’t verify the request. Retry the same request or check My training before choosing another time.",
         );
       }
     } finally {
@@ -486,7 +486,7 @@ function BookingForm({
           {details}
           <p>Your session is not confirmed yet.</p>
           <Link className="button dark" href="/sessions#booking-requests">
-            View My sessions
+            View My training
           </Link>
           <button
             type="button"
@@ -556,7 +556,7 @@ function BookingForm({
         <p className="seven-day-notice" role="status">
           {message}{" "}
           {!sent && (
-            <Link href="/sessions#booking-requests">Check My sessions</Link>
+            <Link href="/sessions#booking-requests">Check My training</Link>
           )}
         </p>
       )}

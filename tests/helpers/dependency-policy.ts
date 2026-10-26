@@ -11,6 +11,7 @@ const neutralRoots = [
   "src/calendar",
   "src/events",
   "src/coaches",
+  "src/training",
 ];
 const availabilityAction = "src/app/coach/availability-actions.ts";
 const key = (source: string, target: string, kind: string) =>

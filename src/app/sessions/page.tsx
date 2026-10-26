@@ -17,7 +17,7 @@ import { protectedPageAccess } from "@/server/authorization/page-access";
 import { currentClientSessionWorkspace } from "@/server/coaches/booking-request-service";
 import { currentCoachAccess } from "@/server/coaches/service";
 
-export const metadata: Metadata = { title: "My sessions" };
+export const metadata: Metadata = { title: "My training" };
 
 export default async function Page() {
   const access = await protectedPageAccess("/sessions");
@@ -34,7 +34,7 @@ export default async function Page() {
       <div className="my-session-recovery">
         <MySessionsNavigation active="private" />
         <section className="protected-access-state">
-          <span className="eyebrow">MY SESSIONS</span>
+          <span className="eyebrow">MY TRAINING</span>
           <h1>Sign in to see your future sessions.</h1>
           <p>
             MovX shows only bookings owned by the verified account. Public coach
@@ -83,7 +83,7 @@ export default async function Page() {
         <MySessionsHeading active="private" />
         <nav
           className="client-session-section-links"
-          aria-label="My sessions sections"
+          aria-label="My training sections"
         >
           <a href="#booking-requests">Booking requests</a>
           <a href="#my-sessions">Confirmed sessions</a>

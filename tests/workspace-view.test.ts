@@ -91,7 +91,10 @@ test("outside Profile the switch retains workspace defaults and strict segment b
     "/",
   ]) {
     assert.equal(workspaceSwitchHref(actor, path, "coach"), "/coach");
-    assert.equal(workspaceSwitchHref(actor, path, "athlete"), "/sessions");
+    assert.equal(
+      workspaceSwitchHref(actor, path, "athlete"),
+      "/sessions/calendar",
+    );
   }
 });
 test("Profile destinations do not expose editing to suspended, applicant or unauthorized actors", () => {
@@ -111,7 +114,7 @@ test("Profile destinations do not expose editing to suspended, applicant or unau
     );
     assert.equal(
       workspaceSwitchHref(ordinary, "/account", "coach"),
-      "/sessions",
+      "/sessions/calendar",
     );
   }
   for (const status of [
