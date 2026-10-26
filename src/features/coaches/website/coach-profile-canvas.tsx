@@ -437,10 +437,10 @@ function ScopedCanvas({
         </div>
       </header>
       {website &&
-        (!website.content.saved ||
-          !website.rate.saved ||
-          website.content.recovery ||
-          website.rate.recovery) && (
+        [website.content, website.rate].some(
+          ({ saved, busy, recovery, message }) =>
+            recovery !== null || (!saved && !busy && message !== ""),
+        ) && (
           <p className="profile-canvas-notice" role="status">
             Some saved content could not be verified. Open its editing panel to
             load or review the latest version.

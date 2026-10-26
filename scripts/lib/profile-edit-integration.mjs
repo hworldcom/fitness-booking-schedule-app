@@ -138,6 +138,75 @@ export async function rehearseProfileEditing({
   await expect(canvas).toBeVisible();
   await expect.poll(async () => !!(await ownWebsite())).toBe(true);
 
+  const initialRead = await coach.context.newPage();
+  const initialIntroduction = initialRead
+    .locator("dialog.profile-edit-drawer")
+    .getByLabel("Short introduction (optional)");
+  initialRead.on("pageerror", (error) => errors.push(error.message));
+  let releaseInitialReads;
+  const heldReads = new Promise((resolve) => {
+    releaseInitialReads = resolve;
+  });
+  let waitingReads = 0,
+    released = false,
+    failWebsiteRead = false;
+  await initialRead.route(
+    (url) =>
+      ["/api/coach/website", "/api/coach/starting-rate"].includes(url.pathname),
+    async (route) => {
+      if (route.request().method() === "GET") {
+        if (!released) {
+          waitingReads++;
+          await heldReads;
+        }
+        if (
+          failWebsiteRead &&
+          new URL(route.request().url()).pathname === "/api/coach/website"
+        )
+          return route.fulfill({
+            status: 503,
+            json: { status: "unavailable" },
+          });
+      }
+      await route.continue();
+    },
+  );
+  try {
+    await initialRead.goto(base + "/profile/coach", {
+      waitUntil: "domcontentloaded",
+    });
+    await expect.poll(() => waitingReads).toBe(2);
+    await expect(initialRead.locator(".profile-canvas-notice")).toHaveCount(0);
+    await initialRead
+      .getByRole("button", { name: "Edit introduction", exact: true })
+      .click();
+    released = true;
+    releaseInitialReads();
+    await expect(initialIntroduction).toBeFocused();
+    await expect(initialRead.locator(".profile-canvas-notice")).toHaveCount(0);
+    failWebsiteRead = true;
+    await initialRead.reload({ waitUntil: "networkidle" });
+    await expect(initialRead.locator(".profile-canvas-notice")).toContainText(
+      "Some saved content could not be verified",
+    );
+    await initialRead
+      .getByRole("button", { name: "Edit introduction", exact: true })
+      .click();
+    failWebsiteRead = false;
+    await initialRead
+      .locator('[data-website-panel="content"]')
+      .getByRole("button", { name: "Retry loading", exact: true })
+      .click();
+    await expect(initialIntroduction).toBeFocused();
+    await expect(initialRead.locator(".profile-canvas-notice")).toHaveCount(0);
+  } finally {
+    releaseInitialReads();
+    await initialRead.close();
+  }
+  pass(
+    "pending website/rate reads show no failure notice; an actual failed read offers retry and real server recovery clears the notice",
+  );
+
   const original = (
     await database`select display_name,bio,(select id from app.coach_training_locations where profile_id=${coach.profileId}::uuid and is_primary) primary_location_id from app.coach_profiles where profile_id=${coach.profileId}::uuid`
   )[0];
