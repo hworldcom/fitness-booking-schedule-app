@@ -278,6 +278,8 @@ export type CoachEditorState =
       gyms: readonly CoachGymOption[];
       ownerDisplayName: string;
       coachAccess: CoachAccessProjection;
+      applicationContact?:
+        import("./coach-application-contact").CoachApplicationContact | null;
     }>
   | Readonly<{
       status: "preview" | "signed-out" | "forbidden" | "unavailable";

@@ -13,6 +13,7 @@ const responseStatus: Record<
   approved: 200,
   rejected: 200,
   suspended: 409,
+  "contact-required": 422,
   "signed-out": 401,
   forbidden: 403,
   unavailable: 503,
@@ -46,6 +47,8 @@ export async function POST(request: Request) {
     return applicationResponse(result.status);
   }
   if (result.status === "signed-out") return applicationResponse("signed-out");
+  if (result.status === "contact-required")
+    return applicationResponse("contact-required");
   if (result.status === "forbidden" || result.status === "preview") {
     return applicationResponse("forbidden");
   }

@@ -3,6 +3,7 @@ import "server-only";
 import postgres from "postgres";
 import { parseDatabaseUrl } from "../config";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
+import { parseCoachApplicationEmail } from "@/server/notifications/coach-application";
 import { parseBookingNotification } from "@/notifications/bookings";
 import type {
   DeliveryRepository,
@@ -13,6 +14,7 @@ import type {
 export async function withNotificationWorker<T>(
   url: string | undefined,
   work: (repository: DeliveryRepository) => Promise<T>,
+  version: 3 | 4 = 4,
 ) {
   const config = parseDatabaseUrl(url);
   const db = postgres(config.connectionString, {
@@ -35,7 +37,9 @@ export async function withNotificationWorker<T>(
     const repository: DeliveryRepository = {
       async claim() {
         const [row] =
-          await db`select app.claim_notification_emails_v3(5) result`;
+          version === 3
+            ? await db`select app.claim_notification_emails_v3(5) result`
+            : await db`select app.claim_notification_emails_v4(5) result`;
         if (!Array.isArray(row.result) || row.result.length > 5)
           throw Error("Invalid notification claims.");
         return row.result.map((v: EmailClaim) => {
@@ -43,7 +47,12 @@ export async function withNotificationWorker<T>(
             !v ||
             !isCanonicalUuid(v.id) ||
             !isCanonicalUuid(v.leaseId) ||
-            !["message", "booking", "group"].includes(v.kind ?? "")
+            ![
+              "message",
+              "booking",
+              "group",
+              ...(version === 4 ? ["coach-application"] : []),
+            ].includes(v.kind ?? "")
           )
             throw Error("Invalid notification claim.");
           return { id: v.id, leaseId: v.leaseId, kind: v.kind };
@@ -51,13 +60,21 @@ export async function withNotificationWorker<T>(
       },
       async prepare(claim) {
         const [row] =
-          claim.kind === "group"
-            ? await db`select app.prepare_group_notification_email(${claim.id}::uuid,${claim.leaseId}::uuid) result`
-            : claim.kind === "booking"
-              ? await db`select app.prepare_booking_notification_email(${claim.id}::uuid,${claim.leaseId}::uuid) result`
-              : await db`select app.prepare_notification_email(${claim.id}::uuid,${claim.leaseId}::uuid) result`;
+          claim.kind === "coach-application"
+            ? await db`select app.prepare_coach_application_email(${claim.id}::uuid,${claim.leaseId}::uuid) result`
+            : claim.kind === "group"
+              ? await db`select app.prepare_group_notification_email(${claim.id}::uuid,${claim.leaseId}::uuid) result`
+              : claim.kind === "booking"
+                ? await db`select app.prepare_booking_notification_email(${claim.id}::uuid,${claim.leaseId}::uuid) result`
+                : await db`select app.prepare_notification_email(${claim.id}::uuid,${claim.leaseId}::uuid) result`;
         if (row.result === null) return null;
         const payload = row.result as EmailPayload;
+        if (claim.kind === "coach-application") {
+          const event = parseCoachApplicationEmail(payload);
+          if (event.id !== claim.id)
+            throw Error("Invalid application email job.");
+          return event;
+        }
         if (claim.kind === "group") {
           if (payload.id !== claim.id || typeof payload.email !== "string")
             throw Error("Invalid group email job.");
@@ -91,11 +108,13 @@ export async function withNotificationWorker<T>(
       },
       async finish(claim, outcome) {
         const [row] =
-          claim.kind === "group"
-            ? await db`select app.finish_group_notification_email(${claim.id}::uuid,${claim.leaseId}::uuid,${outcome.status}::text,${outcome.providerId ?? null}::text) result`
-            : claim.kind === "booking"
-              ? await db`select app.finish_booking_notification_email(${claim.id}::uuid,${claim.leaseId}::uuid,${outcome.status}::text,${outcome.providerId ?? null}::text) result`
-              : await db`select app.finish_notification_email(${claim.id}::uuid,${claim.leaseId}::uuid,${outcome.status}::text,${outcome.providerId ?? null}::text) result`;
+          claim.kind === "coach-application"
+            ? await db`select app.finish_coach_application_email(${claim.id}::uuid,${claim.leaseId}::uuid,${outcome.status}::text,${outcome.providerId ?? null}::text) result`
+            : claim.kind === "group"
+              ? await db`select app.finish_group_notification_email(${claim.id}::uuid,${claim.leaseId}::uuid,${outcome.status}::text,${outcome.providerId ?? null}::text) result`
+              : claim.kind === "booking"
+                ? await db`select app.finish_booking_notification_email(${claim.id}::uuid,${claim.leaseId}::uuid,${outcome.status}::text,${outcome.providerId ?? null}::text) result`
+                : await db`select app.finish_notification_email(${claim.id}::uuid,${claim.leaseId}::uuid,${outcome.status}::text,${outcome.providerId ?? null}::text) result`;
         return row.result === true;
       },
     };

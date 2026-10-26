@@ -32,13 +32,15 @@ function ApplicationButton({ resubmit = false }: { resubmit?: boolean }) {
       return;
     }
     setError(
-      result.status === "signed-out"
-        ? "Your sign-in expired. Sign in again before applying to coach."
-        : result.status === "forbidden"
-          ? "This account cannot submit a coach application in the current workspace."
-          : result.status === "suspended"
-            ? "This coach application is suspended and requires platform review."
-            : "MovX could not submit the coach application right now. Try again shortly.",
+      result.status === "contact-required"
+        ? "Save your phone number in the private application before resubmitting."
+        : result.status === "signed-out"
+          ? "Your sign-in expired. Sign in again before applying to coach."
+          : result.status === "forbidden"
+            ? "This account cannot submit a coach application in the current workspace."
+            : result.status === "suspended"
+              ? "This coach application is suspended and requires platform review."
+              : "MovX could not submit the coach application right now. Try again shortly.",
     );
     actionLock.current = false;
     setPending(false);
@@ -166,8 +168,7 @@ export function CoachApplicationBanner({
             ? hasProfile
               ? "Your application is under review. You can still edit and save changes here. It remains private until approval."
               : "Complete the required details below and submit your application for review. You can edit it after submission."
-            : (access.decisionReason ??
-              "Update the private profile and resubmit it for review.")}
+            : `${access.decisionReason ?? "Update the private profile before another review."} Save your contact phone number and any application changes below before resubmitting.`}
         </p>
       </div>
       {access.status === "rejected" && <ApplicationButton resubmit />}

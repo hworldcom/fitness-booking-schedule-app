@@ -455,7 +455,7 @@ test(
           );
           let captureId: string | undefined;
           try {
-            const result = await runNotificationWorker(environment);
+            const result = await runNotificationWorker(environment, 3);
             assert.equal(result.accepted, 1);
             const [job] =
               await db`select id,provider_id from app.notification_emails where conversation_id=${conversationId}::uuid and closed_at is null`;
@@ -477,7 +477,10 @@ test(
               raw,
               /Another private text|Private content stays/,
             );
-            assert.equal((await runNotificationWorker(environment)).claimed, 0);
+            assert.equal(
+              (await runNotificationWorker(environment, 3)).claimed,
+              0,
+            );
           } finally {
             if (captureId) {
               const response = await fetch(

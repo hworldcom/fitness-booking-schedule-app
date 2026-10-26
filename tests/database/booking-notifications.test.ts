@@ -110,7 +110,7 @@ test(
         (await db`select count(*) n from app.booking_notification_events`)[0].n,
       );
     const eventRows = (source: string) =>
-      db`select e.*,r.id receipt_id,r.recipient_profile_id,r.notify_in_app,r.read_at,r.due_at,r.state,r.attempts,r.lease_id from app.booking_notification_events e join app.booking_notification_receipts r on r.event_id=e.id where e.source_id=${source}::uuid order by e.created_at,e.event_key,r.recipient_profile_id`;
+      db`select e.*,r.id receipt_id,r.recipient_profile_id,r.notify_in_app,r.read_at,r.due_at,r.state,r.attempts,r.lease_id,statement_timestamp() observed_at from app.booking_notification_events e join app.booking_notification_receipts r on r.event_id=e.id where e.source_id=${source}::uuid order by e.created_at,e.event_key,r.recipient_profile_id`;
     const workerEnv = {
       NOTIFICATION_DELIVERY_ENABLED: "true",
       NOTIFICATION_TRANSPORT: "mailpit",
@@ -121,7 +121,7 @@ test(
     async function drain() {
       let accepted = 0;
       for (let n = 0; n < 30; n++) {
-        const r = await runNotificationWorker(workerEnv);
+        const r = await runNotificationWorker(workerEnv, 3);
         accepted += r.accepted;
         assert.equal(r.unknown + r.failed + r.retry, 0);
         if (!r.claimed) break;
@@ -190,7 +190,8 @@ test(
             assert.ok(
               rows.every(
                 (r) =>
-                  r.kind === "requested" && new Date(r.due_at) <= new Date(),
+                  r.kind === "requested" &&
+                  new Date(r.due_at) <= new Date(r.observed_at),
               ),
             );
           }
@@ -710,7 +711,7 @@ test(
             pending.id,
           ]);
           await db`update auth.users set email_confirmed_at=null where id=${athlete.auth}::uuid`;
-          const unverified = await runNotificationWorker(workerEnv);
+          const unverified = await runNotificationWorker(workerEnv, 3);
           assert.equal(unverified.accepted, 1);
           assert.equal(unverified.suppressed, 1);
           const receipts = (await eventRows(pending.id)).filter(
@@ -736,7 +737,7 @@ test(
           ]);
           await db`update app.demo_run_participants set status='revoked',revoked_at=statement_timestamp() where run_id=${athlete.run}::uuid and profile_id=${athlete.id}::uuid`;
           await assert.rejects(list(athlete));
-          const revoked = await runNotificationWorker(workerEnv);
+          const revoked = await runNotificationWorker(workerEnv, 3);
           assert.equal(revoked.accepted, 1);
           assert.equal(revoked.suppressed, 1);
           await db`update app.demo_run_participants set status='active',revoked_at=null where run_id=${athlete.run}::uuid and profile_id=${athlete.id}::uuid`;

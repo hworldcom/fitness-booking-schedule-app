@@ -1,3 +1,5 @@
+import { verifiedDatabaseFingerprints } from "./lib/database-fingerprints.mjs";
+import { rehearseCoachApplicationEmail } from "./lib/coach-application-email-integration.mjs";
 // MOV-77/MOV-86: shared real approval/notification QA in a wholly disposable stack.
 import assert from "node:assert/strict";
 import { spawn, spawnSync, execFileSync } from "node:child_process";
@@ -66,31 +68,33 @@ let retainedBefore;
 const fingerprints = `select jsonb_object_agg(name,hash) from (
  select schemaname||'.'||tablename name,(xpath('/table/row/hash/text()',query_to_xml(format(
  'select md5(coalesce(jsonb_agg(to_jsonb(x) order by to_jsonb(x)::text)::text,''[]'')) hash from %I.%I x',
- schemaname,tablename),false,true,'')))[1]::text hash from pg_tables
+ schemaname,tablename),false,false,'')))[1]::text hash from pg_tables
  where schemaname='app' or (schemaname='auth' and tablename='users')
  or (schemaname='storage' and tablename in ('buckets','objects'))) hashes;`;
 function retainedFingerprint() {
-  return execFileSync(
-    "docker",
-    [
-      "exec",
-      "-i",
-      "supabase_db_movx-club-local",
-      "psql",
-      "-X",
-      "-qAt",
-      "-U",
-      "supabase_admin",
-      "-d",
-      "postgres",
-      "-v",
-      "ON_ERROR_STOP=1",
-      "--single-transaction",
-    ],
-    {
-      input: "set transaction read only;" + fingerprints,
-      encoding: "utf8",
-    },
+  return verifiedDatabaseFingerprints(
+    execFileSync(
+      "docker",
+      [
+        "exec",
+        "-i",
+        "supabase_db_movx-club-local",
+        "psql",
+        "-X",
+        "-qAt",
+        "-U",
+        "supabase_admin",
+        "-d",
+        "postgres",
+        "-v",
+        "ON_ERROR_STOP=1",
+        "--single-transaction",
+      ],
+      {
+        input: "set transaction read only;" + fingerprints,
+        encoding: "utf8",
+      },
+    ),
   );
 }
 async function command(executable, args, env = cleanEnv, cwd = checkout) {
@@ -474,11 +478,24 @@ try {
   const coach = await person("QA Coach"),
     athlete = await person("QA Athlete"),
     stranger = await person("QA Stranger");
-  await database.begin(async (tx) => {
-    await tx`select set_config('app.current_auth_user_id',${coach.authId},true),set_config('app.current_profile_id',${coach.profileId},true),set_config('app.current_run_id',${coach.runId},true),set_config('app.current_run_role','member',true)`;
-    await tx`select app.submit_owned_coach_application()`;
-    await tx`select app.upsert_owned_coach_profile(${coach.name}::text,'An isolated disposable local coach for end-to-end individual group approval testing.'::text,array['Boxing']::text[],'Europe/Berlin'::text,'hidden'::text,'40000000-0000-4000-8000-000000000001'::uuid,null::text,null::numeric,null::numeric,null::text,null::text)`;
-  });
+  if (groupNotifications) {
+    await rehearseCoachApplicationEmail({
+      base,
+      coach,
+      database,
+      mail,
+      cron,
+      pass,
+      output,
+    });
+  } else {
+    await database.begin(async (tx) => {
+      await tx`select set_config('app.current_auth_user_id',${coach.authId},true),set_config('app.current_profile_id',${coach.profileId},true),set_config('app.current_run_id',${coach.runId},true),set_config('app.current_run_role','member',true)`;
+      await tx`select app.submit_owned_coach_application()`;
+      await tx`select app.save_owned_coach_application_contact(0,'{"phoneNumber":"+4915123456789","instagramUrl":null,"facebookUrl":null,"linkedinUrl":null}'::jsonb)`;
+      await tx`select app.upsert_owned_coach_profile(${coach.name}::text,'An isolated disposable local coach for end-to-end individual group approval testing.'::text,array['Boxing']::text[],'Europe/Berlin'::text,'hidden'::text,'40000000-0000-4000-8000-000000000001'::uuid,null::text,null::numeric,null::numeric,null::text,null::text)`;
+    });
+  }
   await database`select app.review_coach_application(${coach.profileId}::uuid,'pending','approved','Disposable group approval QA','local-test','movx-identity-application-v1')`;
   await database`update app.coach_profiles set visibility='visible' where profile_id=${coach.profileId}::uuid`;
   pass("three independent real browser password sessions");

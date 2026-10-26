@@ -9,6 +9,10 @@ import {
 import "server-only";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
 import {
+  parseCoachApplicationEmail,
+  type CoachApplicationEmailPayload,
+} from "./coach-application";
+import {
   BOOKING_EVENTS,
   bookingNotificationHref,
   bookingNotificationSummary,
@@ -19,7 +23,7 @@ import {
 export type EmailClaim = {
   id: string;
   leaseId: string;
-  kind?: "message" | "booking" | "group";
+  kind?: "message" | "booking" | "group" | "coach-application";
 };
 export type MessageEmailPayload = {
   id: string;
@@ -28,6 +32,7 @@ export type MessageEmailPayload = {
 };
 export type EmailPayload =
   | MessageEmailPayload
+  | CoachApplicationEmailPayload
   | ((BookingNotification | GroupNotification) & { id: string; email: string });
 export type DeliveryOutcome = {
   status: "accepted" | "retry" | "failed" | "unknown";
@@ -166,6 +171,53 @@ export function groupEmail(
     html: `<p>${escape(title)}</p><p>${escape(summary)}</p><p>${escape(explanation)}</p><p><a href="${escape(link)}">Open your event</a></p><p>Sign in to view the current details.</p>`,
   };
 }
+export function coachApplicationEmail(
+  payload: CoachApplicationEmailPayload,
+  siteUrl: string,
+) {
+  const event = parseCoachApplicationEmail(payload);
+  const base = messageEmail(
+    { id: event.id, conversationId: event.profileId, email: event.email },
+    siteUrl,
+  );
+  const lines = [
+    "A coach application was submitted for review.",
+    `Applicant: ${event.displayName}`,
+    `Contact email: ${event.applicantEmail}`,
+    ...(event.applicationContact
+      ? [
+          `Phone number: ${event.applicationContact.phoneNumber}`,
+          ...(event.applicationContact.instagramUrl
+            ? [`Instagram: ${event.applicationContact.instagramUrl}`]
+            : []),
+          ...(event.applicationContact.facebookUrl
+            ? [`Facebook: ${event.applicationContact.facebookUrl}`]
+            : []),
+          ...(event.applicationContact.linkedinUrl
+            ? [`LinkedIn: ${event.applicationContact.linkedinUrl}`]
+            : []),
+        ]
+      : []),
+    `Profile ID: ${event.profileId}`,
+    `Application revision: ${event.applicationRevision}`,
+    `Submitted (UTC): ${event.submittedAt}`,
+    `Workspace: ${new URL(siteUrl).origin}`,
+    "Use the platform's authorized application review process. This records a submission; check the current application state before deciding.",
+  ];
+  const escape = (v: string) =>
+    v
+      .replaceAll("&", "&amp;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  return {
+    ...base,
+    subject: "Coach application submitted on MovX Club",
+    text: lines.join("\n\n"),
+    html: lines.map((line) => `<p>${escape(line)}</p>`).join(""),
+  };
+}
+
 export function createEmailTransport(
   config: {
     transport: "resend" | "mailpit";
@@ -201,14 +253,18 @@ export function createEmailTransport(
     config.siteUrl,
   );
   return async (payload: EmailPayload): Promise<DeliveryOutcome> => {
+    const isApplication =
+      "kind" in payload && payload.kind === "coach-application";
     const isGroup = "kind" in payload && payload.kind === "group";
     const isBooking = "kind" in payload && payload.kind === "booking";
-    const email = isGroup
-      ? groupEmail(payload, config.siteUrl)
-      : isBooking
-        ? bookingEmail(payload, config.siteUrl)
-        : messageEmail(payload as MessageEmailPayload, config.siteUrl);
-    const key = `${isGroup ? "group" : isBooking ? "booking" : "message"}-notice/${payload.id}`;
+    const email = isApplication
+      ? coachApplicationEmail(payload, config.siteUrl)
+      : isGroup
+        ? groupEmail(payload, config.siteUrl)
+        : isBooking
+          ? bookingEmail(payload, config.siteUrl)
+          : messageEmail(payload as MessageEmailPayload, config.siteUrl);
+    const key = `${isApplication ? "coach-application" : isGroup ? "group" : isBooking ? "booking" : "message"}-notice/${payload.id}`;
     const local = config.transport === "mailpit";
     const body = local
       ? {

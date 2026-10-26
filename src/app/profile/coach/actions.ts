@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { validateCoachApplicationContact } from "@/domain/coach-application-contact";
 import {
   isCoachTrainingLocationId,
   validateCoachProfileInput,
@@ -15,10 +16,11 @@ import {
 } from "@/server/coaches/service";
 
 export type CoachProfileActionState = Readonly<{
-  status: "idle" | "saved" | "invalid" | "unavailable";
+  status: "idle" | "saved" | "invalid" | "conflict" | "unavailable";
   message: string;
   errors: readonly string[];
   slug?: string;
+  contactRevision?: number;
 }>;
 
 export type CoachTrainingLocationActionState = Readonly<{
@@ -255,7 +257,34 @@ export async function updateCoachProfileAction(
     });
   }
 
-  const result = await saveOwnedCoachProfile(validation.value);
+  let contact;
+  if (formData.has("applicationContactRevision")) {
+    const validated = validateCoachApplicationContact({
+      phoneNumber: formData.get("phoneNumber"),
+      instagramUrl: formData.get("instagramUrl"),
+      facebookUrl: formData.get("facebookUrl"),
+      linkedinUrl: formData.get("linkedinUrl"),
+    });
+    const rawRevision = formData.get("applicationContactRevision");
+    const revision =
+      typeof rawRevision === "string" &&
+      /^(0|[1-9][0-9]{0,6})$/.test(rawRevision)
+        ? Number(rawRevision)
+        : -1;
+    if (!validated.valid || revision < 0 || revision > 1000000) {
+      return Object.freeze({
+        status: "invalid",
+        message: "Review your application contact details.",
+        errors: validated.valid
+          ? Object.freeze([
+              "Reload the application before saving contact details.",
+            ])
+          : validated.errors,
+      });
+    }
+    contact = { details: validated.value, expectedRevision: revision };
+  }
+  const result = await saveOwnedCoachProfile(validation.value, contact);
   if (result.status !== "authorized") {
     return Object.freeze({
       status: "unavailable",
@@ -286,6 +315,20 @@ export async function updateCoachProfileAction(
     });
   }
 
+  if (
+    result.outcome === "contact-required" ||
+    result.outcome === "contact-conflict"
+  ) {
+    return Object.freeze({
+      status: result.outcome === "contact-conflict" ? "conflict" : "invalid",
+      message:
+        result.outcome === "contact-conflict"
+          ? "Your contact details changed in another tab. Your input is still here; copy it and reload the application before saving again."
+          : "Complete your contact phone number before submitting the application.",
+      errors: Object.freeze([]),
+    });
+  }
+
   revalidatePath("/explore");
   revalidatePath(`/coaches/${result.slug}`);
   revalidatePath("/[handle]", "page");
@@ -295,5 +338,8 @@ export async function updateCoachProfileAction(
     message: "Coach profile saved.",
     errors: Object.freeze([]),
     slug: result.slug,
+    ...(result.contactRevision
+      ? { contactRevision: result.contactRevision }
+      : {}),
   });
 }

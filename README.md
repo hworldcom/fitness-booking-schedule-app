@@ -101,6 +101,12 @@ Current group consumers require `20261024000100_group_registration_approvals.sql
 
 MOV-86 extends the existing sender, worker and bell to canonical group lifecycle events. `npm run test:group-notifications-db` checks fresh/upgrade preservation, exact recipient/coach-summary counts, approval versus event states, concurrency/retries, v1/v2 isolation, worker recovery and real loopback Mailpit receipts in owned scratch databases. Docker PostgreSQL and Mailpit55324 must be available; run database rehearsals sequentially. `npm run test:group-notifications-integration -- --diagnose-storage` checks the unchanged production app with real Auth/browser/SQL, group bell and cron-handler delivery in its own disposable stack (ports55420–55429/3169), including clean-source checks and exact retained-data/fixture cleanup. Neither installs SQL on retained environments or sends external email. See [group notification setup/recovery](supabase/README.md#group-notification-extension).
 
+### Coach application email validation
+
+Applications require a contact phone with country code; Instagram, Facebook and LinkedIn HTTPS profile links are optional. These are private review contacts, included in the staff email and separate from public website links. The SQL and browser checks below cover contact validation, ownership, atomic saves, conflicting edits, legacy jobs and submission snapshots. Contact-aware releases also need the [contact migration and rollout guidance](supabase/README.md#coach-application-staff-email).
+
+For coach application staff alerts, run `npm run test:coach-application-emails-db` with local Docker PostgreSQL and Mailpit55324. It uses fresh/upgrade scratch databases, verifies first completed submission and explicit resubmission, privacy/retry behavior and actual local capture to `hello@movx.club`, then removes its exact fixtures and verifies retained hashes. `npm run test:notifications-integration` also checks the actual application form, cron and captured staff receipts in its disposable stack. See [staff-email rollout and recovery](supabase/README.md#coach-application-staff-email); no hosted installation or external send is implied.
+
 ### Session-type validation
 
 With local Supabase running and dependencies installed, run the isolated schema/booking rehearsal:

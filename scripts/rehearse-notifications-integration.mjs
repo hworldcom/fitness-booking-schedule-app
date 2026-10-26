@@ -1,3 +1,5 @@
+import { verifiedDatabaseFingerprints } from "./lib/database-fingerprints.mjs";
+import { rehearseCoachApplicationEmail } from "./lib/coach-application-email-integration.mjs";
 // MOV-68: real Auth/API/SQL/browser/worker QA in a wholly disposable stack.
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
@@ -50,31 +52,33 @@ let retainedBefore;
 const fingerprints = `select jsonb_object_agg(name,hash) from (
  select schemaname||'.'||tablename name,(xpath('/table/row/hash/text()',query_to_xml(format(
  'select md5(coalesce(jsonb_agg(to_jsonb(x) order by to_jsonb(x)::text)::text,''[]'')) hash from %I.%I x',
- schemaname,tablename),false,true,'')))[1]::text hash from pg_tables
+ schemaname,tablename),false,false,'')))[1]::text hash from pg_tables
  where schemaname='app' or (schemaname='auth' and tablename='users')
  or (schemaname='storage' and tablename in ('buckets','objects'))) hashes;`;
 function retainedFingerprint() {
-  return execFileSync(
-    "docker",
-    [
-      "exec",
-      "-i",
-      "supabase_db_movx-club-local",
-      "psql",
-      "-X",
-      "-qAt",
-      "-U",
-      "supabase_admin",
-      "-d",
-      "postgres",
-      "-v",
-      "ON_ERROR_STOP=1",
-      "--single-transaction",
-    ],
-    {
-      input: "set transaction read only;" + fingerprints,
-      encoding: "utf8",
-    },
+  return verifiedDatabaseFingerprints(
+    execFileSync(
+      "docker",
+      [
+        "exec",
+        "-i",
+        "supabase_db_movx-club-local",
+        "psql",
+        "-X",
+        "-qAt",
+        "-U",
+        "supabase_admin",
+        "-d",
+        "postgres",
+        "-v",
+        "ON_ERROR_STOP=1",
+        "--single-transaction",
+      ],
+      {
+        input: "set transaction read only;" + fingerprints,
+        encoding: "utf8",
+      },
+    ),
   );
 }
 async function command(executable, args, env = cleanEnv, cwd = checkout) {
@@ -131,21 +135,21 @@ try {
   );
   retainedBefore = retainedFingerprint();
   // No populated environment files, CLI links, retained rows or secrets are copied.
-  for (const name of [
-    "src",
-    "public",
-    "scripts",
-    "tests",
-    "package.json",
-    "package-lock.json",
-    "tsconfig.json",
-    "next.config.ts",
-    "postcss.config.mjs",
-    "eslint.config.mjs",
-  ]) {
-    await cp(path.join(root, name), path.join(checkout, name), {
-      recursive: true,
-    });
+  const sourceFiles = execFileSync(
+    "git",
+    ["ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+    { cwd: root, encoding: "utf8" },
+  )
+    .split("\0")
+    .filter(
+      (name) =>
+        name &&
+        !name.startsWith("supabase/") &&
+        (!name.startsWith(".env") || name.endsWith(".example")),
+    );
+  for (const name of sourceFiles) {
+    await mkdir(path.dirname(path.join(checkout, name)), { recursive: true });
+    await cp(path.join(root, name), path.join(checkout, name));
   }
   await mkdir(path.join(checkout, "supabase"));
   for (const name of ["migrations", "templates", "seed.sql"])
@@ -277,6 +281,30 @@ try {
         verbatimSymlinks: true,
       },
     );
+  // Inspect only current source, excluding retained ignored work/evidence copies.
+  // Policy tests need the normal checked-in config; startup/runtime keep QA ports.
+  const configPath = path.join(checkout, "supabase/config.toml");
+  const qaConfig = await readFile(configPath, "utf8");
+  await writeFile(
+    configPath,
+    await readFile(path.join(root, "supabase/config.toml"), "utf8"),
+  );
+  try {
+    for (const [name, args] of [
+      ["lint", ["run", "lint"]],
+      ["typecheck", ["run", "typecheck"]],
+      ["format", ["run", "format:check"]],
+      ["tests", ["test"]],
+    ]) {
+      await writeFile(
+        path.join(output, name + ".log"),
+        redact(await command("npm", args, cleanEnv)),
+      );
+      pass("clean current-source " + name);
+    }
+  } finally {
+    await writeFile(configPath, qaConfig);
+  }
   const buildEnv = { ...appEnv };
   for (const key of [
     "DATABASE_URL",
@@ -413,15 +441,33 @@ try {
   const coach = await person("QA Coach"),
     athlete = await person("QA Athlete"),
     stranger = await person("QA Stranger");
-  await database.begin(async (tx) => {
-    await tx`select set_config('app.current_auth_user_id',${coach.authId},true),set_config('app.current_profile_id',${coach.profileId},true),set_config('app.current_run_id',${coach.runId},true),set_config('app.current_run_role','member',true)`;
-    await tx`select app.submit_owned_coach_application()`;
-    await tx`select app.upsert_owned_coach_profile(${coach.name}::text,'An isolated disposable local coach for end-to-end message notification testing.'::text,array['Boxing']::text[],'Europe/Berlin'::text,'hidden'::text,'40000000-0000-4000-8000-000000000001'::uuid,null::text,null::numeric,null::numeric,null::text,null::text)`;
+  await rehearseCoachApplicationEmail({
+    base,
+    coach,
+    database,
+    mail,
+    cron,
+    pass,
+    output,
   });
   await database`select app.review_coach_application(${coach.profileId}::uuid,'pending','approved','Disposable message notification QA','local-test','movx-identity-application-v1')`;
   await database`update app.coach_profiles set visibility='visible' where profile_id=${coach.profileId}::uuid`;
   const [profile] =
     await database`select slug from app.profiles where id=${coach.profileId}::uuid`;
+  const publicProfile = await (
+    await fetch(base + `/coaches/${profile.slug}`)
+  ).text();
+  for (const secret of [
+    "+4915123456789",
+    "+4915198765432",
+    "https://www.instagram.com/movx_test",
+    "https://www.facebook.com/movx_test",
+    "https://www.linkedin.com/in/movx-test",
+  ])
+    assert.equal(publicProfile.includes(secret), false);
+  pass(
+    "approved public coach page and metadata exclude all private application contacts",
+  );
   pass("three independent real browser password sessions");
 
   phase = "real inquiry capture and recipient authorization";
@@ -832,6 +878,15 @@ try {
   assert.deepEqual(errors, []);
   pass("no browser runtime exceptions");
 } catch (error) {
+  let captureIndex = 0;
+  for (const context of browser?.contexts() ?? [])
+    for (const page of context.pages())
+      await page
+        .screenshot({
+          path: path.join(output, `failure-${captureIndex++}.png`),
+          fullPage: true,
+        })
+        .catch(() => {});
   console.error(redact(`FAIL ${phase}: ${error.stack ?? error}`));
   await writeFile(
     path.join(output, "failure.txt"),
