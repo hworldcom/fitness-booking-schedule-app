@@ -294,6 +294,18 @@
   .account-shell-actions {
     gap: 16px;
   }
+  .account-messages-link {
+    justify-content: center;
+    min-width: 44px;
+  }
+  .account-shell-actions .account-menu-trigger {
+    width: 44px;
+    padding: 5px;
+    gap: 0;
+  }
+  .account-shell-actions .account-menu-trigger > svg {
+    display: none;
+  }
   .account-messages-link > span:not(.mailbox-nav-badge) {
     display: none;
   }
@@ -336,5 +348,15 @@
   }
   .account-settings-section h2 {
     font-size: 22px;
+  }
+}
+
+@media (max-width: 360px) {
+  .account-shell-header {
+    padding-inline: 12px;
+    gap: 8px;
+  }
+  .account-shell-actions {
+    gap: 4px;
   }
 }
