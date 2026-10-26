@@ -125,16 +125,37 @@ try {
         database,
         seedBeforeFitness(readFileSync("supabase/seed.sql", "utf8")),
       );
+    }
+    run(database, ["tests/database/coach-starting-rates.test.ts"]);
+    console.log(
+      `Passed DEV0313 ${mode} migration/privacy/revision checks through ${target}.`,
+    );
+    if (mode === "fresh") {
+      // Preserve the pricing migration boundary above. Today's shared group
+      // regressions additionally require banners/types/individual approvals.
+      const peerTarget = "20261024000100_group_registration_approvals.sql";
+      for (const file of readdirSync("supabase/migrations")
+        .filter(
+          (name) =>
+            name.endsWith(".sql") &&
+            name > target &&
+            name <= peerTarget &&
+            ![
+              "20261023000100_message_notifications.sql",
+              "20261023000200_private_booking_notifications.sql",
+            ].includes(name),
+        )
+        .sort())
+        psql(database, readFileSync("supabase/migrations/" + file, "utf8"));
       run(database, [
         "tests/database/coach-bookings.test.ts",
         "tests/database/private-messages.test.ts",
         "tests/database/group-sessions.test.ts",
       ]);
+      console.log(
+        `Passed current shared regressions with prerequisites through ${peerTarget}.`,
+      );
     }
-    run(database, ["tests/database/coach-starting-rates.test.ts"]);
-    console.log(
-      `Passed DEV0313 ${mode} migration/privacy/revision checks through ${target}; later peer migrations are outside this focused run.`,
-    );
   }
 } catch (error) {
   console.error(

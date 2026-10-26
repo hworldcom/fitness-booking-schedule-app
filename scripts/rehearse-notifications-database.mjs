@@ -1,3 +1,4 @@
+import { verifiedDatabaseFingerprints } from "./lib/database-fingerprints.mjs";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -43,11 +44,17 @@ function query(db, sql) {
 const fingerprints = `select jsonb_object_agg(name,hash) from (
  select schemaname||'.'||tablename name,(xpath('/table/row/hash/text()',query_to_xml(format(
  'select md5(coalesce(jsonb_agg(to_jsonb(x) order by to_jsonb(x)::text)::text,''[]'')) hash from %I.%I x',
- schemaname,tablename),false,true,'')))[1]::text hash from pg_tables
+ schemaname,tablename),false,false,'')))[1]::text hash from pg_tables
  where (schemaname='app' and tablename not in ('notifications','notification_emails','booking_notification_events','booking_notification_receipts'))
  or (schemaname='auth' and tablename='users')
  or (schemaname='storage' and tablename in ('buckets','objects'))) hashes;`;
-const retained = query("postgres", "set transaction read only;" + fingerprints);
+const retainedFingerprints = fingerprints.replace(
+  / and tablename not in \([^)]*\)/,
+  "",
+);
+const retained = verifiedDatabaseFingerprints(
+  query("postgres", "set transaction read only;" + retainedFingerprints),
+);
 try {
   const infrastructure = docker([
     "pg_dump",
@@ -81,7 +88,7 @@ try {
         select id,1,coach_profile_id,'text','MOV79 retained pre-migration message',gen_random_uuid() from conversation;
     `,
       );
-    const before = query(database, fingerprints);
+    const before = verifiedDatabaseFingerprints(query(database, fingerprints));
     query(
       database,
       readFileSync(
@@ -91,7 +98,7 @@ try {
     );
     query(database, readFileSync(`supabase/migrations/${migration}`, "utf8"));
     assert.equal(
-      query(database, fingerprints),
+      verifiedDatabaseFingerprints(query(database, fingerprints)),
       before,
       "Migration changed existing rows",
     );
@@ -163,7 +170,9 @@ try {
     docker(["dropdb", "-U", "supabase_admin", "--force", db]);
   for (const login of logins) query("postgres", `drop role "${login}";`);
   assert.equal(
-    query("postgres", "set transaction read only;" + fingerprints),
+    verifiedDatabaseFingerprints(
+      query("postgres", "set transaction read only;" + retainedFingerprints),
+    ),
     retained,
     "Retained local data changed",
   );

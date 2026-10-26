@@ -101,6 +101,8 @@ Website, rate and media authorization denials conceal the complete canvas before
 
 **First checks:**
 
+Release SQL rehearsals also include `npm run test:coach-starting-rates-db` and `npm run test:coach-public-urls-db`. Their original fresh/upgrade migration and privacy assertions retain their historical cutoffs. A separate fresh shared-regression phase installs the later banner/type/individual-approval prerequisites before current booking/message/group tests; notification-only migrations are excluded from those historical fixtures. Dedicated notification rehearsals validate their own retention contracts. Notification and media SQL runners reject NULL/empty fingerprint evidence before preservation comparisons (MOV-110).
+
 ```sh
 node --import tsx --test tests/public-coach-website.test.ts tests/boundaries.test.ts
 node --import tsx --conditions=react-server --test tests/server/coach-website-routes.test.ts tests/server/public-coach-website-groups.test.ts

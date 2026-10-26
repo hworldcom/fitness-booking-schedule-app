@@ -690,6 +690,7 @@ export async function rehearseProfileEditing({
   await database.begin(async (tx) => {
     await tx`select set_config('app.current_auth_user_id',${applicant.authId},true),set_config('app.current_profile_id',${applicant.profileId},true),set_config('app.current_run_id',${applicant.runId},true),set_config('app.current_run_role','member',true)`;
     await tx`select app.submit_owned_coach_application()`;
+    await tx`select app.save_owned_coach_application_contact(0,'{"phoneNumber":"+4915123456789","instagramUrl":null,"facebookUrl":null,"linkedinUrl":null}'::jsonb)`;
     await tx`select app.upsert_owned_coach_profile('Private QA Applicant','A private disposable application used only for profile editor QA.',array['Boxing']::text[],'Europe/Berlin','hidden','40000000-0000-4000-8000-000000000001'::uuid,null::text,null::numeric,null::numeric,null::text,null::text)`;
   });
   await applicant.page.goto(base + "/profile/coach");
