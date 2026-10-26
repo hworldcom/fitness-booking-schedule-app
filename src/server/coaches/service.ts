@@ -43,6 +43,12 @@ import {
   upsertOwnedCoachProfileRecord,
 } from "@/server/db/coaches/repository";
 import { submitOwnedCoachApplicationRecord } from "@/server/db/coaches/application-repository";
+import type { CoachApplicationContactDetails } from "@/domain/coach-application-contact";
+import {
+  CoachApplicationContactConflictError,
+  currentOwnedCoachApplicationContact,
+  saveOwnedCoachApplicationContact,
+} from "@/server/db/coaches/application-contact-repository";
 import { publicCoachWebsiteCards } from "@/server/db/coaches/website-repository";
 import { publicCoachWebsite } from "./website-service";
 import { directoryReviewSummaries } from "./directory-reviews";
@@ -144,6 +150,11 @@ export async function currentCoachEditor(): Promise<CoachEditorState> {
       gyms,
       ownerDisplayName: owner.displayName,
       coachAccess: owner.coachAccess,
+      applicationContact:
+        owner.coachAccess.status === "pending" ||
+        owner.coachAccess.status === "rejected"
+          ? await currentOwnedCoachApplicationContact(transaction)
+          : null,
     });
   });
   if (result.status !== "authorized") return result;
@@ -162,25 +173,60 @@ export async function currentCoachAccess() {
   });
 }
 
-export async function saveOwnedCoachProfile(input: CoachProfileInput) {
-  const result = await withAuthorizedActor(async (transaction, actor) => {
-    const owner = await currentActorProjection(transaction, actor);
-    if (!canPrepareCoachProfile(owner.coachAccess.status)) {
-      return Object.freeze({ outcome: "application-required" as const });
-    }
-    if (
-      input.visibility === "visible" &&
-      !canOperateCoachSchedule(owner.coachAccess.status)
-    ) {
-      return Object.freeze({ outcome: "approval-required" as const });
-    }
-    return Object.freeze({
-      outcome: "saved" as const,
-      slug: await upsertOwnedCoachProfileRecord(transaction, input),
-    });
-  });
-  if (result.status !== "authorized") return result;
-  return Object.freeze({ status: "authorized" as const, ...result.value });
+export async function saveOwnedCoachProfile(
+  input: CoachProfileInput,
+  contact?: Readonly<{
+    details: CoachApplicationContactDetails;
+    expectedRevision: number;
+  }>,
+) {
+  try {
+    const result = await withAuthorizedActor(
+      async (transaction, actor) => {
+        const owner = await currentActorProjection(transaction, actor);
+        if (!canPrepareCoachProfile(owner.coachAccess.status)) {
+          return Object.freeze({ outcome: "application-required" as const });
+        }
+        if (
+          input.visibility === "visible" &&
+          !canOperateCoachSchedule(owner.coachAccess.status)
+        ) {
+          return Object.freeze({ outcome: "approval-required" as const });
+        }
+        const needsContact =
+          owner.coachAccess.status === "pending" ||
+          owner.coachAccess.status === "rejected";
+        if (needsContact && !contact)
+          return Object.freeze({ outcome: "contact-required" as const });
+        const contactRevision =
+          needsContact && contact
+            ? await saveOwnedCoachApplicationContact(
+                transaction,
+                contact.details,
+                contact.expectedRevision,
+              )
+            : undefined;
+        return Object.freeze({
+          outcome: "saved" as const,
+          slug: await upsertOwnedCoachProfileRecord(transaction, input),
+          contactRevision,
+        });
+      },
+      {
+        rethrow: (error) =>
+          error instanceof CoachApplicationContactConflictError,
+      },
+    );
+    if (result.status !== "authorized") return result;
+    return Object.freeze({ status: "authorized" as const, ...result.value });
+  } catch (error) {
+    if (error instanceof CoachApplicationContactConflictError)
+      return Object.freeze({
+        status: "authorized" as const,
+        outcome: "contact-conflict" as const,
+      });
+    throw error;
+  }
 }
 
 type CoachTrainingLocationMutation =
@@ -300,9 +346,15 @@ export function deactivateOwnedCoachTrainingLocation(
 }
 
 export async function submitCurrentCoachApplication() {
-  const result = await withAuthorizedActor((transaction) =>
-    submitOwnedCoachApplicationRecord(transaction),
-  );
+  const result = await withAuthorizedActor(async (transaction, actor) => {
+    const owner = await currentActorProjection(transaction, actor);
+    if (
+      owner.coachAccess.status === "rejected" &&
+      !(await currentOwnedCoachApplicationContact(transaction))
+    )
+      return "contact-required" as const;
+    return submitOwnedCoachApplicationRecord(transaction);
+  });
   if (result.status !== "authorized") return result;
   return Object.freeze({ status: result.value });
 }

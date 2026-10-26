@@ -1,7 +1,12 @@
 import type { CoachApplicationStatus } from "@/domain/coaches";
 
 export type CoachApplicationSubmissionSnapshot = Readonly<{
-  status: CoachApplicationStatus | "signed-out" | "forbidden" | "unavailable";
+  status:
+    | CoachApplicationStatus
+    | "contact-required"
+    | "signed-out"
+    | "forbidden"
+    | "unavailable";
 }>;
 
 export const UNAVAILABLE_COACH_APPLICATION_SUBMISSION = Object.freeze({
@@ -25,6 +30,7 @@ export function isCoachApplicationSubmissionSnapshot(
     value.status === "approved" ||
     value.status === "rejected" ||
     value.status === "suspended" ||
+    value.status === "contact-required" ||
     value.status === "signed-out" ||
     value.status === "forbidden" ||
     value.status === "unavailable"

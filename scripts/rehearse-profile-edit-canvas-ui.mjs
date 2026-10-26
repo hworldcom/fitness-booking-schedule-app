@@ -218,6 +218,8 @@ export const updateCoachTrainingLocationAction=createCoachTrainingLocationAction
   );
   await context.route("**/api/coach/website", async (route) => {
     if (route.request().method() === "GET") {
+      if (websiteMode === "unavailable")
+        return json(route, { status: "unavailable" }, 503);
       if (websiteMode === "delayed")
         await new Promise((resolve) => {
           releaseWebsiteRead = resolve;
@@ -616,6 +618,7 @@ export const updateCoachTrainingLocationAction=createCoachTrainingLocationAction
   slow.on("pageerror", (error) => errors.push(error.message));
   await slow.goto(`${base}/profile/coach`, { waitUntil: "domcontentloaded" });
   await expect.poll(() => typeof releaseWebsiteRead).toBe("function");
+  await expect(slow.locator(".profile-canvas-notice")).toHaveCount(0);
   await slow
     .getByRole("button", { name: "Edit introduction", exact: true })
     .click();
@@ -624,9 +627,33 @@ export const updateCoachTrainingLocationAction=createCoachTrainingLocationAction
   await expect(
     slow.getByRole("dialog").getByLabel("Short introduction (optional)"),
   ).toBeFocused();
+  await expect(slow.locator(".profile-canvas-notice")).toHaveCount(0);
   await slow.close();
   report(
-    "A click before the website read finishes opens the requested field and focuses it once saved content arrives",
+    "Pending reads show no verification failure; an early click opens and focuses the field once saved content arrives",
+  );
+  websiteMode = "unavailable";
+  const unavailable = await context.newPage();
+  unavailable.on("pageerror", (error) => errors.push(error.message));
+  await unavailable.goto(`${base}/profile/coach`, { waitUntil: "networkidle" });
+  await expect(unavailable.locator(".profile-canvas-notice")).toContainText(
+    "Some saved content could not be verified",
+  );
+  await unavailable
+    .getByRole("button", { name: "Edit introduction", exact: true })
+    .click();
+  websiteMode = "ok";
+  await unavailable
+    .locator('[data-website-panel="content"]')
+    .getByRole("button", { name: "Retry loading", exact: true })
+    .click();
+  await expect(unavailable.locator(".profile-canvas-notice")).toHaveCount(0);
+  await expect(
+    unavailable.getByRole("dialog").getByLabel("Short introduction (optional)"),
+  ).toBeFocused();
+  await unavailable.close();
+  report(
+    "A failed initial read shows verification/retry guidance; successful retry clears it and opens the requested field",
   );
   websiteMode = "ok";
   for (const denial of [

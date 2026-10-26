@@ -1,3 +1,4 @@
+import { verifiedDatabaseFingerprints } from "./lib/database-fingerprints.mjs";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -38,8 +39,10 @@ function query(db, input) {
     input,
   );
 }
-const hashes = `select jsonb_object_agg(name,hash) from (select schemaname||'.'||tablename name,(xpath('/table/row/hash/text()',query_to_xml(format('select md5(coalesce(jsonb_agg(to_jsonb(x) order by to_jsonb(x)::text)::text,''[]'')) hash from %I.%I x',schemaname,tablename),false,true,'')))[1]::text hash from pg_tables where schemaname='app' or (schemaname='auth' and tablename='users') or (schemaname='storage' and tablename in ('buckets','objects'))) hashes;`;
-const retained = query("postgres", "set transaction read only;" + hashes);
+const hashes = `select jsonb_object_agg(name,hash) from (select schemaname||'.'||tablename name,(xpath('/table/row/hash/text()',query_to_xml(format('select md5(coalesce(jsonb_agg(to_jsonb(x) order by to_jsonb(x)::text)::text,''[]'')) hash from %I.%I x',schemaname,tablename),false,false,'')))[1]::text hash from pg_tables where schemaname='app' or (schemaname='auth' and tablename='users') or (schemaname='storage' and tablename in ('buckets','objects'))) hashes;`;
+const retained = verifiedDatabaseFingerprints(
+  query("postgres", "set transaction read only;" + hashes),
+);
 const hadWorker =
   query(
     "postgres",
@@ -63,16 +66,18 @@ try {
       query(db, readFileSync("supabase/migrations/" + file, "utf8"));
     if (mode === "upgrade")
       query(db, readFileSync("supabase/seed.sql", "utf8"));
-    const before = query(db, hashes);
+    const before = verifiedDatabaseFingerprints(query(db, hashes));
     query(db, readFileSync("supabase/migrations/" + migration, "utf8"));
-    const after = query(
-      db,
-      hashes
-        .replace(
-          "where schemaname='app'",
-          "where (schemaname='app' and tablename not in ('coach_media_sets','coach_media_assets'))",
-        )
-        .replace("tablename in ('buckets','objects')", "tablename='objects'"),
+    const after = verifiedDatabaseFingerprints(
+      query(
+        db,
+        hashes
+          .replace(
+            "where schemaname='app'",
+            "where (schemaname='app' and tablename not in ('coach_media_sets','coach_media_assets'))",
+          )
+          .replace("tablename in ('buckets','objects')", "tablename='objects'"),
+      ),
     );
     const b = JSON.parse(before),
       a = JSON.parse(after);
@@ -138,7 +143,9 @@ try {
   for (const login of logins) query("postgres", `drop role "${login}";`);
   if (!hadWorker) query("postgres", "drop role app_media_worker;");
   assert.equal(
-    query("postgres", "set transaction read only;" + hashes),
+    verifiedDatabaseFingerprints(
+      query("postgres", "set transaction read only;" + hashes),
+    ),
     retained,
     "Retained application/Auth/Storage rows changed",
   );

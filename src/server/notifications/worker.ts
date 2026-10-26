@@ -4,6 +4,7 @@ import { withNotificationWorker } from "@/server/db/notifications/worker";
 
 export async function runNotificationWorker(
   env: Readonly<Record<string, string | undefined>> = process.env,
+  version: 3 | 4 = 4,
 ) {
   if (env.NOTIFICATION_DELIVERY_ENABLED !== "true")
     throw Error("Notification delivery is disabled.");
@@ -20,7 +21,9 @@ export async function runNotificationWorker(
     apiKey: env.RESEND_API_KEY,
     mailpitUrl: env.NOTIFICATION_MAILPIT_URL,
   });
-  return withNotificationWorker(env.NOTIFICATION_DATABASE_URL, (repository) =>
-    dispatchNotificationBatch(repository, send),
+  return withNotificationWorker(
+    env.NOTIFICATION_DATABASE_URL,
+    (repository) => dispatchNotificationBatch(repository, send),
+    version,
   );
 }

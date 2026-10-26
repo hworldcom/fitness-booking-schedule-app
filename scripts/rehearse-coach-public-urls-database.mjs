@@ -118,12 +118,6 @@ try {
     } else {
       psql(database, readFileSync("supabase/migrations/" + target, "utf8"));
       psql(database, readFileSync("supabase/seed.sql", "utf8"));
-      run(database, [
-        "tests/database/coach-bookings.test.ts",
-        "tests/database/registration-profile.test.ts",
-        "tests/database/private-messages.test.ts",
-        "tests/database/group-sessions.test.ts",
-      ]);
     }
     run(database, ["tests/database/coach-public-urls.test.ts"]);
     // Application rollback keeps the additive schema and reservations: old slug
@@ -138,8 +132,35 @@ try {
     );
 
     console.log(
-      `Passed DEV0331 ${mode} migration/privacy/claim checks through ${target}; later peer migrations are outside this focused run.`,
+      `Passed DEV0331 ${mode} migration/privacy/claim checks through ${target}.`,
     );
+    if (mode === "fresh") {
+      // Current peer tests run only after original handle/privacy assertions;
+      // never replace the intentional historical upgrade fixture above.
+      const peerTarget = "20261024000100_group_registration_approvals.sql";
+      for (const file of readdirSync("supabase/migrations")
+        .filter(
+          (name) =>
+            name.endsWith(".sql") &&
+            name > target &&
+            name <= peerTarget &&
+            ![
+              "20261023000100_message_notifications.sql",
+              "20261023000200_private_booking_notifications.sql",
+            ].includes(name),
+        )
+        .sort())
+        psql(database, readFileSync("supabase/migrations/" + file, "utf8"));
+      run(database, [
+        "tests/database/coach-bookings.test.ts",
+        "tests/database/registration-profile.test.ts",
+        "tests/database/private-messages.test.ts",
+        "tests/database/group-sessions.test.ts",
+      ]);
+      console.log(
+        `Passed current shared regressions with prerequisites through ${peerTarget}.`,
+      );
+    }
   }
 } catch (error) {
   console.error(

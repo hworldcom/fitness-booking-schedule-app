@@ -37,6 +37,8 @@ import { CoachPublicUrlSettings } from "./coach-public-url-settings";
 import type { CoachPublicHandleResult } from "@/domain/coach-public-url";
 import { CoachWebsiteEditor } from "./website/coach-website-editor";
 import "./coach-public-url-settings.css";
+import type { CoachApplicationContact } from "@/domain/coach-application-contact";
+import { CoachApplicationContactFields } from "./coach-application-contact-fields";
 
 const INITIAL_COACH_PROFILE_ACTION_STATE: CoachProfileActionState =
   Object.freeze({ status: "idle", message: "", errors: Object.freeze([]) });
@@ -48,6 +50,7 @@ export function CoachProfileEditor({
   coachAccess,
   locationSearchConfiguration,
   publicUrl,
+  applicationContact = null,
 }: {
   coach: CoachProjection | null;
   gyms: readonly CoachGymOption[];
@@ -55,11 +58,27 @@ export function CoachProfileEditor({
   coachAccess: CoachAccessProjection;
   locationSearchConfiguration: LocationSearchConfiguration;
   publicUrl?: CoachPublicHandleResult;
+  applicationContact?: CoachApplicationContact | null;
 }) {
   const [state, formAction, pending] = useActionState(
-    updateCoachProfileAction,
+    async (previous: CoachProfileActionState, data: FormData) => {
+      const next = await updateCoachProfileAction(previous, data);
+      return {
+        ...next,
+        contactRevision: next.contactRevision ?? previous.contactRevision,
+      };
+    },
     INITIAL_COACH_PROFILE_ACTION_STATE,
   );
+  const [identity, setIdentity] = useState({
+    displayName: coach?.displayName ?? ownerDisplayName,
+    bio: coach?.bio ?? "",
+    timezone: coach?.timezone ?? "Europe/Berlin",
+  });
+  const [disciplines, setDisciplines] = useState<readonly string[]>(
+    coach?.disciplines ?? [],
+  );
+  const [firstGym, setFirstGym] = useState("");
   const [locationMode, setLocationMode] = useState<"gym" | "independent">(
     coach?.location.kind ?? "gym",
   );
@@ -76,7 +95,6 @@ export function CoachProfileEditor({
     }
   }, []);
   const previewCoach = coachWithPortraitOverride(coach, portraitOverride);
-  const initialDisciplines = new Set(coach?.disciplines ?? []);
   const publicationAllowed =
     coachAccess.status === "approved" || coachAccess.status === "demo";
   const firstApplicationSubmission = coachAccess.status === "pending" && !coach;
@@ -154,7 +172,11 @@ export function CoachProfileEditor({
 
       <div className={`coach-profile-layout${coach ? "" : " no-preview"}`}>
         <div className="coach-profile-editor-column">
-          <form className="coach-editor-form" action={formAction}>
+          <form
+            className="coach-editor-form"
+            action={formAction}
+            onReset={(event) => event.preventDefault()}
+          >
             <section className="coach-editor-panel">
               <div className="coach-editor-section-title">
                 <span>01</span>
@@ -170,7 +192,13 @@ export function CoachProfileEditor({
                 <span>Public display name</span>
                 <input
                   name="displayName"
-                  defaultValue={coach?.displayName ?? ownerDisplayName}
+                  value={identity.displayName}
+                  onChange={(event) =>
+                    setIdentity({
+                      ...identity,
+                      displayName: event.target.value,
+                    })
+                  }
                   minLength={2}
                   maxLength={80}
                   required
@@ -180,7 +208,10 @@ export function CoachProfileEditor({
                 <span>Biography</span>
                 <textarea
                   name="bio"
-                  defaultValue={coach?.bio ?? ""}
+                  value={identity.bio}
+                  onChange={(event) =>
+                    setIdentity({ ...identity, bio: event.target.value })
+                  }
                   minLength={40}
                   maxLength={1200}
                   rows={6}
@@ -201,7 +232,16 @@ export function CoachProfileEditor({
                         type="checkbox"
                         name="disciplines"
                         value={discipline}
-                        defaultChecked={initialDisciplines.has(discipline)}
+                        checked={disciplines.includes(discipline)}
+                        onChange={(event) =>
+                          setDisciplines(
+                            event.target.checked
+                              ? [...disciplines, discipline]
+                              : disciplines.filter(
+                                  (value) => value !== discipline,
+                                ),
+                          )
+                        }
                       />
                       <span>
                         <Check size={14} aria-hidden="true" /> {discipline}
@@ -212,9 +252,17 @@ export function CoachProfileEditor({
               </fieldset>
             </section>
 
+            {!publicationAllowed && (
+              <CoachApplicationContactFields
+                contact={applicationContact}
+                revision={
+                  state.contactRevision ?? applicationContact?.revision ?? 0
+                }
+              />
+            )}
             <section className="coach-editor-panel">
               <div className="coach-editor-section-title">
-                <span>02</span>
+                <span>{publicationAllowed ? "02" : "03"}</span>
                 <div>
                   <h2>
                     {coach
@@ -256,7 +304,12 @@ export function CoachProfileEditor({
                   {locationMode === "gym" ? (
                     <label className="coach-field coach-field-wide">
                       <span>Select a reviewed gym</span>
-                      <select name="selectedGymId" defaultValue="" required>
+                      <select
+                        name="selectedGymId"
+                        value={firstGym}
+                        onChange={(event) => setFirstGym(event.target.value)}
+                        required
+                      >
                         <option value="">Choose a gym</option>
                         {gyms.map((gym) => (
                           <option key={gym.id} value={gym.id}>
@@ -364,7 +417,10 @@ export function CoachProfileEditor({
                 <span>Profile timezone</span>
                 <input
                   name="timezone"
-                  defaultValue={coach?.timezone ?? "Europe/Berlin"}
+                  value={identity.timezone}
+                  onChange={(event) =>
+                    setIdentity({ ...identity, timezone: event.target.value })
+                  }
                   maxLength={80}
                   required
                 />
@@ -374,7 +430,7 @@ export function CoachProfileEditor({
 
             <section className="coach-editor-panel">
               <div className="coach-editor-section-title">
-                <span>03</span>
+                <span>{publicationAllowed ? "03" : "04"}</span>
                 <div>
                   <h2
                     ref={visibilityHeading}

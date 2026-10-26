@@ -121,6 +121,7 @@ export default async function Page({
       gyms={state.gyms}
       ownerDisplayName={state.ownerDisplayName}
       coachAccess={state.coachAccess}
+      applicationContact={state.applicationContact ?? null}
       publicUrl={await currentCoachPublicHandle()}
       locationSearchConfiguration={resolveLocationSearchConfiguration(
         process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY,

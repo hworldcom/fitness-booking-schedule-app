@@ -73,7 +73,7 @@ test(
       const id = randomUUID();
       sessions.push(id);
       await db`insert into app.coach_group_sessions(id,run_id,coach_profile_id,slug,title,description,discipline,intended_level,training_location_id,venue_snapshot,starts_at,ends_at,decision_deadline_at,minimum_participants,maximum_participants,price_cents,status,created_at,published_at,confirmed_at,confirmed_by_profile_id)
- select ${id}::uuid,${coach.run}::uuid,${coach.id}::uuid,${"group-" + id.replaceAll("-", "")},'<Group> & QA','Exact temporary group fixture','Boxing','All levels',l.id,jsonb_build_object('id',l.id,'name',l.public_name,'label',l.public_location_label,'kind',l.location_kind,'latitude',l.latitude,'longitude',l.longitude),clock_timestamp()+interval '4 days',clock_timestamp()+interval '4 days 1 hour',clock_timestamp()+make_interval(secs=>${deadlineSeconds}),1,4,0,${confirmed ? "confirmed" : "open"},clock_timestamp()-interval '2 minutes',clock_timestamp()-interval '1 minute',${confirmed ? new Date() : null},${confirmed ? coach.id : null}::uuid from app.coach_training_locations l where l.profile_id=${coach.id}::uuid and l.is_primary`;
+ select ${id}::uuid,${coach.run}::uuid,${coach.id}::uuid,${"group-" + id.replaceAll("-", "")},'<Group> & QA','Exact temporary group fixture','Boxing','All levels',l.id,jsonb_build_object('id',l.id,'name',l.public_name,'label',l.public_location_label,'kind',l.location_kind,'latitude',l.latitude,'longitude',l.longitude),date_trunc('day',statement_timestamp())+interval '4 days 12 hours',date_trunc('day',statement_timestamp())+interval '4 days 13 hours',clock_timestamp()+make_interval(secs=>${deadlineSeconds}),1,4,0,${confirmed ? "confirmed" : "open"},clock_timestamp()-interval '2 minutes',clock_timestamp()-interval '1 minute',${confirmed ? new Date() : null},${confirmed ? coach.id : null}::uuid from app.coach_training_locations l where l.profile_id=${coach.id}::uuid and l.is_primary`;
       return id;
     }
     const join = (who: Actor, id: string, registrationId = randomUUID()) =>
@@ -369,7 +369,7 @@ test(
         async () => {
           let remaining = true;
           while (remaining) {
-            const result = await runNotificationWorker(workerEnv);
+            const result = await runNotificationWorker(workerEnv, 3);
             assert.equal(result.unknown, 0);
             assert.equal(result.failed, 0);
             remaining = result.claimed > 0;
