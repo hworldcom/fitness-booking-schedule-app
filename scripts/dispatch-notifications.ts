@@ -1,6 +1,6 @@
 import { runNotificationWorker } from "../src/server/notifications/worker";
 try {
-  console.log(JSON.stringify(await runNotificationWorker()));
+  console.log(JSON.stringify(await runNotificationWorker(process.env, 5)));
 } catch {
   console.error(
     "Notification dispatch failed. Check the server-only worker/transport configuration; no credential values are printed.",

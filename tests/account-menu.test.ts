@@ -96,7 +96,7 @@ test("dropdown names Trainings and follows the selected capability-bounded view"
       assert.match(html, />Profile<\/span>/);
       assert.match(html, />Trainings<\/span>/);
       assert.match(html, />Account settings<\/span>/);
-      assert.doesNotMatch(html, /My sessions|role="menu"|role="menuitem"/);
+      assert.doesNotMatch(html, /My training|role="menu"|role="menuitem"/);
       if (hasCoachWorkspace(value))
         assert.match(
           html,
@@ -119,7 +119,7 @@ test("coach Profile entry and Profile view switches use their own pages, while T
       "/profile/coach",
       "/coach",
       "/account",
-      "/sessions",
+      "/sessions/calendar",
     ]);
     assert.deepEqual(hrefs(render(actor(status), "/profile/coach")), [
       "/profile/coach",
@@ -129,14 +129,14 @@ test("coach Profile entry and Profile view switches use their own pages, while T
     ]);
     assert.deepEqual(hrefs(render(actor(status), "/profile")), [
       "/profile",
-      "/sessions",
+      "/sessions/calendar",
       "/account",
       "/profile/coach",
     ]);
   }
   assert.deepEqual(hrefs(render(actor("suspended"), "/profile")), [
     "/profile",
-    "/sessions",
+    "/sessions/calendar",
     "/account",
     "/coach",
   ]);

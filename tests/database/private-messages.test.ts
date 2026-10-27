@@ -144,6 +144,12 @@ test("private message database authority, unlimited sends, retries and read isol
       }
       await act(coach);
       await tx`select app.submit_owned_coach_application()`;
+      if (
+        (
+          await tx`select to_regprocedure('app.save_owned_coach_application_contact(integer,jsonb)') present`
+        )[0].present
+      )
+        await tx`select app.save_owned_coach_application_contact(0,'{"phoneNumber":"+4915123456789","instagramUrl":null,"facebookUrl":null,"linkedinUrl":null}'::jsonb)`;
       await tx`select app.upsert_owned_coach_profile('Mailbox Coach','Focused private boxing practice with clear session preparation for every athlete.',array['Boxing'],'Europe/Berlin','hidden','40000000-0000-4000-8000-000000000001'::uuid,null,null,null,null,null)`;
       await tx.unsafe("reset role");
       await tx`select app.review_coach_application(${coach.id}::uuid,'pending','approved','Mailbox test full profile reviewed.','database-test','movx-identity-application-v1')`;
@@ -825,9 +831,9 @@ test("private message database authority, unlimited sends, retries and read isol
                 ),
               );
               await assert.rejects(
-                tx.savepoint(async () => {
+                tx.savepoint(async (savepoint) => {
                   await act(athlete);
-                  await tx`update app.private_session_titles set title='Raw overwrite'`;
+                  await savepoint`update app.private_session_titles set title='Raw overwrite'`;
                 }),
               );
               for (const title of [
@@ -1517,6 +1523,12 @@ test("private message database authority, unlimited sends, retries and read isol
             };
             await act(target);
             await tx`select app.submit_owned_coach_application()`;
+            if (
+              (
+                await tx`select to_regprocedure('app.save_owned_coach_application_contact(integer,jsonb)') present`
+              )[0].present
+            )
+              await tx`select app.save_owned_coach_application_contact(0,'{"phoneNumber":"+4915123456789","instagramUrl":null,"facebookUrl":null,"linkedinUrl":null}'::jsonb)`;
             await tx`select app.upsert_owned_coach_profile(${"Contact Coach " + i},'An isolated coach fixture for unlimited first contact and normal conversation replies.',array['Boxing'],'Europe/Berlin','hidden','40000000-0000-4000-8000-000000000001'::uuid,null,null,null,null,null)`;
             await tx.unsafe("reset role");
             await tx`select app.review_coach_application(${target.id}::uuid,'pending','approved','Isolated contact test reviewed.','database-test','movx-identity-application-v1')`;

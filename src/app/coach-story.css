@@ -23,10 +23,92 @@
 .coach-story-home
   > :is(
     .home-coach-discovery,
+    .home-training-intro,
+    .public-training-calendar,
     .coach-story-section,
-    .marketplace-home-coach-cta
+    .home-coach-invitation
   ) {
   max-width: 1180px;
+}
+
+.home-training-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-block: 24px 12px;
+}
+.home-training-intro > p {
+  max-width: 630px;
+  margin: 0;
+  color: #625c69;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.home-training-actions {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.home-training-actions .button {
+  min-height: 44px;
+  font-size: 12px;
+}
+.home-training-actions .primary {
+  background: #61417b;
+  border-color: #61417b;
+  color: #fff;
+}
+.home-training-actions .secondary {
+  border-color: #e3dce9;
+  background: #fff;
+  color: #61417b;
+}
+.home-training-actions a:focus-visible {
+  outline: 3px solid #61417b;
+  outline-offset: 4px;
+}
+.home-coach-invitation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  border-top: 1px solid #e3dce9;
+  padding-block: 26px 0;
+  color: #2d2933;
+}
+.home-coach-invitation h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  letter-spacing: -0.4px;
+}
+.home-coach-invitation p {
+  margin: 0;
+  color: #625c69;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.home-coach-invitation > .text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: #61417b;
+  font-size: 13px;
+  font-weight: 750;
+}
+.home-coach-invitation > a:focus-visible {
+  outline: 3px solid #61417b;
+  outline-offset: 4px;
+}
+@media (max-width: 1000px) {
+  .home-training-intro {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
 }
 
 .coach-devnet-story .eyebrow,

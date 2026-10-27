@@ -274,14 +274,20 @@ function MailboxWorkspace({
                 aria-current={selected === c.id ? "true" : undefined}
               >
                 <Avatar
-                  initials={profileInitials(c.counterpartName)}
+                  initials={
+                    c.role === "movx" ? "M" : profileInitials(c.counterpartName)
+                  }
                   imageUrl={c.counterpartImageUrl}
-                  color="blue"
+                  color={c.role === "movx" ? "purple" : "blue"}
                 />
                 <span>
                   <strong>{c.counterpartName}</strong>
                   <small>
-                    {c.role === "coach" ? "Your athlete" : "Your coach"}
+                    {c.role === "movx"
+                      ? "Official welcome"
+                      : c.role === "coach"
+                        ? "Your athlete"
+                        : "Your coach"}
                   </small>
                   <small>{date(c.activityAt)}</small>
                 </span>
@@ -683,16 +689,18 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
           <span>Back</span>
         </button>
         <CounterpartIdentity conversation={c} />
-        <button
-          className="mailbox-block-control"
-          onClick={() =>
-            c.blockedByMe ? void action("unblock") : setConfirmBlock(true)
-          }
-          disabled={busy}
-        >
-          <ShieldBan size={16} />
-          {c.blockedByMe ? "Unblock" : "Block"}
-        </button>
+        {c.role !== "movx" && (
+          <button
+            className="mailbox-block-control"
+            onClick={() =>
+              c.blockedByMe ? void action("unblock") : setConfirmBlock(true)
+            }
+            disabled={busy}
+          >
+            <ShieldBan size={16} />
+            {c.blockedByMe ? "Unblock" : "Block"}
+          </button>
+        )}
       </header>
       {confirmBlock && (
         <div className="mailbox-notice" role="group" aria-label="Confirm block">
@@ -855,88 +863,98 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
             {details.bookingId
               ? c.role === "coach"
                 ? "View session"
-                : "View session in My sessions"
+                : "View session in My training"
               : "Review original request"}
             {c.role === "coach" ? " in Coach workspace" : ""}
           </Link>
           <small>Session notes are separate from this conversation.</small>
         </aside>
       )}
-      <div className="mailbox-composer">
-        {thread.contexts.some((v) => v.kind !== "inquiry") && (
-          <>
-            <label htmlFor="message-context">
-              Attach to a session (optional)
-            </label>
-            <select
-              id="message-context"
-              value={activeContext}
-              disabled={
-                busy || pending !== null || !!historyFilter || filterLoading
-              }
-              onChange={(e) => {
-                if (body.trim()) {
-                  setError(
-                    "Send or clear your draft before changing its session.",
-                  );
-                  return;
-                }
-                setContext(e.target.value);
-              }}
-            >
-              <option value="general">Conversation</option>
-              {thread.contexts
-                .filter((v) => v.kind !== "inquiry")
-                .map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {contextLabel(v)}
-                    {!v.canSend ? " · closed" : ""}
-                  </option>
-                ))}
-            </select>
-          </>
-        )}
-        {historyFilter && (
-          <p className="mailbox-selected-session">
-            Sending about:{" "}
-            {contextLabel(
-              chosen ?? thread.contexts.find((v) => v.id === historyFilter)!,
-            )}
-          </p>
-        )}
-        {!canSend && (
+      {c.role === "movx" ? (
+        <div className="mailbox-automated-notice">
+          <p>This is an automated welcome from MovX.</p>
           <p>
-            Messaging is paused. You can still select an eligible existing
-            session when coordination is available.
+            Need a hand?{" "}
+            <a href="mailto:hello@movx.club">Contact hello@movx.club</a>
           </p>
-        )}
-        <label className="sr-only" htmlFor="message-body">
-          Message to {c.counterpartName}
-        </label>
-        <textarea
-          id="message-body"
-          value={body}
-          readOnly={busy || pending !== null}
-          disabled={filterLoading || !canSend}
-          rows={2}
-          onChange={(e) => setBody(e.target.value)}
-          placeholder="Write a message…"
-        />
-        <div className="mailbox-composer-footer">
-          <small>{[...body].length} / 4,000 characters</small>
-          <button
-            className="button dark"
-            disabled={
-              busy || filterLoading || !validMessageBody(body) || !canSend
-            }
-            onClick={send}
-          >
-            <Send size={16} />
-            {busy ? "Saving…" : pending ? "Retry same message" : "Send"}
-          </button>
         </div>
-        <p role="status">{notice}</p>
-      </div>
+      ) : (
+        <div className="mailbox-composer">
+          {thread.contexts.some((v) => v.kind !== "inquiry") && (
+            <>
+              <label htmlFor="message-context">
+                Attach to a session (optional)
+              </label>
+              <select
+                id="message-context"
+                value={activeContext}
+                disabled={
+                  busy || pending !== null || !!historyFilter || filterLoading
+                }
+                onChange={(e) => {
+                  if (body.trim()) {
+                    setError(
+                      "Send or clear your draft before changing its session.",
+                    );
+                    return;
+                  }
+                  setContext(e.target.value);
+                }}
+              >
+                <option value="general">Conversation</option>
+                {thread.contexts
+                  .filter((v) => v.kind !== "inquiry")
+                  .map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {contextLabel(v)}
+                      {!v.canSend ? " · closed" : ""}
+                    </option>
+                  ))}
+              </select>
+            </>
+          )}
+          {historyFilter && (
+            <p className="mailbox-selected-session">
+              Sending about:{" "}
+              {contextLabel(
+                chosen ?? thread.contexts.find((v) => v.id === historyFilter)!,
+              )}
+            </p>
+          )}
+          {!canSend && (
+            <p>
+              Messaging is paused. You can still select an eligible existing
+              session when coordination is available.
+            </p>
+          )}
+          <label className="sr-only" htmlFor="message-body">
+            Message to {c.counterpartName}
+          </label>
+          <textarea
+            id="message-body"
+            value={body}
+            readOnly={busy || pending !== null}
+            disabled={filterLoading || !canSend}
+            rows={2}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="Write a message…"
+          />
+          <div className="mailbox-composer-footer">
+            <small>{[...body].length} / 4,000 characters</small>
+            <button
+              className="button dark"
+              disabled={
+                busy || filterLoading || !validMessageBody(body) || !canSend
+              }
+              onClick={send}
+            >
+              <Send size={16} />
+              {busy ? "Saving…" : pending ? "Retry same message" : "Send"}
+            </button>
+          </div>
+          <p role="status">{notice}</p>
+        </div>
+      )}
     </section>
   );
 }

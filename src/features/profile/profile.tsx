@@ -92,8 +92,8 @@ export function Profile({
             review this account&apos;s current access.
           </p>
         </div>
-        <Link className="button secondary" href="/sessions">
-          <CalendarClock size={16} aria-hidden="true" /> Open My sessions
+        <Link className="button secondary" href="/sessions/calendar">
+          <CalendarClock size={16} aria-hidden="true" /> Open My training
         </Link>
       </header>
 

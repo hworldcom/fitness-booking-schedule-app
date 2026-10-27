@@ -12,13 +12,13 @@ export type MessageConsent = Readonly<{
 }>;
 export type MessageConversation = Readonly<{
   id: string;
-  coachProfileId: string;
+  coachProfileId: string | null;
   athleteProfileId: string;
   actorProfileId: string;
   counterpartName: string;
   counterpartImageUrl: string | null;
   counterpartProfileHref: string | null;
-  role: "coach" | "athlete";
+  role: "coach" | "athlete" | "movx";
   activityAt: string;
   canSendGeneral: boolean;
   canRequestGeneral: boolean;
@@ -230,7 +230,21 @@ function messageImageUrl(value: unknown): string | null {
 }
 export function parseMessageConversation(v: unknown): MessageConversation {
   const a = object(v);
-  const role = choice(a.role, ["coach", "athlete"]);
+  const role = choice(a.role, ["coach", "athlete", "movx"]);
+  if (
+    role === "movx" &&
+    (a.coachProfileId !== null ||
+      a.athleteProfileId !== a.actorProfileId ||
+      a.counterpartName !== "MovX" ||
+      a.counterpartImageUrl !== null ||
+      a.counterpartProfileHref !== null ||
+      a.canSendGeneral !== false ||
+      a.canRequestGeneral !== false ||
+      a.blocked !== false ||
+      a.blockedByMe !== false ||
+      a.consent !== null)
+  )
+    throw Error("Invalid official welcome response.");
   const href = a.counterpartProfileHref;
   let counterpartProfileHref: string | null = null;
   if (href !== null && href !== undefined) {
@@ -250,7 +264,7 @@ export function parseMessageConversation(v: unknown): MessageConversation {
   }
   return {
     id: uuid(a.id),
-    coachProfileId: uuid(a.coachProfileId),
+    coachProfileId: role === "movx" ? null : uuid(a.coachProfileId),
     athleteProfileId: uuid(a.athleteProfileId),
     actorProfileId: uuid(a.actorProfileId),
     counterpartName: text(a.counterpartName),

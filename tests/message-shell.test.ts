@@ -35,7 +35,7 @@ function render(value: ActorSnapshot) {
 test("dedicated messages keep an athlete return and personal account without ordinary workspace chrome", () => {
   for (const status of ["not-applied", "pending", "rejected"] as const) {
     const html = render(actor(status));
-    assert.match(html, /href="\/sessions"/);
+    assert.match(html, /href="\/sessions\/calendar"/);
     assert.match(html, /href="\/account"/);
     assert.match(html, /aria-label="MovX Club home"/);
     assert.match(html, /href="#main-content"/);
@@ -51,11 +51,11 @@ test("coach-capable message accounts default to athlete view until a browser pre
   for (const status of ["approved", "demo", "suspended"] as const) {
     const html = render(actor(status));
     assert.match(html, /href="\/coach"/);
-    assert.match(html, /aria-label="Back to My sessions"/);
+    assert.match(html, /aria-label="Back to My training"/);
     assert.match(html, /Switch to coach view/);
     assert.match(html, /href="\/account"/);
     assert.match(html, /aria-label="Account menu for Message Athlete"/);
-    assert.match(html, /href="\/sessions"/);
+    assert.match(html, /href="\/sessions\/calendar"/);
     assert.ok(html.includes(`href="/profile"`));
   }
 });
@@ -71,7 +71,7 @@ test("unauthorized message shells expose sign-in and Home without fabricated pri
     assert.match(html, /aria-label="MovX Club home"/);
     assert.doesNotMatch(
       html,
-      /href="\/sessions"|href="\/coach"|href="\/account"|Message Athlete/,
+      /href="\/sessions\/calendar"|href="\/coach"|href="\/account"|Message Athlete/,
     );
   }
 });

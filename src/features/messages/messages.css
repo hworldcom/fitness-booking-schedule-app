@@ -1,6 +1,7 @@
 .messages-shell {
   height: var(--messages-height, 100dvh);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
   background: white;
@@ -22,6 +23,7 @@
 }
 .messages-workspace-return {
   gap: 8px;
+  min-width: 44px;
   min-height: 44px;
   padding: 8px 12px;
   border-radius: 12px;
@@ -619,6 +621,15 @@ a.mailbox-counterpart:hover h2 {
     padding: 16px;
   }
 }
+@media (max-width: 360px) {
+  .messages-workspace-return {
+    justify-content: center;
+  }
+  .messages-workspace-return > span {
+    display: none;
+  }
+}
+
 @media (max-width: 1149px) {
   .mailbox-thread.has-details {
     padding-right: 0;
@@ -684,4 +695,25 @@ a.mailbox-counterpart:hover h2 {
   justify-self: start;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+.mailbox-automated-notice {
+  padding: 18px 22px;
+  border-top: 1px solid var(--line);
+  background: #f8f5fa;
+  color: #625c69;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.mailbox-automated-notice p {
+  margin: 0;
+}
+.mailbox-automated-notice a {
+  color: #61417b;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+.mailbox-automated-notice a:focus-visible {
+  outline: 3px solid #61417b;
+  outline-offset: 4px;
 }

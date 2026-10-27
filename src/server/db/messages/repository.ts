@@ -6,6 +6,7 @@ import {
   type MessageCommand,
 } from "@/domain/private-messages";
 import type { ActorDatabaseTransaction } from "../authorization/repository";
+import type { MessageVersion } from "@/messages/version";
 export class MessageConflictError extends Error {
   constructor(readonly reason: "conflict" | "rate-limited" = "conflict") {
     super("Message operation could not be completed.");
@@ -14,10 +15,13 @@ export class MessageConflictError extends Error {
 export async function messageCommandRecord(
   tx: ActorDatabaseTransaction,
   command: MessageCommand,
+  version: MessageVersion = 1,
 ) {
   try {
     const rows = await tx.execute<{ result: unknown }>(
-      sql`select app.message_command(${command.action}::text,${JSON.stringify(command.args)}::jsonb) result`,
+      version === 2
+        ? sql`select app.message_command_v2(${command.action}::text,${JSON.stringify(command.args)}::jsonb) result`
+        : sql`select app.message_command(${command.action}::text,${JSON.stringify(command.args)}::jsonb) result`,
     );
     if (rows.length !== 1) throw new MessageConflictError();
     return parseMessageResult(

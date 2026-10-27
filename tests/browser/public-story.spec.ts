@@ -1,15 +1,13 @@
 import { expect, test } from "@playwright/test";
 
-test("home presents the focused scheduling loop", async ({
+test("home keeps discovery and the calendar together with a concise coach invitation", async ({
   page,
 }, testInfo) => {
   await page.goto("/");
-  await expect(page).toHaveTitle(
-    /Discover coaches and request private sessions/,
-  );
+  await expect(page).toHaveTitle(/Find training\. Build your routine\./);
   await expect(
     page.getByRole("heading", {
-      name: "Find your coach. Achieve your goals.",
+      name: "Find your training. Build your routine.",
     }),
   ).toBeVisible();
   await expect(
@@ -19,18 +17,13 @@ test("home presents the focused scheduling loop", async ({
   ).toBeVisible();
   await expect(
     page.getByRole("heading", {
-      name: "Three steps from search to a clear answer.",
+      name: "All your training. One calendar.",
     }),
   ).toBeVisible();
   await expect(
-    page.getByText("Pick a published hour", { exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByText("Request confirmation", { exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByText(/request stays pending until the coach accepts it/i),
-  ).toBeVisible();
+    page.getByRole("link", { name: "How MovX works", exact: true }),
+  ).toHaveAttribute("href", "/how-it-works");
+  await expect(page.locator(".coach-step-grid")).toHaveCount(0);
   await expect(
     page.getByRole("link", { name: "How coach confirmation works" }),
   ).toHaveCount(0);
@@ -65,7 +58,7 @@ test("home presents the focused scheduling loop", async ({
     await page.goBack();
     await expect(
       page.getByRole("heading", {
-        name: "Find your coach. Achieve your goals.",
+        name: "Find your training. Build your routine.",
       }),
     ).toBeVisible();
   } else {
@@ -77,7 +70,7 @@ test("home presents the focused scheduling loop", async ({
   }
   await expect(
     page
-      .locator(".marketplace-home-coach-cta")
+      .locator(".home-coach-invitation")
       .getByRole("link", { name: "Become a coach" }),
   ).toHaveAttribute(
     "href",
@@ -124,7 +117,7 @@ test("home marketplace remains usable at the adopted review widths", async ({
     ).toBeGreaterThan(0);
     const imageBounds = await image.boundingBox();
     const headlineBounds = await page
-      .getByRole("heading", { name: "Find your coach. Achieve your goals." })
+      .getByRole("heading", { name: "Find your training. Build your routine." })
       .boundingBox();
     expect(headlineBounds!.x).toBeGreaterThanOrEqual(imageBounds!.x);
     expect(headlineBounds!.y).toBeGreaterThanOrEqual(imageBounds!.y);
@@ -164,7 +157,7 @@ test("home marketplace remains usable at the adopted review widths", async ({
     ).toBeVisible();
     await expect(
       page
-        .locator(".marketplace-home-coach-cta")
+        .locator(".home-coach-invitation")
         .getByRole("link", { name: "Become a coach" }),
     ).toBeVisible();
     expect(
@@ -181,7 +174,7 @@ test("how it works guides athletes and coaches through real training choices", a
   await page.goto("/how-it-works");
   await expect(page).toHaveTitle(/How it works/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Good coaching.More personal.",
+    "Your training.Your rhythm.",
   );
   const navigation = page.getByRole("navigation", { name: "On this page" });
   await expect(navigation.getByRole("link")).toHaveCount(3);
@@ -192,7 +185,9 @@ test("how it works guides athletes and coaches through real training choices", a
   await expect(page).toHaveURL(/#coaches$/);
   await expect(page.locator("#coaches")).toBeFocused();
   await expect(
-    page.getByRole("link", { name: "Become a coach", exact: true }),
+    page
+      .locator("#coaches")
+      .getByRole("link", { name: "Become a coach", exact: true }),
   ).toHaveAttribute(
     "href",
     "/sign-in?intent=coach&returnTo=%2Fprofile%2Fcoach",

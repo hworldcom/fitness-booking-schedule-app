@@ -62,8 +62,8 @@ const coachProfileNavigation = {
 };
 
 const clientNavigation = {
-  label: "My sessions",
-  href: "/sessions",
+  label: "My training",
+  href: "/sessions/calendar",
   Icon: CalendarCheck2,
 };
 
@@ -217,6 +217,8 @@ export function isPublicMarketplacePath(path: string) {
 }
 
 export function isNavigationHrefActive(path: string, href: string) {
+  if (href === "/sessions/calendar")
+    return path === "/sessions" || path.startsWith("/sessions/");
   return href === "/"
     ? path === href
     : path === href || path.startsWith(`${href}/`);
@@ -264,11 +266,11 @@ export function MessageShell({
               <Link
                 href={workspaceHref(view)}
                 className="messages-workspace-return"
-                aria-label={`Back to ${coachWorkspace ? "Coach workspace" : "My sessions"}`}
+                aria-label={`Back to ${coachWorkspace ? "Coach workspace" : "My training"}`}
               >
                 <ArrowLeft size={16} aria-hidden="true" />
                 <span>
-                  {coachWorkspace ? "Coach workspace" : "My sessions"}
+                  {coachWorkspace ? "Coach workspace" : "My training"}
                 </span>
               </Link>
               <NotificationBell actor={actor} />

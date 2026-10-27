@@ -44,7 +44,7 @@ export function workspaceViewStorageKey(actor: ActorSnapshot) {
 }
 
 export function workspaceHref(view: WorkspaceView) {
-  return view === "coach" ? "/coach" : "/sessions";
+  return view === "coach" ? "/coach" : "/sessions/calendar";
 }
 
 export function workspaceProfileHref(

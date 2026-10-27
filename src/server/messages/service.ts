@@ -1,15 +1,19 @@
 import "server-only";
 import { validMessageCommand } from "@/domain/private-messages";
 import { withAuthorizedActor } from "@/server/authorization/service";
+import type { MessageVersion } from "@/messages/version";
 import {
   messageCommandRecord,
   MessageConflictError,
 } from "@/server/db/messages/repository";
-export async function currentMessageCommand(command: unknown) {
+export async function currentMessageCommand(
+  command: unknown,
+  version: MessageVersion = 1,
+) {
   if (!validMessageCommand(command)) return { status: "invalid" as const };
   try {
     const result = await withAuthorizedActor(
-      (tx) => messageCommandRecord(tx, command),
+      (tx) => messageCommandRecord(tx, command, version),
       { rethrow: (e) => e instanceof MessageConflictError },
     );
     return result.status === "authorized"
