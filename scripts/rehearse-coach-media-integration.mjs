@@ -12,6 +12,7 @@ import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 import { chromium, expect as baseExpect } from "@playwright/test";
 import { rehearseProfileEditing } from "./lib/profile-edit-integration.mjs";
+import { rehearseAthleteTraining } from "./lib/athlete-training-integration.mjs";
 
 const expect = baseExpect.configure({ timeout: 20000 });
 const root = process.cwd();
@@ -19,10 +20,16 @@ assert.ok(
   process.argv
     .slice(2)
     .every((arg) =>
-      ["--webpack", "--diagnose-storage", "--profile-editor"].includes(arg),
+      [
+        "--webpack",
+        "--diagnose-storage",
+        "--profile-editor",
+        "--athlete-training",
+      ].includes(arg),
     ),
 );
 const profileEditor = process.argv.includes("--profile-editor");
+const athleteTraining = process.argv.includes("--athlete-training");
 const diagnoseStorage = process.argv.includes("--diagnose-storage");
 const webpack = process.argv.includes("--webpack");
 const tag = randomUUID().replaceAll("-", "").slice(0, 10);
@@ -435,7 +442,11 @@ try {
       password,
       email_confirm: true,
       app_metadata: {
-        movx_test_ticket: profileEditor ? "MOV-101" : "MOV-19",
+        movx_test_ticket: athleteTraining
+          ? "MOV-126"
+          : profileEditor
+            ? "MOV-101"
+            : "MOV-19",
         temporary: true,
       },
     });
@@ -448,6 +459,13 @@ try {
     });
     const page = await context.newPage();
     page.on("pageerror", (e) => errors.push(e.message));
+    page.on("console", (message) => {
+      if (
+        message.type() === "error" &&
+        /hydration|server rendered.*match/i.test(message.text())
+      )
+        errors.push(message.text());
+    });
     await page.goto(base + "/sign-in?returnTo=%2Faccount");
     await page.getByLabel("Email address", { exact: true }).fill(email);
     await page.getByLabel("Password", { exact: true }).fill(password);
@@ -481,6 +499,20 @@ try {
   await database`select app.review_coach_application(${coach.profileId}::uuid,'pending','approved','Disposable media QA','local-test','movx-identity-application-v1')`;
   await database`update app.coach_profiles set visibility='visible' where profile_id=${coach.profileId}::uuid`;
   pass("two independent real browser password sessions");
+  if (athleteTraining) {
+    phase = "production athlete training journeys";
+    await rehearseAthleteTraining({
+      base,
+      browser,
+      database,
+      person,
+      stranger,
+      output,
+      pass,
+      errors,
+    });
+  }
+
   if (profileEditor) {
     phase = "production profile editor journeys";
     await rehearseProfileEditing({

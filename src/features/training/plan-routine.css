@@ -1,0 +1,230 @@
+.routine-planner {
+  color: #22392a;
+  padding-bottom: 28px;
+  max-width: 1120px;
+}
+.routine-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin: 32px 0 26px;
+}
+.routine-heading h2 {
+  margin: 7px 0 8px;
+  font-size: clamp(30px, 4vw, 40px);
+  line-height: 1.1;
+  letter-spacing: -0.045em;
+}
+.routine-heading p {
+  font-size: 14px;
+  color: #6b7669;
+  line-height: 1.6;
+}
+.routine-timezone {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid #dce3d7;
+  border-radius: 9px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.routine-toolbar,
+.routine-period,
+.routine-settings {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.routine-text-button.routine-remove {
+  color: #934139;
+}
+.routine-toolbar {
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+.routine-period {
+  gap: 12px;
+  font-size: 14px;
+}
+.routine-period a {
+  display: inline-flex;
+  padding: 9px;
+  border: 1px solid #dce3d7;
+  border-radius: 9px;
+}
+.routine-text-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 4px;
+  background: transparent;
+  border: 0;
+  color: #466c32;
+  font-size: 12px;
+  font-weight: 650;
+}
+.routine-settings {
+  align-items: end;
+  margin-bottom: 22px;
+}
+.routine-settings label {
+  display: grid;
+  gap: 7px;
+  font-size: 12px;
+  min-width: 0;
+}
+.routine-settings input {
+  width: 100%;
+  max-width: 220px;
+  min-width: 0;
+  height: 43px;
+  border: 1px solid #dce2d4;
+  border-radius: 9px;
+  background: #fcfdf8;
+  color: #2b402c;
+  padding: 8px 9px;
+  box-sizing: border-box;
+}
+.routine-settings .button {
+  min-height: 43px;
+  padding: 9px 16px;
+  font-size: 12px;
+}
+.routine-week-card {
+  border: 1px solid #dfe4d7;
+  background: #fff;
+  border-radius: 18px;
+  overflow: hidden;
+}
+.routine-card-intro {
+  padding: 23px 25px;
+  border-bottom: 1px solid #e6eade;
+}
+.routine-card-intro h3 {
+  font-size: 16px;
+  margin: 0 0 7px;
+}
+.routine-card-intro p {
+  font-size: 12px;
+  line-height: 1.65;
+  color: #727c6e;
+}
+.routine-card-intro a {
+  text-decoration: underline;
+}
+.routine-day {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) 110px;
+  gap: 22px;
+  align-items: start;
+  padding: 22px 24px;
+  border-bottom: 1px solid #edf0e6;
+}
+.routine-day:last-child {
+  border-bottom: 0;
+}
+.routine-day-label {
+  display: grid;
+  gap: 5px;
+  padding-top: 8px;
+  font-size: 13px;
+}
+.routine-day-label span,
+.routine-day-add small {
+  font-size: 11px;
+  color: #7a8376;
+}
+.routine-off {
+  margin: 12px 0;
+  font-size: 12px;
+  color: #7a8376;
+}
+.routine-workouts {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.routine-workout {
+  display: flex;
+  align-items: start;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e3e8da;
+  border-radius: 10px;
+  background: #fcfdf8;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.routine-workout h4 {
+  font-size: 13px;
+  margin: 0 0 6px;
+}
+.routine-workout p {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.routine-workout span,
+.routine-workout-actions a {
+  font-size: 11px;
+  color: #727c6e;
+}
+.routine-workout-actions {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+}
+.routine-workout-actions a {
+  text-decoration: underline;
+  padding: 5px 0;
+}
+.routine-day-add {
+  display: grid;
+  justify-items: start;
+}
+.routine-planner :is(button, a, input):focus-visible {
+  outline: 3px solid #759952;
+  outline-offset: 3px;
+}
+.routine-planner :is(button:disabled, a[aria-disabled="true"]) {
+  opacity: 0.55;
+  cursor: wait;
+}
+@media (max-width: 760px) {
+  .routine-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+  .routine-toolbar {
+    gap: 6px;
+  }
+  .routine-settings label {
+    flex: 1 1 180px;
+  }
+  .routine-settings input {
+    max-width: none;
+  }
+  .routine-card-intro {
+    padding: 20px 16px;
+  }
+  .routine-day {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 18px 16px;
+  }
+  .routine-workouts {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .routine-day-add {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}

@@ -10,7 +10,10 @@ export function CoachScheduleNavigation({
   date: string;
 }) {
   return (
-    <nav className="coach-schedule-navigation" aria-label="Schedule sections">
+    <nav
+      className="workspace-section-navigation coach-schedule-navigation"
+      aria-label="Schedule sections"
+    >
       <Link
         aria-current={active === "calendar" ? "page" : undefined}
         href={calendarHref({

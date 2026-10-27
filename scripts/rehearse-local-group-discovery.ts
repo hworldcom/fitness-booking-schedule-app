@@ -743,7 +743,7 @@ try {
       await expect(
         native.page
           .getByRole("navigation", { name: "Session type" })
-          .getByRole("link", { name: "Group sessions Train with a group" }),
+          .getByRole("link", { name: "Group sessions", exact: true }),
       ).toBeVisible();
   }
   await db`update app.coach_profiles set visibility='hidden' where profile_id=${coach.profileId}::uuid`;

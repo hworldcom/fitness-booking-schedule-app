@@ -1,24 +1,3 @@
-.coach-schedule-navigation {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 23px;
-  margin: 24px 0 0;
-  border-bottom: 1px solid #dce3d5;
-}
-.coach-schedule-navigation a {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 15px 2px 13px;
-  color: #7b8475;
-  font-size: 13px;
-  font-weight: 650;
-  border-bottom: 2px solid transparent;
-}
-.coach-schedule-navigation a[aria-current="page"] {
-  color: #314f2b;
-  border-color: #5a7c41;
-}
 .coach-calendar {
   color: #243c2b;
   padding-bottom: 20px;
@@ -630,8 +609,7 @@
   padding: 6px 9px;
   width: fit-content;
 }
-.coach-calendar :is(button, a, input, select):focus-visible,
-.coach-schedule-navigation a:focus-visible {
+.coach-calendar :is(button, a, input, select):focus-visible {
   outline: 3px solid #759952;
   outline-offset: 3px;
 }
@@ -808,9 +786,6 @@
   }
   .coach-calendar-horizon {
     font-size: 11px;
-  }
-  .coach-schedule-navigation {
-    margin-top: 15px;
   }
   .coach-calendar-empty .button {
     font-size: 11px;

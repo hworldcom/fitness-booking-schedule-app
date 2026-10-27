@@ -133,7 +133,7 @@ export async function rehearseProfileEditing({
     await expect(page.locator(".account-profile-workspace")).toBeVisible();
     await expect(canvas).toHaveCount(0);
     await page.reload();
-    await accountDestination("Trainings", "/sessions");
+    await accountDestination("Trainings", "/sessions/calendar");
     await accountDestination("Profile", "/profile");
     await accountDestination("Switch to coach view", "/profile/coach");
     await accountDestination("Trainings", "/coach");

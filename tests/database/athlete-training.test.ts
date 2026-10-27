@@ -487,6 +487,102 @@ test("private athlete calendar, history, recurrence and deadline reminder author
           },
         );
         await t.test(
+          "stopping a series fences edits, cancels moved future plans and preserves history and unrelated data",
+          async () => {
+            const series = randomUUID(),
+              pastRule = randomUUID(),
+              now = Date.now();
+            // Two versions across timezones, plus future planned, past attended and
+            // already-started exceptions. Fixtures stay inside this rollback.
+            await tx`insert into app.athlete_training_rules(id,series_id,run_id,profile_id,revision,title,timezone,from_date,weekday,local_time)
+            values(${series}::uuid,${series}::uuid,${owner.run}::uuid,${owner.id}::uuid,1,'Old routine','Pacific/Auckland',current_date-28,extract(dow from current_date),'23:59'),
+            (${pastRule}::uuid,${series}::uuid,${owner.run}::uuid,${owner.id}::uuid,2,'Current routine','America/Los_Angeles',current_date+7,extract(dow from current_date),'23:59')`;
+            for (const [n, offset, attendance] of [
+              [0, -86400000, "attended"],
+              [1, -60000, "planned"],
+              [2, 1800000, "planned"],
+            ] as const) {
+              await tx`insert into app.athlete_training_entries(run_id,profile_id,occurrence_key,source,rule_id,title,starts_at,ends_at,timezone,attendance,notes,intensity,actual_minutes)
+              values(${owner.run}::uuid,${owner.id}::uuid,${"p:" + series + ":" + date(new Date(now + (n + 1) * 86400000))},'personal',${series}::uuid,${"Exception " + n},${new Date(now + offset)},${new Date(now + offset + 3600000)},'UTC',${attendance},'Keep notes','Hard',35)`;
+            }
+            const untouched =
+              await tx`select to_jsonb(e) value from app.athlete_training_entries e where profile_id=${owner.id}::uuid and (rule_id is distinct from ${series}::uuid or starts_at<=statement_timestamp()) order by id`;
+            const otherRules =
+              await tx`select to_jsonb(r) value from app.athlete_training_rules r where series_id<>${series}::uuid order by id`;
+            const history =
+              await tx`select item from app.athlete_training_items(${owner.id}::uuid,${owner.run}::uuid,now()-interval '30 days',now()) where item->>'seriesId'=${series} order by item->>'key'`;
+            const stop = {
+              commandId: randomUUID(),
+              seriesId: series,
+              planRevision: 2,
+            };
+            await assert.rejects(asActor(other, "stop", stop));
+            await assert.rejects(
+              asActor({ ...owner, run: randomUUID() }, "stop", stop),
+            );
+            await assert.rejects(
+              asActor(owner, "stop", { ...stop, profileId: owner.id }),
+            );
+            await assert.rejects(
+              asActor(owner, "stop", { ...stop, planRevision: 1 }),
+            );
+            await asActor(owner, "stop", stop);
+            const afterFirst =
+              await tx`select to_jsonb(r) value from app.athlete_training_rules r where series_id=${series}::uuid order by revision`;
+            await asActor(owner, "stop", stop);
+            assert.deepEqual(
+              await tx`select to_jsonb(r) value from app.athlete_training_rules r where series_id=${series}::uuid order by revision`,
+              afterFirst,
+            );
+            assert.equal(afterFirst.at(-1)!.value.revision, 3);
+            await assert.rejects(
+              asActor(owner, "stop", { ...stop, seriesId: randomUUID() }),
+            );
+            await assert.rejects(
+              asActor(owner, "series", {
+                ...save,
+                commandId: randomUUID(),
+                seriesId: series,
+                planRevision: 2,
+              }),
+            );
+            assert.deepEqual(
+              await tx`select to_jsonb(e) value from app.athlete_training_entries e where profile_id=${owner.id}::uuid and (rule_id is distinct from ${series}::uuid or starts_at<=statement_timestamp()) order by id`,
+              untouched,
+            );
+            assert.deepEqual(
+              await tx`select to_jsonb(r) value from app.athlete_training_rules r where series_id<>${series}::uuid order by id`,
+              otherRules,
+            );
+            const stopped =
+              await tx`select item from app.athlete_training_items(${owner.id}::uuid,${owner.run}::uuid,now(),now()+interval '30 days') where item->>'seriesId'=${series} and (item->>'startsAt')::timestamptz>statement_timestamp()`;
+            assert.equal(stopped.length, 1);
+            assert.equal(stopped[0].item.attendance, "cancelled");
+            assert.equal(stopped[0].item.notes, "Keep notes");
+            assert.equal(stopped[0].item.intensity, "Hard");
+            assert.equal(stopped[0].item.actualMinutes, 35);
+            assert.equal(stopped[0].item.revision, 2);
+            const afterHistory =
+              await tx`select item from app.athlete_training_items(${owner.id}::uuid,${owner.run}::uuid,now()-interval '30 days',now()) where item->>'seriesId'=${series} order by item->>'key'`;
+            assert.deepEqual(
+              afterHistory.map((r) => ({ ...r.item, planRevision: null })),
+              history.map((r) => ({ ...r.item, planRevision: null })),
+            );
+            // A claimed reminder for a moved exception must be suppressed by the
+            // existing final eligibility check; no provider call is made.
+            const job = randomUUID(),
+              lease = randomUUID();
+            await tx`insert into app.athlete_training_reminders(id,run_id,profile_id,occurrence_key,starts_at,due_at,state,attempts,lease_id,lease_until)
+            values(${job}::uuid,${owner.run}::uuid,${owner.id}::uuid,${stopped[0].item.key},${stopped[0].item.startsAt}::timestamptz,now(),'claimed',1,${lease}::uuid,now()+interval '2 minutes')`;
+            const [prepared] =
+              await tx`select app.prepare_training_reminder(${job}::uuid,${lease}::uuid) value`;
+            assert.equal(prepared.value, null);
+            const [jobState] =
+              await tx`select state from app.athlete_training_reminders where id=${job}::uuid`;
+            assert.equal(jobState.state, "suppressed");
+          },
+        );
+        await t.test(
           "revoked actors and wrong datasets cannot retain calendar or log access",
           async () => {
             await assert.rejects(
@@ -507,6 +603,68 @@ test("private athlete calendar, history, recurrence and deadline reminder author
       .catch((e) => {
         if (!(e instanceof Rollback)) throw e;
       });
+  } finally {
+    await db.end();
+  }
+});
+
+test("concurrent routine stop and edit serialize on the same expected revision", async () => {
+  const db = postgres(url!, { max: 3, onnotice: () => {} }),
+    auth = randomUUID();
+  try {
+    await db`insert into auth.users(id,email,email_confirmed_at,is_sso_user,is_anonymous) values(${auth}::uuid,${"stop-race-" + auth + "@example.test"},now(),false,false)`;
+    const [p] =
+      await db`select * from app.enroll_application_identity(${auth}::uuid,'Routine race fixture')`;
+    const call = (action: string, args: object) =>
+      db.begin(async (tx) => {
+        await tx.unsafe("set local role app_runtime");
+        await tx`select set_config('app.current_auth_user_id',${auth},true),set_config('app.current_profile_id',${p.identity_profile_id},true),set_config('app.current_run_id',${p.identity_run_id},true),set_config('app.current_run_role','member',true)`;
+        const [r] =
+          await tx`select app.athlete_training_command(${action},${tx.json(args as postgres.JSONValue)}) value`;
+        return r.value;
+      });
+    const day = new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+      id = randomUUID();
+    const terms = {
+      title: "Race routine",
+      date: day,
+      time: "19:00",
+      timezone: "UTC",
+      weekly: true,
+    };
+    await call("save", { ...terms, commandId: id });
+    const listed = await call("list", {
+      from: day,
+      through: day,
+      timezone: "UTC",
+    });
+    const seriesId = listed.items[0].seriesId;
+    const result = await Promise.allSettled([
+      call("stop", { commandId: randomUUID(), seriesId, planRevision: 1 }),
+      call("series", {
+        ...terms,
+        commandId: randomUUID(),
+        seriesId,
+        planRevision: 1,
+        time: "20:00",
+      }),
+    ]);
+    assert.equal(result.filter((r) => r.status === "fulfilled").length, 1);
+    const failure = result.find(
+      (r) => r.status === "rejected",
+    ) as PromiseRejectedResult;
+    assert.equal(failure.reason.code, "40001");
+    if (result[1].status === "fulfilled")
+      await call("stop", {
+        commandId: randomUUID(),
+        seriesId,
+        planRevision: 2,
+      });
+    assert.equal(
+      (await call("list", { from: day, through: day, timezone: "UTC" })).items
+        .length,
+      0,
+    );
   } finally {
     await db.end();
   }

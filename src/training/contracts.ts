@@ -27,7 +27,7 @@ export type TrainingPage = Readonly<{
   remindersEnabled: boolean;
 }>;
 export type TrainingCommand = Readonly<{
-  action: "list" | "save" | "series" | "attendance" | "preference";
+  action: "list" | "save" | "series" | "stop" | "attendance" | "preference";
   args: Record<string, unknown>;
 }>;
 export type TrainingResult =
@@ -125,35 +125,37 @@ export function validTrainingCommand(input: unknown): input is TrainingCommand {
         ? ["from", "through", "timezone", "offset"]
         : action === "preference"
           ? ["commandId", "enabled"]
-          : action === "attendance"
-            ? [
-                "commandId",
-                "key",
-                "revision",
-                "attendance",
-                "notes",
-                "intensity",
-                "actualMinutes",
-              ]
-            : action === "save" || action === "series"
+          : action === "stop"
+            ? ["commandId", "seriesId", "planRevision"]
+            : action === "attendance"
               ? [
                   "commandId",
                   "key",
                   "revision",
-                  "seriesId",
-                  "planRevision",
-                  "title",
-                  "date",
-                  "time",
-                  "timezone",
-                  "minutes",
-                  "weekly",
-                  "completed",
+                  "attendance",
                   "notes",
                   "intensity",
                   "actualMinutes",
                 ]
-              : [];
+              : action === "save" || action === "series"
+                ? [
+                    "commandId",
+                    "key",
+                    "revision",
+                    "seriesId",
+                    "planRevision",
+                    "title",
+                    "date",
+                    "time",
+                    "timezone",
+                    "minutes",
+                    "weekly",
+                    "completed",
+                    "notes",
+                    "intensity",
+                    "actualMinutes",
+                  ]
+                : [];
     if (!keys.length || Object.keys(a).some((k) => !keys.includes(k)))
       return false;
     if (action === "list")
@@ -170,6 +172,12 @@ export function validTrainingCommand(input: unknown): input is TrainingCommand {
       );
     if (!isCanonicalUuid(String(a.commandId))) return false;
     if (action === "preference") return typeof a.enabled === "boolean";
+    if (action === "stop")
+      return (
+        isCanonicalUuid(String(a.seriesId)) &&
+        Number.isInteger(a.planRevision) &&
+        Number(a.planRevision) > 0
+      );
     if (
       a.key !== undefined &&
       (typeof a.key !== "string" || a.key.length > 100)

@@ -60,3 +60,29 @@ test("training commands bound input and reject extra authority or invalid option
     false,
   );
 });
+test("stopping a routine requires an exact series revision and no client-supplied scope or cutoff", () => {
+  const args = { commandId, seriesId: commandId, planRevision: 2 };
+  assert.equal(validTrainingCommand({ action: "stop", args }), true);
+  for (const extra of [
+    { commandId: "bad" },
+    { seriesId: "bad" },
+    { planRevision: 0 },
+    { planRevision: 1.5 },
+    { planRevision: "2" },
+    { planRevision: null },
+    { profileId: commandId },
+    { date: "2026-11-03" },
+    { key: "manual:foo" },
+  ])
+    assert.equal(
+      validTrainingCommand({ action: "stop", args: { ...args, ...extra } }),
+      false,
+    );
+  assert.equal(
+    validTrainingCommand({
+      action: "stop",
+      args: { commandId, seriesId: commandId },
+    }),
+    false,
+  );
+});

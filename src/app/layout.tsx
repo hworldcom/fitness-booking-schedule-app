@@ -6,6 +6,7 @@ import "./globals.css";
 import "./club-theme.css";
 import "./authenticated-workspace.css";
 import "./client-sessions-workspace.css";
+import "./workspace-section-navigation.css";
 import "./my-sessions-navigation.css";
 import "./coming-soon.css";
 import "./coach-story.css";
