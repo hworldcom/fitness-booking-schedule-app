@@ -30,11 +30,11 @@ import { initialAuthorizationState } from "@/server/authorization/service";
 
 export const metadata: Metadata = {
   title: {
-    default: "MovX Club — Find your coach.",
+    default: "MovX Club — Find training. Build your routine.",
     template: "%s | MovX Club",
   },
   description:
-    "Discover martial-arts coaches, compare real published availability and request coach-confirmed private sessions.",
+    "Find coaches and group sessions, build your workout routine and track your activity in one personal calendar.",
   robots: { index: false, follow: false },
 };
 export default async function RootLayout({

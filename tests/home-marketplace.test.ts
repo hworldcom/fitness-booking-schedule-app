@@ -249,31 +249,47 @@ test("home discovery keeps empty and unavailable data states honest", () => {
   assert.doesNotMatch(unavailable, /compact-coach-card/);
 });
 
-test("home orders working discovery before the concise confirmation flow", () => {
-  const markup = renderToStaticMarkup(
-    createElement(CoachStoryHome, {
-      background,
-      directory: Object.freeze({ status: "ready", entries, filters }),
-    }),
-  );
-  const searchIndex = markup.indexOf(
-    'aria-label="Browse coaches by discipline"',
-  );
-  const previewIndex = markup.indexOf("Discover coaches in Berlin");
-  const explanationIndex = markup.indexOf(
-    "Three steps from search to a clear answer.",
-  );
-  assert.ok(searchIndex >= 0);
-  assert.ok(previewIndex > searchIndex);
-  assert.ok(explanationIndex > previewIndex);
-  assert.match(markup, /request stays pending until the coach accepts it/i);
-  assert.match(markup, /not an instant booking/i);
-  assert.match(markup, /All disciplines/);
-  assert.match(markup, /href="\/\?discipline=Boxing"/);
-  assert.match(markup, /Explore more/);
-  assert.doesNotMatch(markup, /<form|<input|Explore with a map|Load more/);
-  assert.doesNotMatch(markup, /name="q"|Search coach or focus|by name, focus/);
-  assert.doesNotMatch(markup, /name="when"|near you|rating|price/i);
+test("home keeps discovery first and independent planning paths available in every directory state", () => {
+  for (const directory of [
+    { status: "ready", entries, filters },
+    { status: "ready", entries: [], filters },
+    { status: "unavailable", filters },
+  ] as const) {
+    const markup = renderToStaticMarkup(
+      createElement(CoachStoryHome, {
+        background,
+        directory,
+      }),
+    );
+    const searchIndex = markup.indexOf(
+      'aria-label="Browse coaches by discipline"',
+    );
+    const previewIndex = markup.indexOf("Discover coaches in Berlin");
+    const calendarIndex = markup.indexOf('id="home-training-calendar-title"');
+    const invitationIndex = markup.indexOf('id="home-coach-cta-title"');
+    assert.ok(searchIndex >= 0);
+    assert.ok(previewIndex > searchIndex);
+    assert.ok(calendarIndex > previewIndex);
+    assert.ok(invitationIndex > calendarIndex);
+    assert.match(markup, /Example training week/);
+    assert.match(markup, /Your calendar and notes stay private/);
+    assert.match(markup, /href="\/sessions\/routine"/);
+    assert.match(markup, /href="\/sessions\/calendar"/);
+    assert.match(markup, /href="\/how-it-works"/);
+    assert.match(
+      markup,
+      /href="\/sign-in\?intent=coach&amp;returnTo=%2Fprofile%2Fcoach"/,
+    );
+    assert.doesNotMatch(markup, /coach-step-grid|marketplace-home-coach-cta/);
+    assert.match(markup, /href="\/\?discipline=Boxing"/);
+    assert.match(markup, /Explore more/);
+    assert.doesNotMatch(markup, /<form|<input|Explore with a map|Load more/);
+    assert.doesNotMatch(
+      markup,
+      /name="q"|Search coach or focus|by name, focus/,
+    );
+    assert.doesNotMatch(markup, /name="when"|near you|rating|price/i);
+  }
 });
 
 test("Explore distinguishes today's actual venue from the primary training place", () => {

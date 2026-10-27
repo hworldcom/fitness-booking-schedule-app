@@ -8,7 +8,9 @@ import {
   CalendarCheck2,
   Plus,
   Sparkles,
+  CalendarDays,
 } from "lucide-react";
+import { TrainingCalendarIntro } from "./training-calendar-intro";
 
 export function HowItWorksStory() {
   return (
@@ -17,16 +19,17 @@ export function HowItWorksStory() {
         <div className="hero-copy">
           <span className="eyebrow">HOW IT WORKS</span>
           <h1 id="hero-title">
-            Good coaching.
+            Your training.
             <br />
-            <span>More personal.</span>
+            <span>Your rhythm.</span>
           </h1>
           <p>
-            One-to-one attention or the energy of a group. Find your coach,
-            choose your session and take the next step towards your goals.
+            Find a coach, join a group or build your own routine. Plan your
+            training and keep track of the activity you complete, all in one
+            place.
           </p>
           <span className="hero-note">
-            A good fit starts with a little exploring.
+            With a coach, with a group, or on your own.
           </span>
         </div>
         <div className="hero-art" aria-hidden="true">
@@ -88,7 +91,9 @@ export function HowItWorksStory() {
             </strong>
             <p>Your coach + your group</p>
           </div>
-          <span className="art-footnote">Two ways to move forward.</span>
+          <span className="art-footnote">
+            Find your people. Find your rhythm.
+          </span>
         </div>
       </section>
       <nav className="section-nav" aria-label="On this page">
@@ -115,8 +120,8 @@ export function HowItWorksStory() {
             <br className="mobile-break" /> Your kind of training.
           </h2>
           <p>
-            Choose focused time with a coach or find a group that feels right
-            for you.
+            Choose focused time with a coach, find a group that feels right, or
+            make space for training on your own.
           </p>
         </div>
         <div className="training-grid">
@@ -185,10 +190,46 @@ export function HowItWorksStory() {
               <ArrowRight className="icon" aria-hidden="true" />
             </Link>
           </article>
+          <article className="training-card routine-card">
+            <div className="training-card-top">
+              <span className="format-icon purple">
+                <CalendarDays className="icon" aria-hidden="true" />
+              </span>
+              <span className="soft-label">YOUR OWN PACE</span>
+            </div>
+            <span className="eyebrow card-eyebrow">PERSONAL ROUTINES</span>
+            <h3>Build your own routine.</h3>
+            <p>
+              Make a plan for the training you do on your own. Add recurring
+              workouts or individual activities, then record what you completed.
+            </p>
+            <ul className="benefits">
+              <li>
+                <Check className="icon" aria-hidden="true" />
+                Plan a week that works for you
+              </li>
+              <li>
+                <Check className="icon" aria-hidden="true" />
+                Log workouts and add private notes
+              </li>
+              <li>
+                <Check className="icon" aria-hidden="true" />
+                Use it with or without a coach
+              </li>
+            </ul>
+            <Link className="text-action" href="/sessions/routine">
+              Plan my routine <ArrowRight className="icon" aria-hidden="true" />
+            </Link>
+          </article>
         </div>
+        <TrainingCalendarIntro
+          id="how-training-calendar-title"
+          title="Keep your training in view."
+          description="See your plans and booked sessions together in your calendar. Record attendance, add notes, and see how often you trained this week or month."
+        />
         <div className="journey-heading">
-          <h3>From “I’d like to” to “let’s go.”</h3>
-          <span>Three simple steps</span>
+          <h3>Ready to train with a coach?</h3>
+          <span>Three steps to your session</span>
         </div>
         <ol className="steps athlete-steps">
           <li>
@@ -350,8 +391,18 @@ export function HowItWorksStory() {
             </summary>
             <p>
               You can browse coaches and group classes without an account. Sign
-              in when you’re ready to request a private session or reserve a
-              group place.
+              in when you’re ready to plan a routine, log your activity, request
+              a private session or reserve a group place.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Can I use MovX without booking a coach?
+              <Plus className="icon" aria-hidden="true" />
+            </summary>
+            <p>
+              Yes. Create an account to plan your own workouts and log your
+              activity. Your personal calendar and training notes are private.
             </p>
           </details>
           <details>
@@ -408,11 +459,11 @@ export function HowItWorksStory() {
       <section className="final-cta wrap" aria-labelledby="cta-title">
         <span className="eyebrow">YOUR NEXT STEP</span>
         <h2 id="cta-title">
-          Find your coach.
+          Find your training.
           <br />
           Find your rhythm.
         </h2>
-        <p>Start with a little exploring. See what feels right.</p>
+        <p>Find a session that fits, or start with a routine of your own.</p>
         <div className="final-actions">
           <Link className="button primary" href="/explore">
             Explore coaches
@@ -420,6 +471,9 @@ export function HowItWorksStory() {
           </Link>
           <Link className="button secondary" href="/events">
             Find a group class
+          </Link>
+          <Link className="button secondary" href="/sessions/routine">
+            Plan my routine
           </Link>
         </div>
       </section>

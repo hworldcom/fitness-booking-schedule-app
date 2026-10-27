@@ -10,11 +10,12 @@ import {
 import { CoachStoryHome } from "@/features/public/coach-story";
 import { publicCoachDirectory } from "@/server/coaches/service";
 import homeBackground from "../../public/images/home-battle-ropes.jpg";
+import "@/features/public/training-calendar-intro.css";
 
 export const metadata: Metadata = {
-  title: "Discover coaches and request private sessions",
+  title: "Find training. Build your routine.",
   description:
-    "Discover martial-arts and fitness coaches, compare published availability and request coach confirmation for one private session.",
+    "Discover coaches and group sessions, plan your weekly workouts and track completed activities in your private MovX calendar.",
 };
 
 export default async function Page({

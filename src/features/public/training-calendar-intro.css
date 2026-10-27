@@ -1,0 +1,174 @@
+.public-training-calendar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(24px, 5vw, 64px);
+  margin-block: 42px;
+  padding: clamp(24px, 4vw, 48px);
+  border: 1px solid #e3dce9;
+  border-radius: 24px;
+  background: linear-gradient(120deg, #f7f4fa, #f7f9f4);
+  color: #2d2933;
+}
+.public-training-calendar-copy .eyebrow {
+  color: #61417b;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+}
+.public-training-calendar-copy h2 {
+  max-width: 370px;
+  margin: 14px 0;
+  font-size: clamp(28px, 3vw, 39px);
+  line-height: 1.15;
+  letter-spacing: -1.2px;
+}
+.public-training-calendar-copy > p {
+  margin: 0;
+  color: #625c69;
+  font-size: 14px;
+  line-height: 1.85;
+}
+.public-training-calendar-copy .text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  margin-top: 18px;
+  color: #61417b;
+  font-size: 13px;
+  font-weight: 750;
+}
+.public-training-calendar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 24px;
+}
+.public-training-calendar-copy a:focus-visible {
+  outline: 3px solid #61417b;
+  outline-offset: 4px;
+}
+.public-training-calendar-privacy {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+  color: #625c69;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.public-training-calendar-privacy svg {
+  flex: none;
+}
+.public-training-week {
+  min-width: 0;
+  margin: 0;
+  padding: 22px;
+  border: 1px solid #e3dce9;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 12px 36px rgb(61 36 80 / 4%);
+}
+.public-training-week figcaption {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  font-weight: 750;
+}
+.public-training-week figcaption svg {
+  color: #61417b;
+}
+.public-training-week-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin: 19px 0 16px;
+}
+.public-training-week-days > span {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 9px 0;
+  border-radius: 8px;
+  color: #625c69;
+  font-size: 10px;
+}
+.public-training-week-days i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #e5e2e7;
+}
+.public-training-week-days .has-workout {
+  background: #f5f1f8;
+  color: #61417b;
+  font-weight: 750;
+}
+.public-training-week-days .has-workout i {
+  background: #9474ac;
+}
+.public-training-week ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.public-training-week li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e8e2ed;
+  border-radius: 10px;
+}
+.public-training-week li:first-child {
+  border-color: #dfe6d9;
+  background: #f7f9f4;
+}
+.public-training-week-time,
+.public-training-week-activity {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  color: #625c69;
+  font-size: 10px;
+}
+.public-training-week-time {
+  flex: 0 0 38px;
+}
+.public-training-week-activity {
+  flex: 1;
+}
+.public-training-week-activity strong {
+  color: #2d2933;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.public-training-week li > svg {
+  flex: none;
+  color: #4c6246;
+}
+@media (max-width: 800px) {
+  .public-training-calendar {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 26px;
+  }
+  .public-training-calendar-copy h2 {
+    max-width: none;
+  }
+}
+@media (max-width: 400px) {
+  .public-training-calendar {
+    padding: 21px 17px;
+    border-radius: 18px;
+  }
+  .public-training-week {
+    padding: 14px;
+  }
+  .public-training-week li {
+    gap: 8px;
+    padding: 10px 8px;
+  }
+}

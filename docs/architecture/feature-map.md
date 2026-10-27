@@ -4,17 +4,18 @@ Use one relevant entry, verify its source and follow additional dependencies onl
 
 For import ownership changes, consult the [enforced dependency rules and exact exception owners](overview.md#dependencies-enforced-rules-and-current-exceptions), then run the [source boundary suite](../../tests/boundaries.test.ts) and [isolated graph cases](../../tests/dependency-graph.test.ts). The capability's extraction issue owns removal of its temporary entries.
 
-| Capability                         | Entry                                                         |
-| ---------------------------------- | ------------------------------------------------------------- |
-| Private booking and session types  | [Detailed path](#private-booking-and-session-types)           |
-| Coach availability and calendar    | [Detailed path](#coach-availability-and-calendar)             |
-| Events and group sessions          | [Detailed path](#events-and-group-sessions)                   |
-| Coach profiles and public websites | [Starting references](#coach-profiles-and-public-websites)    |
-| Authentication and authorization   | [Cross-cutting references](#authentication-and-authorization) |
-| Messaging                          | [Starting references](#messaging)                             |
-| Notifications                      | [Message stage and delivery](#notifications)                  |
-| Connections and reviews            | [Starting references](#connections-and-reviews)               |
-| Athlete training calendar          | [Calendar, logs and reminders](#athlete-training-calendar)    |
+| Capability                         | Entry                                                                   |
+| ---------------------------------- | ----------------------------------------------------------------------- |
+| Private booking and session types  | [Detailed path](#private-booking-and-session-types)                     |
+| Coach availability and calendar    | [Detailed path](#coach-availability-and-calendar)                       |
+| Events and group sessions          | [Detailed path](#events-and-group-sessions)                             |
+| Public Home and How it works       | [Presentation and calendar introduction](#public-home-and-how-it-works) |
+| Coach profiles and public websites | [Starting references](#coach-profiles-and-public-websites)              |
+| Authentication and authorization   | [Cross-cutting references](#authentication-and-authorization)           |
+| Messaging                          | [Starting references](#messaging)                                       |
+| Notifications                      | [Message stage and delivery](#notifications)                            |
+| Connections and reviews            | [Starting references](#connections-and-reviews)                         |
+| Athlete training calendar          | [Calendar, logs and reminders](#athlete-training-calendar)              |
 
 ## Private booking and session types
 
@@ -85,6 +86,12 @@ node --import tsx --conditions=react-server --test tests/server/event-actions.te
 ```
 
 For real directory fixtures/manual browser checks use `node --import tsx --conditions=react-server scripts/rehearse-local-event-directory.ts` ([script](../../scripts/rehearse-local-event-directory.ts)); it needs migrated local Supabase, dependencies, Chrome for browser checks and port 3158. Follow [README setup/cleanup](../../README.md#events-banners-and-directory-validation). [Banner database rehearsal](../../scripts/rehearse-event-banners-database.mjs) covers owned fresh/upgrade databases. The older [group-discovery rehearsal](../../scripts/rehearse-local-group-discovery.ts) still asserts page replacement/“Next sessions”; its existence does not prove the current appended-results interaction. Helper tests likewise do not replace mounted-control, keyboard/mobile, race or real privacy evidence.
+
+## Public Home and How it works
+
+[Home](../../src/app/page.tsx) composes [CoachStoryHome](../../src/features/public/coach-story.tsx), its real bounded directory and existing discipline links. [How it works](../../src/app/how-it-works/page.tsx) composes [HowItWorksStory](../../src/features/public/how-it-works.tsx). Both use the static [calendar introduction](../../src/features/public/training-calendar-intro.tsx) and its [scoped styles](../../src/features/public/training-calendar-intro.css); its example week is illustrative, never visitor/session data. Home uses one concise calendar benefit after discovery and a small coach invitation; detailed booking/approval steps stay on How it works, reached through the calendar’s optional guide link (MOV-133). Home styles remain in [coach-story.css](../../src/app/coach-story.css), How it works styles beside its component. Routine/calendar links use existing owner-authorized routes without new data access. [MVP §4.2](../mvp-spec.md#42-discover-a-coach-and-time) owns public copy/discovery/confirmation and [§21](../mvp-spec.md#21-athlete-training-calendar-and-private-activity-logs) owns calendar privacy/activity semantics.
+
+First checks: `node --import tsx --test tests/home-marketplace.test.ts tests/how-it-works.test.ts tests/boundaries.test.ts`, with installed dependencies. For presentation review, the existing loopback app on3100 supports fresh guest browser checks at1440/768/393/375/320, keyboard discovery/routine/calendar actions and native FAQs. Verify real ready/empty/unavailable directory states separately from the decorative example; browser guest checks create no account or workout. Local preview does not publish to UAT/production. Use the standard README lint/type/format/build checks for changed source.
 
 ## Coach profiles and public websites
 
