@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabasePublicConfig } from "@/auth/config";
 import { currentMessageCommand } from "@/server/messages/service";
+import { messageVersion } from "@/messages/version";
 export const dynamic = "force-dynamic";
 function response(result: Awaited<ReturnType<typeof currentMessageCommand>>) {
   const status =
@@ -23,6 +24,8 @@ function response(result: Awaited<ReturnType<typeof currentMessageCommand>>) {
   });
 }
 export async function GET(request: Request) {
+  const version = messageVersion(request.headers);
+  if (version === null) return response({ status: "invalid" });
   const p = new URL(request.url).searchParams;
   const args: Record<string, unknown> = {};
   for (const k of [
@@ -40,12 +43,14 @@ export async function GET(request: Request) {
     : p.has("coachId")
       ? "contact"
       : "inbox";
-  return response(await currentMessageCommand({ action, args }));
+  return response(await currentMessageCommand({ action, args }, version));
 }
 export async function POST(request: Request) {
   const config = supabasePublicConfig();
   if (!config || request.headers.get("origin") !== config.siteUrl)
     return response({ status: "forbidden" });
+  const version = messageVersion(request.headers);
+  if (version === null) return response({ status: "invalid" });
   if (!request.headers.get("content-type")?.startsWith("application/json"))
     return response({ status: "invalid" });
   const reader = request.body?.getReader();
@@ -76,5 +81,5 @@ export async function POST(request: Request) {
   } finally {
     reader.releaseLock();
   }
-  return response(await currentMessageCommand(input));
+  return response(await currentMessageCommand(input, version));
 }

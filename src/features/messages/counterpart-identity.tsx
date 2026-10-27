@@ -11,16 +11,22 @@ export function CounterpartIdentity({
   const content = (
     <>
       <Avatar
-        initials={profileInitials(conversation.counterpartName)}
+        initials={
+          conversation.role === "movx"
+            ? "M"
+            : profileInitials(conversation.counterpartName)
+        }
         imageUrl={conversation.counterpartImageUrl}
-        color="blue"
+        color={conversation.role === "movx" ? "purple" : "blue"}
       />
       <div>
         <h2>{conversation.counterpartName}</h2>
         <p>
-          {conversation.role === "coach"
-            ? "You’re the coach in this conversation"
-            : "You’re the athlete in this conversation"}
+          {conversation.role === "movx"
+            ? "Official MovX welcome"
+            : conversation.role === "coach"
+              ? "You’re the coach in this conversation"
+              : "You’re the athlete in this conversation"}
         </p>
       </div>
     </>

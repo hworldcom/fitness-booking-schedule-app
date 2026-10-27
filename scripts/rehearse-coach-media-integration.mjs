@@ -12,6 +12,7 @@ import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 import { chromium, expect as baseExpect } from "@playwright/test";
 import { rehearseProfileEditing } from "./lib/profile-edit-integration.mjs";
+import { rehearseMemberWelcome } from "./lib/member-welcome-integration.mjs";
 import { rehearseAthleteTraining } from "./lib/athlete-training-integration.mjs";
 
 const expect = baseExpect.configure({ timeout: 20000 });
@@ -25,11 +26,13 @@ assert.ok(
         "--diagnose-storage",
         "--profile-editor",
         "--athlete-training",
+        "--member-welcome",
       ].includes(arg),
     ),
 );
 const profileEditor = process.argv.includes("--profile-editor");
 const athleteTraining = process.argv.includes("--athlete-training");
+const memberWelcome = process.argv.includes("--member-welcome");
 const diagnoseStorage = process.argv.includes("--diagnose-storage");
 const webpack = process.argv.includes("--webpack");
 const tag = randomUUID().replaceAll("-", "").slice(0, 10);
@@ -499,6 +502,22 @@ try {
   await database`select app.review_coach_application(${coach.profileId}::uuid,'pending','approved','Disposable media QA','local-test','movx-identity-application-v1')`;
   await database`update app.coach_profiles set visibility='visible' where profile_id=${coach.profileId}::uuid`;
   pass("two independent real browser password sessions");
+  if (memberWelcome) {
+    phase = "production new-member welcome journeys";
+    await rehearseMemberWelcome({
+      base,
+      browser,
+      database,
+      auth,
+      stranger,
+      output,
+      pass,
+      errors,
+      tag,
+      secrets,
+      project,
+    });
+  }
   if (athleteTraining) {
     phase = "production athlete training journeys";
     await rehearseAthleteTraining({

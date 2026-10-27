@@ -2,6 +2,7 @@ import {
   parseMessageResult,
   type MessageAction,
 } from "@/domain/private-messages";
+import { MESSAGE_VERSION_HEADER } from "./version";
 export class MailboxError extends Error {
   constructor(readonly status: string) {
     super(
@@ -24,6 +25,7 @@ export async function messageRead(
     Object.entries(args).map(([k, v]) => [k, String(v)]),
   );
   const response = await fetch(`/api/messages?${params}`, {
+    headers: { [MESSAGE_VERSION_HEADER]: "2" },
     cache: "no-store",
     credentials: "same-origin",
     signal: signal
@@ -42,7 +44,10 @@ export async function messageWrite(
   const response = await fetch("/api/messages", {
     method: "POST",
     credentials: "same-origin",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      [MESSAGE_VERSION_HEADER]: "2",
+    },
     body: JSON.stringify({ action, args }),
     signal: AbortSignal.timeout(15000),
   });
