@@ -4,7 +4,135 @@ import {
   parseCoachWebsiteContent,
   validateCoachWebsiteContent,
   projectCoachWebsite,
+  publicCoachSocialLinks,
+  publicCoachProfileLinks,
 } from "@/domain/coach-website";
+
+test("a personal website is explicit, independent of four generic links, clearable and safe in drafts", () => {
+  const legacy = parseCoachWebsiteContent({
+    links: Array.from({ length: 4 }, (_, i) => ({
+      label: `Site ${i}`,
+      url: `https://example.com/${i}`,
+    })),
+  })!;
+  assert.equal(Object.hasOwn(legacy, "websiteUrl"), false);
+  const content = parseCoachWebsiteContent({
+    ...legacy,
+    websiteUrl: "https://COACH.EXAMPLE.com",
+    socialLinks: { instagram: "https://instagram.com/coach" },
+  })!;
+  assert.equal(content.websiteUrl, "https://coach.example.com/");
+  assert.deepEqual(content.links, legacy.links);
+  assert.deepEqual(
+    publicCoachProfileLinks(content).map((p) => p.label),
+    ["Website", "Instagram"],
+  );
+  assert.equal(
+    parseCoachWebsiteContent({ ...content, websiteUrl: "" })?.websiteUrl,
+    "",
+  );
+  for (const websiteUrl of [
+    null,
+    42,
+    "http://example.com",
+    "javascript:alert(1)",
+    "https://user:secret@example.com",
+    "https://example.com/a b",
+    "https://site.localhost",
+    "https://example.com/" + "x".repeat(2048),
+  ]) {
+    const result = validateCoachWebsiteContent({ ...legacy, websiteUrl });
+    assert.equal(result.content, null);
+    assert.equal(result.issues[0].field, "websiteUrl");
+  }
+  assert.deepEqual(
+    publicCoachProfileLinks({ ...legacy, websiteUrl: "javascript:alert(1)" }),
+    [],
+  );
+});
+
+test("public socials and languages are optional, bounded and separate from existing links", () => {
+  const legacy = parseCoachWebsiteContent({
+    links: [{ label: "My site", url: "https://example.com" }],
+  })!;
+  assert.equal(Object.hasOwn(legacy, "socialLinks"), false);
+  assert.equal(Object.hasOwn(legacy, "languages"), false);
+  const content = parseCoachWebsiteContent({
+    ...legacy,
+    languages: [" English ", "Deutsch", "Tiếng Việt"],
+    socialLinks: {
+      instagram: "https://WWW.INSTAGRAM.COM/coach",
+      facebook: "",
+      linkedin: "https://linkedin.com/in/coach",
+    },
+  })!;
+  assert.deepEqual(content.languages, ["English", "Deutsch", "Tiếng Việt"]);
+  assert.deepEqual(content.links, legacy.links);
+  assert.deepEqual(content.socialLinks, {
+    instagram: "https://www.instagram.com/coach",
+    linkedin: "https://linkedin.com/in/coach",
+  });
+  assert.deepEqual(
+    publicCoachSocialLinks(content).map((p) => p.label),
+    ["Instagram", "LinkedIn"],
+  );
+  assert.deepEqual(
+    parseCoachWebsiteContent({ ...content, socialLinks: {}, languages: [] })
+      ?.socialLinks,
+    {},
+  );
+  for (const invalid of [
+    { languages: null },
+    { languages: ["English", "english"] },
+    { languages: [""] },
+    { languages: ["English\nDeutsch"] },
+    { languages: ["<b>English</b>"] },
+    { languages: ["E".repeat(61)] },
+    { languages: Array.from({ length: 9 }, (_, i) => String(i)) },
+    { socialLinks: null },
+    { socialLinks: { instagram: null } },
+    { socialLinks: { phone: "+123456789" } },
+    { phone: "+123456789" },
+    { instagramUrl: "https://instagram.com/private-application-contact" },
+  ])
+    assert.equal(
+      parseCoachWebsiteContent({ ...legacy, ...invalid }),
+      null,
+      JSON.stringify(invalid),
+    );
+});
+
+test("platform URLs reject spoofed hosts, credentials and unsafe draft links", () => {
+  for (const url of [
+    "javascript:alert(1)",
+    "http://instagram.com/coach",
+    "https://instagram.com.evil.test/coach",
+    "https://evilinstagram.com/coach",
+    "https://instagram.com@evil.test/coach",
+    "https://evil.test@instagram.com/coach",
+    "https://instagram.com:8080/coach",
+    "https://a..instagram.com/coach",
+    "https://-bad.instagram.com/coach",
+    "https://a_b.instagram.com/coach",
+    "https://facebook.com/coach",
+    "https://instagram.com/white space",
+    "https://instagram.com\\evil",
+    "https://instagram.com/" + "x".repeat(2048),
+  ]) {
+    const draft = {
+      ...parseCoachWebsiteContent({})!,
+      socialLinks: { instagram: url },
+    };
+    const result = validateCoachWebsiteContent(draft);
+    assert.equal(result.content, null, url);
+    assert.equal(result.issues[0].field, "socialLinks.instagram");
+    assert.deepEqual(publicCoachSocialLinks(draft), [], url);
+    assert.doesNotMatch(
+      JSON.stringify(result.issues),
+      /evil|white space|alert\(1\)/,
+    );
+  }
+});
 
 test("optional website content stays compatible and enforces every content bound", () => {
   const empty = parseCoachWebsiteContent({});

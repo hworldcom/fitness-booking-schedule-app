@@ -69,6 +69,7 @@
     "db:lint": "supabase db lint --local --schema app --fail-on warning",
     "format:check": "prettier --check scripts src tests playwright.config.ts package.json tsconfig.json postcss.config.mjs eslint.config.mjs vercel.json",
     "test:calendar-hosted": "node --env-file=.env.development.local scripts/rehearse-hosted-calendar-integration.mjs",
+    "test:coach-socials-languages-db": "node scripts/rehearse-coach-socials-languages-database.mjs",
     "test:coach-public-urls-db": "node scripts/rehearse-coach-public-urls-database.mjs",
     "test:coach-public-urls": "node --import tsx --conditions=react-server scripts/rehearse-local-coach-public-urls.ts",
     "test:group-notifications-integration": "node scripts/rehearse-group-notifications-integration.mjs",

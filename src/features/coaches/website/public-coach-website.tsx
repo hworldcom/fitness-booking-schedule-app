@@ -8,7 +8,12 @@ import { ArrowLeft, MapPin } from "lucide-react";
 import { Avatar } from "@/components/ui";
 import { profileInitials } from "@/auth/profile-presentation";
 import type { PublicCoachProfileState } from "@/domain/coaches";
-import { EMPTY_COACH_WEBSITE_CONTENT } from "@/domain/coach-website";
+import {
+  EMPTY_COACH_WEBSITE_CONTENT,
+  publicCoachProfileLinks,
+} from "@/domain/coach-website";
+import { CoachSocialLinks } from "./website-social-links";
+import { WebsiteLinkIcon, websiteLinkPlatform } from "./website-link-icon";
 import type { ReviewPageResult } from "@/domain/coach-reviews";
 import type { SessionCatalog } from "@/domain/typed-sessions";
 import type { CoachMediaResult, PublicCoachMedia } from "@/domain/coach-media";
@@ -210,6 +215,41 @@ export function PublicCoachWebsite({
                     ))}
                     {!content.focusLabels.length &&
                       placeholder("Add coaching focus and levels")}
+                  </div>,
+                )}
+              {(!!content.languages?.length || onEdit) &&
+                region(
+                  "languages",
+                  "languages spoken",
+                  <div className="coach-website-profile-facts">
+                    <h3>Languages spoken</h3>
+                    {content.languages?.length ? (
+                      <ul
+                        className="coach-website-tags coach-website-languages"
+                        aria-label="Languages spoken"
+                      >
+                        {content.languages.map((language, index) => (
+                          <li key={index}>{language}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      placeholder("Add languages you coach in")
+                    )}
+                  </div>,
+                )}
+              {(!!publicCoachProfileLinks(content).length || onEdit) &&
+                region(
+                  "socialLinks",
+                  "social profiles",
+                  <div className="coach-website-profile-facts">
+                    <h3>Connect with me</h3>
+                    {publicCoachProfileLinks(content).length ? (
+                      <CoachSocialLinks content={content} />
+                    ) : (
+                      placeholder(
+                        "Add your website, Instagram, Facebook or LinkedIn",
+                      )
+                    )}
                   </div>,
                 )}
               <p className="coach-website-note">
@@ -416,9 +456,9 @@ export function PublicCoachWebsite({
                 "links",
                 "external links",
                 <section className="coach-website-section">
-                  <h2>Find out more</h2>
+                  <h2>Website &amp; other links</h2>
                   {!content.links.length &&
-                    placeholder("Add your website or social links")}
+                    placeholder("Add your website or other links")}
                   <div className="coach-website-external-links">
                     {content.links.map((link, index) => (
                       <a
@@ -429,7 +469,11 @@ export function PublicCoachWebsite({
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        {link.label} ↗
+                        <WebsiteLinkIcon
+                          platform={websiteLinkPlatform(link.url)}
+                        />{" "}
+                        {link.label}
+                        <span className="sr-only"> (opens in a new tab)</span>
                       </a>
                     ))}
                   </div>

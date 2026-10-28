@@ -78,6 +78,8 @@ const CONTENT = new Set([
   "focusLabels",
   "faqs",
   "links",
+  "languages",
+  "socialLinks",
 ]);
 type Panel =
   | "content"

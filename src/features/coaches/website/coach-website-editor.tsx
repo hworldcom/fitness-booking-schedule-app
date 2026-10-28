@@ -15,6 +15,7 @@ import { Modal } from "@/components/ui";
 import type { CoachProjection } from "@/domain/coaches";
 import {
   COACH_BANNER_MAX_SOURCE_BYTES,
+  COACH_SOCIAL_PLATFORMS,
   parseCoachWebsiteContent,
   validateCoachWebsiteContent,
   type CoachWebsiteContentIssue,
@@ -524,6 +525,111 @@ function ScopedWebsiteEditor({
                     issues={issuesFor("focusLabels")}
                   />
                 </label>
+                <label className="coach-field">
+                  <span id={`${fieldId("languages")}-label`}>
+                    Languages spoken (optional, one per line, up to 8)
+                  </span>
+                  <textarea
+                    id={fieldId("languages")}
+                    aria-labelledby={`${fieldId("languages")}-label`}
+                    rows={3}
+                    value={(draft.languages ?? []).join("\n")}
+                    placeholder={"English\nDeutsch\nTiếng Việt"}
+                    aria-invalid={
+                      issuesFor("languages").length > 0 || undefined
+                    }
+                    aria-describedby={`${fieldId("languages")}-help${issuesFor("languages").length ? ` ${fieldId("languages")}-errors` : ""}`}
+                    onChange={(event) =>
+                      change(
+                        "languages",
+                        event.target.value === ""
+                          ? []
+                          : event.target.value.split("\n"),
+                      )
+                    }
+                  />
+                  <small id={`${fieldId("languages")}-help`}>
+                    Add languages you can coach in, up to 60 characters each.
+                    Clear a line to remove it, and remove empty lines before
+                    saving.
+                  </small>
+                  <WebsiteFieldErrors
+                    id={`${fieldId("languages")}-errors`}
+                    issues={issuesFor("languages")}
+                  />
+                </label>
+                <h4 id={fieldId("socialLinks")} tabIndex={-1}>
+                  Public website &amp; social profiles
+                </h4>
+                <p id={`${fieldId("socialLinks")}-help`}>
+                  These links appear on your public coach page. Application
+                  contact details stay private. Leave a field empty to hide or
+                  remove its link.
+                </p>
+                <WebsiteFieldErrors
+                  id={`${fieldId("socialLinks")}-errors`}
+                  issues={issuesFor("socialLinks")}
+                />
+                <label className="coach-field">
+                  <span id={`${fieldId("websiteUrl")}-label`}>
+                    Personal website (optional)
+                  </span>
+                  <input
+                    type="url"
+                    inputMode="url"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    id={fieldId("websiteUrl")}
+                    aria-labelledby={`${fieldId("websiteUrl")}-label`}
+                    aria-invalid={
+                      issuesFor("websiteUrl").length > 0 || undefined
+                    }
+                    aria-describedby={`${fieldId("socialLinks")}-help${issuesFor("websiteUrl").length ? ` ${fieldId("websiteUrl")}-errors` : ""}`}
+                    maxLength={2048}
+                    placeholder="https://your-coaching-website.com"
+                    value={draft.websiteUrl ?? ""}
+                    onChange={(event) =>
+                      change("websiteUrl", event.target.value)
+                    }
+                  />
+                  <WebsiteFieldErrors
+                    id={`${fieldId("websiteUrl")}-errors`}
+                    issues={issuesFor("websiteUrl")}
+                  />
+                </label>
+                {COACH_SOCIAL_PLATFORMS.map((platform) => {
+                  const key = `socialLinks.${platform.key}`;
+                  return (
+                    <label className="coach-field" key={platform.key}>
+                      <span id={`${fieldId(key)}-label`}>
+                        {platform.label} (optional)
+                      </span>
+                      <input
+                        type="url"
+                        inputMode="url"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        id={fieldId(key)}
+                        aria-labelledby={`${fieldId(key)}-label`}
+                        maxLength={2048}
+                        placeholder={`https://www.${platform.host}/your-profile`}
+                        value={draft.socialLinks?.[platform.key] ?? ""}
+                        aria-invalid={issuesFor(key).length > 0 || undefined}
+                        aria-describedby={`${fieldId("socialLinks")}-help${issuesFor(key).length ? ` ${fieldId(key)}-errors` : ""}`}
+                        onChange={(event) =>
+                          change("socialLinks", {
+                            ...draft.socialLinks,
+                            [platform.key]: event.target.value,
+                          })
+                        }
+                      />
+                      <WebsiteFieldErrors
+                        id={`${fieldId(key)}-errors`}
+                        issues={issuesFor(key)}
+                      />
+                    </label>
+                  );
+                })}
                 <h4 id={fieldId("faqs")} tabIndex={-1}>
                   Frequently asked questions
                 </h4>
@@ -593,7 +699,7 @@ function ScopedWebsiteEditor({
                   Add question
                 </button>
                 <h4 id={fieldId("links")} tabIndex={-1}>
-                  External links
+                  Website & other links
                 </h4>
                 <WebsiteFieldErrors
                   id={`${fieldId("links")}-errors`}

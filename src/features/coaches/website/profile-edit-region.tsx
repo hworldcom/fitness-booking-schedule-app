@@ -16,6 +16,8 @@ export type ProfileEditField =
   | "focusLabels"
   | "faqs"
   | "links"
+  | "languages"
+  | "socialLinks"
   | "rate"
   | "media";
 

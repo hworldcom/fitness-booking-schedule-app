@@ -329,6 +329,55 @@
   flex-wrap: wrap;
   gap: 20px;
 }
+.coach-website-external-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+.coach-website-profile-facts {
+  margin-top: 22px;
+}
+.coach-website-profile-facts h3 {
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+.coach-website-languages {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.coach-website-languages li {
+  border: 1px solid var(--website-line);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+.coach-website-social-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.coach-website-social-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #d8cbe4;
+  border-radius: 12px;
+  color: #61417b;
+  font-size: 13px;
+  font-weight: 700;
+}
+.coach-website-social-links a:hover {
+  background: #f5f0fa;
+}
+.website-platform-icon {
+  flex-shrink: 0;
+  vertical-align: middle;
+}
 .coach-website-share {
   border-top: 1px solid var(--website-line);
   padding-top: 20px;

@@ -4,7 +4,12 @@ import { useState } from "react";
 import { Avatar } from "@/components/ui";
 import { profileInitials } from "@/auth/profile-presentation";
 import type { CoachProjection } from "@/domain/coaches";
-import type { CoachWebsiteContent } from "@/domain/coach-website";
+import {
+  publicCoachProfileLinks,
+  type CoachWebsiteContent,
+} from "@/domain/coach-website";
+import { CoachSocialLinks } from "./website-social-links";
+import { WebsiteLinkIcon, websiteLinkPlatform } from "./website-link-icon";
 import { publicCoachStartingRate } from "@/domain/coach-starting-rate";
 
 export function CoachWebsitePreview({
@@ -119,6 +124,22 @@ export function CoachWebsitePreview({
           <small>Preview only · No booking or message is sent.</small>
         </aside>
         <div className="website-preview-sections">
+          {!!content.languages?.length && (
+            <section>
+              <h3>Languages spoken</h3>
+              <ul>
+                {content.languages.map((language, index) => (
+                  <li key={index}>{language}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+          {!!publicCoachProfileLinks(content).length && (
+            <section>
+              <h3>Connect with me</h3>
+              <CoachSocialLinks content={content} />
+            </section>
+          )}
           <section>
             <h3>About your coach</h3>
             <p>{coach.bio}</p>
@@ -171,7 +192,9 @@ export function CoachWebsitePreview({
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  {link.label} ↗
+                  <WebsiteLinkIcon platform={websiteLinkPlatform(link.url)} />{" "}
+                  {link.label}
+                  <span className="sr-only"> (opens in a new tab)</span>
                 </a>
               ))}
             </section>

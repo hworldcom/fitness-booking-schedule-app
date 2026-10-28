@@ -59,6 +59,56 @@ const reviews = {
   nextCursor: null,
 } as const;
 
+test("explicit public social links and languages render only when supplied; legacy website links survive", () => {
+  const html = page({
+    state: {
+      status: "ready",
+      coach,
+      slots: [],
+      website: {
+        ...website,
+        content: {
+          ...content,
+          languages: ["English", "Tiếng Việt"],
+          websiteUrl: "https://coach.example.com/",
+          socialLinks: {
+            instagram: "https://instagram.com/example",
+            facebook: "https://facebook.com/example",
+            linkedin: "https://linkedin.com/in/example",
+          },
+        },
+      },
+    },
+  });
+  for (const text of [
+    "Languages spoken",
+    "English",
+    "Tiếng Việt",
+    "Connect with me",
+    "Instagram",
+    "Facebook",
+    "LinkedIn",
+    "Website",
+    content.links[0].label,
+  ])
+    assert.ok(html.includes(text), text);
+  assert.match(
+    html,
+    /href="https:\/\/instagram.com\/example" target="_blank" rel="noopener noreferrer"/,
+  );
+  assert.match(html, /opens in a new tab/);
+  assert.match(html, /href="https:\/\/coach.example.com\/"/);
+  assert.equal(
+    (html.match(/class="[^"]*\bwebsite-platform-icon\b[^"]*"/g) ?? []).length,
+    5,
+  );
+  assert.match(html, /href="https:\/\/example.org\/coaching"/);
+  assert.doesNotMatch(page(), /Languages spoken|Connect with me|Add Instagram/);
+  const owner = page({ onEdit: () => {} });
+  assert.match(owner, /Edit languages spoken/);
+  assert.match(owner, /Edit social profiles/);
+});
+
 test("training media belongs inside About me before approach and experience with no separate media navigation", () => {
   const id = "93290000-0000-4000-8000-000000000001";
   const html = page({

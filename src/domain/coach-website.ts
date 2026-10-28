@@ -7,6 +7,16 @@ export const COACH_BANNER_VARIANTS = {
   hero: { width: 1600, height: 600, maxBytes: 1024 * 1024 },
 } as const;
 export type CoachBannerVariant = keyof typeof COACH_BANNER_VARIANTS;
+export const COACH_SOCIAL_PLATFORMS = [
+  { key: "instagram", label: "Instagram", host: "instagram.com" },
+  { key: "facebook", label: "Facebook", host: "facebook.com" },
+  { key: "linkedin", label: "LinkedIn", host: "linkedin.com" },
+] as const;
+export type CoachSocialPlatform =
+  (typeof COACH_SOCIAL_PLATFORMS)[number]["key"];
+export type CoachSocialLinks = Readonly<
+  Partial<Record<CoachSocialPlatform, string>>
+>;
 export type CoachWebsiteContent = Readonly<{
   brandLabel: string;
   introduction: string;
@@ -15,6 +25,10 @@ export type CoachWebsiteContent = Readonly<{
   focusLabels: readonly string[];
   faqs: readonly Readonly<{ question: string; answer: string }>[];
   links: readonly Readonly<{ label: string; url: string }>[];
+  // Absent on legacy rows; reading or editing unrelated fields never backfills them.
+  socialLinks?: CoachSocialLinks;
+  languages?: readonly string[];
+  websiteUrl?: string;
 }>;
 export type CoachBannerImage = Readonly<{
   url: string;
@@ -126,6 +140,38 @@ function externalUrl(
   }
 }
 
+export function coachSocialUrl(value: string, host: string): string | null {
+  const parsed = externalUrl(value, () => {});
+  if (!parsed) return null;
+  const url = new URL(parsed);
+  const hostname = new RegExp(
+    `^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)*${host.replaceAll(".", "\\.")}$`,
+    "i",
+  );
+  return !url.port && hostname.test(url.hostname) ? parsed : null;
+}
+
+/** Drafts are untrusted too: never make an invalid social address clickable. */
+export function publicCoachSocialLinks(content: CoachWebsiteContent) {
+  return COACH_SOCIAL_PLATFORMS.flatMap((platform) => {
+    const value = content.socialLinks?.[platform.key];
+    const url = value ? coachSocialUrl(value, platform.host) : null;
+    return url ? [{ ...platform, url }] : [];
+  });
+}
+
+export function publicCoachProfileLinks(content: CoachWebsiteContent) {
+  const website = content.websiteUrl
+    ? externalUrl(content.websiteUrl, () => {})
+    : null;
+  return [
+    ...(website
+      ? [{ key: "website" as const, label: "Website", url: website }]
+      : []),
+    ...publicCoachSocialLinks(content),
+  ];
+}
+
 export type CoachWebsiteContentIssue = Readonly<{
   field: string;
   message: string;
@@ -153,7 +199,9 @@ export function validateCoachWebsiteContent(value: unknown): {
   const record = value;
   if (
     Object.keys(value).some(
-      (key) => !Object.hasOwn(EMPTY_COACH_WEBSITE_CONTENT, key),
+      (key) =>
+        !Object.hasOwn(EMPTY_COACH_WEBSITE_CONTENT, key) &&
+        !["socialLinks", "languages", "websiteUrl"].includes(key),
     )
   )
     issue(
@@ -311,6 +359,58 @@ export function validateCoachWebsiteContent(value: unknown): {
     );
     return Object.freeze({ label, url: url ?? "" });
   });
+  const socialLinks: Partial<Record<CoachSocialPlatform, string>> = {};
+  const websiteUrl =
+    record.websiteUrl === undefined || record.websiteUrl === ""
+      ? ""
+      : (externalUrl(record.websiteUrl, (message) =>
+          issue("websiteUrl", `Personal website ${message}`),
+        ) ?? "");
+  if (record.socialLinks !== undefined) {
+    if (
+      !isWebsiteRecord(record.socialLinks) ||
+      Object.keys(record.socialLinks).some(
+        (key) =>
+          !COACH_SOCIAL_PLATFORMS.some((platform) => platform.key === key),
+      )
+    )
+      issue(
+        "socialLinks",
+        "Social links could not be read. Reload the saved version before editing.",
+      );
+    else
+      for (const platform of COACH_SOCIAL_PLATFORMS) {
+        const raw = record.socialLinks[platform.key];
+        if (raw === undefined || raw === "") continue;
+        const url =
+          typeof raw === "string" ? coachSocialUrl(raw, platform.host) : null;
+        if (!url)
+          issue(
+            `socialLinks.${platform.key}`,
+            `${platform.label} needs a full HTTPS address on ${platform.host}, without login details or a custom port. Clear the field to remove it.`,
+          );
+        else socialLinks[platform.key] = url;
+      }
+  }
+  const languageNames = new Set<string>();
+  const languages = rows("languages", 8, "Languages spoken").map((raw, i) => {
+    const language = text(
+      raw,
+      "languages",
+      `Language line ${i + 1}`,
+      60,
+      false,
+      `Language line ${i + 1} is empty. Add a language or remove this line.`,
+    );
+    const key = language.toLowerCase();
+    if (language && languageNames.has(key))
+      issue(
+        "languages",
+        `Language line ${i + 1} is repeated. Change or remove the duplicate language.`,
+      );
+    languageNames.add(key);
+    return language;
+  });
   return {
     content: issues.length
       ? null
@@ -322,6 +422,13 @@ export function validateCoachWebsiteContent(value: unknown): {
           focusLabels: Object.freeze(focusLabels),
           faqs: Object.freeze(faqs),
           links: Object.freeze(links),
+          ...(record.socialLinks !== undefined
+            ? { socialLinks: Object.freeze(socialLinks) }
+            : {}),
+          ...(record.languages !== undefined
+            ? { languages: Object.freeze(languages) }
+            : {}),
+          ...(record.websiteUrl !== undefined ? { websiteUrl } : {}),
         }),
     issues: Object.freeze(issues),
   };

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import sharp from "sharp";
+import { rehearseCoachSocialsLanguages } from "./coach-socials-languages-integration.mjs";
 import { expect as baseExpect } from "@playwright/test";
 const expect = baseExpect.configure({ timeout: 20000 });
 
@@ -314,6 +315,16 @@ export async function rehearseProfileEditing({
   );
 
   const otherTab = await coach.context.newPage();
+  await rehearseCoachSocialsLanguages({
+    page,
+    publicPage,
+    base,
+    publicPath,
+    output,
+    pass,
+    database,
+    coach,
+  });
   otherTab.on("pageerror", (e) => errors.push(e.message));
   otherTab.on("dialog", (dialog) => dialog.accept());
   await otherTab.goto(base + "/profile/coach");
@@ -324,8 +335,20 @@ export async function rehearseProfileEditing({
   await otherDrawer
     .getByLabel("Short introduction (optional)")
     .fill("A different real tab saved this text.");
+  await otherDrawer
+    .getByLabel("Personal website (optional)", { exact: true })
+    .fill("https://remote.example.com/");
+  await otherDrawer
+    .getByLabel("Languages spoken (optional, one per line, up to 8)")
+    .fill("English\nDeutsch");
   await edit("introduction");
   await intro().fill("Local draft kept through the real revision conflict.");
+  await drawer
+    .getByLabel("Personal website (optional)", { exact: true })
+    .fill("https://local.example.com/");
+  await drawer
+    .getByLabel("Languages spoken (optional, one per line, up to 8)")
+    .fill("Tiếng Việt");
   const remoteSave = await responseDuring(
     otherTab,
     (r) =>
@@ -346,13 +369,31 @@ export async function rehearseProfileEditing({
     .click();
   await close();
   await savedPreview(true);
+  await expect(
+    canvas.getByRole("link", {
+      name: "Website (opens in a new tab)",
+      exact: true,
+    }),
+  ).toHaveAttribute("href", "https://remote.example.com/");
   await expect(canvas.locator(".coach-website-intro")).toHaveText(
     "A different real tab saved this text.",
   );
+  await expect(
+    canvas.getByRole("list", { name: "Languages spoken" }),
+  ).toContainText("Deutsch");
   await savedPreview(false);
+  await expect(
+    canvas.getByRole("link", {
+      name: "Website (opens in a new tab)",
+      exact: true,
+    }),
+  ).toHaveAttribute("href", "https://local.example.com/");
   await expect(canvas.locator(".coach-website-intro")).toHaveText(
     "Local draft kept through the real revision conflict.",
   );
+  await expect(
+    canvas.getByRole("list", { name: "Languages spoken" }),
+  ).toHaveText("Tiếng Việt");
   await edit("introduction");
   assert.equal((await saveContent()).status(), 200);
   await close();
