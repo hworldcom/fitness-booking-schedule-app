@@ -610,28 +610,60 @@
 }
 .how-page .coach-formats {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
   margin-top: 28px;
 }
 .how-page .coach-formats article {
-  display: flex;
-  align-items: flex-start;
-  gap: 13px;
-  padding: 20px;
+  padding: 28px;
   border: 1px solid #e8dfef;
-  border-radius: 14px;
+  border-radius: 18px;
   background: #fff;
 }
-.how-page .coach-formats h3 {
-  font-size: 19px;
-  letter-spacing: -0.4px;
+.how-page .coach-service-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
-.how-page .coach-formats p {
-  margin-top: 7px;
+.how-page .coach-formats h3 {
+  font-size: 24px;
+  letter-spacing: -0.6px;
+}
+.how-page .coach-formats .coach-service-promise {
+  margin-top: 20px;
+  font-size: 15px;
+  line-height: 1.6;
+  font-weight: 750;
+  color: var(--purple);
+}
+.how-page .coach-service-benefits {
+  display: grid;
+  gap: 13px;
+  margin: 21px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.how-page .coach-service-benefits li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   font-size: 13px;
-  line-height: 1.85;
+  line-height: 1.7;
   color: var(--muted);
+}
+.how-page .coach-service-benefits .icon {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  margin-top: 3px;
+  color: var(--purple);
+}
+.how-page .coach-formats .coach-service-group {
+  border-color: #dce7d6;
+}
+.how-page .coach-service-group .coach-service-promise,
+.how-page .coach-service-group .coach-service-benefits .icon {
+  color: #4e633c;
 }
 .how-page .coach-steps {
   margin-top: 31px;
@@ -646,7 +678,7 @@
   padding-top: 25px;
 }
 .how-page .coach-panel-footer > span {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--muted);
 }
 .how-page .faq-section {
@@ -865,11 +897,10 @@
     display: none;
   }
   .how-page .coach-formats article {
-    padding: 17px;
-    gap: 11px;
+    padding: 22px;
   }
   .how-page .coach-formats h3 {
-    font-size: 18px;
+    font-size: 21px;
   }
   .how-page .faq-section {
     grid-template-columns: 0.8fr 1.2fr;
@@ -1137,11 +1168,10 @@
     margin-top: 24px;
   }
   .how-page .coach-formats article {
-    padding: 16px;
-    gap: 11px;
+    padding: 21px 18px;
   }
   .how-page .coach-formats h3 {
-    font-size: 19px;
+    font-size: 22px;
   }
   .how-page .coach-formats .mini-icon {
     margin-top: 1px;
@@ -1161,7 +1191,7 @@
     min-height: 46px;
   }
   .how-page .coach-panel-footer > span {
-    font-size: 9px;
+    font-size: 12px;
   }
   .how-page .faq-section {
     grid-template-columns: 1fr;

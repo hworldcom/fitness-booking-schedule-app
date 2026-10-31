@@ -58,15 +58,16 @@ export function CoachStoryHome({
         aria-labelledby="home-coach-cta-title"
       >
         <div>
-          <h2 id="home-coach-cta-title">Are you a coach?</h2>
-          <p>Build your profile and connect with athletes on MovX.</p>
+          <h2 id="home-coach-cta-title">Coach on MovX</h2>
+          <p>
+            Offer private training and group sessions, with your schedule in one
+            place.
+          </p>
         </div>
-        <Link
-          className="text-link"
-          href="/sign-in?intent=coach&returnTo=%2Fprofile%2Fcoach"
-        >
-          Become a coach <ArrowRight size={16} aria-hidden="true" />
-        </Link>
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- Native navigation focuses the destination section for keyboard users. */}
+        <a className="text-link" href="/how-it-works#coaches">
+          Explore coaching on MovX <ArrowRight size={16} aria-hidden="true" />
+        </a>
       </section>
     </div>
   );

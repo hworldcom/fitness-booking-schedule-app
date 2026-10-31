@@ -71,11 +71,8 @@ test("home keeps discovery and the calendar together with a concise coach invita
   await expect(
     page
       .locator(".home-coach-invitation")
-      .getByRole("link", { name: "Become a coach" }),
-  ).toHaveAttribute(
-    "href",
-    "/sign-in?intent=coach&returnTo=%2Fprofile%2Fcoach",
-  );
+      .getByRole("link", { name: "Explore coaching on MovX" }),
+  ).toHaveAttribute("href", "/how-it-works#coaches");
   const copy = await page.locator("main").innerText();
   expect(copy).not.toMatch(
     /Solana|wallet|EURC|credits|group funding|pass purchase|24 hours|near you|rating|price/i,
@@ -89,6 +86,19 @@ test("home keeps discovery and the calendar together with a concise coach invita
     path: testInfo.outputPath("scheduling-story-home.png"),
     fullPage: true,
   });
+  const coaching = page
+    .locator(".home-coach-invitation")
+    .getByRole("link", { name: "Explore coaching on MovX" });
+  await coaching.focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\/how-it-works#coaches$/);
+  await expect(page.locator("#coaches")).toBeFocused();
+  await expect(
+    page.locator("#coaches").getByRole("heading", { name: "Private training" }),
+  ).toBeVisible();
+  await expect(
+    page.locator("#coaches").getByRole("heading", { name: "Group sessions" }),
+  ).toBeVisible();
 });
 
 test("home marketplace remains usable at the adopted review widths", async ({
@@ -158,7 +168,7 @@ test("home marketplace remains usable at the adopted review widths", async ({
     await expect(
       page
         .locator(".home-coach-invitation")
-        .getByRole("link", { name: "Become a coach" }),
+        .getByRole("link", { name: "Explore coaching on MovX" }),
     ).toBeVisible();
     expect(
       await page.evaluate(
@@ -184,6 +194,11 @@ test("how it works guides athletes and coaches through real training choices", a
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/#coaches$/);
   await expect(page.locator("#coaches")).toBeFocused();
+  const services = page.locator(".coach-formats article");
+  await expect(services).toHaveCount(2);
+  for (const service of await services.all()) {
+    await expect(service.getByRole("listitem")).toHaveCount(3);
+  }
   await expect(
     page
       .locator("#coaches")

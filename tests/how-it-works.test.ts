@@ -26,8 +26,8 @@ test("audience navigation has one link per focusable, labelled section", () => {
   }
   assert.match(text, /Your time\. Your coach\./);
   assert.match(text, /Find your kind of group\./);
-  assert.match(text, /Coach one-to-one/);
-  assert.match(text, /Bring a group together/);
+  assert.match(text, /Private training/);
+  assert.match(text, /Group sessions/);
 });
 
 test("athlete and coach actions reach real discovery and application routes", () => {

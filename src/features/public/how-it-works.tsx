@@ -284,13 +284,13 @@ export function HowItWorksStory() {
             <div className="section-intro">
               <span className="eyebrow">FOR COACHES</span>
               <h2 id="coaches-title">
-                Bring your coaching.
+                Your coaching.
                 <br />
-                We’ll help with the planning.
+                Two ways to train.
               </h2>
               <p>
-                Make room for private sessions and group training, with your
-                availability and bookings in one place.
+                Offer individual attention or bring a group together—with your
+                schedule and bookings in one place.
               </p>
             </div>
             <span className="coach-heading-icon" aria-hidden="true">
@@ -298,30 +298,55 @@ export function HowItWorksStory() {
             </span>
           </div>
           <div className="coach-formats">
-            <article>
-              <span className="mini-icon purple">
-                <UserRound className="icon" aria-hidden="true" />
-              </span>
-              <div>
-                <h3>Coach one-to-one</h3>
-                <p>
-                  Offer private sessions, publish your available times and
-                  choose which requests to confirm.
-                </p>
+            <article className="coach-service-card">
+              <div className="coach-service-heading">
+                <span className="mini-icon purple">
+                  <UserRound className="icon" aria-hidden="true" />
+                </span>
+                <h3>Private training</h3>
               </div>
+              <p className="coach-service-promise">
+                One-to-one. Personal attention.
+              </p>
+              <ul className="coach-service-benefits">
+                <li>
+                  <Check className="icon" aria-hidden="true" />
+                  Publish your available times
+                </li>
+                <li>
+                  <Check className="icon" aria-hidden="true" />
+                  Choose which session requests to accept
+                </li>
+                <li>
+                  <Check className="icon" aria-hidden="true" />
+                  Coordinate directly with your athletes
+                </li>
+              </ul>
             </article>
-            <article>
-              <span className="mini-icon purple">
-                <UsersRound className="icon" aria-hidden="true" />
-              </span>
-              <div>
-                <h3>Bring a group together</h3>
-                <p>
-                  Create a class, set its minimum and maximum group size and
-                  invite athletes to join. Offer a smaller group when you want
-                  to keep the coaching close.
-                </p>
+            <article className="coach-service-card coach-service-group">
+              <div className="coach-service-heading">
+                <span className="mini-icon green">
+                  <UsersRound className="icon" aria-hidden="true" />
+                </span>
+                <h3>Group sessions</h3>
               </div>
+              <p className="coach-service-promise">
+                Train together. Share the energy.
+              </p>
+              <ul className="coach-service-benefits">
+                <li>
+                  <Check className="icon" aria-hidden="true" />
+                  Publish classes and training events
+                </li>
+                <li>
+                  <Check className="icon" aria-hidden="true" />
+                  Set the venue, price and group size
+                </li>
+                <li>
+                  <Check className="icon" aria-hidden="true" />
+                  Manage registrations and confirm your sessions
+                </li>
+              </ul>
             </article>
           </div>
           <ol className="steps coach-steps">
@@ -364,7 +389,7 @@ export function HowItWorksStory() {
               Become a coach
               <ArrowRight className="icon" aria-hidden="true" />
             </Link>
-            <span>More time for what you love: coaching.</span>
+            <span>One profile. One calendar. Your coaching business.</span>
           </div>
         </div>
       </section>

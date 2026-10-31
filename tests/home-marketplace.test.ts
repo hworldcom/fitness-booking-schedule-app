@@ -276,10 +276,7 @@ test("home keeps discovery first and independent planning paths available in eve
     assert.match(markup, /href="\/sessions\/routine"/);
     assert.match(markup, /href="\/sessions\/calendar"/);
     assert.match(markup, /href="\/how-it-works"/);
-    assert.match(
-      markup,
-      /href="\/sign-in\?intent=coach&amp;returnTo=%2Fprofile%2Fcoach"/,
-    );
+    assert.match(markup, /href="\/how-it-works#coaches"/);
     assert.doesNotMatch(markup, /coach-step-grid|marketplace-home-coach-cta/);
     assert.match(markup, /href="\/\?discipline=Boxing"/);
     assert.match(markup, /Explore more/);
