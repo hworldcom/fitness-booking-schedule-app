@@ -342,6 +342,23 @@ try {
       DATABASE_URL: loginUrl("qa_app", appPassword),
     };
     await writeFile(
+      path.join(output, "admin-database-transaction.log"),
+      redact(
+        await command(
+          process.execPath,
+          [
+            "--import",
+            "tsx",
+            "--conditions=react-server",
+            "tests/database-transaction.ts",
+          ],
+          adminEnv,
+          adminCheckout,
+        ),
+      ),
+    );
+    pass("admin transaction-local timeout cancellation and context recovery");
+    await writeFile(
       path.join(output, "admin-build.log"),
       redact(await command("npm", ["run", "build"], adminEnv, adminCheckout)),
     );

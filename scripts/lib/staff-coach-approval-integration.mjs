@@ -110,12 +110,12 @@ export async function rehearseStaffCoachApproval({
     });
   }
   await page.setViewportSize({ width: 1440, height: 1000 });
+  const reviewReason =
+    "Identity and completed application reviewed\nwith matching evidence out of band";
   const prepare = async () => {
     for (const box of await page.locator(".staff-checklist input").all())
       await box.check();
-    await page
-      .getByLabel("Review reason", { exact: true })
-      .fill("Identity and completed application reviewed out of band");
+    await page.getByLabel("Review reason", { exact: true }).fill(reviewReason);
     await page
       .getByRole("button", { name: "Review decision", exact: true })
       .click();
@@ -135,6 +135,69 @@ export async function rehearseStaffCoachApproval({
   );
   pass(
     "bounded status filters, private review data, desktop/mobile320/375 layout and keyboard Escape confirmation cancel leave application pending",
+  );
+  const recoverAccess = async (width) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.bringToFront();
+    await database.unsafe("revoke app_runtime from qa_app");
+    try {
+      await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+      await expect(
+        page.getByRole("heading", { name: "Staff access changed" }),
+      ).toBeVisible();
+      await expect(page.locator("dialog")).toHaveJSProperty("open", false);
+      assert.equal(
+        (await page.locator("body").innerText()).includes(coach.email),
+        false,
+      );
+      const retry = page.getByRole("button", {
+        name: "Retry access check",
+        exact: true,
+      });
+      await retry.focus();
+      await expect(retry).toBeFocused();
+      const response = page.waitForResponse(
+        (r) => r.request().method() === "POST",
+      );
+      await page.keyboard.press("Enter");
+      await response;
+      await expect(
+        page.getByRole("heading", { name: "Staff access changed" }),
+      ).toBeVisible();
+      await expect(page.locator("dialog")).toHaveJSProperty("open", false);
+      await page.screenshot({
+        path: path.join(output, `admin-access-recovery-${width}.png`),
+        fullPage: true,
+      });
+    } finally {
+      await database.unsafe("grant app_runtime to qa_app");
+    }
+    await page
+      .getByRole("button", { name: "Retry access check", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.locator(".staff-reason-preview")).toHaveText(
+      reviewReason,
+    );
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+      false,
+    );
+  };
+  for (const width of [1440, 375, 320]) {
+    await prepare();
+    await recoverAccess(width);
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.getByLabel("Review reason", { exact: true })).toHaveValue(
+      reviewReason,
+    );
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  pass(
+    "access-check outages suspend open native dialogs, expose keyboard retry and restore the private draft at desktop/mobile widths",
   );
   // A genuine owner action changes the saved contact after staff viewed it.
   await coach.page.goto(base + "/profile/coach");
@@ -178,6 +241,49 @@ export async function rehearseStaffCoachApproval({
   pass(
     "real owner contact update fences a stale staff approval without false review or receipt",
   );
+  // A failed transport cannot tell the UI whether the write reached SQL.
+  await prepare();
+  await page.route("**/admin/coaches/" + coach.profileId, async (route) => {
+    if (
+      route.request().method() === "POST" &&
+      route.request().postData()?.includes("commandId")
+    )
+      await route.abort("failed");
+    else await route.continue();
+  });
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Confirm approval", exact: true })
+    .click();
+  const unknown = page.getByRole("dialog");
+  await expect(
+    unknown.getByRole("button", { name: "Retry same decision", exact: true }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(unknown).toBeVisible();
+  const history = unknown.getByRole("link", {
+    name: "Reload saved application",
+    exact: true,
+  });
+  await history.focus();
+  await expect(history).toBeFocused();
+  await page.unroute("**/admin/coaches/" + coach.profileId);
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByRole("heading", { name: "Review this application", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  assert.equal(
+    Number(
+      (
+        await database`select count(*) n from app.staff_coach_review_commands where application_profile_id=${coach.profileId}::uuid`
+      )[0].n,
+    ),
+    0,
+  );
+  pass(
+    "an unknown decision keeps alternate edits blocked while its modal provides keyboard navigation to saved history",
+  );
   await prepare();
   let lost = false;
   let capturedAction;
@@ -215,10 +321,17 @@ export async function rehearseStaffCoachApproval({
     "approved",
   );
   await page.unroute("**/admin/coaches/" + coach.profileId);
+  await recoverAccess(375);
+  const retried = page.waitForRequest(
+    (r) => r.method() === "POST" && r.postData()?.includes("commandId"),
+  );
   await page
     .getByRole("dialog")
     .getByRole("button", { name: "Retry same decision", exact: true })
     .click();
+  const retryRequest = await retried;
+  assert.equal(retryRequest.postData(), capturedAction.body);
+  assert.equal(retryRequest.headers()["next-action"], capturedAction.id);
   await expect(
     page.getByText(
       "Coach approved. An email and an in-app alert were queued.",
@@ -226,6 +339,9 @@ export async function rehearseStaffCoachApproval({
     ),
   ).toBeVisible();
   assert.ok(capturedAction?.id && capturedAction.body);
+  const [reviewEvent] =
+    await database`select reason from app.coach_application_review_events where profile_id=${coach.profileId}::uuid and review_source='staff-panel'`;
+  assert.equal(reviewEvent.reason, reviewReason.replaceAll(/\s+/g, " "));
   const ordinaryContext = await browser.newContext(),
     ordinary = await ordinaryContext.newPage();
   await login(stranger, ordinary);
