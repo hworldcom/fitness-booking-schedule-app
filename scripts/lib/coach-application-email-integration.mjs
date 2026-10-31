@@ -20,7 +20,7 @@ export async function rehearseCoachApplicationEmail({
   const initialViewport = page.viewportSize();
   const originalContact = {
     phoneNumber: "+4915123456789",
-    instagramUrl: "https://www.instagram.com/movx_test",
+    instagramUrl: "https://www.instagram.com/_real__h",
     facebookUrl: "https://www.facebook.com/movx_test",
     linkedinUrl: "https://www.linkedin.com/in/movx-test",
   };

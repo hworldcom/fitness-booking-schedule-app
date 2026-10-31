@@ -18,8 +18,10 @@ const SOCIAL_HOSTS = {
 export function applicationSocialUrl(value: string, host: string) {
   if (value.length > 500 || /[\u0000-\u0020\u007f]/u.test(value)) return null;
   const escapedHost = host.replaceAll(".", "\\.");
+  const firstPathCharacter =
+    host === "instagram.com" ? "[A-Za-z0-9_]" : "[A-Za-z0-9]";
   return new RegExp(
-    `^https://(?:www\\.)?${escapedHost}/[A-Za-z0-9][A-Za-z0-9._~!$&'()*+,;=:@/%?-]*$`,
+    `^https://(?:www\\.)?${escapedHost}/${firstPathCharacter}[A-Za-z0-9._~!$&'()*+,;=:@/%?-]*$`,
   ).test(value) && !/%(?:00|0a|0d)/i.test(value)
     ? value
     : null;

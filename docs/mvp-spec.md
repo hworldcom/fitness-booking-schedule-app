@@ -164,6 +164,8 @@ DEV0287’s isolated implementation adds an adapter-owned same-origin Google sta
 6. Approval unlocks coach publication and scheduling without removing athlete capability, and navigation enables the coach-view switch while retaining athlete view. Approval does not automatically make the profile visible.
 7. After saving the required registration profile, the account is invited to add an optional private picture or choose **Do this later**. Existing normalization/private-avatar rules apply, and personal Profile supports adding/editing it later. Refresh/lost optional state cannot block a completed account. Athlete continuation keeps Home/explicit return; coach intent still requires a separate explicit application action. An approved coach separately chooses whether to add a public portrait to the coach profile.
 
+MOV-140 (30 October 2026) corrects private application contact validation to accept Instagram profile paths whose usernames start with underscores, including `https://www.instagram.com/_real__h`. The same rule applies to validation, stored-contact readback and the staff submission snapshot. Social links remain optional/private, and HTTPS/platform-host, length and unsafe-input checks remain in force; Facebook and LinkedIn rules are unchanged.
+
 #### 4.1.1 Methods and account resolution
 
 The current email/password and Google methods, Apple deferral and relaxed password minimum are confirmed user choices. The following operating details are adopted implementation defaults for that target, not claims about delivered behavior or additional user-selected profile requirements.

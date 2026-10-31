@@ -129,7 +129,7 @@ test("staff sends retain bounded rejection/unknown recovery and loopback-only ca
 test("staff email includes the private submitted contact snapshot, with optional socials omitted and HTML escaped", () => {
   const applicationContact = {
     phoneNumber: "+4915123456789",
-    instagramUrl: "https://www.instagram.com/test_coach",
+    instagramUrl: "https://www.instagram.com/_real__h",
     facebookUrl: "https://www.facebook.com/profile.php?id=123&ref=review",
     linkedinUrl: "https://www.linkedin.com/in/test-coach",
   };

@@ -107,6 +107,8 @@ Coach website content includes an explicit personal website, public Instagram/Fa
 
 ### Coach application email validation
 
+Instagram application profile URLs may begin with underscores, for example `https://www.instagram.com/_real__h`. Run `node scripts/rehearse-coach-application-instagram-database.mjs` for the matching validator/forward-SQL fresh and populated-upgrade checks; see [rollout and compatible-reader recovery](supabase/README.md#coach-application-staff-email).
+
 Applications require a contact phone with country code; Instagram, Facebook and LinkedIn HTTPS profile links are optional. These are private review contacts, included in the staff email and separate from public website links. The SQL and browser checks below cover contact validation, ownership, atomic saves, conflicting edits, legacy jobs and submission snapshots. Contact-aware releases also need the [contact migration and rollout guidance](supabase/README.md#coach-application-staff-email).
 
 For coach application staff alerts, run `npm run test:coach-application-emails-db` with local Docker PostgreSQL and Mailpit55324. It uses fresh/upgrade scratch databases, verifies first completed submission and explicit resubmission, privacy/retry behavior and actual local capture to `hello@movx.club`, then removes its exact fixtures and verifies retained hashes. `npm run test:notifications-integration` also checks the actual application form, cron and captured staff receipts in its disposable stack. See [staff-email rollout and recovery](supabase/README.md#coach-application-staff-email); no hosted installation or external send is implied.

@@ -12,6 +12,36 @@ const contact = {
   linkedinUrl: null,
 };
 
+test("Instagram application links allow a username beginning with underscores", () => {
+  for (const host of ["instagram.com", "www.instagram.com"]) {
+    for (const username of ["_real__h", "__coach", "_coach/?igsh=test"]) {
+      const instagramUrl = `https://${host}/${username}`;
+      const result = validateCoachApplicationContact({
+        ...contact,
+        instagramUrl,
+      });
+      assert.deepEqual(result, {
+        valid: true,
+        value: { ...contact, instagramUrl },
+      });
+      assert.deepEqual(
+        parseCoachApplicationContact({ ...contact, instagramUrl, revision: 1 }),
+        { ...contact, instagramUrl, revision: 1 },
+      );
+    }
+  }
+  for (const field of ["facebookUrl", "linkedinUrl"] as const) {
+    const host = field === "facebookUrl" ? "facebook.com" : "linkedin.com";
+    assert.equal(
+      validateCoachApplicationContact({
+        ...contact,
+        [field]: `https://${host}/_real__h`,
+      }).valid,
+      false,
+    );
+  }
+});
+
 test("application contacts require an international phone and allow all socials to be empty", () => {
   assert.deepEqual(
     validateCoachApplicationContact({
