@@ -1,7 +1,17 @@
 "use client";
+import {
+  COACH_APPROVAL_TITLE,
+  COACH_APPROVAL_NEXT_STEPS,
+} from "@/notifications/coach-approvals";
 import { GROUP_EVENTS, groupNotificationSummary } from "@/notifications/groups";
-import { useEffect, useId, useRef, useState } from "react";
-import { Bell, Check, MessageSquare, CalendarCheck } from "lucide-react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import {
+  Bell,
+  Check,
+  MessageSquare,
+  CalendarCheck,
+  BadgeCheck,
+} from "lucide-react";
 import {
   BOOKING_EVENTS,
   bookingNotificationSummary,
@@ -11,6 +21,7 @@ import type { ActorSnapshot } from "@/auth/actor-contracts";
 import {
   notificationHref,
   type NotificationPage,
+  type NotificationItem,
 } from "@/notifications/contracts";
 import {
   NotificationError,
@@ -253,32 +264,38 @@ function RecipientBell({ actorKey }: { actorKey: string }) {
                       className={item.readAt ? "" : "is-unread"}
                     >
                       <span className="notification-item-icon">
-                        {item.kind === "booking" || item.kind === "group" ? (
+                        {item.kind === "coach-approval" ? (
+                          <BadgeCheck size={16} aria-hidden="true" />
+                        ) : item.kind === "booking" || item.kind === "group" ? (
                           <CalendarCheck size={16} aria-hidden="true" />
                         ) : (
                           <MessageSquare size={16} aria-hidden="true" />
                         )}
                       </span>
                       <div>
-                        <Link
-                          href={notificationHref(item)}
+                        <NotificationDestination
+                          item={item}
                           onClick={() => setOpen(false)}
                         >
                           <strong>
-                            {item.kind === "group"
-                              ? GROUP_EVENTS[item.event]
-                              : item.kind === "booking"
-                                ? BOOKING_EVENTS[item.event]
-                                : `New message from ${item.senderName}`}
+                            {item.kind === "coach-approval"
+                              ? COACH_APPROVAL_TITLE
+                              : item.kind === "group"
+                                ? GROUP_EVENTS[item.event]
+                                : item.kind === "booking"
+                                  ? BOOKING_EVENTS[item.event]
+                                  : `New message from ${item.senderName}`}
                           </strong>
                           <span>
-                            {item.kind === "group"
-                              ? groupNotificationSummary(item)
-                              : item.kind === "booking"
-                                ? bookingNotificationSummary(item)
-                                : "Open your conversation to read and reply."}
+                            {item.kind === "coach-approval"
+                              ? COACH_APPROVAL_NEXT_STEPS
+                              : item.kind === "group"
+                                ? groupNotificationSummary(item)
+                                : item.kind === "booking"
+                                  ? bookingNotificationSummary(item)
+                                  : "Open your conversation to read and reply."}
                           </span>
-                        </Link>
+                        </NotificationDestination>
                         <time dateTime={item.createdAt}>
                           {new Intl.DateTimeFormat("en-GB", {
                             timeZone: "Europe/Berlin",
@@ -296,11 +313,13 @@ function RecipientBell({ actorKey }: { actorKey: string }) {
                             disabled={working}
                             onClick={() => void mark(item.id)}
                             aria-label={
-                              item.kind === "group"
-                                ? `Mark ${GROUP_EVENTS[item.event].toLowerCase()} notification as read`
-                                : item.kind === "booking"
-                                  ? `Mark ${BOOKING_EVENTS[item.event].toLowerCase()} notification as read`
-                                  : `Mark message notification from ${item.senderName} as read`
+                              item.kind === "coach-approval"
+                                ? "Mark coach approval notification as read"
+                                : item.kind === "group"
+                                  ? `Mark ${GROUP_EVENTS[item.event].toLowerCase()} notification as read`
+                                  : item.kind === "booking"
+                                    ? `Mark ${BOOKING_EVENTS[item.event].toLowerCase()} notification as read`
+                                    : `Mark message notification from ${item.senderName} as read`
                             }
                           >
                             Mark read
@@ -358,5 +377,31 @@ function RecipientBell({ actorKey }: { actorKey: string }) {
         </Modal>
       )}
     </>
+  );
+}
+
+function NotificationDestination({
+  item,
+  onClick,
+  children,
+}: {
+  item: NotificationItem;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  if (item.kind === "coach-approval") {
+    // A newly granted capability needs a fresh document and actor projection,
+    // including when the pending application already occupies this same URL.
+    return (
+      // eslint-disable-next-line @next/next/no-html-link-for-pages -- Refresh newly granted coach capability and the current profile.
+      <a href="/profile/coach" onClick={onClick}>
+        {children}
+      </a>
+    );
+  }
+  return (
+    <Link href={notificationHref(item)} onClick={onClick}>
+      {children}
+    </Link>
   );
 }

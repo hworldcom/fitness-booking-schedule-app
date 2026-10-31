@@ -4,7 +4,7 @@ import { withNotificationWorker } from "@/server/db/notifications/worker";
 
 export async function runNotificationWorker(
   env: Readonly<Record<string, string | undefined>> = process.env,
-  version: 3 | 4 | 5 = 4,
+  version: 3 | 4 | 5 | 6 = 4,
 ) {
   if (env.NOTIFICATION_DELIVERY_ENABLED !== "true")
     throw Error("Notification delivery is disabled.");
@@ -20,11 +20,12 @@ export async function runNotificationWorker(
     siteUrl: env.NEXT_PUBLIC_SITE_URL,
     apiKey: env.RESEND_API_KEY,
     mailpitUrl: env.NOTIFICATION_MAILPIT_URL,
+    reviewOrigin: env.COACH_REVIEW_SITE_URL,
   });
   // The reminder lane gets its own bounded claims and time budget. Legacy queues
   // retain five claims even when reminders are backlogged, and vice versa.
   const training =
-    version === 5
+    version >= 5
       ? await withNotificationWorker(
           env.NOTIFICATION_DATABASE_URL,
           (repository) =>
@@ -41,7 +42,7 @@ export async function runNotificationWorker(
         undefined,
         training ? 28000 : 45000,
       ),
-    version === 5 ? 4 : version,
+    version === 6 ? 5 : version === 5 ? 4 : version,
   );
   return { ...result, ...(training ? { training } : {}) };
 }

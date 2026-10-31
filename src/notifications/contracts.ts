@@ -1,4 +1,8 @@
 import {
+  parseCoachApprovalNotification,
+  type CoachApprovalNotification,
+} from "./coach-approvals";
+import {
   parseGroupNotification,
   groupNotificationHref,
   type GroupNotification,
@@ -20,6 +24,7 @@ export type NotificationItem = NotificationIdentity &
   (
     | BookingNotification
     | GroupNotification
+    | CoachApprovalNotification
     | Readonly<{
         kind?: "message";
         conversationId: string;
@@ -105,6 +110,23 @@ export function parseNotificationPage(value: unknown): NotificationPage {
   return {
     items: page.items.map((value) => {
       const item = object(value);
+      if (item.kind === "coach-approval") {
+        if (
+          !id(item.id) ||
+          !timestamp(item.createdAt) ||
+          (item.readAt !== null && !timestamp(item.readAt))
+        )
+          throw Error("Invalid notification response.");
+        const approval = parseCoachApprovalNotification(item);
+        if (Date.parse(approval.approvedAt) !== Date.parse(item.createdAt))
+          throw Error("Invalid approval timestamp.");
+        return {
+          ...approval,
+          id: item.id,
+          createdAt: item.createdAt,
+          readAt: item.readAt,
+        };
+      }
       if (item.kind === "group") {
         if (
           !id(item.id) ||
@@ -170,8 +192,13 @@ export function notificationHref(
         "conversationId"
       >
     | BookingNotification
-    | GroupNotification,
+    | GroupNotification
+    | CoachApprovalNotification,
 ) {
+  if ("kind" in item && item.kind === "coach-approval") {
+    parseCoachApprovalNotification(item);
+    return "/profile/coach";
+  }
   if ("kind" in item && item.kind === "group")
     return groupNotificationHref(item);
   if ("kind" in item && item.kind === "booking")

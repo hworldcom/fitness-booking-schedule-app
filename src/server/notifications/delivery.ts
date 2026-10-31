@@ -1,3 +1,12 @@
+import { coachReviewLink } from "@/notifications/coach-review-link";
+import {
+  parseCoachApprovalEmail,
+  type CoachApprovalEmailPayload,
+} from "./coach-approval";
+import {
+  COACH_APPROVAL_TITLE,
+  COACH_APPROVAL_NEXT_STEPS,
+} from "@/notifications/coach-approvals";
 import {
   GROUP_EVENTS,
   parseGroupNotification,
@@ -24,7 +33,13 @@ import {
 export type EmailClaim = {
   id: string;
   leaseId: string;
-  kind?: "message" | "booking" | "group" | "coach-application" | "training";
+  kind?:
+    | "message"
+    | "booking"
+    | "group"
+    | "coach-application"
+    | "training"
+    | "coach-approval";
 };
 export type MessageEmailPayload = {
   id: string;
@@ -34,6 +49,7 @@ export type MessageEmailPayload = {
 export type EmailPayload =
   | MessageEmailPayload
   | TrainingEmailPayload
+  | CoachApprovalEmailPayload
   | CoachApplicationEmailPayload
   | ((BookingNotification | GroupNotification) & { id: string; email: string });
 export type DeliveryOutcome = {
@@ -177,6 +193,7 @@ export function groupEmail(
 export function coachApplicationEmail(
   payload: CoachApplicationEmailPayload,
   siteUrl: string,
+  reviewOrigin?: string,
 ) {
   const event = parseCoachApplicationEmail(payload);
   const base = messageEmail(
@@ -205,6 +222,11 @@ export function coachApplicationEmail(
     `Application revision: ${event.applicationRevision}`,
     `Submitted (UTC): ${event.submittedAt}`,
     `Workspace: ${new URL(siteUrl).origin}`,
+    ...(coachReviewLink(reviewOrigin, new URL(siteUrl).origin, event.profileId)
+      ? [
+          `Review application: ${coachReviewLink(reviewOrigin, new URL(siteUrl).origin, event.profileId)}`,
+        ]
+      : []),
     "Use the platform's authorized application review process. This records a submission; check the current application state before deciding.",
   ];
   const escape = (v: string) =>
@@ -221,12 +243,37 @@ export function coachApplicationEmail(
   };
 }
 
+export function coachApprovalEmail(
+  payload: CoachApprovalEmailPayload,
+  siteUrl: string,
+) {
+  const event = parseCoachApprovalEmail(payload);
+  const base = messageEmail(
+    { id: event.id, conversationId: event.id, email: event.email },
+    siteUrl,
+  );
+  const link = new URL("/profile/coach", siteUrl).href;
+  const escape = (v: string) =>
+    v
+      .replaceAll("&", "&amp;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  return {
+    ...base,
+    subject: "Your coach application was approved on MovX Club",
+    text: `Hi ${event.displayName},\n\n${COACH_APPROVAL_TITLE}.\n\n${COACH_APPROVAL_NEXT_STEPS}\n\nYour profile remains hidden until you publish it.\n\nOpen your coach profile: ${link}\n\nQuestions? Contact hello@movx.club.`,
+    html: `<p>Hi ${escape(event.displayName)},</p><p>${escape(COACH_APPROVAL_TITLE)}.</p><p>${escape(COACH_APPROVAL_NEXT_STEPS)}</p><p>Your profile remains hidden until you publish it.</p><p><a href="${escape(link)}">Open your coach profile</a></p><p>Questions? Contact hello@movx.club.</p>`,
+  };
+}
+
 export function createEmailTransport(
   config: {
     transport: "resend" | "mailpit";
     siteUrl: string;
     apiKey?: string;
     mailpitUrl?: string;
+    reviewOrigin?: string;
   },
   fetcher: typeof fetch = fetch,
 ) {
@@ -256,21 +303,24 @@ export function createEmailTransport(
     config.siteUrl,
   );
   return async (payload: EmailPayload): Promise<DeliveryOutcome> => {
+    const isApproval = "kind" in payload && payload.kind === "coach-approval";
     const isApplication =
       "kind" in payload && payload.kind === "coach-application";
     const isGroup = "kind" in payload && payload.kind === "group";
     const isBooking = "kind" in payload && payload.kind === "booking";
     const isTraining = "kind" in payload && payload.kind === "training";
-    const email = isTraining
-      ? trainingEmail(payload, config.siteUrl)
-      : isApplication
-        ? coachApplicationEmail(payload, config.siteUrl)
-        : isGroup
-          ? groupEmail(payload, config.siteUrl)
-          : isBooking
-            ? bookingEmail(payload, config.siteUrl)
-            : messageEmail(payload as MessageEmailPayload, config.siteUrl);
-    const key = `${isTraining ? "training" : isApplication ? "coach-application" : isGroup ? "group" : isBooking ? "booking" : "message"}-notice/${payload.id}`;
+    const email = isApproval
+      ? coachApprovalEmail(payload, config.siteUrl)
+      : isTraining
+        ? trainingEmail(payload, config.siteUrl)
+        : isApplication
+          ? coachApplicationEmail(payload, config.siteUrl, config.reviewOrigin)
+          : isGroup
+            ? groupEmail(payload, config.siteUrl)
+            : isBooking
+              ? bookingEmail(payload, config.siteUrl)
+              : messageEmail(payload as MessageEmailPayload, config.siteUrl);
+    const key = `${isApproval ? "coach-approval" : isTraining ? "training" : isApplication ? "coach-application" : isGroup ? "group" : isBooking ? "booking" : "message"}-notice/${payload.id}`;
     const local = config.transport === "mailpit";
     const body = local
       ? {

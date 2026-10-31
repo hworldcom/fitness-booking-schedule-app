@@ -23,7 +23,7 @@ const payload = {
   conversationId: randomUUID(),
   email: "athlete@example.test",
 };
-test("cached clients retain v1/v2 while group clients opt into version3", async () => {
+test("cached clients retain v1/v2/v3 while approval clients opt into version4", async () => {
   const versions: number[] = [];
   const handler = notificationHandlers(
     async (_input, version) => {
@@ -75,7 +75,6 @@ test("cached clients retain v1/v2 while group clients opt into version3", async 
     ).status,
     200,
   );
-  assert.deepEqual(versions, [1, 2, 2, 3]);
   assert.equal(
     (
       await handler.GET(
@@ -84,9 +83,20 @@ test("cached clients retain v1/v2 while group clients opt into version3", async 
         }),
       )
     ).status,
+    200,
+  );
+  assert.deepEqual(versions, [1, 2, 2, 3, 4]);
+  assert.equal(
+    (
+      await handler.GET(
+        new Request(site + "/api/notifications", {
+          headers: { [NOTIFICATION_VERSION_HEADER]: "5" },
+        }),
+      )
+    ).status,
     400,
   );
-  assert.equal(versions.length, 4);
+  assert.equal(versions.length, 5);
 });
 test("booking receipts preserve semantic snapshots, escaping and two independent recipient idempotency keys", async () => {
   const event: BookingNotification = {

@@ -1,3 +1,4 @@
+import { rehearseStaffCoachApproval } from "./lib/staff-coach-approval-integration.mjs";
 import { verifiedDatabaseFingerprints } from "./lib/database-fingerprints.mjs";
 import { rehearseCoachApplicationEmail } from "./lib/coach-application-email-integration.mjs";
 // MOV-68: real Auth/API/SQL/browser/worker QA in a wholly disposable stack.
@@ -14,8 +15,20 @@ import { chromium, expect as baseExpect } from "@playwright/test";
 
 const expect = baseExpect.configure({ timeout: 20000 });
 const root = process.cwd();
-assert.ok(process.argv.slice(2).every((arg) => arg === "--webpack"));
+assert.ok(
+  process.argv
+    .slice(2)
+    .every((arg) => ["--webpack", "--admin", "--admin-only"].includes(arg)),
+);
 const webpack = process.argv.includes("--webpack");
+const adminOnly = process.argv.includes("--admin-only");
+const adminEnabled = process.argv.includes("--admin") || adminOnly;
+const adminSource = path.resolve(
+  process.env.MOVX_ADMIN_SOURCE ?? "../movx-admin",
+);
+let adminCheckout,
+  adminServer,
+  adminLog = "";
 const tag = randomUUID().replaceAll("-", "").slice(0, 10);
 const project = `mov68-notification-qa-${tag}`;
 const checkout = await mkdtemp(path.join(tmpdir(), `${project}-`));
@@ -25,7 +38,7 @@ const cli = path.join(root, "node_modules/.bin/supabase");
 const cleanEnv = Object.fromEntries(
   Object.entries(process.env).filter(
     ([key]) =>
-      !/SUPABASE|DATABASE|MOVX|AUTH|NEXT_PUBLIC|RESEND|NOTIFICATION|CRON_SECRET|SMTP|OPENAI_API_KEY/.test(
+      !/SUPABASE|DATABASE|MOVX|AUTH|NEXT_PUBLIC|RESEND|NOTIFICATION|CRON_SECRET|SMTP|MUX|COACH_REVIEW|OPENAI_API_KEY/.test(
         key,
       ),
   ),
@@ -260,6 +273,105 @@ try {
     NOTIFICATION_MAILPIT_URL: mail,
     CRON_SECRET: cron,
   };
+  let adminBase;
+  if (adminEnabled) {
+    assert.equal(
+      JSON.parse(await readFile(path.join(adminSource, "package.json"), "utf8"))
+        .name,
+      "movx-admin",
+    );
+    adminBase = "http://localhost:3170";
+    adminCheckout = await mkdtemp(path.join(tmpdir(), `mov145-admin-${tag}-`));
+    await writeFile(
+      path.join(output, "recovery.json"),
+      JSON.stringify(
+        {
+          project,
+          checkout,
+          adminCheckout,
+          ports: [55421, 55422, 55424, 3169, 3170],
+        },
+        null,
+        2,
+      ),
+      { mode: 0o600 },
+    );
+    const adminFiles = execFileSync(
+      "git",
+      ["ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+      { cwd: adminSource, encoding: "utf8" },
+    )
+      .split("\0")
+      .filter((n) => n && (!n.startsWith(".env") || n.endsWith(".example")));
+    for (const name of adminFiles) {
+      await mkdir(path.dirname(path.join(adminCheckout, name)), {
+        recursive: true,
+      });
+      await cp(path.join(adminSource, name), path.join(adminCheckout, name));
+    }
+    if (process.platform === "darwin")
+      await command("/bin/cp", [
+        "-cR",
+        path.join(adminSource, "node_modules"),
+        path.join(adminCheckout, "node_modules"),
+      ]);
+    else
+      await cp(
+        path.join(adminSource, "node_modules"),
+        path.join(adminCheckout, "node_modules"),
+        {
+          recursive: true,
+          mode: constants.COPYFILE_FICLONE,
+          verbatimSymlinks: true,
+        },
+      );
+    for (const name of ["lint", "typecheck", "test", "format:check"]) {
+      await writeFile(
+        path.join(output, `admin-${name.replace(":", "-")}.log`),
+        redact(await command("npm", ["run", name], cleanEnv, adminCheckout)),
+      );
+      pass("independent admin " + name);
+    }
+    const adminEnv = {
+      ...cleanEnv,
+      NODE_ENV: "production",
+      NEXT_PUBLIC_SITE_URL: adminBase,
+      NEXT_PUBLIC_SUPABASE_URL: api,
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
+        status.PUBLISHABLE_KEY ?? status.ANON_KEY,
+      DATABASE_URL: loginUrl("qa_app", appPassword),
+    };
+    await writeFile(
+      path.join(output, "admin-build.log"),
+      redact(await command("npm", ["run", "build"], adminEnv, adminCheckout)),
+    );
+    pass("independent admin default Turbopack production build");
+    adminServer = spawn(
+      process.execPath,
+      [
+        "node_modules/next/dist/bin/next",
+        "start",
+        "--hostname",
+        "127.0.0.1",
+        "--port",
+        "3170",
+      ],
+      { cwd: adminCheckout, env: adminEnv, stdio: ["ignore", "pipe", "pipe"] },
+    );
+    for (const stream of [adminServer.stdout, adminServer.stderr])
+      stream.on("data", (data) => {
+        adminLog = (adminLog + redact(data.toString())).slice(-100000);
+      });
+    await waitUntil(async () => {
+      if (adminServer.exitCode !== null) throw Error(adminLog);
+      try {
+        return (await fetch(adminBase + "/sign-in")).ok;
+      } catch {
+        return false;
+      }
+    });
+    appEnv.COACH_REVIEW_SITE_URL = adminBase;
+  }
   // Local copies satisfy Turbopack's project-root policy; no package update.
   phase = "production build";
   console.log(
@@ -391,6 +503,7 @@ try {
       runId: identity.identity_run_id,
       name,
       email,
+      password,
       context,
       page,
     };
@@ -450,7 +563,40 @@ try {
     pass,
     output,
   });
-  await database`select app.review_coach_application(${coach.profileId}::uuid,'pending','approved','Disposable message notification QA','local-test','movx-identity-application-v1')`;
+  if (adminEnabled)
+    await rehearseStaffCoachApproval({
+      base,
+      adminBase,
+      browser,
+      coach,
+      stranger,
+      person,
+      database,
+      mail,
+      cron,
+      pass,
+      output,
+    });
+  else {
+    await database`select app.review_coach_application(${coach.profileId}::uuid,'pending','approved','Disposable message notification QA','local-test','movx-identity-application-v1')`;
+    assert.equal((await dispatch()).accepted, 1);
+    const [approval] =
+      await database`select id from app.coach_approval_notifications where profile_id=${coach.profileId}::uuid`;
+    assert.equal(
+      (
+        await call(
+          coach,
+          "/api/notifications",
+          { action: "read", args: { id: approval.id } },
+          { "x-movx-notification-version": "4" },
+        )
+      ).status,
+      200,
+    );
+    pass(
+      "owner-command approval sends one applicant receipt without publishing; read scope independent",
+    );
+  }
   await database`update app.coach_profiles set visibility='visible' where profile_id=${coach.profileId}::uuid`;
   const [profile] =
     await database`select slug from app.profiles where id=${coach.profileId}::uuid`;
@@ -470,413 +616,437 @@ try {
   );
   pass("three independent real browser password sessions");
 
-  phase = "real inquiry capture and recipient authorization";
-  const firstBody = `Private QA message ${tag} <script>literal</script>`;
-  await athlete.page.goto(base + `/coaches/${profile.slug}`);
-  await athlete.page
-    .getByRole("link", { name: "Message coach", exact: true })
-    .click();
-  await athlete.page.getByLabel("Your message").fill(firstBody);
-  await athlete.page
-    .getByRole("button", { name: "Send message", exact: true })
-    .click();
-  await expect(
-    athlete.page.getByText(firstBody, { exact: true }),
-  ).toBeVisible();
-  await expect(athlete.page).toHaveURL(/conversation=/);
-  const conversationId = new URL(athlete.page.url()).searchParams.get(
-    "conversation",
-  );
-  assert.ok(conversationId);
-  const [firstJob] =
-    await database`select j.id,j.due_at,j.first_entry_id,extract(epoch from j.due_at-e.created_at) delay_seconds from app.notification_emails j join app.message_entries e on e.id=j.first_entry_id where j.conversation_id=${conversationId}::uuid and j.recipient_profile_id=${coach.profileId}::uuid`;
-  assert.ok(firstJob);
-  assert.equal(Number(firstJob.delay_seconds), 300);
-  const firstDeadline = new Date(firstJob.due_at).getTime();
-  const thread = await ready(
-    athlete,
-    `/api/messages?conversationId=${conversationId}`,
-  );
-  const contextId = thread.contexts.find((c) => c.kind === "inquiry").id;
-  const send = (body, submissionId = randomUUID()) =>
-    message(athlete, "send", { conversationId, contextId, body, submissionId });
-  assert.equal((await list(coach)).unreadCount, 1);
-  assert.equal((await list(athlete)).unreadCount, 0);
-  assert.equal((await list(stranger)).unreadCount, 0);
-  const initial = await list(coach);
-  assert.ok(!JSON.stringify(initial).includes(firstBody));
-  assert.ok(!JSON.stringify(initial).includes(athlete.email));
-  assert.equal(
-    (
-      await call(stranger, "/api/notifications", {
-        action: "read",
-        args: { id: initial.items[0].id },
-      })
-    ).status,
-    503,
-  );
-  assert.equal(
-    (await call(stranger, `/api/messages?conversationId=${conversationId}`))
-      .status,
-    409,
-  );
-  assert.equal(
-    (
-      await call(
-        coach,
-        "/api/notifications",
-        { action: "read", args: { id: initial.items[0].id } },
-        { origin: "https://other.example" },
-      )
-    ).status,
-    403,
-  );
-  const guest = await browser.newContext();
-  assert.equal(
-    (await guest.request.get(base + "/api/notifications")).status(),
-    401,
-  );
-  assert.equal(
-    (await fetch(base + "/api/internal/notifications/dispatch")).status,
-    401,
-  );
-  assert.equal((await dispatch()).claimed, 0);
-  pass(
-    "browser inquiry atomically captures recipient-only notification; guest, stranger, origin and cron guards",
-  );
-
-  phase = "bell versus conversation read state";
-  await refresh(coach);
-  const bell = coach.page.getByRole("button", { name: /^Notifications,/ });
-  await expect(bell).toHaveAccessibleName("Notifications, 1 unread");
-  await bell.click();
-  const dialog = coach.page.getByRole("dialog");
-  await expect(
-    dialog.getByRole("link", { name: /New message from QA/ }),
-  ).toBeVisible();
-  assert.equal((await ready(coach, "/api/messages")).unreadCount, 1);
-  await dialog
-    .getByRole("button", { name: /Mark message notification/ })
-    .click();
-  await expect(bell).toHaveAccessibleName("Notifications, 0 unread");
-  assert.equal((await ready(coach, "/api/messages")).unreadCount, 1);
-  assert.equal(
-    (
-      await database`select state from app.notification_emails where id=${firstJob.id}::uuid`
-    )[0].state,
-    "queued",
-  );
-  await coach.page.keyboard.press("Escape");
-  await expect(bell).toBeFocused();
-  const retryId = randomUUID();
-  await send("Exact retry QA", retryId);
-  await send("Exact retry QA", retryId);
-  assert.equal((await list(coach)).unreadCount, 1);
-  assert.equal(
-    Number(
+  if (adminOnly) {
+    assert.deepEqual(errors, []);
+    pass(
+      "focused two-app admin acceptance without repeating unchanged five-minute message journey",
+    );
+  } else {
+    phase = "real inquiry capture and recipient authorization";
+    const firstBody = `Private QA message ${tag} <script>literal</script>`;
+    await athlete.page.goto(base + `/coaches/${profile.slug}`);
+    await athlete.page
+      .getByRole("link", { name: "Message coach", exact: true })
+      .click();
+    await athlete.page.getByLabel("Your message").fill(firstBody);
+    await athlete.page
+      .getByRole("button", { name: "Send message", exact: true })
+      .click();
+    await expect(
+      athlete.page.getByText(firstBody, { exact: true }),
+    ).toBeVisible();
+    await expect(athlete.page).toHaveURL(/conversation=/);
+    const conversationId = new URL(athlete.page.url()).searchParams.get(
+      "conversation",
+    );
+    assert.ok(conversationId);
+    const [firstJob] =
+      await database`select j.id,j.due_at,j.first_entry_id,extract(epoch from j.due_at-e.created_at) delay_seconds from app.notification_emails j join app.message_entries e on e.id=j.first_entry_id where j.conversation_id=${conversationId}::uuid and j.recipient_profile_id=${coach.profileId}::uuid`;
+    assert.ok(firstJob);
+    assert.equal(Number(firstJob.delay_seconds), 300);
+    const firstDeadline = new Date(firstJob.due_at).getTime();
+    const thread = await ready(
+      athlete,
+      `/api/messages?conversationId=${conversationId}`,
+    );
+    const contextId = thread.contexts.find((c) => c.kind === "inquiry").id;
+    const send = (body, submissionId = randomUUID()) =>
+      message(athlete, "send", {
+        conversationId,
+        contextId,
+        body,
+        submissionId,
+      });
+    assert.equal((await list(coach)).unreadCount, 1);
+    assert.equal((await list(athlete)).unreadCount, 0);
+    assert.equal((await list(stranger)).unreadCount, 0);
+    const initial = await list(coach);
+    assert.ok(!JSON.stringify(initial).includes(firstBody));
+    assert.ok(!JSON.stringify(initial).includes(athlete.email));
+    assert.equal(
       (
-        await database`select count(*) n from app.message_entries where submission_id=${retryId}::uuid`
-      )[0].n,
-    ),
-    1,
-  );
-  pass(
-    "bell opening/mark-read independent of chat; exact message retry produces one alert",
-  );
-
-  phase = "real history paging and snapshot cutoff";
-  for (let i = 0; i < 21; i++) await send(`Paging QA ${i}`);
-  assert.equal((await list(coach)).unreadCount, 22);
-  await refresh(coach);
-  await bell.click();
-  await expect(dialog.locator(".notification-items > li")).toHaveCount(20);
-  await dialog.getByRole("button", { name: "Older", exact: true }).click();
-  await expect(dialog.locator(".notification-items > li")).toHaveCount(3);
-  await dialog.getByRole("button", { name: "Newer", exact: true }).click();
-  await expect(dialog.locator(".notification-items > li")).toHaveCount(20);
-  const snapshot = await list(coach);
-  await send("Arrived after list snapshot");
-  await ready(coach, "/api/notifications", {
-    action: "read-all",
-    args: { throughAt: snapshot.snapshotAt },
-  });
-  assert.equal((await list(coach, "?filter=unread")).unreadCount, 1);
-  await refresh(coach);
-  await dialog.getByRole("button", { name: "Unread", exact: true }).click();
-  await expect(dialog.locator(".notification-items > li")).toHaveCount(1);
-  pass(
-    "real twenty-item paging and snapshot-bounded mark-all preserve later arrivals",
-  );
-
-  phase = "read/write transport failure recovery";
-  await coach.page.route("**/api/notifications", async (route) =>
-    route.request().method() === "POST"
-      ? route.abort("failed")
-      : route.continue(),
-  );
-  await dialog
-    .getByRole("button", { name: /Mark message notification/ })
-    .click();
-  await expect(
-    dialog.getByRole("button", { name: "Try again", exact: true }),
-  ).toBeVisible();
-  assert.equal((await list(coach)).unreadCount, 1);
-  await coach.page.unroute("**/api/notifications");
-  await dialog.getByRole("button", { name: "Try again", exact: true }).click();
-  await expect(
-    dialog.getByRole("button", { name: /Mark message notification/ }),
-  ).toBeVisible();
-  await coach.page.route("**/api/notifications?*", (route) =>
-    route.abort("failed"),
-  );
-  // Opening explicitly forces a fresh read; a focus event may correctly
-  // coalesce with the successful retry still in flight above.
-  await coach.page.keyboard.press("Escape");
-  await bell.click();
-  await expect(bell).toHaveAccessibleName("Notifications, count unavailable");
-  await expect(dialog.locator(".notification-items > li")).toHaveCount(1);
-  await coach.page.unroute("**/api/notifications?*");
-  await dialog.getByRole("button", { name: "Try again", exact: true }).click();
-  await expect(bell).toHaveAccessibleName("Notifications, 1 unread");
-  await dialog
-    .getByRole("button", { name: "Mark all read", exact: true })
-    .click();
-  await expect(
-    dialog.getByText("You’re all caught up", { exact: true }),
-  ).toBeVisible();
-  assert.equal((await ready(coach, "/api/messages")).unreadCount, 1);
-  pass(
-    "real API failure injection retains stale rows/count uncertainty; writes retry without false success",
-  );
-
-  phase = "desktop/mobile and real signed-in header coverage";
-  await dialog.getByRole("button", { name: "All", exact: true }).click();
-  await expect(dialog.locator(".notification-items > li")).toHaveCount(20);
-  for (const width of [1440, 375, 320]) {
-    await coach.page.setViewportSize({ width, height: 950 });
-    const bounds = await dialog.boundingBox();
-    assert.ok(bounds && bounds.x >= -1 && bounds.x + bounds.width <= width + 1);
-    await coach.page.screenshot({
-      path: path.join(output, `bell-${width}.png`),
-    });
-  }
-  await coach.page.keyboard.press("Escape");
-  for (const route of [
-    "/explore",
-    "/coach",
-    "/messages",
-    "/account",
-    "/profile",
-  ]) {
-    await coach.page.goto(base + route);
-    await expect(bell).toHaveAccessibleName("Notifications, 0 unread");
-  }
-  // Leave Messages without opening the conversation, so it stays unread.
-  await coach.page.goto(base + "/account");
-  await coach.page.setViewportSize({ width: 1440, height: 1000 });
-  pass(
-    "actual authorized headers at five routes; desktop and 375/320px panel bounds and Escape focus",
-  );
-
-  phase = "real five-minute eligibility";
-  const [unchanged] =
-    await database`select due_at from app.notification_emails where id=${firstJob.id}::uuid`;
-  assert.equal(new Date(unchanged.due_at).getTime(), firstDeadline);
-  let checks = 0;
-  while (Date.now() < firstDeadline - 1000) {
+        await call(stranger, "/api/notifications", {
+          action: "read",
+          args: { id: initial.items[0].id },
+        })
+      ).status,
+      503,
+    );
+    assert.equal(
+      (await call(stranger, `/api/messages?conversationId=${conversationId}`))
+        .status,
+      409,
+    );
+    assert.equal(
+      (
+        await call(
+          coach,
+          "/api/notifications",
+          { action: "read", args: { id: initial.items[0].id } },
+          { origin: "https://other.example" },
+        )
+      ).status,
+      403,
+    );
+    const guest = await browser.newContext();
+    assert.equal(
+      (await guest.request.get(base + "/api/notifications")).status(),
+      401,
+    );
+    assert.equal(
+      (await fetch(base + "/api/internal/notifications/dispatch")).status,
+      401,
+    );
     assert.equal((await dispatch()).claimed, 0);
-    checks++;
-    const remaining = firstDeadline - Date.now();
-    console.log(
-      `Five-minute wall-clock check: not eligible; ${Math.ceil(remaining / 1000)} seconds remain.`,
+    pass(
+      "browser inquiry atomically captures recipient-only notification; guest, stranger, origin and cron guards",
     );
-    await new Promise((resolve) =>
-      setTimeout(resolve, Math.min(30000, Math.max(100, remaining - 1000))),
-    );
-  }
-  await waitUntil(async () => Date.now() >= firstDeadline + 500, 5000);
-  const delivered = await dispatch();
-  assert.equal(delivered.accepted, 1);
-  const [accepted] =
-    await database`select state,provider_id from app.notification_emails where id=${firstJob.id}::uuid`;
-  assert.equal(accepted.state, "accepted");
-  const captured = await (
-    await fetch(`${mail}/api/v1/message/${accepted.provider_id}`)
-  ).json();
-  assert.equal(captured.From.Address, "notification@movx.club");
-  assert.equal(captured.To[0].Address, coach.email);
-  const raw = await (
-    await fetch(`${mail}/api/v1/message/${accepted.provider_id}/raw`)
-  ).text();
-  assert.match(raw, /Reply-To:.*hello@movx\.club/i);
-  assert.ok(
-    captured.Text.includes(`${base}/messages?conversation=${conversationId}`),
-  );
-  assert.ok(!JSON.stringify(captured).includes(firstBody));
-  assert.equal((await dispatch()).claimed, 0);
-  await send("Still unread after first delivery");
-  assert.equal(
-    Number(
-      (
-        await database`select count(*) n from app.notification_emails where conversation_id=${conversationId}::uuid and recipient_profile_id=${coach.profileId}::uuid`
-      )[0].n,
-    ),
-    1,
-  );
-  assert.equal((await dispatch()).claimed, 0);
-  pass(
-    "actual five-minute wall-clock delay, fixed deadline, correct captured headers/link/privacy and one email until read",
-    { earlyDispatchChecks: checks },
-  );
 
-  phase = "real conversation read and next unread period suppression";
-  await coach.page.bringToFront();
-  await coach.page.goto(`${base}/messages?conversation=${conversationId}`);
-  const lastMessage = coach.page.getByText(
-    "Still unread after first delivery",
-    { exact: true },
-  );
-  await lastMessage.scrollIntoViewIfNeeded();
-  await lastMessage.click();
-  await expect(lastMessage).toBeInViewport({ ratio: 0.5 });
-  await expect
-    .poll(() =>
-      coach.page.evaluate(
-        () => document.hasFocus() && document.visibilityState === "visible",
+    phase = "bell versus conversation read state";
+    await refresh(coach);
+    const bell = coach.page.getByRole("button", { name: /^Notifications,/ });
+    await expect(bell).toHaveAccessibleName("Notifications, 1 unread");
+    await bell.click();
+    const dialog = coach.page.getByRole("dialog");
+    await expect(
+      dialog.getByRole("link", { name: /New message from QA/ }),
+    ).toBeVisible();
+    assert.equal((await ready(coach, "/api/messages")).unreadCount, 1);
+    await dialog
+      .getByRole("button", { name: /Mark message notification/ })
+      .click();
+    await expect(bell).toHaveAccessibleName("Notifications, 0 unread");
+    assert.equal((await ready(coach, "/api/messages")).unreadCount, 1);
+    assert.equal(
+      (
+        await database`select state from app.notification_emails where id=${firstJob.id}::uuid`
+      )[0].state,
+      "queued",
+    );
+    await coach.page.keyboard.press("Escape");
+    await expect(bell).toBeFocused();
+    const retryId = randomUUID();
+    await send("Exact retry QA", retryId);
+    await send("Exact retry QA", retryId);
+    assert.equal((await list(coach)).unreadCount, 1);
+    assert.equal(
+      Number(
+        (
+          await database`select count(*) n from app.message_entries where submission_id=${retryId}::uuid`
+        )[0].n,
       ),
-    )
-    .toBe(true);
-  await expect
-    .poll(
-      async () =>
-        (
-          await database`select closed_at from app.notification_emails where id=${firstJob.id}::uuid`
-        )[0].closed_at,
-    )
-    .not.toBeNull();
-  assert.ok(
-    (await list(coach)).unreadCount > 0,
-    "Reading chat must not silently mark bell history read",
-  );
-  await coach.page.goto(base + "/account");
-  await send("Fresh unread period after reading");
-  const jobs =
-    await database`select id,state,closed_at from app.notification_emails where conversation_id=${conversationId}::uuid and recipient_profile_id=${coach.profileId}::uuid order by due_at`;
-  assert.equal(jobs.length, 2);
-  assert.equal(jobs[1].state, "queued");
-  await coach.page.goto(`${base}/messages?conversation=${conversationId}`);
-  const freshMessage = coach.page.getByText(
-    "Fresh unread period after reading",
-    { exact: true },
-  );
-  await freshMessage.scrollIntoViewIfNeeded();
-  await freshMessage.click();
-  await expect(freshMessage).toBeInViewport({ ratio: 0.5 });
-  await expect
-    .poll(
-      async () =>
-        (
-          await database`select state from app.notification_emails where id=${jobs[1].id}::uuid`
-        )[0].state,
-    )
-    .toBe("suppressed");
-  assert.equal((await dispatch()).claimed, 0);
-  pass(
-    "real Messages full read closes period, next text re-arms, read-before-due suppresses second email",
-  );
-  phase = "real booking HTTP/Auth/SQL/bell/two-party immediate email";
-  await coach.page.goto(base + "/account");
-  const [venue] =
-    await database`select id,to_jsonb(updated_at)#>>'{}' stamp from app.coach_training_locations where profile_id=${coach.profileId}::uuid and is_primary`;
-  const [offer] =
-    await database`select id,revision from app.coach_session_types where coach_profile_id=${coach.profileId}::uuid and format='private' limit 1`;
-  const [future] =
-    await database`select ((clock_timestamp() at time zone 'Europe/Berlin')::date+3)::text target`;
-  await database.begin(async (tx) => {
-    await tx`select set_config('app.current_auth_user_id',${coach.authId},true),set_config('app.current_profile_id',${coach.profileId},true),set_config('app.current_run_id',${coach.runId},true),set_config('app.current_run_role','member',true)`;
-    await tx`select app.save_owned_effective_coach_availability(${tx.json({ kind: "dates", operationId: randomUUID(), expectedRevision: 0, dates: [{ date: future.target, mode: "custom", hours: [{ localStartTime: "09:00", locationId: venue.id, locationUpdatedAt: venue.stamp }] }] })})`;
-    await tx`select app.mutate_owned_coach_session_type(${randomUUID()}::uuid,${tx.json({ action: "save", id: offer.id, expectedRevision: offer.revision, format: "private", name: "Booking QA session", description: "Disposable browser booking notification validation.", color: "#123456", durationMinutes: 60, defaultLocationId: venue.id, bookable: true })})`;
-  });
-  const [start] =
-    await database`select ((${future.target}::date+time '09:00') at time zone 'Europe/Berlin') starts_at`;
-  const requestBody = {
-    commandId: randomUUID(),
-    typeId: offer.id,
-    typeRevision: offer.revision + 1,
-    locationId: venue.id,
-    startsAt: new Date(start.starts_at).toISOString(),
-  };
-  const booked = await call(athlete, "/api/session-bookings", requestBody);
-  assert.equal(booked.status, 200, JSON.stringify(booked.data));
-  assert.equal(booked.data.status, "saved");
-  assert.equal(booked.data.requestStatus, "pending");
-  const replay = await call(athlete, "/api/session-bookings", requestBody);
-  assert.equal(replay.data.requestId, booked.data.requestId);
-  const receiptRows =
-    await database`select r.id,r.recipient_profile_id,r.state,r.notify_in_app from app.booking_notification_receipts r join app.booking_notification_events e on e.id=r.event_id where e.source_id=${booked.data.requestId}::uuid`;
-  assert.equal(receiptRows.length, 2);
-  assert.ok(receiptRows.every((r) => r.state === "queued"));
-  assert.equal(receiptRows.filter((r) => r.notify_in_app).length, 1);
-  assert.equal(
-    (await list(athlete)).items.filter((x) => x.kind === "booking").length,
-    0,
-  );
-  await refresh(coach);
-  await bell.click();
-  await expect(
-    dialog.getByRole("link", { name: /Booking request submitted/ }),
-  ).toBeVisible();
-  const legacy = await coach.context.request.get(base + "/api/notifications");
-  const legacyPage = (await legacy.json()).value;
-  assert.equal(legacyPage.items.filter((x) => x.kind === "booking").length, 0);
-  const legacyRead = await coach.context.request.post(
-    base + "/api/notifications",
-    {
-      headers: { origin: base },
-      data: { action: "read-all", args: { throughAt: legacyPage.snapshotAt } },
-    },
-  );
-  assert.equal(legacyRead.status(), 200);
-  assert.equal(
-    (await list(coach, "?filter=unread")).items.filter(
-      (x) => x.kind === "booking",
-    ).length,
-    1,
-  );
-  await dialog
-    .getByRole("button", {
-      name: "Mark booking request submitted notification as read",
-      exact: true,
-    })
-    .click();
-  assert.ok(
-    (
-      await database`select state from app.booking_notification_receipts where id in(${receiptRows[0].id}::uuid,${receiptRows[1].id}::uuid)`
-    ).every((r) => r.state === "queued"),
-  );
-  assert.equal((await dispatch()).accepted, 2);
-  const receipts =
-    await database`select provider_id,recipient_profile_id from app.booking_notification_receipts where id in(${receiptRows[0].id}::uuid,${receiptRows[1].id}::uuid)`;
-  const received = new Set();
-  for (const receipt of receipts) {
+      1,
+    );
+    pass(
+      "bell opening/mark-read independent of chat; exact message retry produces one alert",
+    );
+
+    phase = "real history paging and snapshot cutoff";
+    for (let i = 0; i < 21; i++) await send(`Paging QA ${i}`);
+    assert.equal((await list(coach)).unreadCount, 22);
+    await refresh(coach);
+    await bell.click();
+    await expect(dialog.locator(".notification-items > li")).toHaveCount(20);
+    await dialog.getByRole("button", { name: "Older", exact: true }).click();
+    await expect(dialog.locator(".notification-items > li")).toHaveCount(4);
+    await dialog.getByRole("button", { name: "Newer", exact: true }).click();
+    await expect(dialog.locator(".notification-items > li")).toHaveCount(20);
+    const snapshot = await list(coach);
+    await send("Arrived after list snapshot");
+    await ready(coach, "/api/notifications", {
+      action: "read-all",
+      args: { throughAt: snapshot.snapshotAt },
+    });
+    assert.equal((await list(coach, "?filter=unread")).unreadCount, 1);
+    await refresh(coach);
+    await dialog.getByRole("button", { name: "Unread", exact: true }).click();
+    await expect(dialog.locator(".notification-items > li")).toHaveCount(1);
+    pass(
+      "real twenty-item paging and snapshot-bounded mark-all preserve later arrivals",
+    );
+
+    phase = "read/write transport failure recovery";
+    await coach.page.route("**/api/notifications", async (route) =>
+      route.request().method() === "POST"
+        ? route.abort("failed")
+        : route.continue(),
+    );
+    await dialog
+      .getByRole("button", { name: /Mark message notification/ })
+      .click();
+    await expect(
+      dialog.getByRole("button", { name: "Try again", exact: true }),
+    ).toBeVisible();
+    assert.equal((await list(coach)).unreadCount, 1);
+    await coach.page.unroute("**/api/notifications");
+    await dialog
+      .getByRole("button", { name: "Try again", exact: true })
+      .click();
+    await expect(
+      dialog.getByRole("button", { name: /Mark message notification/ }),
+    ).toBeVisible();
+    await coach.page.route("**/api/notifications?*", (route) =>
+      route.abort("failed"),
+    );
+    // Opening explicitly forces a fresh read; a focus event may correctly
+    // coalesce with the successful retry still in flight above.
+    await coach.page.keyboard.press("Escape");
+    await bell.click();
+    await expect(bell).toHaveAccessibleName("Notifications, count unavailable");
+    await expect(dialog.locator(".notification-items > li")).toHaveCount(1);
+    await coach.page.unroute("**/api/notifications?*");
+    await dialog
+      .getByRole("button", { name: "Try again", exact: true })
+      .click();
+    await expect(bell).toHaveAccessibleName("Notifications, 1 unread");
+    await dialog
+      .getByRole("button", { name: "Mark all read", exact: true })
+      .click();
+    await expect(
+      dialog.getByText("You’re all caught up", { exact: true }),
+    ).toBeVisible();
+    assert.equal((await ready(coach, "/api/messages")).unreadCount, 1);
+    pass(
+      "real API failure injection retains stale rows/count uncertainty; writes retry without false success",
+    );
+
+    phase = "desktop/mobile and real signed-in header coverage";
+    await dialog.getByRole("button", { name: "All", exact: true }).click();
+    await expect(dialog.locator(".notification-items > li")).toHaveCount(20);
+    for (const width of [1440, 375, 320]) {
+      await coach.page.setViewportSize({ width, height: 950 });
+      const bounds = await dialog.boundingBox();
+      assert.ok(
+        bounds && bounds.x >= -1 && bounds.x + bounds.width <= width + 1,
+      );
+      await coach.page.screenshot({
+        path: path.join(output, `bell-${width}.png`),
+      });
+    }
+    await coach.page.keyboard.press("Escape");
+    for (const route of [
+      "/explore",
+      "/coach",
+      "/messages",
+      "/account",
+      "/profile",
+    ]) {
+      await coach.page.goto(base + route);
+      await expect(bell).toHaveAccessibleName("Notifications, 0 unread");
+    }
+    // Leave Messages without opening the conversation, so it stays unread.
+    await coach.page.goto(base + "/account");
+    await coach.page.setViewportSize({ width: 1440, height: 1000 });
+    pass(
+      "actual authorized headers at five routes; desktop and 375/320px panel bounds and Escape focus",
+    );
+
+    phase = "real five-minute eligibility";
+    const [unchanged] =
+      await database`select due_at from app.notification_emails where id=${firstJob.id}::uuid`;
+    assert.equal(new Date(unchanged.due_at).getTime(), firstDeadline);
+    let checks = 0;
+    while (Date.now() < firstDeadline - 1000) {
+      assert.equal((await dispatch()).claimed, 0);
+      checks++;
+      const remaining = firstDeadline - Date.now();
+      console.log(
+        `Five-minute wall-clock check: not eligible; ${Math.ceil(remaining / 1000)} seconds remain.`,
+      );
+      await new Promise((resolve) =>
+        setTimeout(resolve, Math.min(30000, Math.max(100, remaining - 1000))),
+      );
+    }
+    await waitUntil(async () => Date.now() >= firstDeadline + 500, 5000);
+    const delivered = await dispatch();
+    assert.equal(delivered.accepted, 1);
+    const [accepted] =
+      await database`select state,provider_id from app.notification_emails where id=${firstJob.id}::uuid`;
+    assert.equal(accepted.state, "accepted");
     const captured = await (
-      await fetch(`${mail}/api/v1/message/${receipt.provider_id}`)
+      await fetch(`${mail}/api/v1/message/${accepted.provider_id}`)
     ).json();
     assert.equal(captured.From.Address, "notification@movx.club");
-    assert.equal(captured.To.length, 1);
-    received.add(captured.To[0].Address);
-    assert.match(captured.Text, /Booking request submitted/);
-    assert.match(captured.Text, /not a confirmed booking/);
-    assert.ok(!captured.Text.includes(firstBody));
+    assert.equal(captured.To[0].Address, coach.email);
+    const raw = await (
+      await fetch(`${mail}/api/v1/message/${accepted.provider_id}/raw`)
+    ).text();
+    assert.match(raw, /Reply-To:.*hello@movx\.club/i);
+    assert.ok(
+      captured.Text.includes(`${base}/messages?conversation=${conversationId}`),
+    );
+    assert.ok(!JSON.stringify(captured).includes(firstBody));
+    assert.equal((await dispatch()).claimed, 0);
+    await send("Still unread after first delivery");
+    assert.equal(
+      Number(
+        (
+          await database`select count(*) n from app.notification_emails where conversation_id=${conversationId}::uuid and recipient_profile_id=${coach.profileId}::uuid`
+        )[0].n,
+      ),
+      1,
+    );
+    assert.equal((await dispatch()).claimed, 0);
+    pass(
+      "actual five-minute wall-clock delay, fixed deadline, correct captured headers/link/privacy and one email until read",
+      { earlyDispatchChecks: checks },
+    );
+
+    phase = "real conversation read and next unread period suppression";
+    await coach.page.bringToFront();
+    await coach.page.goto(`${base}/messages?conversation=${conversationId}`);
+    const lastMessage = coach.page.getByText(
+      "Still unread after first delivery",
+      { exact: true },
+    );
+    await lastMessage.scrollIntoViewIfNeeded();
+    await lastMessage.click();
+    await expect(lastMessage).toBeInViewport({ ratio: 0.5 });
+    await expect
+      .poll(() =>
+        coach.page.evaluate(
+          () => document.hasFocus() && document.visibilityState === "visible",
+        ),
+      )
+      .toBe(true);
+    await expect
+      .poll(
+        async () =>
+          (
+            await database`select closed_at from app.notification_emails where id=${firstJob.id}::uuid`
+          )[0].closed_at,
+      )
+      .not.toBeNull();
+    assert.ok(
+      (await list(coach)).unreadCount > 0,
+      "Reading chat must not silently mark bell history read",
+    );
+    await coach.page.goto(base + "/account");
+    await send("Fresh unread period after reading");
+    const jobs =
+      await database`select id,state,closed_at from app.notification_emails where conversation_id=${conversationId}::uuid and recipient_profile_id=${coach.profileId}::uuid order by due_at`;
+    assert.equal(jobs.length, 2);
+    assert.equal(jobs[1].state, "queued");
+    await coach.page.goto(`${base}/messages?conversation=${conversationId}`);
+    const freshMessage = coach.page.getByText(
+      "Fresh unread period after reading",
+      { exact: true },
+    );
+    await freshMessage.scrollIntoViewIfNeeded();
+    await freshMessage.click();
+    await expect(freshMessage).toBeInViewport({ ratio: 0.5 });
+    await expect
+      .poll(
+        async () =>
+          (
+            await database`select state from app.notification_emails where id=${jobs[1].id}::uuid`
+          )[0].state,
+      )
+      .toBe("suppressed");
+    assert.equal((await dispatch()).claimed, 0);
+    pass(
+      "real Messages full read closes period, next text re-arms, read-before-due suppresses second email",
+    );
+    phase = "real booking HTTP/Auth/SQL/bell/two-party immediate email";
+    await coach.page.goto(base + "/account");
+    const [venue] =
+      await database`select id,to_jsonb(updated_at)#>>'{}' stamp from app.coach_training_locations where profile_id=${coach.profileId}::uuid and is_primary`;
+    const [offer] =
+      await database`select id,revision from app.coach_session_types where coach_profile_id=${coach.profileId}::uuid and format='private' limit 1`;
+    const [future] =
+      await database`select ((clock_timestamp() at time zone 'Europe/Berlin')::date+3)::text target`;
+    await database.begin(async (tx) => {
+      await tx`select set_config('app.current_auth_user_id',${coach.authId},true),set_config('app.current_profile_id',${coach.profileId},true),set_config('app.current_run_id',${coach.runId},true),set_config('app.current_run_role','member',true)`;
+      await tx`select app.save_owned_effective_coach_availability(${tx.json({ kind: "dates", operationId: randomUUID(), expectedRevision: 0, dates: [{ date: future.target, mode: "custom", hours: [{ localStartTime: "09:00", locationId: venue.id, locationUpdatedAt: venue.stamp }] }] })})`;
+      await tx`select app.mutate_owned_coach_session_type(${randomUUID()}::uuid,${tx.json({ action: "save", id: offer.id, expectedRevision: offer.revision, format: "private", name: "Booking QA session", description: "Disposable browser booking notification validation.", color: "#123456", durationMinutes: 60, defaultLocationId: venue.id, bookable: true })})`;
+    });
+    const [start] =
+      await database`select ((${future.target}::date+time '09:00') at time zone 'Europe/Berlin') starts_at`;
+    const requestBody = {
+      commandId: randomUUID(),
+      typeId: offer.id,
+      typeRevision: offer.revision + 1,
+      locationId: venue.id,
+      startsAt: new Date(start.starts_at).toISOString(),
+    };
+    const booked = await call(athlete, "/api/session-bookings", requestBody);
+    assert.equal(booked.status, 200, JSON.stringify(booked.data));
+    assert.equal(booked.data.status, "saved");
+    assert.equal(booked.data.requestStatus, "pending");
+    const replay = await call(athlete, "/api/session-bookings", requestBody);
+    assert.equal(replay.data.requestId, booked.data.requestId);
+    const receiptRows =
+      await database`select r.id,r.recipient_profile_id,r.state,r.notify_in_app from app.booking_notification_receipts r join app.booking_notification_events e on e.id=r.event_id where e.source_id=${booked.data.requestId}::uuid`;
+    assert.equal(receiptRows.length, 2);
+    assert.ok(receiptRows.every((r) => r.state === "queued"));
+    assert.equal(receiptRows.filter((r) => r.notify_in_app).length, 1);
+    assert.equal(
+      (await list(athlete)).items.filter((x) => x.kind === "booking").length,
+      0,
+    );
+    await refresh(coach);
+    await bell.click();
+    await expect(
+      dialog.getByRole("link", { name: /Booking request submitted/ }),
+    ).toBeVisible();
+    const legacy = await coach.context.request.get(base + "/api/notifications");
+    const legacyPage = (await legacy.json()).value;
+    assert.equal(
+      legacyPage.items.filter((x) => x.kind === "booking").length,
+      0,
+    );
+    const legacyRead = await coach.context.request.post(
+      base + "/api/notifications",
+      {
+        headers: { origin: base },
+        data: {
+          action: "read-all",
+          args: { throughAt: legacyPage.snapshotAt },
+        },
+      },
+    );
+    assert.equal(legacyRead.status(), 200);
+    assert.equal(
+      (await list(coach, "?filter=unread")).items.filter(
+        (x) => x.kind === "booking",
+      ).length,
+      1,
+    );
+    await dialog
+      .getByRole("button", {
+        name: "Mark booking request submitted notification as read",
+        exact: true,
+      })
+      .click();
+    assert.ok(
+      (
+        await database`select state from app.booking_notification_receipts where id in(${receiptRows[0].id}::uuid,${receiptRows[1].id}::uuid)`
+      ).every((r) => r.state === "queued"),
+    );
+    assert.equal((await dispatch()).accepted, 2);
+    const receipts =
+      await database`select provider_id,recipient_profile_id from app.booking_notification_receipts where id in(${receiptRows[0].id}::uuid,${receiptRows[1].id}::uuid)`;
+    const received = new Set();
+    for (const receipt of receipts) {
+      const captured = await (
+        await fetch(`${mail}/api/v1/message/${receipt.provider_id}`)
+      ).json();
+      assert.equal(captured.From.Address, "notification@movx.club");
+      assert.equal(captured.To.length, 1);
+      received.add(captured.To[0].Address);
+      assert.match(captured.Text, /Booking request submitted/);
+      assert.match(captured.Text, /not a confirmed booking/);
+      assert.ok(!captured.Text.includes(firstBody));
+    }
+    assert.deepEqual(received, new Set([coach.email, athlete.email]));
+    assert.equal((await dispatch()).claimed, 0);
+    pass(
+      "real browser-cookie booking POST/retry, canonical SQL capture, coach-only bell, legacy v1/v2 isolation, independent read and two immediate Mailpit receipts",
+    );
+    await guest.close();
+    assert.deepEqual(errors, []);
+    pass("no browser runtime exceptions");
   }
-  assert.deepEqual(received, new Set([coach.email, athlete.email]));
-  assert.equal((await dispatch()).claimed, 0);
-  pass(
-    "real browser-cookie booking POST/retry, canonical SQL capture, coach-only bell, legacy v1/v2 isolation, independent read and two immediate Mailpit receipts",
-  );
-  await guest.close();
-  assert.deepEqual(errors, []);
-  pass("no browser runtime exceptions");
 } catch (error) {
   let captureIndex = 0;
   for (const context of browser?.contexts() ?? [])
@@ -900,6 +1070,12 @@ try {
     if (server.exitCode === null)
       await new Promise((resolve) => server.once("exit", resolve));
   }
+  if (adminServer) {
+    adminServer.kill("SIGTERM");
+    if (adminServer.exitCode === null)
+      await new Promise((resolve) => adminServer.once("exit", resolve));
+  }
+  await writeFile(path.join(output, "admin-server.log"), redact(adminLog));
   await database?.end({ timeout: 1 });
   await writeFile(path.join(output, "server.log"), redact(serverLog));
   if (started) {
@@ -936,6 +1112,7 @@ try {
       2,
     ),
   );
+  if (adminCheckout) await rm(adminCheckout, { recursive: true, force: true });
   await rm(checkout, { recursive: true, force: true });
   console.log(`Evidence: ${output}`);
 }
