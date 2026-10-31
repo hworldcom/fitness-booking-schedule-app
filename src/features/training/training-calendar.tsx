@@ -38,16 +38,19 @@ export function TrainingCalendar({
     view,
     timezone,
   });
-  const { page, busy, error, pending } = workspace;
-  const [day, setDay] = useState(
-    selected
+  const { page, busy, error, pending, paused } = workspace;
+  const [selection, setSelection] = useState({
+    date,
+    day: selected
       ? localDate(
           initial.items.find((i) => i.key === selected)?.startsAt ??
             `${date}T12:00:00Z`,
           timezone,
         )
       : date,
-  );
+  });
+  if (selection.date !== date) setSelection({ date, day: date });
+  const day = selection.date === date ? selection.day : date;
   const [editor, setEditor] = useState<{
     item?: TrainingItem;
     log?: boolean;
@@ -57,7 +60,7 @@ export function TrainingCalendar({
   const href = (d: string, v = view, tz = timezone) =>
     `/sessions/calendar?date=${d}&view=${v}&timezone=${encodeURIComponent(tz)}`;
   function selectDay(d: string) {
-    setDay(d);
+    setSelection({ date, day: d });
     router.replace(href(d), { scroll: false });
   }
   function save(command: TrainingCommand) {
@@ -131,6 +134,7 @@ export function TrainingCalendar({
       <div className="training-actions">
         <button
           className="button secondary"
+          disabled={paused}
           onClick={() => setEditor({ log: true })}
         >
           Log workout
@@ -139,7 +143,7 @@ export function TrainingCalendar({
           <input
             type="checkbox"
             checked={page.remindersEnabled}
-            disabled={busy}
+            disabled={paused}
             onChange={(e) =>
               void save({
                 action: "preference",
@@ -228,6 +232,9 @@ export function TrainingCalendar({
           </label>
           <button type="submit">Apply timezone</button>
         </form>
+        <p className="training-help training-calendar-help">
+          Select a personal workout to edit its details or log.
+        </p>
         <div className={`training-grid training-grid-${view}`}>
           {days.map((d) => {
             const items = page.items.filter((i) => onDay(i, d));
@@ -252,9 +259,21 @@ export function TrainingCalendar({
                   <button
                     className={`training-event training-event-${i.attendance}`}
                     key={i.key}
+                    aria-label={
+                      i.source === "personal"
+                        ? `Edit workout: ${i.title}`
+                        : undefined
+                    }
+                    aria-haspopup={
+                      i.source === "personal" ? "dialog" : undefined
+                    }
+                    disabled={i.source === "personal" && paused}
                     onClick={() => {
-                      selectDay(d);
-                      document.getElementById("training-agenda")?.focus();
+                      if (i.source === "personal") setEditor({ item: i });
+                      else {
+                        selectDay(d);
+                        document.getElementById("training-agenda")?.focus();
+                      }
                     }}
                   >
                     <span>{time(i)}</span>
@@ -262,6 +281,9 @@ export function TrainingCalendar({
                     <small>
                       {i.attendance !== "planned" ? i.attendance : i.state}
                     </small>
+                    {i.source === "personal" && (
+                      <span className="training-event-edit">Edit</span>
+                    )}
                   </button>
                 ))}
                 {items.length > 3 && (
@@ -285,7 +307,7 @@ export function TrainingCalendar({
               More training is available in this period. Load it to complete the
               calendar and day counts.
             </p>
-            <button disabled={busy} onClick={workspace.loadMore}>
+            <button disabled={paused} onClick={workspace.loadMore}>
               Load more training
             </button>
           </div>
@@ -355,7 +377,10 @@ export function TrainingCalendar({
                       This local time is unavailable because the clocks change.
                       Choose another time.
                     </p>
-                    <button onClick={() => setEditor({ item: i })}>
+                    <button
+                      disabled={paused}
+                      onClick={() => setEditor({ item: i })}
+                    >
                       Choose workout time
                     </button>
                   </>
@@ -364,27 +389,30 @@ export function TrainingCalendar({
                   <>
                     {Date.parse(i.endsAt) <= Date.parse(page.now) && (
                       <button
-                        disabled={busy}
+                        disabled={paused}
                         onClick={() => attendance(i, "attended")}
                       >
                         I attended
                       </button>
                     )}
                     <button
-                      disabled={busy}
+                      disabled={paused}
                       onClick={() => attendance(i, "skipped")}
                     >
                       Skipped
                     </button>
                     {i.attendance !== "planned" && (
                       <button
-                        disabled={busy}
+                        disabled={paused}
                         onClick={() => attendance(i, "planned")}
                       >
                         Clear attendance
                       </button>
                     )}
-                    <button onClick={() => setEditor({ item: i })}>
+                    <button
+                      disabled={paused}
+                      onClick={() => setEditor({ item: i })}
+                    >
                       {i.source === "personal"
                         ? "Edit workout / log"
                         : "Edit personal log"}
@@ -393,7 +421,7 @@ export function TrainingCalendar({
                 )}
                 {i.source === "personal" && (
                   <button
-                    disabled={busy}
+                    disabled={paused}
                     onClick={() => attendance(i, "cancelled")}
                   >
                     Cancel workout
@@ -402,6 +430,7 @@ export function TrainingCalendar({
                 {i.seriesId &&
                   Date.parse(i.startsAt) > Date.parse(page.now) && (
                     <button
+                      disabled={paused}
                       onClick={() => setEditor({ item: i, series: true })}
                     >
                       Edit future series

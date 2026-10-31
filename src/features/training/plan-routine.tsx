@@ -38,7 +38,7 @@ export function PlanRoutine({
     view: "week",
     timezone,
   });
-  const { page, busy, pending, error } = workspace;
+  const { page, busy, pending, error, paused } = workspace;
   const [editor, setEditor] = useState<{
     date: string;
     item?: TrainingItem;
@@ -46,7 +46,6 @@ export function PlanRoutine({
   } | null>(null);
   const [removing, setRemoving] = useState<TrainingItem | null>(null);
   const period = calendarPeriod(date, "week");
-  const paused = busy || !!pending;
   function save(command: TrainingCommand) {
     return workspace.save(command, () => {
       setEditor(null);
@@ -132,7 +131,7 @@ export function PlanRoutine({
         </nav>
         <button
           className="routine-text-button"
-          disabled={paused}
+          disabled={busy || !!pending}
           onClick={workspace.refresh}
         >
           Reload saved version
@@ -308,7 +307,7 @@ export function PlanRoutine({
             More training is available in this week. Load it to see all your
             planned workouts.
           </p>
-          <button disabled={busy} onClick={workspace.loadMore}>
+          <button disabled={paused} onClick={workspace.loadMore}>
             Load more training
           </button>
         </section>

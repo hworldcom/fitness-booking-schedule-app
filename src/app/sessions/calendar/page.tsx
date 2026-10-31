@@ -46,7 +46,7 @@ export default async function Page({
       <MySessionsHeading active="calendar" />
       {result.status === "ready" && "items" in result.value ? (
         <TrainingCalendar
-          key={`${result.scope}:${date}:${view}:${timezone}`}
+          key={`${result.scope}:${period.from}:${view}:${timezone}`}
           initial={result.value}
           scope={result.scope}
           date={date}

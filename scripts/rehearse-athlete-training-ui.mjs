@@ -121,7 +121,8 @@ return <main className="training-page">{active?.startsWith("coach-")
     const items = [],
       requests = [];
     let fail = false;
-    let failList = false;
+    let failList = 0;
+    let delayedList;
     let remindersEnabled = false;
     let actorChanged = false;
     await context.route("**/api/auth/actor", (r) =>
@@ -154,8 +155,9 @@ return <main className="training-page">{active?.startsWith("coach-")
       const body = route.request().postDataJSON(),
         c = body.command;
       requests.push(c);
+      if (c.action === "list" && delayedList) await delayedList;
       if (c.action === "list" && failList) {
-        failList = false;
+        failList--;
         await route.fulfill({ status: 503, json: { status: "unavailable" } });
         return;
       }
@@ -175,6 +177,15 @@ return <main className="training-page">{active?.startsWith("coach-")
             ? i.seriesId === c.args.seriesId
             : i.key === c.args.key,
         );
+        if (
+          existing &&
+          (c.action === "series"
+            ? existing.planRevision !== c.args.planRevision
+            : existing.revision !== c.args.revision)
+        ) {
+          await route.fulfill({ status: 409, json: { status: "conflict" } });
+          return;
+        }
         const startsAt = new Date(c.args.date + "T" + c.args.time + ":00Z");
         const value = {
           key:
@@ -226,11 +237,17 @@ return <main className="training-page">{active?.startsWith("coach-")
       const offset = c.args.offset ?? 0;
       const matching =
         c.action === "list"
-          ? items.filter(
-              (i) =>
-                i.startsAt.slice(0, 10) >= c.args.from &&
-                i.startsAt.slice(0, 10) <= c.args.through,
-            )
+          ? items
+              .filter(
+                (i) =>
+                  i.startsAt.slice(0, 10) >= c.args.from &&
+                  i.startsAt.slice(0, 10) <= c.args.through,
+              )
+              .sort(
+                (a, b) =>
+                  Date.parse(a.startsAt) - Date.parse(b.startsAt) ||
+                  a.key.localeCompare(b.key),
+              )
           : items;
       await route.fulfill({
         json: {
@@ -411,9 +428,27 @@ return <main className="training-page">{active?.startsWith("coach-")
     await strength
       .getByRole("button", { name: "Clear attendance", exact: true })
       .click();
-    await strength
-      .getByRole("button", { name: "Edit workout / log", exact: true })
-      .click();
+    await page.locator(".training-day-heading").nth(1).click();
+    await expect(page).toHaveURL(/date=2026-10-27/);
+    const strengthCard = page.locator(".training-event").filter({
+      hasText: "Strength and movement",
+    });
+    await expect(strengthCard.getByText("Edit", { exact: true })).toBeVisible();
+    await expect(strengthCard).toHaveAccessibleName(
+      "Edit workout: Strength and movement",
+    );
+    await strengthCard.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByLabel("Activity", { exact: true })).toHaveValue(
+      "Strength and movement",
+    );
+    await expect(page.getByLabel("Planned minutes")).toHaveValue("60");
+    await expect(page).toHaveURL(/date=2026-10-27/);
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(strengthCard).toBeFocused();
+    await strengthCard.click();
     await page.getByLabel("Planned minutes").fill("90");
     await page.getByText("Optional workout details", { exact: true }).click();
     await page.getByLabel("Actual minutes", { exact: true }).fill("45");
@@ -427,6 +462,7 @@ return <main className="training-page">{active?.startsWith("coach-")
       .getByRole("button", { name: "Save training", exact: true })
       .click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
+    await page.locator(".training-day-heading").first().click();
     await expect(
       strength.getByText("Private strength note", { exact: true }),
     ).toBeVisible();
@@ -438,6 +474,21 @@ return <main className="training-page">{active?.startsWith("coach-")
       90,
     );
     assert.ok(requests.filter((c) => c.action === "save").at(-1).args.key);
+    const strengthRevision = items.find(
+      (i) => i.title === "Strength and movement",
+    ).revision;
+    await strengthCard.click();
+    await expect(page.getByLabel("Planned minutes")).toHaveValue("90");
+    await page.getByLabel("Planned minutes").fill("85");
+    await page
+      .getByRole("button", { name: "Save training", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(strengthCard).toBeEnabled();
+    assert.equal(
+      items.find((i) => i.title === "Strength and movement").revision,
+      strengthRevision + 1,
+    );
 
     await page.getByRole("link", { name: "Plan routine", exact: true }).click();
     await page
@@ -492,6 +543,22 @@ return <main className="training-page">{active?.startsWith("coach-")
     const seriesCommand = requests.findLast((c) => c.action === "series");
     assert.ok(seriesCommand.args.seriesId);
     assert.equal(seriesCommand.args.planRevision, 1);
+    await page
+      .getByRole("button", { name: "Edit routine", exact: true })
+      .click();
+    await expect(page.getByLabel("Planned minutes")).toHaveValue("50");
+    await page.getByLabel("Planned minutes").fill("55");
+    await page
+      .getByRole("button", { name: "Save workout", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Edit routine", exact: true }),
+    ).toBeEnabled();
+    assert.equal(
+      requests.findLast((c) => c.action === "series").args.planRevision,
+      2,
+    );
     await expect(
       page.locator(".routine-workout").filter({
         has: page.getByRole("heading", {
@@ -707,6 +774,152 @@ return <main className="training-page">{active?.startsWith("coach-")
     await expect(page.locator(".training-count strong").first()).toHaveText(
       "1",
     );
+    const logged = items.find((i) => i.title === "Morning walk");
+    const logCard = page.getByRole("button", {
+      name: "Edit workout: Morning walk",
+      exact: true,
+    });
+    await logCard.click();
+    await expect(page.getByLabel("Activity", { exact: true })).toHaveValue(
+      "Morning walk",
+    );
+    await expect(
+      page.getByRole("textbox", { name: "Personal notes", exact: true }),
+    ).toHaveValue("Private morning note");
+    await expect(
+      page.getByLabel("Actual minutes", { exact: true }),
+    ).toHaveValue("30");
+    await page
+      .getByLabel("Activity", { exact: true })
+      .fill("Updated morning walk");
+    await page.getByLabel("Planned minutes").fill("45");
+    fail = true;
+    await page
+      .getByRole("button", { name: "Save training", exact: true })
+      .click();
+    await expect(page.getByRole("dialog").getByRole("alert")).toBeVisible();
+    await expect(
+      page.locator(".training-event").filter({ hasText: "Morning walk" }),
+    ).toBeDisabled();
+    const editRetry = requests.findLast((c) => c.action === "save");
+    assert.equal(editRetry.args.key, logged.key);
+    assert.equal(editRetry.args.completed, true);
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Retry last save", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    assert.deepEqual(
+      requests.findLast((c) => c.action === "save"),
+      editRetry,
+    );
+    assert.equal(items.filter((i) => i.key === logged.key).length, 1);
+    assert.equal(logged.attendance, "attended");
+    assert.equal(logged.notes, "Private morning note");
+    assert.equal(logged.intensity, "Moderate");
+    assert.equal(logged.actualMinutes, 30);
+    // Edit again without a page reload; a transient read failure must recover
+    // automatically before the next edit can use the updated revision.
+    const secondEditRevision = logged.revision;
+    await page
+      .getByRole("button", {
+        name: "Edit workout: Updated morning walk",
+        exact: true,
+      })
+      .click();
+    await expect(page.getByLabel("Planned minutes")).toHaveValue("45");
+    await page.getByLabel("Planned minutes").fill("50");
+    failList = 1;
+    let releaseList;
+    delayedList = new Promise((resolve) => (releaseList = resolve));
+    await page
+      .getByRole("button", { name: "Save training", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(
+      page.getByRole("button", {
+        name: "Edit workout: Updated morning walk",
+        exact: true,
+      }),
+    ).toBeDisabled();
+    releaseList();
+    delayedList = undefined;
+    await expect(
+      page.getByRole("button", {
+        name: "Edit workout: Updated morning walk",
+        exact: true,
+      }),
+    ).toBeEnabled();
+    await expect(page.locator(".training-error")).toHaveCount(0);
+    assert.equal(logged.revision, secondEditRevision + 1);
+    await page
+      .getByRole("button", {
+        name: "Edit workout: Updated morning walk",
+        exact: true,
+      })
+      .click();
+    await expect(page.getByLabel("Planned minutes")).toHaveValue("50");
+    await page.getByLabel("Planned minutes").fill("55");
+    failList = 2;
+    await page
+      .getByRole("button", { name: "Save training", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.locator(".training-error")).toContainText(
+      "Training saved",
+    );
+    await expect(
+      page.getByRole("button", {
+        name: "Edit workout: Updated morning walk",
+        exact: true,
+      }),
+    ).toBeDisabled();
+    await expect(
+      page.getByRole("checkbox", { name: "Email me before training" }),
+    ).toBeDisabled();
+    await page.screenshot({
+      path: path.join(evidence, `consecutive-read-recovery-${width}.png`),
+      fullPage: true,
+    });
+    const acknowledgedWrites = requests.filter(
+      (c) => c.action === "save",
+    ).length;
+    await page
+      .getByRole("button", { name: "Refresh calendar", exact: true })
+      .click();
+    await expect(page.locator(".training-error")).toHaveCount(0);
+    assert.equal(
+      requests.filter((c) => c.action === "save").length,
+      acknowledgedWrites,
+    );
+    await page
+      .getByRole("button", {
+        name: "Edit workout: Updated morning walk",
+        exact: true,
+      })
+      .click();
+    await expect(page.getByLabel("Planned minutes")).toHaveValue("55");
+    await page.keyboard.press("Escape");
+    checks.push(
+      `${width}px consecutive log edits use current revisions; transient read recovery is automatic; persistent read failure pauses edits and recovers without repeating the saved write`,
+    );
+    await page.reload();
+    await expect(
+      page.getByRole("button", {
+        name: "Edit workout: Updated morning walk",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(page.locator(".training-count strong").first()).toHaveText(
+      "1",
+    );
+    await page.screenshot({
+      path: path.join(evidence, `direct-workout-edit-${width}.png`),
+      fullPage: true,
+    });
+    checks.push(
+      `${width}px direct calendar-card edit on another selected day, visible Edit cue, keyboard/Escape/focus, and completed-log same-key edit/reload/exact retry preserve attendance and private details`,
+    );
     const reminder = page.getByRole("checkbox", {
       name: "Email me before training",
     });
@@ -717,10 +930,12 @@ return <main className="training-page">{active?.startsWith("coach-")
       true,
     );
     // A successful write followed by a failed reload must stay recoverable.
-    failList = true;
+    failList = 2;
     await reminder.click();
     await expect(page.locator(".training-error")).toBeVisible();
-    await expect(page.locator(".training-error")).toContainText("unavailable");
+    await expect(page.locator(".training-error")).toContainText(
+      "Training saved",
+    );
     const preferencesBeforeRefresh = requests.filter(
       (c) => c.action === "preference",
     ).length;
@@ -821,7 +1036,7 @@ return <main className="training-page">{active?.startsWith("coach-")
         exact: false,
       }),
     ).toBeVisible();
-    failList = true;
+    failList = 1;
     await page
       .getByRole("button", { name: "Load more training", exact: true })
       .click();

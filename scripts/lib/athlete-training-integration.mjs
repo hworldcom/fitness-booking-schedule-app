@@ -70,6 +70,8 @@ export async function rehearseAthleteTraining({
     page
       .locator(".routine-workout")
       .filter({ has: page.getByRole("heading", { name: title, exact: true }) });
+  const calendarCard = (title) =>
+    page.getByRole("button", { name: `Edit workout: ${title}`, exact: true });
   const dialog = page.getByRole("dialog");
   await page.goto(routineUrl);
   await expect(page.locator(".routine-day")).toHaveCount(7);
@@ -115,6 +117,30 @@ export async function rehearseAthleteTraining({
     .click();
   await expect(dialog).toHaveCount(0);
   await expect(card("QA revised routine")).toBeVisible();
+  await card("QA revised routine")
+    .getByRole("button", { name: "Edit routine", exact: true })
+    .click();
+  await expect(page.getByLabel("Planned minutes")).toHaveValue("45");
+  await page.getByLabel("Planned minutes").fill("50");
+  await dialog
+    .getByRole("button", { name: "Save workout", exact: true })
+    .click();
+  await expect(dialog).toHaveCount(0);
+  await expect(
+    card("QA revised routine").getByRole("button", {
+      name: "Edit routine",
+      exact: true,
+    }),
+  ).toBeEnabled();
+  const twiceEditedRoutine = (await read()).items.find(
+    (i) => i.seriesId === original.seriesId,
+  );
+  assert.equal(twiceEditedRoutine.planRevision, 3);
+  assert.equal(
+    Date.parse(twiceEditedRoutine.endsAt) -
+      Date.parse(twiceEditedRoutine.startsAt),
+    50 * 60000,
+  );
   const conflict = await command(page, {
     action: "stop",
     args: { commandId: randomUUID(), seriesId: item.seriesId, planRevision: 1 },
@@ -190,20 +216,118 @@ export async function rehearseAthleteTraining({
     .getByRole("button", { name: "Save workout", exact: true })
     .click();
   await expect(dialog).toHaveCount(0);
+  const oneOff = (await read()).items.find(
+    (i) => i.title === "QA one-off workout",
+  );
   await card("QA one-off workout")
+    .getByRole("link", { name: "View in Calendar", exact: true })
+    .click();
+  await calendarCard("QA one-off workout").focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByLabel("Activity", { exact: true })).toHaveValue(
+    "QA one-off workout",
+  );
+  await page.keyboard.press("Escape");
+  await expect(calendarCard("QA one-off workout")).toBeFocused();
+  await calendarCard("QA one-off workout").click();
+  await page.getByLabel("Activity", { exact: true }).fill("QA revised one-off");
+  await page.getByLabel("Time", { exact: true }).fill("16:30");
+  await page.getByLabel("Planned minutes").fill("75");
+  await dialog
+    .getByRole("button", { name: "Save training", exact: true })
+    .click();
+  await expect(dialog).toHaveCount(0);
+  await expect(calendarCard("QA revised one-off")).toBeEnabled();
+  const dayIndex = (new Date(day + "T12:00:00Z").getUTCDay() + 6) % 7;
+  const targetIndex = dayIndex === 0 ? 1 : 0;
+  const targetDay = new Date(
+    Date.parse(day + "T12:00:00Z") + (targetIndex - dayIndex) * 86400000,
+  )
+    .toISOString()
+    .slice(0, 10);
+  let releaseNavigation;
+  const delayedNavigation = new Promise(
+    (resolve) => (releaseNavigation = resolve),
+  );
+  let navigationHeld = false;
+  await page.route("**/sessions/calendar?**", async (route) => {
+    const request = route.request();
+    if (
+      new URL(request.url()).searchParams.get("date") === targetDay &&
+      request.headers().rsc === "1"
+    ) {
+      navigationHeld = true;
+      const response = await route.fetch();
+      await delayedNavigation;
+      await route.fulfill({ response });
+    } else await route.continue();
+  });
+  await page.locator(".training-day-heading").nth(targetIndex).click();
+  await expect.poll(() => navigationHeld).toBe(true);
+  await calendarCard("QA revised one-off").click();
+  await expect(page.getByLabel("Planned minutes")).toHaveValue("75");
+  await page.getByLabel("Planned minutes").fill("80");
+  const navigationResponse = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).searchParams.get("date") === targetDay &&
+      response.request().headers().rsc === "1",
+  );
+  releaseNavigation();
+  await navigationResponse;
+  await expect(dialog).toBeVisible();
+  await dialog
+    .getByRole("button", { name: "Save training", exact: true })
+    .click();
+  await expect(dialog).toHaveCount(0);
+  await expect(calendarCard("QA revised one-off")).toBeEnabled();
+  await page.unroute("**/sessions/calendar?**");
+  const twiceEditedOneOff = (await read()).items.find(
+    (i) => i.key === oneOff.key,
+  );
+  assert.equal(twiceEditedOneOff.revision, oneOff.revision + 2);
+  await page.reload();
+  await expect(calendarCard("QA revised one-off")).toBeVisible();
+  const oneOffAfter = (await read()).items.filter((i) => i.key === oneOff.key);
+  assert.equal(oneOffAfter.length, 1);
+  assert.equal(oneOffAfter[0].attendance, "planned");
+  assert.equal(oneOffAfter[0].revision, oneOff.revision + 2);
+  assert.equal(
+    Date.parse(oneOffAfter[0].endsAt) - Date.parse(oneOffAfter[0].startsAt),
+    80 * 60000,
+  );
+  const staleEdit = {
+    action: "save",
+    args: {
+      commandId: randomUUID(),
+      key: oneOff.key,
+      revision: oneOff.revision,
+      title: "Stale edit",
+      date: day,
+      time: "16:30",
+      timezone: "UTC",
+      minutes: 75,
+    },
+  };
+  assert.equal((await command(page, staleEdit)).http, 409);
+  assert.equal((await command(stranger.page, staleEdit)).http, 409);
+  await page.goto(routineUrl);
+  await card("QA revised one-off")
     .getByRole("button", { name: "Cancel workout", exact: true })
     .click();
   await dialog
     .getByRole("button", { name: "Keep workout", exact: true })
     .click();
-  await expect(card("QA one-off workout")).toBeVisible();
-  await card("QA one-off workout")
+  await expect(card("QA revised one-off")).toBeVisible();
+  await card("QA revised one-off")
     .getByRole("button", { name: "Cancel workout", exact: true })
     .click();
   await dialog
     .getByRole("button", { name: "Cancel workout", exact: true })
     .click();
-  await expect(card("QA one-off workout")).toHaveCount(0);
+  await expect(card("QA revised one-off")).toHaveCount(0);
+  pass(
+    "consecutive one-off edits survive a delayed real day-navigation response and persist the same key; stale/foreign-owner edits fail closed; keyboard cancel restores focus",
+  );
   const deleteButton = card("QA occurrence exception").getByRole("button", {
     name: "Delete routine",
     exact: true,
@@ -257,7 +381,7 @@ export async function rehearseAthleteTraining({
   const exception = listed.items.find((i) => i.key === original.key);
   assert.equal(exception.attendance, "cancelled");
   assert.equal(exception.notes, "Private routine annotation");
-  assert.equal(exception.planRevision, 3);
+  assert.equal(exception.planRevision, 4);
   const [retry] =
     await database`select count(*)::int count from app.athlete_training_commands where profile_id=${athlete.profileId}::uuid and command_id=${lost.args.commandId}::uuid`;
   assert.equal(retry.count, 1);
@@ -312,6 +436,113 @@ export async function rehearseAthleteTraining({
   await expect(
     page.getByText("You confirmed attendance", { exact: false }),
   ).toBeVisible();
+  const completedCalendarUrl =
+    base +
+    `/sessions/calendar?date=${past.toISOString().slice(0, 10)}&timezone=UTC`;
+  const logRead = () =>
+    command(page, {
+      action: "list",
+      args: {
+        from: past.toISOString().slice(0, 10),
+        through: past.toISOString().slice(0, 10),
+        timezone: "UTC",
+      },
+    });
+  const logBefore = (await logRead()).body.value.items.find(
+    (i) => i.title === "QA completed walk",
+  );
+  await calendarCard("QA completed walk").click();
+  await expect(
+    page.getByRole("textbox", { name: "Personal notes", exact: true }),
+  ).toHaveValue("Private completed log");
+  await page.getByLabel("Activity", { exact: true }).fill("QA corrected walk");
+  await page.getByLabel("Planned minutes").fill("45");
+  await page.getByLabel("Actual minutes", { exact: true }).fill("40");
+  await page
+    .getByRole("combobox", { name: "How did it feel?", exact: true })
+    .selectOption("Easy");
+  let lostLogEdit;
+  const logAttempts = [];
+  await page.route("**/api/training", async (route) => {
+    const body = route.request().postDataJSON();
+    if (
+      body.command.action === "save" &&
+      body.command.args.key === logBefore.key
+    ) {
+      logAttempts.push(body.command);
+      if (!lostLogEdit) {
+        lostLogEdit = body.command;
+        assert.equal((await route.fetch()).status(), 200);
+        await route.abort("failed");
+        return;
+      }
+    }
+    await route.continue();
+  });
+  await dialog
+    .getByRole("button", { name: "Save training", exact: true })
+    .click();
+  await expect(dialog.getByRole("alert")).toBeVisible();
+  await dialog
+    .getByRole("button", { name: "Retry last save", exact: true })
+    .click();
+  await expect(dialog).toHaveCount(0);
+  await page.unroute("**/api/training");
+  assert.equal(logAttempts.length, 2);
+  assert.deepEqual(logAttempts[0], logAttempts[1]);
+  const correctedLogs = (await logRead()).body.value.items.filter(
+    (i) => i.key === logBefore.key,
+  );
+  assert.equal(correctedLogs.length, 1);
+  assert.equal(correctedLogs[0].revision, logBefore.revision + 1);
+  assert.equal(correctedLogs[0].attendance, "attended");
+  assert.equal(correctedLogs[0].notes, "Private completed log");
+  assert.equal(correctedLogs[0].actualMinutes, 40);
+  assert.equal(correctedLogs[0].intensity, "Easy");
+  const [logRetry] =
+    await database`select count(*)::int count from app.athlete_training_commands where profile_id=${athlete.profileId}::uuid and command_id=${lostLogEdit.args.commandId}::uuid`;
+  assert.equal(logRetry.count, 1);
+  const secondLogEdits = [];
+  let failedRead = false;
+  await page.route("**/api/training", async (route) => {
+    const { command: next } = route.request().postDataJSON();
+    if (next.action === "save") secondLogEdits.push(next);
+    if (next.action === "list" && !failedRead) {
+      failedRead = true;
+      await route.fulfill({ status: 503, json: { status: "unavailable" } });
+    } else await route.continue();
+  });
+  await calendarCard("QA corrected walk").click();
+  await expect(page.getByLabel("Planned minutes")).toHaveValue("45");
+  await page.getByLabel("Planned minutes").fill("50");
+  await dialog
+    .getByRole("button", { name: "Save training", exact: true })
+    .click();
+  await expect(dialog).toHaveCount(0);
+  await expect(calendarCard("QA corrected walk")).toBeEnabled();
+  await expect(page.locator(".training-error")).toHaveCount(0);
+  await page.unroute("**/api/training");
+  assert.equal(failedRead, true);
+  assert.equal(secondLogEdits.length, 1);
+  assert.equal(secondLogEdits[0].args.revision, logBefore.revision + 1);
+  const twiceEditedLog = (await logRead()).body.value.items.find(
+    (i) => i.key === logBefore.key,
+  );
+  assert.equal(twiceEditedLog.revision, logBefore.revision + 2);
+  assert.equal(twiceEditedLog.attendance, "attended");
+  assert.equal(twiceEditedLog.notes, "Private completed log");
+  await calendarCard("QA corrected walk").click();
+  await expect(page.getByLabel("Planned minutes")).toHaveValue("50");
+  await page.keyboard.press("Escape");
+  pass(
+    "consecutive routine, one-off and completed-log edits need no page reload; current SQL revisions advance and a transient post-save read recovers without repeating the mutation",
+  );
+  await page.reload();
+  await expect(calendarCard("QA corrected walk")).toBeVisible();
+  await expect(page.locator(".training-count strong").first()).toHaveText("1");
+  pass(
+    "direct completed-log edit preserves attendance/private details and persists once after a genuinely committed lost response and exact retry",
+  );
   assert.equal(
     JSON.stringify(await read(stranger.page)).includes("Private"),
     false,
@@ -348,6 +579,28 @@ export async function rehearseAthleteTraining({
       path: path.join(output, `athlete-routine-${width}.png`),
       fullPage: true,
     });
+    for (const view of ["week", "month"]) {
+      await page.goto(completedCalendarUrl + `&view=${view}`);
+      const edit = calendarCard("QA corrected walk");
+      await expect(edit.getByText("Edit", { exact: true })).toBeVisible();
+      await edit.focus();
+      await page.keyboard.press("Enter");
+      await expect(dialog).toBeVisible();
+      await expect(page.getByLabel("Activity", { exact: true })).toHaveValue(
+        "QA corrected walk",
+      );
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth + 1,
+        ),
+        false,
+      );
+      await page.screenshot({
+        path: path.join(output, `workout-edit-${view}-${width}.png`),
+      });
+      await page.keyboard.press("Escape");
+      await expect(edit).toBeFocused();
+    }
   }
   const guest = await page.context().browser().newContext();
   try {

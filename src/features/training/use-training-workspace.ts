@@ -37,6 +37,8 @@ export function useTrainingWorkspace({
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState<TrainingCommand | null>(null);
+  const [needsRefresh, setNeedsRefresh] = useState(false);
+  const running = useRef(false);
   const period = calendarPeriod(date, view);
 
   async function request(command: TrainingCommand): Promise<TrainingResult> {
@@ -89,15 +91,18 @@ export function useTrainingWorkspace({
             ]
           : next.items,
       }));
-      if (!pending) setError("");
+      setNeedsRefresh(false);
+      setError("");
     }
   }
   async function save(command: TrainingCommand, onSaved?: () => void) {
-    if (busy || latestScope.current !== scope) return;
+    if (running.current || needsRefresh || latestScope.current !== scope)
+      return;
     if (pending && JSON.stringify(pending) !== JSON.stringify(command)) {
       setError("A previous save needs retry before making another change.");
       return;
     }
+    running.current = true;
     setPending(command);
     setBusy(true);
     setError("");
@@ -105,30 +110,52 @@ export function useTrainingWorkspace({
     try {
       await request(command);
       setPending(null);
+      setNeedsRefresh(true);
       setMessage("Training saved.");
+      router.refresh();
       onSaved?.();
-      await load();
+      try {
+        await load();
+      } catch {
+        // Reads are safe to repeat; an acknowledged mutation must not be replayed.
+        try {
+          await load();
+        } catch {
+          setError(
+            "Training saved, but the calendar could not refresh. Refresh the calendar before making another change.",
+          );
+        }
+      }
     } catch (e) {
       if ((e as Error & { definite?: boolean }).definite) setPending(null);
       setError((e as Error).message);
     } finally {
+      running.current = false;
       setBusy(false);
     }
   }
   function refresh() {
-    if (busy || pending) return;
+    if (running.current || pending) return;
+    running.current = true;
     router.refresh();
     setBusy(true);
     void load()
       .catch(() => setError("Calendar unavailable. Try again."))
-      .finally(() => setBusy(false));
+      .finally(() => {
+        running.current = false;
+        setBusy(false);
+      });
   }
   function loadMore() {
-    if (busy) return;
+    if (running.current || pending || needsRefresh) return;
+    running.current = true;
     setBusy(true);
     void load(true)
       .catch(() => setError("Could not load more training. Try again."))
-      .finally(() => setBusy(false));
+      .finally(() => {
+        running.current = false;
+        setBusy(false);
+      });
   }
   return {
     page,
@@ -136,6 +163,7 @@ export function useTrainingWorkspace({
     error,
     message,
     pending,
+    paused: busy || !!pending || needsRefresh,
     visible: liveScope === scope,
     save,
     refresh,

@@ -83,6 +83,10 @@
   padding: 0 20px 20px;
   font-size: 13px;
 }
+.training-calendar-help {
+  margin: 0;
+  padding: 0 20px 16px;
+}
 .training-zone label {
   display: flex;
   align-items: center;
@@ -135,6 +139,10 @@
 .training-event strong {
   font-size: 12px;
   line-height: 1.4;
+}
+.training-event-edit {
+  font-weight: 700;
+  text-decoration: underline;
 }
 .training-event-attended {
   background: #e8f0df;

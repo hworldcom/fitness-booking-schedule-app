@@ -20,7 +20,8 @@ export default function Fixture({
   timezone?: string;
   selected?: string;
 }) {
-  const identity = `${routine}:${date}:${view}:${timezone}`;
+  const period = calendarPeriod(date, routine ? "week" : view);
+  const identity = `${routine}:${routine ? date : period.from}:${view}:${timezone}`;
   const [loaded, setLoaded] = useState<{
     identity: string;
     page: TrainingPage;
