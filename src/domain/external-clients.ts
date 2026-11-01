@@ -189,6 +189,11 @@ export function parseClientInvitation(value: unknown): ClientInvitation | null {
     createdAt: v.createdAt,
   };
 }
+export type PendingCoachInvitation =
+  | Readonly<{ status: "pending"; coachName: string }>
+  | Readonly<{ status: "unavailable" }>
+  | null;
+
 export function parseInvitationReview(value: unknown): {
   state: "pending" | "accepted" | "unavailable";
   coachName?: string;

@@ -205,12 +205,22 @@ function Review() {
             Sign in with the account that accepted this invitation to access
             your shared session history.
           </p>
-          <Link
-            className="button dark"
-            href={signedIn ? "/sessions" : "/sign-in?returnTo=%2Fsessions"}
-          >
-            Open My training
-          </Link>
+          <div className="session-type-toolbar">
+            <a
+              className="button dark"
+              href={
+                signedIn ? "/my-coaches" : "/sign-in?returnTo=%2Fmy-coaches"
+              }
+            >
+              View My coaches
+            </a>
+            <Link
+              className="button secondary"
+              href={signedIn ? "/sessions" : "/sign-in?returnTo=%2Fsessions"}
+            >
+              Open My training
+            </Link>
+          </div>
         </>
       )}
       {offer?.state === "declined" && (

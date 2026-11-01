@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 import {
   loadBookingConnectionContextAction,
@@ -63,6 +69,7 @@ export function ConnectionWorkspace({
   sourceVersion,
   mayInitiate,
   view = "all",
+  headingActions,
 }: {
   role?: ConnectionRole;
   bookings: readonly PrivateBookingProjection[] | null;
@@ -71,6 +78,7 @@ export function ConnectionWorkspace({
   sourceVersion: string;
   mayInitiate: boolean;
   view?: "all" | "sessions" | "connections";
+  headingActions?: ReactNode;
 }) {
   const router = useRouter();
   const [local, setLocal] = useState<{
@@ -326,6 +334,7 @@ export function ConnectionWorkspace({
         <ConnectionLists
           role={role}
           headingLevel={view === "connections" ? 1 : 2}
+          headingActions={headingActions}
           pages={pages}
           busy={busy}
           mayInitiate={mayInitiate}

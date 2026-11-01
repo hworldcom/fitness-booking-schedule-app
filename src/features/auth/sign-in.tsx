@@ -49,7 +49,7 @@ const stageCopy = {
   ],
   "check-email": [
     "Check your email",
-    "If this address is eligible, an email with your next step is on its way.",
+    "If this address is eligible, we’ll send a link for your next step.",
   ],
   "forgot-password": [
     "Reset your password",
@@ -508,10 +508,22 @@ export function SignInScreen({
               <div className="authentication-notice">
                 <Mail size={23} aria-hidden="true" />
                 <p>
-                  Open the latest email in the browser where you requested it.
-                  The link works once and expires in one hour.
+                  If an email arrives, open the latest link in the browser where
+                  you requested it. The link works once and expires in one hour.
                 </p>
               </div>
+              {emailPurpose !== "recovery" && (
+                <div className="authentication-notice">
+                  <p>
+                    Already have a verified account? Creating an account again
+                    won’t send another confirmation email. Sign in with your
+                    existing password, or request a password reset below.
+                  </p>
+                  <Link href={link("sign-in")} className="button dark full">
+                    Sign in to your account
+                  </Link>
+                </div>
+              )}
               <form
                 className="authentication-form"
                 onSubmit={(e) => {
@@ -777,11 +789,15 @@ export function SignInScreen({
               </Link>
             </p>
           )}
-          {!authEntry && (
-            <Link href={link("sign-in")} className="authentication-inline-link">
-              Back to sign in
-            </Link>
-          )}
+          {!authEntry &&
+            !(stage === "check-email" && emailPurpose !== "recovery") && (
+              <Link
+                href={link("sign-in")}
+                className="authentication-inline-link"
+              >
+                Back to sign in
+              </Link>
+            )}
           <footer>
             <Link href="/explore">Browse coaches without signing in</Link>
             <span>Your account stays with you as your training grows.</span>

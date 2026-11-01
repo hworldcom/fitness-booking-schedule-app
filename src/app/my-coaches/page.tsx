@@ -9,6 +9,8 @@ import { ProtectedAccessUnavailable } from "@/features/auth/protected-access";
 import { protectedPageAccess } from "@/server/authorization/page-access";
 import { currentClientSessionWorkspace } from "@/server/coaches/booking-request-service";
 import { connectionWorkspaceVersion } from "@/server/connections/workspace-version";
+import { currentPendingCoachInvitation } from "@/server/external-clients/pending-invitation";
+import { PendingInvitationNotice } from "@/features/external-clients/pending-invitation-notice";
 
 export const metadata: Metadata = { title: "My coaches" };
 
@@ -30,9 +32,10 @@ export default async function Page() {
     );
   }
 
-  const [workspace, pages] = await Promise.all([
+  const [workspace, pages, invitation] = await Promise.all([
     currentClientSessionWorkspace({ pageSize: 20 }),
     loadConnectionPagesAction("athlete"),
+    currentPendingCoachInvitation(),
   ]);
   if (workspace.status === "signed-out") redirect(signInHref("/my-coaches"));
   if (workspace.status === "forbidden")
@@ -41,6 +44,7 @@ export default async function Page() {
 
   return (
     <div className="client-session-workspace my-coaches-page">
+      <PendingInvitationNotice invitation={invitation} />
       <ConnectionWorkspace
         key={workspace.actorScope}
         role="athlete"

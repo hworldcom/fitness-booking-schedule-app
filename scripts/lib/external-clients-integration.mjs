@@ -55,11 +55,15 @@ export async function rehearseExternalClients({
     ],
   );
   await page.goto(base + "/coach/athletes");
-  await page
-    .getByRole("link", {
-      name: "External clients · sessions & notes",
+  const athleteActions = page.locator(".coach-connections-heading-actions");
+  await expect(
+    athleteActions.getByRole("button", {
+      name: "Refresh connections",
       exact: true,
-    })
+    }),
+  ).toBeVisible();
+  await athleteActions
+    .getByRole("link", { name: "External clients", exact: true })
     .click();
   await expect(
     page.getByRole("heading", { name: "External clients", exact: true }),
@@ -254,7 +258,7 @@ export async function rehearseExternalClients({
     page.getByRole("button", { name: "Retry exact save", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Review invitation", exact: true }),
+    page.getByRole("button", { name: "Invite client", exact: true }),
   ).toBeDisabled();
   await page
     .getByRole("button", { name: "Retry exact save", exact: true })
@@ -264,7 +268,7 @@ export async function rehearseExternalClients({
     page.getByLabel("Email · optional", { exact: true }),
   ).toHaveValue(athlete.email);
   await expect(
-    page.getByRole("button", { name: "Review invitation", exact: true }),
+    page.getByRole("button", { name: "Invite client", exact: true }),
   ).toBeEnabled();
   const [latestContact] =
     await database`select revision,name,email from app.coach_external_clients where id=${clientId}::uuid`;
@@ -299,7 +303,7 @@ export async function rehearseExternalClients({
     "My retained stale draft",
   );
   await expect(
-    page.getByRole("button", { name: "Review invitation", exact: true }),
+    page.getByRole("button", { name: "Invite client", exact: true }),
   ).toBeDisabled();
   await page
     .getByRole("link", { name: "Reload current client details", exact: true })
@@ -308,7 +312,7 @@ export async function rehearseExternalClients({
     "Jamie External",
   );
   await page
-    .getByRole("button", { name: "Review invitation", exact: true })
+    .getByRole("button", { name: "Invite client", exact: true })
     .click();
   const invitationReview = page.getByRole("region", {
     name: "Review invitation",
@@ -316,7 +320,7 @@ export async function rehearseExternalClients({
   });
   await expect(invitationReview).toContainText(athlete.email);
   await invitationReview
-    .getByRole("button", { name: "Send invitation", exact: true })
+    .getByRole("button", { name: "Send email invitation", exact: true })
     .click();
   await expect(
     page.getByText(/Email: accepted by email provider/),
@@ -608,11 +612,59 @@ export async function rehearseExternalClients({
     )[0].linked_profile_id,
     null,
   );
+  await newPage.goto(base + "/my-coaches");
+  const reminder = newPage.getByRole("complementary", {
+    name: "Coach invitation",
+    exact: true,
+  });
+  for (const width of [1440, 430, 375, 320]) {
+    await newPage.setViewportSize({ width, height: 1000 });
+    await expect(reminder).toContainText(
+      coach.name + " invited you to connect",
+    );
+    const review = reminder.getByRole("link", {
+      name: "Review invitation",
+      exact: true,
+    });
+    await expect(review).toHaveAttribute("href", "/invitations");
+    const box = await review.boundingBox();
+    assert.ok(box && box.height >= 44 && box.x >= 0);
+    assert.ok(
+      box.x + box.width <= width,
+      `Invitation action overflow ${width}`,
+    );
+    assert.ok(
+      await newPage.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    );
+    assert.ok(!(await reminder.innerText()).includes(freshEmail));
+    assert.ok(!(await reminder.innerHTML()).includes(new URL(freshLink).hash));
+    await review.focus();
+    await expect(review).toBeFocused();
+    await newPage.screenshot({
+      path: path.join(output, `pending-invitation-${width}.png`),
+      fullPage: true,
+    });
+  }
+  await newPage.keyboard.press("Enter");
+  await expect(newPage).toHaveURL(base + "/invitations");
   await newPage
     .getByRole("button", { name: "Accept invitation", exact: true })
     .click();
   await expect(
     newPage.getByRole("heading", { name: "Invitation accepted", exact: true }),
+  ).toBeVisible();
+  await newPage
+    .getByRole("link", { name: "View My coaches", exact: true })
+    .click();
+  await expect(newPage).toHaveURL(base + "/my-coaches");
+  await expect(reminder).toHaveCount(0);
+  await expect(
+    newPage.getByRole("article", {
+      name: coach.name + " · Connected",
+      exact: true,
+    }),
   ).toBeVisible();
   const [freshAccount] =
     await database`select p.id,p.display_name from app.profiles p join auth.users u on u.id=p.auth_user_id where u.email=${freshEmail}`;
@@ -625,7 +677,7 @@ export async function rehearseExternalClients({
   );
   await newContext.close();
   pass(
-    "new recipient registers and verifies email normally, keeps token-free pending context through enrollment and explicitly accepts without profile overwrite",
+    "new recipient registers/verifies, resumes pending invitation from My coaches at 1440/430/375/320 with keyboard, explicitly accepts and sees the connected coach on the previously visited page without profile overwrite",
   );
   await page.setViewportSize({ width: 1440, height: 1000 });
 }

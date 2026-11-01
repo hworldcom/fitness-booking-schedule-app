@@ -202,7 +202,7 @@ function Workspace({ clientId }: { clientId?: string }) {
       )}
       {detail && c && (
         <>
-          <h2>{c.name}</h2>
+          <h2 className="external-client-name">{c.name}</h2>
           <p>
             {c.linkedProfileId
               ? "This client joined MovX. Their shared session records are available in My training."
@@ -224,10 +224,14 @@ function Workspace({ clientId }: { clientId?: string }) {
             onPendingChange={setClientPending}
           />
           <section
-            className="session-type-editor"
+            className="session-type-editor external-client-invitation"
             aria-label="Client invitation"
           >
-            <h2>Invite to MovX</h2>
+            <h2>
+              {c.linkedProfileId
+                ? "Connected to MovX"
+                : "Invite client to MovX"}
+            </h2>
             {c.linkedProfileId ? (
               <p>
                 Invitation accepted. Shared history is linked to their account;
@@ -236,22 +240,34 @@ function Workspace({ clientId }: { clientId?: string }) {
             ) : (
               <>
                 <p>
-                  Send to {c.email ?? "an email you add above"}. The client will
-                  sign in or register with that email and choose whether to
-                  accept.
+                  Email {c.name} an invitation to join MovX and access their
+                  shared sessions, plans and notes.
                 </p>
-                {!c.email && (
-                  <p>Add and save an email above before inviting.</p>
+                {c.email ? (
+                  <p>
+                    Invitation email: <strong>{c.email}</strong>. They’ll need
+                    to sign in or register with this same address, then accept
+                    your invitation.
+                  </p>
+                ) : (
+                  <p>
+                    Add an email in Client details above, then choose Save
+                    client details to enable invitations.
+                  </p>
                 )}
                 <div className="session-type-toolbar">
                   <button
+                    type="button"
+                    className="button dark"
                     disabled={!c.email || busy || !!review || clientPending}
                     onClick={() => invitationReview(inv ? "resend" : "send")}
                   >
-                    {inv ? "Review new invitation" : "Review invitation"}
+                    {inv ? "Resend invitation" : "Invite client"}
                   </button>
                   {inv?.status === "pending" && (
                     <button
+                      type="button"
+                      className="button secondary"
                       disabled={busy || !!review || clientPending}
                       onClick={() => invitationReview("revoke")}
                     >
@@ -259,10 +275,13 @@ function Workspace({ clientId }: { clientId?: string }) {
                     </button>
                   )}
                 </div>
-                <p>
-                  New invitations replace older pending links. Wait at least one
-                  minute between sends.
-                </p>
+                <p>You’ll confirm the email address before sending.</p>
+                {inv && (
+                  <p>
+                    Sending again replaces older pending links. Wait at least
+                    one minute between sends.
+                  </p>
+                )}
               </>
             )}
             {inv && (
@@ -281,31 +300,39 @@ function Workspace({ clientId }: { clientId?: string }) {
                 <h3>
                   {review.action === "revoke"
                     ? "Revoke this invitation?"
-                    : "Send this invitation?"}
+                    : "Confirm invitation email"}
                 </h3>
                 <p>
                   {review.action === "revoke"
                     ? "The current link will stop granting access."
                     : `An invitation will be sent to ${c.email}. Accepting connects this client’s original sessions and shared notes to their verified account.`}
                 </p>
-                <button
-                  className="button dark"
-                  disabled={busy}
-                  onClick={() => void invite()}
-                >
-                  {busy
-                    ? "Saving…"
-                    : unknown
-                      ? "Retry exact action"
-                      : review.action === "revoke"
-                        ? "Confirm revocation"
-                        : "Send invitation"}
-                </button>
-                {!unknown && (
-                  <button disabled={busy} onClick={() => setReview(null)}>
-                    Cancel
+                <div className="session-type-toolbar">
+                  <button
+                    type="button"
+                    className="button dark"
+                    disabled={busy}
+                    onClick={() => void invite()}
+                  >
+                    {busy
+                      ? "Saving…"
+                      : unknown
+                        ? "Retry exact action"
+                        : review.action === "revoke"
+                          ? "Confirm revocation"
+                          : "Send email invitation"}
                   </button>
-                )}
+                  {!unknown && (
+                    <button
+                      type="button"
+                      className="button secondary"
+                      disabled={busy}
+                      onClick={() => setReview(null)}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </section>

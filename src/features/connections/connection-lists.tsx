@@ -44,6 +44,7 @@ export function ConnectionLists({
   onHistory,
   renderHistory,
   headingLevel = 2,
+  headingActions,
 }: {
   role?: ConnectionRole;
   pages: ConnectionPages;
@@ -55,6 +56,7 @@ export function ConnectionLists({
   onHistory: (row: ConnectionProjection) => void;
   renderHistory: (row: ConnectionProjection) => ReactNode;
   headingLevel?: 1 | 2;
+  headingActions?: ReactNode;
 }) {
   const Heading = headingLevel === 1 ? "h1" : "h2";
   const noun = role === "coach" ? "athletes" : "coaches";
@@ -82,14 +84,17 @@ export function ConnectionLists({
             connect you automatically.
           </p>
         </div>
-        <button
-          type="button"
-          className="button secondary"
-          disabled={busy}
-          onClick={onRefresh}
-        >
-          Refresh connections
-        </button>
+        <div className="coach-connections-heading-actions">
+          {headingActions}
+          <button
+            type="button"
+            className="button secondary"
+            disabled={busy}
+            onClick={onRefresh}
+          >
+            Refresh connections
+          </button>
+        </div>
       </header>
       {CONNECTION_SECTIONS.map((section) => {
         const page = pages[section];

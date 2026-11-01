@@ -14,13 +14,19 @@ function screen(
   stage: AuthenticationStage,
   session: AuthSessionSnapshot = { status: "signed-out" },
   returnTo = "/",
+  emailPurpose: "confirmation" | "recovery" = "confirmation",
 ) {
   return renderToStaticMarkup(
     jsx(AuthSessionProvider, {
       initialSession: session,
       children: jsx(ActorProvider, {
         initialActor: { status: "signed-out" },
-        children: jsx(SignInScreen, { stage, returnTo, intent: "coach" }),
+        children: jsx(SignInScreen, {
+          stage,
+          returnTo,
+          intent: "coach",
+          emailPurpose,
+        }),
       }),
     }),
   );
@@ -43,6 +49,51 @@ test("entry forms retain password-manager semantics and cannot submit before hyd
     assert.match(html, /Google sign-in is currently unavailable/);
     assert.doesNotMatch(html, /Apple|email code|Six-digit code/);
     assert.match(html, /href="\/explore"/);
+  }
+});
+
+test("email request alternatives keep invitation continuation without claiming delivery or account existence", (t) => {
+  const config = {
+    NEXT_PUBLIC_SITE_URL: "http://localhost:3100",
+    NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:55321",
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "public-presentation-fixture",
+  };
+  const previous = Object.fromEntries(
+    Object.keys(config).map((key) => [key, process.env[key]]),
+  );
+  Object.assign(process.env, config);
+  t.after(() => {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  });
+  for (const purpose of ["confirmation", "recovery"] as const) {
+    const html = screen(
+      "check-email",
+      { status: "signed-out" },
+      "/invitations",
+      purpose,
+    );
+    assert.match(html, /If this address is eligible/);
+    assert.match(html, /If an email arrives/);
+    assert.doesNotMatch(html, /on its way|email (?:was|has been) sent/);
+    for (const path of ["sign-in", "forgot-password"]) {
+      assert.match(
+        html,
+        new RegExp(
+          `href="/${path}\\?returnTo=%2Finvitations&amp;intent=coach"`,
+        ),
+      );
+    }
+    if (purpose === "confirmation") {
+      assert.match(html, /Already have a verified account\?/);
+      assert.match(html, /Sign in to your account/);
+      assert.match(html, /Resend confirmation email/);
+    } else {
+      assert.match(html, /Resend reset link/);
+      assert.doesNotMatch(html, /Resend confirmation email/);
+    }
   }
 });
 

@@ -7,14 +7,13 @@ import {
   reviewInvitation,
   decideInvitation,
 } from "@/server/external-clients/service";
+import {
+  PENDING_INVITATION_COOKIE,
+  pendingInvitationHash,
+} from "@/server/external-clients/pending-invitation";
 export const dynamic = "force-dynamic";
-const cookieName = "movx-pending-invitation";
-async function context() {
-  const value = (await cookies()).get(cookieName)?.value;
-  return value && /^[0-9a-f]{64}$/.test(value) ? value : null;
-}
 export async function GET() {
-  const hash = await context();
+  const hash = await pendingInvitationHash();
   return externalResponse(
     hash
       ? {
@@ -35,7 +34,7 @@ export async function POST(request: Request) {
     /^[A-Za-z0-9_-]{43}$/.test(v.token)
   ) {
     const hash = invitationTokenHash(v.token);
-    (await cookies()).set(cookieName, hash, {
+    (await cookies()).set(PENDING_INVITATION_COOKIE, hash, {
       httpOnly: true,
       sameSite: "lax",
       secure: new URL(request.url).protocol === "https:",
@@ -54,7 +53,7 @@ export async function POST(request: Request) {
     !/^[0-9a-f]{64}$/.test(v.context)
   )
     return externalResponse({ status: "invalid" });
-  const hash = await context();
+  const hash = await pendingInvitationHash();
   if (!hash) return externalResponse({ status: "invalid" });
   if (v.context !== invitationReviewContext(hash))
     return externalResponse({ status: "conflict" });
@@ -65,6 +64,7 @@ export async function POST(request: Request) {
       "/coach",
       "/coach/athletes",
       "/connections",
+      "/my-coaches",
     ])
       revalidatePath(path);
   return externalResponse(result);

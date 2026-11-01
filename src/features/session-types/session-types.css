@@ -163,3 +163,13 @@
 .session-type-editor button + button {
   margin-left: 10px;
 }
+.external-client-name,
+.external-client-invitation {
+  overflow-wrap: anywhere;
+}
+.external-client-invitation .button {
+  min-height: 44px;
+}
+.external-client-invitation .session-type-toolbar button + button {
+  margin-left: 0;
+}
