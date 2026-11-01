@@ -116,16 +116,15 @@ test("approval capture, recipient privacy, versioning and durable delivery", asy
       async () => {
         const j = await notice(coach);
         for (const version of [1, 2, 3]) {
+          const snapshot = (await command(coach, "list", {}, version))[0].value;
           assert.equal(
-            (await command(coach, "list", {}, version))[0].value.items.some(
-              (x: { id: string }) => x.id === j.id,
-            ),
+            snapshot.items.some((x: { id: string }) => x.id === j.id),
             false,
           );
           await command(
             coach,
             "read-all",
-            { throughAt: new Date().toISOString() },
+            { throughAt: snapshot.snapshotAt },
             version,
           );
           await assert.rejects(command(coach, "read", { id: j.id }, version));
