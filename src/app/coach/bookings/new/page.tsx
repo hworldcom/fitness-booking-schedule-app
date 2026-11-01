@@ -1,5 +1,17 @@
 import { BookingEditor } from "@/features/session-types/booking-editor";
 export const metadata = { title: "Schedule a client" };
-export default function Page() {
-  return <BookingEditor />;
+import { sessionUuid } from "@/domain/session-types";
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ externalClientId?: string }>;
+}) {
+  const { externalClientId } = await searchParams;
+  return (
+    <BookingEditor
+      initialExternalClientId={
+        sessionUuid(externalClientId) ? externalClientId : undefined
+      }
+    />
+  );
 }

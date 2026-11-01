@@ -27,7 +27,8 @@ export const coachPrivateBookings = app.table(
     runId: uuid("run_id").notNull(),
     slotId: uuid("slot_id").notNull(),
     coachProfileId: uuid("coach_profile_id").notNull(),
-    clientProfileId: uuid("client_profile_id").notNull(),
+    clientProfileId: uuid("client_profile_id"),
+    externalClientId: uuid("external_client_id"),
     // Historical credit-backed rows keep this value; direct bookings leave it null.
     creditProjectionId: uuid("credit_projection_id"),
     status: text("status").notNull(),

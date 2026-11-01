@@ -22,6 +22,7 @@ export type CoachSessionCommand = TypedSessionRequest &
     action: "create" | "override";
     durationMinutes: SessionDuration;
     athleteId?: string;
+    externalClientId?: string;
     bookingId?: string;
     expectedRevision?: number;
   }>;
@@ -34,7 +35,12 @@ export type SessionBookingDetail = Readonly<{
   locationId: string;
   venueName: string;
   sessionType: SessionType | null;
-  athleteId: string;
+  athleteId: string | null;
+  externalClient?: {
+    id: string;
+    name: string;
+    linkedProfileId: string | null;
+  } | null;
   viewerIsCoach: boolean;
   historyTotal: number;
   nextHistoryRevision: number | null;
@@ -64,6 +70,7 @@ export function parseTypedRequest(
           "action",
           "durationMinutes",
           "athleteId",
+          "externalClientId",
           "bookingId",
           "expectedRevision",
         ]
@@ -93,7 +100,9 @@ export function parseTypedRequest(
       return null;
     if (
       v.action === "create" &&
-      (!sessionUuid(v.athleteId) ||
+      ((sessionUuid(v.athleteId)
+        ? v.externalClientId !== undefined
+        : !sessionUuid(v.externalClientId) || v.athleteId !== undefined) ||
         v.bookingId !== undefined ||
         v.expectedRevision !== undefined)
     )
@@ -102,6 +111,7 @@ export function parseTypedRequest(
       v.action === "override" &&
       (!sessionUuid(v.bookingId) ||
         v.athleteId !== undefined ||
+        v.externalClientId !== undefined ||
         !Number.isSafeInteger(v.expectedRevision) ||
         Number(v.expectedRevision) < 0 ||
         Number(v.expectedRevision) >= 2147483647)

@@ -1,3 +1,7 @@
+import {
+  invitationEmail,
+  type InvitationEmailPayload,
+} from "./invitation-email";
 import { coachReviewLink } from "@/notifications/coach-review-link";
 import {
   parseCoachApprovalEmail,
@@ -39,7 +43,8 @@ export type EmailClaim = {
     | "group"
     | "coach-application"
     | "training"
-    | "coach-approval";
+    | "coach-approval"
+    | "coach-invitation";
 };
 export type MessageEmailPayload = {
   id: string;
@@ -48,6 +53,7 @@ export type MessageEmailPayload = {
 };
 export type EmailPayload =
   | MessageEmailPayload
+  | InvitationEmailPayload
   | TrainingEmailPayload
   | CoachApprovalEmailPayload
   | CoachApplicationEmailPayload
@@ -303,24 +309,32 @@ export function createEmailTransport(
     config.siteUrl,
   );
   return async (payload: EmailPayload): Promise<DeliveryOutcome> => {
+    const isInvitation =
+      "kind" in payload && payload.kind === "coach-invitation";
     const isApproval = "kind" in payload && payload.kind === "coach-approval";
     const isApplication =
       "kind" in payload && payload.kind === "coach-application";
     const isGroup = "kind" in payload && payload.kind === "group";
     const isBooking = "kind" in payload && payload.kind === "booking";
     const isTraining = "kind" in payload && payload.kind === "training";
-    const email = isApproval
-      ? coachApprovalEmail(payload, config.siteUrl)
-      : isTraining
-        ? trainingEmail(payload, config.siteUrl)
-        : isApplication
-          ? coachApplicationEmail(payload, config.siteUrl, config.reviewOrigin)
-          : isGroup
-            ? groupEmail(payload, config.siteUrl)
-            : isBooking
-              ? bookingEmail(payload, config.siteUrl)
-              : messageEmail(payload as MessageEmailPayload, config.siteUrl);
-    const key = `${isApproval ? "coach-approval" : isTraining ? "training" : isApplication ? "coach-application" : isGroup ? "group" : isBooking ? "booking" : "message"}-notice/${payload.id}`;
+    const email = isInvitation
+      ? invitationEmail(payload, config.siteUrl)
+      : isApproval
+        ? coachApprovalEmail(payload, config.siteUrl)
+        : isTraining
+          ? trainingEmail(payload, config.siteUrl)
+          : isApplication
+            ? coachApplicationEmail(
+                payload,
+                config.siteUrl,
+                config.reviewOrigin,
+              )
+            : isGroup
+              ? groupEmail(payload, config.siteUrl)
+              : isBooking
+                ? bookingEmail(payload, config.siteUrl)
+                : messageEmail(payload as MessageEmailPayload, config.siteUrl);
+    const key = `${isInvitation ? "coach-invitation" : isApproval ? "coach-approval" : isTraining ? "training" : isApplication ? "coach-application" : isGroup ? "group" : isBooking ? "booking" : "message"}-notice/${payload.id}`;
     const local = config.transport === "mailpit";
     const body = local
       ? {

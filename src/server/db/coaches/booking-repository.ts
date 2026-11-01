@@ -42,7 +42,7 @@ type BookingRow = Readonly<{
   coach_portrait_source: string | null;
   coach_portrait_path: string | null;
   coach_portrait_updated_at: string | Date | null;
-  client_profile_id: string;
+  client_profile_id: string | null;
   client_display_name: string;
   client_avatar_updated_at: string | Date | null;
   status: string;

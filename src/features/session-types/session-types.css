@@ -143,3 +143,23 @@
 .typed-public-booking {
   margin-top: 24px;
 }
+.external-session-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.external-session-list a {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid #d5dbe2;
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.external-session-list span {
+  font-size: 14px;
+}
+.session-type-editor button + button {
+  margin-left: 10px;
+}

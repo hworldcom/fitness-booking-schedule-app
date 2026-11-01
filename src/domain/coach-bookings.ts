@@ -21,7 +21,7 @@ export type PrivateBookingProjection = SessionTitleDetails &
     coachDisplayName: string;
     coachSlug: string;
     coachPortraitUrl: string | null;
-    clientProfileId: string;
+    clientProfileId: string | null;
     clientDisplayName: string;
     clientAvatarUrl: string | null;
     athleteProfileHref: string | null;

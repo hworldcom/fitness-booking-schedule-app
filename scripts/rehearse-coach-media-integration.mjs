@@ -14,6 +14,7 @@ import { chromium, expect as baseExpect } from "@playwright/test";
 import { rehearseProfileEditing } from "./lib/profile-edit-integration.mjs";
 import { rehearseMemberWelcome } from "./lib/member-welcome-integration.mjs";
 import { rehearseAthleteTraining } from "./lib/athlete-training-integration.mjs";
+import { rehearseExternalClients } from "./lib/external-clients-integration.mjs";
 import { rehearseSessionNotes } from "./lib/session-notes-integration.mjs";
 
 const expect = baseExpect.configure({ timeout: 20000 });
@@ -28,9 +29,14 @@ assert.ok(
         "--profile-editor",
         "--athlete-training",
         "--member-welcome",
+        "--external-clients",
+        "--external-clients-only",
       ].includes(arg),
     ),
 );
+const externalClientsOnly = process.argv.includes("--external-clients-only");
+const externalClients =
+  process.argv.includes("--external-clients") || externalClientsOnly;
 const profileEditor = process.argv.includes("--profile-editor");
 const athleteTraining = process.argv.includes("--athlete-training");
 const memberWelcome = process.argv.includes("--member-welcome");
@@ -41,9 +47,11 @@ const project = `mov19-media-qa-${tag}`;
 const checkout = await mkdtemp(path.join(tmpdir(), `${project}-`));
 const output = path.join(
   root,
-  profileEditor
-    ? "test-results/profile-edit-integration"
-    : "test-results/coach-media-integration",
+  externalClients
+    ? "test-results/external-clients-integration"
+    : profileEditor
+      ? "test-results/profile-edit-integration"
+      : "test-results/coach-media-integration",
   tag,
 );
 const base = "http://localhost:3169";
@@ -148,7 +156,7 @@ async function waitUntil(check, timeout = 30000) {
   } while (Date.now() < end);
   throw Error(`Timed out in ${phase}`);
 }
-try {
+async function run() {
   await mkdir(output, { recursive: true, mode: 0o700 });
   await writeFile(
     path.join(output, "recovery.json"),
@@ -326,6 +334,10 @@ try {
   secrets.push(appPassword, workerPassword, cron);
   await database.unsafe(`create role qa_app login password '${appPassword}' nosuperuser nocreatedb nocreaterole nobypassrls inherit in role app_runtime;
     create role qa_worker login password '${workerPassword}' nosuperuser nocreatedb nocreaterole nobypassrls inherit in role app_media_worker;`);
+  if (externalClients)
+    await database.unsafe(
+      `create role qa_invitation login password '${workerPassword}' nosuperuser nocreatedb nocreaterole nobypassrls inherit in role app_notification_worker`,
+    );
   const loginUrl = (login, password) => {
     const value = new URL(dbUrl);
     value.username = login;
@@ -341,7 +353,10 @@ try {
       status.PUBLISHABLE_KEY ?? status.ANON_KEY,
     DATABASE_URL: loginUrl("qa_app", appPassword),
     COACH_MEDIA_DATABASE_URL: loginUrl("qa_worker", workerPassword),
-    NOTIFICATION_DELIVERY_ENABLED: "false",
+    NOTIFICATION_DELIVERY_ENABLED: externalClients ? "true" : "false",
+    ...(externalClients
+      ? { NOTIFICATION_DATABASE_URL: loginUrl("qa_invitation", workerPassword) }
+      : {}),
     NOTIFICATION_TRANSPORT: "mailpit",
     NOTIFICATION_MAILPIT_URL: mail,
     CRON_SECRET: cron,
@@ -392,7 +407,12 @@ try {
     await writeFile(configPath, qaConfig);
   }
   const buildEnv = { ...appEnv };
-  for (const key of ["DATABASE_URL", "COACH_MEDIA_DATABASE_URL", "CRON_SECRET"])
+  for (const key of [
+    "DATABASE_URL",
+    "COACH_MEDIA_DATABASE_URL",
+    "NOTIFICATION_DATABASE_URL",
+    "CRON_SECRET",
+  ])
     delete buildEnv[key];
   await writeFile(
     path.join(output, "build.log"),
@@ -446,11 +466,13 @@ try {
       password,
       email_confirm: true,
       app_metadata: {
-        movx_test_ticket: athleteTraining
-          ? "MOV-126"
-          : profileEditor
-            ? "MOV-101"
-            : "MOV-19",
+        movx_test_ticket: externalClients
+          ? "MOV-12"
+          : athleteTraining
+            ? "MOV-126"
+            : profileEditor
+              ? "MOV-101"
+              : "MOV-19",
         temporary: true,
       },
     });
@@ -503,6 +525,26 @@ try {
   await database`select app.review_coach_application(${coach.profileId}::uuid,'pending','approved','Disposable media QA','local-test','movx-identity-application-v1')`;
   await database`update app.coach_profiles set visibility='visible' where profile_id=${coach.profileId}::uuid`;
   pass("two independent real browser password sessions");
+  if (externalClients) {
+    phase = "production external-client and invitation journeys";
+    await rehearseExternalClients({
+      base,
+      database,
+      person,
+      coach,
+      stranger,
+      browser,
+      mail,
+      output,
+      pass,
+      secrets,
+    });
+  }
+  if (externalClientsOnly) {
+    assert.deepEqual(errors, []);
+    pass("no browser runtime exceptions in external-client journeys");
+    return;
+  }
   if (memberWelcome) {
     phase = "production new-member welcome journeys";
     await rehearseMemberWelcome({
@@ -952,8 +994,8 @@ try {
   // CSS cascade, without creating or claiming a real provider asset.
   await database.begin(async (tx) => {
     await tx`insert into app.coach_media_assets(id,run_id,profile_id,kind,status,fingerprint,description,mux_upload_id,mux_asset_id,mux_playback_id,duration)
-      select ${videoId}::uuid,run_id,profile_id,'video','ready',repeat('f',64),'Introduction fixture','fixtureupload000001','fixtureasset000001','fixtureplayback000001',60
-      from app.coach_media_sets where profile_id=${coach.profileId}::uuid`;
+    select ${videoId}::uuid,run_id,profile_id,'video','ready',repeat('f',64),'Introduction fixture','fixtureupload000001','fixtureasset000001','fixtureplayback000001',60
+    from app.coach_media_sets where profile_id=${coach.profileId}::uuid`;
     await tx`update app.coach_media_sets set published_video=${videoId}::uuid where profile_id=${coach.profileId}::uuid`;
   });
   const publicPoster = `**/api/coaches/${slug}/media/videos/${videoId}/poster`;
@@ -1061,6 +1103,9 @@ try {
   pass(
     "no browser runtime exceptions; live Mux upload/playback intentionally not claimed without configured credentials",
   );
+}
+try {
+  await run();
 } catch (error) {
   if (browser) {
     let n = 0;

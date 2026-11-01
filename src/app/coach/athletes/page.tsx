@@ -48,6 +48,11 @@ export default async function Page() {
     bookingState.status === "authorized" ? bookingState.coachBookings : null;
   const content = (
     <div className="coach-bookings-workspace">
+      <div className="session-type-toolbar">
+        <Link className="button light" href="/coach/athletes/external">
+          External clients · sessions & notes
+        </Link>
+      </div>
       <ConnectionWorkspace
         key={state.actorScope}
         role="coach"

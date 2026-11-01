@@ -1,4 +1,5 @@
 import "server-only";
+import { externalClientsPage } from "@/server/db/external-clients/repository";
 import { sessionUuid } from "@/domain/session-types";
 import { isCoachPublicSlug } from "@/domain/coaches";
 import { isAvailabilityDate } from "@/domain/effective-availability";
@@ -163,6 +164,7 @@ export async function coachSessionBookingOptions(
     return {
       status: "ready" as const,
       types: await ownedSessionTypes(tx, actor),
+      externalClients: await externalClientsPage(tx, null, true),
       athletes: await connectionPageRecord(tx, "coach", "accepted", options),
       locations: await ownedSessionTypeLocations(tx, actor),
     };

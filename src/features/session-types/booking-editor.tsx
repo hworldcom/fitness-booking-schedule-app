@@ -1,4 +1,6 @@
 "use client";
+import { ExternalClientPicker } from "@/features/external-clients/client-picker";
+import type { ExternalClientPage } from "@/domain/external-clients";
 import { SessionNotes } from "@/features/notes/session-notes";
 import { berlinLocalInstant as berlinInstant } from "@/features/coach-events/contract";
 import Link from "next/link";
@@ -24,6 +26,7 @@ type Options = {
   types: readonly SessionType[];
   locations: readonly { id: string; name: string }[];
   athletes: ConnectionPage<ConnectionProjection>;
+  externalClients: ExternalClientPage;
 };
 const dateLabel = (s: string) =>
   new Intl.DateTimeFormat("en-GB", {
@@ -47,10 +50,12 @@ export function BookingEditor({
   bookingId,
   coachView = !bookingId,
   returnHref,
+  initialExternalClientId,
 }: {
   bookingId?: string;
   coachView?: boolean;
   returnHref?: string;
+  initialExternalClientId?: string;
 }) {
   return (
     <section className="session-types-page">
@@ -65,13 +70,20 @@ export function BookingEditor({
           <Editor
             key={`${identity}:${bookingId ?? "new"}`}
             bookingId={bookingId}
+            initialExternalClientId={initialExternalClientId}
           />
         )}
       </SessionActorBoundary>
     </section>
   );
 }
-function Editor({ bookingId }: { bookingId?: string }) {
+function Editor({
+  bookingId,
+  initialExternalClientId,
+}: {
+  bookingId?: string;
+  initialExternalClientId?: string;
+}) {
   const router = useRouter();
   const [options, setOptions] = useState<Options | null>(null);
   const [detail, setDetail] = useState<SessionBookingDetail | null>(null);
@@ -81,6 +93,14 @@ function Editor({ bookingId }: { bookingId?: string }) {
   const [message, setMessage] = useState("");
   const [typeId, setTypeId] = useState("");
   const [athleteId, setAthleteId] = useState("");
+  const [clientKind, setClientKind] = useState(
+    initialExternalClientId ? "external" : "platform",
+  );
+  const [externalClientId, setExternalClientId] = useState(
+    initialExternalClientId ?? "",
+  );
+  const [uncertain, setUncertain] = useState(false);
+  const [clientPending, setClientPending] = useState(false);
   const [locationId, setLocationId] = useState("");
   const [localTime, setLocalTime] = useState("");
   const [duration, setDuration] = useState<SessionDuration>(60);
@@ -220,9 +240,10 @@ function Editor({ bookingId }: { bookingId?: string }) {
         })
       ).json();
       if (r.status === "saved") {
+        setUncertain(false);
         setSaved(true);
         setMessage("Session saved.");
-        if (!bookingId) router.push(`/sessions/${r.bookingId}`);
+        if (!bookingId) router.push(`/coach/sessions/${r.bookingId}`);
         else {
           try {
             const current = await (
@@ -235,7 +256,12 @@ function Editor({ bookingId }: { bookingId?: string }) {
             setMessage("Session saved. Reload to view its latest details.");
           }
         }
-      } else
+      } else {
+        setUncertain(
+          !["invalid", "conflict", "forbidden", "signed-out"].includes(
+            r.status,
+          ),
+        );
         setMessage(
           r.status === "conflict"
             ? "The class, connection, booking or time changed. Reload and review the current details."
@@ -243,7 +269,9 @@ function Editor({ bookingId }: { bookingId?: string }) {
               ? "Review the duration and Berlin start time."
               : "We couldn’t verify the save. Retry this exact review or reload to check the booking.",
         );
+      }
     } catch {
+      setUncertain(true);
       setMessage(
         "We couldn’t verify the save. Retry this exact review or reload to check the booking.",
       );
@@ -278,9 +306,21 @@ function Editor({ bookingId }: { bookingId?: string }) {
           <p>
             {detail.venueName} · {detail.status}
           </p>
-          <Link href={`/messages?booking=${detail.bookingId}`}>
-            Messages and session record
-          </Link>
+          {detail.athleteId && (
+            <Link href={`/messages?booking=${detail.bookingId}`}>
+              Messages and session record
+            </Link>
+          )}
+          {detail.externalClient && (
+            <p>
+              Client:{" "}
+              <Link
+                href={`/coach/athletes/external/${detail.externalClient.id}`}
+              >
+                {detail.externalClient.name}
+              </Link>
+            </p>
+          )}
           {detail.changes.length > 0 && (
             <details>
               <summary>Schedule changes ({detail.historyTotal})</summary>
@@ -294,7 +334,7 @@ function Editor({ bookingId }: { bookingId?: string }) {
               {detail.nextHistoryRevision && (
                 <button
                   type="button"
-                  disabled={busy}
+                  disabled={busy || uncertain || clientPending}
                   onClick={() => void olderChanges()}
                 >
                   Load older changes
@@ -304,14 +344,67 @@ function Editor({ bookingId }: { bookingId?: string }) {
           )}
         </section>
       )}
-      {detail && <SessionNotes bookingId={detail.bookingId} />}
+      {detail && (
+        <>
+          {detail.viewerIsCoach && !detail.athleteId && (
+            <p>
+              Shared notes and the plan become visible to this client after they
+              accept an invitation. Your private notes stay private.
+            </p>
+          )}
+          <SessionNotes bookingId={detail.bookingId} />
+        </>
+      )}
+      {editable && !detail && !saved && (
+        <>
+          <div className="session-type-editor">
+            <label>
+              Client type
+              <select
+                aria-label="Client type"
+                value={clientKind}
+                disabled={busy || uncertain || clientPending}
+                onChange={(e) => {
+                  setClientKind(e.target.value);
+                  setReview(null);
+                }}
+              >
+                <option value="platform">Connected athlete</option>
+                <option value="external">External client</option>
+              </select>
+            </label>
+          </div>
+          {clientKind === "external" && (
+            <ExternalClientPicker
+              initial={options.externalClients}
+              initialId={initialExternalClientId}
+              value={externalClientId}
+              onChange={(id) => {
+                setExternalClientId(id);
+                setReview(null);
+              }}
+              disabled={busy || uncertain}
+              onPendingChange={(pending) => {
+                setClientPending(pending);
+                if (pending) setReview(null);
+              }}
+            />
+          )}
+        </>
+      )}
       {editable && !saved && (
         <form
           className="session-type-editor"
           onSubmit={(e) => {
             e.preventDefault();
             const startsAt = berlinInstant(localTime);
-            if (!startsAt || !type) {
+            if (
+              clientPending ||
+              !startsAt ||
+              !type ||
+              (!detail &&
+                !(clientKind === "external" ? externalClientId : athleteId))
+            ) {
               setMessage(
                 "Choose a valid, unambiguous Berlin time and current class.",
               );
@@ -331,7 +424,12 @@ function Editor({ bookingId }: { bookingId?: string }) {
                     bookingId: detail.bookingId,
                     expectedRevision: detail.revision,
                   }
-                : { action: "create", athleteId }),
+                : {
+                    action: "create",
+                    ...(clientKind === "external"
+                      ? { externalClientId }
+                      : { athleteId }),
+                  }),
             });
           }}
         >
@@ -340,7 +438,7 @@ function Editor({ bookingId }: { bookingId?: string }) {
             Use a free time within your saved availability. This changes one
             booking; your session type stays the same.
           </p>
-          {!detail && (
+          {!detail && clientKind === "platform" && (
             <>
               <label>
                 Athlete
@@ -348,7 +446,7 @@ function Editor({ bookingId }: { bookingId?: string }) {
                   required
                   aria-label="Athlete"
                   value={athleteId}
-                  disabled={busy}
+                  disabled={busy || uncertain || clientPending}
                   onChange={(e) => {
                     setAthleteId(e.target.value);
                     setReview(null);
@@ -365,7 +463,7 @@ function Editor({ bookingId }: { bookingId?: string }) {
               {options.athletes.nextCursor && (
                 <button
                   type="button"
-                  disabled={busy}
+                  disabled={busy || uncertain || clientPending}
                   onClick={() => void more()}
                 >
                   Load more athletes
@@ -373,8 +471,7 @@ function Editor({ bookingId }: { bookingId?: string }) {
               )}
               {options.athletes.items.length === 0 && (
                 <p>
-                  An accepted connection is required. Invite an athlete from a
-                  shared booking first.
+                  Choose External client to book someone who hasn’t joined MovX.
                 </p>
               )}
             </>
@@ -383,7 +480,7 @@ function Editor({ bookingId }: { bookingId?: string }) {
             Session type
             <select
               required
-              disabled={busy}
+              disabled={busy || uncertain || clientPending}
               aria-label="Session type"
               value={typeId}
               onChange={(e) => {
@@ -415,7 +512,7 @@ function Editor({ bookingId }: { bookingId?: string }) {
               required
               aria-label="Venue"
               value={locationId}
-              disabled={busy}
+              disabled={busy || uncertain || clientPending}
               onChange={(e) => {
                 setLocationId(e.target.value);
                 setReview(null);
@@ -436,7 +533,7 @@ function Editor({ bookingId }: { bookingId?: string }) {
                 type="datetime-local"
                 required
                 step={900}
-                disabled={busy}
+                disabled={busy || uncertain || clientPending}
                 value={localTime}
                 onChange={(e) => {
                   setLocalTime(e.target.value);
@@ -449,7 +546,7 @@ function Editor({ bookingId }: { bookingId?: string }) {
               <select
                 aria-label="Duration"
                 value={duration}
-                disabled={busy}
+                disabled={busy || uncertain || clientPending}
                 onChange={(e) => {
                   setDuration(Number(e.target.value) as SessionDuration);
                   setReview(null);
@@ -463,7 +560,10 @@ function Editor({ bookingId }: { bookingId?: string }) {
               </select>
             </label>
           </div>
-          <button className="button dark" disabled={busy || !type}>
+          <button
+            className="button dark"
+            disabled={busy || uncertain || clientPending || !type}
+          >
             Review {detail ? "change" : "session"}
           </button>
         </form>
@@ -483,11 +583,13 @@ function Editor({ bookingId }: { bookingId?: string }) {
           <p>
             {detail
               ? "Messages and notes stay with this booking. Original schedule details remain in its change history."
-              : "This coach action confirms the session for the selected connected athlete."}
+              : clientKind === "external"
+                ? "This reserves a confirmed session for the selected external client. They gain shared history access after accepting an invitation."
+                : "This coach action confirms the session for the selected connected athlete."}
           </p>
           <button
             className="button dark"
-            disabled={busy}
+            disabled={busy || clientPending}
             onClick={() => void save()}
           >
             {busy
