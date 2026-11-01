@@ -344,7 +344,7 @@ try {
     await dialog
       .getByRole("link", { name: "View original booking", exact: true })
       .getAttribute("href"),
-    /#coach-booking-/,
+    /\/coach\/sessions\//,
   );
   await page.keyboard.press("Escape");
   await page.goto(`${base}/coach?date=2026-12-03&calendarView=day`);

@@ -1,0 +1,107 @@
+body {
+  background: #f8f8f2;
+}
+.notes-preview-banner {
+  background: #263c2b;
+  color: #f4f6ec;
+  text-align: center;
+  padding: 0.65rem 1rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+.notes-preview {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 2rem 5rem;
+}
+.notes-preview-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.6rem 0;
+  border-bottom: 1px solid #dce1d3;
+}
+.notes-preview-top > span {
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: #7d8473;
+}
+.notes-preview-brand {
+  color: #233e2a;
+  text-decoration: none;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.08em;
+}
+.notes-preview-brand span {
+  display: block;
+  font-size: 0.55rem;
+  letter-spacing: 0.35em;
+  line-height: 0.7;
+  text-align: center;
+}
+.notes-preview-switch {
+  display: flex;
+  gap: 0.4rem;
+  padding: 1.5rem 0;
+  flex-wrap: wrap;
+}
+.notes-preview-switch button {
+  border: 1px solid #d7ddcf;
+  background: #fffefa;
+  color: #64735b;
+  padding: 0.7rem 1rem;
+  border-radius: 30px;
+  font-size: 0.8rem;
+}
+.notes-preview-switch button[aria-pressed="true"] {
+  background: #e9efdf;
+  color: #304d31;
+  border-color: #b8c6a5;
+}
+.notes-preview-context {
+  background: #edf1e5;
+  border: 1px solid #dfe7d4;
+  border-radius: 22px;
+  padding: 1.6rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+.notes-preview-context h1 {
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  letter-spacing: -0.05em;
+  margin: 0.5rem 0;
+  color: #283e2b;
+}
+.notes-preview-context p {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: #6d7864;
+}
+@media (max-width: 600px) {
+  .notes-preview {
+    padding: 0 1rem 3rem;
+  }
+  .notes-preview-top > span {
+    display: none;
+  }
+  .notes-preview-context {
+    padding: 1.2rem;
+    display: block;
+  }
+  .notes-preview-context p {
+    line-height: 1.6;
+    align-items: flex-start;
+  }
+  .notes-preview-context .note-visibility {
+    margin-top: 0.5rem;
+  }
+  .notes-preview-switch button {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.75rem;
+  }
+}

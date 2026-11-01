@@ -856,8 +856,12 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
           <Link
             href={
               c.role === "coach"
-                ? `/coach?view=bookings#${details.bookingId ? "coach-booking-" + details.bookingId : "booking-requests"}`
-                : `/sessions#${details.bookingId ? "athlete-booking-" + details.bookingId : "booking-requests"}`
+                ? details.bookingId
+                  ? `/coach/sessions/${details.bookingId}`
+                  : "/coach?view=bookings#booking-requests"
+                : details.bookingId
+                  ? `/sessions/${details.bookingId}`
+                  : "/sessions#booking-requests"
             }
           >
             {details.bookingId

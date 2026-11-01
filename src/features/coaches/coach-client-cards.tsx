@@ -162,7 +162,7 @@ export function CoachClientCards({
                   {booking.hasSessionDetails && (
                     <Link
                       className="button secondary"
-                      href={`/sessions/${booking.id}`}
+                      href={`/coach/sessions/${booking.id}`}
                     >
                       Session details
                     </Link>

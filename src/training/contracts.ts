@@ -1,4 +1,8 @@
 import { isCanonicalUuid } from "@/domain/coach-bookings";
+import {
+  normalizeVideoReferences,
+  type VideoReference,
+} from "@/domain/video-references";
 
 export type TrainingItem = Readonly<{
   key: string;
@@ -10,6 +14,7 @@ export type TrainingItem = Readonly<{
   state: string;
   attendance: "planned" | "attended" | "skipped" | "cancelled";
   notes: string;
+  videos?: readonly VideoReference[];
   intensity: string | null;
   actualMinutes: number | null;
   revision: number;
@@ -136,6 +141,7 @@ export function validTrainingCommand(input: unknown): input is TrainingCommand {
                   "notes",
                   "intensity",
                   "actualMinutes",
+                  "videos",
                 ]
               : action === "save" || action === "series"
                 ? [
@@ -154,6 +160,7 @@ export function validTrainingCommand(input: unknown): input is TrainingCommand {
                     "notes",
                     "intensity",
                     "actualMinutes",
+                    "videos",
                   ]
                 : [];
     if (!keys.length || Object.keys(a).some((k) => !keys.includes(k)))
@@ -171,6 +178,7 @@ export function validTrainingCommand(input: unknown): input is TrainingCommand {
             Number(a.offset) <= 10000))
       );
     if (!isCanonicalUuid(String(a.commandId))) return false;
+    if (a.videos !== undefined) normalizeVideoReferences(a.videos);
     if (action === "preference") return typeof a.enabled === "boolean";
     if (action === "stop")
       return (
@@ -253,6 +261,7 @@ export function parseTrainingPage(value: unknown): TrainingPage {
   )
     throw Error("Invalid training page");
   for (const item of p.items) {
+    if (item.videos !== undefined) normalizeVideoReferences(item.videos);
     if (
       !item ||
       typeof item.key !== "string" ||

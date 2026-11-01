@@ -1,4 +1,5 @@
 "use client";
+import { SessionNotes } from "@/features/notes/session-notes";
 import { berlinLocalInstant as berlinInstant } from "@/features/coach-events/contract";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -42,10 +43,18 @@ function berlinInput(s: string) {
   }).format(new Date(s));
   return parts.replace(" ", "T");
 }
-export function BookingEditor({ bookingId }: { bookingId?: string }) {
+export function BookingEditor({
+  bookingId,
+  coachView = !bookingId,
+}: {
+  bookingId?: string;
+  coachView?: boolean;
+}) {
   return (
     <section className="session-types-page">
-      <Link href="/coach?view=bookings">← Bookings</Link>
+      <Link href={coachView ? "/coach?view=bookings" : "/sessions"}>
+        {coachView ? "← Bookings" : "← My training"}
+      </Link>
       <h1>{bookingId ? "Session details" : "Schedule a client"}</h1>
       <SessionActorBoundary>
         {(identity) => (
@@ -291,6 +300,7 @@ function Editor({ bookingId }: { bookingId?: string }) {
           )}
         </section>
       )}
+      {detail && <SessionNotes bookingId={detail.bookingId} />}
       {editable && !saved && (
         <form
           className="session-type-editor"

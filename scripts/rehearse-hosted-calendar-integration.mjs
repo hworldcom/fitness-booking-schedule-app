@@ -106,11 +106,13 @@ async function calendarStage(stage, c) {
     await items().filter({ hasText: "Private session" }).click();
     await expect(
       dialog.getByRole("link", { name: "View original booking", exact: true }),
-    ).toHaveAttribute("href", `/coach?view=bookings#coach-booking-${booking}`);
+    ).toHaveAttribute("href", `/coach/sessions/${booking}`);
     await dialog
       .getByRole("link", { name: "View original booking", exact: true })
       .click();
-    await expect(page.locator(`#coach-booking-${booking}`)).toBeVisible();
+    await expect(
+      page.getByRole("region", { name: "Session notes and videos" }),
+    ).toBeVisible();
     await read();
     await items().filter({ hasText: "DEV0253 retained group" }).click();
     await expect(

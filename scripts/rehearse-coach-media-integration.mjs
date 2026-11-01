@@ -14,6 +14,7 @@ import { chromium, expect as baseExpect } from "@playwright/test";
 import { rehearseProfileEditing } from "./lib/profile-edit-integration.mjs";
 import { rehearseMemberWelcome } from "./lib/member-welcome-integration.mjs";
 import { rehearseAthleteTraining } from "./lib/athlete-training-integration.mjs";
+import { rehearseSessionNotes } from "./lib/session-notes-integration.mjs";
 
 const expect = baseExpect.configure({ timeout: 20000 });
 const root = process.cwd();
@@ -529,6 +530,18 @@ try {
       output,
       pass,
       errors,
+    });
+  }
+
+  if (athleteTraining) {
+    phase = "production session notes journeys";
+    await rehearseSessionNotes({
+      base,
+      database,
+      person,
+      stranger,
+      output,
+      pass,
     });
   }
 

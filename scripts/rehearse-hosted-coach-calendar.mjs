@@ -565,9 +565,11 @@ try {
     .click();
   await expect(
     dialog.getByRole("link", { name: "View original booking" }),
-  ).toHaveAttribute("href", `/coach?view=bookings#coach-booking-${bookingId}`);
+  ).toHaveAttribute("href", `/coach/sessions/${bookingId}`);
   await dialog.getByRole("link", { name: "View original booking" }).click();
-  await expect(page.locator(`#coach-booking-${bookingId}`)).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Session notes and videos" }),
+  ).toBeVisible();
   await goto(href(pendingDate));
   await agenda().getByRole("button").filter({ hasText: "1 pending" }).click();
   await dialog.getByRole("link", { name: "Edit date hours" }).click();

@@ -1,0 +1,18 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+set search_path=public,extensions;
+select plan(12);
+select ok(not has_table_privilege('app_runtime','app.session_note_entries','SELECT'),'runtime cannot read note rows directly');
+select ok(not has_table_privilege('app_runtime','app.session_note_operations','SELECT'),'runtime cannot read retry payloads directly');
+select ok(not has_table_privilege('authenticated','app.session_note_plans','SELECT'),'browser cannot read plans directly');
+select ok(not has_function_privilege('app_runtime','app.session_notes_impl(text,jsonb)','EXECUTE'),'implementation helper is private');
+select ok(has_function_privilege('app_runtime','app.session_notes_command(text,jsonb)','EXECUTE'),'restricted runtime can call guarded command');
+select ok(not has_function_privilege('anon','app.session_notes_command(text,jsonb)','EXECUTE'),'anonymous cannot call note command');
+select ok(not has_function_privilege('app_notification_worker','app.session_notes_command(text,jsonb)','EXECUTE'),'notification worker receives no notes authority');
+select ok((select relrowsecurity and relforcerowsecurity from pg_class where oid='app.session_note_entries'::regclass),'entry RLS is forced');
+select ok((select relrowsecurity and relforcerowsecurity from pg_class where oid='app.session_note_plans'::regclass),'plan RLS is forced');
+select ok((select prosecdef and proowner='app_owner'::regrole from pg_proc where oid='app.session_notes_command(text,jsonb)'::regprocedure),'guarded command uses the established owner');
+select ok(not app.valid_training_videos('[{"label":"Unsafe","url":"javascript:alert(1)"}]'),'database rejects unsafe video protocols');
+select ok(app.valid_training_videos('[{"label":"Technique","url":"https://www.youtube.com/watch?v=M7lc1UVf-VE"}]'),'database accepts canonical video references');
+select * from finish();
+rollback;

@@ -1,5 +1,8 @@
 "use client";
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
+import { LockKeyhole } from "lucide-react";
+import { normalizeVideoReferences } from "@/notes/contracts";
+import { VideoLinkEditor } from "@/features/notes/video-links";
 import { Modal } from "@/components/ui";
 import {
   localDate,
@@ -51,15 +54,29 @@ export function WorkoutEditor({
     hourCycle: "h23",
   }).format(new Date(initialTime));
   const linked = item && item.source !== "personal";
+  const [videos, setVideos] = useState(item?.videos ?? []);
+  const [weekly, setWeekly] = useState(defaultWeekly);
+  const [validation, setValidation] = useState("");
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const f = new FormData(event.currentTarget);
+    let references;
+    try {
+      references = normalizeVideoReferences(videos);
+      setValidation("");
+    } catch (e) {
+      setValidation((e as Error).message);
+      return;
+    }
     const optional = {
       notes: String(f.get("notes") ?? ""),
       intensity: f.get("intensity") || null,
       actualMinutes: f.get("actualMinutes")
         ? Number(f.get("actualMinutes"))
         : null,
+      ...(!series && !(routine && !item && weekly)
+        ? { videos: references }
+        : {}),
     };
     const commandId = crypto.randomUUID();
     onSave(
@@ -117,9 +134,9 @@ export function WorkoutEditor({
       className="training-dialog"
     >
       <form onSubmit={submit}>
-        {error && (
+        {(error || validation) && (
           <div role="alert">
-            <p>{error}</p>
+            <p>{validation || error}</p>
             {onRetry && (
               <button type="button" disabled={busy} onClick={onRetry}>
                 Retry last save
@@ -193,7 +210,8 @@ export function WorkoutEditor({
                 <input
                   name="weekly"
                   type="checkbox"
-                  defaultChecked={defaultWeekly}
+                  checked={weekly}
+                  onChange={(e) => setWeekly(e.target.checked)}
                 />
                 Repeat weekly
               </label>
@@ -205,6 +223,35 @@ export function WorkoutEditor({
               </p>
             )}
           </>
+        )}
+        {!series && !(routine && !item && weekly) && (
+          <section
+            className="workout-notes"
+            aria-label="Private notes and videos"
+          >
+            <h3>
+              <LockKeyhole size={15} aria-hidden="true" /> Notes & videos
+            </h3>
+            <p className="note-help">
+              Only you can see this. Keep a thought, a cue or a drill for this
+              workout.
+            </p>
+            <label htmlFor="workout-personal-notes">Personal notes</label>
+            <textarea
+              id="workout-personal-notes"
+              name="notes"
+              maxLength={2000}
+              rows={4}
+              defaultValue={item?.notes ?? ""}
+              placeholder="What did you work on? What would you like to remember?"
+            />
+            <VideoLinkEditor
+              id="workout-videos"
+              videos={videos}
+              onChange={setVideos}
+              disabled={busy}
+            />
+          </section>
         )}
         {(log || (!!item && !series)) && (
           <details open={!!item?.notes || !!item?.intensity}>
@@ -227,15 +274,6 @@ export function WorkoutEditor({
                 <option>Moderate</option>
                 <option>Hard</option>
               </select>
-            </label>
-            <label>
-              Personal notes
-              <textarea
-                name="notes"
-                maxLength={2000}
-                rows={4}
-                defaultValue={item?.notes ?? ""}
-              />
             </label>
             <p>Only you can see these details.</p>
           </details>

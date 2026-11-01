@@ -5,6 +5,7 @@ import { useState } from "react";
 import { WorkoutEditor } from "./workout-editor";
 import { useTrainingWorkspace } from "./use-training-workspace";
 import { TrainingFeedback } from "./training-feedback";
+import { VideoLinks } from "@/features/notes/video-links";
 import {
   addDays,
   calendarPeriod,
@@ -364,6 +365,7 @@ export function TrainingCalendar({
               </p>
               {i.location && <p>{i.location}</p>}
               {i.notes && <p className="training-notes">{i.notes}</p>}
+              <VideoLinks videos={i.videos ?? []} />
               {(i.intensity || i.actualMinutes) && (
                 <p>
                   {i.intensity ?? "Actual duration"}

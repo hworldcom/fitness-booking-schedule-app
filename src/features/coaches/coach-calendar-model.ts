@@ -31,7 +31,7 @@ export function calendarActorAccess(
 }
 export function calendarDetailHref(item: CalendarItem) {
   return item.source === "booking"
-    ? `/coach?view=bookings#coach-booking-${item.id}`
+    ? `/coach/sessions/${item.id}`
     : item.source === "availability"
       ? `/coach?view=bookings&occurrence=${item.id}#coach-occurrence-${item.id}`
       : coachEventHref(item.id);

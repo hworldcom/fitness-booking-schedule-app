@@ -203,7 +203,7 @@ test("history stays terminal, past private confirmations do not auto-complete an
   assert.equal(outside.page.items[0].source, "group");
   assert.match(
     calendarDetailHref(booking),
-    new RegExp(`#coach-booking-${booking.id}$`),
+    new RegExp(`/coach/sessions/${booking.id}$`),
   );
   for (const item of CALENDAR_FIXTURE_ITEMS.filter(
     (item) => item.source === "group",
