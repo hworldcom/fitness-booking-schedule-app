@@ -584,9 +584,13 @@ export async function rehearseProfileEditing({
   await close();
   const [venue] =
     await database`select id,to_jsonb(updated_at)#>>'{}' stamp from app.coach_training_locations where profile_id=${coach.profileId}::uuid and is_primary`;
+  const [availability] = await asOwner(
+    (tx) =>
+      tx`select app.owned_effective_coach_availability(current_date,current_date) result`,
+  );
   const policy = await asOwner(
     (tx) =>
-      tx`select app.save_owned_effective_coach_availability(${tx.json({ kind: "weekly", operationId: randomUUID(), expectedRevision: 0, hours: Array.from({ length: 7 }, (_, i) => ({ locationId: venue.id, locationUpdatedAt: venue.stamp, localStartTime: "12:00", isoWeekday: i + 1 })) })}::jsonb) result`,
+      tx`select app.save_owned_effective_coach_availability(${tx.json({ kind: "weekly", operationId: randomUUID(), expectedRevision: availability.result.revision, hours: Array.from({ length: 7 }, (_, i) => ({ locationId: venue.id, locationUpdatedAt: venue.stamp, localStartTime: "12:00", isoWeekday: i + 1 })) })}::jsonb) result`,
   );
   assert.equal(policy[0].result.outcome, "saved");
   pass(

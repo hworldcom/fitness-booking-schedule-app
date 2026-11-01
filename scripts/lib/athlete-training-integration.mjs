@@ -250,16 +250,22 @@ export async function rehearseAthleteTraining({
     (resolve) => (releaseNavigation = resolve),
   );
   let navigationHeld = false;
+  let heldNavigation;
   await page.route("**/sessions/calendar?**", async (route) => {
     const request = route.request();
     if (
       new URL(request.url()).searchParams.get("date") === targetDay &&
-      request.headers().rsc === "1"
+      request.headers().rsc === "1" &&
+      !navigationHeld
     ) {
       navigationHeld = true;
-      const response = await route.fetch();
-      await delayedNavigation;
-      await route.fulfill({ response });
+      heldNavigation = (async () => {
+        const response = await route.fetch();
+        await delayedNavigation;
+        await route.fulfill({ response });
+      })();
+      // The main journey awaits this promise so failures reach its cleanup.
+      await heldNavigation.catch(() => {});
     } else await route.continue();
   });
   await page.locator(".training-day-heading").nth(targetIndex).click();
@@ -273,6 +279,7 @@ export async function rehearseAthleteTraining({
       response.request().headers().rsc === "1",
   );
   releaseNavigation();
+  await heldNavigation;
   await navigationResponse;
   await expect(dialog).toBeVisible();
   await dialog
