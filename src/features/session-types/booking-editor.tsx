@@ -46,13 +46,17 @@ function berlinInput(s: string) {
 export function BookingEditor({
   bookingId,
   coachView = !bookingId,
+  returnHref,
 }: {
   bookingId?: string;
   coachView?: boolean;
+  returnHref?: string;
 }) {
   return (
     <section className="session-types-page">
-      <Link href={coachView ? "/coach?view=bookings" : "/sessions"}>
+      <Link
+        href={returnHref ?? (coachView ? "/coach?view=bookings" : "/sessions")}
+      >
         {coachView ? "← Bookings" : "← My training"}
       </Link>
       <h1>{bookingId ? "Session details" : "Schedule a client"}</h1>

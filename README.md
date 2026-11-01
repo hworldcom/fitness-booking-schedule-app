@@ -48,6 +48,8 @@ Prerequisites are Node.js 24.21.0 LTS and npm 11. The supported Node range is re
 
 ### Local Supabase (default)
 
+The optional My training history layout preview is at [localhost:3100/sessions/preview?view=past](http://localhost:3100/sessions/preview?view=past). It uses your existing signed-in account and separates Upcoming, Past sessions and Booking requests, with **Session & notes** links. It does not replace the current layout or populate demonstration sessions. See the [preview contract](docs/mvp-spec.md#21-athlete-training-calendar-and-private-activity-logs) and [feature map](docs/architecture/feature-map.md#athlete-training-calendar) for its checks.
+
 Start Docker, then run:
 
 ```sh
