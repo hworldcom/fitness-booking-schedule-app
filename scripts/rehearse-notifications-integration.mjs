@@ -1,6 +1,11 @@
 import { rehearseStaffCoachApproval } from "./lib/staff-coach-approval-integration.mjs";
 import { verifiedDatabaseFingerprints } from "./lib/database-fingerprints.mjs";
 import { rehearseCoachApplicationEmail } from "./lib/coach-application-email-integration.mjs";
+import {
+  assertRehearsalPortsAvailable,
+  rehearsalIdentityMatches,
+  writeRehearsalIdentityRoute,
+} from "./lib/rehearsal-target.mjs";
 // MOV-68: real Auth/API/SQL/browser/worker QA in a wholly disposable stack.
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
@@ -147,6 +152,13 @@ try {
     { mode: 0o600 },
   );
   retainedBefore = retainedFingerprint();
+  await assertRehearsalPortsAvailable([
+    55421,
+    55422,
+    55424,
+    3169,
+    ...(adminEnabled ? [3171] : []),
+  ]);
   // No populated environment files, CLI links, retained rows or secrets are copied.
   const sourceFiles = execFileSync(
     "git",
@@ -280,7 +292,7 @@ try {
         .name,
       "movx-admin",
     );
-    adminBase = "http://localhost:3170";
+    adminBase = "http://localhost:3171";
     adminCheckout = await mkdtemp(path.join(tmpdir(), `mov145-admin-${tag}-`));
     await writeFile(
       path.join(output, "recovery.json"),
@@ -289,7 +301,7 @@ try {
           project,
           checkout,
           adminCheckout,
-          ports: [55421, 55422, 55424, 3169, 3170],
+          ports: [55421, 55422, 55424, 3169, 3171],
         },
         null,
         2,
@@ -358,20 +370,21 @@ try {
       ),
     );
     pass("admin transaction-local timeout cancellation and context recovery");
+    await writeRehearsalIdentityRoute(adminCheckout, tag, "admin");
     await writeFile(
       path.join(output, "admin-build.log"),
       redact(await command("npm", ["run", "build"], adminEnv, adminCheckout)),
     );
-    pass("independent admin default Turbopack production build");
+    pass("independent admin production build with fixture identity route");
     adminServer = spawn(
       process.execPath,
       [
         "node_modules/next/dist/bin/next",
         "start",
         "--hostname",
-        "127.0.0.1",
+        "localhost",
         "--port",
-        "3170",
+        "3171",
       ],
       { cwd: adminCheckout, env: adminEnv, stdio: ["ignore", "pipe", "pipe"] },
     );
@@ -382,11 +395,12 @@ try {
     await waitUntil(async () => {
       if (adminServer.exitCode !== null) throw Error(adminLog);
       try {
-        return (await fetch(adminBase + "/sign-in")).ok;
+        return await rehearsalIdentityMatches(adminBase, tag, "admin");
       } catch {
         return false;
       }
     });
+    pass("exact owned admin identity verified on localhost3171 before Auth");
     appEnv.COACH_REVIEW_SITE_URL = adminBase;
   }
   // Local copies satisfy Turbopack's project-root policy; no package update.
@@ -441,6 +455,7 @@ try {
     "CRON_SECRET",
   ])
     delete buildEnv[key];
+  await writeRehearsalIdentityRoute(checkout, tag, "application");
   await writeFile(
     path.join(output, "build.log"),
     redact(
@@ -452,7 +467,7 @@ try {
     ),
   );
   pass(
-    `unchanged production build (${webpack ? "webpack" : "default Turbopack"})`,
+    `production build with fixture identity route (${webpack ? "webpack" : "default Turbopack"})`,
   );
   phase = "production server";
   server = spawn(
@@ -461,7 +476,7 @@ try {
       "node_modules/next/dist/bin/next",
       "start",
       "--hostname",
-      "127.0.0.1",
+      "localhost",
       "--port",
       "3169",
     ],
@@ -474,11 +489,12 @@ try {
   await waitUntil(async () => {
     if (server.exitCode !== null) throw Error(serverLog);
     try {
-      return (await fetch(base + "/sign-in")).ok;
+      return await rehearsalIdentityMatches(base, tag, "application");
     } catch {
       return false;
     }
   });
+  pass("exact owned application identity verified before Auth");
   const auth = createClient(api, status.SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });

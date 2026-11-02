@@ -18,7 +18,7 @@ export async function rehearseStaffCoachApproval({
   output,
 }) {
   assert.equal(base, "http://localhost:3169");
-  assert.equal(adminBase, "http://localhost:3170");
+  assert.equal(adminBase, "http://localhost:3171");
   assert.equal(new URL(mail).port, "55424");
   const detail = adminBase + "/admin/coaches/" + coach.profileId;
   const staff = await person("QA Reviewer");
