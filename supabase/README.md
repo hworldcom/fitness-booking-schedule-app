@@ -294,6 +294,12 @@ The guarded Vercel build requires the complete database/Auth group whenever host
 
 ## Hosted changes and recovery
 
+### Current application release
+
+[MOV-166](https://linear.app/movx/issue/MOV-166/qa-and-release-current-changes-to-uat-then-production) records the UAT-first release through `20261101000200`, its exact source/deployment identifiers, browser results and recovery evidence. Its preflight found 42 installed versions on UAT and 45 on production. Production already contained the three staff-review migrations while the older `20261027000300`/`20261027000400` website migrations were absent; an installed ledger must therefore be compared as an exact set, not assumed to be a prefix. The reviewed missing sets were eight files for UAT and five for production. Use the issue's verified final ledger rather than treating these historical preflight counts as current state.
+
+Each environment requires its own private schema/data/Auth/roles/ledger and Storage-byte backup, verified owned restore and exact SQL/ledger rollback rehearsal. Apply only its missing canonical sources and verbatim ledger entries together under lock/time guards; preserve every original field, role and file. Deploy and browser-test UAT before production. Keep additive notes, contacts, invitation consent/delivery history and retry records when rolling back consumers; do not reset, seed, fill existing coach catalogs, rotate credentials or restore over later live activity. The independent admin application remains [locally operated against production](#staff-coach-reviews-and-approval-receipts); this release does not host it or enable Mux.
+
 ### UAT rollout on 19 October 2026
 
 [UAT is live](https://uat.movx.club), replacing the formerly planned test hostname. [DEV0372](https://github.com/hworldcom/movx-work-records/blob/b49f60b2454b3de9345c395acbc08f324bcdabb3/originals/tickets/archive/organisatory/DEV0372-deploy-reviewed-release-to-uat.md) owns the dedicated Vercel `movx-club-uat` Preview deployment, exact-origin Auth configuration, DNS/TLS and final smoke evidence. Preview intentionally uses `movx-dev`; production and the historical staging app remain separate. Public Supabase/site values must be supplied at build time as well as runtime. Startup and deployment create no demonstration accounts.
