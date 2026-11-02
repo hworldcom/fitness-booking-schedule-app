@@ -1,3 +1,4 @@
+import directoryFixture from "../fixtures/public-browser-directory.json" with { type: "json" };
 import { expect, test } from "@playwright/test";
 
 // A valid local style makes view/navigation checks independent of tile latency.
@@ -28,12 +29,16 @@ test("Explore typed filters, shortcuts and clear preserve the active view throug
   const shortcuts = page.getByRole("navigation", {
     name: "Browse coaches by discipline",
   });
+  const discipline = search.locator('input[type="hidden"][name="discipline"]');
   await shortcuts.getByRole("link", { name: "Boxing", exact: true }).click();
+  await expect(page).toHaveURL(
+    /q=footwork&discipline=Boxing&location=Berlin&view=map$/,
+  );
+  await expect(discipline).toHaveValue("Boxing");
   await search.getByLabel("Where in Berlin?").press("Enter");
   await expect(page).toHaveURL(
     /q=footwork&discipline=Boxing&location=Berlin&view=map$/,
   );
-  const discipline = search.locator('input[type="hidden"][name="discipline"]');
   await expect(discipline).toHaveValue("Boxing");
   await shortcuts.getByRole("link", { name: "Muay Thai", exact: true }).click();
   await expect(page).toHaveURL(
@@ -63,7 +68,9 @@ test("Explore typed filters, shortcuts and clear preserve the active view throug
   await expect(page.locator(".coach-map-panel")).toHaveCount(0);
   await page.getByRole("link", { name: "Clear filters" }).click();
   await expect(page).toHaveURL(/\/explore\?view=map$/);
-  await expect(page.locator(".compact-coach-card.result")).toHaveCount(5);
+  await expect(page.locator(".compact-coach-card.result")).toHaveCount(
+    directoryFixture.coaches.length,
+  );
 });
 
 test("Explore shares Home's search and cards without introducing a Home query field", async ({
@@ -84,13 +91,17 @@ test("Explore shares Home's search and cards without introducing a Home query fi
       search.getByRole("button", { name: "Search coaches" }),
     ).toBeFocused();
     const cards = page.locator(".compact-coach-card.result");
-    await expect(cards).toHaveCount(5);
+    await expect(cards).toHaveCount(directoryFixture.coaches.length);
     await expect(cards.locator(".compact-coach-bio")).toHaveCount(0);
     await expect(cards.first().locator(".avatar img")).toHaveAttribute(
       "src",
       "/images/coaches/daniel-park.webp",
     );
-    await expect(cards.nth(1).locator(".avatar")).toHaveText("ED");
+    const sam = cards.filter({
+      has: page.getByRole("heading", { name: "Sam Lee", exact: true }),
+    });
+    await expect(sam.locator(".avatar img")).toHaveCount(0);
+    await expect(sam.locator(".avatar")).toHaveText("SL");
     const containedActions = await cards.evaluateAll((rows) =>
       rows.every((card) => {
         const bounds = card.getBoundingClientRect();
@@ -112,7 +123,7 @@ test("Explore shares Home's search and cards without introducing a Home query fi
         (element) =>
           getComputedStyle(element).gridTemplateColumns.split(" ").length,
       );
-    expect(gridColumns).toBe(2);
+    expect(gridColumns).toBe(width < 600 ? 1 : 2);
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -178,7 +189,9 @@ test("Explore discipline aliases and explicit view survive query GET without Jav
       .getByRole("link", { name: "Clear search" })
       .click({ force: true });
     await expect(page).toHaveURL(/\/explore\?view=list$/);
-    await expect(page.locator(".compact-coach-card.result")).toHaveCount(5);
+    await expect(page.locator(".compact-coach-card.result")).toHaveCount(
+      directoryFixture.coaches.length,
+    );
   } finally {
     await context.close();
   }

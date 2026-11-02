@@ -1,0 +1,17 @@
+{
+  "coaches": [
+    "Daniel Park",
+    "Elif Demir",
+    "Idris Malik",
+    "Jake Miller",
+    "Nora Klein",
+    "Sam Lee"
+  ],
+  "withoutPortrait": "sam-lee",
+  "additionalLocation": {
+    "coachSlug": "daniel-park",
+    "name": "Chimosa",
+    "latitude": 52.5321,
+    "longitude": 13.3959
+  }
+}

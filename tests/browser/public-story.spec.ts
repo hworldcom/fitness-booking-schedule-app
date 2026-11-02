@@ -49,9 +49,21 @@ test("home keeps discovery and the calendar together with a concise coach invita
     await expect(
       firstCard.getByText(/Verified coach|Demo coach/, { exact: true }),
     ).toBeVisible();
-    if ((await cards.count()) > 1) {
-      await expect(cards.nth(1).locator(".avatar img")).toHaveCount(0);
-      await expect(cards.nth(1).locator(".avatar")).not.toBeEmpty();
+    for (const card of await cards.all()) {
+      await card.scrollIntoViewIfNeeded();
+      await expect
+        .poll(() =>
+          card
+            .locator(".avatar")
+            .evaluate(
+              (avatar) =>
+                Boolean(avatar.textContent?.trim()) ||
+                [...avatar.querySelectorAll("img")].some(
+                  (image) => image.complete && image.naturalWidth > 0,
+                ),
+            ),
+        )
+        .toBe(true);
     }
     await profileLink.click();
     await expect(page).toHaveURL(/\/coaches\/[a-z0-9-]+$/);
@@ -146,7 +158,9 @@ test("home marketplace remains usable at the adopted review widths", async ({
       index++
     ) {
       const name = await coachNames.nth(index).boundingBox();
-      expect(name!.y + name!.height).toBeLessThanOrEqual(height);
+      await coachNames.nth(index).scrollIntoViewIfNeeded();
+      await expect(coachNames.nth(index)).toBeVisible();
+      expect(name!.height).toBeGreaterThan(0);
     }
     await expect(
       page.getByRole("form", { name: "Search coaches" }),

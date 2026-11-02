@@ -37,7 +37,7 @@ test("public landmarks, headings, skip focus and touch controls fit every breakp
       await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
       await expect(
         page.getByRole("region", { name: "Demonstration data" }),
-      ).toBeVisible();
+      ).toHaveCount(0);
       await expect(
         page.getByRole("navigation", { name: "Public navigation" }),
       ).toHaveCount(1);
@@ -209,7 +209,9 @@ test("reduced motion uses instant map-selection scrolling and keeps profile acce
     .toBe(true);
   const profileLink =
     testInfo.project.name === "mobile"
-      ? page.locator(".coach-map-detail > a")
+      ? page
+          .locator(".coach-map-detail")
+          .getByRole("link", { name: "View profile and schedule" })
       : card.locator(".compact-coach-link");
   await expect(profileLink).toBeVisible();
   await expect(profileLink).toHaveAttribute("href", /^\/coaches\/[a-z0-9-]+$/);

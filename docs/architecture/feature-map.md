@@ -96,6 +96,8 @@ For real directory fixtures/manual browser checks use `node --import tsx --condi
 
 First checks: `node --import tsx --test tests/home-marketplace.test.ts tests/how-it-works.test.ts tests/boundaries.test.ts`, with installed dependencies. For presentation review, the existing loopback app on3100 supports fresh guest browser checks at1440/768/393/375/320, keyboard discovery/routine/calendar actions and native FAQs. Verify real ready/empty/unavailable directory states separately from the decorative example; browser guest checks create no account or workout. Local preview does not publish to UAT/production. Use the standard README lint/type/format/build checks for changed source.
 
+For the complete public browser matrix, use `npm run test:public-browser` and its separate `-- --unavailable` mode. The [runner](../../scripts/rehearse-public-browser.mjs) owns a clean current-source production build and a unique scratch database; [fixture names and the second location](../../tests/fixtures/public-browser-directory.json) define deterministic directory/map assertions. See [README prerequisites and cleanup](../../README.md#checks). No retained demo data is initialized or changed.
+
 ## Coach profiles and public websites
 
 Start with the [owner profile route](../../src/app/profile/coach/page.tsx) and [public page composition](../../src/app/_coaches/public-coach-page.tsx). [Website service](../../src/server/coaches/website-service.ts) owns content operations; [§19](../mvp-spec.md#19-coach-marketplace-cards-and-personal-websites) supplies publication, username, media and disclosure contracts. Booking composition is detailed above.

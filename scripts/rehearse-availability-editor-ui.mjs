@@ -36,7 +36,7 @@ await mkdir(path.join(checkout, "src/app/availability-fixture"), {
 await writeFile(
   path.join(checkout, "src/app/availability-fixture/page.tsx"),
   `import { AvailabilityEditorHarness } from "../../tests-fixtures/availability-editor-harness";
-export default async function Page({searchParams}:{searchParams:Promise<{tab?:string;date?:string}>}) {const params=await searchParams;return <AvailabilityEditorHarness tab={params.tab==="dates"?"dates":"weekly"} date={params.date??"2026-10-16"}/>;}`,
+export default async function Page({searchParams}:{searchParams:Promise<{tab?:string;date?:string}>}) {const params=await searchParams;return <AvailabilityEditorHarness navigation={<a href="/availability-fixture?section=bookings">Bookings</a>} tab={params.tab==="dates"?"dates":"weekly"} date={params.date??"2026-10-16"}/>;}`,
 );
 await cp(
   path.join(root, "tests/fixtures"),

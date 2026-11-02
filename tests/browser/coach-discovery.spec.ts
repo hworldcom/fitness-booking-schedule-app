@@ -1,3 +1,4 @@
+import directoryFixture from "../fixtures/public-browser-directory.json" with { type: "json" };
 import { expect, test } from "@playwright/test";
 
 test("desktop guest browses and filters the persistent coach directory", async ({
@@ -6,13 +7,17 @@ test("desktop guest browses and filters the persistent coach directory", async (
   test.skip(testInfo.project.name !== "desktop");
   await page.goto("/explore");
 
-  await expect(page).toHaveTitle(/Explore martial-arts coaches/);
+  await expect(page).toHaveTitle(/Explore coaches/);
   await expect(
     page.getByRole("heading", {
       name: "Find your discipline. Meet your coach.",
     }),
   ).toBeVisible();
-  await expect(page.getByText("5 coaches", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText(`${directoryFixture.coaches.length} coaches`, {
+      exact: true,
+    }),
+  ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Sam Lee", exact: true }),
   ).toBeVisible();
@@ -36,7 +41,9 @@ test("desktop guest browses and filters the persistent coach directory", async (
   await expect(
     elifCard.getByText("No availability today", { exact: true }),
   ).toBeVisible();
-  await expect(page.locator(".demo-strip")).toBeVisible();
+  await expect(
+    danielCard.getByText("Demo coach", { exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Map of matching coaches" }),
   ).toBeVisible();
@@ -45,7 +52,7 @@ test("desktop guest browses and filters the persistent coach directory", async (
   await expect(mapCanvas.or(unavailableState)).toBeVisible({ timeout: 30_000 });
   if (await mapCanvas.isVisible()) {
     const markers = page.locator("button.location-map-marker");
-    await expect(markers).toHaveCount(5);
+    await expect(markers).toHaveCount(directoryFixture.coaches.length);
     const danielMarker = page.getByRole("button", {
       name: /Select Daniel Park at primary training location/,
     });
@@ -168,7 +175,11 @@ test("desktop Explore keeps a bounded 60/40 comparison layout across breakpoints
   page,
 }) => {
   await page.goto("/explore");
-  await expect(page.getByText("5 coaches", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText(`${directoryFixture.coaches.length} coaches`, {
+      exact: true,
+    }),
+  ).toBeVisible();
 
   for (const viewport of [
     { width: 1440, height: 1040, columns: true },
@@ -227,7 +238,7 @@ test("desktop Explore keeps every coach and profile link when the map provider f
       .getByText("Map unavailable", { exact: true }),
   ).toBeVisible({ timeout: 30_000 });
   const cards = page.locator(".compact-coach-card.result");
-  await expect(cards).toHaveCount(5);
+  await expect(cards).toHaveCount(directoryFixture.coaches.length);
   await expect(
     page.getByRole("link", { name: /View Daniel Park's coach profile/ }),
   ).toHaveAttribute("href", "/coaches/daniel-park");
@@ -256,7 +267,9 @@ test("desktop Explore keeps both result surfaces for a mobile view URL", async (
   test.skip(testInfo.project.name !== "desktop", "Desktop non-regression only");
   await page.goto("/explore?view=map");
 
-  await expect(page.locator(".compact-coach-card.result")).toHaveCount(5);
+  await expect(page.locator(".compact-coach-card.result")).toHaveCount(
+    directoryFixture.coaches.length,
+  );
   await expect(page.getByLabel("Coach location map")).toBeVisible();
   await expect(
     page.getByRole("navigation", { name: "Explore results view" }),
@@ -372,7 +385,7 @@ test("mobile card selection opens a focused truthful map preview", async ({
   ).toBeVisible();
   await expect(
     danielPreview.getByRole("link", {
-      name: "View full profile and schedule",
+      name: "View profile and schedule",
     }),
   ).toHaveAttribute("href", "/coaches/daniel-park");
   await expect(
@@ -546,8 +559,8 @@ test("guest opens a coach profile without fabricated availability", async ({
   await expect(page.getByText("Muay Thai", { exact: true })).toBeVisible();
   await expect(
     page
-      .locator(".public-coach-place")
-      .getByText("Northside Combat", { exact: true }),
+      .locator(".coach-website-facts")
+      .getByRole("link", { name: /Northside Combat/ }),
   ).toBeVisible();
   await expect(
     page
@@ -597,13 +610,25 @@ test("guest opens a coach profile without fabricated availability", async ({
     ).toBeVisible();
   }
   await expect(page.getByText("Primary base", { exact: true })).toBeVisible();
+  const schedule = page.getByRole("region", {
+    name: "Make time for your next step.",
+  });
+  await expect(schedule.getByRole("status").locator("strong")).toHaveText("0");
+  await expect(schedule.getByRole("status")).toContainText("open slots");
+  await expect(schedule.getByRole("status")).toContainText(
+    "in the next 7 days",
+  );
   await expect(
-    page.getByRole("heading", {
-      name: "No scheduled times right now.",
+    schedule.getByRole("link", {
+      name: "Sign in to view schedule",
+      exact: true,
     }),
-  ).toBeVisible();
+  ).toHaveAttribute("href", /\/sign-in\?returnTo=/);
   await expect(
-    page.getByRole("link", { name: "Sign in for session requests" }),
+    schedule.getByRole("button", { name: /request|book/i }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "Sign in to view schedule" }),
   ).toHaveAttribute("href", /\/sign-in\?returnTo=/);
   await expect(page.getByText(/not live tracking/)).toBeVisible();
   await expect(
@@ -643,9 +668,12 @@ test("coach profile keeps its complete location list when the map provider fails
       name: "Show Northside Combat on the map",
     }),
   ).toBeDisabled();
-  await expect(
-    page.getByRole("heading", { name: "No scheduled times right now." }),
-  ).toBeVisible();
+  const summary = page
+    .getByRole("region", { name: "Make time for your next step." })
+    .getByRole("status");
+  await expect(summary.locator("strong")).toHaveText("0");
+  await expect(summary).toContainText("open slots");
+  await expect(summary).toContainText("in the next 7 days");
 });
 
 test("coach workspace stays protected and exposes no placeholder controls", async ({
@@ -654,7 +682,12 @@ test("coach workspace stays protected and exposes no placeholder controls", asyn
   await page.goto("/coach");
   const destination = new URL(page.url());
   if (destination.pathname === "/sign-in") {
-    expect(destination.searchParams.get("returnTo")).toBe("/coach");
+    const continuation = new URL(
+      destination.searchParams.get("returnTo")!,
+      destination.origin,
+    );
+    expect(continuation.pathname).toBe("/coach");
+    expect(continuation.searchParams.get("view")).toBe("schedule");
   } else {
     await expect(
       page.getByRole("heading", {
