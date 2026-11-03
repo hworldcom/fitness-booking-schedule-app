@@ -1,0 +1,54 @@
+{
+  "name": "@movx/mobile",
+  "main": "expo-router/entry",
+  "version": "0.1.0",
+  "dependencies": {
+    "expo": "57.0.31",
+    "expo-constants": "57.0.22",
+    "expo-font": "57.0.4",
+    "expo-linking": "57.0.13",
+    "expo-router": "57.0.29",
+    "expo-splash-screen": "57.0.10",
+    "expo-status-bar": "57.0.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-gesture-handler": "2.32.0",
+    "react-native-reanimated": "4.5.1",
+    "react-native-safe-area-context": "5.7.0",
+    "react-native-screens": "4.26.2",
+    "react-native-svg": "15.15.4",
+    "react-native-web": "0.21.4",
+    "react-native-worklets": "0.10.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/react": "19.2.18",
+    "eslint": "9.39.5",
+    "eslint-config-expo": "57.0.2",
+    "expo-doctor": "1.21.5",
+    "prettier": "3.9.8",
+    "typescript": "6.0.3"
+  },
+  "scripts": {
+    "start": "EXPO_NO_DOTENV=1 expo start --go --lan",
+    "ios": "EXPO_NO_DOTENV=1 expo start --go --ios",
+    "web": "EXPO_NO_DOTENV=1 expo start --web --port 8082",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "format:check": "prettier --check src scripts tests app.config.ts metro.config.cjs eslint.config.cjs tsconfig.json package.json README.md AGENTS.md",
+    "test": "node --test tests/*.test.mjs",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
+    "export:ios": "npm run check:boundaries && EXPO_NO_DOTENV=1 expo export --platform ios --source-maps --output-dir dist/ios && node scripts/check-bundle.mjs",
+    "export:web": "EXPO_NO_DOTENV=1 expo export --platform web --output-dir dist/web",
+    "preview:web": "node scripts/serve-preview.mjs",
+    "test:ui": "node scripts/rehearse-preview.mjs",
+    "doctor": "expo-doctor"
+  },
+  "private": true,
+  "description": "MovX native iOS sample-data preview",
+  "engines": {
+    "node": ">=24.21.0 <25"
+  },
+  "packageManager": "npm@11.19.0"
+}

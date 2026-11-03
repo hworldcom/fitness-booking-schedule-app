@@ -6,6 +6,7 @@ export default defineConfig([
   ...nextVitals,
   ...nextTs,
   globalIgnores([
+    "mobile/**",
     ".next/**",
     "clients/js/src/generated/**",
     "out/**",

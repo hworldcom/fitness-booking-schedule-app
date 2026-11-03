@@ -26,7 +26,7 @@ Start with the [MVP specification](docs/mvp-spec.md), the single current product
 
 Google sign-in activation and remaining live checks: [provider setup](docs/google-auth-setup.md).
 
-Native iOS startup: [platform contract and release stages](docs/mvp-spec.md#23-native-ios-application), owned by [MOV-49](https://linear.app/movx/issue/MOV-49); [MOV-26](https://linear.app/movx/issue/MOV-26) owns the planned separate Expo application and phone preview. No mobile directory, native setup/check command or device build exists at contract adoption. Keep product rules in the specification; native implementation status and evidence remain in Linear.
+Native iOS preview: the independent [Expo app and phone setup](mobile/README.md) live in `mobile/`, owned by [MOV-26](https://linear.app/movx/issue/MOV-26). From this repository run `npm --prefix mobile ci` and `npm --prefix mobile start`, using Node24.21.x/npm11.19.x. The labelled fictional-data preview includes Explore, Sessions, Messages and distinct shared/personal notes; edits stay in memory. Real Auth/API integration, physical-device acceptance and Apple distribution remain pending. The [platform contract and release stages](docs/mvp-spec.md#23-native-ios-application) own product rules; Linear records implementation evidence.
 
 ## Current foundation
 

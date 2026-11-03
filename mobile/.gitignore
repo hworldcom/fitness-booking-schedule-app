@@ -1,0 +1,11 @@
+/node_modules/
+/.expo/
+/dist/
+/test-results/
+/coverage/
+/ios/
+/android/
+expo-env.d.ts
+*.tsbuildinfo
+.env
+.env.*
