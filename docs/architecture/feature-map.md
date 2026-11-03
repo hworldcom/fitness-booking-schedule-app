@@ -4,21 +4,22 @@ Use one relevant entry, verify its source and follow additional dependencies onl
 
 For import ownership changes, consult the [enforced dependency rules and exact exception owners](overview.md#dependencies-enforced-rules-and-current-exceptions), then run the [source boundary suite](../../tests/boundaries.test.ts) and [isolated graph cases](../../tests/dependency-graph.test.ts). The capability's extraction issue owns removal of its temporary entries.
 
-| Capability                         | Entry                                                                   |
-| ---------------------------------- | ----------------------------------------------------------------------- |
-| Private booking and session types  | [Detailed path](#private-booking-and-session-types)                     |
-| Coach availability and calendar    | [Detailed path](#coach-availability-and-calendar)                       |
-| Events and group sessions          | [Detailed path](#events-and-group-sessions)                             |
-| Public Home and How it works       | [Presentation and calendar introduction](#public-home-and-how-it-works) |
-| Coach profiles and public websites | [Starting references](#coach-profiles-and-public-websites)              |
-| Authentication and authorization   | [Cross-cutting references](#authentication-and-authorization)           |
-| Messaging                          | [Starting references](#messaging)                                       |
-| Staff coach application review     | [Authority and separate admin app](#staff-coach-application-review)      |
-| Notifications                      | [Message stage and delivery](#notifications)                            |
-| Connections and reviews            | [Starting references](#connections-and-reviews)                         |
-| Athlete training calendar          | [Calendar, logs and reminders](#athlete-training-calendar)              |
+| Capability                                | Entry                                                                                      |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Private booking and session types         | [Detailed path](#private-booking-and-session-types)                                        |
+| Coach availability and calendar           | [Detailed path](#coach-availability-and-calendar)                                          |
+| Events and group sessions                 | [Detailed path](#events-and-group-sessions)                                                |
+| Public Home and How it works              | [Presentation and calendar introduction](#public-home-and-how-it-works)                    |
+| Coach profiles and public websites        | [Starting references](#coach-profiles-and-public-websites)                                 |
+| Authentication and authorization          | [Cross-cutting references](#authentication-and-authorization)                              |
+| Messaging                                 | [Starting references](#messaging)                                                          |
+| Staff coach application review            | [Authority and separate admin app](#staff-coach-application-review)                        |
+| Notifications                             | [Message stage and delivery](#notifications)                                               |
+| Connections and reviews                   | [Starting references](#connections-and-reviews)                                            |
+| Athlete training calendar                 | [Calendar, logs and reminders](#athlete-training-calendar)                                 |
 | External clients and targeted invitations | [Coach-owned records and later account access](#external-clients-and-targeted-invitations) |
-| Session notes and video references | [Private and shared training records](#session-notes-and-video-references) |
+| Session notes and video references        | [Private and shared training records](#session-notes-and-video-references)                 |
+| Native iOS application                    | [Contract and planned startup](#native-ios-application-planned)                            |
 
 ## Private booking and session types
 
@@ -225,7 +226,6 @@ Run `node scripts/rehearse-coach-approval-notifications-database.mjs` (and `--re
 
 **Checks/preview:** `node --import tsx --test tests/notes.test.ts tests/training.test.ts tests/coach-calendar.test.ts tests/boundaries.test.ts`; `node scripts/rehearse-session-notes-database.mjs` uses only uniquely named movnotes fresh/upgrade scratch databases on Docker55322, pgTAP, schema lint, restricted actor tests and real concurrency, then removes exact targets and checks retained hashes. `node scripts/preview-session-notes.mjs --test` mounts actual components with explicit fictional API/Auth data at3194, checks desktop/430/375/320, keyboard, saves/retry/privacy and overflow; this is presentation proof only. `node scripts/preview-session-notes.mjs` leaves an interactive fixture-only preview at127.0.0.1:3193/notes-preview, with an exact scratch/PID manifest under test-results/session-notes-ui. Stop that process to remove its source copy. The normal disposable `npm run test:coach-media-integration -- --profile-editor --athlete-training --diagnose-storage` additionally runs [real notes Auth/SQL journeys](../../scripts/lib/session-notes-integration.mjs), alongside existing full source/build/media/athlete coverage, with the same isolation/cleanup prerequisites above. Never migrate/reset retained accounts for this preview.
 
-
 ## External clients and targeted invitations
 
 **Coach invitation entry (MOV-165):** the [client workspace](../../src/features/external-clients/workspace.tsx) presents a primary **Invite client** / **Resend invitation** button, highlights the saved email and explains missing-email setup. It opens recipient confirmation with **Send email invitation** as the final action. Scoped [shared styles](../../src/features/session-types/session-types.css) preserve44px targets, wrapping and secondary controls. Mutation/retry/recipient/delivery authority remains with the existing API/SQL; mounted workspace checks cover two-step/busy/unknown/error/no-email/accepted presentation without real sends, and the existing disposable integration selectors follow these labels.
@@ -243,3 +243,11 @@ Run `node scripts/rehearse-coach-approval-notifications-database.mjs` (and `--re
 **Delivery:** [Invitation renderer](../../src/server/notifications/invitation-email.ts), [owner-targeted dispatcher](../../src/server/notifications/invitations.ts), existing restricted [worker repository](../../src/server/db/notifications/worker.ts) and [top-level worker](../../src/server/notifications/worker.ts) version7. Separate bounded invitation lane; versions3–6 retain previous queues/contracts. Existing notification worker/transport/site configuration applies. Queueing and provider acceptance are distinct; possible handoffs become Unknown, with no automatic resend. No transaction spans provider I/O.
 
 **Validation/setup:** `npm run test:external-clients-db` uses unique `movexternal_*` fresh/upgrade databases on55322, original-field fingerprints, restricted SQL, exact retry, reschedule/cancel, claim/revoke concurrency and worker fencing/lifecycle checks plus schema lint. It removes exactly owned targets and verifies retained hashes; run sequentially with other database rehearsals. `npm run test:external-clients-integration` extends the disposable real production/Auth/SQL/Mailpit/Storage rehearsal with creation, lost-response retry, scheduling/notes, minimal guest/wrong-account offers, captured invitation and explicit history access, desktop/mobile/keyboard checks, then existing athlete/notes/media regressions. Requires Node24.21.x, locked dependencies, Docker/Chrome and free55421/55422/55424/3169; artifacts/cleanup manifest are under `test-results/external-clients-integration/<tag>`. See [SQL/runtime/recovery](../../supabase/README.md#external-clients-and-targeted-invitations). Never reset/provision retained accounts for tests.
+
+## Native iOS application (planned)
+
+**Start:** [MVP section 23](../mvp-spec.md#23-native-ios-application) is the native contract. [MOV-49](https://linear.app/movx/issue/MOV-49) owns its documentation; [MOV-26](https://linear.app/movx/issue/MOV-26) owns the planned separate Expo application/tooling and phone preview; [MOV-7](https://linear.app/movx/issue/MOV-7) owns common mobile bearer/API authority. No native source directory, installed Expo dependency, mobile script or device proof exists at contract adoption.
+
+**Feature owners:** [MOV-27](https://linear.app/movx/issue/MOV-27) athlete scheduling; [MOV-153](https://linear.app/movx/issue/MOV-153) both-role messaging; [MOV-154](https://linear.app/movx/issue/MOV-154) booked-session notes; [MOV-173](https://linear.app/movx/issue/MOV-173) private personal-workout notes. Begin with the relevant existing web/source entry above and preserve its authority; mobile feature adapters reuse MOV-7 rather than importing the root web/server source. Later native coach management is separate from the first beta. [MOV-8](https://linear.app/movx/issue/MOV-8) owns deletion and [MOV-30](https://linear.app/movx/issue/MOV-30) distribution/integrated device evidence.
+
+**Validation/prerequisites:** contract work needs documentation formatting and local-link/anchor/consistency checks. MOV-26 must establish actual isolated native commands, dependencies/import checks and a physical-phone route before documenting them as runnable. Current root source-boundary tests do not prove future mobile isolation. A labelled fixture preview, real Auth/API/SQL integration, TestFlight and public release are separate evidence. Consult [the contract's stage gates](../mvp-spec.md#235-delivery-stages-and-proof), existing capability test prerequisites and the [database guide](../../supabase/README.md) before any data operation; native startup grants no retained-data or hosted authority.

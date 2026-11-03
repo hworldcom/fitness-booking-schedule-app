@@ -26,6 +26,8 @@ Start with the [MVP specification](docs/mvp-spec.md), the single current product
 
 Google sign-in activation and remaining live checks: [provider setup](docs/google-auth-setup.md).
 
+Native iOS startup: [platform contract and release stages](docs/mvp-spec.md#23-native-ios-application), owned by [MOV-49](https://linear.app/movx/issue/MOV-49); [MOV-26](https://linear.app/movx/issue/MOV-26) owns the planned separate Expo application and phone preview. No mobile directory, native setup/check command or device build exists at contract adoption. Keep product rules in the specification; native implementation status and evidence remain in Linear.
+
 ## Current foundation
 
 Delivered reusable foundations include:
@@ -380,7 +382,6 @@ For the athlete **My training** Calendar and **Plan routine** weekly planner (in
 ### New-member welcome validation
 
 `node scripts/rehearse-member-welcome-database.mjs` validates atomic new registration, private read-only MovX welcomes and existing registration/chat regression in disposable local scratch databases. `npm run test:coach-media-integration -- --member-welcome --diagnose-storage` adds actual profile completion, inbox/unread/read/reload/desktop/mobile/help/privacy checks to the wholly disposable real Auth/SQL/Storage production rehearsal above. No old-account backfill, external welcome email or retained fixture mutation occurs. See [setup, prerequisites and recovery](supabase/README.md#new-member-welcome); install its exact forward SQL through the backed-up retained-target procedure before using version2 consumers on local/UAT/production.
-
 
 For coach **External clients**, use **My athletes → External clients · sessions & notes**, or choose **External client** in **Schedule a client**. A name is enough to reserve real sessions; add an email later and review/send an invitation. A verified matching account must explicitly accept before it can access the original shared session history. Private coach notes stay private. See [contract](docs/mvp-spec.md#22-external-clients-and-invitation-based-session-access), [feature map](docs/architecture/feature-map.md#external-clients-and-targeted-invitations) and [SQL/setup/recovery](supabase/README.md#external-clients-and-targeted-invitations). Install both November1 migrations before these consumers; do not reset retained accounts.
 

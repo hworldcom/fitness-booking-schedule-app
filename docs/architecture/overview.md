@@ -43,6 +43,8 @@ Services validate input and gate access. SQL functions and constraints own persi
 
 Drizzle schema mappings are not the complete database contract. Follow repository function names through [current migrations](../../supabase/migrations/) in order, including later replacements. The [migration archive](../../supabase/migration-history/README.md) supplies preserved history, not another live migration chain. Scheduling instants and timezone/full-duration fit ultimately follow SQL authority; client previews grant no permission.
 
+The [planned native frontend](../mvp-spec.md#23-native-ios-application) will consume a versioned HTTP API over these services. [MOV-26](https://linear.app/movx/issue/MOV-26) must establish separate native tooling/import/build checks, and [MOV-7](https://linear.app/movx/issue/MOV-7) mobile identity/API compatibility. No native source or enforcement exists yet; the source graph and rules below describe the current web tree. Use the [native feature-map entry](feature-map.md#native-ios-application-planned) for ownership and prerequisites.
+
 ## Dependencies: enforced rules and current exceptions
 
 [Boundary tests](../../tests/boundaries.test.ts) use a [TypeScript source graph](../../tests/helpers/dependency-graph.ts) and [dependency policy](../../tests/helpers/dependency-policy.ts). Existing Auth SDK, Storage adapter, database-package and availability-service checks remain enforced.
