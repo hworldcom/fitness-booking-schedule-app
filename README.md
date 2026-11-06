@@ -115,6 +115,12 @@ Applications require a contact phone with country code; Instagram, Facebook and 
 
 For coach application staff alerts, run `npm run test:coach-application-emails-db` with local Docker PostgreSQL and Mailpit55324. It uses fresh/upgrade scratch databases, verifies first completed submission and explicit resubmission, privacy/retry behavior and actual local capture to `hello@movx.club`, then removes its exact fixtures and verifies retained hashes. `npm run test:notifications-integration` also checks the actual application form, cron and captured staff receipts in its disposable stack. See [staff-email rollout and recovery](supabase/README.md#coach-application-staff-email); no hosted installation or external send is implied.
 
+### Registration staff email validation
+
+New account registrations queue a staff email to `hello@movx.club` immediately, before verification or profile completion; unverified signup addresses are labelled explicitly. Existing registrations are not backfilled, and confirmation/login/profile setup do not send another signup alert. Run `npm run test:registration-emails-db` for isolated fresh/upgrade SQL, authority/concurrency/recovery and registration regression. Run `npm run test:registration-emails-integration` for the actual signup → cron → local Mailpit journey and existing notification regression, using Node24, Docker and Chrome. Read [prerequisites and SQL-before-worker rollout/recovery](supabase/README.md#registration-staff-email) first. These commands preserve retained data and send no external mail; hosted activation remains separate.
+
+The separate admin app also provides **Users** with current email verification, profile completion and both staff-email states (MOV-176). First email verification queues its own notice; existing already-verified accounts receive no historical mail. Run `npm run test:verification-admin-db` for isolated SQL/staff/worker checks and `MOVX_ADMIN_SOURCE=/absolute/path/to/movx-admin npm run test:registration-admin-integration` for both apps, actual email proof/two local staff receipts and authorized/error/mobile/keyboard Users journeys. See [verification/admin installation and recovery](supabase/README.md#verification-alerts-and-admin-users). Both November 6 migrations must precede worker version 9 and the new admin consumer; production rollout remains separate.
+
 ### Session-type validation
 
 With local Supabase running and dependencies installed, run the isolated schema/booking rehearsal:

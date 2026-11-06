@@ -1,6 +1,8 @@
 import { rehearseStaffCoachApproval } from "./lib/staff-coach-approval-integration.mjs";
 import { verifiedDatabaseFingerprints } from "./lib/database-fingerprints.mjs";
 import { rehearseCoachApplicationEmail } from "./lib/coach-application-email-integration.mjs";
+import { rehearseRegistrationEmail } from "./lib/registration-email-integration.mjs";
+import { rehearseRegistrationAdmin } from "./lib/registration-admin-integration.mjs";
 import {
   assertRehearsalPortsAvailable,
   rehearsalIdentityMatches,
@@ -587,6 +589,17 @@ try {
   const coach = await person("QA Coach"),
     athlete = await person("QA Athlete"),
     stranger = await person("QA Stranger");
+  await rehearseRegistrationEmail({
+    base,
+    browser,
+    database,
+    mail,
+    cron,
+    pass,
+    output,
+    tag,
+    people: [coach, athlete, stranger],
+  });
   await rehearseCoachApplicationEmail({
     base,
     coach,
@@ -596,7 +609,7 @@ try {
     pass,
     output,
   });
-  if (adminEnabled)
+  if (adminEnabled) {
     await rehearseStaffCoachApproval({
       base,
       adminBase,
@@ -610,7 +623,21 @@ try {
       pass,
       output,
     });
-  else {
+    phase = "registration Users admin";
+    await rehearseRegistrationAdmin({
+      base,
+      adminBase,
+      browser,
+      person,
+      stranger,
+      database,
+      mail,
+      cron,
+      pass,
+      output,
+      tag,
+    });
+  } else {
     await database`select app.review_coach_application(${coach.profileId}::uuid,'pending','approved','Disposable message notification QA','local-test','movx-identity-application-v1')`;
     assert.equal((await dispatch()).accepted, 1);
     const [approval] =

@@ -4,7 +4,7 @@ import { withNotificationWorker } from "@/server/db/notifications/worker";
 
 export async function runNotificationWorker(
   env: Readonly<Record<string, string | undefined>> = process.env,
-  version: 3 | 4 | 5 | 6 | 7 = 4,
+  version: 3 | 4 | 5 | 6 | 7 | 8 | 9 = 4,
 ) {
   if (env.NOTIFICATION_DELIVERY_ENABLED !== "true")
     throw Error("Notification delivery is disabled.");
@@ -50,7 +50,15 @@ export async function runNotificationWorker(
         undefined,
         training ? 28000 : 45000,
       ),
-    version === 6 || version === 7 ? 5 : version === 5 ? 4 : version,
+    version === 9
+      ? 7
+      : version === 8
+        ? 6
+        : version === 6 || version === 7
+          ? 5
+          : version === 5
+            ? 4
+            : version,
   );
   return {
     ...result,

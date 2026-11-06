@@ -22,6 +22,20 @@ export async function rehearseStaffCoachApproval({
   assert.equal(new URL(mail).port, "55424");
   const detail = adminBase + "/admin/coaches/" + coach.profileId;
   const staff = await person("QA Reviewer");
+  // Registration alerts are separate from the approval receipt asserted below.
+  const staffRegistration = await fetch(
+    base + "/api/internal/notifications/dispatch",
+    {
+      headers: { authorization: "Bearer " + cron },
+    },
+  );
+  assert.equal(staffRegistration.status, 200);
+  assert.equal(
+    (
+      await database`select state from app.registration_emails where auth_user_id=${staff.authId}::uuid`
+    )[0].state,
+    "accepted",
+  );
   await database`select app.set_platform_staff(${staff.profileId}::uuid,${staff.runId}::uuid,0,'active','Assign isolated fixture staff access','fixture-operator')`;
   const context = await browser.newContext({
       viewport: { width: 1440, height: 1000 },
