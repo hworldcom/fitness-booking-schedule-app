@@ -4,6 +4,7 @@ import {
   BOOKING_REQUEST_TIMEOUT_MS,
   reloadSavedBooking,
   saveCoachBooking,
+  reviewCoachBooking,
 } from "@/features/session-types/booking-client";
 import type { CoachSessionCommand } from "@/domain/typed-sessions";
 
@@ -58,6 +59,7 @@ test("only matching HTTP/DTO failures are definitive; contradictory or unrelated
   for (const [status, code] of Object.entries({
     invalid: 400,
     conflict: 409,
+    "outside-hours": 409,
     forbidden: 403,
     "signed-out": 401,
     unavailable: 503,
@@ -202,3 +204,30 @@ test(
     );
   },
 );
+
+test("server review checks the exact proposed interval before asking for a working-hours exception", async () => {
+  assert.deepEqual(
+    await reviewCoachBooking(command, {
+      request: async (url, init) => {
+        assert.equal(url, "/api/session-bookings?coach=true&review=true");
+        assert.deepEqual(JSON.parse(String(init?.body)), command);
+        assert.equal(init?.credentials, "same-origin");
+        return Response.json({ status: "reviewed", outsideWorkingHours: true });
+      },
+    }),
+    { outsideWorkingHours: true },
+  );
+  for (const body of [
+    { status: "saved" },
+    { status: "reviewed", outsideWorkingHours: "true" },
+    { status: "conflict" },
+  ])
+    await assert.rejects(
+      reviewCoachBooking(command, { request: request(body) }),
+    );
+  await assert.rejects(
+    reviewCoachBooking(command, {
+      request: request({ status: "reviewed", outsideWorkingHours: true }, 409),
+    }),
+  );
+});

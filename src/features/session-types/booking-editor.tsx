@@ -7,7 +7,11 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SessionActorBoundary } from "./actor-boundary";
-import { reloadSavedBooking, saveCoachBooking } from "./booking-client";
+import {
+  reloadSavedBooking,
+  reviewCoachBooking,
+  saveCoachBooking,
+} from "./booking-client";
 
 import {
   SESSION_DURATIONS,
@@ -107,6 +111,8 @@ function Editor({
   const [duration, setDuration] = useState<SessionDuration>(60);
   const [review, setReview] = useState<CoachSessionCommand | null>(null);
   const reviewPanel = useRef<HTMLElement>(null);
+  const reviewButton = useRef<HTMLButtonElement>(null);
+  const [outsideWorkingHours, setOutsideWorkingHours] = useState(false);
   const [saved, setSaved] = useState(false);
   const [detailsNeedRefresh, setDetailsNeedRefresh] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState(false);
@@ -118,11 +124,12 @@ function Editor({
     saveNotice.current.focus({ preventScroll: true });
     saveNotice.current.scrollIntoView({ block: "center" });
   }, [message, saveFeedback]);
+  const reviewId = review?.commandId;
   useEffect(() => {
-    if (!review || !reviewPanel.current) return;
+    if (!reviewId || !reviewPanel.current) return;
     reviewPanel.current.focus({ preventScroll: true });
-    reviewPanel.current.scrollIntoView({ block: "start" });
-  }, [review]);
+    reviewPanel.current.scrollIntoView({ block: "start", behavior: "instant" });
+  }, [reviewId]);
   useEffect(() => {
     let active = true;
     async function load() {
@@ -244,8 +251,40 @@ function Editor({
       setBusy(false);
     }
   }
+  async function checkReview(command: CoachSessionCommand) {
+    if (saveController.current) return;
+    const controller = new AbortController();
+    saveController.current = controller;
+    setBusy(true);
+    setReview(null);
+    setSaveFeedback(true);
+    setMessage("Checking this booking change…");
+    try {
+      const result = await reviewCoachBooking(command, {
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
+      setOutsideWorkingHours(result.outsideWorkingHours);
+      setReview(command);
+      setMessage("");
+      setSaveFeedback(false);
+    } catch {
+      if (!controller.signal.aborted)
+        setMessage(
+          "This change could not be reviewed. Check the full duration, venue and any overlapping sessions, then try Review again. Reload if the booking or class changed.",
+        );
+    } finally {
+      saveController.current = null;
+      if (!controller.signal.aborted) setBusy(false);
+    }
+  }
   async function save() {
-    if (!review || saveController.current) return;
+    if (
+      !review ||
+      saveController.current ||
+      (outsideWorkingHours && !review.outsideHoursConfirmed)
+    )
+      return;
     const controller = new AbortController();
     saveController.current = controller;
     setBusy(true);
@@ -274,6 +313,17 @@ function Editor({
             setMessage("Session saved. Reload to view its latest details.");
           }
         }
+      } else if (r.status === "outside-hours") {
+        setOutsideWorkingHours(true);
+        setUncertain(false);
+        setDetailsNeedRefresh(false);
+        setReview({
+          ...review,
+          commandId: crypto.randomUUID(),
+          outsideHoursConfirmed: false,
+        });
+        setMessage("");
+        setSaveFeedback(false);
       } else {
         setUncertain(
           !["invalid", "conflict", "forbidden", "signed-out"].includes(
@@ -475,7 +525,7 @@ function Editor({
             }
             setMessage("");
             setSaveFeedback(false);
-            setReview({
+            const command: CoachSessionCommand = {
               commandId: crypto.randomUUID(),
               typeId: type.id,
               typeRevision: type.revision,
@@ -494,13 +544,19 @@ function Editor({
                       ? { externalClientId }
                       : { athleteId }),
                   }),
-            });
+            };
+            if (detail) void checkReview(command);
+            else {
+              setOutsideWorkingHours(false);
+              setReview(command);
+            }
           }}
         >
           <h2>{detail ? "Change this booking" : "New confirmed session"}</h2>
           <p>
-            Use a free time within your saved availability. This changes one
-            booking; your session type stays the same.
+            {detail
+              ? "Choose a free time. If the full session falls outside your saved working hours, we’ll ask you to confirm this one-booking exception. Your regular hours and session type stay the same."
+              : "Use a free time within your saved availability. Your session type stays the same."}
           </p>
           {!detail && clientKind === "platform" && (
             <>
@@ -625,6 +681,7 @@ function Editor({
             </label>
           </div>
           <button
+            ref={reviewButton}
             type="submit"
             className="button dark"
             disabled={busy || uncertain || clientPending || !type}
@@ -644,9 +701,39 @@ function Editor({
           <p>
             {type?.name} · {duration} minutes
             <br />
-            {dateLabel(review.startsAt)} ·{" "}
-            {options?.locations.find((l) => l.id === locationId)?.name}
+            {dateLabel(review.startsAt)} –{" "}
+            {dateLabel(
+              new Date(
+                Date.parse(review.startsAt) + review.durationMinutes * 60000,
+              ).toISOString(),
+            )}{" "}
+            · {options?.locations.find((l) => l.id === locationId)?.name}
           </p>
+          {outsideWorkingHours && (
+            <div className="session-booking-hours-warning" role="note">
+              <h3>Outside your working hours</h3>
+              <p id="booking-hours-warning">
+                This session extends beyond your saved working hours or falls on
+                a day off. Do you want to reschedule it anyway? This changes
+                only this booking; your regular availability stays the same.
+              </p>
+              <label className="session-booking-hours-confirmation">
+                <input
+                  type="checkbox"
+                  checked={review.outsideHoursConfirmed === true}
+                  disabled={busy || uncertain}
+                  aria-describedby="booking-hours-warning"
+                  onChange={(e) =>
+                    setReview({
+                      ...review,
+                      outsideHoursConfirmed: e.target.checked,
+                    })
+                  }
+                />
+                Reschedule outside my saved working hours
+              </label>
+            </div>
+          )}
           <p>
             {detail
               ? "Messages and notes stay with this booking. Original schedule details remain in its change history."
@@ -658,7 +745,11 @@ function Editor({
             <button
               type="button"
               className="button dark"
-              disabled={busy || clientPending}
+              disabled={
+                busy ||
+                clientPending ||
+                (outsideWorkingHours && !review.outsideHoursConfirmed)
+              }
               onClick={() => void save()}
             >
               {busy
@@ -666,6 +757,20 @@ function Editor({
                 : detail
                   ? "Save booking change"
                   : "Confirm session"}
+            </button>
+          )}
+          {!uncertain && (
+            <button
+              type="button"
+              className="button secondary"
+              disabled={busy}
+              onClick={() => {
+                setReview(null);
+                setOutsideWorkingHours(false);
+                reviewButton.current?.focus();
+              }}
+            >
+              Cancel review
             </button>
           )}
         </section>

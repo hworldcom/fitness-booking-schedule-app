@@ -97,3 +97,37 @@ test("type filters bind calendar cursors and public group IDs", () => {
     null,
   );
 });
+
+test("only coach override commands accept a boolean working-hours acknowledgement", () => {
+  const override = {
+    ...request,
+    action: "override",
+    bookingId: id,
+    expectedRevision: 1,
+    durationMinutes: 75,
+  };
+  for (const outsideHoursConfirmed of [true, false])
+    assert.ok(parseTypedRequest({ ...override, outsideHoursConfirmed }, true));
+  for (const outsideHoursConfirmed of ["true", 1, null])
+    assert.equal(
+      parseTypedRequest({ ...override, outsideHoursConfirmed }, true),
+      null,
+    );
+  assert.equal(
+    parseTypedRequest({ ...request, outsideHoursConfirmed: true }),
+    null,
+  );
+  assert.equal(
+    parseTypedRequest(
+      {
+        ...request,
+        action: "create",
+        athleteId: id,
+        durationMinutes: 60,
+        outsideHoursConfirmed: true,
+      },
+      true,
+    ),
+    null,
+  );
+});

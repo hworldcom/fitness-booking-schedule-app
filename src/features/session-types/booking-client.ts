@@ -90,6 +90,7 @@ export async function saveCoachBooking(
   const failures = {
     invalid: 400,
     conflict: 409,
+    "outside-hours": 409,
     forbidden: 403,
     "signed-out": 401,
     unavailable: 503,
@@ -98,6 +99,28 @@ export async function saveCoachBooking(
     if (body.status === status && code === expected)
       return { status: status as keyof typeof failures };
   throw Error("Invalid booking save response");
+}
+
+export async function reviewCoachBooking(
+  command: CoachSessionCommand,
+  options: RequestOptions = {},
+) {
+  const { code, body } = await bookingResponse(
+    "/api/session-bookings?coach=true&review=true",
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(command),
+    },
+    options,
+  );
+  if (
+    code === 200 &&
+    body.status === "reviewed" &&
+    typeof body.outsideWorkingHours === "boolean"
+  )
+    return { outsideWorkingHours: body.outsideWorkingHours };
+  throw Error("The booking change could not be reviewed");
 }
 
 export async function reloadSavedBooking(

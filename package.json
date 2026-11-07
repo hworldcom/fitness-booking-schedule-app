@@ -81,6 +81,7 @@
     "test:registration-emails-integration": "node scripts/rehearse-notifications-integration.mjs",
     "test:verification-admin-db": "node scripts/rehearse-verification-admin-database.mjs",
     "test:registration-admin-integration": "node scripts/rehearse-notifications-integration.mjs --admin",
+    "test:working-hours-db": "node scripts/rehearse-working-hours-database.mjs",
     "test:person-conversations-db": "node scripts/rehearse-person-conversations-database.mjs",
     "test:person-conversations-integration": "node scripts/rehearse-notifications-integration.mjs --person-conversations",
     "test:booking-rescheduling-integration": "node scripts/rehearse-notifications-integration.mjs --booking-rescheduling-only",

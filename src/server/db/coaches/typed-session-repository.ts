@@ -149,3 +149,23 @@ export async function sessionBookingDetailRecord(
     return sessionMutationError(error);
   }
 }
+
+export async function reviewBookingChangeRecord(
+  tx: ActorDatabaseTransaction,
+  input: CoachSessionCommand,
+) {
+  const { commandId: _commandId, ...payload } = input;
+  void _commandId;
+  try {
+    const [row] = await tx.execute<{
+      result: { outsideWorkingHours: boolean };
+    }>(
+      sql`select app.review_owned_booking_change(${JSON.stringify(payload)}::jsonb) result`,
+    );
+    if (typeof row?.result?.outsideWorkingHours !== "boolean")
+      throw Error("Invalid booking review result");
+    return row.result;
+  } catch (error) {
+    return sessionMutationError(error);
+  }
+}

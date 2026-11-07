@@ -322,6 +322,12 @@ Dev uses the existing Porkbun SMTP service (`smtp.porkbun.com`, STARTTLS port 58
 
 The guarded Vercel build requires the complete database/Auth group whenever hosted runtime mode is enabled. Keep the Vercel function region close to the Supabase project and measure hosted connection behavior before changing the request-owned connection model in `src/server/db/client.ts`.
 
+## Coach working-hours rescheduling confirmation
+
+MOV-181's `20261107000200_coach_working_hours_confirmation.sql` follows person conversations. It adds private fit checks and an owner-only review projection, replacing the bounded coach command and private fit wrapper without updating historical rows, roles or table grants. An explicit acknowledgement applies only to one existing future booking's exact actor/dataset/revision/type/venue/start/duration. The private command intent is inserted within that scheduling transaction before nested occurrence checks and rolls back with any rejection; runtime cannot write that proof directly. Normal public/athlete/create paths stay strict. Current horizon/timezone, active venue/type, manual closures and private/group conflicts remain independent, and an exception never updates working hours or publishes new availability. The existing change trigger and worker send the normal two participant receipts once.
+
+Install this SQL before releasing the server-review consumer. Old consumers keep strict in-hours behavior and cannot create an unconfirmed exception. Compatible rollback retains original booking IDs, commands, audits, events and Unknown history, including acknowledged exceptions; do not rewrite installed SQL or undo a saved user booking. Hosted activation needs the target-specific backup/restore/atomic-ledger procedure below; local implementation does not activate UAT/production. `npm run test:working-hours-db` uses unique owned `mov181_*_fresh|upgrade` databases and runtime-only logins on local55322 with row/role preservation and atomic rollback proof. Run serially with other DB rehearsals. `npm run test:booking-rescheduling-integration` uses the separate complete disposable Auth/browser/worker/Mailpit stack and removes only its own resources.
+
 ## Hosted changes and recovery
 
 ### Current application release

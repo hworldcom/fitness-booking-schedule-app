@@ -639,6 +639,159 @@ export async function rehearseBookingRescheduling({
     pass(
       "client-side return to Bookings and both real calendar views show the new time and link the original booking",
     );
+
+    await coach.page.goto(base + "/coach/sessions/" + bookingId);
+    await reviewButton.click();
+    await expect(review).toBeVisible();
+    await expect(save).toBeEnabled();
+    await expect(
+      coach.page.getByRole("heading", {
+        name: "Outside your working hours",
+        exact: true,
+      }),
+    ).toHaveCount(0);
+    const [policyBefore] =
+      await database`select revision from app.coach_availability_policies where profile_id=${coach.profileId}::uuid`;
+    const setHours = async (expectedRevision, hours) =>
+      source(
+        coach,
+        "select app.save_owned_effective_coach_availability($1::jsonb)",
+        [
+          database.json({
+            kind: "dates",
+            operationId: randomUUID(),
+            expectedRevision,
+            dates: [
+              {
+                date: day.date,
+                mode: "custom",
+                hours: hours.map((localStartTime) => ({
+                  localStartTime,
+                  locationId: venue.id,
+                  locationUpdatedAt: venue.stamp,
+                })),
+              },
+            ],
+          }),
+        ],
+      );
+    await setHours(policyBefore.revision, ["11:00"]);
+    await save.click();
+    await expect(
+      coach.page.getByRole("heading", {
+        name: "Outside your working hours",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      coach.page.getByLabel("Reschedule outside my saved working hours", {
+        exact: true,
+      }),
+    ).not.toBeChecked();
+    await expect(save).toBeDisabled();
+    assert.equal(
+      (await api(coach, "?bookingId=" + bookingId)).data.detail.revision,
+      2,
+    );
+    await coach.page
+      .getByRole("button", { name: "Cancel review", exact: true })
+      .click();
+    await setHours(policyBefore.revision + 1, ["11:00", "12:00"]);
+    pass(
+      "a valid in-hours review becoming outside-hours before Save cannot commit; the actual response asks for a fresh unchecked acknowledgement and no extra revision/email",
+    );
+    const [hoursBeforeException] =
+      await database`select to_jsonb(p) policy,to_jsonb(d) dates from app.coach_availability_policies p join app.coach_availability_date_overrides d using(run_id,profile_id) where p.profile_id=${coach.profileId}::uuid and d.local_date=${day.date}::date`;
+    await coach.page.goto(base + "/coach/sessions/" + bookingId);
+    await coach.page
+      .getByLabel("Start · Berlin time", { exact: true })
+      .fill(day.date + "T19:00");
+    await coach.page.getByLabel("Duration", { exact: true }).selectOption("75");
+    await reviewButton.click();
+    const acknowledgement = coach.page.getByLabel(
+      "Reschedule outside my saved working hours",
+      { exact: true },
+    );
+    await expect(
+      coach.page.getByRole("heading", {
+        name: "Outside your working hours",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(acknowledgement).not.toBeChecked();
+    await expect(save).toBeDisabled();
+    for (const width of [1440, 375, 320]) {
+      await coach.page.setViewportSize({ width, height: 1000 });
+      await acknowledgement.focus();
+      await expect(acknowledgement).toBeFocused();
+      assert.equal(
+        await coach.page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth,
+        ),
+        false,
+      );
+      await review.screenshot({
+        path: path.join(output, `outside-hours-review-${width}.png`),
+      });
+    }
+    await coach.page
+      .getByRole("button", { name: "Cancel review", exact: true })
+      .click();
+    await expect(reviewButton).toBeFocused();
+    assert.equal(
+      (await api(coach, "?bookingId=" + bookingId)).data.detail.revision,
+      2,
+    );
+    await reviewButton.click();
+    await expect(acknowledgement).not.toBeChecked();
+    await acknowledgement.focus();
+    await coach.page.keyboard.press("Space");
+    await expect(acknowledgement).toBeChecked();
+    await expect(acknowledgement).toBeFocused();
+    await coach.page.getByLabel("Duration", { exact: true }).selectOption("60");
+    await reviewButton.click();
+    await expect(acknowledgement).not.toBeChecked();
+    await expect(save).toBeDisabled();
+    await coach.page.getByLabel("Duration", { exact: true }).selectOption("75");
+    await reviewButton.click();
+    await expect(acknowledgement).not.toBeChecked();
+    await acknowledgement.check();
+    await save.click();
+    await expect(feedback).toContainText("Session saved.");
+    const changed = await api(coach, "?bookingId=" + bookingId);
+    assert.equal(changed.data.detail.revision, 3);
+    assert.equal(
+      new Date(changed.data.detail.startsAt).getTime(),
+      Date.parse(times.original) + 9 * 3600000,
+    );
+    assert.equal(
+      Date.parse(changed.data.detail.endsAt) -
+        Date.parse(changed.data.detail.startsAt),
+      75 * 60000,
+    );
+    const [hoursAfterException] =
+      await database`select to_jsonb(p) policy,to_jsonb(d) dates from app.coach_availability_policies p join app.coach_availability_date_overrides d using(run_id,profile_id) where p.profile_id=${coach.profileId}::uuid and d.local_date=${day.date}::date`;
+    assert.deepEqual(hoursAfterException, hoursBeforeException);
+    await drain();
+    const exceptionReceipts =
+      await database`select r.state,r.provider_id,r.recipient_profile_id from app.booking_notification_receipts r join app.booking_notification_events e on e.id=r.event_id where e.event_key=${"booking:" + bookingId + ":changed:3"}`;
+    assert.equal(exceptionReceipts.length, 2);
+    for (const receipt of exceptionReceipts) {
+      assert.equal(receipt.state, "accepted");
+      const captured = await (
+        await fetch(mail + "/api/v1/message/" + receipt.provider_id)
+      ).json();
+      assert.match(captured.Text, /19:00/);
+      assert.equal(
+        captured.To[0].Address,
+        receipt.recipient_profile_id === athlete.profileId
+          ? athlete.email
+          : coach.email,
+      );
+    }
+    pass(
+      "outside-hours19:00/75 review requires unchecked explicit acknowledgement; cancel/field changes save nothing, desktop/375/320 keyboard fits, confirmed third change preserves regular hours and sends exactly one athlete/coach local receipt",
+    );
   } catch (error) {
     await coach.page
       .screenshot({

@@ -25,6 +25,7 @@ export type CoachSessionCommand = TypedSessionRequest &
     externalClientId?: string;
     bookingId?: string;
     expectedRevision?: number;
+    outsideHoursConfirmed?: boolean;
   }>;
 export type SessionBookingDetail = Readonly<{
   bookingId: string;
@@ -73,6 +74,7 @@ export function parseTypedRequest(
           "externalClientId",
           "bookingId",
           "expectedRevision",
+          "outsideHoursConfirmed",
         ]
       : []),
   ];
@@ -93,6 +95,11 @@ export function parseTypedRequest(
   )
     return null;
   if (coach) {
+    if (
+      v.outsideHoursConfirmed !== undefined &&
+      (v.action !== "override" || typeof v.outsideHoursConfirmed !== "boolean")
+    )
+      return null;
     if (
       !["create", "override"].includes(String(v.action)) ||
       !SESSION_DURATIONS.includes(v.durationMinutes as SessionDuration)

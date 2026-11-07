@@ -192,3 +192,21 @@
 .external-client-invitation .session-type-toolbar button + button {
   margin-left: 0;
 }
+.session-booking-hours-warning {
+  padding: 16px;
+  border: 1px solid #b46d16;
+  border-radius: 12px;
+  background: #fff7e8;
+  overflow-wrap: anywhere;
+}
+.session-type-editor .session-booking-hours-confirmation {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-block: 12px;
+}
+.session-booking-hours-confirmation input {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+}

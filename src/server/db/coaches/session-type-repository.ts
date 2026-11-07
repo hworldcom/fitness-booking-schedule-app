@@ -12,10 +12,20 @@ export class SessionTypeError extends Error {
     super("Session type operation failed.");
   }
 }
+export class OutsideWorkingHoursError extends SessionTypeError {
+  constructor() {
+    super("conflict");
+  }
+}
 export function sessionMutationError(error: unknown): never {
   let e: unknown = error;
   for (let depth = 0; depth < 6 && e && typeof e === "object"; depth++) {
-    const v = e as { code?: string; cause?: unknown };
+    const v = e as { code?: string; message?: string; cause?: unknown };
+    if (
+      v.code === "P0001" &&
+      v.message === "typed booking outside working hours"
+    )
+      throw new OutsideWorkingHoursError();
     if (v.code === "42501") throw new SessionTypeError("forbidden");
     if (
       [

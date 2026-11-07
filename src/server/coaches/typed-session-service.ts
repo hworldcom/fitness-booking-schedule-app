@@ -6,6 +6,7 @@ import { isAvailabilityDate } from "@/domain/effective-availability";
 import {
   parseTypedRequest,
   type SessionCatalog,
+  type CoachSessionCommand,
 } from "@/domain/typed-sessions";
 import {
   validConnectionPageOptions,
@@ -16,6 +17,7 @@ import { currentActorProjection } from "@/server/db/authorization/repository";
 import { publicSessionCatalogRecord } from "@/server/db/coaches/public-session-catalog-repository";
 import {
   SessionTypeError,
+  OutsideWorkingHoursError,
   ownedSessionTypes,
   ownedSessionTypeLocations,
 } from "@/server/db/coaches/session-type-repository";
@@ -25,6 +27,7 @@ import {
   typedSessionWeekRecord,
   typedSessionCommandRecord,
   sessionBookingDetailRecord,
+  reviewBookingChangeRecord,
 } from "@/server/db/coaches/typed-session-repository";
 export async function publicSessionCatalog(
   slug: string,
@@ -97,21 +100,40 @@ export async function publicSessionWeek(
   }
 }
 
-export async function typedSessionCommand(value: unknown, coach = false) {
+export async function typedSessionCommand(
+  value: unknown,
+  coach = false,
+  review = false,
+) {
   const input = parseTypedRequest(value, coach);
-  if (!input) return { status: "invalid" as const };
+  if (
+    !input ||
+    (review && (!coach || !("action" in input) || input.action !== "override"))
+  )
+    return { status: "invalid" as const };
   try {
     const r = await withAuthorizedActor(
-      async (tx) => ({
-        status: "saved" as const,
-        ...(await typedSessionCommandRecord(tx, input, coach)),
-      }),
+      async (tx) =>
+        review
+          ? {
+              status: "reviewed" as const,
+              ...(await reviewBookingChangeRecord(
+                tx,
+                input as CoachSessionCommand,
+              )),
+            }
+          : {
+              status: "saved" as const,
+              ...(await typedSessionCommandRecord(tx, input, coach)),
+            },
       { rethrow: (e) => e instanceof SessionTypeError },
     );
     return r.status === "authorized"
       ? r.value
       : { status: r.status === "preview" ? ("forbidden" as const) : r.status };
   } catch (error) {
+    if (error instanceof OutsideWorkingHoursError)
+      return { status: "outside-hours" as const };
     return {
       status:
         error instanceof SessionTypeError
