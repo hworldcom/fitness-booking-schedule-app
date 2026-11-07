@@ -11,6 +11,8 @@ function response(result: { status: string }) {
   const codes: Record<string, number> = {
     ready: 200,
     saved: 200,
+    reviewed: 200,
+    "outside-hours": 409,
     invalid: 400,
     conflict: 409,
     forbidden: 403,
@@ -59,6 +61,7 @@ export async function POST(request: Request) {
   const result = await typedSessionCommand(
     value,
     new URL(request.url).searchParams.get("coach") === "true",
+    new URL(request.url).searchParams.get("review") === "true",
   );
   if (result.status === "saved") {
     for (const path of ["/coach", "/sessions", "/messages", "/coach/athletes"])

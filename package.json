@@ -81,6 +81,7 @@
     "test:registration-emails-integration": "node scripts/rehearse-notifications-integration.mjs",
     "test:verification-admin-db": "node scripts/rehearse-verification-admin-database.mjs",
     "test:registration-admin-integration": "node scripts/rehearse-notifications-integration.mjs --admin",
+    "test:working-hours-db": "node scripts/rehearse-working-hours-database.mjs",
     "test:person-conversations-db": "node scripts/rehearse-person-conversations-database.mjs",
     "test:person-conversations-integration": "node scripts/rehearse-notifications-integration.mjs --person-conversations",
     "test:booking-rescheduling-integration": "node scripts/rehearse-notifications-integration.mjs --booking-rescheduling-only",
@@ -90,7 +91,8 @@
     "test:coach-media-integration": "node scripts/rehearse-coach-media-integration.mjs",
     "test:coach-media-live": "node scripts/rehearse-coach-media-live-mux.mjs",
     "test:external-clients-db": "node scripts/rehearse-external-clients-database.mjs",
-    "test:external-clients-integration": "node scripts/rehearse-coach-media-integration.mjs --external-clients --athlete-training --diagnose-storage"
+    "test:external-clients-integration": "node scripts/rehearse-coach-media-integration.mjs --external-clients --athlete-training --diagnose-storage",
+    "test:athlete-booking-notifications-db": "node scripts/rehearse-athlete-booking-notifications-database.mjs"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "5.3.0",

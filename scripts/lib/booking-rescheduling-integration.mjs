@@ -34,6 +34,73 @@ export async function rehearseBookingRescheduling({
     );
     return { status: r.status(), data: await r.json() };
   };
+  const notificationPage = async (actor, version = 5) => {
+    const r = await actor.context.request.get(base + "/api/notifications", {
+      headers: { "x-movx-notification-version": String(version) },
+    });
+    assert.equal(r.status(), 200);
+    return (await r.json()).value;
+  };
+  const athleteBell = async (bookingId, event, width) => {
+    const titles = {
+        confirmed: "Booking confirmed",
+        changed: "Booking rescheduled",
+        cancelled: "Booking cancelled",
+      },
+      title = titles[event];
+    const before = await notificationPage(athlete);
+    const target = before.items.find(
+      (x) =>
+        x.kind === "booking" &&
+        x.sourceId === bookingId &&
+        x.event === event &&
+        x.readAt === null,
+    );
+    assert.ok(target, `Missing athlete ${event} notification`);
+    await athlete.page.setViewportSize({ width, height: 900 });
+    await athlete.page.goto(base + "/sessions");
+    const bell = athlete.page.getByRole("button", { name: /^Notifications,/ });
+    await bell.click();
+    const dialog = athlete.page.getByRole("dialog", {
+      name: "Notifications",
+      exact: true,
+    });
+    const link = dialog.getByRole("link", { name: new RegExp(title) }).first();
+    await expect(link).toHaveAttribute(
+      "href",
+      "/sessions#athlete-booking-" + bookingId,
+    );
+    assert.equal(
+      await athlete.page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+      false,
+    );
+    await athlete.page.screenshot({
+      path: path.join(output, `athlete-booking-bell-${event}-${width}.png`),
+    });
+    const mark = dialog
+      .getByRole("button", {
+        name: `Mark ${title.toLowerCase()} notification as read`,
+        exact: true,
+      })
+      .first();
+    await mark.focus();
+    await athlete.page.keyboard.press("Enter");
+    await expect
+      .poll(
+        async () =>
+          (await notificationPage(athlete)).items.find(
+            (x) => x.id === target.id,
+          )?.readAt ?? null,
+      )
+      .not.toBe(null);
+    await link.focus();
+    await athlete.page.keyboard.press("Enter");
+    await expect(athlete.page).toHaveURL(
+      base + "/sessions#athlete-booking-" + bookingId,
+    );
+  };
   const drain = async () => {
     for (let i = 0; i < 10; i++) {
       const r = await fetch(base + "/api/internal/notifications/dispatch", {
@@ -144,6 +211,26 @@ export async function rehearseBookingRescheduling({
     pass(
       "athlete selects and reviews Sunday10:00 on the public coach website, submits a real request, and the coach accepts through Bookings",
     );
+    await athleteBell(bookingId, "confirmed", 1440);
+    for (const version of [1, 2, 3, 4])
+      assert.equal(
+        (await notificationPage(athlete, version)).items.some(
+          (x) => x.kind === "booking" && x.sourceId === bookingId,
+        ),
+        false,
+      );
+    assert.equal(
+      (await notificationPage(coach)).items.some(
+        (x) => x.kind === "booking" && x.sourceId === bookingId,
+      ),
+      false,
+    );
+    const [queuedConfirmation] =
+      await database`select r.state from app.booking_notification_receipts r join app.booking_notification_events e on e.id=r.event_id where e.source_id=${bookingId}::uuid and e.kind='confirmed'and r.recipient_profile_id=${athlete.profileId}::uuid`;
+    assert.equal(queuedConfirmation.state, "queued");
+    pass(
+      "athlete confirmation bell renders, keyboard mark-read/link works, legacy versions and coach self alert stay empty, reading does not suppress queued email",
+    );
     await source(coach, "select app.session_notes_command('save',$1::jsonb)", [
       database.json({
         bookingId,
@@ -215,7 +302,71 @@ export async function rehearseBookingRescheduling({
     pass(
       "Save availability warns that the existing10:00 session stays scheduled; saving11:00–13:00 hours preserves that booking and sends no reschedule email",
     );
-    await coach.page.goto(base + "/coach/sessions/" + bookingId);
+    for (const width of [1440, 375, 320]) {
+      await coach.page.setViewportSize({ width, height: 1000 });
+      await coach.page.goto(base + "/coach?view=bookings");
+      const card = coach.page.locator("#coach-booking-" + bookingId);
+      await expect(
+        card.getByRole("link", { name: "Session details", exact: true }),
+      ).toBeVisible();
+      await expect(
+        card.getByRole("button", { name: "Cancel session", exact: true }),
+      ).toBeVisible();
+      const reschedule = card.getByRole("link", {
+        name: "Reschedule",
+        exact: true,
+      });
+      await expect(reschedule).toHaveAttribute(
+        "href",
+        `/coach/sessions/${bookingId}#reschedule`,
+      );
+      assert.equal(
+        await coach.page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth,
+        ),
+        false,
+      );
+      await card.screenshot({
+        path: path.join(output, `coach-direct-reschedule-${width}.png`),
+      });
+      await reschedule.focus();
+      await coach.page.keyboard.press("Enter");
+      await expect(coach.page).toHaveURL(
+        base + "/coach/sessions/" + bookingId + "#reschedule",
+      );
+      const change = coach.page.getByRole("form", {
+        name: "Change this booking",
+        exact: true,
+      });
+      await expect(change).toBeFocused();
+      await expect(
+        change.getByRole("heading", {
+          name: "Change this booking",
+          exact: true,
+        }),
+      ).toBeInViewport();
+      await expect(
+        coach.page.getByRole("region", {
+          name: "Review booking change",
+          exact: true,
+        }),
+      ).toHaveCount(0);
+      const unchanged = await api(coach, "?bookingId=" + bookingId);
+      assert.equal(unchanged.data.detail.revision, 0);
+      assert.equal(
+        Date.parse(unchanged.data.detail.startsAt),
+        Date.parse(times.original),
+      );
+    }
+    assert.equal(
+      (
+        await database`select count(*)::integer n from app.booking_notification_events where source_id=${bookingId}::uuid and kind='changed'`
+      )[0].n,
+      0,
+    );
+    pass(
+      "direct Reschedule is visible beside details/cancel at1440/375/320; keyboard opens and focuses the loaded original change form without review, mutation or email",
+    );
     await expect(
       coach.page.getByRole("heading", {
         name: "Change this booking",
@@ -522,7 +673,8 @@ export async function rehearseBookingRescheduling({
       const captured = await (
         await fetch(mail + "/api/v1/message/" + row.provider_id)
       ).json();
-      assert.match(captured.Text, /Booking details changed/);
+      assert.match(captured.Text, /Booking rescheduled/);
+      assert.equal(captured.Subject, "Booking rescheduled on MovX Club");
       assert.match(captured.Text, /11:00/);
       assert.match(captured.Text, /Berlin/);
       assert.ok(captured.Text.includes(venue.name));
@@ -638,6 +790,229 @@ export async function rehearseBookingRescheduling({
     });
     pass(
       "client-side return to Bookings and both real calendar views show the new time and link the original booking",
+    );
+
+    await coach.page.goto(base + "/coach/sessions/" + bookingId);
+    await reviewButton.click();
+    await expect(review).toBeVisible();
+    await expect(save).toBeEnabled();
+    await expect(
+      coach.page.getByRole("heading", {
+        name: "Outside your working hours",
+        exact: true,
+      }),
+    ).toHaveCount(0);
+    const [policyBefore] =
+      await database`select revision from app.coach_availability_policies where profile_id=${coach.profileId}::uuid`;
+    const setHours = async (expectedRevision, hours) =>
+      source(
+        coach,
+        "select app.save_owned_effective_coach_availability($1::jsonb)",
+        [
+          database.json({
+            kind: "dates",
+            operationId: randomUUID(),
+            expectedRevision,
+            dates: [
+              {
+                date: day.date,
+                mode: "custom",
+                hours: hours.map((localStartTime) => ({
+                  localStartTime,
+                  locationId: venue.id,
+                  locationUpdatedAt: venue.stamp,
+                })),
+              },
+            ],
+          }),
+        ],
+      );
+    await setHours(policyBefore.revision, ["11:00"]);
+    await save.click();
+    await expect(
+      coach.page.getByRole("heading", {
+        name: "Outside your working hours",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      coach.page.getByLabel("Reschedule outside my saved working hours", {
+        exact: true,
+      }),
+    ).not.toBeChecked();
+    await expect(save).toBeDisabled();
+    assert.equal(
+      (await api(coach, "?bookingId=" + bookingId)).data.detail.revision,
+      2,
+    );
+    await coach.page
+      .getByRole("button", { name: "Cancel review", exact: true })
+      .click();
+    await setHours(policyBefore.revision + 1, ["11:00", "12:00"]);
+    pass(
+      "a valid in-hours review becoming outside-hours before Save cannot commit; the actual response asks for a fresh unchecked acknowledgement and no extra revision/email",
+    );
+    const [hoursBeforeException] =
+      await database`select to_jsonb(p) policy,to_jsonb(d) dates from app.coach_availability_policies p join app.coach_availability_date_overrides d using(run_id,profile_id) where p.profile_id=${coach.profileId}::uuid and d.local_date=${day.date}::date`;
+    await coach.page.goto(base + "/coach/sessions/" + bookingId);
+    await coach.page
+      .getByLabel("Start · Berlin time", { exact: true })
+      .fill(day.date + "T19:00");
+    await coach.page.getByLabel("Duration", { exact: true }).selectOption("75");
+    await reviewButton.click();
+    const acknowledgement = coach.page.getByLabel(
+      "Reschedule outside my saved working hours",
+      { exact: true },
+    );
+    await expect(
+      coach.page.getByRole("heading", {
+        name: "Outside your working hours",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(acknowledgement).not.toBeChecked();
+    await expect(save).toBeDisabled();
+    for (const width of [1440, 375, 320]) {
+      await coach.page.setViewportSize({ width, height: 1000 });
+      await acknowledgement.focus();
+      await expect(acknowledgement).toBeFocused();
+      assert.equal(
+        await coach.page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth,
+        ),
+        false,
+      );
+      await review.screenshot({
+        path: path.join(output, `outside-hours-review-${width}.png`),
+      });
+    }
+    await coach.page
+      .getByRole("button", { name: "Cancel review", exact: true })
+      .click();
+    await expect(reviewButton).toBeFocused();
+    assert.equal(
+      (await api(coach, "?bookingId=" + bookingId)).data.detail.revision,
+      2,
+    );
+    await reviewButton.click();
+    await expect(acknowledgement).not.toBeChecked();
+    await acknowledgement.focus();
+    await coach.page.keyboard.press("Space");
+    await expect(acknowledgement).toBeChecked();
+    await expect(acknowledgement).toBeFocused();
+    await coach.page.getByLabel("Duration", { exact: true }).selectOption("60");
+    await reviewButton.click();
+    await expect(acknowledgement).not.toBeChecked();
+    await expect(save).toBeDisabled();
+    await coach.page.getByLabel("Duration", { exact: true }).selectOption("75");
+    await reviewButton.click();
+    await expect(acknowledgement).not.toBeChecked();
+    await acknowledgement.check();
+    await save.click();
+    await expect(feedback).toContainText("Session saved.");
+    const changed = await api(coach, "?bookingId=" + bookingId);
+    assert.equal(changed.data.detail.revision, 3);
+    assert.equal(
+      new Date(changed.data.detail.startsAt).getTime(),
+      Date.parse(times.original) + 9 * 3600000,
+    );
+    assert.equal(
+      Date.parse(changed.data.detail.endsAt) -
+        Date.parse(changed.data.detail.startsAt),
+      75 * 60000,
+    );
+    const [hoursAfterException] =
+      await database`select to_jsonb(p) policy,to_jsonb(d) dates from app.coach_availability_policies p join app.coach_availability_date_overrides d using(run_id,profile_id) where p.profile_id=${coach.profileId}::uuid and d.local_date=${day.date}::date`;
+    assert.deepEqual(hoursAfterException, hoursBeforeException);
+    await drain();
+    const exceptionReceipts =
+      await database`select r.state,r.provider_id,r.recipient_profile_id from app.booking_notification_receipts r join app.booking_notification_events e on e.id=r.event_id where e.event_key=${"booking:" + bookingId + ":changed:3"}`;
+    assert.equal(exceptionReceipts.length, 2);
+    for (const receipt of exceptionReceipts) {
+      assert.equal(receipt.state, "accepted");
+      const captured = await (
+        await fetch(mail + "/api/v1/message/" + receipt.provider_id)
+      ).json();
+      assert.equal(captured.Subject, "Booking rescheduled on MovX Club");
+      assert.match(captured.Text, /19:00/);
+      assert.equal(
+        captured.To[0].Address,
+        receipt.recipient_profile_id === athlete.profileId
+          ? athlete.email
+          : coach.email,
+      );
+    }
+    pass(
+      "outside-hours19:00/75 review requires unchecked explicit acknowledgement; cancel/field changes save nothing, desktop/375/320 keyboard fits, confirmed third change preserves regular hours and sends exactly one athlete/coach local receipt",
+    );
+    await athleteBell(bookingId, "changed", 375);
+    await coach.page.goto(base + "/coach?view=bookings");
+    await coach.page
+      .locator("#coach-booking-" + bookingId)
+      .getByRole("button", { name: "Cancel session", exact: true })
+      .click();
+    await expect(
+      coach.page.getByText("Booking cancelled.", { exact: true }),
+    ).toBeVisible();
+    for (let retry = 0; retry < 2; retry++) {
+      const result = await source(
+        coach,
+        "select app.cancel_direct_private_booking($1::uuid)id",
+        [bookingId],
+      );
+      assert.equal(result[0].id, bookingId);
+    }
+    const cancelled = await api(coach, "?bookingId=" + bookingId);
+    assert.equal(cancelled.data.detail.status, "cancelled");
+    assert.equal(cancelled.data.detail.revision, 3);
+    assert.equal(cancelled.data.detail.historyTotal, 3);
+    const kinds =
+      await database`select kind,count(*)::integer n from app.booking_notification_events where source_id=${bookingId}::uuid and source_kind='booking' group by kind order by kind`;
+    assert.deepEqual(
+      [...kinds],
+      [
+        { kind: "cancelled", n: 1 },
+        { kind: "changed", n: 3 },
+        { kind: "confirmed", n: 1 },
+      ],
+    );
+    await drain();
+    const cancellationReceipts =
+      await database`select r.state,r.provider_id,r.recipient_profile_id from app.booking_notification_receipts r join app.booking_notification_events e on e.id=r.event_id where e.source_id=${bookingId}::uuid and e.kind='cancelled'`;
+    assert.equal(cancellationReceipts.length, 2);
+    for (const receipt of cancellationReceipts) {
+      assert.equal(receipt.state, "accepted");
+      const captured = await (
+        await fetch(mail + "/api/v1/message/" + receipt.provider_id)
+      ).json();
+      assert.equal(captured.Subject, "Booking cancelled on MovX Club");
+      assert.match(captured.Text, /19:00/);
+      assert.equal(captured.To.length, 1);
+      assert.equal(
+        captured.To[0].Address,
+        receipt.recipient_profile_id === athlete.profileId
+          ? athlete.email
+          : coach.email,
+      );
+    }
+    await athleteBell(bookingId, "cancelled", 320);
+    assert.equal(
+      (await notificationPage(athlete)).items.filter(
+        (x) => x.kind === "booking" && x.sourceId === bookingId,
+      ).length,
+      5,
+    );
+    assert.equal(
+      (await notificationPage(coach)).items.some(
+        (x) => x.kind === "booking" && x.sourceId === bookingId,
+      ),
+      false,
+    );
+    pass(
+      "actual athlete confirmation/reschedule/cancellation bell at1440/375/320 keeps all five distinct events, safe destinations and explicit keyboard reads; coach gets no self alert",
+    );
+    pass(
+      "actual coach cancellation and two exact retries create one cancellation event, one email per participant with an explicit subject, and no extra reschedule revision/event; earlier rescheduling receipts remain distinct",
     );
   } catch (error) {
     await coach.page

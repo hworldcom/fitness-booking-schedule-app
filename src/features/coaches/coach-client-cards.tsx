@@ -7,6 +7,7 @@ import {
   RotateCcw,
   ShieldAlert,
   UserRound,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -167,6 +168,15 @@ export function CoachClientCards({
                       Session details
                     </Link>
                   )}
+                  {booking.hasSessionDetails && cancellable && (
+                    <Link
+                      className="button secondary"
+                      href={`/coach/sessions/${booking.id}#reschedule`}
+                    >
+                      <RotateCcw size={15} aria-hidden="true" />
+                      Reschedule
+                    </Link>
+                  )}
                   {cancellable && (
                     <button
                       type="button"
@@ -178,7 +188,7 @@ export function CoachClientCards({
                         )
                       }
                     >
-                      <RotateCcw size={15} aria-hidden="true" />
+                      <X size={15} aria-hidden="true" />
                       {busyKey === `cancel:${booking.id}`
                         ? "Cancelling…"
                         : "Cancel session"}

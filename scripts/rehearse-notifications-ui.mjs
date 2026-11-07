@@ -80,6 +80,27 @@ try {
       `import {Controls} from "@/tests-fixtures/controls";export default function Fixture(){return <><h1>Explicit notification UI fixture</h1><p>No real Auth, database writes or email.</p><Controls/></>}`,
     );
   }
+  const bookingActions = process.argv.includes("--booking-actions");
+  const cardIds = Array.from(
+    { length: 6 },
+    (_, i) => `18700000-0000-4000-8000-${String(i + 1).padStart(12, "0")}`,
+  );
+  if (bookingActions) {
+    await mkdir(path.join(checkout, "src/app/coach/booking-actions-fixture"), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(checkout, "src/app/coach/booking-actions-fixture/page.tsx"),
+      `
+      import {CoachClientCards} from "@/features/coaches/coach-client-cards";
+      import type {PrivateBookingProjection} from "@/domain/coach-bookings";
+      const ids=${JSON.stringify(cardIds)};
+      const base:PrivateBookingProjection={id:ids[0],slotId:ids[0],coachProfileId:ids[0],coachDisplayName:"Fixture coach",coachSlug:"fixture",coachPortraitUrl:null,clientProfileId:ids[1],clientDisplayName:"Future athlete",clientAvatarUrl:null,athleteProfileHref:null,status:"confirmed",scheduledStartAt:"2026-11-09T09:00:00Z",scheduledEndAt:"2026-11-09T10:00:00Z",coachTimezone:"Europe/Berlin",location:{trainingLocationId:null,name:"Fixture studio",kind:"independent",gymName:null,publicLabel:"Fixture studio"},cancelledBy:null,cancelledAt:null,completedAt:null,createdAt:"2026-11-01T10:00:00Z",title:"",titleRevision:0,canEditTitle:false,hasSessionDetails:true};
+      const cards:PrivateBookingProjection[]=[base,{...base,id:ids[1],clientDisplayName:"Past athlete",scheduledStartAt:"2026-11-06T09:00:00Z",scheduledEndAt:"2026-11-06T10:00:00Z"},{...base,id:ids[2],clientDisplayName:"Cancelled athlete",status:"cancelled",cancelledBy:"coach",cancelledAt:"2026-11-07T09:00:00Z"},{...base,id:ids[3],clientDisplayName:"Completed athlete",status:"completed",scheduledStartAt:"2026-11-06T09:00:00Z",scheduledEndAt:"2026-11-06T10:00:00Z",completedAt:"2026-11-06T11:00:00Z"},{...base,id:ids[4],clientDisplayName:"Unsupported athlete",hasSessionDetails:undefined}];
+      export default function Fixture(){return <><h1>Explicit booking action fixtures</h1><p>No real booking or database.</p><div className="coach-bookings-workspace"><CoachClientCards bookings={cards} referenceTime="2026-11-07T10:00:00Z"/></div><h2>Shared athlete layout</h2><CoachClientCards bookings={[{...base,id:ids[5]}]} referenceTime="2026-11-07T10:00:00Z"/></>}
+    `,
+    );
+  }
   const env = Object.fromEntries(
     Object.entries(process.env).filter(
       ([key]) =>
@@ -306,6 +327,47 @@ try {
   console.log(
     "PASS booking event title/snapshot/safe destination and explicit read in mixed history",
   );
+  // MOV-185: affected athletes share the existing bell/read controller.
+  const athleteBooking = randomUUID();
+  for (const [event, title, width] of [
+    ["confirmed", "Booking confirmed", 1440],
+    ["changed", "Booking rescheduled", 375],
+    ["cancelled", "Booking cancelled", 320],
+  ]) {
+    items[0] = {
+      ...items[0],
+      event,
+      sourceKind: "booking",
+      sourceId: athleteBooking,
+      recipientRole: "athlete",
+      readAt: null,
+    };
+    await page.keyboard.press("Escape");
+    await page.setViewportSize({ width, height: 900 });
+    await bell().click();
+    await expect(
+      dialog().getByRole("link", { name: new RegExp(title) }),
+    ).toHaveAttribute("href", `/sessions#athlete-booking-${athleteBooking}`);
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+      false,
+    );
+    const mark = dialog().getByRole("button", {
+      name: `Mark ${title.toLowerCase()} notification as read`,
+      exact: true,
+    });
+    await mark.focus();
+    await page.keyboard.press("Enter");
+    await expect(bell()).toHaveAttribute(
+      "aria-label",
+      "Notifications, 0 unread",
+    );
+  }
+  console.log(
+    "PASS athlete confirmed/rescheduled/cancelled entries:1440/375/320 layout, correct private destination and keyboard mark-read",
+  );
   // MOV-86: group notices use the same recipient/read/recovery controller.
   const groupId = randomUUID();
   items[0] = {
@@ -429,6 +491,59 @@ try {
   ]);
   await page.reload();
   await expect(bell()).toHaveCount(0);
+  if (bookingActions) {
+    await context.addCookies([
+      { name: "mov81-actor", value: "owner", url: base },
+    ]);
+    for (const width of [1440, 375, 320]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.goto(base + "/coach/booking-actions-fixture");
+      for (const i of [0, 5]) {
+        const card = page.locator("#coach-booking-" + cardIds[i]);
+        const details = card.getByRole("link", {
+            name: "Session details",
+            exact: true,
+          }),
+          reschedule = card.getByRole("link", {
+            name: "Reschedule",
+            exact: true,
+          }),
+          cancel = card.getByRole("button", {
+            name: "Cancel session",
+            exact: true,
+          });
+        await expect(reschedule).toHaveAttribute(
+          "href",
+          `/coach/sessions/${cardIds[i]}#reschedule`,
+        );
+        await expect(details).toBeVisible();
+        await expect(cancel).toBeVisible();
+        await details.focus();
+        await page.keyboard.press("Tab");
+        await expect(reschedule).toBeFocused();
+        await page.keyboard.press("Tab");
+        await expect(cancel).toBeFocused();
+        await card.screenshot({
+          path: path.join(output, `booking-actions-${i}-${width}.png`),
+        });
+      }
+      for (const i of [1, 2, 3, 4])
+        await expect(
+          page
+            .locator("#coach-booking-" + cardIds[i])
+            .getByRole("link", { name: "Reschedule", exact: true }),
+        ).toHaveCount(0);
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth,
+        ),
+        false,
+      );
+    }
+    console.log(
+      "PASS direct Reschedule action, details/reschedule/cancel keyboard order,1440/375/320 Bookings/shared athlete layouts and no past/cancelled/completed/unsupported shortcut",
+    );
+  }
   console.log(
     "PASS desktop/mobile bounds, keyboard containment, stale actor response isolation and signed-out exclusion",
   );

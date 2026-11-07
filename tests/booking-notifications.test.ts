@@ -56,6 +56,27 @@ test("booking history has coach-only typed metadata and safe existing workspace 
       snapshotAt: identity.createdAt,
     }),
   );
+  for (const key of ["confirmed", "cancelled", "changed"] as const) {
+    const page = parseNotificationPage({
+      items: [
+        {
+          ...event,
+          ...identity,
+          event: key,
+          sourceKind: "booking",
+          recipientRole: "athlete",
+        },
+      ],
+      unreadCount: 1,
+      hasMore: false,
+      snapshotAt: identity.createdAt,
+    });
+    assert.equal(page.items[0].kind, "booking");
+    assert.equal(
+      notificationHref(page.items[0]),
+      `/sessions#athlete-booking-${event.sourceId}`,
+    );
+  }
   assert.equal(
     bookingNotificationHref({ ...event, recipientRole: "athlete" }),
     "/sessions#booking-requests",

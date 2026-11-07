@@ -8,7 +8,7 @@ if (
   (!/^postgresql:\/\/postgres:postgres@127\.0\.0\.1:55322\/movnotes_[a-z0-9_]+$/.test(
     url,
   ) &&
-    !/^postgresql:\/\/postgres:postgres@127\.0\.0\.1:55322\/mov177_[a-f0-9]{12}_(fresh|upgrade)$/.test(
+    !/^postgresql:\/\/postgres:postgres@127\.0\.0\.1:55322\/mov(?:177|181)_[a-f0-9]{12}_(fresh|upgrade)$/.test(
       url,
     ))
 )
