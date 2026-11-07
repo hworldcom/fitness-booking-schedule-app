@@ -5,6 +5,8 @@ import { BookOpen, LockKeyhole, NotebookPen, Users } from "lucide-react";
 import { useActor } from "@/auth/client/actor-provider";
 import {
   parseNotesCommand,
+  noteCharacterCount,
+  noteTextError,
   type NoteEntry,
   type NoteKind,
   type NotesCommand,
@@ -13,6 +15,7 @@ import {
   type VideoReference,
 } from "@/notes/contracts";
 import { VideoLinkEditor, VideoLinks } from "./video-links";
+import { videoReferenceErrors } from "@/domain/video-references";
 import "./notes.css";
 
 type Draft = { kind: NoteKind | "plan"; entry?: NoteEntry };
@@ -229,7 +232,7 @@ function NotesWorkspace({
           r.status === "limit"
             ? "This section has reached its 100-note limit. You can still edit your existing notes."
             : r.status === "invalid"
-              ? "Check the note and video links. Your draft is still here."
+              ? "This session could not accept the save. Your draft is still here. Copy it before reloading this session."
               : "This session no longer allows this change. Your draft is still here while access is checked.",
         );
         if (["forbidden", "signed-out", "actor-changed"].includes(r.status))
@@ -501,14 +504,59 @@ function NoteForm({
     draft.entry?.videos ?? [],
   );
   const [revision, setRevision] = useState(draft.entry?.revision ?? 0);
-  const [validation, setValidation] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [focusAttempt, setFocusAttempt] = useState(0);
+  const [preparationError, setPreparationError] = useState("");
   const field = useRef<HTMLTextAreaElement>(null);
+  const form = useRef<HTMLFormElement>(null);
   useEffect(() => {
     field.current?.focus();
   }, []);
+  useEffect(() => {
+    if (focusAttempt)
+      form.current
+        ?.querySelector<HTMLElement>('[aria-invalid="true"]')
+        ?.focus();
+  }, [focusAttempt]);
   const plan = draft.kind === "plan";
+  const bodyId = `session-note-body-${draft.kind}`;
+  const videoId = `session-${draft.kind}`;
+  const bodyError =
+    noteTextError(body, plan) ??
+    (plan && !body.trim() && videos.length
+      ? "Add training plan text, or remove all video links to clear the plan."
+      : null);
+  const videoErrors = videos.map(videoReferenceErrors);
+  const invalidFields = [
+    ...(bodyError
+      ? [
+          {
+            id: bodyId,
+            label: plan ? "Training plan" : "Your note",
+            message: bodyError,
+          },
+        ]
+      : []),
+    ...videoErrors.flatMap((errors, index) =>
+      (["label", "url"] as const).flatMap((key) =>
+        errors[key]
+          ? [
+              {
+                id: `${videoId}-${key}-${index}`,
+                label: `Video ${index + 1} ${key === "label" ? "title" : "URL"}`,
+                message: errors[key],
+              },
+            ]
+          : [],
+      ),
+    ),
+  ];
+  const characters = noteCharacterCount(body);
+  const limit = plan ? 8000 : 2000;
   return (
     <form
+      ref={form}
+      noValidate
       className="note-compose"
       aria-label={
         plan
@@ -520,6 +568,12 @@ function NoteForm({
       onSubmit={(event) => {
         event.preventDefault();
         if (disabled || conflict) return;
+        setSubmitted(true);
+        setPreparationError("");
+        if (invalidFields.length) {
+          setFocusAttempt((attempt) => attempt + 1);
+          return;
+        }
         const command = parseNotesCommand({
           action: "save",
           args: {
@@ -533,14 +587,11 @@ function NoteForm({
           },
         });
         if (!command) {
-          setValidation(
-            plan
-              ? "Use up to 8,000 characters and valid YouTube or Instagram video links. Remove video links when clearing a plan."
-              : "Write a note of up to 2,000 characters and check the video titles/URLs.",
+          setPreparationError(
+            "This note could not be submitted. Your draft is still here. Copy it before reloading this session.",
           );
           return;
         }
-        setValidation("");
         onSave(command);
       }}
     >
@@ -556,16 +607,38 @@ function NoteForm({
           ? "Only you can read this note and its videos."
           : "Your session partner can read this note and its videos."}
       </p>
-      <label htmlFor={`session-note-body-${draft.kind}`}>
-        {plan ? "Training plan" : "Your note"}
-      </label>
+      {submitted && invalidFields.length > 0 && (
+        <div role="alert" className="note-error">
+          <strong>Check these fields. Your draft is still here.</strong>
+          <ul>
+            {invalidFields.map((issue) => (
+              <li key={issue.id}>
+                <a
+                  href={`#${issue.id}`}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    form.current
+                      ?.querySelector<HTMLElement>(`[id="${issue.id}"]`)
+                      ?.focus();
+                  }}
+                >
+                  {issue.label}: {issue.message}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <label htmlFor={bodyId}>{plan ? "Training plan" : "Your note"}</label>
       <textarea
-        id={`session-note-body-${draft.kind}`}
+        id={bodyId}
         ref={field}
         value={body}
         rows={5}
         disabled={disabled}
         required={!plan}
+        aria-invalid={(submitted && !!bodyError) || undefined}
+        aria-describedby={`${bodyId}-count${submitted && bodyError ? ` ${bodyId}-error` : ""}`}
         onChange={(e) => setBody(e.target.value)}
         placeholder={
           plan
@@ -573,15 +646,28 @@ function NoteForm({
             : "A useful detail, a small win, or something to try next time…"
         }
       />
+      <p
+        id={`${bodyId}-count`}
+        className={`note-count${characters > limit ? " note-field-error" : ""}`}
+      >
+        {characters.toLocaleString("en-GB")} / {limit.toLocaleString("en-GB")}{" "}
+        characters
+      </p>
+      {submitted && bodyError && (
+        <p id={`${bodyId}-error`} className="note-field-error">
+          {bodyError}
+        </p>
+      )}
       <VideoLinkEditor
-        id={`session-${draft.kind}`}
+        id={videoId}
         videos={videos}
         onChange={setVideos}
         disabled={disabled}
+        errors={submitted ? videoErrors : undefined}
       />
-      {validation && (
+      {preparationError && (
         <p role="alert" className="note-error">
-          {validation}
+          {preparationError}
         </p>
       )}
       {conflict && (
@@ -597,6 +683,8 @@ function NoteForm({
               setBody(conflict.current?.body ?? "");
               setVideos(conflict.current?.videos ?? []);
               setRevision(conflict.current?.revision ?? 0);
+              setSubmitted(false);
+              setPreparationError("");
               onUseSaved(conflict.current);
             }}
           >

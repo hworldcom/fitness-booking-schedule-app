@@ -152,6 +152,30 @@
   min-height: 130px;
   resize: vertical;
 }
+.note-count {
+  margin: 0.35rem 0;
+  color: var(--note-muted);
+  font-size: 0.78rem;
+}
+.note-field-error {
+  color: #923d32;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  margin: 0.35rem 0;
+  overflow-wrap: anywhere;
+}
+.note-compose textarea[aria-invalid="true"],
+.note-link-row input[aria-invalid="true"] {
+  border-color: #a85043;
+}
+.note-error ul {
+  padding-left: 1.2rem;
+  margin-bottom: 0;
+}
+.note-error a {
+  color: inherit;
+  overflow-wrap: anywhere;
+}
 .note-actions {
   display: flex;
   flex-wrap: wrap;

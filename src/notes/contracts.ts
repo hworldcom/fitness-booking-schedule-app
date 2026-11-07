@@ -65,15 +65,35 @@ export type NotesResult =
     };
 
 const cleanText = (s: string) => s.replace(/\r\n?/g, "\n").trim();
+export const noteCharacterCount = (value: string) =>
+  Array.from(cleanText(value)).length;
+
+export function noteTextError(value: unknown, plan = false): string | null {
+  if (typeof value !== "string") return "Enter plain text before saving.";
+  const text = cleanText(value),
+    count = noteCharacterCount(value),
+    limit = plan ? 8000 : 2000;
+  if (!plan && !text) return "Write a note before saving.";
+  if (count > limit) {
+    const excess = count - limit;
+    return `Remove ${excess.toLocaleString("en-GB")} ${excess === 1 ? "character" : "characters"} to stay within the ${limit.toLocaleString("en-GB")} character limit.`;
+  }
+  if (new TextEncoder().encode(text).length > (plan ? 32000 : 8000))
+    return "This text is too large to save. Shorten it and try again.";
+  const unsupported = /[\p{Cc}\p{Cs}]/u.exec(text.replace(/[\n\t]/g, " "));
+  if (unsupported) {
+    // Locate the rejected character in the actual draft, including leading space.
+    const normalized = value.replace(/\r\n?/g, "\n"),
+      start = normalized.indexOf(text);
+    const before = normalized.slice(0, start + unsupported.index);
+    const lines = before.split("\n");
+    return `Remove or retype the unsupported character at line ${lines.length}, character ${Array.from(lines.at(-1) ?? "").length + 1}.`;
+  }
+  return null;
+}
+
 export function validNoteText(value: unknown, plan = false) {
-  if (typeof value !== "string") return false;
-  const text = cleanText(value);
-  return (
-    (plan || text.length > 0) &&
-    Array.from(text).length <= (plan ? 8000 : 2000) &&
-    new TextEncoder().encode(text).length <= (plan ? 32000 : 8000) &&
-    !/[\p{Cc}\p{Cs}]/u.test(text.replace(/[\n\t]/g, ""))
-  );
+  return noteTextError(value, plan) === null;
 }
 export function parseNotesCommand(input: unknown): NotesCommand | null {
   try {

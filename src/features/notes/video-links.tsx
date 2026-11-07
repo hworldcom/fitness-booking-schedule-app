@@ -1,6 +1,7 @@
 "use client";
 import { ExternalLink, Film, Plus, Trash2 } from "lucide-react";
 import type { VideoReference } from "@/notes/contracts";
+import type { VideoReferenceErrors } from "@/domain/video-references";
 import "./notes.css";
 
 export function VideoLinks({ videos }: { videos: readonly VideoReference[] }) {
@@ -37,11 +38,13 @@ export function VideoLinkEditor({
   onChange,
   disabled = false,
   id,
+  errors = [],
 }: {
   videos: readonly VideoReference[];
   onChange: (videos: readonly VideoReference[]) => void;
   disabled?: boolean;
   id: string;
+  errors?: readonly VideoReferenceErrors[];
 }) {
   return (
     <div className="note-link-editor">
@@ -53,8 +56,11 @@ export function VideoLinkEditor({
             <input
               id={`${id}-label-${i}`}
               value={v.label}
-              maxLength={80}
               required
+              aria-invalid={!!errors[i]?.label || undefined}
+              aria-describedby={
+                errors[i]?.label ? `${id}-label-${i}-error` : undefined
+              }
               placeholder="e.g. Footwork drill"
               onChange={(e) =>
                 onChange(
@@ -65,6 +71,11 @@ export function VideoLinkEditor({
               }
             />
           </label>
+          {errors[i]?.label && (
+            <p id={`${id}-label-${i}-error`} className="note-field-error">
+              {errors[i].label}
+            </p>
+          )}
           <label htmlFor={`${id}-url-${i}`}>
             YouTube or Instagram URL
             <input
@@ -73,6 +84,10 @@ export function VideoLinkEditor({
               value={v.url}
               maxLength={2048}
               required
+              aria-invalid={!!errors[i]?.url || undefined}
+              aria-describedby={
+                errors[i]?.url ? `${id}-url-${i}-error` : undefined
+              }
               placeholder="https://…"
               onChange={(e) =>
                 onChange(
@@ -83,6 +98,11 @@ export function VideoLinkEditor({
               }
             />
           </label>
+          {errors[i]?.url && (
+            <p id={`${id}-url-${i}-error`} className="note-field-error">
+              {errors[i].url}
+            </p>
+          )}
           <button
             type="button"
             className="note-remove"
@@ -104,8 +124,8 @@ export function VideoLinkEditor({
         </button>
       )}
       <p className="note-help">
-        Save a drill, technique or video to come back to. Links open on YouTube
-        or Instagram.
+        Add up to five YouTube videos/Shorts or Instagram posts/Reels. Give each
+        video a title of up to 80 characters. Links open in a new tab.
       </p>
     </div>
   );
