@@ -72,7 +72,8 @@ try {
     path.join(checkout, "src/tests-fixtures/controls.tsx"),
     `"use client";
     import {useActor} from "@/auth/client/actor-provider";
-    export function Controls(){const {actor,refreshActor}=useActor();return <><span data-testid="fixture-current-actor">{actor.status==="authorized"?actor.profile.slug:actor.status}</span><button onClick={()=>{document.cookie="mov81-actor=other; path=/";void refreshActor();}}>Switch fixture actor</button></>}`,
+    import {useAuthSession} from "@/auth/client/session-provider";
+    export function Controls(){const {actor}=useActor();const {refreshSession}=useAuthSession();return <><span data-testid="fixture-current-actor">{actor.status==="authorized"?actor.profile.slug:actor.status}</span><button onClick={()=>{document.cookie="mov81-actor=other; path=/";void refreshSession();}}>Switch fixture actor</button></>}`,
   );
   for (const route of ["explore", "coach", "messages", "account", "profile"]) {
     await writeFile(
@@ -81,6 +82,16 @@ try {
     );
   }
   const bookingActions = process.argv.includes("--booking-actions");
+  const startPicker = process.argv.includes("--booking-start-picker");
+  if (startPicker) {
+    await mkdir(path.join(checkout, "src/app/coach/booking-picker-fixture"), {
+      recursive: true,
+    });
+    await cp(
+      path.join(root, "tests/fixtures/booking-start-picker-page.tsx"),
+      path.join(checkout, "src/app/coach/booking-picker-fixture/page.tsx"),
+    );
+  }
   const cardIds = Array.from(
     { length: 6 },
     (_, i) => `18700000-0000-4000-8000-${String(i + 1).padStart(12, "0")}`,
@@ -542,6 +553,268 @@ try {
     }
     console.log(
       "PASS direct Reschedule action, details/reschedule/cancel keyboard order,1440/375/320 Bookings/shared athlete layouts and no past/cancelled/completed/unsupported shortcut",
+    );
+  }
+  if (startPicker) {
+    const fixtureId = "19700000-0000-4000-8000-000000000001";
+    const type = {
+      id: fixtureId,
+      format: "private",
+      name: "Picker fixture",
+      description: "",
+      color: "#123456",
+      durationMinutes: 75,
+      defaultLocationId: fixtureId,
+      bookable: true,
+      archived: false,
+      revision: 0,
+    };
+    const posts = [];
+    await page.route("**/api/session-notes*", (route) =>
+      route.fulfill({ status: 503, json: { status: "unavailable" } }),
+    );
+    await page.route("**/api/session-bookings?*", (route) => {
+      const request = route.request();
+      if (request.method() === "POST") {
+        posts.push(request.postDataJSON());
+        return route.fulfill({ status: 503, json: { status: "unavailable" } });
+      }
+      if (request.headers().cookie?.includes("mov81-actor=other"))
+        return route.fulfill({ status: 403, json: { status: "forbidden" } });
+      if (new URL(request.url()).searchParams.has("options"))
+        return route.fulfill({
+          json: {
+            status: "ready",
+            types: [type],
+            locations: [{ id: fixtureId, name: "Fixture studio" }],
+            athletes: { items: [], nextCursor: null },
+            externalClients: { items: [], nextCursor: null },
+          },
+        });
+      return route.fulfill({
+        json: {
+          status: "ready",
+          detail: {
+            bookingId: fixtureId,
+            revision: 0,
+            status: "confirmed",
+            startsAt: "2030-11-09T17:00:00Z",
+            endsAt: "2030-11-09T18:15:00Z",
+            locationId: fixtureId,
+            venueName: "Fixture studio",
+            sessionType: type,
+            athleteId: null,
+            externalClient: null,
+            viewerIsCoach: true,
+            historyTotal: 0,
+            nextHistoryRevision: null,
+            changes: [],
+          },
+        },
+      });
+    });
+    const trigger = () =>
+      page.getByRole("button", { name: "Start · Berlin time", exact: true });
+    const picker = () =>
+      page.getByRole("dialog", {
+        name: "Choose session date and time",
+        exact: true,
+      });
+    const apply = () =>
+      picker().getByRole("button", {
+        name: "Apply date and time",
+        exact: true,
+      });
+    const cancel = () =>
+      picker().getByRole("button", {
+        name: "Cancel date and time selection",
+        exact: true,
+      });
+    for (const width of [1440, 375, 320]) {
+      await context.addCookies([
+        { name: "mov81-actor", value: "owner", url: base },
+      ]);
+      await page.setViewportSize({ width, height: width === 320 ? 568 : 800 });
+      await page.goto(base + "/coach/booking-picker-fixture", {
+        timeout: 120000,
+      });
+      await expect(trigger()).toContainText("18:00");
+      await trigger().focus();
+      await page.keyboard.press("Enter");
+      await expect(picker()).toBeVisible();
+      await expect(
+        picker().getByLabel("Minute", { exact: true }),
+      ).toBeVisible();
+      assert.deepEqual(
+        await picker()
+          .getByLabel("Minute", { exact: true })
+          .locator("option")
+          .evaluateAll((items) => items.map((x) => x.value).filter(Boolean)),
+        ["00", "15", "30", "45"],
+      );
+      assert.equal(
+        await picker()
+          .getByLabel("Hour", { exact: true })
+          .locator("option")
+          .count(),
+        25,
+      );
+      await picker().getByLabel("Hour", { exact: true }).selectOption("19");
+      await picker().getByLabel("Minute", { exact: true }).selectOption("30");
+      await expect(trigger()).toContainText("18:00");
+      await expect(apply()).toBeInViewport({ ratio: 1 });
+      await expect(cancel()).toBeInViewport({ ratio: 1 });
+      assert.equal(await page.locator("form form").count(), 0);
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth,
+        ),
+        false,
+      );
+      await page.screenshot({
+        path: path.join(output, "booking-start-picker-" + width + ".png"),
+      });
+      await apply().focus();
+      await page.keyboard.press("Tab");
+      await expect(
+        picker().getByRole("button", { name: "Close dialog", exact: true }),
+      ).toBeFocused();
+      await page.keyboard.press("Shift+Tab");
+      await expect(apply()).toBeFocused();
+      await cancel().click();
+      await expect(picker()).toHaveCount(0);
+      await expect(trigger()).toBeFocused();
+      await expect(trigger()).toContainText("18:00");
+      for (const method of ["Escape", "close", "backdrop"]) {
+        await trigger().click();
+        await picker().getByLabel("Hour", { exact: true }).selectOption("22");
+        if (method === "Escape") await page.keyboard.press("Escape");
+        else if (method === "close")
+          await picker()
+            .getByRole("button", { name: "Close dialog", exact: true })
+            .click();
+        else await page.mouse.click(2, 2);
+        await expect(picker()).toHaveCount(0);
+        await expect(trigger()).toBeFocused();
+        await expect(trigger()).toContainText("18:00");
+      }
+      await trigger().click();
+      await picker().getByLabel("Hour", { exact: true }).selectOption("19");
+      await picker().getByLabel("Minute", { exact: true }).selectOption("15");
+      await apply().focus();
+      await page.keyboard.press("Enter");
+      await expect(picker()).toHaveCount(0);
+      await expect(trigger()).toBeFocused();
+      await expect(trigger()).toContainText("19:15");
+      await expect(
+        page.getByRole("region", {
+          name: "Review booking change",
+          exact: true,
+        }),
+      ).toHaveCount(0);
+      await trigger().click();
+      await expect(picker().getByLabel("Minute", { exact: true })).toHaveValue(
+        "15",
+      );
+      await cancel().click();
+      assert.equal(posts.length, 0);
+    }
+    // Invalid and ambiguous local dates cannot be applied, even with forged DOM options.
+    await trigger().click();
+    await picker().getByLabel("Date", { exact: true }).fill("");
+    await apply().click();
+    await expect(picker().getByLabel("Date", { exact: true })).toBeFocused();
+    await expect(trigger()).toContainText("19:15");
+    await picker().getByLabel("Date", { exact: true }).fill("2030-11-09");
+    await picker()
+      .getByLabel("Minute", { exact: true })
+      .evaluate((el) => {
+        el.add(new Option("20", "20"));
+      });
+    await picker().getByLabel("Minute", { exact: true }).selectOption("20");
+    await apply().click();
+    await expect(picker().getByRole("alert")).toContainText(
+      "valid, unambiguous Berlin",
+    );
+    await expect(picker().getByRole("alert")).toBeInViewport({ ratio: 1 });
+    await expect(apply()).toBeInViewport({ ratio: 1 });
+    await expect(cancel()).toBeInViewport({ ratio: 1 });
+    await expect(trigger()).toContainText("19:15");
+    await picker().getByLabel("Minute", { exact: true }).selectOption("15");
+    for (const date of ["2027-03-28", "2027-10-31"]) {
+      await picker().getByLabel("Date", { exact: true }).fill(date);
+      await picker().getByLabel("Hour", { exact: true }).selectOption("02");
+      await apply().click();
+      await expect(picker().getByRole("alert")).toBeVisible();
+    }
+    await picker().getByLabel("Date", { exact: true }).fill("2030-11-09");
+    await picker().getByLabel("Hour", { exact: true }).selectOption("19");
+    await picker().getByLabel("Minute", { exact: true }).selectOption("30");
+    // Actual provider revalidation suspends the top layer but retains the same actor's draft.
+    await page.route("**/api/auth/actor", (route) =>
+      route.fulfill({ status: 503, json: { status: "unavailable" } }),
+    );
+    await page.evaluate(() =>
+      window.dispatchEvent(new Event("mov197-refresh")),
+    );
+    await expect(picker()).toHaveCount(0);
+    await expect(
+      page.getByText("Checking your account…", { exact: true }).first(),
+    ).toBeVisible();
+    await page.unroute("**/api/auth/actor");
+    await page.evaluate(() =>
+      window.dispatchEvent(new Event("mov197-refresh")),
+    );
+    await expect(picker()).toBeVisible();
+    await expect(picker().getByLabel("Minute", { exact: true })).toHaveValue(
+      "30",
+    );
+    await cancel().click();
+    await expect(trigger()).toBeFocused();
+    await expect(trigger()).toContainText("19:15");
+    await trigger().click();
+    await picker().getByLabel("Minute", { exact: true }).selectOption("45");
+    await context.addCookies([
+      { name: "mov81-actor", value: "other", url: base },
+    ]);
+    await page.evaluate(() =>
+      window.dispatchEvent(new Event("mov197-session")),
+    );
+    await expect(picker()).toHaveCount(0);
+    await expect(trigger()).toHaveCount(0);
+    await expect(
+      page.getByText(
+        "This session could not be verified for your account. Reload to try again.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await context.addCookies([
+      { name: "mov81-actor", value: "owner", url: base },
+    ]);
+    await page.evaluate(() =>
+      window.dispatchEvent(new Event("mov197-session")),
+    );
+    await expect(trigger()).toContainText("18:00");
+    await trigger().click();
+    await expect(picker().getByLabel("Minute", { exact: true })).toHaveValue(
+      "00",
+    );
+    await context.addCookies([
+      { name: "mov81-actor", value: "signed-out", url: base },
+    ]);
+    await page.evaluate(() =>
+      window.dispatchEvent(new Event("mov197-session")),
+    );
+    await expect(picker()).toHaveCount(0);
+    await expect(trigger()).toHaveCount(0);
+    await expect(
+      page.getByText("Sign in with the appropriate account to continue.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    assert.equal(posts.length, 0);
+    console.log(
+      "PASS real booking picker: quarter-hour options, Apply/Cancel/Escape/close/backdrop, keyboard/focus/viewport1440/375/320x568, invalid/DST refusal, actual account-check draft suspension/resume and actor/sign-out clearing; zero Review/Save traffic",
     );
   }
   console.log(

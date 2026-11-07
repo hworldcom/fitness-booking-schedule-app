@@ -103,6 +103,95 @@
   grid-template-columns: 2fr 2fr 1fr;
   gap: 18px;
 }
+.booking-start-field {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  margin: 14px 0;
+  font-weight: 600;
+}
+.booking-start-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid #aab3c0;
+  border-radius: 9px;
+  background: white;
+  font: inherit;
+  text-align: left;
+}
+.booking-start-dialog {
+  max-height: calc(100dvh - 24px);
+  overflow: hidden;
+  padding: 20px;
+}
+.booking-start-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.booking-start-dialog > :is(.dialog-top, h2, p) {
+  flex-shrink: 0;
+}
+.booking-start-dialog .dialog-top {
+  margin-bottom: 12px;
+}
+.booking-start-dialog > p {
+  margin: 8px 0;
+}
+.booking-start-dialog form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.booking-start-fields {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+.booking-start-dialog form > [role="alert"] {
+  flex-shrink: 0;
+  margin: 8px 0 0;
+}
+.booking-start-dialog form label {
+  display: grid;
+  gap: 7px;
+  margin: 16px 0;
+  font-weight: 600;
+}
+.booking-start-dialog :is(input, select) {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid #aab3c0;
+  border-radius: 9px;
+  padding: 10px;
+  background: white;
+  font: inherit;
+}
+.booking-start-clock {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.booking-start-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+  flex-shrink: 0;
+}
+.booking-start-actions .button {
+  flex: 1 1 100px;
+  justify-content: center;
+}
+.booking-start-dialog .icon-button {
+  width: 44px;
+  height: 44px;
+}
 .session-type-editor .session-type-check {
   display: flex;
   align-items: center;
