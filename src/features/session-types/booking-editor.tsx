@@ -112,6 +112,8 @@ function Editor({
   const [review, setReview] = useState<CoachSessionCommand | null>(null);
   const reviewPanel = useRef<HTMLElement>(null);
   const reviewButton = useRef<HTMLButtonElement>(null);
+  const changeForm = useRef<HTMLFormElement>(null);
+  const rescheduleHandled = useRef(false);
   const [outsideWorkingHours, setOutsideWorkingHours] = useState(false);
   const [saved, setSaved] = useState(false);
   const [detailsNeedRefresh, setDetailsNeedRefresh] = useState(false);
@@ -357,6 +359,20 @@ function Editor({
     options &&
     (!detail ||
       (detail.status === "confirmed" && Date.parse(detail.startsAt) > now));
+  useEffect(() => {
+    if (
+      loading ||
+      !editable ||
+      !detail ||
+      rescheduleHandled.current ||
+      window.location.hash !== "#reschedule" ||
+      !changeForm.current
+    )
+      return;
+    rescheduleHandled.current = true;
+    changeForm.current.focus({ preventScroll: true });
+    changeForm.current.scrollIntoView({ block: "start", behavior: "instant" });
+  }, [loading, editable, detail]);
   const type = options?.types.find((t) => t.id === typeId);
   const activeTypes =
     options?.types.filter((t) => t.format === "private" && !t.archived) ?? [];
@@ -507,7 +523,11 @@ function Editor({
       )}
       {editable && !saved && (
         <form
-          className="session-type-editor"
+          ref={changeForm}
+          id={detail ? "reschedule" : undefined}
+          tabIndex={-1}
+          aria-labelledby="booking-change-heading"
+          className="session-type-editor session-booking-change"
           onSubmit={(e) => {
             e.preventDefault();
             const startsAt = berlinInstant(localTime);
@@ -552,7 +572,9 @@ function Editor({
             }
           }}
         >
-          <h2>{detail ? "Change this booking" : "New confirmed session"}</h2>
+          <h2 id="booking-change-heading">
+            {detail ? "Change this booking" : "New confirmed session"}
+          </h2>
           <p>
             {detail
               ? "Choose a free time. If the full session falls outside your saved working hours, we’ll ask you to confirm this one-booking exception. Your regular hours and session type stay the same."

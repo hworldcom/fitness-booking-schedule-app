@@ -167,6 +167,14 @@ export function CoachClientCards({
                       Session details
                     </Link>
                   )}
+                  {booking.hasSessionDetails && cancellable && (
+                    <Link
+                      className="button secondary"
+                      href={`/coach/sessions/${booking.id}#reschedule`}
+                    >
+                      Reschedule
+                    </Link>
+                  )}
                   {cancellable && (
                     <button
                       type="button"

@@ -302,7 +302,71 @@ export async function rehearseBookingRescheduling({
     pass(
       "Save availability warns that the existing10:00 session stays scheduled; saving11:00–13:00 hours preserves that booking and sends no reschedule email",
     );
-    await coach.page.goto(base + "/coach/sessions/" + bookingId);
+    for (const width of [1440, 375, 320]) {
+      await coach.page.setViewportSize({ width, height: 1000 });
+      await coach.page.goto(base + "/coach?view=bookings");
+      const card = coach.page.locator("#coach-booking-" + bookingId);
+      await expect(
+        card.getByRole("link", { name: "Session details", exact: true }),
+      ).toBeVisible();
+      await expect(
+        card.getByRole("button", { name: "Cancel session", exact: true }),
+      ).toBeVisible();
+      const reschedule = card.getByRole("link", {
+        name: "Reschedule",
+        exact: true,
+      });
+      await expect(reschedule).toHaveAttribute(
+        "href",
+        `/coach/sessions/${bookingId}#reschedule`,
+      );
+      assert.equal(
+        await coach.page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth,
+        ),
+        false,
+      );
+      await card.screenshot({
+        path: path.join(output, `coach-direct-reschedule-${width}.png`),
+      });
+      await reschedule.focus();
+      await coach.page.keyboard.press("Enter");
+      await expect(coach.page).toHaveURL(
+        base + "/coach/sessions/" + bookingId + "#reschedule",
+      );
+      const change = coach.page.getByRole("form", {
+        name: "Change this booking",
+        exact: true,
+      });
+      await expect(change).toBeFocused();
+      await expect(
+        change.getByRole("heading", {
+          name: "Change this booking",
+          exact: true,
+        }),
+      ).toBeInViewport();
+      await expect(
+        coach.page.getByRole("region", {
+          name: "Review booking change",
+          exact: true,
+        }),
+      ).toHaveCount(0);
+      const unchanged = await api(coach, "?bookingId=" + bookingId);
+      assert.equal(unchanged.data.detail.revision, 0);
+      assert.equal(
+        Date.parse(unchanged.data.detail.startsAt),
+        Date.parse(times.original),
+      );
+    }
+    assert.equal(
+      (
+        await database`select count(*)::integer n from app.booking_notification_events where source_id=${bookingId}::uuid and kind='changed'`
+      )[0].n,
+      0,
+    );
+    pass(
+      "direct Reschedule is visible beside details/cancel at1440/375/320; keyboard opens and focuses the loaded original change form without review, mutation or email",
+    );
     await expect(
       coach.page.getByRole("heading", {
         name: "Change this booking",
