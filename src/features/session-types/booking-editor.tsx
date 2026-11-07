@@ -33,6 +33,8 @@ type Options = {
   athletes: ConnectionPage<ConnectionProjection>;
   externalClients: ExternalClientPage;
 };
+const START_TIME_GUIDANCE =
+  "Choose a start time at :00, :15, :30 or :45 (15-minute intervals).";
 const dateLabel = (s: string) =>
   new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Berlin",
@@ -113,6 +115,7 @@ function Editor({
   const reviewPanel = useRef<HTMLElement>(null);
   const reviewButton = useRef<HTMLButtonElement>(null);
   const changeForm = useRef<HTMLFormElement>(null);
+  const startInput = useRef<HTMLInputElement>(null);
   const rescheduleHandled = useRef(false);
   const [outsideWorkingHours, setOutsideWorkingHours] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -374,6 +377,17 @@ function Editor({
     changeForm.current.scrollIntoView({ block: "start", behavior: "instant" });
   }, [loading, editable, detail]);
   const type = options?.types.find((t) => t.id === typeId);
+  const selectedStart = berlinInstant(localTime);
+  const invalidStartStep =
+    selectedStart !== null && Date.parse(selectedStart) % 900000 !== 0;
+  useEffect(() => {
+    if (message !== START_TIME_GUIDANCE || !invalidStartStep) return;
+    startInput.current?.focus({ preventScroll: true });
+    startInput.current?.scrollIntoView({
+      block: "center",
+      behavior: "instant",
+    });
+  }, [message, invalidStartStep]);
   const activeTypes =
     options?.types.filter((t) => t.format === "private" && !t.archived) ?? [];
   const reloadHref = bookingId
@@ -531,6 +545,16 @@ function Editor({
           onSubmit={(e) => {
             e.preventDefault();
             const startsAt = berlinInstant(localTime);
+            if (startsAt && Date.parse(startsAt) % 900000 !== 0) {
+              setMessage(START_TIME_GUIDANCE);
+              setSaveFeedback(false);
+              startInput.current?.focus({ preventScroll: true });
+              startInput.current?.scrollIntoView({
+                block: "center",
+                behavior: "instant",
+              });
+              return;
+            }
             if (
               clientPending ||
               !startsAt ||
@@ -672,14 +696,32 @@ function Editor({
             <label>
               Start · Berlin time
               <input
+                ref={startInput}
                 type="datetime-local"
                 required
+                min="1970-01-01T00:00"
                 step={900}
+                aria-describedby="booking-start-guidance"
+                aria-invalid={invalidStartStep || undefined}
                 disabled={busy || uncertain || clientPending}
                 value={localTime}
                 onChange={(e) => {
+                  e.currentTarget.setCustomValidity("");
                   setLocalTime(e.target.value);
                   setReview(null);
+                  if (message === START_TIME_GUIDANCE) setMessage("");
+                }}
+                onInvalid={(e) => {
+                  if (e.currentTarget.validity.stepMismatch) {
+                    e.currentTarget.setCustomValidity(START_TIME_GUIDANCE);
+                    setMessage(START_TIME_GUIDANCE);
+                    setSaveFeedback(false);
+                    e.currentTarget.focus({ preventScroll: true });
+                    e.currentTarget.scrollIntoView({
+                      block: "center",
+                      behavior: "instant",
+                    });
+                  }
                 }}
               />
             </label>
@@ -702,6 +744,7 @@ function Editor({
               </select>
             </label>
           </div>
+          <p id="booking-start-guidance">{START_TIME_GUIDANCE}</p>
           <button
             ref={reviewButton}
             type="submit"

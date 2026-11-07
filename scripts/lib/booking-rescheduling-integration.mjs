@@ -855,6 +855,102 @@ export async function rehearseBookingRescheduling({
     const [hoursBeforeException] =
       await database`select to_jsonb(p) policy,to_jsonb(d) dates from app.coach_availability_policies p join app.coach_availability_date_overrides d using(run_id,profile_id) where p.profile_id=${coach.profileId}::uuid and d.local_date=${day.date}::date`;
     await coach.page.goto(base + "/coach/sessions/" + bookingId);
+    const start = coach.page.getByLabel("Start · Berlin time", { exact: true });
+    const startGuidance =
+      "Choose a start time at :00, :15, :30 or :45 (15-minute intervals).";
+    const invalidRequests = [];
+    const recordInvalidRequest = (request) => {
+      if (
+        request.method() === "POST" &&
+        new URL(request.url()).pathname === "/api/session-bookings"
+      )
+        invalidRequests.push(request.url());
+    };
+    coach.page.on("request", recordInvalidRequest);
+    for (const width of [1440, 375, 320]) {
+      await coach.page.setViewportSize({ width, height: 1000 });
+      await start.fill(day.date + "T19:20");
+      await coach.page
+        .getByLabel("Duration", { exact: true })
+        .selectOption("75");
+      await expect(start).toHaveAttribute("aria-invalid", "true");
+      await expect(start).toHaveAccessibleDescription(startGuidance);
+      assert.equal(
+        await start.evaluate((el) => el.validity.stepMismatch),
+        true,
+      );
+      await reviewButton.focus();
+      await coach.page.keyboard.press("Enter");
+      await expect(feedback).toContainText(startGuidance);
+      await expect(start).toBeFocused();
+      await expect(start).toBeInViewport();
+      await expect(start).toHaveValue(day.date + "T19:20");
+      await expect(
+        coach.page.getByLabel("Duration", { exact: true }),
+      ).toHaveValue("75");
+      // A synthetic submit bypasses native constraints; the editor must still
+      // reject the minute locally rather than call the review endpoint.
+      await start.evaluate((el) =>
+        el.form.dispatchEvent(
+          new Event("submit", { bubbles: true, cancelable: true }),
+        ),
+      );
+      await expect(feedback).toContainText(startGuidance);
+      await expect(start).toBeFocused();
+      await expect(start).toBeInViewport();
+      await expect(
+        coach.page.locator("#booking-start-guidance"),
+      ).toBeInViewport();
+      await expect(review).toHaveCount(0);
+      assert.equal(invalidRequests.length, 0);
+      assert.equal(
+        await coach.page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth,
+        ),
+        false,
+      );
+      await coach.page.screenshot({
+        path: path.join(output, `booking-start-minute-error-${width}.png`),
+      });
+    }
+    coach.page.off("request", recordInvalidRequest);
+    const offGrid = {
+      ...command,
+      commandId: randomUUID(),
+      expectedRevision: 2,
+      startsAt: new Date(
+        Date.parse(times.original) + 560 * 60000,
+      ).toISOString(),
+      durationMinutes: 75,
+    };
+    assert.equal(
+      (await api(coach, "?coach=true&review=true", offGrid)).status,
+      400,
+    );
+    for (const minute of ["15", "30"]) {
+      await start.fill(day.date + "T19:" + minute);
+      await expect(start).not.toHaveAttribute("aria-invalid", "true");
+      await expect(feedback).not.toContainText(startGuidance);
+      assert.equal(await start.evaluate((el) => el.checkValidity()), true);
+      await reviewButton.focus();
+      await coach.page.keyboard.press("Enter");
+      await expect(
+        coach.page.getByRole("heading", {
+          name: "Outside your working hours",
+          exact: true,
+        }),
+      ).toBeVisible();
+      await coach.page
+        .getByRole("button", { name: "Cancel review", exact: true })
+        .click();
+    }
+    assert.equal(
+      (await api(coach, "?bookingId=" + bookingId)).data.detail.revision,
+      2,
+    );
+    pass(
+      "19:20/75 shows quarter-hour guidance with preserved draft/focus at1440/375/320; native/direct submits make no review/save request, server rejects off-grid, corrected19:15/19:30 reach real outside-hours review without saving",
+    );
     await coach.page
       .getByLabel("Start · Berlin time", { exact: true })
       .fill(day.date + "T19:00");
