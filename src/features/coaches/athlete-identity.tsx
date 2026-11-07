@@ -8,12 +8,14 @@ export function AthleteIdentity({
   imageUrl,
   href,
   heading: Heading = "h3",
+  ariaLabel,
   children,
 }: {
   name: string;
   imageUrl: string | null;
   href: string | null;
   heading?: "h3" | "h4";
+  ariaLabel?: string;
   children?: ReactNode;
 }) {
   const content = (
@@ -29,7 +31,7 @@ export function AthleteIdentity({
     <Link
       href={href}
       className="coach-athlete-identity"
-      aria-label={`View ${name}’s athlete details`}
+      aria-label={ariaLabel ?? `View ${name}’s athlete details`}
     >
       {content}
     </Link>

@@ -227,6 +227,8 @@ Run `node scripts/rehearse-coach-approval-notifications-database.mjs` (and `--re
 
 ## Connections and reviews
 
+My coaches card identity/profile navigation is owned by [ConnectionLists](../../src/features/connections/connection-lists.tsx) and [connection presentation](../../src/features/connections/connection-model.ts), reusing the [identity component](../../src/features/coaches/athlete-identity.tsx) and existing public coach routes. Run `node --import tsx --test tests/coach-connections.test.ts tests/boundaries.test.ts` for role/status/publication regressions and `node scripts/rehearse-connection-profile-links-ui.mjs` for actual component navigation, keyboard, transition and unavailable-state checks at desktop/mobile widths. The UI runner uses only an owned temporary Next app, fictional fixtures and Chrome on free loopback3199; it has no Auth/database or retained account writes. Evidence is under `test-results/connection-profile-links/`; this is separate from live UAT/Auth/SQL proof (MOV-201).
+
 [My coaches](../../src/app/my-coaches/page.tsx) leads to the [connection service](../../src/server/connections/service.ts); pair reviews have a distinct [review service](../../src/server/coaches/review-service.ts). Consult [§19.4 reviews](../mvp-spec.md#194-reviews-consent-and-public-aggregates) and the specification's connection flows; do not infer review eligibility from a current connection alone.
 
 ## Athlete training calendar

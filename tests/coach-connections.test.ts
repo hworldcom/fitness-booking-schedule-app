@@ -407,11 +407,84 @@ test("athlete coach presentation never selects athlete private media and gates p
     connectionPresentation({ ...connected, coachPublic: false }, "athlete"),
     { name: "Test Coach", imageUrl: null, profileHref: null },
   );
-  assert.equal(
-    connectionPresentation({ ...connected, status: "pending" }, "athlete")
-      .profileHref,
-    null,
-  );
+  for (const status of [
+    "pending",
+    "accepted",
+    "declined",
+    "withdrawn",
+    "removed",
+  ] as const) {
+    assert.equal(
+      connectionPresentation({ ...connected, status }, "athlete").profileHref,
+      "/coaches/test-coach",
+    );
+    assert.equal(
+      connectionPresentation(
+        { ...connected, status, coachPublic: false },
+        "athlete",
+      ).profileHref,
+      null,
+    );
+  }
+});
+
+test("public coach identity and profile actions remain available after disconnect without restoring private actions", () => {
+  for (const status of [
+    "removed",
+    "declined",
+    "withdrawn",
+    "pending",
+  ] as const) {
+    const row = connection(1, {
+      status,
+      canAccept: false,
+      canDecline: false,
+      canWithdraw: false,
+      canDisconnect: false,
+    });
+    for (const coachPublic of [true, false]) {
+      const html = renderToStaticMarkup(
+        createElement(ConnectionLists, {
+          role: "athlete",
+          pages: pages({
+            [status === "pending" ? "incoming" : "history"]: {
+              items: [{ ...row, coachPublic }],
+              nextCursor: null,
+            },
+          }),
+          busy: false,
+          mayInitiate: true,
+          onRefresh: noop,
+          onPage: noop,
+          onDecision: noop,
+          onHistory: noop,
+          renderHistory: () => null,
+        }),
+      );
+      if (coachPublic) {
+        const identity = [...html.matchAll(/<a\b[^>]*>[\s\S]*?<\/a>/g)]
+          .map(([link]) => link)
+          .find((link) =>
+            link.includes('aria-label="View Test Coach’s coach profile"'),
+          );
+        assert.ok(identity);
+        assert.match(identity, /href="\/coaches\/test-coach"/);
+        assert.match(identity, /class="avatar/);
+        assert.match(identity, /<h4>Test Coach<\/h4>/);
+        assert.match(html, /View coach profile<\/a>/);
+      } else {
+        assert.doesNotMatch(
+          html,
+          /href="\/coaches\/test-coach"|View coach profile/,
+        );
+      }
+      if (status === "removed") assert.match(html, /Disconnected/);
+      assert.doesNotMatch(
+        html,
+        /Message coach|View shared history|Confirm disconnect|View Test Coach’s athlete details/,
+      );
+    }
+  }
 });
 
 test("My coaches uses retained counterpart identity, server flags and no hidden-coach new-session action", () => {

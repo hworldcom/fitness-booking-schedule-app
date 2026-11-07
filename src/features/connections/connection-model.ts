@@ -145,10 +145,7 @@ export function connectionPresentation(
     : {
         name: row.coachDisplayName,
         imageUrl: row.coachPublic ? row.coachPortraitUrl : null,
-        profileHref:
-          row.coachPublic && row.status === "accepted"
-            ? `/coaches/${row.coachSlug}`
-            : null,
+        profileHref: row.coachPublic ? `/coaches/${row.coachSlug}` : null,
       };
 }
 
