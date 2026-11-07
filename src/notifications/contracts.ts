@@ -152,7 +152,10 @@ export function parseNotificationPage(value: unknown): NotificationPage {
         )
           throw Error("Invalid notification response.");
         const booking = parseBookingNotification(item);
-        if (booking.recipientRole !== "coach")
+        if (
+          booking.recipientRole === "athlete" &&
+          !["confirmed", "cancelled", "changed"].includes(booking.event)
+        )
           throw Error("Invalid booking notification recipient.");
         return {
           ...booking,

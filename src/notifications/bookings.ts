@@ -9,7 +9,7 @@ export const BOOKING_EVENTS = {
   "not-selected": "Booking request not selected",
   unavailable: "Requested time became unavailable",
   cancelled: "Booking cancelled",
-  changed: "Booking details changed",
+  changed: "Booking rescheduled",
 } as const;
 export type BookingEvent = keyof typeof BOOKING_EVENTS;
 export type BookingNotification = Readonly<{

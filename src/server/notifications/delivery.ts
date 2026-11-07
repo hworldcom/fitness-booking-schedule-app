@@ -162,10 +162,7 @@ export function bookingEmail(
     { id: payload.id, email: payload.email, conversationId: event.sourceId },
     siteUrl,
   );
-  const title =
-    event.event === "changed"
-      ? "Booking rescheduled"
-      : BOOKING_EVENTS[event.event];
+  const title = BOOKING_EVENTS[event.event];
   const summary = bookingNotificationSummary(event);
   const link = new URL(bookingNotificationHref(event), siteUrl).href;
   const explanation =

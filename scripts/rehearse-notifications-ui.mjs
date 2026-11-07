@@ -306,6 +306,47 @@ try {
   console.log(
     "PASS booking event title/snapshot/safe destination and explicit read in mixed history",
   );
+  // MOV-185: affected athletes share the existing bell/read controller.
+  const athleteBooking = randomUUID();
+  for (const [event, title, width] of [
+    ["confirmed", "Booking confirmed", 1440],
+    ["changed", "Booking rescheduled", 375],
+    ["cancelled", "Booking cancelled", 320],
+  ]) {
+    items[0] = {
+      ...items[0],
+      event,
+      sourceKind: "booking",
+      sourceId: athleteBooking,
+      recipientRole: "athlete",
+      readAt: null,
+    };
+    await page.keyboard.press("Escape");
+    await page.setViewportSize({ width, height: 900 });
+    await bell().click();
+    await expect(
+      dialog().getByRole("link", { name: new RegExp(title) }),
+    ).toHaveAttribute("href", `/sessions#athlete-booking-${athleteBooking}`);
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+      false,
+    );
+    const mark = dialog().getByRole("button", {
+      name: `Mark ${title.toLowerCase()} notification as read`,
+      exact: true,
+    });
+    await mark.focus();
+    await page.keyboard.press("Enter");
+    await expect(bell()).toHaveAttribute(
+      "aria-label",
+      "Notifications, 0 unread",
+    );
+  }
+  console.log(
+    "PASS athlete confirmed/rescheduled/cancelled entries:1440/375/320 layout, correct private destination and keyboard mark-read",
+  );
   // MOV-86: group notices use the same recipient/read/recovery controller.
   const groupId = randomUUID();
   items[0] = {

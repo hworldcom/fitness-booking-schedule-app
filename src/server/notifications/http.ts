@@ -7,7 +7,7 @@ import {
 export function notificationHandlers(
   command: (
     input: unknown,
-    version: 1 | 2 | 3 | 4,
+    version: 1 | 2 | 3 | 4 | 5,
   ) => Promise<NotificationResult>,
   siteUrl: () => string | undefined,
 ) {
@@ -33,7 +33,8 @@ export function notificationHandlers(
         version !== "1" &&
         version !== "2" &&
         version !== "3" &&
-        version !== "4"
+        version !== "4" &&
+        version !== "5"
       )
         return response({ status: "invalid" });
       const params = new URL(request.url).searchParams;
@@ -47,7 +48,15 @@ export function notificationHandlers(
       return response(
         await command(
           { action: "list", args: Object.fromEntries(params) },
-          version === "4" ? 4 : version === "3" ? 3 : version === "2" ? 2 : 1,
+          version === "5"
+            ? 5
+            : version === "4"
+              ? 4
+              : version === "3"
+                ? 3
+                : version === "2"
+                  ? 2
+                  : 1,
         ),
       );
     },
@@ -57,7 +66,8 @@ export function notificationHandlers(
         version !== "1" &&
         version !== "2" &&
         version !== "3" &&
-        version !== "4"
+        version !== "4" &&
+        version !== "5"
       )
         return response({ status: "invalid" });
       const origin = siteUrl();
@@ -109,7 +119,15 @@ export function notificationHandlers(
       return response(
         await command(
           input,
-          version === "4" ? 4 : version === "3" ? 3 : version === "2" ? 2 : 1,
+          version === "5"
+            ? 5
+            : version === "4"
+              ? 4
+              : version === "3"
+                ? 3
+                : version === "2"
+                  ? 2
+                  : 1,
         ),
       );
     },

@@ -34,6 +34,73 @@ export async function rehearseBookingRescheduling({
     );
     return { status: r.status(), data: await r.json() };
   };
+  const notificationPage = async (actor, version = 5) => {
+    const r = await actor.context.request.get(base + "/api/notifications", {
+      headers: { "x-movx-notification-version": String(version) },
+    });
+    assert.equal(r.status(), 200);
+    return (await r.json()).value;
+  };
+  const athleteBell = async (bookingId, event, width) => {
+    const titles = {
+        confirmed: "Booking confirmed",
+        changed: "Booking rescheduled",
+        cancelled: "Booking cancelled",
+      },
+      title = titles[event];
+    const before = await notificationPage(athlete);
+    const target = before.items.find(
+      (x) =>
+        x.kind === "booking" &&
+        x.sourceId === bookingId &&
+        x.event === event &&
+        x.readAt === null,
+    );
+    assert.ok(target, `Missing athlete ${event} notification`);
+    await athlete.page.setViewportSize({ width, height: 900 });
+    await athlete.page.goto(base + "/sessions");
+    const bell = athlete.page.getByRole("button", { name: /^Notifications,/ });
+    await bell.click();
+    const dialog = athlete.page.getByRole("dialog", {
+      name: "Notifications",
+      exact: true,
+    });
+    const link = dialog.getByRole("link", { name: new RegExp(title) }).first();
+    await expect(link).toHaveAttribute(
+      "href",
+      "/sessions#athlete-booking-" + bookingId,
+    );
+    assert.equal(
+      await athlete.page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+      false,
+    );
+    await athlete.page.screenshot({
+      path: path.join(output, `athlete-booking-bell-${event}-${width}.png`),
+    });
+    const mark = dialog
+      .getByRole("button", {
+        name: `Mark ${title.toLowerCase()} notification as read`,
+        exact: true,
+      })
+      .first();
+    await mark.focus();
+    await athlete.page.keyboard.press("Enter");
+    await expect
+      .poll(
+        async () =>
+          (await notificationPage(athlete)).items.find(
+            (x) => x.id === target.id,
+          )?.readAt ?? null,
+      )
+      .not.toBe(null);
+    await link.focus();
+    await athlete.page.keyboard.press("Enter");
+    await expect(athlete.page).toHaveURL(
+      base + "/sessions#athlete-booking-" + bookingId,
+    );
+  };
   const drain = async () => {
     for (let i = 0; i < 10; i++) {
       const r = await fetch(base + "/api/internal/notifications/dispatch", {
@@ -143,6 +210,26 @@ export async function rehearseBookingRescheduling({
     assert.ok(bookingId);
     pass(
       "athlete selects and reviews Sunday10:00 on the public coach website, submits a real request, and the coach accepts through Bookings",
+    );
+    await athleteBell(bookingId, "confirmed", 1440);
+    for (const version of [1, 2, 3, 4])
+      assert.equal(
+        (await notificationPage(athlete, version)).items.some(
+          (x) => x.kind === "booking" && x.sourceId === bookingId,
+        ),
+        false,
+      );
+    assert.equal(
+      (await notificationPage(coach)).items.some(
+        (x) => x.kind === "booking" && x.sourceId === bookingId,
+      ),
+      false,
+    );
+    const [queuedConfirmation] =
+      await database`select r.state from app.booking_notification_receipts r join app.booking_notification_events e on e.id=r.event_id where e.source_id=${bookingId}::uuid and e.kind='confirmed'and r.recipient_profile_id=${athlete.profileId}::uuid`;
+    assert.equal(queuedConfirmation.state, "queued");
+    pass(
+      "athlete confirmation bell renders, keyboard mark-read/link works, legacy versions and coach self alert stay empty, reading does not suppress queued email",
     );
     await source(coach, "select app.session_notes_command('save',$1::jsonb)", [
       database.json({
@@ -794,6 +881,7 @@ export async function rehearseBookingRescheduling({
     pass(
       "outside-hours19:00/75 review requires unchecked explicit acknowledgement; cancel/field changes save nothing, desktop/375/320 keyboard fits, confirmed third change preserves regular hours and sends exactly one athlete/coach local receipt",
     );
+    await athleteBell(bookingId, "changed", 375);
     await coach.page.goto(base + "/coach?view=bookings");
     await coach.page
       .locator("#coach-booking-" + bookingId)
@@ -843,6 +931,22 @@ export async function rehearseBookingRescheduling({
           : coach.email,
       );
     }
+    await athleteBell(bookingId, "cancelled", 320);
+    assert.equal(
+      (await notificationPage(athlete)).items.filter(
+        (x) => x.kind === "booking" && x.sourceId === bookingId,
+      ).length,
+      5,
+    );
+    assert.equal(
+      (await notificationPage(coach)).items.some(
+        (x) => x.kind === "booking" && x.sourceId === bookingId,
+      ),
+      false,
+    );
+    pass(
+      "actual athlete confirmation/reschedule/cancellation bell at1440/375/320 keeps all five distinct events, safe destinations and explicit keyboard reads; coach gets no self alert",
+    );
     pass(
       "actual coach cancellation and two exact retries create one cancellation event, one email per participant with an explicit subject, and no extra reschedule revision/event; earlier rescheduling receipts remain distinct",
     );

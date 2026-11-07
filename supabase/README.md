@@ -328,6 +328,14 @@ MOV-181's `20261107000200_coach_working_hours_confirmation.sql` follows person c
 
 Install this SQL before releasing the server-review consumer. Old consumers keep strict in-hours behavior and cannot create an unconfirmed exception. Compatible rollback retains original booking IDs, commands, audits, events and Unknown history, including acknowledged exceptions; do not rewrite installed SQL or undo a saved user booking. Hosted activation needs the target-specific backup/restore/atomic-ledger procedure below; local implementation does not activate UAT/production. `npm run test:working-hours-db` uses unique owned `mov181_*_fresh|upgrade` databases and runtime-only logins on local55322 with row/role preservation and atomic rollback proof. Run serially with other DB rehearsals. `npm run test:booking-rescheduling-integration` uses the separate complete disposable Auth/browser/worker/Mailpit stack and removes only its own resources.
 
+## Athlete booking bell notifications
+
+MOV-185's `20261107000300_athlete_booking_notifications.sql` follows working-hours confirmation. It changes only canonical capture and notification projections, adds runtime-only `notification_command_v5`, and preserves existing function owners/grants/security plus all historical rows. Newly captured confirmed/cancelled/changed receipts can notify the affected athlete; the actor gets no self alert. Existing versions1–4 retain coach-only booking lists/counts/read/read-all. Current consumers opt into5; older browser sessions cannot read or mark new athlete history through an old version. Email jobs, worker/provider contracts and other event kinds are unchanged. No backfill or new configuration is required.
+
+Install SQL before the version5 consumer. `npm run test:athlete-booking-notifications-db` creates only owned `mov185_*_fresh|upgrade` scratch databases/restricted logins on loopback55322, proves upgrade/atomic rollback/data/function authority and recipient/version/read/paging/retry contracts, then removes exact owned resources and compares retained rows/role credentials. Run serially. The existing disposable booking Auth/browser/worker/Mailpit journey and mounted notification UI rehearsal supply separate runtime/keyboard/mobile/error proof. Hosted activation requires the target-specific backed-up SQL/ledger procedure below; local acceptance does not migrate retained local/UAT/production.
+
+Compatible consumer rollback restores version4 behavior while preserving private new athlete receipts, read state and all email/Unknown history. Use a reviewed forward SQL correction if needed; do not rewrite installed migrations, clear receipt flags or mark old events unread to recreate notifications.
+
 ## Hosted changes and recovery
 
 ### Current application release

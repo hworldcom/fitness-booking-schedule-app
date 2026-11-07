@@ -91,7 +91,8 @@
     "test:coach-media-integration": "node scripts/rehearse-coach-media-integration.mjs",
     "test:coach-media-live": "node scripts/rehearse-coach-media-live-mux.mjs",
     "test:external-clients-db": "node scripts/rehearse-external-clients-database.mjs",
-    "test:external-clients-integration": "node scripts/rehearse-coach-media-integration.mjs --external-clients --athlete-training --diagnose-storage"
+    "test:external-clients-integration": "node scripts/rehearse-coach-media-integration.mjs --external-clients --athlete-training --diagnose-storage",
+    "test:athlete-booking-notifications-db": "node scripts/rehearse-athlete-booking-notifications-database.mjs"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "5.3.0",
