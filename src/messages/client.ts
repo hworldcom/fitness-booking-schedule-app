@@ -25,7 +25,7 @@ export async function messageRead(
     Object.entries(args).map(([k, v]) => [k, String(v)]),
   );
   const response = await fetch(`/api/messages?${params}`, {
-    headers: { [MESSAGE_VERSION_HEADER]: "2" },
+    headers: { [MESSAGE_VERSION_HEADER]: "3" },
     cache: "no-store",
     credentials: "same-origin",
     signal: signal
@@ -46,7 +46,7 @@ export async function messageWrite(
     credentials: "same-origin",
     headers: {
       "content-type": "application/json",
-      [MESSAGE_VERSION_HEADER]: "2",
+      [MESSAGE_VERSION_HEADER]: "3",
     },
     body: JSON.stringify({ action, args }),
     signal: AbortSignal.timeout(15000),

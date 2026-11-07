@@ -66,6 +66,25 @@
   font-weight: 600;
   margin: 14px 0;
 }
+.session-booking-review {
+  scroll-margin-top: 95px;
+}
+.session-booking-feedback {
+  scroll-margin-block: 95px;
+  overflow-wrap: anywhere;
+}
+.session-booking-feedback:not(:empty) {
+  border: 1px solid #aab3c0;
+  border-radius: 12px;
+  background: white;
+  padding: 16px;
+}
+.session-booking-feedback-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
 .session-type-editor input:not([type="checkbox"]):not([type="radio"]),
 .session-type-editor select,
 .session-type-editor textarea {

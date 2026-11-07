@@ -14,7 +14,7 @@ test("unsupported Messages versions fail before Auth/database access and retain 
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "message-test-public-key";
   process.env.NEXT_PUBLIC_SITE_URL = "http://localhost:3100";
   try {
-    for (const version of ["0", "3", "02", "2,1"]) {
+    for (const version of ["0", "4", "02", "2,1"]) {
       const headers = {
         [MESSAGE_VERSION_HEADER]: version,
         origin: "http://localhost:3100",

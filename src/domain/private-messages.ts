@@ -39,6 +39,7 @@ export type MessageContext = SessionTitleDetails &
     venue: string | null;
     deadline: string | null;
     canSend: boolean;
+    actorRole?: "coach" | "athlete";
   }>;
 export type MessageEntry = Readonly<{
   id: string;
@@ -58,6 +59,7 @@ export type MessageThread = Readonly<{
   readThrough: number;
   hasOlder: boolean;
   hasNewer: boolean;
+  earlierContacts?: readonly MessageConsent[];
 }>;
 export type MessageInbox = Readonly<{
   items: readonly MessageConversation[];
@@ -290,6 +292,15 @@ export function parseMessageInbox(v: unknown): MessageInbox {
 export function parseMessageThread(v: unknown): MessageThread {
   const a = object(v);
   return {
+    ...(a.earlierContacts === undefined
+      ? {}
+      : {
+          earlierContacts: values(a.earlierContacts, 2).map((v) => {
+            const contact = consent(v);
+            if (!contact) throw Error("Invalid earlier contact.");
+            return contact;
+          }),
+        }),
     conversation: parseMessageConversation(a.conversation),
     lastSeq: integer(a.lastSeq),
     readThrough: integer(a.readThrough),
@@ -321,6 +332,9 @@ export function parseMessageThread(v: unknown): MessageThread {
         venue: nullable(c.venue),
         deadline: nullable(c.deadline),
         canSend: bool(c.canSend),
+        ...(c.actorRole === undefined
+          ? {}
+          : { actorRole: choice(c.actorRole, ["coach", "athlete"] as const) }),
         ...parseSessionTitleDetails(c),
       };
     }),
@@ -332,7 +346,13 @@ export function parseMessageResult(action: MessageAction, v: unknown): unknown {
   if (action === "session-title") return parseSessionTitleDetails(v);
   const a = object(v);
   if (action === "contact")
-    return { coachId: uuid(a.coachId), name: text(a.name) };
+    return {
+      coachId: uuid(a.coachId),
+      name: text(a.name),
+      ...(a.conversationId === undefined
+        ? {}
+        : { conversationId: uuid(a.conversationId) }),
+    };
   if (["inquire", "send", "open"].includes(action))
     return {
       conversationId: uuid(a.conversationId),

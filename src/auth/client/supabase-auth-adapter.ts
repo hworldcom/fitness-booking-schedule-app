@@ -10,6 +10,7 @@ import type {
 } from "../gateway";
 import type { AuthenticationCommand } from "../operations";
 import { createAuthServiceFetch } from "../service-availability";
+import { startGoogleAuthentication } from "./google-authentication";
 import { postAuthenticationCommand } from "./operation-client";
 
 type BrowserClient = ReturnType<typeof createBrowserClient>;
@@ -33,6 +34,8 @@ export function createSupabaseAuthenticationAdapter(
   ) => Promise<AuthenticationResult> = postAuthenticationCommand,
 ): AuthenticationAdapter {
   async function execute(command: AuthenticationCommand) {
+    if (command.action === "start-google")
+      return startGoogleAuthentication(command);
     const result = await request(command);
     if (
       typeof window !== "undefined" &&

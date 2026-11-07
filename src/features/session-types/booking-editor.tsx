@@ -4,9 +4,10 @@ import type { ExternalClientPage } from "@/domain/external-clients";
 import { SessionNotes } from "@/features/notes/session-notes";
 import { berlinLocalInstant as berlinInstant } from "@/features/coach-events/contract";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SessionActorBoundary } from "./actor-boundary";
+import { reloadSavedBooking, saveCoachBooking } from "./booking-client";
 
 import {
   SESSION_DURATIONS,
@@ -105,7 +106,23 @@ function Editor({
   const [localTime, setLocalTime] = useState("");
   const [duration, setDuration] = useState<SessionDuration>(60);
   const [review, setReview] = useState<CoachSessionCommand | null>(null);
+  const reviewPanel = useRef<HTMLElement>(null);
   const [saved, setSaved] = useState(false);
+  const [detailsNeedRefresh, setDetailsNeedRefresh] = useState(false);
+  const [saveFeedback, setSaveFeedback] = useState(false);
+  const saveNotice = useRef<HTMLParagraphElement>(null);
+  const saveController = useRef<AbortController | null>(null);
+  useEffect(() => () => saveController.current?.abort(), []);
+  useEffect(() => {
+    if (!saveFeedback || !message || !saveNotice.current) return;
+    saveNotice.current.focus({ preventScroll: true });
+    saveNotice.current.scrollIntoView({ block: "center" });
+  }, [message, saveFeedback]);
+  useEffect(() => {
+    if (!review || !reviewPanel.current) return;
+    reviewPanel.current.focus({ preventScroll: true });
+    reviewPanel.current.scrollIntoView({ block: "start" });
+  }, [review]);
   useEffect(() => {
     let active = true;
     async function load() {
@@ -228,31 +245,32 @@ function Editor({
     }
   }
   async function save() {
-    if (!review) return;
+    if (!review || saveController.current) return;
+    const controller = new AbortController();
+    saveController.current = controller;
     setBusy(true);
-    setMessage("");
+    setSaveFeedback(true);
+    setDetailsNeedRefresh(true);
+    setMessage(detail ? "Saving booking change…" : "Saving session…");
     try {
-      const r = await (
-        await fetch("/api/session-bookings?coach=true", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(review),
-        })
-      ).json();
+      const r = await saveCoachBooking(review, { signal: controller.signal });
+      if (controller.signal.aborted) return;
       if (r.status === "saved") {
         setUncertain(false);
         setSaved(true);
-        setMessage("Session saved.");
+        setMessage("Session saved. Checking the latest details…");
         if (!bookingId) router.push(`/coach/sessions/${r.bookingId}`);
         else {
           try {
-            const current = await (
-              await fetch(`/api/session-bookings?bookingId=${bookingId}`, {
-                cache: "no-store",
-              })
-            ).json();
-            if (current.status === "ready") setDetail(current.detail);
+            const current = await reloadSavedBooking(bookingId, r.revision, {
+              signal: controller.signal,
+            });
+            if (controller.signal.aborted) return;
+            setDetail(current);
+            setDetailsNeedRefresh(false);
+            setMessage("Session saved.");
           } catch {
+            if (controller.signal.aborted) return;
             setMessage("Session saved. Reload to view its latest details.");
           }
         }
@@ -267,16 +285,22 @@ function Editor({
             ? "The class, connection, booking or time changed. Reload and review the current details."
             : r.status === "invalid"
               ? "Review the duration and Berlin start time."
-              : "We couldn’t verify the save. Retry this exact review or reload to check the booking.",
+              : r.status === "signed-out"
+                ? "Your sign-in expired. Sign in again, then reload this booking before saving."
+                : r.status === "forbidden"
+                  ? "This account cannot change this booking. Reload to check your current access."
+                  : "We couldn’t verify the save. Retry this exact review or reload to check the booking.",
         );
       }
     } catch {
+      if (controller.signal.aborted) return;
       setUncertain(true);
       setMessage(
         "We couldn’t verify the save. Retry this exact review or reload to check the booking.",
       );
     } finally {
-      setBusy(false);
+      saveController.current = null;
+      if (!controller.signal.aborted) setBusy(false);
     }
   }
   const editable =
@@ -286,12 +310,21 @@ function Editor({
   const type = options?.types.find((t) => t.id === typeId);
   const activeTypes =
     options?.types.filter((t) => t.format === "private" && !t.archived) ?? [];
+  const reloadHref = bookingId
+    ? `${detail?.viewerIsCoach ? "/coach/sessions/" : "/sessions/"}${bookingId}`
+    : "/coach/bookings/new";
   return (
     <>
       {loading && <p role="status">Loading session…</p>}
       {detail && (
         <section className="session-type-editor">
           <h2>{detail.sessionType?.name ?? "Private session"}</h2>
+          {detailsNeedRefresh && (
+            <p>
+              <strong>These details may be outdated.</strong> Reload to check
+              the current schedule.
+            </p>
+          )}
           <p>
             {dateLabel(detail.startsAt)}–
             {new Intl.DateTimeFormat("en-GB", {
@@ -344,6 +377,36 @@ function Editor({
           )}
         </section>
       )}
+      <p
+        ref={saveNotice}
+        tabIndex={-1}
+        className="session-booking-feedback"
+        role="status"
+        aria-live="polite"
+      >
+        {message}
+        {saveFeedback && message && (
+          <span className="session-booking-feedback-actions">
+            {uncertain && (
+              <button
+                type="button"
+                className="button dark"
+                disabled={busy}
+                onClick={() => void save()}
+              >
+                {busy
+                  ? "Saving…"
+                  : detail
+                    ? "Retry same change"
+                    : "Retry same session"}
+              </button>
+            )}
+            <a className="button secondary" href={reloadHref}>
+              Reload current details
+            </a>
+          </span>
+        )}
+      </p>
       {detail && (
         <>
           {detail.viewerIsCoach && !detail.athleteId && (
@@ -411,6 +474,7 @@ function Editor({
               return;
             }
             setMessage("");
+            setSaveFeedback(false);
             setReview({
               commandId: crypto.randomUUID(),
               typeId: type.id,
@@ -561,6 +625,7 @@ function Editor({
             </label>
           </div>
           <button
+            type="submit"
             className="button dark"
             disabled={busy || uncertain || clientPending || !type}
           >
@@ -570,7 +635,9 @@ function Editor({
       )}
       {review && !saved && (
         <section
-          className="session-type-editor"
+          ref={reviewPanel}
+          tabIndex={-1}
+          className="session-type-editor session-booking-review"
           aria-label="Review booking change"
         >
           <h2>{detail ? "Confirm schedule change" : "Confirm session"}</h2>
@@ -587,27 +654,24 @@ function Editor({
                 ? "This reserves a confirmed session for the selected external client. They gain shared history access after accepting an invitation."
                 : "This coach action confirms the session for the selected connected athlete."}
           </p>
-          <button
-            className="button dark"
-            disabled={busy || clientPending}
-            onClick={() => void save()}
-          >
-            {busy
-              ? "Saving…"
-              : detail
-                ? "Save booking change"
-                : "Confirm session"}
-          </button>
+          {!uncertain && (
+            <button
+              type="button"
+              className="button dark"
+              disabled={busy || clientPending}
+              onClick={() => void save()}
+            >
+              {busy
+                ? "Saving…"
+                : detail
+                  ? "Save booking change"
+                  : "Confirm session"}
+            </button>
+          )}
         </section>
       )}
-      <p role="status" aria-live="polite">
-        {message}
-      </p>
-      {!loading && (
-        <a
-          className="button secondary"
-          href={bookingId ? `/sessions/${bookingId}` : "/coach/bookings/new"}
-        >
+      {!loading && !(saveFeedback && message) && (
+        <a className="button secondary" href={reloadHref}>
           Reload current details
         </a>
       )}

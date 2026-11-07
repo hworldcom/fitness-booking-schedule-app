@@ -1,3 +1,5 @@
+// Historical DEV0247 rehearsal. Current acceptance: npm run test:private-messages.
+// Retain --cleanup solely for this helper's own tagged local leftovers.
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { mkdir } from "node:fs/promises";

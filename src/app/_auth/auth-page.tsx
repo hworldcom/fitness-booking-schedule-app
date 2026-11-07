@@ -34,6 +34,13 @@ export async function AuthenticationPage({
       accessRequired={params.reason === "forbidden"}
       emailPurpose={params.purpose === "recovery" ? "recovery" : "confirmation"}
       passwordUpdated={params.notice === "password-updated"}
+      googleNotice={
+        params.notice === "google-cancelled" ||
+        params.notice === "google-failed" ||
+        params.notice === "google-unavailable"
+          ? params.notice
+          : undefined
+      }
     />
   );
 }

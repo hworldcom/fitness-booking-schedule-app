@@ -8,7 +8,6 @@ import { normalizeEmail } from "@/auth/email";
 import type { AuthenticationResult } from "@/auth/gateway";
 import type { AuthenticationCommand } from "@/auth/operations";
 import { isSignInPassword, validateNewPassword } from "@/auth/password";
-import { safeReturnTo } from "@/auth/return-to";
 import {
   beginEmailAuthFlow,
   consumeEmailAuthFlow,
@@ -19,13 +18,15 @@ import {
   revokeApplicationAuthSessions,
   withPasswordMutation,
   recordPasswordMethod,
-  type AuthContinuation,
   type EmailAuthPurpose,
 } from "@/server/db/auth/repository";
-import { currentApplicationIdentity } from "@/server/identity/service";
-import { currentActorSnapshot } from "@/server/authorization/service";
 import { serverAuthClient, createServerAuthFetch } from "./client";
-import { verifiedProviderContext, verifiedAuthSession } from "./session";
+import { verifiedProviderContext } from "./session";
+import {
+  authContinuation as continuation,
+  withAuthContinuation as withContinuation,
+  authenticationDestination as destination,
+} from "./continuation";
 
 const FLOW_COOKIE = "movx-auth-flow";
 const hash = (value: string) =>
@@ -77,42 +78,6 @@ function failure(
   )
     return { status: "invalid-credentials" };
   return { status: "unavailable" };
-}
-
-function continuation(
-  command: { returnTo?: string; intent?: "client" | "coach" },
-  site: string,
-): AuthContinuation {
-  return {
-    returnTo: safeReturnTo(command.returnTo, site),
-    intent: command.intent ?? null,
-  };
-}
-
-function withContinuation(path: string, context: AuthContinuation) {
-  const params = new URLSearchParams({ returnTo: context.returnTo });
-  if (context.intent) params.set("intent", context.intent);
-  return path + "?" + params;
-}
-
-async function destination(context: AuthContinuation) {
-  const identity = await currentApplicationIdentity(
-    await verifiedAuthSession(),
-  );
-  if (identity.status === "profile-required")
-    return withContinuation("/complete-profile", context);
-  if (identity.status !== "enrolled")
-    return withContinuation("/complete-profile", context);
-  if (context.intent === "coach") {
-    const actor = await currentActorSnapshot();
-    if (
-      actor.status === "authorized" &&
-      ["approved", "demo", "suspended"].includes(actor.coachAccessStatus)
-    )
-      return "/profile/coach";
-    return withContinuation("/complete-profile", context);
-  }
-  return context.returnTo;
 }
 
 async function boundFlow(flowValue?: string) {
@@ -422,6 +387,9 @@ export async function runAuthenticationCommand(
     )
       return { status: "recovery-required", next: "/reset-password" };
     switch (command.action) {
+      case "start-google":
+        // Google uses a same-origin navigation POST, never the JSON credential API.
+        return { status: "forbidden" };
       case "register":
         return requestEmail(command, "confirmation");
       case "resend-confirmation":

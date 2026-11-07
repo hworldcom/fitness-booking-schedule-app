@@ -62,6 +62,7 @@ test("Auth SDK imports and calls stay inside documented Auth adapters", () => {
     "src/server/auth/proxy.ts",
     "src/server/auth/session.ts",
     "src/server/auth/supabase-operations.ts",
+    "src/server/auth/google.ts",
   ]);
   for (const file of sourceFiles(src)) {
     const relative = path.relative(root, file);
@@ -81,7 +82,7 @@ test("Auth SDK imports and calls stay inside documented Auth adapters", () => {
     }
     assert.doesNotMatch(
       readFileSync(file, "utf8"),
-      /\.auth\.(?:signIn|signUp|signOut|verifyOtp|onAuthStateChange|resetPassword|updateUser)/,
+      /\.auth\.(?:signIn|signUp|signOut|verifyOtp|onAuthStateChange|resetPassword|updateUser|exchangeCodeForSession)/,
       relative,
     );
   }

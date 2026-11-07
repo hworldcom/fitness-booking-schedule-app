@@ -11,6 +11,12 @@ export async function currentMessageCommand(
   version: MessageVersion = 1,
 ) {
   if (!validMessageCommand(command)) return { status: "invalid" as const };
+  if (
+    version === 3 &&
+    ((command.action === "send" && command.args.contextId !== null) ||
+      (command.action === "thread" && command.args.contextId !== undefined))
+  )
+    return { status: "invalid" as const };
   try {
     const result = await withAuthorizedActor(
       (tx) => messageCommandRecord(tx, command, version),

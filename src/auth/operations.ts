@@ -2,6 +2,11 @@ import type { AuthenticationResult } from "./gateway";
 
 export type AuthenticationCommand =
   | Readonly<{
+      action: "start-google";
+      returnTo?: string;
+      intent?: "client" | "coach";
+    }>
+  | Readonly<{
       action: "register" | "sign-in";
       email: string;
       password: string;
@@ -34,6 +39,7 @@ export function parseAuthenticationCommand(
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const input = value as Record<string, unknown>;
   const fields: Record<string, readonly string[]> = {
+    "start-google": ["returnTo", "intent"],
     register: ["email", "password", "returnTo", "intent"],
     "sign-in": ["email", "password", "returnTo", "intent"],
     "request-recovery": ["email", "returnTo", "intent"],
@@ -88,6 +94,7 @@ export function isAuthenticationResult(
   const allowed: Record<string, readonly string[]> = {
     success: ["status", "email", "next"],
     requested: ["status", "next"],
+    redirecting: ["status"],
     invalid: ["status", "message"],
     "invalid-credentials": ["status"],
     "invalid-proof": ["status"],

@@ -26,3 +26,22 @@ test("retired message approval commands and filtering fail before authorization 
     { status: "invalid" },
   );
 });
+
+test("person messages reject session attachments and filtering before reading Auth or SQL", async () => {
+  const id = "ac028000-0000-4000-8000-000000000001";
+  for (const command of [
+    {
+      action: "send",
+      args: {
+        conversationId: id,
+        submissionId: id,
+        body: "Hello",
+        contextId: id,
+      },
+    },
+    { action: "thread", args: { conversationId: id, contextId: id } },
+  ])
+    assert.deepEqual(await currentMessageCommand(command, 3), {
+      status: "invalid",
+    });
+});

@@ -168,11 +168,18 @@ function MailboxWorkspace({
       window.removeEventListener("movx:messages", refresh);
     };
   }, [refresh]);
-  const select = (id: string) => {
+  const select = useCallback((id: string) => {
     setContact(null);
     setSelected(id);
     window.history.replaceState(null, "", `/messages?conversation=${id}`);
-  };
+  }, []);
+  const contactSaved = useCallback(
+    (id: string) => {
+      select(id);
+      void refresh();
+    },
+    [select, refresh],
+  );
   const backToConversations = () => {
     const previous = selectedButton.current;
     setContact(null);
@@ -285,9 +292,7 @@ function MailboxWorkspace({
                   <small>
                     {c.role === "movx"
                       ? "Official welcome"
-                      : c.role === "coach"
-                        ? "Your athlete"
-                        : "Your coach"}
+                      : "Private conversation"}
                   </small>
                   <small>{date(c.activityAt)}</small>
                 </span>
@@ -308,15 +313,13 @@ function MailboxWorkspace({
             key={contact}
             coachId={contact}
             back={backToConversations}
-            saved={(id) => {
-              select(id);
-              void refresh();
-            }}
+            saved={contactSaved}
           />
         ) : selected ? (
           <Conversation
             key={selected}
             id={selected}
+            resolve={select}
             back={backToConversations}
           />
         ) : (
@@ -349,12 +352,17 @@ function Inquiry({
   useEffect(() => {
     const controller = new AbortController();
     void messageRead("contact", { coachId }, controller.signal)
-      .then((v) => setCoach(v as { name: string }))
+      .then((v) => {
+        if (controller.signal.aborted) return;
+        const value = v as { name: string; conversationId?: string };
+        if (value.conversationId) saved(value.conversationId);
+        else setCoach(value);
+      })
       .catch((e) => {
         if (!controller.signal.aborted) setError(messageError(e));
       });
     return () => controller.abort();
-  }, [coachId]);
+  }, [coachId, saved]);
   const send = async () => {
     if (sending || !validMessageBody(body)) return;
     setSending(true);
@@ -392,7 +400,7 @@ function Inquiry({
         </button>
         <div>
           <h2>{coach ? `Message ${coach.name}` : "Message coach"}</h2>
-          <p>Start a conversation before choosing a session.</p>
+          <p>Send a message to start your private conversation.</p>
         </div>
       </header>
       <div className="mailbox-contact-intro">
@@ -436,7 +444,15 @@ function Inquiry({
     </section>
   );
 }
-function Conversation({ id, back }: { id: string; back: () => void }) {
+function Conversation({
+  id,
+  back,
+  resolve,
+}: {
+  id: string;
+  back: () => void;
+  resolve: (id: string) => void;
+}) {
   const [thread, setThread] = useState<MessageThread | null>(null);
   const latest = useRef<MessageThread | null>(null);
   const [error, setError] = useState("");
@@ -463,10 +479,6 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
   const [busy, setBusy] = useState(false);
   const [confirmBlock, setConfirmBlock] = useState(false);
   const [body, setBody] = useState("");
-  const [context, setContext] = useState<string>("general");
-  const [historyFilter, setHistoryFilter] = useState("");
-  const filterRef = useRef("");
-  const [filterLoading, setFilterLoading] = useState(false);
   const [notice, setNotice] = useState("");
   const inFlight = useRef(false);
   const revision = useRef(0);
@@ -475,7 +487,7 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
   const [pending, setPending] = useState<{
     id: string;
     body: string;
-    contextId: string | null;
+    contextId: null;
   } | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const refresh = useCallback(
@@ -487,14 +499,16 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
       }
       inFlight.current = true;
       const version = revision.current;
-      const scope = filterRef.current;
       try {
         const next = (await messageRead("thread", {
           conversationId: id,
-          ...(scope ? { contextId: scope } : {}),
           ...cursor,
         })) as MessageThread;
         if (mounted.current && version === revision.current) {
+          if (next.conversation.id !== id) {
+            resolve(next.conversation.id);
+            return;
+          }
           const merged = mergeThread(latest.current, next);
           latest.current = merged;
           setThread(merged);
@@ -502,7 +516,6 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
             old ? (merged.contexts.find((c) => c.id === old.id) ?? old) : null,
           );
           setError("");
-          setFilterLoading(false);
         }
       } catch (e) {
         if (mounted.current && version === revision.current) {
@@ -514,7 +527,6 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
             mounted.current = false;
           }
           setError(messageError(e));
-          setFilterLoading(false);
         }
       } finally {
         inFlight.current = false;
@@ -525,7 +537,7 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
         }
       }
     },
-    [id],
+    [id, resolve],
   );
   useEffect(() => {
     mounted.current = true;
@@ -549,7 +561,7 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
   // observer also handles keyboard scrolling and long histories loaded above it.
   useEffect(() => {
     const root = listRef.current;
-    if (!root || !thread || historyFilter || filterLoading) return;
+    if (!root || !thread) return;
     let through = thread.readThrough;
     let timer: number | undefined;
     const observer = new IntersectionObserver(
@@ -578,28 +590,7 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
       observer.disconnect();
       clearTimeout(timer);
     };
-  }, [thread, id, historyFilter, filterLoading]);
-  function changeFilter(value: string) {
-    if (busy || pending) return;
-    if (body.trim()) {
-      setError("Send or clear your draft before changing the session filter.");
-      return;
-    }
-    revision.current++;
-    filterRef.current = value;
-    setHistoryFilter(value);
-    setContext(value || "general");
-    const empty = latest.current && {
-      ...latest.current,
-      entries: [],
-      hasOlder: false,
-      hasNewer: false,
-    };
-    latest.current = empty;
-    setThread(empty);
-    setFilterLoading(true);
-    void refresh();
-  }
+  }, [thread, id]);
   const action = async (type: "block" | "unblock") => {
     if (busy) return;
     setBusy(true);
@@ -633,20 +624,17 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
       </section>
     );
   const c = thread.conversation;
-  const chosen = thread.contexts.find((v) => v.id === context);
-  const activeContext = context || "general";
-  const service = thread.contexts.find((v) => v.id === activeContext);
-  const canSend =
-    activeContext === "general" ? c.canSendGeneral : !!service?.canSend;
+  const canSend = c.canSendGeneral;
+  const detailsRole = details?.actorRole ?? c.role;
   const send = async () => {
-    if (busy || filterLoading || !validMessageBody(body) || !canSend) return;
+    if (busy || !validMessageBody(body) || !canSend) return;
     setBusy(true);
     setError("");
     setNotice("");
     const submission = pending ?? {
       id: crypto.randomUUID(),
       body,
-      contextId: service?.id ?? null,
+      contextId: null,
     };
     setPending(submission);
     try {
@@ -706,9 +694,8 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
         <div className="mailbox-notice" role="group" aria-label="Confirm block">
           <strong>Block {c.counterpartName}?</strong>
           <p>
-            This removes your connection and stops new contact. Existing
-            bookings stay in place; eligible booking coordination remains
-            available until 14 days after that session ends.
+            This removes your connection and stops all new messages. Existing
+            bookings and message history remain.
           </p>
           <button onClick={() => action("block")} disabled={busy}>
             Confirm block
@@ -720,8 +707,8 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
       )}
       {c.blocked && (
         <p className="mailbox-notice">
-          Contact is blocked. Only eligible existing session contexts can be
-          used. Your history remains available.
+          Contact is blocked. New messages are stopped. Your history remains
+          available.
         </p>
       )}
       {error && (
@@ -733,53 +720,20 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
       <p className="sr-only" role="status">
         {thread.lastSeq} conversation entries.
       </p>
-      {thread.contexts.some((v) => v.kind !== "inquiry") && (
-        <div className="mailbox-history-filter">
-          <label htmlFor="message-history-filter">Show messages</label>
-          <select
-            id="message-history-filter"
-            value={historyFilter}
-            disabled={busy || pending !== null}
-            onChange={(e) => changeFilter(e.target.value)}
-          >
-            <option value="">All messages</option>
-            {thread.contexts
-              .filter((v) => v.kind !== "inquiry")
-              .filter(
-                (v, i, all) =>
-                  !v.bookingId ||
-                  all.findIndex((other) => other.bookingId === v.bookingId) ===
-                    i,
-              )
-              .map((v) => (
-                <option key={v.id} value={v.id}>
-                  {contextLabel(v)}
-                </option>
-              ))}
-          </select>
-          {historyFilter && (
-            <button
-              onClick={() => changeFilter("")}
-              disabled={busy || pending !== null}
-            >
-              All messages
-            </button>
-          )}
-          {historyFilter && (
-            <small>
-              Only this session’s messages are shown. Other messages keep their
-              unread status.
-            </small>
-          )}
-        </div>
-      )}
       <div
         className="mailbox-entry-list"
         ref={listRef}
         tabIndex={0}
         aria-label="Message history"
       >
-        {!historyFilter && <HistoricalContact conversation={c} />}
+        {(thread.earlierContacts ?? (c.consent ? [c.consent] : [])).map(
+          (consent) => (
+            <HistoricalContact
+              key={consent.id}
+              conversation={{ ...c, consent }}
+            />
+          ),
+        )}
         {thread.hasOlder && thread.entries.length > 0 && (
           <button
             className="mailbox-load"
@@ -795,7 +749,6 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
             conversation={c}
             context={thread.contexts.find((x) => x.id === e.contextId)}
             details={openDetails}
-            filter={changeFilter}
           />
         ))}
         {thread.hasNewer && thread.entries.length > 0 && (
@@ -806,12 +759,9 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
             Load newer messages
           </button>
         )}
-        {filterLoading && <p role="status">Loading session messages…</p>}
-        {!error && !filterLoading && !thread.entries.length && (
+        {!error && !thread.entries.length && (
           <p className="mailbox-empty">
-            {historyFilter
-              ? "No messages for this session yet."
-              : "Your conversation has no messages yet."}
+            Your conversation has no messages yet.
           </p>
         )}
       </div>
@@ -855,7 +805,7 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
           )}
           <Link
             href={
-              c.role === "coach"
+              detailsRole === "coach"
                 ? details.bookingId
                   ? `/coach/sessions/${details.bookingId}`
                   : "/coach?view=bookings#booking-requests"
@@ -865,11 +815,11 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
             }
           >
             {details.bookingId
-              ? c.role === "coach"
+              ? detailsRole === "coach"
                 ? "View session"
                 : "View session in My training"
               : "Review original request"}
-            {c.role === "coach" ? " in Coach workspace" : ""}
+            {detailsRole === "coach" ? " in Coach workspace" : ""}
           </Link>
           <small>Session notes are separate from this conversation.</small>
         </aside>
@@ -884,52 +834,8 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
         </div>
       ) : (
         <div className="mailbox-composer">
-          {thread.contexts.some((v) => v.kind !== "inquiry") && (
-            <>
-              <label htmlFor="message-context">
-                Attach to a session (optional)
-              </label>
-              <select
-                id="message-context"
-                value={activeContext}
-                disabled={
-                  busy || pending !== null || !!historyFilter || filterLoading
-                }
-                onChange={(e) => {
-                  if (body.trim()) {
-                    setError(
-                      "Send or clear your draft before changing its session.",
-                    );
-                    return;
-                  }
-                  setContext(e.target.value);
-                }}
-              >
-                <option value="general">Conversation</option>
-                {thread.contexts
-                  .filter((v) => v.kind !== "inquiry")
-                  .map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {contextLabel(v)}
-                      {!v.canSend ? " · closed" : ""}
-                    </option>
-                  ))}
-              </select>
-            </>
-          )}
-          {historyFilter && (
-            <p className="mailbox-selected-session">
-              Sending about:{" "}
-              {contextLabel(
-                chosen ?? thread.contexts.find((v) => v.id === historyFilter)!,
-              )}
-            </p>
-          )}
           {!canSend && (
-            <p>
-              Messaging is paused. You can still select an eligible existing
-              session when coordination is available.
-            </p>
+            <p>Messaging is paused. You can still read your conversation.</p>
           )}
           <label className="sr-only" htmlFor="message-body">
             Message to {c.counterpartName}
@@ -938,7 +844,7 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
             id="message-body"
             value={body}
             readOnly={busy || pending !== null}
-            disabled={filterLoading || !canSend}
+            disabled={!canSend}
             rows={2}
             onChange={(e) => setBody(e.target.value)}
             placeholder="Write a message…"
@@ -947,9 +853,7 @@ function Conversation({ id, back }: { id: string; back: () => void }) {
             <small>{[...body].length} / 4,000 characters</small>
             <button
               className="button dark"
-              disabled={
-                busy || filterLoading || !validMessageBody(body) || !canSend
-              }
+              disabled={busy || !validMessageBody(body) || !canSend}
               onClick={send}
             >
               <Send size={16} />
@@ -967,13 +871,11 @@ function Entry({
   conversation: c,
   context,
   details,
-  filter,
 }: {
   entry: MessageEntry;
   conversation: MessageConversation;
   context: MessageContext | undefined;
   details: (c: MessageContext) => void;
-  filter: (contextId: string) => void;
 }) {
   if (e.kind !== "text")
     return (
@@ -994,11 +896,6 @@ function Entry({
         {context?.startsAt && <p>{date(context.startsAt)}</p>}
         {context?.venue && <p>{context.venue}</p>}
         {context && <button onClick={() => details(context)}>Details</button>}
-        {context && (
-          <button onClick={() => filter(context.id)}>
-            Show messages for this session
-          </button>
-        )}
         <small>{date(e.createdAt)}</small>
       </article>
     );

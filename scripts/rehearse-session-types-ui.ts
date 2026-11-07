@@ -399,7 +399,7 @@ try {
   await cp
     .getByRole("button", { name: "Save booking change", exact: true })
     .click();
-  await expect(cp.getByRole("status")).toHaveText("Session saved.");
+  await expect(cp.getByRole("status")).toContainText("Session saved.");
   await cp.reload();
   await expect(
     cp.getByText("Schedule changes (1)", { exact: true }),

@@ -39,6 +39,23 @@ test("authentication accepts only bounded application commands without caller-ow
     { action: "verify-code", email: "former@example.test", code: "123456" },
   ])
     assert.equal(parseAuthenticationCommand(command), null);
+  assert.deepEqual(
+    parseAuthenticationCommand({
+      action: "start-google",
+      returnTo: "/messages",
+    }),
+    { action: "start-google", returnTo: "/messages" },
+  );
+  for (const extra of [
+    { provider: "apple" },
+    { email: "forged@test.test" },
+    { role: "coach" },
+    { state: "forged" },
+  ])
+    assert.equal(
+      parseAuthenticationCommand({ action: "start-google", ...extra }),
+      null,
+    );
   const proof = {
     action: "confirm-email",
     flow: "a".repeat(64),
@@ -60,12 +77,14 @@ test("authentication results cannot smuggle provider credentials or unbounded er
   for (const result of [
     { status: "success", email: null },
     { status: "requested" },
+    { status: "redirecting" },
     { status: "recovery-required", next: "/reset-password" },
     { status: "rate-limited", retryAfterSeconds: null },
   ])
     assert.equal(isAuthenticationResult(result), true);
   for (const result of [
     { status: "success", email: null, refresh_token: "secret" },
+    { status: "redirecting", url: "https://outside.test" },
     { status: "unavailable", message: "private provider response" },
     { status: "success", email: null, next: "//outside.test" },
     { status: "recovery-required" },

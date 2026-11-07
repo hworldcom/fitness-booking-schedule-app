@@ -17,7 +17,7 @@ export function createServerAuthFetch(url: string): typeof fetch {
     });
 }
 
-export async function serverAuthClient() {
+export async function serverAuthClient(options?: { googlePkce?: boolean }) {
   const config = supabasePublicConfig();
   if (!config) return null;
 
@@ -27,13 +27,48 @@ export async function serverAuthClient() {
     global: { fetch: createServerAuthFetch(config.url) },
     cookies: {
       getAll() {
-        return cookieStore.getAll();
+        const values = cookieStore.getAll();
+        if (!options?.googlePkce) return values;
+        // Isolate Google from an outstanding confirmation/recovery verifier.
+        return values
+          .filter(
+            ({ name }) =>
+              !/^(?!.*-google-code-verifier).*?-code-verifier(?:\.\d+)?$/.test(
+                name,
+              ),
+          )
+          .map(({ name, value }) => ({
+            name: name.replace(
+              /-google-code-verifier(?=\.|$)/,
+              "-code-verifier",
+            ),
+            value,
+          }));
       },
       setAll(cookiesToSet) {
         try {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options),
-          );
+          cookiesToSet.forEach(({ name, value, options: cookieOptions }) => {
+            const verifier =
+              options?.googlePkce && /-code-verifier(?:\.\d+)?$/.test(name);
+            cookieStore.set(
+              verifier
+                ? name.replace(
+                    /-code-verifier(?=\.|$)/,
+                    "-google-code-verifier",
+                  )
+                : name,
+              value,
+              verifier
+                ? {
+                    ...cookieOptions,
+                    httpOnly: true,
+                    secure: config.siteUrl.startsWith("https:"),
+                    sameSite: "lax",
+                    maxAge: cookieOptions.maxAge === 0 ? 0 : 600,
+                  }
+                : cookieOptions,
+            );
+          });
         } catch {
           // Server Components cannot write cookies. The request proxy owns
           // refresh writes before rendering begins.

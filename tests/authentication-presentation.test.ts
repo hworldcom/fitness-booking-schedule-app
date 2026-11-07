@@ -15,6 +15,7 @@ function screen(
   session: AuthSessionSnapshot = { status: "signed-out" },
   returnTo = "/",
   emailPurpose: "confirmation" | "recovery" = "confirmation",
+  googleNotice?: "google-cancelled" | "google-failed" | "google-unavailable",
 ) {
   return renderToStaticMarkup(
     jsx(AuthSessionProvider, {
@@ -26,6 +27,7 @@ function screen(
           returnTo,
           intent: "coach",
           emailPurpose,
+          googleNotice,
         }),
       }),
     }),
@@ -49,6 +51,28 @@ test("entry forms retain password-manager semantics and cannot submit before hyd
     assert.match(html, /Google sign-in is currently unavailable/);
     assert.doesNotMatch(html, /Apple|email code|Six-digit code/);
     assert.match(html, /href="\/explore"/);
+  }
+});
+
+test("Google notices offer bounded retry without removing password recovery or registration", () => {
+  for (const notice of [
+    "google-cancelled",
+    "google-failed",
+    "google-unavailable",
+  ] as const) {
+    const html = screen(
+      "sign-in",
+      { status: "signed-out" },
+      "/messages",
+      "confirmation",
+      notice,
+    );
+    assert.match(html, /role="status"/);
+    assert.match(html, /Google sign-in/);
+    assert.match(html, /use email|Use email/);
+    assert.match(html, /href="\/forgot-password\?returnTo=%2F/);
+    assert.match(html, /href="\/register\?returnTo=%2F/);
+    assert.doesNotMatch(html, /token_hash|access_token|error_description/);
   }
 });
 

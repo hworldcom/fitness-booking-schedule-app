@@ -51,7 +51,11 @@ test("message version opt-in preserves absent/v1 clients and rejects unknown ver
     messageVersion(new Headers({ [MESSAGE_VERSION_HEADER]: "2" })),
     2,
   );
-  for (const value of ["0", "3", "02", "", "2,1", "welcome"])
+  assert.equal(
+    messageVersion(new Headers({ [MESSAGE_VERSION_HEADER]: "3" })),
+    3,
+  );
+  for (const value of ["0", "4", "02", "", "2,1", "welcome"])
     assert.equal(
       messageVersion(new Headers({ [MESSAGE_VERSION_HEADER]: value })),
       null,

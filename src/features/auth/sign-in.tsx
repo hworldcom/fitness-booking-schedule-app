@@ -11,6 +11,7 @@ import {
   Mail,
   ShieldCheck,
 } from "lucide-react";
+import { googleAuthenticationAvailable } from "@/auth/client/google-authentication";
 import { authenticationGateway } from "@/auth/client/authentication-gateway";
 import { useAuthSession } from "@/auth/client/session-provider";
 import { useActor } from "@/auth/client/actor-provider";
@@ -86,6 +87,7 @@ export function SignInScreen({
   accessRequired = false,
   emailPurpose = "confirmation",
   passwordUpdated = false,
+  googleNotice,
 }: {
   stage?: AuthenticationStage;
   returnTo: string | null;
@@ -93,6 +95,7 @@ export function SignInScreen({
   accessRequired?: boolean;
   emailPurpose?: "confirmation" | "recovery";
   passwordUpdated?: boolean;
+  googleNotice?: "google-cancelled" | "google-failed" | "google-unavailable";
 }) {
   const navigate = (path: string) => {
     window.location.replace(path);
@@ -125,6 +128,16 @@ export function SignInScreen({
   );
   const [proof, setProof] = useState<AuthenticationCommand | null>(null);
   const [busy, setBusy] = useState(false);
+  const [googleAvailable, setGoogleAvailable] = useState(false);
+
+  useEffect(() => {
+    if (!ready || !["sign-in", "register"].includes(stage)) return;
+    const abort = new AbortController();
+    void googleAuthenticationAvailable(abort.signal).then((available) => {
+      if (!abort.signal.aborted) setGoogleAvailable(available);
+    });
+    return () => abort.abort();
+  }, [ready, stage]);
   const [error, setError] = useState<string | null>(null);
   const lock = useRef(false);
   const errorRef = useRef<HTMLParagraphElement>(null);
@@ -185,9 +198,14 @@ export function SignInScreen({
     lock.current = true;
     setBusy(true);
     setError(null);
+    let redirecting = false;
     try {
       const result = await authenticationGateway.execute(command);
-      if (result.status === "requested") {
+      if (result.status === "redirecting") {
+        redirecting = true;
+        // The adapter has submitted the navigation POST; retain disabled controls.
+        return;
+      } else if (result.status === "requested") {
         setPassword("");
         navigate(
           link("check-email") +
@@ -208,8 +226,10 @@ export function SignInScreen({
         );
       } else setError(authenticationResultMessage(result));
     } finally {
-      lock.current = false;
-      setBusy(false);
+      if (!redirecting) {
+        lock.current = false;
+        setBusy(false);
+      }
     }
   }
 
@@ -363,6 +383,15 @@ export function SignInScreen({
               Sign-in is temporarily unavailable. You can keep browsing coaches.
             </p>
           )}
+          {googleNotice && authEntry && (
+            <p role="status" className="authentication-notice">
+              {googleNotice === "google-cancelled"
+                ? "Google sign-in was cancelled. Try again or use email."
+                : googleNotice === "google-unavailable"
+                  ? "Google sign-in is unavailable right now. Use email or try again shortly."
+                  : "We couldn’t complete Google sign-in. Start again from this page or use email."}
+            </p>
+          )}
           {passwordUpdated && stage === "sign-in" && (
             <p role="status" className="authentication-notice">
               Your password was saved. Sign in again with your new password.
@@ -397,13 +426,16 @@ export function SignInScreen({
               <button
                 className="authentication-google"
                 type="button"
-                disabled
+                disabled={!ready || !googleAvailable || busy}
                 aria-describedby="google-unavailable"
+                onClick={() => void run({ action: "start-google", ...context })}
               >
                 <span aria-hidden="true">G</span>Continue with Google
               </button>
               <p className="authentication-help" id="google-unavailable">
-                Google sign-in is currently unavailable.
+                {googleAvailable
+                  ? "Continue securely with your Google account."
+                  : "Google sign-in is currently unavailable."}
               </p>
               <div className="authentication-divider">
                 <span>or continue with email</span>

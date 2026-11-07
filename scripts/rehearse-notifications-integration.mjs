@@ -3,6 +3,8 @@ import { verifiedDatabaseFingerprints } from "./lib/database-fingerprints.mjs";
 import { rehearseCoachApplicationEmail } from "./lib/coach-application-email-integration.mjs";
 import { rehearseRegistrationEmail } from "./lib/registration-email-integration.mjs";
 import { rehearseRegistrationAdmin } from "./lib/registration-admin-integration.mjs";
+import { rehearsePersonConversations } from "./lib/person-conversations-integration.mjs";
+import { rehearseBookingRescheduling } from "./lib/booking-rescheduling-integration.mjs";
 import {
   assertRehearsalPortsAvailable,
   rehearsalIdentityMatches,
@@ -25,10 +27,20 @@ const root = process.cwd();
 assert.ok(
   process.argv
     .slice(2)
-    .every((arg) => ["--webpack", "--admin", "--admin-only"].includes(arg)),
+    .every((arg) =>
+      [
+        "--webpack",
+        "--admin",
+        "--admin-only",
+        "--person-conversations",
+        "--booking-rescheduling",
+        "--booking-rescheduling-only",
+      ].includes(arg),
+    ),
 );
 const webpack = process.argv.includes("--webpack");
 const adminOnly = process.argv.includes("--admin-only");
+const bookingOnly = process.argv.includes("--booking-rescheduling-only");
 const adminEnabled = process.argv.includes("--admin") || adminOnly;
 const adminSource = path.resolve(
   process.env.MOVX_ADMIN_SOURCE ?? "../movx-admin",
@@ -676,10 +688,36 @@ try {
   );
   pass("three independent real browser password sessions");
 
-  if (adminOnly) {
+  if (bookingOnly || process.argv.includes("--booking-rescheduling")) {
+    phase = "coach booking rescheduling";
+    await rehearseBookingRescheduling({
+      base,
+      person,
+      database,
+      cron,
+      mail,
+      pass,
+      output,
+    });
+  }
+  if (process.argv.includes("--person-conversations")) {
+    phase = "person conversations";
+    await rehearsePersonConversations({
+      base,
+      person,
+      stranger,
+      database,
+      cron,
+      pass,
+      output,
+    });
+  }
+  if (adminOnly || bookingOnly) {
     assert.deepEqual(errors, []);
     pass(
-      "focused two-app admin acceptance without repeating unchanged five-minute message journey",
+      bookingOnly
+        ? "focused coach rescheduling acceptance without repeating the independent five-minute message journey"
+        : "focused two-app admin acceptance without repeating unchanged five-minute message journey",
     );
   } else {
     phase = "real inquiry capture and recipient authorization";

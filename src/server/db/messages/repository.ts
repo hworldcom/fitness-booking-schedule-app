@@ -19,9 +19,11 @@ export async function messageCommandRecord(
 ) {
   try {
     const rows = await tx.execute<{ result: unknown }>(
-      version === 2
-        ? sql`select app.message_command_v2(${command.action}::text,${JSON.stringify(command.args)}::jsonb) result`
-        : sql`select app.message_command(${command.action}::text,${JSON.stringify(command.args)}::jsonb) result`,
+      version === 3
+        ? sql`select app.message_command_v3(${command.action}::text,${JSON.stringify(command.args)}::jsonb) result`
+        : version === 2
+          ? sql`select app.message_command_v2(${command.action}::text,${JSON.stringify(command.args)}::jsonb) result`
+          : sql`select app.message_command(${command.action}::text,${JSON.stringify(command.args)}::jsonb) result`,
     );
     if (rows.length !== 1) throw new MessageConflictError();
     return parseMessageResult(

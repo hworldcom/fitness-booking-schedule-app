@@ -24,9 +24,7 @@ export function CounterpartIdentity({
         <p>
           {conversation.role === "movx"
             ? "Official MovX welcome"
-            : conversation.role === "coach"
-              ? "You’re the coach in this conversation"
-              : "You’re the athlete in this conversation"}
+            : "Private conversation"}
         </p>
       </div>
     </>

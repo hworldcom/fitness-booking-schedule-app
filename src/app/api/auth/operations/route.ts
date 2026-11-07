@@ -10,6 +10,7 @@ function response(result: AuthenticationResult) {
   const codes: Record<AuthenticationResult["status"], number> = {
     success: 200,
     requested: 200,
+    redirecting: 200,
     "password-updated": 200,
     "recovery-required": 200,
     invalid: 400,

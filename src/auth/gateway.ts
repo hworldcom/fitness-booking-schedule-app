@@ -7,6 +7,7 @@ import {
 } from "./operations";
 
 export type AuthenticationResult =
+  | Readonly<{ status: "redirecting" }>
   | Readonly<{ status: "success"; email: string | null; next?: string }>
   | Readonly<{ status: "requested"; next?: string }>
   | Readonly<{ status: "recovery-required" | "password-updated"; next: string }>

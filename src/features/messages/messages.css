@@ -348,7 +348,6 @@ a.mailbox-counterpart:hover h2 {
   font-size: 0.78rem;
   margin-bottom: 8px;
 }
-.mailbox-composer select,
 .mailbox-composer textarea {
   display: block;
   width: 100%;
@@ -360,12 +359,6 @@ a.mailbox-counterpart:hover h2 {
   color: inherit;
   padding: 12px;
   box-sizing: border-box;
-}
-.mailbox-composer select {
-  font-size: 0.8rem;
-  margin-bottom: 12px;
-  min-height: 44px;
-  text-overflow: ellipsis;
 }
 .mailbox-composer textarea {
   font-size: 0.9rem;
@@ -642,20 +635,6 @@ a.mailbox-counterpart:hover h2 {
     border-left: 0;
   }
 }
-.mailbox-history-filter {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 8px 12px;
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--line, #e3e6e5);
-  flex-shrink: 0;
-  font-size: 0.8rem;
-}
-.mailbox-history-filter small {
-  grid-column: 1 / -1;
-}
-.mailbox-history-filter select,
 .session-title-editor input {
   width: 100%;
   min-width: 0;
@@ -665,11 +644,9 @@ a.mailbox-counterpart:hover h2 {
   background: white;
   color: inherit;
 }
-.mailbox-history-filter small,
 .session-title-editor small {
   color: #56665e;
 }
-.mailbox-selected-session,
 .mailbox-session-title {
   display: block;
   font-weight: 650;
@@ -690,8 +667,7 @@ a.mailbox-counterpart:hover h2 {
   display: flex;
   gap: 12px;
 }
-.session-title-editor button,
-.mailbox-history-filter button {
+.session-title-editor button {
   justify-self: start;
   text-decoration: underline;
   text-underline-offset: 3px;
