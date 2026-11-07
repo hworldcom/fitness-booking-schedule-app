@@ -522,7 +522,8 @@ export async function rehearseBookingRescheduling({
       const captured = await (
         await fetch(mail + "/api/v1/message/" + row.provider_id)
       ).json();
-      assert.match(captured.Text, /Booking details changed/);
+      assert.match(captured.Text, /Booking rescheduled/);
+      assert.equal(captured.Subject, "Booking rescheduled on MovX Club");
       assert.match(captured.Text, /11:00/);
       assert.match(captured.Text, /Berlin/);
       assert.ok(captured.Text.includes(venue.name));
@@ -781,6 +782,7 @@ export async function rehearseBookingRescheduling({
       const captured = await (
         await fetch(mail + "/api/v1/message/" + receipt.provider_id)
       ).json();
+      assert.equal(captured.Subject, "Booking rescheduled on MovX Club");
       assert.match(captured.Text, /19:00/);
       assert.equal(
         captured.To[0].Address,
@@ -791,6 +793,58 @@ export async function rehearseBookingRescheduling({
     }
     pass(
       "outside-hours19:00/75 review requires unchecked explicit acknowledgement; cancel/field changes save nothing, desktop/375/320 keyboard fits, confirmed third change preserves regular hours and sends exactly one athlete/coach local receipt",
+    );
+    await coach.page.goto(base + "/coach?view=bookings");
+    await coach.page
+      .locator("#coach-booking-" + bookingId)
+      .getByRole("button", { name: "Cancel session", exact: true })
+      .click();
+    await expect(
+      coach.page.getByText("Booking cancelled.", { exact: true }),
+    ).toBeVisible();
+    for (let retry = 0; retry < 2; retry++) {
+      const result = await source(
+        coach,
+        "select app.cancel_direct_private_booking($1::uuid)id",
+        [bookingId],
+      );
+      assert.equal(result[0].id, bookingId);
+    }
+    const cancelled = await api(coach, "?bookingId=" + bookingId);
+    assert.equal(cancelled.data.detail.status, "cancelled");
+    assert.equal(cancelled.data.detail.revision, 3);
+    assert.equal(cancelled.data.detail.historyTotal, 3);
+    const kinds =
+      await database`select kind,count(*)::integer n from app.booking_notification_events where source_id=${bookingId}::uuid and source_kind='booking' group by kind order by kind`;
+    assert.deepEqual(
+      [...kinds],
+      [
+        { kind: "cancelled", n: 1 },
+        { kind: "changed", n: 3 },
+        { kind: "confirmed", n: 1 },
+      ],
+    );
+    await drain();
+    const cancellationReceipts =
+      await database`select r.state,r.provider_id,r.recipient_profile_id from app.booking_notification_receipts r join app.booking_notification_events e on e.id=r.event_id where e.source_id=${bookingId}::uuid and e.kind='cancelled'`;
+    assert.equal(cancellationReceipts.length, 2);
+    for (const receipt of cancellationReceipts) {
+      assert.equal(receipt.state, "accepted");
+      const captured = await (
+        await fetch(mail + "/api/v1/message/" + receipt.provider_id)
+      ).json();
+      assert.equal(captured.Subject, "Booking cancelled on MovX Club");
+      assert.match(captured.Text, /19:00/);
+      assert.equal(captured.To.length, 1);
+      assert.equal(
+        captured.To[0].Address,
+        receipt.recipient_profile_id === athlete.profileId
+          ? athlete.email
+          : coach.email,
+      );
+    }
+    pass(
+      "actual coach cancellation and two exact retries create one cancellation event, one email per participant with an explicit subject, and no extra reschedule revision/event; earlier rescheduling receipts remain distinct",
     );
   } catch (error) {
     await coach.page

@@ -126,6 +126,25 @@ test("booking receipts preserve semantic snapshots, escaping and two independent
   assert.ok(!email.html.includes("<img"));
   assert.equal(email.reply_to, "hello@movx.club");
   assert.deepEqual(email.to, ["athlete@example.test"]);
+  for (const [event, subject] of [
+    ["changed", "Booking rescheduled on MovX Club"],
+    ["cancelled", "Booking cancelled on MovX Club"],
+  ] as const) {
+    const receipt = bookingEmail(
+      { ...first, event, sourceKind: "booking" },
+      site,
+    );
+    assert.equal(receipt.subject, subject);
+    assert.ok(receipt.text.startsWith(subject.replace(" on MovX Club", "")));
+    assert.match(receipt.text, /75 min/);
+    assert.match(receipt.text, /Open your bookings for the current status/);
+    assert.ok(receipt.html.includes("&lt;img"));
+    assert.ok(!receipt.html.includes("<img"));
+    assert.deepEqual(receipt.to, ["athlete@example.test"]);
+    assert.ok(
+      receipt.text.includes(`/sessions#athlete-booking-${first.sourceId}`),
+    );
+  }
   const requests: RequestInit[] = [];
   const send = createEmailTransport(
     { transport: "resend", siteUrl: site, apiKey: "re_fixture" },
