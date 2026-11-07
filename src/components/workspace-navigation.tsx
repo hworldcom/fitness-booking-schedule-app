@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import type { LucideIcon } from "lucide-react";
 import { COACH_WORKSPACE_DESTINATIONS } from "./coach-workspace-destinations";
 import { selectedCoachWorkspaceDestination } from "@/domain/coach-workspace";
+import { isNavigationHrefActive } from "@/domain/workspace-navigation";
 
 type Props = {
   navigation: readonly Readonly<{
@@ -64,9 +65,7 @@ export function WorkspaceNavigationItems({
     );
     const active = coachDestination
       ? coachDestination.id === selected
-      : href === "/"
-        ? pathname === "/"
-        : pathname === href || pathname.startsWith(`${href}/`);
+      : isNavigationHrefActive(pathname, href);
     return (
       <Link
         href={href}

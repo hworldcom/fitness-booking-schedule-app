@@ -261,7 +261,7 @@ function NotesWorkspace({
     return (
       <section className="session-notes" role="alert">
         <p>Your session notes are unavailable for this account.</p>
-        <Link href="/sessions">Back to My training</Link>
+        <Link href="/sessions">Back to Bookings</Link>
       </section>
     );
   return (

@@ -8,6 +8,7 @@ import {
   ArrowRight,
   ArrowLeft,
   BriefcaseBusiness,
+  BookOpenCheck,
   CalendarCheck2,
   CalendarDays,
   House,
@@ -35,7 +36,10 @@ import { HeaderAccountControl } from "./header-account-control";
 import { AccountShell } from "@/components/account-shell";
 import { WorkspaceNavigation } from "./workspace-navigation";
 import { COACH_WORKSPACE_DESTINATIONS } from "./coach-workspace-destinations";
+import { isNavigationHrefActive } from "@/domain/workspace-navigation";
 import { Brand, Modal, Pill } from "./ui";
+
+export { isNavigationHrefActive } from "@/domain/workspace-navigation";
 
 const publicNavigationBeforeAccount = [
   { label: "Home", href: "/", Icon: House },
@@ -71,6 +75,12 @@ const myCoachesNavigation = {
   label: "My coaches",
   href: "/my-coaches",
   Icon: UsersRound,
+};
+
+const athleteBookingsNavigation = {
+  label: "Bookings",
+  href: "/sessions",
+  Icon: BookOpenCheck,
 };
 
 const coachNavigation = {
@@ -122,7 +132,7 @@ function allNavigationForActor(
       publicNavigationBeforeAccount[0],
       ...(resolveWorkspaceView(actor, path, view) === "coach"
         ? [...COACH_WORKSPACE_DESTINATIONS]
-        : [clientNavigation, myCoachesNavigation]),
+        : [clientNavigation, athleteBookingsNavigation, myCoachesNavigation]),
       messagesNavigation,
     ];
   }
@@ -134,6 +144,7 @@ function allNavigationForActor(
     ({ href }) =>
       (!isCoachWorkspacePath(path) &&
         !isNavigationHrefActive(path, clientNavigation.href) &&
+        !isNavigationHrefActive(path, athleteBookingsNavigation.href) &&
         !isNavigationHrefActive(path, myCoachesNavigation.href) &&
         !isNavigationHrefActive(path, accountProfileNavigation.href)) ||
       !["/explore", "/events", howItWorksNavigation.href].includes(href),
@@ -214,14 +225,6 @@ export function isPublicMarketplacePath(path: string) {
     (eventSlug.length > 0 && !eventSlug.includes("/")) ||
     (coachSlug.length > 0 && !coachSlug.includes("/"))
   );
-}
-
-export function isNavigationHrefActive(path: string, href: string) {
-  if (href === "/sessions/calendar")
-    return path === "/sessions" || path.startsWith("/sessions/");
-  return href === "/"
-    ? path === href
-    : path === href || path.startsWith(`${href}/`);
 }
 
 export function MessageShell({

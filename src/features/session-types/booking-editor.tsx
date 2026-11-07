@@ -74,7 +74,7 @@ export function BookingEditor({
       <Link
         href={returnHref ?? (coachView ? "/coach?view=bookings" : "/sessions")}
       >
-        {coachView ? "← Bookings" : "← My training"}
+        ← Bookings
       </Link>
       <h1>{bookingId ? "Session details" : "Schedule a client"}</h1>
       <SessionActorBoundary>
