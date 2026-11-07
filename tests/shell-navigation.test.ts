@@ -42,7 +42,7 @@ test("personal sessions are omitted from every unauthorized shell state", () => 
   }
 });
 
-test("athlete view keeps Home first and unchanged private labels for every account", () => {
+test("athlete view keeps Home first and direct booking access for every account", () => {
   for (const status of [
     "not-applied",
     "pending",
@@ -55,6 +55,9 @@ test("athlete view keeps Home first and unchanged private labels for every accou
     for (const path of [
       "",
       "/sessions/calendar",
+      "/sessions/routine",
+      "/sessions",
+      "/sessions/preview",
       "/sessions/groups/example",
       "/my-coaches",
       "/my-coaches/history",
@@ -62,6 +65,7 @@ test("athlete view keeps Home first and unchanged private labels for every accou
       const expected = [
         { label: "Home", href: "/" },
         { label: "My training", href: "/sessions/calendar" },
+        { label: "Bookings", href: "/sessions" },
         { label: "My coaches", href: "/my-coaches" },
       ];
       assert.deepEqual(
@@ -115,7 +119,7 @@ test("coach view exclusively exposes its existing authorized workspace", () => {
       navigationForActor(authorizedActor(status), "/coach", "coach").map(
         ({ href }) => href,
       ),
-      ["/", "/sessions/calendar", "/my-coaches"],
+      ["/", "/sessions/calendar", "/sessions", "/my-coaches"],
     );
   }
 });

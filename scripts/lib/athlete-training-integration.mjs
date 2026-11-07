@@ -572,6 +572,7 @@ export async function rehearseAthleteTraining({
         name: "Session type",
         exact: true,
       });
+      await expect(nav.getByRole("link")).toHaveCount(2);
       await expect(nav.locator('[aria-current="page"]')).toHaveText(active);
       assert.equal(
         await page.evaluate(
@@ -618,7 +619,7 @@ export async function rehearseAthleteTraining({
     await guest.close();
   }
   pass(
-    "actual athlete four-tab current state and no overflow at1440/375/320; guest routine sign-in return preserved",
+    "actual athlete planning/booking section current state and no overflow at1440/375/320; guest routine sign-in return preserved",
   );
   await athlete.context.close();
 }

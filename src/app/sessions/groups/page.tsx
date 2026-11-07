@@ -25,7 +25,7 @@ import { protectedPageAccess } from "@/server/authorization/page-access";
 import { athleteGroupHistory } from "@/server/group-sessions/athlete-service";
 import "@/features/events/events.css";
 
-export const metadata: Metadata = { title: "My group sessions" };
+export const metadata: Metadata = { title: "Group bookings" };
 export default async function Page({
   searchParams,
 }: {

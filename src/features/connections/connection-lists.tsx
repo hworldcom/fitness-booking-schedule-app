@@ -142,11 +142,21 @@ export function ConnectionLists({
                     aria-label={`${name(row)} · ${connectionStatusLabel(row.status)}`}
                   >
                     <header>
-                      {role === "coach" && row.status === "accepted" ? (
+                      {(role === "coach" && row.status === "accepted") ||
+                      role === "athlete" ? (
                         <AthleteIdentity
                           name={name(row)}
                           imageUrl={connectionPresentation(row, role).imageUrl}
-                          href={privateAthleteHref(row.pairId)}
+                          href={
+                            role === "coach"
+                              ? privateAthleteHref(row.pairId)
+                              : connectionPresentation(row, role).profileHref
+                          }
+                          ariaLabel={
+                            role === "athlete"
+                              ? `View ${name(row)}’s coach profile`
+                              : undefined
+                          }
                           heading="h4"
                         >
                           <span>{connectionStatusLabel(row.status)}</span>
@@ -182,18 +192,16 @@ export function ConnectionLists({
                           Message {role === "coach" ? "athlete" : "coach"}
                         </Link>
                       )}
-                      {role === "athlete" &&
-                        row.status === "accepted" &&
-                        row.coachPublic && (
-                          <Link
-                            className="button secondary"
-                            href={
-                              connectionPresentation(row, role).profileHref!
-                            }
-                          >
-                            View coach and request a session
-                          </Link>
-                        )}
+                      {role === "athlete" && row.coachPublic && (
+                        <Link
+                          className="button secondary"
+                          href={connectionPresentation(row, role).profileHref!}
+                        >
+                          {row.status === "accepted"
+                            ? "View coach and request a session"
+                            : "View coach profile"}
+                        </Link>
+                      )}
                       {mayInitiate && row.canAccept && (
                         <button
                           type="button"

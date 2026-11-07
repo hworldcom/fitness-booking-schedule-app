@@ -35,21 +35,27 @@ const sessionTypes = [
   },
 ] as const;
 
+function isBookingView(type: SessionType) {
+  return type === "private" || type === "group";
+}
+
 export function MySessionsNavigation({ active }: { active: SessionType }) {
   return (
     <nav
       className="workspace-section-navigation my-session-types"
       aria-label="Session type"
     >
-      {sessionTypes.map(({ type, href, label, Icon }) => (
-        <Link
-          key={type}
-          href={href}
-          aria-current={active === type ? "page" : undefined}
-        >
-          <Icon size={16} aria-hidden="true" /> {label}
-        </Link>
-      ))}
+      {sessionTypes
+        .filter(({ type }) => isBookingView(type) === isBookingView(active))
+        .map(({ type, href, label, Icon }) => (
+          <Link
+            key={type}
+            href={href}
+            aria-current={active === type ? "page" : undefined}
+          >
+            <Icon size={16} aria-hidden="true" /> {label}
+          </Link>
+        ))}
     </nav>
   );
 }
@@ -57,8 +63,10 @@ export function MySessionsNavigation({ active }: { active: SessionType }) {
 export function MySessionsHeading({ active }: { active: SessionType }) {
   return (
     <header className="client-session-page-heading">
-      <span className="eyebrow">YOUR TRAINING</span>
-      <h1>My training</h1>
+      <span className="eyebrow">
+        {isBookingView(active) ? "YOUR BOOKINGS" : "YOUR TRAINING"}
+      </span>
+      <h1>{isBookingView(active) ? "Bookings" : "My training"}</h1>
       <p>
         {active === "calendar"
           ? "Your personal workouts and coaching sessions, together in one calendar."

@@ -5,6 +5,62 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { WorkspaceNavigationItems } from "@/components/workspace-navigation";
 import { COACH_WORKSPACE_DESTINATIONS } from "@/features/coaches/coach-workspace-navigation";
 import { selectedCoachWorkspaceDestination } from "@/features/coaches/coach-workspace-view";
+import { navigationForActor, isNavigationHrefActive } from "@/components/shell";
+import type { ActorSnapshot } from "@/auth/actor-contracts";
+
+const athlete: ActorSnapshot = {
+  status: "authorized",
+  profile: {
+    slug: "fixture",
+    displayName: "Fixture",
+    avatarUrl: null,
+    coachPortraitUrl: null,
+  },
+  demoRun: { slug: "fixture", name: "Fixture" },
+  role: "member",
+  coachAccessStatus: "not-applied",
+};
+
+test("athlete bookings and personal planning select exactly one desktop/mobile destination, including during query loading", () => {
+  for (const [pathname, selectedHref] of [
+    ["/", "/"],
+    ["/sessions/calendar", "/sessions/calendar"],
+    ["/sessions/routine", "/sessions/calendar"],
+    ["/sessions", "/sessions"],
+    ["/sessions/groups", "/sessions"],
+    ["/sessions/booking-id", "/sessions"],
+    ["/sessions/preview", "/sessions"],
+    ["/sessions/preview/booking-id", "/sessions"],
+    ["/sessions/calendar-other", "/sessions"],
+    ["/my-coaches/history", "/my-coaches"],
+    ["/sessions-other", null],
+    ["/coaches/fixture", null],
+  ] as const) {
+    const navigation = navigationForActor(athlete, pathname);
+    for (const item of navigation)
+      assert.equal(
+        isNavigationHrefActive(pathname, item.href),
+        item.href === selectedHref,
+      );
+    for (const mobile of [false, true])
+      for (const viewValues of [[], ["bookings"], null]) {
+        const html = renderToStaticMarkup(
+          createElement(WorkspaceNavigationItems, {
+            navigation,
+            pathname: pathname,
+            mobile,
+            viewValues,
+          }),
+        );
+        const current = [
+          ...html.matchAll(/<a\b[^>]*aria-current="page"[^>]*>/g),
+        ];
+        assert.equal(current.length, selectedHref ? 1 : 0, pathname);
+        if (selectedHref)
+          assert.ok(current[0][0].includes(`href="${selectedHref}"`));
+      }
+  }
+});
 
 const cases = [
   ["/coach", [], "schedule"],

@@ -285,7 +285,7 @@ return <main className="training-page">{active?.startsWith("coach-")
         exact: true,
       });
       const links = navigation.getByRole("link");
-      await expect(links).toHaveCount(4);
+      await expect(links).toHaveCount(coach ? 4 : 2);
       const current = navigation.locator('[aria-current="page"]');
       await expect(current).toHaveCount(1);
       await expect(current).toHaveText(
@@ -329,12 +329,9 @@ return <main className="training-page">{active?.startsWith("coach-")
             "/coach/session-types",
             "/coach/bookings/new",
           ]
-        : [
-            "/sessions/calendar",
-            "/sessions/routine",
-            "/sessions",
-            "/sessions/groups",
-          ];
+        : ["private", "group"].includes(active)
+          ? ["/sessions", "/sessions/groups"]
+          : ["/sessions/calendar", "/sessions/routine"];
       for (let n = 0; n < expectedHrefs.length; n++)
         await expect(links.nth(n)).toHaveAttribute("href", expectedHrefs[n]);
       await links.first().focus();
@@ -362,6 +359,7 @@ return <main className="training-page">{active?.startsWith("coach-")
         fullPage: true,
       });
     }
+    await page.goto(base + "/qa-navigation?active=calendar");
     await page.getByRole("link", { name: "Calendar", exact: true }).focus();
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(base + "/sessions/calendar");

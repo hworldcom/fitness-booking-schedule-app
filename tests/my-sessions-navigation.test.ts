@@ -8,33 +8,30 @@ import {
 } from "@/features/profile/my-sessions-navigation";
 
 for (const active of ["calendar", "routine", "private", "group"] as const) {
-  test(`${active} view exposes all training routes and only its own current-page state`, () => {
+  test(`${active} view exposes its planning or booking routes and only its own current-page state`, () => {
     const html = renderToStaticMarkup(
       createElement(MySessionsNavigation, { active }),
     );
     assert.match(html, /<nav[^>]+aria-label="Session type"/);
     const links = [...html.matchAll(/<a\b([^>]+)>(.*?)<\/a>/g)];
-    assert.equal(links.length, 4);
+    assert.equal(links.length, 2);
     assert.equal((html.match(/aria-current="page"/g) ?? []).length, 1);
-    for (const [index, href] of [
-      "/sessions/calendar",
-      "/sessions/routine",
-      "/sessions",
-      "/sessions/groups",
-    ].entries()) {
+    const booking = active === "private" || active === "group";
+    const types = booking ? ["private", "group"] : ["calendar", "routine"];
+    const routes = booking
+      ? ["/sessions", "/sessions/groups"]
+      : ["/sessions/calendar", "/sessions/routine"];
+    const labels = booking
+      ? ["Private sessions", "Group sessions"]
+      : ["Calendar", "Plan routine"];
+    for (const [index, href] of routes.entries()) {
       const [, attributes, content] = links[index];
       assert.ok(attributes.includes(`href="${href}"`));
       assert.equal(
         attributes.includes('aria-current="page"'),
-        index === ["calendar", "routine", "private", "group"].indexOf(active),
+        index === types.indexOf(active),
       );
-      assert.ok(
-        content.includes(
-          ["Calendar", "Plan routine", "Private sessions", "Group sessions"][
-            index
-          ],
-        ),
-      );
+      assert.ok(content.includes(labels[index]));
     }
     assert.doesNotMatch(html, /role="tab/);
   });
@@ -43,7 +40,11 @@ for (const active of ["calendar", "routine", "private", "group"] as const) {
     const html = renderToStaticMarkup(
       createElement(MySessionsHeading, { active }),
     );
-    assert.match(html, /<h1>My training<\/h1>/);
+    assert.ok(
+      html.includes(
+        `<h1>${active === "private" || active === "group" ? "Bookings" : "My training"}</h1>`,
+      ),
+    );
     assert.ok(
       html.includes(
         active === "calendar"
