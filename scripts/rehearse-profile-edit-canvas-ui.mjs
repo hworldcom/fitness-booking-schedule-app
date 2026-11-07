@@ -431,6 +431,13 @@ export const updateCoachTrainingLocationAction=createCoachTrainingLocationAction
   await dialog
     .getByLabel("Display name", { exact: true })
     .fill("Draft Coach Name");
+  const wellness = dialog.getByRole("checkbox", {
+    name: "Wellness",
+    exact: true,
+  });
+  await wellness.focus();
+  await page.keyboard.press("Space");
+  await expect(wellness).toBeChecked();
   profileMode = "error";
   await dialog.getByRole("button", { name: "Save profile details" }).click();
   await expect(dialog.getByRole("alert")).toContainText(
@@ -439,7 +446,9 @@ export const updateCoachTrainingLocationAction=createCoachTrainingLocationAction
   await expect(dialog.getByLabel("Display name", { exact: true })).toHaveValue(
     "Draft Coach Name",
   );
+  await expect(wellness).toBeChecked();
   await dialog.getByRole("button", { name: "Cancel profile edits" }).click();
+  await expect(wellness).not.toBeChecked();
   await close();
   await expect(
     canvas.getByRole("heading", { name: "Alex Morgan", exact: true }),
@@ -570,6 +579,15 @@ export const updateCoachTrainingLocationAction=createCoachTrainingLocationAction
       await dialog.evaluate((el) => el.contains(document.activeElement)),
       "Focus escaped native modal",
     );
+    const category = dialog.getByRole("checkbox", {
+      name: "Wellness",
+      exact: true,
+    });
+    await category.focus();
+    await page.keyboard.press("Space");
+    await expect(category).toBeChecked();
+    await dialog.getByRole("button", { name: "Cancel profile edits" }).click();
+    await expect(category).not.toBeChecked();
     await dialog.screenshot({
       path: path.join(evidence, `drawer-${width}.png`),
     });

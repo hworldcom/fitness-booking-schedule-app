@@ -180,6 +180,7 @@ test("Explore typed disciplines use Home's aliases without accepting unsupported
     ["Muay   Thai", "Muay Thai"],
     ["BJJ", "Brazilian Jiu-Jitsu"],
     ["thai boxing", "Muay Thai"],
+    [" wellness ", "Wellness"],
     ["All disciplines", null],
     ["Yoga", null],
     ["constructor", null],

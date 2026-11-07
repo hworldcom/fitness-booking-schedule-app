@@ -100,9 +100,15 @@ test("Home URLs retain only discipline and reject retired query, location and pa
   assert.equal(homeDiscipline("constructor"), null);
   assert.equal(homeDiscipline("__proto__"), null);
   assert.equal(homeDiscipline(" kickboxing "), "Kickboxing");
+  const wellness = normalizeHomeSearch({ discipline: " wellness " });
+  assert.equal(homeDirectoryHref(wellness.filters), "/?discipline=Wellness");
+  assert.ok(
+    isCanonicalHomeSearch({ discipline: "Wellness" }, wellness.filters),
+  );
   const pattern = new RegExp("^(?:" + HOME_DISCIPLINE_PATTERN + ")$", "v");
   assert.equal(pattern.test(" bjj "), true);
   assert.equal(pattern.test("Muay   Thai"), true);
+  assert.equal(pattern.test(" wellness "), true);
   assert.equal(pattern.test("Yoga"), false);
 });
 

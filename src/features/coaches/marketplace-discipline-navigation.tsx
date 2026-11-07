@@ -11,6 +11,7 @@ import {
   Footprints,
   HandFist,
   LayoutGrid,
+  Leaf,
   Swords,
   UsersRound,
 } from "lucide-react";
@@ -32,6 +33,7 @@ const icons = {
   MMA: Swords,
   Wrestling: UsersRound,
   Fitness: Dumbbell,
+  Wellness: Leaf,
 };
 
 export function MarketplaceDisciplineNavigation({
