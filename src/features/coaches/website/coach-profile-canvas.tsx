@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  startTransition,
   useActionState,
   useCallback,
   useEffect,
@@ -558,7 +559,15 @@ function ScopedCanvas({
             />
           </div>
           <div hidden={panel !== "details" && panel !== "settings"}>
-            <form action={saveDetails}>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (pending) return;
+                const data = new FormData(event.currentTarget);
+                // Keep the editable draft when a resolved action reports an error.
+                startTransition(() => saveDetails(data));
+              }}
+            >
               <fieldset disabled={pending} className="profile-details-fields">
                 <legend className="sr-only">
                   Profile details and visibility

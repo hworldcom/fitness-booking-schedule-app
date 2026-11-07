@@ -92,6 +92,14 @@ The original MOV-77 rollout assumed no existing published events. MOV-97 adopts 
 
 `npm run test:group-approvals-db` uses only uniquely owned `mov77_<tag>_fresh/upgrade` scratch databases and verifies retained app/Auth-user/Storage hashes before/after. `npm run test:group-approvals-integration` creates its own complete local Supabase project, application source copy and browser accounts, records exact recovery metadata, then stops only that project/volumes and verifies retained hashes. See [root setup/prerequisites](../README.md#individual-group-approval-validation). Neither command migrates retained databases or sends external email.
 
+## Wellness category
+
+MOV-189 adds `Wellness` to the existing discipline contract through [20261107000400](migrations/20261107000400_wellness_discipline.sql), after `20261107000300_athlete_booking_notifications.sql`. It extends three CHECK constraints and the installed profile/legacy-event validators, retaining function identities, ownership, grants and other validation. It changes no account, profile category, offering, scheduling row, seed or credential. Current group sessions already require a category from the owning profile.
+
+Run `node scripts/rehearse-wellness-database.mjs` with locked dependencies and the existing local Docker database on55322. The runner reads schema infrastructure and preservation fingerprints, creates uniquely named `mov189_*` fresh/upgrade databases, applies the canonical migration chain, verifies populated-row/function-security preservation, and exercises Wellness profile/discovery/group persistence through the restricted runtime. It refuses existing scratch names, removes only databases it created and verifies retained fingerprints afterward. It never migrates, seeds or resets retained local/UAT/production data and sends no email. Interrupted cleanup uses only the exact printed owned names with `docker exec supabase_db_movx-club-local dropdb -U supabase_admin <exact-owned-name>`.
+
+Install reviewed SQL before the category consumers using the existing target-specific backup/restore/rollback procedure; source edits and scratch checks do not install it on retained environments. After Wellness records exist, old consumers may reject those projections. Keep the additive SQL and use compatible consumers or a reviewed forward correction; do not delete or retag owner data to roll back.
+
 ## Local email Auth
 
 Normal `npm run dev` already prepares the Auth-enabled services and restricted login. If you previously selected the database-only profile, switch to the Auth-enabled profile before rehearsing sign-in:

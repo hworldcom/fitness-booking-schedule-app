@@ -77,6 +77,28 @@ test("coach profile validation separates gym and independent locations", () => {
   }
 });
 
+test("Wellness is a selectable profile category and a bounded directory filter", () => {
+  const result = validateCoachProfileInput({
+    displayName: "Wellness Coach",
+    bio: "Private wellness and recovery sessions with an adaptable pace.",
+    disciplines: ["Wellness", "Fitness"],
+    timezone: "Europe/Berlin",
+    visibility: "hidden",
+    selectedGymId: "40000000-0000-4000-8000-000000000001",
+  });
+  assert.ok(result.valid);
+  assert.deepEqual(result.value.disciplines, ["Wellness", "Fitness"]);
+  assert.equal(
+    normalizeCoachDirectoryFilters({ discipline: "Wellness" }).discipline,
+    "Wellness",
+  );
+  for (const discipline of ["Massage", "Sauna", "Recovery"])
+    assert.equal(
+      normalizeCoachDirectoryFilters({ discipline }).discipline,
+      null,
+    );
+});
+
 test("permanent coach locations accept current and legacy confirmed providers", () => {
   const input = {
     displayName: "Coach Morgan",

@@ -15,7 +15,7 @@ import "@/features/public/training-calendar-intro.css";
 export const metadata: Metadata = {
   title: "Find training. Build your routine.",
   description:
-    "Discover coaches and group sessions, plan your weekly workouts and track completed activities in your private MovX calendar.",
+    "Discover coaches and group sessions, plan your weekly workouts and recovery, and track your activity in one personal calendar.",
 };
 
 export default async function Page({

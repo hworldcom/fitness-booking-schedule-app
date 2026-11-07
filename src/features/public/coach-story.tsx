@@ -25,8 +25,8 @@ export function CoachStoryHome({
       </MarketplaceHero>
       <div className="home-training-intro">
         <p>
-          Discover coaches and group sessions, plan your weekly workouts, and
-          track your activity in one personal calendar.
+          Discover coaches and group sessions, plan your weekly workouts and
+          recovery, and track your activity in one personal calendar.
         </p>
         <div className="home-training-actions">
           <Link className="button primary" href="/explore">

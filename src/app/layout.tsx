@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     template: "%s | MovX Club",
   },
   description:
-    "Find coaches and group sessions, build your workout routine and track your activity in one personal calendar.",
+    "Discover coaches and group sessions, plan your weekly workouts and recovery, and track your activity in one personal calendar.",
   robots: { index: false, follow: false },
 };
 export default async function RootLayout({

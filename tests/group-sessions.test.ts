@@ -97,6 +97,32 @@ test("group commands accept Free and fixed euro cents without actor injection or
     null,
   );
 });
+test("Wellness uses the existing group draft, query and result contracts", () => {
+  const command = {
+    action: "save-draft",
+    args: { ...draft, discipline: "Wellness" },
+  };
+  const parsed = parseGroupSessionCommand(command);
+  assert.equal(parsed?.action, "save-draft");
+  assert.ok(parsed?.action === "save-draft");
+  assert.equal(parsed.args.discipline, "Wellness");
+  assert.deepEqual(
+    parsePublicGroupQuery({ action: "list", args: { discipline: "Wellness" } }),
+    {
+      action: "list",
+      args: { discipline: "Wellness", location: "", after: null },
+    },
+  );
+  assert.equal(
+    parseGroupSessionResult("publish", {
+      outcome: "published",
+      reason: null,
+      session: { ...session, discipline: "Wellness" },
+    }).session?.discipline,
+    "Wellness",
+  );
+});
+
 test("publication requires an exact draft revision and bounded owner-only results", () => {
   assert.deepEqual(
     parseGroupSessionCommand({
