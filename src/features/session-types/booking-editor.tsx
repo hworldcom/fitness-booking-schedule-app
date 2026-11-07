@@ -6,7 +6,11 @@ import { berlinLocalInstant as berlinInstant } from "@/features/coach-events/con
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { CalendarDays } from "lucide-react";
+import { useActor } from "@/auth/client/actor-provider";
+import { useAuthSession } from "@/auth/client/session-provider";
 import { SessionActorBoundary } from "./actor-boundary";
+import { BookingStartPicker } from "./booking-start-picker";
 import {
   reloadSavedBooking,
   reviewCoachBooking,
@@ -35,6 +39,7 @@ type Options = {
 };
 const START_TIME_GUIDANCE =
   "Choose a start time at :00, :15, :30 or :45 (15-minute intervals).";
+const START_TIME_REQUIRED = "Choose a date and time before reviewing.";
 const dateLabel = (s: string) =>
   new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Berlin",
@@ -92,6 +97,8 @@ function Editor({
   initialExternalClientId?: string;
 }) {
   const router = useRouter();
+  const { actor } = useActor();
+  const { session } = useAuthSession();
   const [options, setOptions] = useState<Options | null>(null);
   const [detail, setDetail] = useState<SessionBookingDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -115,7 +122,9 @@ function Editor({
   const reviewPanel = useRef<HTMLElement>(null);
   const reviewButton = useRef<HTMLButtonElement>(null);
   const changeForm = useRef<HTMLFormElement>(null);
-  const startInput = useRef<HTMLInputElement>(null);
+  const startInput = useRef<HTMLButtonElement>(null);
+  const [pickingStart, setPickingStart] = useState(false);
+  const pickerWasOpen = useRef(false);
   const rescheduleHandled = useRef(false);
   const [outsideWorkingHours, setOutsideWorkingHours] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -380,6 +389,13 @@ function Editor({
   const selectedStart = berlinInstant(localTime);
   const invalidStartStep =
     selectedStart !== null && Date.parse(selectedStart) % 900000 !== 0;
+  const pickerSuspended =
+    actor.status !== "authorized" || session.status !== "signed-in";
+  useEffect(() => {
+    if (!pickingStart && pickerWasOpen.current && !pickerSuspended)
+      startInput.current?.focus();
+    pickerWasOpen.current = pickingStart;
+  }, [pickingStart, pickerSuspended]);
   useEffect(() => {
     if (message !== START_TIME_GUIDANCE || !invalidStartStep) return;
     startInput.current?.focus({ preventScroll: true });
@@ -544,9 +560,10 @@ function Editor({
           className="session-type-editor session-booking-change"
           onSubmit={(e) => {
             e.preventDefault();
+            if (pickingStart) return;
             const startsAt = berlinInstant(localTime);
-            if (startsAt && Date.parse(startsAt) % 900000 !== 0) {
-              setMessage(START_TIME_GUIDANCE);
+            if (!startsAt || Date.parse(startsAt) % 900000 !== 0) {
+              setMessage(startsAt ? START_TIME_GUIDANCE : START_TIME_REQUIRED);
               setSaveFeedback(false);
               startInput.current?.focus({ preventScroll: true });
               startInput.current?.scrollIntoView({
@@ -693,38 +710,25 @@ function Editor({
             </select>
           </label>
           <div className="session-type-fields">
-            <label>
-              Start · Berlin time
-              <input
+            <div className="booking-start-field">
+              <span>Start · Berlin time</span>
+              <button
                 ref={startInput}
-                type="datetime-local"
-                required
-                min="1970-01-01T00:00"
-                step={900}
+                type="button"
+                className="booking-start-trigger"
+                aria-label="Start · Berlin time"
+                aria-haspopup="dialog"
+                aria-expanded={pickingStart && !pickerSuspended}
                 aria-describedby="booking-start-guidance"
-                aria-invalid={invalidStartStep || undefined}
                 disabled={busy || uncertain || clientPending}
-                value={localTime}
-                onChange={(e) => {
-                  e.currentTarget.setCustomValidity("");
-                  setLocalTime(e.target.value);
-                  setReview(null);
-                  if (message === START_TIME_GUIDANCE) setMessage("");
-                }}
-                onInvalid={(e) => {
-                  if (e.currentTarget.validity.stepMismatch) {
-                    e.currentTarget.setCustomValidity(START_TIME_GUIDANCE);
-                    setMessage(START_TIME_GUIDANCE);
-                    setSaveFeedback(false);
-                    e.currentTarget.focus({ preventScroll: true });
-                    e.currentTarget.scrollIntoView({
-                      block: "center",
-                      behavior: "instant",
-                    });
-                  }
-                }}
-              />
-            </label>
+                onClick={() => setPickingStart(true)}
+              >
+                <CalendarDays size={18} aria-hidden="true" />
+                {selectedStart
+                  ? dateLabel(selectedStart)
+                  : "Choose date and time"}
+              </button>
+            </div>
             <label>
               Duration
               <select
@@ -749,11 +753,33 @@ function Editor({
             ref={reviewButton}
             type="submit"
             className="button dark"
-            disabled={busy || uncertain || clientPending || !type}
+            disabled={
+              busy || uncertain || clientPending || pickingStart || !type
+            }
           >
             Review {detail ? "change" : "session"}
           </button>
         </form>
+      )}
+      {pickingStart && editable && !saved && (
+        <BookingStartPicker
+          value={localTime}
+          suspended={pickerSuspended || busy || uncertain || clientPending}
+          onCancel={() => setPickingStart(false)}
+          onApply={(value) => {
+            if (value !== localTime) {
+              setLocalTime(value);
+              setReview(null);
+              setOutsideWorkingHours(false);
+              if (
+                message === START_TIME_GUIDANCE ||
+                message === START_TIME_REQUIRED
+              )
+                setMessage("");
+            }
+            setPickingStart(false);
+          }}
+        />
       )}
       {review && !saved && (
         <section

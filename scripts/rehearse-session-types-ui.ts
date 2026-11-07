@@ -373,6 +373,25 @@ try {
   await withActorDatabaseContext(athlete.actor, (tx) =>
     decideConnectionRecord(tx, sent.id, "accept"),
   );
+  const chooseStart = async (value: string) => {
+    await cp
+      .getByRole("button", { name: "Start · Berlin time", exact: true })
+      .click();
+    const picker = cp.getByRole("dialog", {
+      name: "Choose session date and time",
+      exact: true,
+    });
+    await picker.getByLabel("Date", { exact: true }).fill(value.slice(0, 10));
+    await picker
+      .getByLabel("Hour", { exact: true })
+      .selectOption(value.slice(11, 13));
+    await picker
+      .getByLabel("Minute", { exact: true })
+      .selectOption(value.slice(14, 16));
+    await picker
+      .getByRole("button", { name: "Apply date and time", exact: true })
+      .click();
+  };
   await cp.goto(base + "/coach/bookings/new");
   await cp
     .getByLabel("Athlete", { exact: true })
@@ -381,9 +400,7 @@ try {
     .getByLabel("Session type", { exact: true })
     .selectOption(privateType.id);
   await cp.getByLabel("Venue", { exact: true }).selectOption(venue.id);
-  await cp
-    .getByLabel("Start · Berlin time", { exact: true })
-    .fill(clock.target + "T14:00");
+  await chooseStart(clock.target + "T14:00");
   await cp.getByLabel("Duration", { exact: true }).selectOption("90");
   await cp.getByRole("button", { name: "Review session", exact: true }).click();
   await cp
@@ -391,9 +408,7 @@ try {
     .click();
   await expect(cp).toHaveURL(/\/sessions\//);
   const manualId = cp.url().split("/").at(-1)!;
-  await cp
-    .getByLabel("Start · Berlin time", { exact: true })
-    .fill(clock.target + "T14:15");
+  await chooseStart(clock.target + "T14:15");
   await cp.getByLabel("Duration", { exact: true }).selectOption("75");
   await cp.getByRole("button", { name: "Review change", exact: true }).click();
   await cp

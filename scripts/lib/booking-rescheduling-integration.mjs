@@ -17,6 +17,29 @@ export async function rehearseBookingRescheduling({
   assert.equal(base, "http://localhost:3169");
   const coach = await person("Mov178Coach"),
     athlete = await person("Mov178Athlete");
+  const chooseStart = async (value) => {
+    const trigger = coach.page.getByRole("button", {
+      name: "Start · Berlin time",
+      exact: true,
+    });
+    await trigger.click();
+    const picker = coach.page.getByRole("dialog", {
+      name: "Choose session date and time",
+      exact: true,
+    });
+    await picker.getByLabel("Date", { exact: true }).fill(value.slice(0, 10));
+    await picker
+      .getByLabel("Hour", { exact: true })
+      .selectOption(value.slice(11, 13));
+    await picker
+      .getByLabel("Minute", { exact: true })
+      .selectOption(value.slice(14, 16));
+    await picker
+      .getByRole("button", { name: "Apply date and time", exact: true })
+      .click();
+    await expect(picker).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+  };
   const source = (actor, query, params = []) =>
     database.begin(async (tx) => {
       await tx`set local role app_runtime`;
@@ -376,9 +399,7 @@ export async function rehearseBookingRescheduling({
     await expect(
       coach.page.getByLabel("Session type", { exact: true }),
     ).toHaveValue(type.id);
-    await coach.page
-      .getByLabel("Start · Berlin time", { exact: true })
-      .fill(day.date + "T11:00");
+    await chooseStart(day.date + "T11:00");
     const reviewButton = coach.page.getByRole("button", {
       name: "Review change",
       exact: true,
@@ -694,9 +715,7 @@ export async function rehearseBookingRescheduling({
     pass(
       "Save progress/errors stay visible; stalled committed POST and refresh recover after real15s deadlines, late replies stay fenced, exact retry creates one revision/email each and original request/booking/plan survive",
     );
-    await coach.page
-      .getByLabel("Start · Berlin time", { exact: true })
-      .fill(day.date + "T12:00");
+    await chooseStart(day.date + "T12:00");
     await reviewButton.click();
     await save.click();
     await expect(feedback).toContainText("Session saved.");
@@ -855,54 +874,64 @@ export async function rehearseBookingRescheduling({
     const [hoursBeforeException] =
       await database`select to_jsonb(p) policy,to_jsonb(d) dates from app.coach_availability_policies p join app.coach_availability_date_overrides d using(run_id,profile_id) where p.profile_id=${coach.profileId}::uuid and d.local_date=${day.date}::date`;
     await coach.page.goto(base + "/coach/sessions/" + bookingId);
-    const start = coach.page.getByLabel("Start · Berlin time", { exact: true });
-    const startGuidance =
-      "Choose a start time at :00, :15, :30 or :45 (15-minute intervals).";
-    const invalidRequests = [];
-    const recordInvalidRequest = (request) => {
+    const start = coach.page.getByRole("button", {
+      name: "Start · Berlin time",
+      exact: true,
+    });
+    const picker = coach.page.getByRole("dialog", {
+      name: "Choose session date and time",
+      exact: true,
+    });
+    await coach.page.getByLabel("Duration", { exact: true }).selectOption("75");
+    const selectionRequests = [];
+    const recordSelectionRequest = (request) => {
       if (
         request.method() === "POST" &&
         new URL(request.url()).pathname === "/api/session-bookings"
       )
-        invalidRequests.push(request.url());
+        selectionRequests.push(request.url());
     };
-    coach.page.on("request", recordInvalidRequest);
+    coach.page.on("request", recordSelectionRequest);
     for (const width of [1440, 375, 320]) {
-      await coach.page.setViewportSize({ width, height: 1000 });
-      await start.fill(day.date + "T19:20");
-      await coach.page
-        .getByLabel("Duration", { exact: true })
-        .selectOption("75");
-      await expect(start).toHaveAttribute("aria-invalid", "true");
-      await expect(start).toHaveAccessibleDescription(startGuidance);
-      assert.equal(
-        await start.evaluate((el) => el.validity.stepMismatch),
-        true,
-      );
-      await reviewButton.focus();
+      await coach.page.setViewportSize({ width, height: 800 });
+      await start.focus();
       await coach.page.keyboard.press("Enter");
-      await expect(feedback).toContainText(startGuidance);
-      await expect(start).toBeFocused();
-      await expect(start).toBeInViewport();
-      await expect(start).toHaveValue(day.date + "T19:20");
-      await expect(
-        coach.page.getByLabel("Duration", { exact: true }),
-      ).toHaveValue("75");
-      // A synthetic submit bypasses native constraints; the editor must still
-      // reject the minute locally rather than call the review endpoint.
-      await start.evaluate((el) =>
-        el.form.dispatchEvent(
-          new Event("submit", { bubbles: true, cancelable: true }),
-        ),
+      assert.deepEqual(
+        await picker
+          .getByLabel("Minute", { exact: true })
+          .locator("option")
+          .evaluateAll((items) =>
+            items.map((item) => item.value).filter(Boolean),
+          ),
+        ["00", "15", "30", "45"],
       );
-      await expect(feedback).toContainText(startGuidance);
+      await picker.getByLabel("Date", { exact: true }).fill(day.date);
+      await picker.getByLabel("Hour", { exact: true }).selectOption("19");
+      await picker.getByLabel("Minute", { exact: true }).selectOption("30");
+      await picker
+        .getByRole("button", {
+          name: "Cancel date and time selection",
+          exact: true,
+        })
+        .click();
+      await expect(picker).toHaveCount(0);
       await expect(start).toBeFocused();
-      await expect(start).toBeInViewport();
+      // Cancel leaves the last applied form value unchanged.
+      await expect(start).toContainText(width === 1440 ? "12:00" : "19:15");
+      await start.click();
+      await picker.getByLabel("Hour", { exact: true }).selectOption("19");
+      await picker.getByLabel("Minute", { exact: true }).selectOption("15");
+      const apply = picker.getByRole("button", {
+        name: "Apply date and time",
+        exact: true,
+      });
+      await expect(apply).toBeInViewport({ ratio: 1 });
       await expect(
-        coach.page.locator("#booking-start-guidance"),
-      ).toBeInViewport();
-      await expect(review).toHaveCount(0);
-      assert.equal(invalidRequests.length, 0);
+        picker.getByRole("button", {
+          name: "Cancel date and time selection",
+          exact: true,
+        }),
+      ).toBeInViewport({ ratio: 1 });
       assert.equal(
         await coach.page.evaluate(
           () => document.documentElement.scrollWidth > innerWidth,
@@ -910,10 +939,22 @@ export async function rehearseBookingRescheduling({
         false,
       );
       await coach.page.screenshot({
-        path: path.join(output, `booking-start-minute-error-${width}.png`),
+        path: path.join(output, `booking-start-picker-${width}.png`),
       });
+      await apply.focus();
+      await coach.page.keyboard.press("Enter");
+      await expect(picker).toHaveCount(0);
+      await expect(start).toBeFocused();
+      await expect(start).toContainText("19:15");
+      await expect(review).toHaveCount(0);
+      await start.click();
+      await picker.getByLabel("Minute", { exact: true }).selectOption("45");
+      await coach.page.keyboard.press("Escape");
+      await expect(start).toBeFocused();
+      await expect(start).toContainText("19:15");
+      assert.equal(selectionRequests.length, 0);
     }
-    coach.page.off("request", recordInvalidRequest);
+    coach.page.off("request", recordSelectionRequest);
     const offGrid = {
       ...command,
       commandId: randomUUID(),
@@ -928,10 +969,8 @@ export async function rehearseBookingRescheduling({
       400,
     );
     for (const minute of ["15", "30"]) {
-      await start.fill(day.date + "T19:" + minute);
+      await chooseStart(day.date + "T19:" + minute);
       await expect(start).not.toHaveAttribute("aria-invalid", "true");
-      await expect(feedback).not.toContainText(startGuidance);
-      assert.equal(await start.evaluate((el) => el.checkValidity()), true);
       await reviewButton.focus();
       await coach.page.keyboard.press("Enter");
       await expect(
@@ -949,11 +988,9 @@ export async function rehearseBookingRescheduling({
       2,
     );
     pass(
-      "19:20/75 shows quarter-hour guidance with preserved draft/focus at1440/375/320; native/direct submits make no review/save request, server rejects off-grid, corrected19:15/19:30 reach real outside-hours review without saving",
+      "quarter-hour picker at1440/375/320 applies or discards selection with check/cross/keyboard/focus and zero review/save requests; server rejects off-grid and applied19:15/19:30 reach real outside-hours review without saving",
     );
-    await coach.page
-      .getByLabel("Start · Berlin time", { exact: true })
-      .fill(day.date + "T19:00");
+    await chooseStart(day.date + "T19:00");
     await coach.page.getByLabel("Duration", { exact: true }).selectOption("75");
     await reviewButton.click();
     const acknowledgement = coach.page.getByLabel(
@@ -996,6 +1033,25 @@ export async function rehearseBookingRescheduling({
     await coach.page.keyboard.press("Space");
     await expect(acknowledgement).toBeChecked();
     await expect(acknowledgement).toBeFocused();
+    await start.click();
+    await picker.getByLabel("Minute", { exact: true }).selectOption("30");
+    await picker
+      .getByRole("button", {
+        name: "Cancel date and time selection",
+        exact: true,
+      })
+      .click();
+    await expect(acknowledgement).toBeChecked();
+    await expect(save).toBeEnabled();
+    await expect(start).toContainText("19:00");
+    await chooseStart(day.date + "T19:15");
+    await expect(review).toHaveCount(0);
+    await reviewButton.click();
+    await expect(acknowledgement).not.toBeChecked();
+    await expect(save).toBeDisabled();
+    await chooseStart(day.date + "T19:00");
+    await reviewButton.click();
+    await acknowledgement.check();
     await coach.page.getByLabel("Duration", { exact: true }).selectOption("60");
     await reviewButton.click();
     await expect(acknowledgement).not.toBeChecked();
