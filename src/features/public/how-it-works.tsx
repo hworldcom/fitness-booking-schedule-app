@@ -25,7 +25,7 @@ export function HowItWorksStory() {
           </h1>
           <p>
             Find a coach, join a group or build your own routine. Plan your
-            training and keep track of the activity you complete, all in one
+            training and recovery, and track your completed activity in one
             place.
           </p>
           <span className="hero-note">
@@ -257,8 +257,8 @@ export function HowItWorksStory() {
             <div>
               <h4>Check your confirmation</h4>
               <p>
-                Your private request needs coach acceptance. For groups, check
-                whether the coach has confirmed the session.
+                Private sessions need coach acceptance. For groups, check that
+                your participation is approved and the session is confirmed.
               </p>
             </div>
           </li>
