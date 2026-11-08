@@ -1,4 +1,4 @@
-// MOV-215: real Shell/view preference with owned loopback Auth/API fixtures.
+// MOV-215/MOV-216: real Shell/view preference with owned loopback Auth/API fixtures.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import {
@@ -15,6 +15,7 @@ import path from "node:path";
 import { createServer } from "node:net";
 import { chromium, expect as baseExpect } from "@playwright/test";
 
+const publicMobileOnly = process.argv.includes("--public-mobile");
 const expect = baseExpect.configure({ timeout: 20000 });
 const root = process.cwd(),
   port = 3201,
@@ -36,6 +37,249 @@ async function put(file, text) {
   const target = path.join(scratch, file);
   await mkdir(path.dirname(target), { recursive: true });
   await writeFile(target, text);
+}
+
+async function publicMobileChecks(browser) {
+  const context = await browser.newContext();
+  await context.route("**/api/**", async (route) => {
+    if (route.request().method() !== "GET") {
+      writes.push(route.request().url());
+      return route.abort();
+    }
+    if (new URL(route.request().url()).pathname.startsWith("/api/auth/"))
+      return route.continue();
+    return route.fulfill({ status: 503, json: { status: "unavailable" } });
+  });
+  const page = await context.newPage();
+  page.setDefaultNavigationTimeout(60000);
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (
+      message.type() === "error" &&
+      /hydration|server rendered.*match/i.test(message.text())
+    )
+      errors.push(message.text());
+  });
+  const cookie = (kind) =>
+    context.addCookies([{ name: "mov215-actor", value: kind, url: base }]);
+  const open = (href) => page.goto(base + href, { waitUntil: "networkidle" });
+  const nav = () =>
+    page.getByRole("navigation", { name: "Mobile navigation", exact: true });
+  const refresh = () =>
+    page
+      .getByRole("button", { name: "Refresh fixture account", exact: true })
+      .click();
+  const allRoutes = [
+    "/",
+    "/explore",
+    "/events",
+    "/events/fixture",
+    "/coaches/fixture",
+    "/@fixture_coach",
+    "/how-it-works",
+    "/privacy",
+  ];
+  await cookie("approved");
+  for (const width of [1440, 768, 760, 430, 375, 320]) {
+    await page.setViewportSize({ width, height: 812 });
+    const routes =
+      width === 320
+        ? allRoutes
+        : width === 375
+          ? ["/", "/explore", "/@fixture_coach"]
+          : ["/", "/explore"];
+    for (const href of routes) {
+      await open(href);
+      await expect(page.locator(".sidebar")).toHaveCount(0);
+      if (width > 760) {
+        await expect(nav()).toHaveCount(0);
+        await expect(page.locator(".mobile-nav")).toBeHidden();
+        continue;
+      }
+      await expect(nav()).toBeVisible();
+      await expect(
+        nav().getByRole("link", { name: "My training", exact: true }),
+      ).toHaveAttribute("href", "/sessions/calendar");
+      await expect(nav().getByRole("link").last()).toHaveText(
+        "Switch to coach view",
+      );
+      await expect(nav().locator('[aria-current="page"]')).toHaveCount(
+        href === "/" ? 1 : 0,
+      );
+      if (href === "/")
+        await expect(nav().locator('[aria-current="page"]')).toHaveText("Home");
+      assert.equal(
+        await nav().evaluate((el) => getComputedStyle(el).position),
+        "fixed",
+      );
+      for (const link of await nav().getByRole("link").all())
+        assert.ok((await link.boundingBox()).height >= 44);
+      assert.ok(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        `${width} ${href} overflow`,
+      );
+      await page.evaluate(() =>
+        scrollTo(0, document.documentElement.scrollHeight),
+      );
+      const bar = await nav().boundingBox(),
+        footer = await page.locator(".footer-demo-info").boundingBox(),
+        action = await page
+          .getByRole("button", { name: "End of content action", exact: true })
+          .boundingBox();
+      assert.ok(
+        footer && footer.y + footer.height < bar.y,
+        `${width} ${href} footer clearance`,
+      );
+      assert.ok(
+        action && action.y + action.height < bar.y,
+        `${width} ${href} action clearance`,
+      );
+      await expect(nav()).toBeVisible();
+      if (href === "/")
+        await page.screenshot({
+          path: path.join(output, `${width}-public-bottom-athlete.png`),
+        });
+    }
+    record(
+      `${width}px public browsing header/no sidebar, signed-in bottom bar policy, Home/current,44px/no overflow/footer clearance`,
+    );
+  }
+  await page.setViewportSize({ width: 375, height: 812 });
+  await open("/sessions/calendar");
+  await nav().getByRole("link", { name: "Home", exact: true }).click();
+  await expect(page).toHaveURL(base + "/");
+  await nav().getByRole("link", { name: "Bookings", exact: true }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(base + "/sessions");
+  await open("/coach");
+  await nav().getByRole("link", { name: "Home", exact: true }).click();
+  await expect(page).toHaveURL(base + "/");
+  await expect(
+    nav().getByRole("link", { name: "Calendar", exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    nav().getByRole("link", { name: "Calendar", exact: true }),
+  ).toBeVisible();
+  await open("/explore");
+  await expect(
+    nav().getByRole("link", { name: "Calendar", exact: true }),
+  ).toHaveAttribute("href", "/coach");
+  await expect(nav().getByRole("link").last()).toHaveText(
+    "Switch to athlete view",
+  );
+  assert.ok(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  );
+  await page.screenshot({
+    path: path.join(output, "375-public-bottom-coach.png"),
+  });
+  await page.setViewportSize({ width: 320, height: 812 });
+  assert.ok(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+    "320px public coach-mode header and bottom navigation fit",
+  );
+  await page.screenshot({
+    path: path.join(output, "320-public-bottom-coach.png"),
+  });
+  await nav().getByRole("link").last().focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(base + "/sessions/calendar");
+  record(
+    "public mobile workspace handoff, keyboard links,375/320px coach preference/reload and separated view switch",
+  );
+  for (const status of [
+    "not-applied",
+    "pending",
+    "rejected",
+    "demo",
+    "suspended",
+  ]) {
+    await cookie(status);
+    await open("/");
+    await expect(nav()).toBeVisible();
+    await expect(
+      nav().getByRole("link", { name: "My training", exact: true }),
+    ).toBeVisible();
+    await expect(nav().getByRole("link", { name: /^Switch to/ })).toHaveCount(
+      ["demo", "suspended"].includes(status) ? 1 : 0,
+    );
+    assert.ok(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    );
+  }
+  for (const status of ["preview", "signed-out", "unavailable", "forbidden"]) {
+    await cookie(status);
+    await open("/");
+    await expect(page.locator(".mobile-nav")).toHaveCount(0);
+  }
+  record(
+    "mobile website eligibility retains athlete capability and hides the bar for guests/unavailable actors",
+  );
+  await cookie("approved");
+  for (const route of [
+    "/sign-in",
+    "/register",
+    "/check-email",
+    "/forgot-password",
+    "/reset-password",
+    "/complete-profile",
+    "/profile",
+    "/profile/coach",
+    "/account",
+    "/messages",
+  ]) {
+    await open(route);
+    await expect(page.locator(".mobile-nav")).toHaveCount(0);
+  }
+  record(
+    "mobile Auth/enrollment/recovery and independent Profile/Account/Messages keep their existing framing",
+  );
+  for (const kind of ["other", "dataset"]) {
+    await cookie("approved");
+    await open("/coach");
+    await open("/");
+    await expect(
+      nav().getByRole("link", { name: "Calendar", exact: true }),
+    ).toBeVisible();
+    await cookie(kind);
+    await refresh();
+    await expect(page.locator("[data-fixture-state]")).toHaveAttribute(
+      "data-fixture-state",
+      new RegExp(
+        kind === "other"
+          ? '"slug":"switch-other"'
+          : '"slug":"switch-other-run"',
+      ),
+    );
+    await expect(
+      nav().getByRole("link", { name: "My training", exact: true }),
+    ).toBeVisible();
+    await expect(
+      nav().getByRole("link", { name: "Calendar", exact: true }),
+    ).toHaveCount(0);
+  }
+  await cookie("unavailable");
+  await refresh();
+  await expect(page.locator(".mobile-nav")).toHaveCount(0);
+  await cookie("approved");
+  await refresh();
+  await expect(nav()).toBeVisible();
+  await cookie("signed-out");
+  await refresh();
+  await expect(page.locator(".mobile-nav")).toHaveCount(0);
+  record(
+    "public mobile account/dataset preference isolation, verification and sign-out clear former navigation",
+  );
+  await context.close();
 }
 try {
   await new Promise((resolve, reject) => {
@@ -108,6 +352,19 @@ try {
     "profile/coach",
     "account",
     "messages",
+    "",
+    "events",
+    "events/fixture",
+    "coaches/fixture",
+    "[handle]",
+    "how-it-works",
+    "privacy",
+    "sign-in",
+    "register",
+    "check-email",
+    "forgot-password",
+    "reset-password",
+    "complete-profile",
   ])
     await put(
       `src/app/${route}/page.tsx`,
@@ -179,245 +436,251 @@ try {
     page
       .getByRole("button", { name: "Refresh fixture account", exact: true })
       .click();
-  for (const width of [1440, 768, 760, 430, 375, 320]) {
-    await page.setViewportSize({ width, height: 812 });
-    await cookie("approved");
-    await open("/my-coaches");
-    const nav = page.getByRole("navigation", {
-      name: width > 760 ? "Main navigation" : "Mobile navigation",
-      exact: true,
-    });
-    for (const [label, href] of [
-      ["coach", "/coach"],
-      ["athlete", "/sessions/calendar"],
-    ]) {
-      const link = nav.getByRole("link", {
-        name: `Switch to ${label} view`,
+  if (!publicMobileOnly) {
+    for (const width of [1440, 768, 760, 430, 375, 320]) {
+      await page.setViewportSize({ width, height: 812 });
+      await cookie("approved");
+      await open("/my-coaches");
+      const nav = page.getByRole("navigation", {
+        name: width > 760 ? "Main navigation" : "Mobile navigation",
         exact: true,
       });
-      await expect(link).toBeVisible();
+      for (const [label, href] of [
+        ["coach", "/coach"],
+        ["athlete", "/sessions/calendar"],
+      ]) {
+        const link = nav.getByRole("link", {
+          name: `Switch to ${label} view`,
+          exact: true,
+        });
+        await expect(link).toBeVisible();
+        await expect(nav.getByRole("link").last()).toHaveText(
+          `Switch to ${label} view`,
+        );
+        assert.equal(await link.getAttribute("aria-current"), null);
+        await expect(nav.locator('[aria-current="page"]')).toHaveCount(1);
+        const line = await nav.getByRole("separator").boundingBox(),
+          box = await link.boundingBox();
+        assert.ok(
+          line && box && line.width > 100 && line.height <= 2 && line.y < box.y,
+        );
+        assert.ok(box.height >= 44);
+        await link.focus();
+        assert.ok(
+          await link.evaluate(
+            (el) =>
+              el.matches(":focus-visible") &&
+              getComputedStyle(el).outlineStyle !== "none",
+          ),
+        );
+        await page.screenshot({
+          path: path.join(output, `${width}-switch-${label}.png`),
+        });
+        await page.keyboard.press("Enter");
+        await expect(page).toHaveURL(base + href);
+      }
+      await page.reload();
       await expect(nav.getByRole("link").last()).toHaveText(
-        `Switch to ${label} view`,
+        "Switch to coach view",
       );
-      assert.equal(await link.getAttribute("aria-current"), null);
-      await expect(nav.locator('[aria-current="page"]')).toHaveCount(1);
-      const line = await nav.getByRole("separator").boundingBox(),
-        box = await link.boundingBox();
-      assert.ok(
-        line && box && line.width > 100 && line.height <= 2 && line.y < box.y,
+      await page.goBack();
+      await expect(nav.getByRole("link").last()).toHaveText(
+        "Switch to athlete view",
       );
-      assert.ok(box.height >= 44);
-      await link.focus();
+      await page.goForward();
+      await expect(nav.getByRole("link").last()).toHaveText(
+        "Switch to coach view",
+      );
+      await page
+        .getByRole("button", { name: "Show content failure", exact: true })
+        .click();
+      await expect(
+        page.getByRole("heading", {
+          name: "We couldn’t verify access right now.",
+          exact: true,
+        }),
+      ).toBeVisible();
+      await expect(nav.getByRole("link").last()).toBeVisible();
       assert.ok(
-        await link.evaluate(
-          (el) =>
-            el.matches(":focus-visible") &&
-            getComputedStyle(el).outlineStyle !== "none",
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
         ),
       );
-      await page.screenshot({
-        path: path.join(output, `${width}-switch-${label}.png`),
-      });
-      await page.keyboard.press("Enter");
-      await expect(page).toHaveURL(base + href);
+      if (width <= 760) {
+        assert.equal(
+          await nav.evaluate((el) => getComputedStyle(el).position),
+          "fixed",
+        );
+        const navBox = await nav.boundingBox();
+        assert.ok(
+          await page
+            .locator(".availability-savebar")
+            .evaluate(
+              (el, height) =>
+                parseFloat(getComputedStyle(el).bottom) >= height + 8,
+              navBox.height,
+            ),
+        );
+        await page.evaluate(() =>
+          scrollTo(0, document.documentElement.scrollHeight),
+        );
+        const footer = await page
+          .locator("footer .footer-contact")
+          .first()
+          .boundingBox();
+        assert.ok(
+          footer && footer.y + footer.height < navBox.y,
+          "Footer remains above mobile nav",
+        );
+        await expect(nav.getByRole("link").last()).toBeVisible();
+      }
+      record(
+        `${width}px last switch/separator,44px/focus/keyboard round trip,history/reload,content failure,overflow and mobile clearance`,
+      );
     }
-    await page.reload();
-    await expect(nav.getByRole("link").last()).toHaveText(
-      "Switch to coach view",
-    );
-    await page.goBack();
-    await expect(nav.getByRole("link").last()).toHaveText(
-      "Switch to athlete view",
-    );
-    await page.goForward();
-    await expect(nav.getByRole("link").last()).toHaveText(
-      "Switch to coach view",
-    );
-    await page
-      .getByRole("button", { name: "Show content failure", exact: true })
-      .click();
-    await expect(
-      page.getByRole("heading", {
-        name: "We couldn’t verify access right now.",
-        exact: true,
-      }),
-    ).toBeVisible();
-    await expect(nav.getByRole("link").last()).toBeVisible();
-    assert.ok(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth <= innerWidth,
-      ),
-    );
-    if (width <= 760) {
-      assert.equal(
-        await nav.evaluate((el) => getComputedStyle(el).position),
-        "fixed",
-      );
-      const navBox = await nav.boundingBox();
-      assert.ok(
-        await page
-          .locator(".availability-savebar")
-          .evaluate(
-            (el, height) =>
-              parseFloat(getComputedStyle(el).bottom) >= height + 8,
-            navBox.height,
-          ),
-      );
-      await page.evaluate(() =>
-        scrollTo(0, document.documentElement.scrollHeight),
-      );
-      const footer = await page
-        .locator("footer .footer-contact")
-        .first()
-        .boundingBox();
-      assert.ok(
-        footer && footer.y + footer.height < navBox.y,
-        "Footer remains above mobile nav",
-      );
-      await expect(nav.getByRole("link").last()).toBeVisible();
-    }
-    record(
-      `${width}px last switch/separator,44px/focus/keyboard round trip,history/reload,content failure,overflow and mobile clearance`,
-    );
-  }
-  await page.setViewportSize({ width: 1440, height: 400 });
-  await open("/coach");
-  const desktop = page.getByRole("navigation", {
-    name: "Main navigation",
-    exact: true,
-  });
-  await desktop.getByRole("link").last().focus();
-  const shortBox = await desktop.getByRole("link").last().boundingBox();
-  assert.ok(shortBox.y >= 0 && shortBox.y + shortBox.height <= 400);
-  record("short desktop sidebar scrolls the final keyboard control into view");
-  for (const status of [
-    "not-applied",
-    "pending",
-    "rejected",
-    "preview",
-    "signed-out",
-    "unavailable",
-    "forbidden",
-    "demo",
-    "suspended",
-  ]) {
-    await cookie(status);
-    await open("/my-coaches");
-    const nav = page.getByRole("navigation", {
+    await page.setViewportSize({ width: 1440, height: 400 });
+    await open("/coach");
+    const desktop = page.getByRole("navigation", {
       name: "Main navigation",
       exact: true,
     });
-    await expect(nav.getByRole("link", { name: /^Switch to/ })).toHaveCount(
-      ["demo", "suspended"].includes(status) ? 1 : 0,
+    await desktop.getByRole("link").last().focus();
+    const shortBox = await desktop.getByRole("link").last().boundingBox();
+    assert.ok(shortBox.y >= 0 && shortBox.y + shortBox.height <= 400);
+    record(
+      "short desktop sidebar scrolls the final keyboard control into view",
     );
-    if (["demo", "suspended"].includes(status)) {
-      await nav
-        .getByRole("link", { name: "Switch to coach view", exact: true })
-        .click();
-      await expect(page).toHaveURL(base + "/coach");
+    for (const status of [
+      "not-applied",
+      "pending",
+      "rejected",
+      "preview",
+      "signed-out",
+      "unavailable",
+      "forbidden",
+      "demo",
+      "suspended",
+    ]) {
+      await cookie(status);
+      await open("/my-coaches");
+      const nav = page.getByRole("navigation", {
+        name: "Main navigation",
+        exact: true,
+      });
+      await expect(nav.getByRole("link", { name: /^Switch to/ })).toHaveCount(
+        ["demo", "suspended"].includes(status) ? 1 : 0,
+      );
+      if (["demo", "suspended"].includes(status)) {
+        await nav
+          .getByRole("link", { name: "Switch to coach view", exact: true })
+          .click();
+        await expect(page).toHaveURL(base + "/coach");
+      }
     }
-  }
-  record(
-    "ordinary/applicant/unauthorized/unavailable states omit the switch; demo/suspended retain existing destinations",
-  );
-  await cookie("approved");
-  await open("/coach");
-  await page.goto(base + "/explore");
-  await expect(
-    page.getByRole("navigation", { name: "Main navigation", exact: true }),
-  ).toHaveCount(0);
-  await expect(
-    page.getByRole("navigation", { name: "Mobile navigation", exact: true }),
-  ).toHaveCount(0);
-  for (const kind of ["other", "dataset"]) {
+    record(
+      "ordinary/applicant/unauthorized/unavailable states omit the switch; demo/suspended retain existing destinations",
+    );
     await cookie("approved");
     await open("/coach");
-    await open("/explore");
-    await cookie(kind);
+    await page.goto(base + "/explore");
+    await expect(
+      page.getByRole("navigation", { name: "Main navigation", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("navigation", { name: "Mobile navigation", exact: true }),
+    ).toHaveCount(0);
+    for (const kind of ["other", "dataset"]) {
+      await cookie("approved");
+      await open("/coach");
+      await open("/explore");
+      await cookie(kind);
+      await refresh();
+      await expect(page.locator("[data-fixture-state]")).toHaveAttribute(
+        "data-fixture-state",
+        new RegExp(
+          kind === "other"
+            ? '"slug":"switch-other"'
+            : '"slug":"switch-other-run"',
+        ),
+      );
+      await page
+        .getByRole("button", {
+          name: "Account menu for Switch Fixture",
+          exact: true,
+        })
+        .click();
+      await expect(
+        page
+          .locator(".account-menu-panel")
+          .getByRole("link", { name: "Switch to coach view", exact: true }),
+      ).toBeVisible();
+    }
+    await cookie("approved");
+    await open("/my-coaches");
+    await cookie("unavailable");
     await refresh();
-    await expect(page.locator("[data-fixture-state]")).toHaveAttribute(
-      "data-fixture-state",
-      new RegExp(
-        kind === "other"
-          ? '"slug":"switch-other"'
-          : '"slug":"switch-other-run"',
-      ),
+    await expect(desktop.getByRole("link", { name: /^Switch to/ })).toHaveCount(
+      0,
     );
+    await cookie("approved");
+    await refresh();
+    await expect(
+      desktop.getByRole("link", { name: "Switch to coach view", exact: true }),
+    ).toBeVisible();
+    await cookie("signed-out");
+    await refresh();
+    await expect(desktop.getByRole("link", { name: /^Switch to/ })).toHaveCount(
+      0,
+    );
+    record(
+      "account/dataset preference isolation and live verification/sign-out remove stale switching controls",
+    );
+    await cookie("approved");
+    for (const route of ["/profile", "/account", "/messages"]) {
+      await open(route);
+      await expect(page.locator(".workspace-view-switch")).toHaveCount(0);
+      await expect(
+        page.getByRole("button", {
+          name: "Account menu for Switch Fixture",
+          exact: true,
+        }),
+      ).toBeVisible();
+    }
+    await open("/profile");
     await page
       .getByRole("button", {
         name: "Account menu for Switch Fixture",
         exact: true,
       })
       .click();
-    await expect(
-      page
-        .locator(".account-menu-panel")
-        .getByRole("link", { name: "Switch to coach view", exact: true }),
-    ).toBeVisible();
-  }
-  await cookie("approved");
-  await open("/my-coaches");
-  await cookie("unavailable");
-  await refresh();
-  await expect(desktop.getByRole("link", { name: /^Switch to/ })).toHaveCount(
-    0,
-  );
-  await cookie("approved");
-  await refresh();
-  await expect(
-    desktop.getByRole("link", { name: "Switch to coach view", exact: true }),
-  ).toBeVisible();
-  await cookie("signed-out");
-  await refresh();
-  await expect(desktop.getByRole("link", { name: /^Switch to/ })).toHaveCount(
-    0,
-  );
-  record(
-    "account/dataset preference isolation and live verification/sign-out remove stale switching controls",
-  );
-  await cookie("approved");
-  for (const route of ["/profile", "/account", "/messages"]) {
-    await open(route);
-    await expect(page.locator(".workspace-view-switch")).toHaveCount(0);
-    await expect(
-      page.getByRole("button", {
-        name: "Account menu for Switch Fixture",
-        exact: true,
+    await page
+      .locator(".account-menu-panel")
+      .getByRole("link", { name: "Switch to coach view", exact: true })
+      .click();
+    await expect(page).toHaveURL(base + "/profile/coach");
+    record(
+      "public desktop and standalone framings stay independent; the existing dropdown retains Profile switching",
+    );
+    await context.addInitScript(() =>
+      Object.defineProperty(window, "sessionStorage", {
+        get() {
+          throw new Error("Fixture storage unavailable");
+        },
       }),
-    ).toBeVisible();
+    );
+    await open("/my-coaches");
+    await desktop
+      .getByRole("link", { name: "Switch to coach view", exact: true })
+      .click();
+    await expect(page).toHaveURL(base + "/coach");
+    await desktop
+      .getByRole("link", { name: "Switch to athlete view", exact: true })
+      .click();
+    await expect(page).toHaveURL(base + "/sessions/calendar");
+    record("explicit switching works when session storage is unavailable");
   }
-  await open("/profile");
-  await page
-    .getByRole("button", {
-      name: "Account menu for Switch Fixture",
-      exact: true,
-    })
-    .click();
-  await page
-    .locator(".account-menu-panel")
-    .getByRole("link", { name: "Switch to coach view", exact: true })
-    .click();
-  await expect(page).toHaveURL(base + "/profile/coach");
-  record(
-    "public and standalone framings stay independent; the existing dropdown retains Profile switching",
-  );
-  await context.addInitScript(() =>
-    Object.defineProperty(window, "sessionStorage", {
-      get() {
-        throw new Error("Fixture storage unavailable");
-      },
-    }),
-  );
-  await open("/my-coaches");
-  await desktop
-    .getByRole("link", { name: "Switch to coach view", exact: true })
-    .click();
-  await expect(page).toHaveURL(base + "/coach");
-  await desktop
-    .getByRole("link", { name: "Switch to athlete view", exact: true })
-    .click();
-  await expect(page).toHaveURL(base + "/sessions/calendar");
-  record("explicit switching works when session storage is unavailable");
+  await context.close();
+  await publicMobileChecks(browser);
   assert.deepEqual(errors, []);
   assert.deepEqual(writes, []);
   success = true;

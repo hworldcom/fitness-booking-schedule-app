@@ -102,12 +102,15 @@ const publicHeaderNavigation = [
   howItWorksNavigation,
 ];
 
-const publicMarketplacePaths = new Set([
+const publicBrowsingPaths = new Set([
   "/",
   "/explore",
   "/events",
   "/how-it-works",
   "/privacy",
+]);
+
+const publicAuthenticationPaths = new Set([
   "/sign-in",
   "/register",
   "/check-email",
@@ -214,7 +217,7 @@ export function publicAccountNavigationForActor(
     : [messagesNavigation];
 }
 
-export function isPublicMarketplacePath(path: string) {
+export function isPublicBrowsingPath(path: string) {
   const coachSlug = path.startsWith("/coaches/")
     ? path.slice("/coaches/".length)
     : "";
@@ -222,10 +225,26 @@ export function isPublicMarketplacePath(path: string) {
     ? path.slice("/events/".length)
     : "";
   return (
-    publicMarketplacePaths.has(path) ||
+    publicBrowsingPaths.has(path) ||
     (path.startsWith("/") && publicCoachHandle(path.slice(1)) !== null) ||
     (eventSlug.length > 0 && !eventSlug.includes("/")) ||
     (coachSlug.length > 0 && !coachSlug.includes("/"))
+  );
+}
+
+export function isPublicMarketplacePath(path: string) {
+  return publicAuthenticationPaths.has(path) || isPublicBrowsingPath(path);
+}
+
+export function shouldRenderMobileNavigation(
+  actor: ActorSnapshot,
+  path: string,
+) {
+  if (path === "/messages" || path === "/account" || isProfilePath(path))
+    return false;
+  return (
+    !isPublicMarketplacePath(path) ||
+    (actor.status === "authorized" && isPublicBrowsingPath(path))
   );
 }
 
@@ -322,6 +341,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </span>
     );
   const publicShell = isPublicMarketplacePath(path);
+  const showMobileNavigation = shouldRenderMobileNavigation(actor, path);
   const hasWorkspaceSwitch = hasCoachWorkspaceNavigation(actor);
   const currentProfile = actor.status === "authorized" ? actor.profile : null;
   const visibleNavigation = navigationForActor(actor, path, view);
@@ -386,10 +406,8 @@ export function Shell({ children }: { children: ReactNode }) {
       )}
       <div
         className={`app-main ${
-          publicShell
-            ? "public-app-main"
-            : `authenticated-app-main${hasWorkspaceSwitch ? " has-workspace-switch" : ""}`
-        }`}
+          publicShell ? "public-app-main" : "authenticated-app-main"
+        }${showMobileNavigation ? " has-mobile-navigation" : ""}${showMobileNavigation && hasWorkspaceSwitch ? " has-workspace-switch" : ""}`}
       >
         {publicShell ? (
           <header className="public-header">
@@ -522,7 +540,7 @@ export function Shell({ children }: { children: ReactNode }) {
           )}
         </footer>
       </div>
-      {!publicShell && (
+      {showMobileNavigation && (
         <nav
           className="mobile-nav authenticated-mobile-nav"
           aria-label="Mobile navigation"

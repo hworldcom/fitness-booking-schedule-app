@@ -479,8 +479,15 @@
       );
   }
 
-  .authenticated-app-main.has-workspace-switch {
+  .app-main.has-workspace-switch {
     --workspace-switch-clearance: 56px;
+  }
+
+  .public-app-main.has-mobile-navigation {
+    padding-bottom: calc(
+      88px + var(--workspace-switch-clearance, 0px) +
+        env(safe-area-inset-bottom)
+    );
   }
 
   .authenticated-mobile-nav {
