@@ -35,6 +35,7 @@ import { NotificationBell } from "./notification-bell";
 import { HeaderAccountControl } from "./header-account-control";
 import { AccountShell } from "@/components/account-shell";
 import { WorkspaceNavigation } from "./workspace-navigation";
+import { WorkspaceViewSwitch } from "./workspace-view-switch";
 import { COACH_WORKSPACE_DESTINATIONS } from "./coach-workspace-destinations";
 import { isNavigationHrefActive } from "@/domain/workspace-navigation";
 import { Brand, Modal, Pill } from "./ui";
@@ -321,6 +322,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </span>
     );
   const publicShell = isPublicMarketplacePath(path);
+  const hasWorkspaceSwitch = hasCoachWorkspaceNavigation(actor);
   const currentProfile = actor.status === "authorized" ? actor.profile : null;
   const visibleNavigation = navigationForActor(actor, path, view);
   const mobileNavigation = mobileNavigationForActor(actor, path, view);
@@ -366,6 +368,7 @@ export function Shell({ children }: { children: ReactNode }) {
               navigation={visibleNavigation}
               pathname={path}
             />
+            <WorkspaceViewSwitch actor={actor} pathname={path} view={view} />
           </nav>
           <div className="sidebar-bottom">
             <button
@@ -383,7 +386,9 @@ export function Shell({ children }: { children: ReactNode }) {
       )}
       <div
         className={`app-main ${
-          publicShell ? "public-app-main" : "authenticated-app-main"
+          publicShell
+            ? "public-app-main"
+            : `authenticated-app-main${hasWorkspaceSwitch ? " has-workspace-switch" : ""}`
         }`}
       >
         {publicShell ? (
@@ -522,11 +527,14 @@ export function Shell({ children }: { children: ReactNode }) {
           className="mobile-nav authenticated-mobile-nav"
           aria-label="Mobile navigation"
         >
-          <WorkspaceNavigation
-            navigation={mobileNavigation}
-            pathname={path}
-            mobile
-          />
+          <div className="workspace-mobile-destinations">
+            <WorkspaceNavigation
+              navigation={mobileNavigation}
+              pathname={path}
+              mobile
+            />
+          </div>
+          <WorkspaceViewSwitch actor={actor} pathname={path} view={view} />
         </nav>
       )}
       {aboutOpen && (
