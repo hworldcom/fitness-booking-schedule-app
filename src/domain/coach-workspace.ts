@@ -16,6 +16,8 @@ export function selectedCoachWorkspaceDestination(
   if (within("/coach/events")) return "events";
   if (within("/coach/athletes")) return "athletes";
   if (within("/coach/sessions")) return "bookings";
+  if (within("/coach/session-types") || path === "/coach/bookings/new")
+    return "schedule";
   if (path !== "/coach") return null;
   return resolveCoachWorkspaceView(
     viewValues.length === 1 ? viewValues[0] : undefined,

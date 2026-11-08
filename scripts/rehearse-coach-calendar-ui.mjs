@@ -535,7 +535,7 @@ try {
     .selectOption("13:00");
   const calendar = page
     .getByRole("navigation", { name: "Schedule sections", exact: true })
-    .getByRole("link", { name: "Calendar", exact: true });
+    .getByRole("link", { name: "Schedule", exact: true });
   await calendar.click();
   await page
     .getByRole("dialog")

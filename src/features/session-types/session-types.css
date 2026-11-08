@@ -6,6 +6,16 @@
 .session-types-page h1 {
   margin: 16px 0 8px;
 }
+.session-types-page.schedule-tab-content {
+  max-width: none;
+  margin: 24px 0 0;
+  padding: 0;
+}
+.schedule-tab-content > h2,
+.schedule-tab-content > header > h2 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
 .session-types-page header p,
 .session-type-card p {
   color: var(--muted, #58616d);

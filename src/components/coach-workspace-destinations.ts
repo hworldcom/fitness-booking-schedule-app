@@ -1,7 +1,7 @@
 import { CalendarClock, CalendarDays, UsersRound } from "lucide-react";
 
 export const COACH_WORKSPACE_DESTINATIONS = Object.freeze([
-  { id: "schedule", label: "Schedule", href: "/coach", Icon: CalendarClock },
+  { id: "schedule", label: "Calendar", href: "/coach", Icon: CalendarClock },
   {
     id: "bookings",
     label: "Bookings",

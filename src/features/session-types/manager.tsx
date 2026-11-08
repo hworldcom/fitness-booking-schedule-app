@@ -33,12 +33,19 @@ function emptyType(): SessionType {
     revision: -1,
   };
 }
-export function SessionTypeManager() {
+export function SessionTypeManager({
+  embedded = false,
+}: {
+  embedded?: boolean;
+}) {
+  const Heading = embedded ? "h2" : "h1";
   return (
-    <section className="session-types-page">
+    <section
+      className={`session-types-page${embedded ? " schedule-tab-content" : ""}`}
+    >
       <header>
-        <Link href="/coach">← Schedule</Link>
-        <h1>Session types</h1>
+        {!embedded && <Link href="/coach">← Schedule</Link>}
+        <Heading>Session types</Heading>
         <p>Create classes athletes can choose when requesting a session.</p>
       </header>
       <SessionActorBoundary>

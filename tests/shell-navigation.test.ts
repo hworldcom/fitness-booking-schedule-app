@@ -95,7 +95,7 @@ test("coach view exclusively exposes its existing authorized workspace", () => {
     ]) {
       const expected = [
         { label: "Home", href: "/" },
-        { label: "Schedule", href: "/coach" },
+        { label: "Calendar", href: "/coach" },
         { label: "Bookings", href: "/coach?view=bookings" },
         { label: "My athletes", href: "/coach/athletes" },
         { label: "Events", href: "/coach/events" },

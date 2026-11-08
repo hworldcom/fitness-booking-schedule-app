@@ -63,20 +63,29 @@ export function BookingEditor({
   coachView = !bookingId,
   returnHref,
   initialExternalClientId,
+  embedded = false,
 }: {
   bookingId?: string;
   coachView?: boolean;
   returnHref?: string;
   initialExternalClientId?: string;
+  embedded?: boolean;
 }) {
+  const Heading = embedded ? "h2" : "h1";
   return (
-    <section className="session-types-page">
-      <Link
-        href={returnHref ?? (coachView ? "/coach?view=bookings" : "/sessions")}
-      >
-        ← Bookings
-      </Link>
-      <h1>{bookingId ? "Session details" : "Schedule a client"}</h1>
+    <section
+      className={`session-types-page${embedded ? " schedule-tab-content" : ""}`}
+    >
+      {!embedded && (
+        <Link
+          href={
+            returnHref ?? (coachView ? "/coach?view=bookings" : "/sessions")
+          }
+        >
+          ← Bookings
+        </Link>
+      )}
+      <Heading>{bookingId ? "Session details" : "Schedule a client"}</Heading>
       <SessionActorBoundary>
         {(identity) => (
           <Editor

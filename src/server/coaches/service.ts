@@ -386,6 +386,7 @@ export async function currentCoachAvailabilityWorkspace(
         actor.runId,
         actor.runRole,
       ].join(":"),
+      actorIdentity: [owner.profileSlug, owner.runSlug, owner.role].join(":"),
       ownerDisplayName: owner.displayName,
       coachAccess: owner.coachAccess,
     });

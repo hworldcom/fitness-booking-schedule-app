@@ -290,7 +290,7 @@ return <main className="training-page">{active?.startsWith("coach-")
       await expect(current).toHaveCount(1);
       await expect(current).toHaveText(
         {
-          "coach-calendar": "Calendar",
+          "coach-calendar": "Schedule",
           "coach-availability": "Availability",
           calendar: "Calendar",
           routine: "Plan routine",
