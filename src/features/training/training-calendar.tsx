@@ -1,10 +1,14 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { WorkoutEditor } from "./workout-editor";
 import { calendarItemPresentation } from "./calendar-item-model";
+import {
+  trainingItemDateRange,
+  weeklyTrainingAgenda,
+} from "./calendar-agenda-model";
 import { useTrainingWorkspace } from "./use-training-workspace";
 import { TrainingFeedback } from "./training-feedback";
 import { VideoLinks } from "@/features/notes/video-links";
@@ -54,6 +58,31 @@ export function TrainingCalendar({
   });
   if (selection.date !== date) setSelection({ date, day: date });
   const day = selection.date === date ? selection.day : date;
+  const agendaFocus = useRef<string | null>(null);
+  const initialAgendaFocus = useRef(false);
+  useEffect(() => {
+    if (!workspace.visible) {
+      agendaFocus.current = null;
+      initialAgendaFocus.current = true;
+      return;
+    }
+    if (!initialAgendaFocus.current) {
+      initialAgendaFocus.current = true;
+      const anchor = window.location.hash.match(
+        /^#training-agenda-day-(20\d{2}-\d{2}-\d{2})$/,
+      );
+      if (anchor) agendaFocus.current = anchor[1];
+    }
+    if (agendaFocus.current) {
+      const target = document.getElementById(
+        `training-agenda-day-${agendaFocus.current}`,
+      );
+      if (target) {
+        target.focus();
+        agendaFocus.current = null;
+      }
+    }
+  }, [selection, page.items, workspace.visible]);
   const [editor, setEditor] = useState<{
     item?: TrainingItem;
     log?: boolean;
@@ -65,6 +94,11 @@ export function TrainingCalendar({
   function selectDay(d: string) {
     setSelection({ date, day: d });
     router.replace(href(d), { scroll: false });
+  }
+  function showDay(d: string) {
+    agendaFocus.current = d;
+    setSelection({ date, day: d });
+    router.replace(`${href(d)}#training-agenda-day-${d}`, { scroll: false });
   }
   function save(command: TrainingCommand) {
     return workspace.save(command, () => setEditor(null));
@@ -94,30 +128,28 @@ export function TrainingCalendar({
   const days = Array.from({ length: view === "month" ? 42 : 7 }, (_, n) =>
     addDays(period.from, n),
   );
-  const dayFormatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
   const dateRanges = new Map(
-    page.items.map((i) => [
-      i.key,
-      [
-        dayFormatter.format(new Date(i.startsAt)),
-        dayFormatter.format(new Date(Date.parse(i.endsAt) - 1)),
-      ],
-    ]),
+    page.items.map((i) => [i.key, trainingItemDateRange(i, timezone)]),
   );
   const onDay = (i: TrainingItem, d: string) =>
-    dateRanges.get(i.key)![0] <= d && dateRanges.get(i.key)![1] >= d;
+    dateRanges.get(i.key)!.from <= d && dateRanges.get(i.key)!.through >= d;
+  const dateLabel = (d: string) =>
+    new Intl.DateTimeFormat("en-GB", {
+      dateStyle: "full",
+      timeZone: "UTC",
+    }).format(new Date(`${d}T12:00:00Z`));
   const time = (i: TrainingItem) =>
     new Intl.DateTimeFormat("en-GB", {
       timeZone: timezone,
       hour: "2-digit",
       minute: "2-digit",
     }).format(new Date(i.startsAt));
-  const agenda = page.items.filter((i) => onDay(i, day));
+  const agenda = weeklyTrainingAgenda(
+    page.items,
+    view === "week" ? date : day,
+    timezone,
+  );
+  const agendaDays = agenda.days.filter((group) => group.items.length > 0);
   return (
     <>
       <section className="training-summary" aria-label="Your training progress">
@@ -277,8 +309,7 @@ export function TrainingCalendar({
                       onClick={() => {
                         if (i.source === "personal") setEditor({ item: i });
                         else {
-                          selectDay(d);
-                          document.getElementById("training-agenda")?.focus();
+                          showDay(d);
                         }
                       }}
                     >
@@ -295,8 +326,7 @@ export function TrainingCalendar({
                   <button
                     className="text-link"
                     onClick={() => {
-                      selectDay(d);
-                      document.getElementById("training-agenda")?.focus();
+                      showDay(d);
                     }}
                   >
                     +{items.length - 3} more
@@ -306,6 +336,196 @@ export function TrainingCalendar({
             );
           })}
         </div>
+      </section>
+      <section className="training-agenda" id="training-agenda" tabIndex={-1}>
+        <div className="training-agenda-heading">
+          <div>
+            <h2>Training for the week</h2>
+            <p>
+              {dateLabel(agenda.from)} — {dateLabel(agenda.through)}
+            </p>
+          </div>
+          <span>{timezone}</span>
+        </div>
+        {page.next !== null && (
+          <p className="training-agenda-notice" role="status">
+            Showing loaded training. Load more below to check for more sessions
+            in this period.
+          </p>
+        )}
+        {!agendaDays.length && (
+          <div className="training-empty">
+            <h3>
+              {page.next === null ? "Room to move." : "More training to load"}
+            </h3>
+            <p>
+              No training loaded for this week.{" "}
+              {page.next === null && (
+                <>
+                  <Link href="/sessions/routine">Plan your routine</Link>, log a
+                  workout, or enjoy a rest day.
+                </>
+              )}
+            </p>
+          </div>
+        )}
+        {agendaDays.map((group) => (
+          <section
+            className="training-agenda-day"
+            id={`training-agenda-day-${group.date}`}
+            key={group.date}
+            aria-labelledby={`training-agenda-heading-${group.date}`}
+            tabIndex={-1}
+          >
+            <h3 id={`training-agenda-heading-${group.date}`}>
+              {dateLabel(group.date)}
+            </h3>
+            {group.items.map((i) => {
+              const presentation = calendarItemPresentation(i, page.now);
+              return (
+                <article
+                  className={`training-agenda-item${presentation.cancelled ? " training-agenda-item-cancelled" : ""}`}
+                  key={i.key}
+                >
+                  <div className="training-agenda-time">{time(i)}</div>
+                  <div className="training-agenda-copy">
+                    <span className="eyebrow">
+                      {i.source === "personal"
+                        ? "YOUR WORKOUT"
+                        : i.source === "booking"
+                          ? "PRIVATE SESSION"
+                          : i.source === "group"
+                            ? "GROUP SESSION"
+                            : "BOOKING REQUEST"}
+                    </span>
+                    <h4>{i.title}</h4>
+                    {dateRanges.get(i.key)!.from < group.date && (
+                      <p className="training-continuation">
+                        Continues from {dateLabel(dateRanges.get(i.key)!.from)}
+                      </p>
+                    )}
+                    <p
+                      className={
+                        presentation.cancelled
+                          ? "training-status-cancelled"
+                          : undefined
+                      }
+                    >
+                      {presentation.summary}
+                    </p>
+                    {presentation.previousAttendance && (
+                      <p>{presentation.previousAttendance}</p>
+                    )}
+                    {i.location && <p>{i.location}</p>}
+                    {i.notes && <p className="training-notes">{i.notes}</p>}
+                    <VideoLinks videos={i.videos ?? []} />
+                    {(i.intensity || i.actualMinutes) && (
+                      <p>
+                        {i.intensity ?? "Actual duration"}
+                        {i.actualMinutes ? ` · ${i.actualMinutes} minutes` : ""}
+                      </p>
+                    )}
+                    <div className="training-item-actions">
+                      {i.source === "personal" &&
+                        i.state === "time-unavailable" && (
+                          <>
+                            <p>
+                              This local time is unavailable because the clocks
+                              change. Choose another time.
+                            </p>
+                            <button
+                              disabled={paused}
+                              onClick={() => setEditor({ item: i })}
+                            >
+                              Choose workout time
+                            </button>
+                          </>
+                        )}
+                      {presentation.canSetAttendance && (
+                        <div
+                          className="training-attendance-actions"
+                          role="group"
+                          aria-label={`Attendance for ${i.title}`}
+                        >
+                          {(presentation.canAttend ||
+                            i.attendance === "attended") && (
+                            <button
+                              disabled={paused || i.attendance === "attended"}
+                              aria-pressed={i.attendance === "attended"}
+                              onClick={() => attendance(i, "attended")}
+                            >
+                              {i.attendance === "attended" && (
+                                <Check size={16} aria-hidden="true" />
+                              )}
+                              {i.attendance === "attended"
+                                ? "Attended"
+                                : "I attended"}
+                            </button>
+                          )}
+                          <button
+                            className="training-attendance-skipped"
+                            disabled={paused || i.attendance === "skipped"}
+                            aria-pressed={i.attendance === "skipped"}
+                            onClick={() => attendance(i, "skipped")}
+                          >
+                            {i.attendance === "skipped" && (
+                              <Check size={16} aria-hidden="true" />
+                            )}
+                            Skipped
+                          </button>
+                          {i.attendance !== "planned" && (
+                            <button
+                              disabled={paused}
+                              onClick={() => attendance(i, "planned")}
+                            >
+                              Clear attendance
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      {i.source !== "request" &&
+                        i.state !== "time-unavailable" && (
+                          <button
+                            disabled={paused}
+                            onClick={() => setEditor({ item: i })}
+                          >
+                            {i.source === "personal"
+                              ? "Edit workout / log"
+                              : "Edit personal log"}
+                          </button>
+                        )}
+                      {presentation.canCancel && (
+                        <button
+                          disabled={paused}
+                          onClick={() => attendance(i, "cancelled")}
+                        >
+                          Cancel workout
+                        </button>
+                      )}
+                      {i.seriesId &&
+                        Date.parse(i.startsAt) > Date.parse(page.now) && (
+                          <button
+                            disabled={paused}
+                            onClick={() => setEditor({ item: i, series: true })}
+                          >
+                            Edit future series
+                          </button>
+                        )}
+                      {i.href && (
+                        <Link href={i.href}>
+                          View{" "}
+                          {i.source === "group"
+                            ? "group session"
+                            : "booking details"}
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </section>
+        ))}
         {page.next !== null && (
           <div className="training-more">
             <p>
@@ -317,165 +537,6 @@ export function TrainingCalendar({
             </button>
           </div>
         )}
-      </section>
-      <section className="training-agenda" id="training-agenda" tabIndex={-1}>
-        <div className="training-agenda-heading">
-          <h2>
-            {new Intl.DateTimeFormat("en-GB", {
-              dateStyle: "full",
-              timeZone: "UTC",
-            }).format(new Date(`${day}T12:00:00Z`))}
-          </h2>
-          <span>{timezone}</span>
-        </div>
-        {!agenda.length && (
-          <div className="training-empty">
-            <h3>Room to move.</h3>
-            <p>
-              No training loaded for this day.{" "}
-              <Link href="/sessions/routine">Plan your routine</Link>, log a
-              workout, or enjoy a rest day.
-            </p>
-          </div>
-        )}
-        {agenda.map((i) => {
-          const presentation = calendarItemPresentation(i, page.now);
-          return (
-            <article
-              className={`training-agenda-item${presentation.cancelled ? " training-agenda-item-cancelled" : ""}`}
-              key={i.key}
-            >
-              <div className="training-agenda-time">{time(i)}</div>
-              <div className="training-agenda-copy">
-                <span className="eyebrow">
-                  {i.source === "personal"
-                    ? "YOUR WORKOUT"
-                    : i.source === "booking"
-                      ? "PRIVATE SESSION"
-                      : i.source === "group"
-                        ? "GROUP SESSION"
-                        : "BOOKING REQUEST"}
-                </span>
-                <h3>{i.title}</h3>
-                <p
-                  className={
-                    presentation.cancelled
-                      ? "training-status-cancelled"
-                      : undefined
-                  }
-                >
-                  {presentation.summary}
-                </p>
-                {presentation.previousAttendance && (
-                  <p>{presentation.previousAttendance}</p>
-                )}
-                {i.location && <p>{i.location}</p>}
-                {i.notes && <p className="training-notes">{i.notes}</p>}
-                <VideoLinks videos={i.videos ?? []} />
-                {(i.intensity || i.actualMinutes) && (
-                  <p>
-                    {i.intensity ?? "Actual duration"}
-                    {i.actualMinutes ? ` · ${i.actualMinutes} minutes` : ""}
-                  </p>
-                )}
-                <div className="training-item-actions">
-                  {i.source === "personal" &&
-                    i.state === "time-unavailable" && (
-                      <>
-                        <p>
-                          This local time is unavailable because the clocks
-                          change. Choose another time.
-                        </p>
-                        <button
-                          disabled={paused}
-                          onClick={() => setEditor({ item: i })}
-                        >
-                          Choose workout time
-                        </button>
-                      </>
-                    )}
-                  {presentation.canSetAttendance && (
-                    <div
-                      className="training-attendance-actions"
-                      role="group"
-                      aria-label={`Attendance for ${i.title}`}
-                    >
-                      {(presentation.canAttend ||
-                        i.attendance === "attended") && (
-                        <button
-                          disabled={paused || i.attendance === "attended"}
-                          aria-pressed={i.attendance === "attended"}
-                          onClick={() => attendance(i, "attended")}
-                        >
-                          {i.attendance === "attended" && (
-                            <Check size={16} aria-hidden="true" />
-                          )}
-                          {i.attendance === "attended"
-                            ? "Attended"
-                            : "I attended"}
-                        </button>
-                      )}
-                      <button
-                        className="training-attendance-skipped"
-                        disabled={paused || i.attendance === "skipped"}
-                        aria-pressed={i.attendance === "skipped"}
-                        onClick={() => attendance(i, "skipped")}
-                      >
-                        {i.attendance === "skipped" && (
-                          <Check size={16} aria-hidden="true" />
-                        )}
-                        Skipped
-                      </button>
-                      {i.attendance !== "planned" && (
-                        <button
-                          disabled={paused}
-                          onClick={() => attendance(i, "planned")}
-                        >
-                          Clear attendance
-                        </button>
-                      )}
-                    </div>
-                  )}
-                  {i.source !== "request" && i.state !== "time-unavailable" && (
-                    <button
-                      disabled={paused}
-                      onClick={() => setEditor({ item: i })}
-                    >
-                      {i.source === "personal"
-                        ? "Edit workout / log"
-                        : "Edit personal log"}
-                    </button>
-                  )}
-                  {presentation.canCancel && (
-                    <button
-                      disabled={paused}
-                      onClick={() => attendance(i, "cancelled")}
-                    >
-                      Cancel workout
-                    </button>
-                  )}
-                  {i.seriesId &&
-                    Date.parse(i.startsAt) > Date.parse(page.now) && (
-                      <button
-                        disabled={paused}
-                        onClick={() => setEditor({ item: i, series: true })}
-                      >
-                        Edit future series
-                      </button>
-                    )}
-                  {i.href && (
-                    <Link href={i.href}>
-                      View{" "}
-                      {i.source === "group"
-                        ? "group session"
-                        : "booking details"}
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </article>
-          );
-        })}
       </section>
       {editor && (
         <WorkoutEditor

@@ -240,7 +240,9 @@ return <main className="training-page">{active?.startsWith("coach-")
           ? items
               .filter(
                 (i) =>
-                  i.startsAt.slice(0, 10) >= c.args.from &&
+                  new Date(Date.parse(i.endsAt) - 1)
+                    .toISOString()
+                    .slice(0, 10) >= c.args.from &&
                   i.startsAt.slice(0, 10) <= c.args.through,
               )
               .sort(
@@ -1055,6 +1057,144 @@ return <main className="training-page">{active?.startsWith("coach-")
         attendance: "planned",
       },
     );
+    // MOV-219: all dates in the selected week are visible before day selection.
+    await page.goto(base + "/sessions/calendar?date=2026-10-28");
+    await expect(
+      page.getByRole("heading", { name: "Training for the week", exact: true }),
+    ).toBeVisible();
+    for (const fixture of cancelledFixtures)
+      await expect(
+        page.getByRole("heading", { name: fixture.title, exact: true }),
+      ).toBeVisible();
+    await expect(page.locator(".training-agenda-day")).toHaveCount(3);
+    await expect(page.locator(".training-agenda-day").first()).toContainText(
+      "Monday, 26 October 2026",
+    );
+    await page.locator(".training-day-heading").nth(1).click();
+    await expect(page).toHaveURL(/date=2026-10-27/);
+    for (const fixture of cancelledFixtures)
+      await expect(
+        page.getByRole("heading", { name: fixture.title, exact: true }),
+      ).toBeVisible();
+    const sourceCard = page
+      .locator(".training-event")
+      .filter({ hasText: "Cancelled group fixture" });
+    await sourceCard.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#training-agenda-day-2026-10-27")).toBeFocused();
+    await page.getByRole("link", { name: "Next period", exact: true }).click();
+    await expect(
+      page.getByText("No training loaded for this week.", { exact: false }),
+    ).toBeVisible();
+    await expect(page.locator(".training-agenda-item")).toHaveCount(0);
+    await page.goBack();
+    await expect(
+      page.getByRole("heading", {
+        name: "Cancelled booking fixture",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await page.goto(base + "/sessions/calendar?date=2026-10-28&view=month");
+    await expect(page.locator(".training-agenda-day")).toHaveCount(3);
+    await page
+      .locator(".training-day-heading")
+      .filter({ hasText: "Tue 3 Nov" })
+      .click();
+    await expect(
+      page.getByText("No training loaded for this week.", { exact: false }),
+    ).toBeVisible();
+    await page
+      .locator(".training-event")
+      .filter({ hasText: "Cancelled group fixture" })
+      .focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#training-agenda-day-2026-10-27")).toBeFocused();
+    await expect(
+      page.getByRole("heading", {
+        name: "Cancelled booking fixture",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(page).toHaveURL(/#training-agenda-day-2026-10-27$/);
+    await page.reload();
+    await expect(page.locator("#training-agenda-day-2026-10-27")).toBeFocused();
+    const weeklyItems = [...items];
+    const bulkTemplate = items.find((i) => i.key === "future:personal");
+    for (let n = 0; n < 100; n++)
+      items.push({
+        ...bulkTemplate,
+        key: `weekly:bulk:${n}`,
+        title: `Earlier-week loaded ${n}`,
+      });
+    items.push({
+      ...bulkTemplate,
+      key: "weekly:later",
+      title: "Next-week paged fixture",
+      startsAt: "2026-11-03T09:00:00Z",
+      endsAt: "2026-11-03T10:00:00Z",
+    });
+    await page.goto(base + "/sessions/calendar?date=2026-11-03&view=month");
+    await expect(
+      page.getByRole("heading", { name: "More training to load", exact: true }),
+    ).toBeVisible();
+    await expect(page.locator(".training-agenda-item")).toHaveCount(0);
+    await expect(page.locator(".training-agenda-notice")).toContainText(
+      "Showing loaded training",
+    );
+    failList = 1;
+    await page
+      .getByRole("button", { name: "Load more training", exact: true })
+      .click();
+    await expect(page.locator(".training-error")).toContainText(
+      "Could not load more",
+    );
+    await expect(
+      page.getByRole("heading", { name: "More training to load", exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Load more training", exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", {
+        name: "Next-week paged fixture",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(page.locator(".training-agenda-notice")).toHaveCount(0);
+    await expect(page.locator(".training-error")).toHaveCount(0);
+    items.splice(0, items.length, ...weeklyItems);
+    const overnight = {
+      ...items.find((i) => i.key === "future:personal"),
+      key: "weekly:overnight",
+      title: "Overnight weekly fixture",
+      startsAt: "2026-10-25T23:30:00Z",
+      endsAt: "2026-10-26T00:30:00Z",
+    };
+    items.push(overnight);
+    await page.goto(
+      base + "/sessions/calendar?date=2026-10-28&selected=weekly%3Aovernight",
+    );
+    await expect(page.locator(".training-agenda-heading")).toContainText(
+      "Monday, 26 October 2026",
+    );
+    const monday = page.locator("#training-agenda-day-2026-10-26");
+    await expect(
+      monday.getByRole("heading", { name: overnight.title, exact: true }),
+    ).toBeVisible();
+    await expect(
+      monday.getByText("Continues from Sunday, 25 October 2026", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await page.screenshot({
+      path: path.join(evidence, `weekly-agenda-${width}.png`),
+      fullPage: true,
+    });
+    items.splice(items.indexOf(overnight), 1);
+    await page.goto(base + "/sessions/calendar?date=2026-10-28");
+    checks.push(
+      `${width}px full selected-week history on entry, chronological date groups, within-week click keeps all sessions, source-card keyboard focus, next-week empty/Back, Month selected week and cross-week focus, overnight carry-in`,
+    );
     const mutationsBeforeHistory = requests.filter(
       (c) => c.action !== "list",
     ).length;
@@ -1281,6 +1421,9 @@ return <main className="training-page">{active?.startsWith("coach-")
         exact: false,
       }),
     ).toBeVisible();
+    await expect(page.locator(".training-agenda-notice")).toContainText(
+      "Showing loaded training",
+    );
     failList = 1;
     await page
       .getByRole("button", { name: "Load more training", exact: true })
@@ -1297,6 +1440,7 @@ return <main className="training-page">{active?.startsWith("coach-")
     ).toHaveCount(0);
     await expect(page.locator(".training-error")).toHaveCount(0);
     await expect(page.locator(".training-agenda-item")).toHaveCount(103);
+    await expect(page.locator(".training-agenda-notice")).toHaveCount(0);
     assert.equal(
       requests.findLast((c) => c.action === "list").args.offset,
       100,

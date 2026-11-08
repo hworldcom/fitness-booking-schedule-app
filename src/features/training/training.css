@@ -154,7 +154,7 @@
   border-left-color: #929089;
 }
 .training-event-cancelled strong,
-.training-agenda-item-cancelled h3 {
+.training-agenda-item-cancelled h4 {
   text-decoration: line-through;
 }
 .training-agenda-copy .training-status-cancelled {
@@ -182,6 +182,25 @@
   font-size: 13px;
   color: #686459;
 }
+.training-agenda-heading p,
+.training-agenda-notice {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #65635c;
+  overflow-wrap: anywhere;
+}
+.training-agenda-day {
+  margin-top: 28px;
+  scroll-margin-top: 24px;
+}
+.training-agenda-day > h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+.training-agenda-day:focus-visible {
+  outline: 3px solid #725a91;
+  outline-offset: 4px;
+}
 .training-agenda-item {
   display: flex;
   gap: 24px;
@@ -196,7 +215,7 @@
   min-width: 0;
   flex: 1;
 }
-.training-agenda-copy h3 {
+.training-agenda-copy h4 {
   font-size: 20px;
   margin: 8px 0;
   overflow-wrap: anywhere;
