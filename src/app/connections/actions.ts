@@ -16,17 +16,20 @@ import {
   sendCoachAthleteConnection,
 } from "@/server/connections/service";
 import {
-  CONNECTION_SECTIONS,
+  connectionSectionsForView,
+  isConnectionListView,
+  UNAVAILABLE_CONNECTION_PAGES,
   type ConnectionPages,
 } from "@/features/connections/connection-model";
 
 export async function loadConnectionPagesAction(
   role: unknown = "coach",
+  view: unknown = "all",
 ): Promise<ConnectionPages> {
-  if (!isConnectionRole(role))
+  if (!isConnectionRole(role) || !isConnectionListView(view))
     return { accepted: null, incoming: null, outgoing: null, history: null };
   const results = await Promise.all(
-    CONNECTION_SECTIONS.map(async (section) => {
+    connectionSectionsForView(view).map(async (section) => {
       const result = await currentConnectionPage(role, section);
       return [
         section,
@@ -34,7 +37,10 @@ export async function loadConnectionPagesAction(
       ] as const;
     }),
   );
-  return Object.fromEntries(results) as ConnectionPages;
+  return {
+    ...UNAVAILABLE_CONNECTION_PAGES,
+    ...Object.fromEntries(results),
+  } as ConnectionPages;
 }
 
 export async function loadBookingConnectionContextAction(bookingId: string) {

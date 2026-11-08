@@ -100,6 +100,14 @@ Run `node scripts/rehearse-wellness-database.mjs` with locked dependencies and t
 
 Install reviewed SQL before the category consumers using the existing target-specific backup/restore/rollback procedure; source edits and scratch checks do not install it on retained environments. After Wellness records exist, old consumers may reject those projections. Keep the additive SQL and use compatible consumers or a reviewed forward correction; do not delete or retag owner data to roll back.
 
+## Coach Bookings pending count (MOV-208)
+
+Install `20261108000100_coach_pending_request_count.sql` before the Bookings-tab consumer. The additive runtime-only `app.current_owned_pending_coach_booking_request_count()` returns one exact owner/dataset scalar for future pending requests across all pages; it does not reconcile expired requests, change rows or create notification receipts. Browser/service roles gain no schema/execute access, and runtime keeps no direct table access. A failed or actor-mismatched read displays unavailable rather than zero. Source rollback can retain this additive function and all later user data.
+
+Run `node scripts/rehearse-coach-pending-count-database.mjs` with the configured local Docker project and Node24. It creates exact uniquely named fresh/upgrade databases, applies canonical migrations and synthetic fixtures only there, tests counts beyond page limits and authority/read-only contracts, removes its owned databases and verifies retained application/Auth-user/Storage rows and role credentials. Retained local installation additionally requires a private full backup, verified owned restore, SQL-plus-verbatim-ledger rollback rehearsal and exact preservation checks; normal startup must never seed/reset existing data. Hosted installation/release remains a separate operation under the recovery procedures below.
+
+Retained local checkpoint (8 November 2026): MOV-208 installed only this forward migration with its verbatim ledger source after private backup, exact owned restore and SQL-plus-ledger rollback proof. Local now has 57 canonical versions; all 90 original application/Auth-user/Storage table fingerprints, existing function/table authority, role credentials and nine Storage file hashes were preserved. Normal startup then applied no pending migration and performed no demo provisioning. Hosted targets remain unchanged; the live issue owns private backup/runtime verification evidence.
+
 ## Local email Auth
 
 Normal `npm run dev` already prepares the Auth-enabled services and restricted login. If you previously selected the database-only profile, switch to the Auth-enabled profile before rehearsing sign-in:

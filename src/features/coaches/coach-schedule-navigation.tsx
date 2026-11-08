@@ -6,7 +6,7 @@ export function CoachScheduleNavigation({
   active,
   date,
 }: {
-  active: "calendar" | "availability" | "session-types" | "new-booking";
+  active: "calendar" | "availability" | "session-types";
   date: string;
 }) {
   return (
@@ -37,12 +37,6 @@ export function CoachScheduleNavigation({
         href="/coach/session-types"
       >
         <SlidersHorizontal size={16} /> Session types
-      </Link>
-      <Link
-        aria-current={active === "new-booking" ? "page" : undefined}
-        href="/coach/bookings/new"
-      >
-        Schedule a client
       </Link>
     </nav>
   );

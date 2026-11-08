@@ -91,12 +91,8 @@ const SUSPENDED_ACCESS: CoachAccessProjection = Object.freeze({
   verificationPolicyVersion: "movx-identity-application-v1",
 });
 
-test("all four Schedule routes select Schedule without stealing booking details", () => {
-  for (const path of [
-    "/coach",
-    "/coach/session-types",
-    "/coach/bookings/new",
-  ]) {
+test("Calendar routes select Calendar and client scheduling selects Bookings", () => {
+  for (const path of ["/coach", "/coach/session-types"]) {
     assert.equal(selectedCoachWorkspaceDestination(path, []), "schedule");
     const html = renderToStaticMarkup(
       createElement(WorkspaceNavigationItems, {
@@ -108,6 +104,10 @@ test("all four Schedule routes select Schedule without stealing booking details"
     assert.equal((html.match(/aria-current="page"/g) ?? []).length, 1);
     assert.match(html, /aria-current="page" href="\/coach"/);
   }
+  assert.equal(
+    selectedCoachWorkspaceDestination("/coach/bookings/new", []),
+    "bookings",
+  );
   assert.equal(
     selectedCoachWorkspaceDestination("/coach", ["schedule"]),
     "schedule",

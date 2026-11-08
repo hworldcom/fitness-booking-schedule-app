@@ -33,6 +33,8 @@ import { ConnectionLists } from "./connection-lists";
 import { ConnectionHistory } from "./connection-history";
 import {
   applyConnectionResult,
+  connectionSectionsForView,
+  type ConnectionListView,
   connectionReadMessage,
   freshConnectionRange,
   UNAVAILABLE_CONNECTION_PAGES,
@@ -70,6 +72,8 @@ export function ConnectionWorkspace({
   mayInitiate,
   view = "all",
   headingActions,
+  connectionView = "all",
+  connectionHeadingLevel,
 }: {
   role?: ConnectionRole;
   bookings: readonly PrivateBookingProjection[] | null;
@@ -79,6 +83,8 @@ export function ConnectionWorkspace({
   mayInitiate: boolean;
   view?: "all" | "sessions" | "connections";
   headingActions?: ReactNode;
+  connectionView?: ConnectionListView;
+  connectionHeadingLevel?: 1 | 2;
 }) {
   const router = useRouter();
   const [local, setLocal] = useState<{
@@ -139,7 +145,7 @@ export function ConnectionWorkspace({
     });
   }
   async function refreshPages() {
-    const next = await loadConnectionPagesAction(role);
+    const next = await loadConnectionPagesAction(role, connectionView);
     setLocal({ source: sourceVersion, pages: next });
     return next;
   }
@@ -151,8 +157,14 @@ export function ConnectionWorkspace({
       setLocal({ source: sourceVersion, pages: UNAVAILABLE_CONNECTION_PAGES });
       const next = await refreshPages();
       message(
-        Object.values(next).every(Boolean) ? "saved" : "unavailable",
-        Object.values(next).every(Boolean)
+        connectionSectionsForView(connectionView).every(
+          (section) => next[section] !== null,
+        )
+          ? "saved"
+          : "unavailable",
+        connectionSectionsForView(connectionView).every(
+          (section) => next[section] !== null,
+        )
           ? "Connections updated."
           : "Some connections could not be verified. Retry the affected list.",
       );
@@ -333,7 +345,10 @@ export function ConnectionWorkspace({
       {view !== "sessions" && (
         <ConnectionLists
           role={role}
-          headingLevel={view === "connections" ? 1 : 2}
+          headingLevel={
+            connectionHeadingLevel ?? (view === "connections" ? 1 : 2)
+          }
+          view={connectionView}
           headingActions={headingActions}
           pages={pages}
           busy={busy}

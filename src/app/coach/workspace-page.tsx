@@ -1,3 +1,5 @@
+import { CoachBookingsNavigation } from "@/features/coaches/coach-bookings-navigation";
+import { currentOwnedCoachPendingRequestCount } from "@/server/coaches/booking-request-service";
 import "server-only";
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -8,17 +10,20 @@ import { currentCoachAvailabilityWorkspace } from "@/server/coaches/service";
 import { CoachApplicationGate } from "@/features/coaches/coach-application-gate";
 import { CoachWorkspaceFrame } from "@/features/coaches/coach-workspace-frame";
 import { CoachScheduleNavigation } from "@/features/coaches/coach-schedule-navigation";
-import { CoachScheduleOwnerBoundary } from "@/features/coaches/coach-schedule-owner-boundary";
+import { CoachWorkspaceOwnerBoundary } from "@/features/coaches/coach-workspace-owner-boundary";
 
-export async function CoachSchedulePage({
+export async function CoachWorkspacePage({
   active,
+  area,
   returnHref,
   children,
 }: {
-  active: "session-types" | "new-booking";
   returnHref: string;
   children: ReactNode;
-}) {
+} & (
+  | { area: "calendar"; active: "session-types" }
+  | { area: "bookings"; active: "new-booking" }
+)) {
   const state = await currentCoachAvailabilityWorkspace(false);
   if (state.status !== "authorized") {
     if (state.status === "signed-out") redirect(signInHref(returnHref));
@@ -29,7 +34,7 @@ export async function CoachSchedulePage({
         <span className="eyebrow">COACH WORKSPACE</span>
         <h1>
           {state.status === "preview"
-            ? "Sign in to manage your coach schedule."
+            ? "Sign in to manage your coach workspace."
             : "We couldn’t verify your coach workspace right now."}
         </h1>
         <p>No coach or scheduling data was shown.</p>
@@ -46,8 +51,12 @@ export async function CoachSchedulePage({
   }
   if (!["approved", "demo"].includes(state.coachAccess.status))
     return <CoachApplicationGate access={state.coachAccess} />;
+  const pendingCount =
+    area === "bookings"
+      ? await currentOwnedCoachPendingRequestCount(state.actorScope)
+      : null;
   return (
-    <CoachScheduleOwnerBoundary
+    <CoachWorkspaceOwnerBoundary
       scope={state.actorScope}
       actorIdentity={state.actorIdentity}
       returnHref={returnHref}
@@ -56,12 +65,20 @@ export async function CoachSchedulePage({
         coach={state.coach}
         ownerDisplayName={state.ownerDisplayName}
       >
-        <CoachScheduleNavigation
-          active={active}
-          date={berlinAvailabilityDate(new Date())}
-        />
+        {area === "bookings" ? (
+          <CoachBookingsNavigation
+            active={active}
+            pendingCount={pendingCount}
+            newBookingHref={returnHref}
+          />
+        ) : (
+          <CoachScheduleNavigation
+            active={active}
+            date={berlinAvailabilityDate(new Date())}
+          />
+        )}
         {children}
       </CoachWorkspaceFrame>
-    </CoachScheduleOwnerBoundary>
+    </CoachWorkspaceOwnerBoundary>
   );
 }

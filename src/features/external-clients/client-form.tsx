@@ -47,7 +47,7 @@ export function ClientForm({
       if (r.status === "ready") {
         setCommand(null);
         onPendingChange?.(false);
-        setMessage("Client saved.");
+        setMessage("Athlete saved.");
         if (!client) {
           setName("");
           setEmail("");
@@ -63,8 +63,8 @@ export function ClientForm({
         } else onPendingChange?.(false);
         setMessage(
           r.status === "conflict"
-            ? "This record changed or the email is already in your roster. Keep this draft and reload the current record, or choose the existing client."
-            : "Client could not be saved. Check the fields and your coach access.",
+            ? "This record changed or the email is already in your roster. Keep this draft and reload the current record, or choose the existing athlete."
+            : "Athlete could not be saved. Check the fields and your coach access.",
         );
       } else
         setMessage(
@@ -86,7 +86,7 @@ export function ClientForm({
         void save();
       }}
     >
-      <h2>{client ? "Client details" : "Add an external client"}</h2>
+      <h2>{client ? "Athlete details" : "Add an external athlete"}</h2>
       <p>Start with a name. Add an email when you’re ready to invite them.</p>
       <label>
         Name
@@ -116,18 +116,19 @@ export function ClientForm({
           : command
             ? "Retry exact save"
             : client
-              ? "Save client details"
-              : "Save client"}
+              ? "Save athlete details"
+              : "Save athlete"}
       </button>
       {message && <p role="status">{message}</p>}
       {current && (
-        <aside aria-label="Current saved client">
+        <aside aria-label="Current saved athlete">
           <p>
-            Current saved client: {current.name} · {current.email ?? "No email"}
-            . Your draft remains in the fields above.
+            Current saved athlete: {current.name} ·{" "}
+            {current.email ?? "No email"}. Your draft remains in the fields
+            above.
           </p>
           <a href={`/coach/athletes/external/${current.id}`}>
-            Reload current client details
+            Reload current athlete details
           </a>
         </aside>
       )}

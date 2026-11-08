@@ -12,6 +12,7 @@ import {
   currentClientCoachBookingRequestRecords,
   currentClientPendingCoachBookingRequestRecords,
   currentOwnedCoachBookingRequestRecords,
+  currentOwnedPendingCoachBookingRequestCountRecord,
   declineCoachBookingRequestRecord,
   withdrawCoachBookingRequestRecord,
 } from "@/server/db/coaches/booking-request-repository";
@@ -28,6 +29,22 @@ type RequestPageOptions = Readonly<{
   pageSize?: number;
   cursor?: CoachBookingRequestPageCursor | null;
 }>;
+
+export async function currentOwnedCoachPendingRequestCount(
+  expectedScope: string,
+) {
+  const result = await withAuthorizedActor(async (transaction, actor) => {
+    const scope = [
+      actor.authUserId,
+      actor.profileId,
+      actor.runId,
+      actor.runRole,
+    ].join(":");
+    if (scope !== expectedScope) throw new Error("Coach workspace changed");
+    return currentOwnedPendingCoachBookingRequestCountRecord(transaction);
+  });
+  return result.status === "authorized" ? result.value : null;
+}
 
 async function mutateRequest<T>(
   work: Parameters<typeof withAuthorizedActor<T>>[0],

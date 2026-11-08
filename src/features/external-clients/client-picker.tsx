@@ -60,11 +60,11 @@ export function ExternalClientPicker({
           }));
         else
           setMessage(
-            "This external client could not be selected. Choose a current client.",
+            "This external athlete could not be selected. Choose a current athlete.",
           );
       })
       .catch(() => {
-        if (active) setMessage("Client could not be loaded. Try reloading.");
+        if (active) setMessage("Athlete could not be loaded. Try reloading.");
       });
     return () => {
       active = false;
@@ -87,7 +87,7 @@ export function ExternalClientPicker({
         next: r.page.next,
       }));
     } catch {
-      setMessage("More clients could not be loaded. Try again.");
+      setMessage("More athletes could not be loaded. Try again.");
     } finally {
       setBusy(false);
     }
@@ -101,27 +101,27 @@ export function ExternalClientPicker({
     onChange(c.id);
     setAdding(false);
     setMessage(
-      "Client saved. Choose the session details below to book their slot.",
+      "Athlete saved. Choose the session details below to book their slot.",
     );
   }
   return (
     <section
       className="external-client-picker"
-      aria-label="External client selection"
+      aria-label="External athlete selection"
     >
       <div className="session-type-editor external-client-chooser">
-        <h3>Choose or add an external client</h3>
-        <p>Choose someone you’ve saved, or add a new client below.</p>
+        <h3>Choose or add an external athlete</h3>
+        <p>Choose someone you’ve saved, or add a new athlete below.</p>
         <label>
-          External client
+          External athlete
           <select
             ref={selection}
-            aria-label="External client"
+            aria-label="External athlete"
             value={value}
             disabled={disabled || busy || creating}
             onChange={(e) => onChange(e.target.value)}
           >
-            <option value="">Choose a saved client</option>
+            <option value="">Choose a saved athlete</option>
             {page.items.map((c) => (
               <option value={c.id} key={c.id}>
                 {c.name}
@@ -138,7 +138,7 @@ export function ExternalClientPicker({
               disabled={disabled || busy || creating}
               onClick={() => void more()}
             >
-              {busy ? "Loading clients…" : "Load more clients"}
+              {busy ? "Loading athletes…" : "Load more athletes"}
             </button>
           )}
           <button
@@ -158,7 +158,7 @@ export function ExternalClientPicker({
             ) : (
               <Plus size={18} aria-hidden="true" />
             )}
-            {adding ? "Close new client form" : "Add a new external client"}
+            {adding ? "Close new athlete form" : "Add a new external athlete"}
           </button>
           <Link
             className="button secondary"
@@ -169,12 +169,13 @@ export function ExternalClientPicker({
               if (navigationBlocked) event.preventDefault();
             }}
           >
-            <UsersRound size={18} aria-hidden="true" /> Manage external clients
+            <UsersRound size={18} aria-hidden="true" /> Manage external athletes
           </Link>
         </div>
         {page.items.length === 0 && !page.next && (
           <p>
-            No saved external clients yet. Add your first client to get started.
+            No saved external athletes yet. Add your first athlete to get
+            started.
           </p>
         )}
         <p>

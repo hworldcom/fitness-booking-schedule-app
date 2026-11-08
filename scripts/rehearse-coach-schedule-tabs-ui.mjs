@@ -103,6 +103,46 @@ try {
   `,
   );
   await writeFile(
+    path.join(checkout, "src/tests-fixtures/booking-services.ts"),
+    `
+    import {cookies} from "next/headers";
+    import {fixtureScenario} from "./schedule-auth";
+    const id="20800000-0000-4000-8000-000000000001";
+    export async function currentOwnedCoachPendingRequestCount(){const {fault}=await fixtureScenario();return fault==="count-unavailable"?null:Number((await cookies()).get("mov208-count")?.value??55);}
+    export async function currentPrivateBookingWorkspace(){return {status:"authorized",coachBookings:[]};}
+    export async function currentOwnedCoachBookingRequestPage(){const jar=await cookies(),{fault}=await fixtureScenario();if(fault==="queue-unavailable")return {status:"unavailable"};return {status:"authorized",page:{items:jar.has("mov208-decided")?[]:[{id,slotId:id,clientProfileId:id,clientDisplayName:"Request fixture athlete",clientAvatarUrl:null,status:"pending",scheduledStartAt:"2035-01-01T10:00:00Z",scheduledEndAt:"2035-01-01T11:00:00Z",coachTimezone:"Europe/Berlin",location:{name:"Fixture studio",kind:"independent",gymName:null,publicLabel:"Fixture studio",trainingLocationId:null},decisionDeadlineAt:"2034-12-31T10:00:00Z",createdAt:"2034-12-01T10:00:00Z",updatedAt:"2034-12-01T10:00:00Z",decidedAt:null,acceptedBookingId:null}],nextCursor:null}};}
+    async function decide(){const jar=await cookies();jar.set("mov208-count","54");jar.set("mov208-decided","yes");}
+    export async function declineCoachBookingRequest(requestId:string){await decide();return {status:"authorized",outcome:"saved",value:{requestId,status:"declined",bookingId:null}};}
+    export async function acceptCoachBookingRequest(requestId:string){await decide();return {status:"authorized",outcome:"saved",value:{requestId,status:"accepted",bookingId:id}};}
+    export async function closeCoachBookingRequestOccurrence(){await decide();return {status:"authorized",outcome:"saved",value:"withdrawn"};}
+    export async function currentClientCoachBookingRequestPage(){throw Error("Not rehearsed");}
+    export async function createCoachBookingRequest(){throw Error("Not rehearsed");}
+    export async function withdrawCoachBookingRequest(){throw Error("Not rehearsed");}
+    export async function cancelDirectPrivateBooking(){throw Error("Not rehearsed");}
+    export async function completeDirectPrivateBooking(){throw Error("Not rehearsed");}
+  `,
+  );
+  await writeFile(
+    path.join(checkout, "src/tests-fixtures/connection-services.ts"),
+    `
+    import {cookies} from "next/headers";
+    import {fixtureScenario} from "./schedule-auth";
+    const uuid=(n:number)=>"21000000-0000-4000-8000-"+String(n).padStart(12,"0");
+    async function rows(){const jar=await cookies(),scenario=await fixtureScenario();const prefix=scenario.actor==="other"?"Other account ":scenario.actor==="dataset"?"Other dataset ":"";
+      const row=(n:number,status:string,label:string)=>({id:uuid(n),pairId:uuid(n+100),attemptNumber:1,coachProfileId:uuid(500),athleteProfileId:uuid(n+600),senderProfileId:uuid(n+600),recipientProfileId:uuid(500),status,createdAt:"2026-11-01T10:00:00Z",updatedAt:"2026-11-01T10:00:00Z",decidedAt:status==="pending"?null:"2026-11-01T11:00:00Z",removedAt:null,coachDisplayName:"Fixture coach",athleteDisplayName:prefix+label,coachSlug:"fixture-coach",coachPublic:true,coachPortraitUrl:null,athleteAvatarUrl:null,canAccept:status==="pending",canDecline:status==="pending",canWithdraw:false,canDisconnect:status==="accepted"});
+      const decision=jar.get("mov210-incoming")?.value;
+      const accepted=jar.has("mov210-disconnected")?[]:[row(1,"accepted","Connected fixture athlete")];
+      if(decision==="accept")accepted.push(row(11,"accepted","Incoming fixture athlete"));
+      return {accepted,incoming:decision?[]:[row(11,"pending","Incoming fixture athlete")],outgoing:jar.has("mov210-withdrawn")?[]:[{...row(12,"pending","Outgoing fixture athlete"),senderProfileId:uuid(500),recipientProfileId:uuid(612),canAccept:false,canDecline:false,canWithdraw:true}],history:[row(13,"declined","Previous fixture athlete")],row};
+    }
+    export async function currentConnectionPage(role:any,section:any,options:any={}){const {fault}=await fixtureScenario();if(fault==="connections-unavailable"||(fault==="incoming-unavailable"&&section==="incoming")||(fault==="connection-page-unavailable"&&options.cursor))return {status:"unavailable"};const all=await rows();if(section==="accepted"&&options.cursor)return {status:"ready",value:{items:[all.row(2,"accepted","Older connected athlete")],nextCursor:null}};return {status:"ready",value:{items:all[section as keyof typeof all],nextCursor:section==="accepted"?{createdAt:"2026-11-01T10:00:00Z",id:uuid(1)}:null}};}
+    export async function decideCoachAthleteConnection(id:string,action:string){const {fault}=await fixtureScenario();if(fault==="connection-mutation-unavailable")return {status:"unavailable"};const jar=await cookies();if(action==="disconnect")jar.set("mov210-disconnected","yes");else if(action==="withdraw")jar.set("mov210-withdrawn","yes");else jar.set("mov210-incoming",action);const data=await rows();return {status:"ready",value:data.row(id===uuid(1)?1:id===uuid(12)?12:11,action==="accept"?"accepted":action==="disconnect"?"removed":action==="withdraw"?"withdrawn":"declined","Incoming fixture athlete")};}
+    export async function sendCoachAthleteConnection(){throw Error("Not rehearsed");}
+    export async function currentConnectionHistory(){return {status:"ready",value:{items:[],nextCursor:null}};}
+    export async function currentBookingConnectionContext(){return {status:"unavailable"};}
+  `,
+  );
+  await writeFile(
     path.join(checkout, "src/tests-fixtures/schedule-controls.tsx"),
     `"use client";
     import{useAuthSession}from"@/auth/client/session-provider";import{useActor}from"@/auth/client/actor-provider";
@@ -133,7 +173,10 @@ try {
   );
   for (const name of [
     "src/app/coach/page.tsx",
-    "src/app/coach/schedule-page.tsx",
+    "src/app/coach/workspace-page.tsx",
+    "src/app/coach-marketplace-actions.ts",
+    "src/app/coach/athletes/page.tsx",
+    "src/app/connections/actions.ts",
   ]) {
     const file = path.join(checkout, name);
     const source = (await readFile(file, "utf8"))
@@ -146,10 +189,24 @@ try {
         'from "@/tests-fixtures/schedule-services"',
       )
       .replaceAll(
+        'from "@/server/coaches/booking-request-service"',
+        'from "@/tests-fixtures/booking-services"',
+      )
+      .replaceAll(
+        'from "@/server/coaches/booking-service"',
+        'from "@/tests-fixtures/booking-services"',
+      )
+      .replaceAll(
         'from "@/server/coaches/calendar-service"',
         'from "@/tests-fixtures/schedule-services"',
       );
-    await writeFile(file, source);
+    await writeFile(
+      file,
+      source.replaceAll(
+        'from "@/server/connections/service"',
+        'from "@/tests-fixtures/connection-services"',
+      ),
+    );
   }
   await writeFile(
     path.join(checkout, "src/app/coach/calendar-actions.ts"),
@@ -212,6 +269,8 @@ try {
   const page = await browser.newPage({
     viewport: { width: 1440, height: 1000 },
   });
+  page.setDefaultNavigationTimeout(60_000);
+  page.setDefaultTimeout(15_000);
   page.on("pageerror", (e) => errors.push(e.message));
   const id = "20400000-0000-4000-8000-000000000001";
   const type = {
@@ -235,6 +294,7 @@ try {
     createdAt: "2026-11-01T12:00:00Z",
     updatedAt: "2026-11-01T12:00:00Z",
   };
+  let rosterMode = "off";
   let failCatalog = false,
     failOptions = false,
     emptyClients = false,
@@ -244,6 +304,34 @@ try {
     const request = route.request(),
       url = new URL(request.url());
     if (url.pathname.startsWith("/api/auth/")) return route.continue();
+    if (
+      url.pathname === "/api/coach/external-clients" &&
+      request.method() === "GET" &&
+      rosterMode !== "off"
+    )
+      return route.fulfill({
+        json:
+          rosterMode === "unavailable"
+            ? { status: "unavailable" }
+            : url.searchParams.has("id")
+              ? {
+                  status: "ready",
+                  detail: {
+                    client,
+                    invitation: null,
+                    sessions: [],
+                    nextOffset: null,
+                  },
+                }
+              : {
+                  status: "ready",
+                  page: {
+                    items: rosterMode === "empty" ? [] : [client],
+                    next: null,
+                  },
+                },
+      });
+
     if (
       url.pathname === "/api/coach/external-clients" &&
       request.method() === "POST"
@@ -307,7 +395,7 @@ try {
     return route.fulfill({ status: 503, json: { status: "unavailable" } });
   });
   const nav = () =>
-    page.getByRole("navigation", { name: "Schedule sections", exact: true });
+    page.getByRole("navigation", { name: /^(Schedule|Bookings) sections$/ });
   const open = (href) => page.goto(base + href, { waitUntil: "networkidle" });
   const cookie = async (actor = "owner", fault = "none") =>
     page.context().addCookies([
@@ -324,92 +412,167 @@ try {
     ["Session types", "/coach/session-types"],
     ["Schedule a client", "/coach/bookings/new"],
   ];
+  const bookingTabs = [
+    ["Booked sessions", "/coach?view=bookings"],
+    ["Booking requests, 55 pending", "/coach?view=bookings&section=requests"],
+    tabs[3],
+  ];
   for (const width of [1440, 375, 320]) {
     await page.setViewportSize({ width, height: 1000 });
-    let reference;
-    await open(tabs[0][1]);
-    for (const [name, href] of tabs) {
-      if (name !== "Schedule") {
-        await nav().getByRole("link", { name, exact: true }).focus();
-        await page.keyboard.press("Enter");
-        await page.waitForURL(base + href);
-      }
-      await expect(nav().locator('[aria-current="page"]')).toHaveCount(1);
-      await expect(
-        nav().getByRole("link", { name, exact: true }),
-      ).toHaveAttribute("aria-current", "page");
-      await expect(
-        page.getByRole("heading", {
-          level: 1,
-          name: "Run your coaching week.",
-        }),
-      ).toBeVisible();
-      assert.equal(await page.locator("main h1").count(), 1);
-      const selected = page
-        .getByRole("navigation", {
-          name: width > 760 ? "Main navigation" : "Mobile navigation",
-          exact: true,
-        })
-        .getByRole("link", { name: "Calendar", exact: true });
-      await expect(selected).toHaveAttribute("aria-current", "page");
-      await expect(selected).toHaveAttribute("href", "/coach");
-      assert.ok(
-        await page.evaluate(
-          () => document.documentElement.scrollWidth <= innerWidth,
-        ),
-      );
-      const frame = await page.locator(".coach-workspace-header").boundingBox(),
-        bar = await nav().boundingBox();
-      assert.ok(frame && bar);
-      if (reference)
-        for (const key of ["x", "y", "width", "height"])
-          assert.ok(
-            Math.abs(frame[key] - reference[key]) < 1,
-            `${width} ${name} header ${key}`,
-          );
-      reference = frame;
-      if (name === "Session types" || name === "Schedule a client") {
-        const content = await page
-          .locator(".schedule-tab-content")
-          .boundingBox();
-        assert.ok(content);
-        assert.ok(Math.abs(content.x - bar.x) < 1);
-        assert.ok(Math.abs(content.width - bar.width) < 1);
-        assert.equal(
-          await page
-            .getByRole("link", { name: /← (Schedule|Bookings)/ })
-            .count(),
-          0,
+    for (const [group, primary] of [
+      [tabs.slice(0, 3), "Calendar"],
+      [bookingTabs, "Bookings"],
+    ]) {
+      let reference;
+      await open(group[0][1]);
+      for (const [index, [name, href]] of group.entries()) {
+        if (index) {
+          await nav().getByRole("link", { name, exact: true }).focus();
+          await page.keyboard.press("Enter");
+          await page.waitForURL(base + href);
+        }
+        await expect(nav().locator('[aria-current="page"]')).toHaveCount(1);
+        await expect(
+          nav().getByRole("link", { name, exact: true }),
+        ).toHaveAttribute("aria-current", "page");
+        assert.equal(await nav().getByRole("link").count(), 3);
+        await expect(
+          page.getByRole("heading", {
+            level: 1,
+            name: "Run your coaching week.",
+          }),
+        ).toBeVisible();
+        assert.equal(await page.locator("main h1").count(), 1);
+        await expect(
+          page
+            .getByRole("navigation", {
+              name: width > 760 ? "Main navigation" : "Mobile navigation",
+              exact: true,
+            })
+            .getByRole("link", { name: primary, exact: true }),
+        ).toHaveAttribute("aria-current", "page");
+        assert.ok(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
         );
+        const frame = await page
+            .locator(".coach-workspace-header")
+            .boundingBox(),
+          bar = await nav().boundingBox();
+        assert.ok(frame && bar);
+        if (reference)
+          for (const key of ["x", "y", "width", "height"])
+            assert.ok(
+              Math.abs(frame[key] - reference[key]) < 1,
+              `${width} ${name} header ${key}`,
+            );
+        reference = frame;
+        if (name === "Booked sessions") {
+          await expect(page.locator("#client-bookings")).toBeVisible();
+          await expect(page.locator("#booking-requests")).toHaveCount(0);
+        }
+        if (name.startsWith("Booking requests")) {
+          await expect(page.locator("#booking-requests")).toBeVisible();
+          await expect(page.locator("#client-bookings")).toHaveCount(0);
+        }
+        await page.screenshot({
+          path: path.join(output, `${width}-${name.replaceAll(" ", "-")}.png`),
+          fullPage: true,
+        });
       }
-      await page.screenshot({
-        path: path.join(output, `${width}-${name.replaceAll(" ", "-")}.png`),
-        fullPage: true,
-      });
+      await page.goBack({ waitUntil: "networkidle" });
+      await expect(
+        nav().getByRole("link", { name: group[1][0], exact: true }),
+      ).toHaveAttribute("aria-current", "page");
+      await page.goForward({ waitUntil: "networkidle" });
+      await expect(
+        nav().getByRole("link", { name: group[2][0], exact: true }),
+      ).toHaveAttribute("aria-current", "page");
     }
-    await page.goBack({ waitUntil: "networkidle" });
-    await expect(
-      nav().getByRole("link", { name: "Session types", exact: true }),
-    ).toHaveAttribute("aria-current", "page");
-    await page.goForward({ waitUntil: "networkidle" });
-    await expect(
-      nav().getByRole("link", { name: "Schedule a client", exact: true }),
-    ).toHaveAttribute("aria-current", "page");
     record(
-      `${width}px actual four-route frame/alignment/one-H1/keyboard/active-tab/history/overflow`,
+      `${width}px ordered Calendar/Bookings sections, default sessions, one panel, active primary, frame, keyboard, history, overflow`,
     );
   }
+  const occurrence = "20800000-0000-4000-8000-000000000001";
+  for (const href of [
+    `/coach?view=bookings&occurrence=${occurrence}#coach-occurrence-${occurrence}`,
+    `/coach?view=bookings&section=requests&occurrence=${occurrence}#coach-occurrence-${occurrence}`,
+    "/coach?view=bookings#booking-requests",
+  ]) {
+    await open(href);
+    await expect(page.locator("#booking-requests")).toBeVisible();
+    await expect(
+      nav().getByRole("link", {
+        name: "Booking requests, 55 pending",
+        exact: true,
+      }),
+    ).toHaveAttribute("aria-current", "page");
+  }
+  for (const action of ["Decline", "Accept", "Close occurrence"]) {
+    await page.context().clearCookies({ name: /^mov208-/ });
+    await open(bookingTabs[1][1]);
+    if (action === "Close occurrence")
+      await page
+        .getByRole("button", { name: "Close this occurrence", exact: true })
+        .click();
+    await page.getByRole("button", { name: action, exact: true }).click();
+    await expect(
+      nav().getByRole("link", {
+        name: "Booking requests, 54 pending",
+        exact: true,
+      }),
+    ).toBeVisible();
+  }
+  await page.context().clearCookies({ name: /^mov208-/ });
+  for (const fault of ["count-unavailable", "queue-unavailable"]) {
+    await cookie("owner", fault);
+    await open(bookingTabs[1][1]);
+    if (fault === "count-unavailable")
+      await expect(
+        nav().getByRole("link", {
+          name: "Booking requests, pending count unavailable",
+          exact: true,
+        }),
+      ).toBeVisible();
+    else {
+      await expect(
+        nav().getByRole("link", {
+          name: "Booking requests, 55 pending",
+          exact: true,
+        }),
+      ).toBeVisible();
+      await expect(
+        page.getByText("Your request queue cannot be verified right now.", {
+          exact: true,
+        }),
+      ).toBeVisible();
+    }
+  }
+  await cookie("suspended");
+  await open(bookingTabs[0][1]);
+  await expect(nav()).toBeVisible();
+  await expect(page.locator("#client-bookings")).toBeVisible();
+  await open(bookingTabs[1][1]);
+  await expect(nav()).toBeVisible();
+  await cookie("other");
+  await refresh();
+  await expect(nav()).toHaveCount(0);
+  await cookie();
+  record(
+    "legacy/explicit request links, three decision refreshes, independent read failures, suspended history and owner fencing",
+  );
   for (const [, href] of tabs.slice(2)) {
     await open(href);
     await expect(nav()).toBeVisible();
   }
   await open(`/coach/bookings/new?externalClientId=${id}`);
-  await expect(page.getByLabel("Client type", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("Athlete type", { exact: true })).toHaveValue(
     "external",
   );
-  await expect(page.getByLabel("External client", { exact: true })).toHaveValue(
-    id,
-  );
+  await expect(
+    page.getByLabel("External athlete", { exact: true }),
+  ).toHaveValue(id);
   await page
     .getByRole("button", { name: "Start · Berlin time", exact: true })
     .click();
@@ -426,22 +589,22 @@ try {
   );
   const picker = () =>
     page.getByRole("region", {
-      name: "External client selection",
+      name: "External athlete selection",
       exact: true,
     });
   const addClient = () =>
     picker().getByRole("button", {
-      name: "Add a new external client",
+      name: "Add a new external athlete",
       exact: true,
     });
   const closeClient = () =>
     picker().getByRole("button", {
-      name: "Close new client form",
+      name: "Close new athlete form",
       exact: true,
     });
   const manageClients = () =>
     picker().getByRole("link", {
-      name: "Manage external clients",
+      name: "Manage external athletes",
       exact: true,
     });
   for (const width of [1440, 375, 320]) {
@@ -449,11 +612,11 @@ try {
     emptyClients = true;
     await open(tabs[3][1]);
     await page
-      .getByLabel("Client type", { exact: true })
+      .getByLabel("Athlete type", { exact: true })
       .selectOption("external");
     await expect(
       picker().getByText(
-        "No saved external clients yet. Add your first client to get started.",
+        "No saved external athletes yet. Add your first athlete to get started.",
         { exact: true },
       ),
     ).toBeVisible();
@@ -515,14 +678,14 @@ try {
   await open(`/coach/bookings/new?externalClientId=${id}`);
   await addClient().click();
   await page.getByLabel("Name", { exact: true }).fill("New picker client");
-  await page.getByRole("button", { name: "Save client", exact: true }).click();
+  await page.getByRole("button", { name: "Save athlete", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Retry exact save", exact: true }),
   ).toBeVisible();
   await expect(closeClient()).toBeDisabled();
   await expect(manageClients()).toHaveAttribute("aria-disabled", "true");
   await expect(
-    page.getByLabel("External client", { exact: true }),
+    page.getByLabel("External athlete", { exact: true }),
   ).toBeDisabled();
   const pendingUrl = page.url();
   await manageClients().dispatchEvent("click");
@@ -531,11 +694,11 @@ try {
   await page
     .getByRole("button", { name: "Retry exact save", exact: true })
     .click();
-  await expect(page.getByLabel("External client", { exact: true })).toHaveValue(
-    "20700000-0000-4000-8000-000000000001",
-  );
   await expect(
-    page.getByLabel("External client", { exact: true }),
+    page.getByLabel("External athlete", { exact: true }),
+  ).toHaveValue("20700000-0000-4000-8000-000000000001");
+  await expect(
+    page.getByLabel("External athlete", { exact: true }),
   ).toBeFocused();
   await expect(addClient()).toBeEnabled();
   await expect(manageClients()).not.toHaveAttribute("aria-disabled", "true");
@@ -544,10 +707,10 @@ try {
   moreClients = true;
   await open(`/coach/bookings/new?externalClientId=${id}`);
   await picker()
-    .getByRole("button", { name: "Load more clients", exact: true })
+    .getByRole("button", { name: "Load more athletes", exact: true })
     .click();
   await expect(
-    picker().getByText("More clients could not be loaded. Try again.", {
+    picker().getByText("More athletes could not be loaded. Try again.", {
       exact: true,
     }),
   ).toBeVisible();
@@ -555,7 +718,7 @@ try {
   await expect(manageClients()).toBeVisible();
   moreClients = false;
   record(
-    "external-client unknown save retains exact retry,blocks conflicting navigation,selects saved client; paging errors preserve actions",
+    "external-client unknown save retains exact retry,blocks conflicting navigation,selects saved athlete; paging errors preserve actions",
   );
   failOptions = true;
   await open(tabs[3][1]);
@@ -670,6 +833,249 @@ try {
       page.getByRole("link", { name: "← Bookings", exact: true }),
     ).toBeVisible();
   }
+
+  const athletesNav = () =>
+    page.getByRole("navigation", { name: "My athletes sections", exact: true });
+  const athleteTabs = [
+    ["Connected athletes", "/coach/athletes"],
+    ["External athletes", "/coach/athletes/external"],
+    ["Connection requests", "/coach/athletes?section=requests"],
+  ];
+  rosterMode = "ready";
+  for (const width of [1440, 375, 320]) {
+    await cookie();
+    await page.context().clearCookies({ name: /^mov210-/ });
+    await page.setViewportSize({ width, height: 1000 });
+    await open(athleteTabs[0][1]);
+    let reference;
+    for (const [index, [name, href]] of athleteTabs.entries()) {
+      if (index) {
+        await athletesNav().getByRole("link", { name, exact: true }).focus();
+        await page.keyboard.press("Enter");
+        await page.waitForURL(base + href);
+      }
+      await expect(athletesNav().locator('[aria-current="page"]')).toHaveCount(
+        1,
+      );
+      await expect(
+        athletesNav().getByRole("link", { name, exact: true }),
+      ).toHaveAttribute("aria-current", "page");
+      await expect(
+        page.getByRole("heading", {
+          name: "My athletes",
+          level: 1,
+          exact: true,
+        }),
+      ).toBeVisible();
+      assert.equal(await page.locator("main h1").count(), 1);
+      await expect(
+        page
+          .getByRole("navigation", {
+            name: width > 760 ? "Main navigation" : "Mobile navigation",
+            exact: true,
+          })
+          .getByRole("link", { name: "My athletes", exact: true }),
+      ).toHaveAttribute("aria-current", "page");
+      const frame = await page.locator(".coach-workspace-header").boundingBox();
+      assert.ok(frame);
+      if (reference)
+        for (const key of ["x", "y", "width", "height"])
+          assert.ok(
+            Math.abs(frame[key] - reference[key]) < 1,
+            `${width} ${name} frame ${key}`,
+          );
+      reference = frame;
+      if (index === 0) {
+        await expect(
+          page.getByText("Connected fixture athlete", { exact: true }),
+        ).toBeVisible();
+        await expect(
+          page.getByText("Incoming fixture athlete", { exact: true }),
+        ).toHaveCount(0);
+      }
+      if (index === 1) {
+        await expect(
+          page.getByRole("button", { name: "Save athlete", exact: true }),
+        ).toBeVisible();
+        await expect(page.locator("#my-athletes")).toHaveCount(0);
+      }
+      if (index === 2) {
+        for (const text of [
+          "Incoming fixture athlete",
+          "Outgoing fixture athlete",
+          "Previous fixture athlete",
+        ])
+          await expect(page.getByText(text, { exact: true })).toBeVisible();
+        await expect(
+          page.getByText("Connected fixture athlete", { exact: true }),
+        ).toHaveCount(0);
+      }
+      assert.ok(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      );
+      await page.screenshot({
+        path: path.join(output, `${width}-athletes-${index}.png`),
+        fullPage: true,
+      });
+    }
+    await page.goBack({ waitUntil: "networkidle" });
+    await expect(
+      athletesNav().getByRole("link", {
+        name: "External athletes",
+        exact: true,
+      }),
+    ).toHaveAttribute("aria-current", "page");
+    await page.goForward({ waitUntil: "networkidle" });
+    await expect(
+      athletesNav().getByRole("link", {
+        name: "Connection requests",
+        exact: true,
+      }),
+    ).toHaveAttribute("aria-current", "page");
+    record(
+      `${width}px My athletes ordered tabs/default, matching frame, one H1/panel/primary, keyboard/history/overflow`,
+    );
+  }
+  await open(athleteTabs[0][1]);
+  await page
+    .getByRole("button", { name: "Load more athletes", exact: true })
+    .click();
+  await expect(
+    page.getByText("Older connected athlete", { exact: true }),
+  ).toBeVisible();
+  await cookie("owner", "incoming-unavailable");
+  await open(athleteTabs[2][1]);
+  await expect(
+    page.getByText(
+      "Incoming connection requests could not be verified. No connection data is shown.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Outgoing fixture athlete", { exact: true }),
+  ).toBeVisible();
+  await cookie();
+  await page
+    .getByRole("button", {
+      name: "Retry incoming connection requests",
+      exact: true,
+    })
+    .click();
+  await expect(
+    page.getByText("Incoming fixture athlete", { exact: true }),
+  ).toBeVisible();
+  for (const action of [
+    "Decline connection",
+    "Accept connection",
+    "Withdraw request",
+  ]) {
+    await page.context().clearCookies({ name: /^mov210-/ });
+    await open(athleteTabs[2][1]);
+    await page.getByRole("button", { name: action, exact: true }).click();
+    await expect(page.locator(".coach-connection-feedback")).toContainText(
+      action === "Accept connection"
+        ? "Connected."
+        : action === "Decline connection"
+          ? "declined"
+          : "withdrawn",
+    );
+    if (action === "Accept connection") {
+      await athletesNav()
+        .getByRole("link", { name: "Connected athletes", exact: true })
+        .click();
+      await expect(
+        page.getByText("Incoming fixture athlete", { exact: true }),
+      ).toBeVisible();
+    }
+  }
+  await page.context().clearCookies({ name: /^mov210-/ });
+  await open(athleteTabs[0][1]);
+  await page.getByRole("button", { name: /Disconnect/, exact: false }).click();
+  await page
+    .getByRole("button", { name: "Stay connected", exact: true })
+    .click();
+  await expect(
+    page.getByText("Connected fixture athlete", { exact: true }),
+  ).toBeVisible();
+  for (const href of [athleteTabs[0][1], athleteTabs[2][1]]) {
+    await cookie();
+    await open(href);
+    await cookie("owner", "checking");
+    await refresh();
+    await expect(athletesNav()).toBeHidden();
+    await cookie();
+    await refresh();
+    await expect(athletesNav()).toBeVisible();
+    await cookie("dataset");
+    await refresh();
+    await expect(athletesNav()).toHaveCount(0);
+  }
+  await cookie("suspended");
+  await open(athleteTabs[2][1]);
+  await expect(athletesNav()).toBeVisible();
+  assert.equal(await page.locator("main h1").count(), 1);
+  await expect(
+    page.getByRole("button", { name: "Accept connection", exact: true }),
+  ).toHaveCount(0);
+  await cookie("signed-out");
+  await open(athleteTabs[2][1]);
+  assert.equal(
+    new URL(page.url()).searchParams.get("returnTo"),
+    athleteTabs[2][1],
+  );
+  await cookie();
+  record(
+    "My athletes scoped paging/partial error/retry/three decisions/disconnect cancel and suspended/guest/account fences",
+  );
+  rosterMode = "empty";
+  await open(athleteTabs[1][1]);
+  await expect(
+    page.getByText("No external athletes yet.", { exact: true }),
+  ).toBeVisible();
+  await page.getByLabel("Name", { exact: true }).fill("Roster pending athlete");
+  clientSave = "unavailable";
+  await page.getByRole("button", { name: "Save athlete", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Retry exact save", exact: true }),
+  ).toBeVisible();
+  for (const link of await athletesNav().getByRole("link").all())
+    await expect(link).toHaveAttribute("aria-disabled", "true");
+  const pendingRosterUrl = page.url();
+  await athletesNav()
+    .getByRole("link", { name: "Connected athletes", exact: true })
+    .dispatchEvent("click");
+  assert.equal(page.url(), pendingRosterUrl);
+  clientSave = "ready";
+  await page
+    .getByRole("button", { name: "Retry exact save", exact: true })
+    .click();
+  await expect(
+    athletesNav().getByRole("link", {
+      name: "Connected athletes",
+      exact: true,
+    }),
+  ).not.toHaveAttribute("aria-disabled", "true");
+  assert.deepEqual(clientWrites.at(-1), clientWrites.at(-2));
+  rosterMode = "unavailable";
+  await open(athleteTabs[1][1]);
+  await expect(
+    page.getByText(
+      "Athlete records could not be verified. Reload to try again.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await expect(athletesNav()).toBeVisible();
+  rosterMode = "ready";
+  await open(`/coach/athletes/external/${id}`);
+  await expect(athletesNav()).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "← External athletes", exact: true }),
+  ).toHaveAttribute("href", athleteTabs[1][1]);
+  record(
+    "embedded external roster keeps empty/unavailable states, exact pending-save navigation fence/retry and standalone details",
+  );
   assert.deepEqual(writes, []);
   assert.deepEqual(errors, []);
   record(

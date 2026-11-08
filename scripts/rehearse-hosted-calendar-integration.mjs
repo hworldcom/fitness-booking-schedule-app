@@ -98,7 +98,7 @@ async function calendarStage(stage, c) {
     });
     await expect(original).toHaveAttribute(
       "href",
-      `/coach?view=bookings&occurrence=${pending.id}#coach-occurrence-${pending.id}`,
+      `/coach?view=bookings&section=requests&occurrence=${pending.id}#coach-occurrence-${pending.id}`,
     );
     await original.click();
     await expect(page.locator(`#coach-occurrence-${pending.id}`)).toBeVisible();

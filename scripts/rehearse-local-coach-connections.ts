@@ -25,6 +25,8 @@ let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
 let phase = "setup";
 
 async function historyIds(page: Page, attemptId: string) {
+  if (new URL(page.url()).searchParams.get("section") === "requests")
+    await page.goto(base + "/coach/athletes");
   const card = page.locator(
     `.coach-connection-card[data-connection-id="${attemptId}"]`,
   );
@@ -204,7 +206,7 @@ try {
         bookingConnectionContextRecord(tx, main.bookingId),
       )
     ).connection!;
-    await page.goto(base + "/coach/athletes");
+    await page.goto(base + "/coach/athletes?section=requests");
     await page
       .locator(`.coach-connection-card[data-connection-id="${first.id}"]`)
       .getByRole("button", { name: "Withdraw request" })
@@ -234,7 +236,7 @@ try {
       .click();
     await expect(
       page.locator(
-        `[aria-label="My athletes"] .coach-connection-card[data-connection-id="${pending.id}"]`,
+        `[aria-label="Connected athletes"] .coach-connection-card[data-connection-id="${pending.id}"]`,
       ),
     ).toBeVisible();
     await expect(
@@ -270,7 +272,7 @@ try {
       .getByRole("button", { name: "Confirm disconnect" })
       .click();
     await expect(
-      page.locator(`[aria-label="My athletes"] .coach-connection-card`),
+      page.locator(`[aria-label="Connected athletes"] .coach-connection-card`),
     ).toHaveCount(0);
     await expect(page.locator(".coach-connection-history")).toHaveCount(0);
     await expect(page.locator(".coach-connection-feedback")).toHaveText(
@@ -291,10 +293,10 @@ try {
     await expect(page.locator(".coach-connection-feedback")).toHaveText(
       "Connection request pending acceptance.",
     );
-    await page.goto(base + "/coach/athletes");
-    await expect(
-      page.locator(`[aria-label="My athletes"] .coach-connection-card`),
-    ).toHaveCount(0);
+    await page.goto(base + "/coach/athletes?section=requests");
+    await expect(page.locator('[aria-label="Connected athletes"]')).toHaveCount(
+      0,
+    );
     await page
       .locator(`.coach-connection-card[data-connection-id="${inbound.id}"]`)
       .getByRole("button", { name: "Accept connection" })
@@ -310,6 +312,7 @@ try {
       .click();
     await expect(page.locator(".coach-connection-history")).toHaveCount(0);
     const again = await send(athlete, main.bookingId);
+    await page.goto(base + "/coach/athletes?section=requests");
     await page
       .getByRole("button", { name: "Refresh connections", exact: true })
       .click();
@@ -368,7 +371,7 @@ try {
         `#coach-booking-${otherBooking.bookingId} .coach-booking-status`,
       ),
     ).toHaveText("cancelled");
-    await page.goto(base + "/coach/athletes");
+    await page.goto(base + "/coach/athletes?section=requests");
     await page
       .locator(`[data-connection-id="${stale.id}"]`)
       .getByRole("button", { name: "Decline connection", exact: true })
@@ -397,7 +400,7 @@ try {
     );
     await page.goto(base + "/coach/athletes");
     acceptedCard = page.locator(
-      `[aria-label="My athletes"] [data-connection-id="${again.id}"]`,
+      `[aria-label="Connected athletes"] [data-connection-id="${again.id}"]`,
     );
     await expect(acceptedCard.locator(".avatar img")).toHaveCount(0);
     await expect(acceptedCard.locator(".avatar")).toHaveText("DA");
@@ -414,7 +417,7 @@ try {
     }
     await page.reload();
     await expect(
-      page.locator(`[aria-label="My athletes"] .coach-connection-card`),
+      page.locator(`[aria-label="Connected athletes"] .coach-connection-card`),
     ).toHaveCount(20);
     await page.route("**/coach/athletes", async (route) => {
       if (route.request().method() === "POST") await route.abort();
@@ -423,18 +426,18 @@ try {
     await page
       .getByRole("button", { name: "Load more athletes", exact: true })
       .click();
-    await expect(page.locator(`[aria-label="My athletes"]`)).toContainText(
-      "could not be verified",
-    );
     await expect(
-      page.locator(`[aria-label="My athletes"] .coach-connection-card`),
+      page.locator(`[aria-label="Connected athletes"]`),
+    ).toContainText("could not be verified");
+    await expect(
+      page.locator(`[aria-label="Connected athletes"] .coach-connection-card`),
     ).toHaveCount(0);
     await page.unroute("**/coach/athletes");
     await page
-      .getByRole("button", { name: "Retry my athletes", exact: true })
+      .getByRole("button", { name: "Retry connected athletes", exact: true })
       .click();
     await expect(
-      page.locator(`[aria-label="My athletes"] .coach-connection-card`),
+      page.locator(`[aria-label="Connected athletes"] .coach-connection-card`),
     ).toHaveCount(20);
     await expect(
       page.getByRole("button", { name: "Load more athletes", exact: true }),
@@ -444,16 +447,18 @@ try {
       .focus();
     await page.keyboard.press("Enter");
     await expect(
-      page.locator(`[aria-label="My athletes"] .coach-connection-card`),
+      page.locator(`[aria-label="Connected athletes"] .coach-connection-card`),
     ).toHaveCount(22);
     await expect(
-      page.locator(`[aria-label="My athletes"] .coach-connection-card`).nth(20),
+      page
+        .locator(`[aria-label="Connected athletes"] .coach-connection-card`)
+        .nth(20),
     ).toBeFocused();
     await expect(
       page.getByRole("button", { name: "Load more athletes" }),
     ).toHaveCount(0);
     const ids = await page
-      .locator(`[aria-label="My athletes"] .coach-connection-card`)
+      .locator(`[aria-label="Connected athletes"] .coach-connection-card`)
       .evaluateAll((nodes) =>
         nodes.map((node) => node.getAttribute("data-connection-id")),
       );
@@ -490,7 +495,7 @@ try {
       page.getByRole("button", { name: "Accept connection" }),
     ).toHaveCount(0);
     await expect(
-      page.locator(`[aria-label="My athletes"] .coach-connection-card`),
+      page.locator(`[aria-label="Connected athletes"] .coach-connection-card`),
     ).toHaveCount(20);
     await page.getByRole("button", { name: "Load more athletes" }).click();
     assert.deepEqual(await historyIds(page, again.id), original);

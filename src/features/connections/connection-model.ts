@@ -14,6 +14,22 @@ export const CONNECTION_SECTIONS = [
   "outgoing",
   "history",
 ] as const;
+export type ConnectionListView = "all" | "connected" | "requests";
+export function isConnectionListView(
+  value: unknown,
+): value is ConnectionListView {
+  return value === "all" || value === "connected" || value === "requests";
+}
+const ACCEPTED_SECTIONS = ["accepted"] as const;
+const REQUEST_SECTIONS = ["incoming", "outgoing", "history"] as const;
+export function connectionSectionsForView(view: ConnectionListView = "all") {
+  return view === "connected"
+    ? ACCEPTED_SECTIONS
+    : view === "requests"
+      ? REQUEST_SECTIONS
+      : CONNECTION_SECTIONS;
+}
+
 export type ConnectionPages = Readonly<
   Record<ConnectionSection, ConnectionPage<ConnectionProjection> | null>
 >;

@@ -516,8 +516,8 @@ function Editor({
         <>
           {detail.viewerIsCoach && !detail.athleteId && (
             <p>
-              Shared notes and the plan become visible to this client after they
-              accept an invitation. Your private notes stay private.
+              Shared notes and the plan become visible to this athlete after
+              they accept an invitation. Your private notes stay private.
             </p>
           )}
           <SessionNotes bookingId={detail.bookingId} />
@@ -527,9 +527,9 @@ function Editor({
         <>
           <div className="session-type-editor">
             <label>
-              Client type
+              Athlete type
               <select
-                aria-label="Client type"
+                aria-label="Athlete type"
                 value={clientKind}
                 disabled={busy || uncertain || clientPending}
                 onChange={(e) => {
@@ -538,7 +538,7 @@ function Editor({
                 }}
               >
                 <option value="platform">Connected athlete</option>
-                <option value="external">External client</option>
+                <option value="external">External athlete</option>
               </select>
             </label>
           </div>
@@ -663,7 +663,8 @@ function Editor({
               )}
               {options.athletes.items.length === 0 && (
                 <p>
-                  Choose External client to book someone who hasn’t joined MovX.
+                  Choose External athlete to book someone who hasn’t joined
+                  MovX.
                 </p>
               )}
             </>
@@ -838,7 +839,7 @@ function Editor({
             {detail
               ? "Messages and notes stay with this booking. Original schedule details remain in its change history."
               : clientKind === "external"
-                ? "This reserves a confirmed session for the selected external client. They gain shared history access after accepting an invitation."
+                ? "This reserves a confirmed session for the selected external athlete. They gain shared history access after accepting an invitation."
                 : "This coach action confirms the session for the selected connected athlete."}
           </p>
           {!uncertain && (

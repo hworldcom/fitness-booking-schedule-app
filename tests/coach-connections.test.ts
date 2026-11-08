@@ -651,3 +651,56 @@ test("loading another page rebuilds authorised rows and current statuses without
   );
   assert.deepEqual(denied, { status: "forbidden" });
 });
+
+test("connected and requests panels keep distinct identities, history and per-list failure recovery", () => {
+  const accepted = connection(71, { status: "accepted", canDisconnect: true });
+  const incoming = connection(72, {
+    athleteDisplayName: "Incoming athlete",
+    canAccept: true,
+    canDecline: true,
+  });
+  const outgoing = connection(73, {
+    athleteDisplayName: "Outgoing athlete",
+    canWithdraw: true,
+  });
+  const previous = connection(74, {
+    status: "declined",
+    athleteDisplayName: "Previous athlete",
+  });
+  const data = pages({
+    accepted: { items: [accepted], nextCursor: null },
+    incoming: { items: [incoming], nextCursor: null },
+    outgoing: { items: [outgoing], nextCursor: null },
+    history: { items: [previous], nextCursor: null },
+  });
+  const render = (view: "connected" | "requests", value = data) =>
+    renderToStaticMarkup(
+      createElement(ConnectionLists, {
+        view,
+        pages: value,
+        busy: false,
+        mayInitiate: true,
+        onRefresh: noop,
+        onPage: noop,
+        onDecision: noop,
+        onHistory: noop,
+        renderHistory: () => null,
+      }),
+    );
+  const connected = render("connected");
+  assert.match(connected, /Connected athletes/);
+  assert.match(connected, /Amina Athlete/);
+  assert.doesNotMatch(
+    connected,
+    /Incoming athlete|Outgoing athlete|Previous athlete|Accept connection/,
+  );
+  const requests = render("requests");
+  assert.match(requests, /Incoming athlete/);
+  assert.match(requests, /Outgoing athlete/);
+  assert.match(requests, /Previous athlete/);
+  assert.doesNotMatch(requests, /Amina Athlete|Disconnect/);
+  const failed = render("requests", { ...data, incoming: null });
+  assert.match(failed, /Incoming connection requests could not be verified/);
+  assert.match(failed, /Outgoing athlete/);
+  assert.doesNotMatch(failed, /Connected athletes could not be verified/);
+});

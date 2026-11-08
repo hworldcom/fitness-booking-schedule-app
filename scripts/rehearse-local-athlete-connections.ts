@@ -91,6 +91,8 @@ async function sendThrough(page: Page, id: string, role: "athlete" | "coach") {
   ).toBeEnabled();
 }
 async function acceptThrough(page: Page, id: string) {
+  if (new URL(page.url()).pathname === "/coach/athletes")
+    await page.goto(base + "/coach/athletes?section=requests");
   await openConnectionList(page);
   await card(page, id)
     .getByRole("button", { name: "Accept connection", exact: true })
@@ -148,6 +150,11 @@ async function revealAccepted(page: Page, id: string) {
   }
 }
 async function history(page: Page, id: string) {
+  if (
+    new URL(page.url()).pathname === "/coach/athletes" &&
+    new URL(page.url()).searchParams.get("section") === "requests"
+  )
+    await page.goto(base + "/coach/athletes");
   await openConnectionList(page);
   const entry = card(page, id);
   await entry
@@ -299,7 +306,7 @@ try {
     await expect(
       athletePage.locator('[aria-label="My coaches"] .coach-connection-card'),
     ).toHaveCount(0);
-    await coachPage.reload();
+    await coachPage.goto(base + "/coach/athletes?section=requests");
     await expect(
       card(coachPage, first.id).getByRole("button", {
         name: "Accept connection",
@@ -348,7 +355,9 @@ try {
     await disconnectThrough(athletePage, first.id);
     await coachPage.reload();
     await expect(
-      coachPage.locator('[aria-label="My athletes"] .coach-connection-card'),
+      coachPage.locator(
+        '[aria-label="Connected athletes"] .coach-connection-card',
+      ),
     ).toHaveCount(0);
     await sendThrough(coachPage, main.bookingId, "coach");
     let next = (await context(coach, main.bookingId)).connection;

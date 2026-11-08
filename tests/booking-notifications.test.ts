@@ -46,7 +46,7 @@ test("booking history has coach-only typed metadata and safe existing workspace 
   assert.ok(!JSON.stringify(parsed).includes("evil.test"));
   assert.equal(
     notificationHref(parsed.items[0]),
-    `/coach?view=bookings&occurrence=${event.slotId}#coach-occurrence-${event.slotId}`,
+    `/coach?view=bookings&section=requests&occurrence=${event.slotId}#coach-occurrence-${event.slotId}`,
   );
   assert.throws(() =>
     parseNotificationPage({
