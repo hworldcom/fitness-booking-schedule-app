@@ -21,7 +21,8 @@ const checkout = await mkdtemp(path.join(tmpdir(), "mov204-schedule-tabs-"));
 const output = path.join(root, "test-results/coach-schedule-tabs");
 const checks = [],
   errors = [],
-  writes = [];
+  writes = [],
+  clientWrites = [];
 let server,
   browser,
   log = "",
@@ -235,11 +236,36 @@ try {
     updatedAt: "2026-11-01T12:00:00Z",
   };
   let failCatalog = false,
-    failOptions = false;
+    failOptions = false,
+    emptyClients = false,
+    moreClients = false,
+    clientSave = "unavailable";
   await page.route("**/api/**", async (route) => {
     const request = route.request(),
       url = new URL(request.url());
     if (url.pathname.startsWith("/api/auth/")) return route.continue();
+    if (
+      url.pathname === "/api/coach/external-clients" &&
+      request.method() === "POST"
+    ) {
+      const payload = request.postDataJSON();
+      assert.equal(payload.action, "create");
+      clientWrites.push(payload);
+      return route.fulfill({
+        json:
+          clientSave === "ready"
+            ? {
+                status: "ready",
+                client: {
+                  ...client,
+                  id: "20700000-0000-4000-8000-000000000001",
+                  name: payload.name,
+                  email: payload.email,
+                },
+              }
+            : { status: "unavailable" },
+      });
+    }
     if (request.method() !== "GET") {
       writes.push(url.pathname);
       return route.fulfill({ status: 503, json: { status: "unavailable" } });
@@ -265,7 +291,10 @@ try {
               types: [type],
               locations: [{ id, name: "Fixture studio" }],
               athletes: { items: [], nextCursor: null },
-              externalClients: { items: [client], nextCursor: null },
+              externalClients: {
+                items: emptyClients ? [] : [client],
+                next: moreClients ? "fixture-more" : null,
+              },
             },
       });
     }
@@ -395,6 +424,139 @@ try {
   record(
     "direct links, saved external-client handoff and actual date-picker cancel remain usable",
   );
+  const picker = () =>
+    page.getByRole("region", {
+      name: "External client selection",
+      exact: true,
+    });
+  const addClient = () =>
+    picker().getByRole("button", {
+      name: "Add a new external client",
+      exact: true,
+    });
+  const closeClient = () =>
+    picker().getByRole("button", {
+      name: "Close new client form",
+      exact: true,
+    });
+  const manageClients = () =>
+    picker().getByRole("link", {
+      name: "Manage external clients",
+      exact: true,
+    });
+  for (const width of [1440, 375, 320]) {
+    await page.setViewportSize({ width, height: width === 320 ? 568 : 1000 });
+    emptyClients = true;
+    await open(tabs[3][1]);
+    await page
+      .getByLabel("Client type", { exact: true })
+      .selectOption("external");
+    await expect(
+      picker().getByText(
+        "No saved external clients yet. Add your first client to get started.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(addClient()).toHaveAttribute("aria-expanded", "false");
+    await expect(manageClients()).toHaveAttribute(
+      "href",
+      "/coach/athletes/external",
+    );
+    for (const action of [addClient(), manageClients()]) {
+      await action.scrollIntoViewIfNeeded();
+      await expect(action).toBeVisible();
+      const box = await action.boundingBox();
+      assert.ok(
+        box && box.height >= 44 && box.x >= 0 && box.x + box.width <= width,
+      );
+      const contrast = await action.evaluate((el) => {
+        const css = getComputedStyle(el);
+        const lum = (s) => {
+          const rgb = s
+            .match(/[\d.]+/g)
+            .slice(0, 3)
+            .map(Number)
+            .map((v) => {
+              v /= 255;
+              return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+            });
+          return rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
+        };
+        const a = lum(css.color),
+          b = lum(css.backgroundColor);
+        return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+      });
+      assert.ok(contrast >= 4.5, `action contrast ${contrast}`);
+    }
+    await addClient().focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByLabel("Name", { exact: true })).toBeFocused();
+    await expect(closeClient()).toHaveAttribute("aria-expanded", "true");
+    await closeClient().scrollIntoViewIfNeeded();
+    await expect(closeClient()).toBeVisible();
+    await page.screenshot({
+      path: path.join(output, `${width}-external-client-actions.png`),
+      fullPage: true,
+    });
+    assert.ok(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    );
+    await closeClient().click();
+    await expect(addClient()).toBeFocused();
+    await expect(page.getByLabel("Name", { exact: true })).toHaveCount(0);
+    record(
+      `${width}px visible external-client actions,4.5 contrast,44px targets, empty help, keyboard expansion/focus/close`,
+    );
+  }
+  emptyClients = false;
+  await page.setViewportSize({ width: 375, height: 1000 });
+  await open(`/coach/bookings/new?externalClientId=${id}`);
+  await addClient().click();
+  await page.getByLabel("Name", { exact: true }).fill("New picker client");
+  await page.getByRole("button", { name: "Save client", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Retry exact save", exact: true }),
+  ).toBeVisible();
+  await expect(closeClient()).toBeDisabled();
+  await expect(manageClients()).toHaveAttribute("aria-disabled", "true");
+  await expect(
+    page.getByLabel("External client", { exact: true }),
+  ).toBeDisabled();
+  const pendingUrl = page.url();
+  await manageClients().dispatchEvent("click");
+  assert.equal(page.url(), pendingUrl);
+  clientSave = "ready";
+  await page
+    .getByRole("button", { name: "Retry exact save", exact: true })
+    .click();
+  await expect(page.getByLabel("External client", { exact: true })).toHaveValue(
+    "20700000-0000-4000-8000-000000000001",
+  );
+  await expect(
+    page.getByLabel("External client", { exact: true }),
+  ).toBeFocused();
+  await expect(addClient()).toBeEnabled();
+  await expect(manageClients()).not.toHaveAttribute("aria-disabled", "true");
+  assert.equal(clientWrites.length, 2);
+  assert.deepEqual(clientWrites[1], clientWrites[0]);
+  moreClients = true;
+  await open(`/coach/bookings/new?externalClientId=${id}`);
+  await picker()
+    .getByRole("button", { name: "Load more clients", exact: true })
+    .click();
+  await expect(
+    picker().getByText("More clients could not be loaded. Try again.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(addClient()).toBeEnabled();
+  await expect(manageClients()).toBeVisible();
+  moreClients = false;
+  record(
+    "external-client unknown save retains exact retry,blocks conflicting navigation,selects saved client; paging errors preserve actions",
+  );
   failOptions = true;
   await open(tabs[3][1]);
   await expect(
@@ -511,7 +673,7 @@ try {
   assert.deepEqual(writes, []);
   assert.deepEqual(errors, []);
   record(
-    "existing booking details stay standalone; no mutation requests or browser errors",
+    "existing booking details stay standalone; no unexpected mutation requests or browser errors",
   );
   success = true;
 } finally {
@@ -531,6 +693,7 @@ try {
         checks,
         errors,
         writes,
+        clientWrites,
         ownedCheckoutRemoved: true,
         noDatabaseOrHostedAuth: true,
       },

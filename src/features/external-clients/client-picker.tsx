@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
+import { Plus, UsersRound, X } from "lucide-react";
 import type {
   ExternalClient,
   ExternalClientPage,
@@ -26,6 +27,21 @@ export function ExternalClientPicker({
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
     [creating, setCreating] = useState(false);
+  const formId = useId();
+  const form = useRef<HTMLDivElement>(null);
+  const selection = useRef<HTMLSelectElement>(null);
+  const focusSavedClient = useRef(false);
+  const toggle = useRef<HTMLButtonElement>(null);
+  const navigationBlocked = disabled || creating;
+  useEffect(() => {
+    if (adding) form.current?.querySelector<HTMLInputElement>("input")?.focus();
+  }, [adding]);
+  useEffect(() => {
+    if (!adding && !creating && !disabled && focusSavedClient.current) {
+      focusSavedClient.current = false;
+      selection.current?.focus();
+    }
+  }, [adding, creating, disabled]);
   useEffect(() => {
     if (!initialId || initial.items.some((c) => c.id === initialId)) return;
     let active = true;
@@ -77,6 +93,7 @@ export function ExternalClientPicker({
     }
   }
   function saved(c: ExternalClient) {
+    focusSavedClient.current = true;
     setPage((p) => ({
       ...p,
       items: [...p.items.filter((x) => x.id !== c.id), c],
@@ -88,11 +105,17 @@ export function ExternalClientPicker({
     );
   }
   return (
-    <section aria-label="External client selection">
-      <div className="session-type-editor">
+    <section
+      className="external-client-picker"
+      aria-label="External client selection"
+    >
+      <div className="session-type-editor external-client-chooser">
+        <h3>Choose or add an external client</h3>
+        <p>Choose someone you’ve saved, or add a new client below.</p>
         <label>
           External client
           <select
+            ref={selection}
             aria-label="External client"
             value={value}
             disabled={disabled || busy || creating}
@@ -107,25 +130,53 @@ export function ExternalClientPicker({
             ))}
           </select>
         </label>
-        <div className="session-type-toolbar">
+        <div className="session-type-toolbar external-client-picker-actions">
           {page.next && (
             <button
               type="button"
+              className="button secondary"
               disabled={disabled || busy || creating}
               onClick={() => void more()}
             >
-              Load more clients
+              {busy ? "Loading clients…" : "Load more clients"}
             </button>
           )}
           <button
             type="button"
+            ref={toggle}
+            className={`button ${adding ? "secondary" : "dark"}`}
+            aria-expanded={adding}
+            aria-controls={formId}
             disabled={disabled || creating}
-            onClick={() => setAdding((v) => !v)}
+            onClick={() => {
+              setAdding((v) => !v);
+              if (adding) toggle.current?.focus();
+            }}
           >
+            {adding ? (
+              <X size={18} aria-hidden="true" />
+            ) : (
+              <Plus size={18} aria-hidden="true" />
+            )}
             {adding ? "Close new client form" : "Add a new external client"}
           </button>
-          <Link href="/coach/athletes/external">Manage external clients</Link>
+          <Link
+            className="button secondary"
+            href="/coach/athletes/external"
+            aria-disabled={navigationBlocked || undefined}
+            tabIndex={navigationBlocked ? -1 : undefined}
+            onClick={(event) => {
+              if (navigationBlocked) event.preventDefault();
+            }}
+          >
+            <UsersRound size={18} aria-hidden="true" /> Manage external clients
+          </Link>
         </div>
+        {page.items.length === 0 && !page.next && (
+          <p>
+            No saved external clients yet. Add your first client to get started.
+          </p>
+        )}
         <p>
           They can access shared session notes after accepting an invitation. A
           platform account isn’t needed to reserve their slot.
@@ -133,14 +184,16 @@ export function ExternalClientPicker({
         {message && <p role="status">{message}</p>}
       </div>
       {adding && (
-        <ClientForm
-          onSaved={saved}
-          disabled={disabled}
-          onPendingChange={(pending) => {
-            setCreating(pending);
-            onPendingChange(pending);
-          }}
-        />
+        <div id={formId} ref={form}>
+          <ClientForm
+            onSaved={saved}
+            disabled={disabled}
+            onPendingChange={(pending) => {
+              setCreating(pending);
+              onPendingChange(pending);
+            }}
+          />
+        </div>
       )}
     </section>
   );
