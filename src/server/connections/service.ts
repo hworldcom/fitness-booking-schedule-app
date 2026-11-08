@@ -11,6 +11,9 @@ import {
   type ConnectionSection,
 } from "@/domain/coach-athlete-connections";
 import { withAuthorizedActor } from "@/server/authorization/service";
+import { currentActorProjection } from "@/server/db/authorization/repository";
+import { isConnectionCountIdentity } from "@/domain/connection-request-count";
+import { countIncomingConnectionPages } from "./pending-count";
 import {
   bookingConnectionContextRecord,
   ConnectionConflictError,
@@ -104,4 +107,25 @@ export function currentConnectionHistory(
   if (!validId(pairId) || !validConnectionPageOptions(options))
     return Promise.resolve({ status: "invalid" as const });
   return connectionWork((tx) => connectionHistoryRecord(tx, pairId, options));
+}
+
+export function currentConnectionPendingCount(
+  role: unknown,
+  expectedIdentity: unknown,
+) {
+  if (!isConnectionRole(role) || !isConnectionCountIdentity(expectedIdentity))
+    return Promise.resolve({ status: "invalid" as const });
+  return connectionWork(async (tx, actor) => {
+    const owner = await currentActorProjection(tx, actor);
+    const identity = [
+      actor.authUserId,
+      owner.profileSlug,
+      owner.runSlug,
+      owner.role,
+    ].join(":");
+    if (identity !== expectedIdentity) throw new ConnectionConflictError();
+    return countIncomingConnectionPages((cursor) =>
+      connectionPageRecord(tx, role, "incoming", { pageSize: 50, cursor }),
+    );
+  });
 }

@@ -31,6 +31,7 @@ import { ClientSessions } from "../profile/client-sessions";
 import { BookingConnectionOptions } from "./booking-connection-options";
 import { ConnectionLists } from "./connection-lists";
 import { ConnectionHistory } from "./connection-history";
+import { useConnectionRequestCount } from "./connection-request-count";
 import {
   applyConnectionResult,
   connectionSectionsForView,
@@ -87,6 +88,7 @@ export function ConnectionWorkspace({
   connectionHeadingLevel?: 1 | 2;
 }) {
   const router = useRouter();
+  const { refresh: refreshPendingCount } = useConnectionRequestCount();
   const [local, setLocal] = useState<{
     source: string;
     pages: ConnectionPages;
@@ -151,6 +153,7 @@ export function ConnectionWorkspace({
   }
   function refresh() {
     run("refresh", async () => {
+      refreshPendingCount();
       setHistory(null);
       setContexts(null);
       setContextRevision((revision) => revision + 1);
@@ -179,7 +182,14 @@ export function ConnectionWorkspace({
           pages: { ...pages, accepted: null },
         });
       }
-      const next = await mutateConnectionAction(idle, form);
+      let next: ConnectionActionState;
+      try {
+        next = await mutateConnectionAction(idle, form);
+      } finally {
+        // Even an uncertain write may have committed. Reread authority rather
+        // than decrementing the badge from a local assumption.
+        refreshPendingCount();
+      }
       setResult(next);
       // An unavailable response may hide a committed operation. Preserve its
       // operation ID until a definitive result or an explicit context read.
@@ -231,6 +241,7 @@ export function ConnectionWorkspace({
   }
   function loadPage(section: ConnectionSection) {
     run(`page:${section}`, async () => {
+      refreshPendingCount();
       const current = pages[section];
       if (section === "accepted") setHistory(null);
       setLocal({ source: sourceVersion, pages: { ...pages, [section]: null } });

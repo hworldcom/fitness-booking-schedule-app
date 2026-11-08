@@ -10,8 +10,16 @@ import {
   type MyCoachesSection,
 } from "@/domain/my-coaches-navigation";
 import { myCoachesOwnerAccess } from "./my-coaches-model";
+import {
+  ConnectionRequestCountProvider,
+  ConnectionRequestCountBadge,
+  ConnectionRequestCountRetry,
+  connectionRequestCountLabel,
+  useConnectionRequestCount,
+} from "./connection-request-count";
 
 export function MyCoachesNavigation({ active }: { active: MyCoachesSection }) {
+  const { count } = useConnectionRequestCount();
   return (
     <nav
       className="workspace-section-navigation"
@@ -26,9 +34,12 @@ export function MyCoachesNavigation({ active }: { active: MyCoachesSection }) {
       <Link
         href={myCoachesHref("requests")}
         aria-current={active === "requests" ? "page" : undefined}
+        aria-label={connectionRequestCountLabel(count)}
       >
         <ClipboardList size={16} aria-hidden="true" /> Connection requests
+        <ConnectionRequestCountBadge />
       </Link>
+      <ConnectionRequestCountRetry />
     </nav>
   );
 }
@@ -68,15 +79,17 @@ export function MyCoachesWorkspace({
       {access !== "denied" && (
         <div hidden={access !== "allowed"}>
           <div className="coach-workspace my-coaches-page">
-            <header className="coach-workspace-header">
-              <div>
-                <span className="eyebrow">YOUR COACHES</span>
-                <h1>My coaches</h1>
-                <p>Manage your connected coaches and connection requests.</p>
-              </div>
-            </header>
-            <MyCoachesNavigation active={active} />
-            <div className="my-coaches-tab-content">{children}</div>
+            <ConnectionRequestCountProvider role="athlete" viewKey={active}>
+              <header className="coach-workspace-header">
+                <div>
+                  <span className="eyebrow">YOUR COACHES</span>
+                  <h1>My coaches</h1>
+                  <p>Manage your connected coaches and connection requests.</p>
+                </div>
+              </header>
+              <MyCoachesNavigation active={active} />
+              <div className="my-coaches-tab-content">{children}</div>
+            </ConnectionRequestCountProvider>
           </div>
         </div>
       )}

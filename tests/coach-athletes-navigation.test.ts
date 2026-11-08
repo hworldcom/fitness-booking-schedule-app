@@ -1,13 +1,32 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createElement } from "react";
+import { jsx } from "react/jsx-runtime";
 import { renderToStaticMarkup } from "react-dom/server";
+import { AuthSessionProvider } from "@/auth/client/session-provider";
+import { ActorProvider } from "@/auth/client/actor-provider";
 import { coachAthletesSection } from "@/domain/coach-athletes-navigation";
 import { CoachAthletesWorkspace } from "@/features/coaches/coach-athletes-workspace";
 import {
   connectionSectionsForView,
   isConnectionListView,
 } from "@/features/connections/connection-model";
+
+function renderWorkspace(props: Parameters<typeof CoachAthletesWorkspace>[0]) {
+  return renderToStaticMarkup(
+    jsx(AuthSessionProvider, {
+      initialSession: { status: "signed-out" },
+      children: jsx(ActorProvider, {
+        initialActor: { status: "signed-out" },
+        children: createElement(
+          CoachAthletesWorkspace,
+          props,
+          "Selected panel",
+        ),
+      }),
+    }),
+  );
+}
 
 test("My athletes defaults safely to connected; only a single explicit requests value selects requests", () => {
   assert.equal(coachAthletesSection("requests"), "requests");
@@ -39,9 +58,7 @@ test("My athletes defaults safely to connected; only a single explicit requests 
 
 test("My athletes sections preserve URLs, one page heading/current tab and pending-save navigation fences", () => {
   for (const active of ["connected", "external", "requests"] as const) {
-    const html = renderToStaticMarkup(
-      createElement(CoachAthletesWorkspace, { active }, "Selected panel"),
-    );
+    const html = renderWorkspace({ active });
     assert.deepEqual(
       [...html.matchAll(/href="([^"]+)"/g)].map((x) => x[1]),
       [
@@ -56,12 +73,10 @@ test("My athletes sections preserve URLs, one page heading/current tab and pendi
       html.indexOf("Connected athletes") < html.indexOf("External athletes"),
     );
   }
-  const blocked = renderToStaticMarkup(
-    createElement(CoachAthletesWorkspace, {
-      active: "external",
-      navigationDisabled: true,
-    }),
-  );
+  const blocked = renderWorkspace({
+    active: "external",
+    navigationDisabled: true,
+  });
   assert.equal((blocked.match(/aria-disabled="true"/g) ?? []).length, 3);
   assert.equal((blocked.match(/tabindex="-1"/g) ?? []).length, 3);
 });
