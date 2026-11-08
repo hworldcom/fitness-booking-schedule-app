@@ -32,6 +32,6 @@ For accidentally disclosed medical information, limit further access, help the o
 
 ## Providers and publication
 
-Initial production uses Vercel, Supabase, Porkbun and Resend; maps/place search use OpenFreeMap/Geoapify when accessed. Google sign-in is described conditionally and remains disabled in production; Mux uploads are not enabled there. Processing agreements and international-transfer provisions are linked from the notice. These public standard terms do not establish that every custom agreement or every future feature has been reviewed.
+Initial production uses Vercel, Supabase, Porkbun and Resend; maps/place search use OpenFreeMap/Geoapify when accessed. Google sign-in is described conditionally and remains disabled in production; Mux uploads are not enabled there. UAT has existing Mux configuration, so the notice also describes Mux upload/playback processing conditionally, with its privacy and processing terms (MOV-214). Processing agreements and international-transfer provisions are linked from the notice. These public standard terms do not establish that every custom agreement or every future feature has been reviewed.
 
 Keep the effective date, actual data practices and homepage privacy link accurate. Publish the same publicly accessible policy URL in Google Branding only after live route/content verification. Publishing a notice does not constitute Google brand verification or an independent legal certification.

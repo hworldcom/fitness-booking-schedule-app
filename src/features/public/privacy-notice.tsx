@@ -233,14 +233,18 @@ const sections = [
             </dd>
           </div>
           <div>
-            <dt>Google and external links</dt>
+            <dt>Google, video and external links</dt>
             <dd>
               Where Google sign-in is enabled, Google handles the sign-in you
               choose under its own{" "}
               <a href="https://policies.google.com/privacy">privacy policy</a>.
-              Coach video uploads are not enabled in the public service. Opening
-              external training, video or social links takes you to services
-              with their own privacy practices.
+              Where coach video uploads and playback are enabled, Mux processes
+              the uploaded videos and technical playback information, such as an
+              IP address, device details and video identifiers. See the{" "}
+              <a href="https://www.mux.com/privacy">Mux privacy policy</a> and{" "}
+              <a href="https://www.mux.com/dpa">data processing terms</a>.
+              Opening external training, video or social links takes you to
+              services with their own privacy practices.
             </dd>
           </div>
         </dl>
