@@ -153,6 +153,18 @@
   background: #f0eeeb;
   border-left-color: #929089;
 }
+.training-event-cancelled strong,
+.training-agenda-item-cancelled h4 {
+  text-decoration: line-through;
+}
+.training-agenda-copy .training-status-cancelled {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #f0eeeb;
+  color: #544f47;
+  font-weight: 700;
+}
 .training-agenda {
   margin: 28px 0;
 }
@@ -170,6 +182,25 @@
   font-size: 13px;
   color: #686459;
 }
+.training-agenda-heading p,
+.training-agenda-notice {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #65635c;
+  overflow-wrap: anywhere;
+}
+.training-agenda-day {
+  margin-top: 28px;
+  scroll-margin-top: 24px;
+}
+.training-agenda-day > h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+.training-agenda-day:focus-visible {
+  outline: 3px solid #725a91;
+  outline-offset: 4px;
+}
 .training-agenda-item {
   display: flex;
   gap: 24px;
@@ -184,7 +215,7 @@
   min-width: 0;
   flex: 1;
 }
-.training-agenda-copy h3 {
+.training-agenda-copy h4 {
   font-size: 20px;
   margin: 8px 0;
   overflow-wrap: anywhere;
@@ -206,6 +237,32 @@
   border-radius: 9px;
   padding: 9px 12px;
   font-size: 13px;
+}
+.training-item-actions button,
+.training-item-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+}
+.training-attendance-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.training-attendance-actions button[aria-pressed="true"]:disabled {
+  background: #e8f0df;
+  border-color: #5d7547;
+  color: #354a24;
+  opacity: 1;
+  cursor: default;
+}
+.training-attendance-actions
+  button.training-attendance-skipped[aria-pressed="true"]:disabled {
+  background: #f0eeeb;
+  border-color: #929089;
+  color: #544f47;
 }
 .training-item-actions a {
   font-size: 13px;

@@ -240,7 +240,9 @@ return <main className="training-page">{active?.startsWith("coach-")
           ? items
               .filter(
                 (i) =>
-                  i.startsAt.slice(0, 10) >= c.args.from &&
+                  new Date(Date.parse(i.endsAt) - 1)
+                    .toISOString()
+                    .slice(0, 10) >= c.args.from &&
                   i.startsAt.slice(0, 10) <= c.args.through,
               )
               .sort(
@@ -285,7 +287,7 @@ return <main className="training-page">{active?.startsWith("coach-")
         exact: true,
       });
       const links = navigation.getByRole("link");
-      await expect(links).toHaveCount(coach ? 4 : 2);
+      await expect(links).toHaveCount(coach ? 3 : 2);
       const current = navigation.locator('[aria-current="page"]');
       await expect(current).toHaveCount(1);
       await expect(current).toHaveText(
@@ -327,7 +329,6 @@ return <main className="training-page">{active?.startsWith("coach-")
             "/coach?view=schedule&section=calendar&date=2026-10-26&calendarView=week&type=all",
             "/coach?view=schedule&section=availability",
             "/coach/session-types",
-            "/coach/bookings/new",
           ]
         : ["private", "group"].includes(active)
           ? ["/sessions", "/sessions/groups"]
@@ -422,7 +423,15 @@ return <main className="training-page">{active?.startsWith("coach-")
     await strength
       .getByRole("button", { name: "Skipped", exact: true })
       .click();
-    await expect(strength.getByText("skipped", { exact: true })).toBeVisible();
+    await expect(
+      strength.getByText("You marked this as skipped", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      strength.getByRole("button", { name: "Skipped", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(
+      strength.getByRole("button", { name: "Skipped", exact: true }),
+    ).toBeDisabled();
     await strength
       .getByRole("button", { name: "Clear attendance", exact: true })
       .click();
@@ -638,7 +647,7 @@ return <main className="training-page">{active?.startsWith("coach-")
       .getByRole("button", { name: "Cancel workout", exact: true })
       .click();
     await expect(
-      occurrence.getByText("cancelled", { exact: true }),
+      occurrence.getByText("Cancelled", { exact: true }),
     ).toBeVisible();
     await page.getByRole("link", { name: "Plan routine", exact: true }).click();
     const oneOff = page.locator(".routine-workout").filter({
@@ -731,7 +740,7 @@ return <main className="training-page">{active?.startsWith("coach-")
       }),
     });
     await expect(
-      removedCalendar.getByText("cancelled", { exact: true }),
+      removedCalendar.getByText("Cancelled", { exact: true }),
     ).toBeVisible();
     await page.goto(base + "/sessions/calendar");
     checks.push(
@@ -997,6 +1006,384 @@ return <main className="training-page">{active?.startsWith("coach-")
       path: path.join(evidence, `calendar-${width}.png`),
       fullPage: true,
     });
+    // MOV-218: lifecycle cancellation wins over an older attendance annotation.
+    // Substitute only this owned browser fixture's records, then restore them.
+    const earlierItems = items.splice(0);
+    const cancelledFixtures = ["booking", "group", "personal"].map(
+      (source, n) => ({
+        ...earlierItems[0],
+        key: `cancelled:${source}`,
+        source,
+        title: `Cancelled ${source} fixture`,
+        startsAt: `2026-10-${26 + n}T09:00:00Z`,
+        endsAt: `2026-10-${26 + n}T10:00:00Z`,
+        state: source === "personal" ? "planned" : "cancelled",
+        attendance:
+          source === "personal"
+            ? "cancelled"
+            : source === "group"
+              ? "attended"
+              : "planned",
+        notes: "Retained history note",
+        videos: [],
+        intensity: null,
+        actualMinutes: null,
+        seriesId: null,
+        planRevision: null,
+        href:
+          source === "group"
+            ? "/events/cancelled-fixture"
+            : source === "booking"
+              ? "/sessions/cancelled-fixture"
+              : null,
+      }),
+    );
+    items.push(
+      ...cancelledFixtures,
+      {
+        ...cancelledFixtures[2],
+        key: "attended:personal",
+        title: "Attended personal fixture",
+        startsAt: "2026-10-26T10:30:00Z",
+        endsAt: "2026-10-26T11:30:00Z",
+        attendance: "attended",
+      },
+      {
+        ...cancelledFixtures[2],
+        key: "future:personal",
+        title: "Future personal fixture",
+        startsAt: "2026-10-26T18:00:00Z",
+        endsAt: "2026-10-26T19:00:00Z",
+        attendance: "planned",
+      },
+    );
+    // MOV-219: all dates in the selected week are visible before day selection.
+    await page.goto(base + "/sessions/calendar?date=2026-10-28");
+    await expect(
+      page.getByRole("heading", { name: "Training for the week", exact: true }),
+    ).toBeVisible();
+    for (const fixture of cancelledFixtures)
+      await expect(
+        page.getByRole("heading", { name: fixture.title, exact: true }),
+      ).toBeVisible();
+    await expect(page.locator(".training-agenda-day")).toHaveCount(3);
+    await expect(page.locator(".training-agenda-day").first()).toContainText(
+      "Monday, 26 October 2026",
+    );
+    await page.locator(".training-day-heading").nth(1).click();
+    await expect(page).toHaveURL(/date=2026-10-27/);
+    for (const fixture of cancelledFixtures)
+      await expect(
+        page.getByRole("heading", { name: fixture.title, exact: true }),
+      ).toBeVisible();
+    const sourceCard = page
+      .locator(".training-event")
+      .filter({ hasText: "Cancelled group fixture" });
+    await sourceCard.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#training-agenda-day-2026-10-27")).toBeFocused();
+    await page.getByRole("link", { name: "Next period", exact: true }).click();
+    await expect(
+      page.getByText("No training loaded for this week.", { exact: false }),
+    ).toBeVisible();
+    await expect(page.locator(".training-agenda-item")).toHaveCount(0);
+    await page.goBack();
+    await expect(
+      page.getByRole("heading", {
+        name: "Cancelled booking fixture",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await page.goto(base + "/sessions/calendar?date=2026-10-28&view=month");
+    await expect(page.locator(".training-agenda-day")).toHaveCount(3);
+    await page
+      .locator(".training-day-heading")
+      .filter({ hasText: "Tue 3 Nov" })
+      .click();
+    await expect(
+      page.getByText("No training loaded for this week.", { exact: false }),
+    ).toBeVisible();
+    await page
+      .locator(".training-event")
+      .filter({ hasText: "Cancelled group fixture" })
+      .focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#training-agenda-day-2026-10-27")).toBeFocused();
+    await expect(
+      page.getByRole("heading", {
+        name: "Cancelled booking fixture",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(page).toHaveURL(/#training-agenda-day-2026-10-27$/);
+    await page.reload();
+    await expect(page.locator("#training-agenda-day-2026-10-27")).toBeFocused();
+    const weeklyItems = [...items];
+    const bulkTemplate = items.find((i) => i.key === "future:personal");
+    for (let n = 0; n < 100; n++)
+      items.push({
+        ...bulkTemplate,
+        key: `weekly:bulk:${n}`,
+        title: `Earlier-week loaded ${n}`,
+      });
+    items.push({
+      ...bulkTemplate,
+      key: "weekly:later",
+      title: "Next-week paged fixture",
+      startsAt: "2026-11-03T09:00:00Z",
+      endsAt: "2026-11-03T10:00:00Z",
+    });
+    await page.goto(base + "/sessions/calendar?date=2026-11-03&view=month");
+    await expect(
+      page.getByRole("heading", { name: "More training to load", exact: true }),
+    ).toBeVisible();
+    await expect(page.locator(".training-agenda-item")).toHaveCount(0);
+    await expect(page.locator(".training-agenda-notice")).toContainText(
+      "Showing loaded training",
+    );
+    failList = 1;
+    await page
+      .getByRole("button", { name: "Load more training", exact: true })
+      .click();
+    await expect(page.locator(".training-error")).toContainText(
+      "Could not load more",
+    );
+    await expect(
+      page.getByRole("heading", { name: "More training to load", exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Load more training", exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", {
+        name: "Next-week paged fixture",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(page.locator(".training-agenda-notice")).toHaveCount(0);
+    await expect(page.locator(".training-error")).toHaveCount(0);
+    items.splice(0, items.length, ...weeklyItems);
+    const overnight = {
+      ...items.find((i) => i.key === "future:personal"),
+      key: "weekly:overnight",
+      title: "Overnight weekly fixture",
+      startsAt: "2026-10-25T23:30:00Z",
+      endsAt: "2026-10-26T00:30:00Z",
+    };
+    items.push(overnight);
+    await page.goto(
+      base + "/sessions/calendar?date=2026-10-28&selected=weekly%3Aovernight",
+    );
+    await expect(page.locator(".training-agenda-heading")).toContainText(
+      "Monday, 26 October 2026",
+    );
+    const monday = page.locator("#training-agenda-day-2026-10-26");
+    await expect(
+      monday.getByRole("heading", { name: overnight.title, exact: true }),
+    ).toBeVisible();
+    await expect(
+      monday.getByText("Continues from Sunday, 25 October 2026", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await page.screenshot({
+      path: path.join(evidence, `weekly-agenda-${width}.png`),
+      fullPage: true,
+    });
+    items.splice(items.indexOf(overnight), 1);
+    await page.goto(base + "/sessions/calendar?date=2026-10-28");
+    checks.push(
+      `${width}px full selected-week history on entry, chronological date groups, within-week click keeps all sessions, source-card keyboard focus, next-week empty/Back, Month selected week and cross-week focus, overnight carry-in`,
+    );
+    const mutationsBeforeHistory = requests.filter(
+      (c) => c.action !== "list",
+    ).length;
+    for (const view of ["week", "month"]) {
+      for (const fixture of cancelledFixtures) {
+        await page.goto(
+          base +
+            `/sessions/calendar?date=${fixture.startsAt.slice(0, 10)}&view=${view}`,
+        );
+        const article = page.locator(".training-agenda-item").filter({
+          has: page.getByRole("heading", {
+            name: fixture.title,
+            exact: true,
+          }),
+        });
+        await expect(article).toHaveClass(/training-agenda-item-cancelled/);
+        await expect(article.locator(".training-status-cancelled")).toHaveText(
+          "Cancelled",
+        );
+        await expect(
+          article.getByText("Retained history note", { exact: true }),
+        ).toBeVisible();
+        await expect(
+          article.getByRole("group", { name: /^Attendance for/ }),
+        ).toHaveCount(0);
+        await expect(
+          article.getByRole("button", {
+            name: /^(I attended|Attended|Skipped|Clear attendance|Cancel workout)$/,
+          }),
+        ).toHaveCount(0);
+        const card = page
+          .locator(".training-event")
+          .filter({ hasText: fixture.title });
+        await expect(card).toHaveClass(/training-event-cancelled/);
+        await expect(card.locator("small")).toHaveText("Cancelled");
+        if (fixture.source === "personal")
+          await expect(card).toHaveAccessibleName(
+            `Edit workout: ${fixture.title} (Cancelled)`,
+          );
+        assert.ok(
+          await card
+            .locator("strong")
+            .evaluate((e) =>
+              getComputedStyle(e).textDecorationLine.includes("line-through"),
+            ),
+        );
+        if (fixture.source === "group")
+          await expect(
+            article.getByText("Previously marked attended", { exact: true }),
+          ).toBeVisible();
+        if (fixture.href) {
+          await expect(article.getByRole("link")).toHaveAttribute(
+            "href",
+            fixture.href,
+          );
+          await article
+            .getByRole("button", { name: "Edit personal log", exact: true })
+            .focus();
+          await page.keyboard.press("Enter");
+          await expect(page.getByRole("dialog")).toBeVisible();
+          await page.keyboard.press("Escape");
+          await expect(
+            article.getByRole("button", {
+              name: "Edit personal log",
+              exact: true,
+            }),
+          ).toBeFocused();
+        }
+      }
+      await page.goto(base + `/sessions/calendar?date=2026-10-26&view=${view}`);
+      const attendedArticle = page.locator(".training-agenda-item").filter({
+        has: page.getByRole("heading", {
+          name: "Attended personal fixture",
+          exact: true,
+        }),
+      });
+      const selected = attendedArticle.getByRole("button", {
+        name: "Attended",
+        exact: true,
+      });
+      await expect(selected).toHaveAttribute("aria-pressed", "true");
+      await expect(selected).toBeDisabled();
+      assert.equal(
+        await selected.evaluate((e) => getComputedStyle(e).opacity),
+        "1",
+      );
+      assert.ok((await selected.boundingBox()).height >= 44);
+      await expect(
+        attendedArticle.getByRole("button", {
+          name: "I attended",
+          exact: true,
+        }),
+      ).toHaveCount(0);
+      await expect(
+        attendedArticle.getByRole("button", {
+          name: "Cancel workout",
+          exact: true,
+        }),
+      ).toHaveCount(0);
+      await selected.evaluate((e) => e.click());
+      const futureArticle = page.locator(".training-agenda-item").filter({
+        has: page.getByRole("heading", {
+          name: "Future personal fixture",
+          exact: true,
+        }),
+      });
+      await expect(
+        futureArticle.getByRole("button", {
+          name: "Cancel workout",
+          exact: true,
+        }),
+      ).toBeVisible();
+      await expect(
+        futureArticle.getByRole("button", { name: "I attended", exact: true }),
+      ).toHaveCount(0);
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth + 1,
+        ),
+        false,
+      );
+      await page.screenshot({
+        path: path.join(evidence, `status-${view}-${width}.png`),
+        fullPage: true,
+      });
+    }
+    assert.equal(
+      requests.filter((c) => c.action !== "list").length,
+      mutationsBeforeHistory,
+    );
+    const attendedArticle = page.locator(".training-agenda-item").filter({
+      has: page.getByRole("heading", {
+        name: "Attended personal fixture",
+        exact: true,
+      }),
+    });
+    fail = true;
+    await attendedArticle
+      .getByRole("button", { name: "Skipped", exact: true })
+      .focus();
+    await page.keyboard.press("Enter");
+    await expect(
+      page.getByRole("button", { name: "Retry last save", exact: true }),
+    ).toBeVisible();
+    const attendanceRetry = requests.findLast((c) => c.action === "attendance");
+    await expect(
+      attendedArticle.getByRole("button", { name: "Attended", exact: true }),
+    ).toBeDisabled();
+    await expect(
+      attendedArticle.getByRole("button", { name: "Skipped", exact: true }),
+    ).toBeDisabled();
+    await page
+      .getByRole("button", { name: "Retry last save", exact: true })
+      .click();
+    await expect(
+      attendedArticle.getByRole("button", { name: "Skipped", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    assert.deepEqual(
+      requests.findLast((c) => c.action === "attendance"),
+      attendanceRetry,
+    );
+    await attendedArticle
+      .getByRole("button", { name: "Clear attendance", exact: true })
+      .click();
+    await expect(
+      attendedArticle.getByText("Attendance not recorded", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      attendedArticle.getByRole("button", { name: "I attended", exact: true }),
+    ).toBeEnabled();
+    await attendedArticle
+      .getByRole("button", { name: "I attended", exact: true })
+      .focus();
+    await page.keyboard.press("Enter");
+    await expect(
+      attendedArticle.getByRole("button", { name: "Attended", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await page.reload();
+    await expect(
+      attendedArticle.getByRole("button", { name: "Attended", exact: true }),
+    ).toBeDisabled();
+    await expect(
+      attendedArticle.getByText("You confirmed attendance", { exact: true }),
+    ).toBeVisible();
+    checks.push(
+      `${width}px Week/Month cancelled private/group/personal history, notes/details, cancellation precedence over previous attendance, selected44px attendance/no redundant write, keyboard correction/clear/reload, unknown exact retry and overflow`,
+    );
+    items.splice(0, items.length, ...earlierItems);
+    await page.goto(base + "/sessions/calendar");
     // Read pagination and source-session presentation share the actual component,
     // while their authority and canonical storage remain separate SQL tests.
     const template = items[0];
@@ -1034,6 +1421,9 @@ return <main className="training-page">{active?.startsWith("coach-")
         exact: false,
       }),
     ).toBeVisible();
+    await expect(page.locator(".training-agenda-notice")).toContainText(
+      "Showing loaded training",
+    );
     failList = 1;
     await page
       .getByRole("button", { name: "Load more training", exact: true })
@@ -1050,6 +1440,7 @@ return <main className="training-page">{active?.startsWith("coach-")
     ).toHaveCount(0);
     await expect(page.locator(".training-error")).toHaveCount(0);
     await expect(page.locator(".training-agenda-item")).toHaveCount(103);
+    await expect(page.locator(".training-agenda-notice")).toHaveCount(0);
     assert.equal(
       requests.findLast((c) => c.action === "list").args.offset,
       100,
