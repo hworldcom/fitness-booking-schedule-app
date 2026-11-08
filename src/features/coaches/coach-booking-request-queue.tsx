@@ -197,7 +197,7 @@ export function CoachBookingRequestQueue({
         }
       }
       setResult(next);
-      if (next.status === "saved" && next.bookingId) {
+      if (next.status === "saved" || next.status === "conflict") {
         router.refresh();
       }
     } catch {

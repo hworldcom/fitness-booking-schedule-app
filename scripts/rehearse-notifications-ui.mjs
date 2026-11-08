@@ -325,7 +325,7 @@ try {
     dialog().getByRole("link", { name: /Booking request submitted/ }),
   ).toHaveAttribute(
     "href",
-    `/coach?view=bookings&occurrence=${bookingSlot}#coach-occurrence-${bookingSlot}`,
+    `/coach?view=bookings&section=requests&occurrence=${bookingSlot}#coach-occurrence-${bookingSlot}`,
   );
   await expect(dialog()).toContainText("75 min · Berlin training studio");
   await dialog()

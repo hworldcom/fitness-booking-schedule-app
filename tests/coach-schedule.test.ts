@@ -10,6 +10,7 @@ import { CoachWorkspaceHeader } from "@/features/coaches/coach-workspace-header"
 import { COACH_WORKSPACE_DESTINATIONS } from "@/features/coaches/coach-workspace-navigation";
 import { WorkspaceNavigationItems } from "@/components/workspace-navigation";
 import { resolveCoachWorkspaceView } from "@/features/coaches/coach-workspace-view";
+import { selectedCoachWorkspaceDestination } from "@/domain/coach-workspace";
 
 const COACH: CoachProjection = Object.freeze({
   profileId: "10000000-0000-4000-8000-000000000001",
@@ -88,6 +89,39 @@ const SUSPENDED_ACCESS: CoachAccessProjection = Object.freeze({
   submittedAt: "2026-10-01T10:00:00.000Z",
   decisionReason: null,
   verificationPolicyVersion: "movx-identity-application-v1",
+});
+
+test("Calendar routes select Calendar and client scheduling selects Bookings", () => {
+  for (const path of ["/coach", "/coach/session-types"]) {
+    assert.equal(selectedCoachWorkspaceDestination(path, []), "schedule");
+    const html = renderToStaticMarkup(
+      createElement(WorkspaceNavigationItems, {
+        navigation: COACH_WORKSPACE_DESTINATIONS,
+        pathname: path,
+        viewValues: [],
+      }),
+    );
+    assert.equal((html.match(/aria-current="page"/g) ?? []).length, 1);
+    assert.match(html, /aria-current="page" href="\/coach"/);
+  }
+  assert.equal(
+    selectedCoachWorkspaceDestination("/coach/bookings/new", []),
+    "bookings",
+  );
+  assert.equal(
+    selectedCoachWorkspaceDestination("/coach", ["schedule"]),
+    "schedule",
+  );
+  assert.equal(
+    selectedCoachWorkspaceDestination("/coach", ["bookings"]),
+    "bookings",
+  );
+  assert.equal(
+    selectedCoachWorkspaceDestination("/coach/sessions/example", []),
+    "bookings",
+  );
+  for (const path of ["/coach/session-types-other", "/coach/bookings/newer"])
+    assert.equal(selectedCoachWorkspaceDestination(path, []), null);
 });
 
 test("coach destinations separate Schedule, Bookings, My athletes and Events from Profile", () => {

@@ -7,27 +7,65 @@ import type {
   ExternalClientPage,
 } from "@/domain/external-clients";
 import { SessionActorBoundary } from "@/features/session-types/actor-boundary";
+import { CoachAthletesWorkspace } from "@/features/coaches/coach-athletes-workspace";
 import { ClientForm } from "./client-form";
 import "@/features/session-types/session-types.css";
-export function ExternalClientsWorkspace({ clientId }: { clientId?: string }) {
+export function ExternalAthletesTab() {
+  const [pending, setPending] = useState(false);
   return (
-    <section className="session-types-page">
-      <Link href={clientId ? "/coach/athletes/external" : "/coach/athletes"}>
-        {clientId ? "← External clients" : "← My athletes"}
-      </Link>
-      <h1>{clientId ? "External client" : "External clients"}</h1>
+    <CoachAthletesWorkspace active="external" navigationDisabled={pending}>
+      <ExternalClientsWorkspace embedded onPendingChange={setPending} />
+    </CoachAthletesWorkspace>
+  );
+}
+export function ExternalClientsWorkspace({
+  clientId,
+  embedded = false,
+  onPendingChange,
+}: {
+  clientId?: string;
+  embedded?: boolean;
+  onPendingChange?: (pending: boolean) => void;
+}) {
+  const Heading = embedded ? "h2" : "h1";
+  return (
+    <section
+      className={
+        embedded
+          ? "session-types-page schedule-tab-content"
+          : "session-types-page"
+      }
+    >
+      {!embedded && (
+        <Link href={clientId ? "/coach/athletes/external" : "/coach/athletes"}>
+          {clientId ? "← External athletes" : "← My athletes"}
+        </Link>
+      )}
+      <Heading>{clientId ? "External athlete" : "External athletes"}</Heading>
       <SessionActorBoundary>
         {(identity) => (
           <Workspace
             key={`${identity}:${clientId ?? "list"}`}
             clientId={clientId}
+            onPendingChange={onPendingChange}
           />
         )}
       </SessionActorBoundary>
     </section>
   );
 }
-function Workspace({ clientId }: { clientId?: string }) {
+function Workspace({
+  clientId,
+  onPendingChange,
+}: {
+  clientId?: string;
+  onPendingChange?: (pending: boolean) => void;
+}) {
+  useEffect(() => () => onPendingChange?.(false), [onPendingChange]);
+  function pendingChanged(pending: boolean) {
+    setClientPending(pending);
+    onPendingChange?.(pending);
+  }
   const [page, setPage] = useState<ExternalClientPage | null>(null),
     [detail, setDetail] = useState<ExternalClientDetail | null>(null),
     [message, setMessage] = useState(""),
@@ -54,7 +92,7 @@ function Workspace({ clientId }: { clientId?: string }) {
       .catch(() => {
         if (active)
           setMessage(
-            "Client records could not be verified. Reload to try again.",
+            "Athlete records could not be verified. Reload to try again.",
           );
       });
     return () => {
@@ -93,7 +131,7 @@ function Workspace({ clientId }: { clientId?: string }) {
     }
   }
   function saved(c: ExternalClient) {
-    setMessage("Client saved.");
+    setMessage("Athlete saved.");
     if (detail) {
       setDetail({ ...detail, client: c });
       setVersion((v) => v + 1);
@@ -147,7 +185,7 @@ function Workspace({ clientId }: { clientId?: string }) {
       } else {
         setUnknown(true);
         setMessage(
-          "Invitation outcome is unverified. Retry this exact action before editing the client or sending another invitation.",
+          "Invitation outcome is unverified. Retry this exact action before editing the athlete or sending another invitation.",
         );
       }
     } catch {
@@ -163,7 +201,7 @@ function Workspace({ clientId }: { clientId?: string }) {
     <>
       {message && <p role="status">{message}</p>}
       {!page && !detail && !message && (
-        <p role="status">Loading client records…</p>
+        <p role="status">Loading athlete records…</p>
       )}
       {page && (
         <>
@@ -171,9 +209,9 @@ function Workspace({ clientId }: { clientId?: string }) {
             Book sessions for people who haven’t joined MovX yet. Invite them
             later to share their session history.
           </p>
-          <ClientForm onSaved={saved} />
+          <ClientForm onSaved={saved} onPendingChange={pendingChanged} />
           <div className="session-type-list">
-            {page.items.length === 0 && <p>No external clients yet.</p>}
+            {page.items.length === 0 && <p>No external athletes yet.</p>}
             {page.items.map((client) => (
               <article className="session-type-card" key={client.id}>
                 <div>
@@ -184,7 +222,9 @@ function Workspace({ clientId }: { clientId?: string }) {
                   </h2>
                   <p>
                     {client.email ?? "No email added"} ·{" "}
-                    {client.linkedProfileId ? "Joined MovX" : "External client"}
+                    {client.linkedProfileId
+                      ? "Joined MovX"
+                      : "External athlete"}
                   </p>
                 </div>
                 <Link href={`/coach/athletes/external/${client.id}`}>
@@ -195,7 +235,7 @@ function Workspace({ clientId }: { clientId?: string }) {
           </div>
           {page.next && (
             <button disabled={busy} onClick={() => void more()}>
-              Load more clients
+              Load more athletes
             </button>
           )}
         </>
@@ -205,8 +245,8 @@ function Workspace({ clientId }: { clientId?: string }) {
           <h2 className="external-client-name">{c.name}</h2>
           <p>
             {c.linkedProfileId
-              ? "This client joined MovX. Their shared session records are available in My training."
-              : "Only you can see this client’s records until they accept an invitation."}
+              ? "This athlete joined MovX. Their shared session records are available in My training."
+              : "Only you can see this athlete’s records until they accept an invitation."}
           </p>
           {!c.linkedProfileId && !clientPending && (
             <Link
@@ -221,16 +261,16 @@ function Workspace({ clientId }: { clientId?: string }) {
             client={c}
             onSaved={saved}
             disabled={busy || !!review}
-            onPendingChange={setClientPending}
+            onPendingChange={pendingChanged}
           />
           <section
             className="session-type-editor external-client-invitation"
-            aria-label="Client invitation"
+            aria-label="Athlete invitation"
           >
             <h2>
               {c.linkedProfileId
                 ? "Connected to MovX"
-                : "Invite client to MovX"}
+                : "Invite athlete to MovX"}
             </h2>
             {c.linkedProfileId ? (
               <p>
@@ -251,8 +291,8 @@ function Workspace({ clientId }: { clientId?: string }) {
                   </p>
                 ) : (
                   <p>
-                    Add an email in Client details above, then choose Save
-                    client details to enable invitations.
+                    Add an email in Athlete details above, then choose Save
+                    athlete details to enable invitations.
                   </p>
                 )}
                 <div className="session-type-toolbar">
@@ -262,7 +302,7 @@ function Workspace({ clientId }: { clientId?: string }) {
                     disabled={!c.email || busy || !!review || clientPending}
                     onClick={() => invitationReview(inv ? "resend" : "send")}
                   >
-                    {inv ? "Resend invitation" : "Invite client"}
+                    {inv ? "Resend invitation" : "Invite athlete"}
                   </button>
                   {inv?.status === "pending" && (
                     <button
@@ -305,7 +345,7 @@ function Workspace({ clientId }: { clientId?: string }) {
                 <p>
                   {review.action === "revoke"
                     ? "The current link will stop granting access."
-                    : `An invitation will be sent to ${c.email}. Accepting connects this client’s original sessions and shared notes to their verified account.`}
+                    : `An invitation will be sent to ${c.email}. Accepting connects this athlete’s original sessions and shared notes to their verified account.`}
                 </p>
                 <div className="session-type-toolbar">
                   <button
@@ -338,7 +378,7 @@ function Workspace({ clientId }: { clientId?: string }) {
           </section>
           <section
             className="session-type-editor"
-            aria-label="Client session history"
+            aria-label="Athlete session history"
           >
             <h2>Sessions & notes</h2>
             <p>

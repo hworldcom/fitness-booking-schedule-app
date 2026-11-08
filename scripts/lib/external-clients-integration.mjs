@@ -63,14 +63,14 @@ export async function rehearseExternalClients({
     }),
   ).toBeVisible();
   await athleteActions
-    .getByRole("link", { name: "External clients", exact: true })
+    .getByRole("link", { name: "External athletes", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "External clients", exact: true }),
+    page.getByRole("heading", { name: "External athletes", exact: true }),
   ).toBeVisible();
   const form = page.locator("form").filter({
     has: page.getByRole("heading", {
-      name: "Add an external client",
+      name: "Add an external athlete",
       exact: true,
     }),
   });
@@ -90,7 +90,7 @@ export async function rehearseExternalClients({
     }
     await route.continue();
   });
-  await form.getByRole("button", { name: "Save client", exact: true }).click();
+  await form.getByRole("button", { name: "Save athlete", exact: true }).click();
   await expect(
     form.getByRole("button", { name: "Retry exact save", exact: true }),
   ).toBeVisible();
@@ -117,12 +117,12 @@ export async function rehearseExternalClients({
   await page
     .getByRole("link", { name: "Schedule a session", exact: true })
     .click();
-  await expect(page.getByLabel("Client type", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("Athlete type", { exact: true })).toHaveValue(
     "external",
   );
-  await expect(page.getByLabel("External client", { exact: true })).toHaveValue(
-    clientId,
-  );
+  await expect(
+    page.getByLabel("External athlete", { exact: true }),
+  ).toHaveValue(clientId);
   const [type] =
     await database`select id from app.coach_session_types where coach_profile_id=${coach.profileId}::uuid and format='private' limit 1`;
   await page.getByLabel("Session type", { exact: true }).selectOption(type.id);
@@ -131,9 +131,11 @@ export async function rehearseExternalClients({
     .getByLabel("Start · Berlin time", { exact: true })
     .fill(day.date + "T09:00");
   await page
-    .getByRole("button", { name: "Add a new external client", exact: true })
+    .getByRole("button", { name: "Add a new external athlete", exact: true })
     .click();
-  await page.getByLabel("Name", { exact: true }).fill("Inline external client");
+  await page
+    .getByLabel("Name", { exact: true })
+    .fill("Inline external athlete");
   let inlineLost = false;
   await page.route("**/api/coach/external-clients", async (route) => {
     if (
@@ -148,23 +150,23 @@ export async function rehearseExternalClients({
     }
     await route.continue();
   });
-  await page.getByRole("button", { name: "Save client", exact: true }).click();
+  await page.getByRole("button", { name: "Save athlete", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Retry exact save", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Review session", exact: true }),
   ).toBeDisabled();
-  await expect(page.getByLabel("Client type", { exact: true })).toBeDisabled();
+  await expect(page.getByLabel("Athlete type", { exact: true })).toBeDisabled();
   await page
     .getByRole("button", { name: "Retry exact save", exact: true })
     .click();
   await expect(
-    page.getByRole("option", { name: "Inline external client", exact: true }),
+    page.getByRole("option", { name: "Inline external athlete", exact: true }),
   ).toBeAttached();
   await page.unroute("**/api/coach/external-clients");
   await page
-    .getByLabel("External client", { exact: true })
+    .getByLabel("External athlete", { exact: true })
     .selectOption(clientId);
   await page
     .getByRole("button", { name: "Review session", exact: true })
@@ -221,7 +223,7 @@ export async function rehearseExternalClients({
   await stranger.page.goto(base + `/coach/athletes/external/${clientId}`);
   await expect(
     stranger.page.getByText(
-      "Client records could not be verified. Reload to try again.",
+      "Athlete records could not be verified. Reload to try again.",
     ),
   ).toBeVisible();
   assert.ok(
@@ -252,13 +254,13 @@ export async function rehearseExternalClients({
     await route.continue();
   });
   await page
-    .getByRole("button", { name: "Save client details", exact: true })
+    .getByRole("button", { name: "Save athlete details", exact: true })
     .click();
   await expect(
     page.getByRole("button", { name: "Retry exact save", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Invite client", exact: true }),
+    page.getByRole("button", { name: "Invite athlete", exact: true }),
   ).toBeDisabled();
   await page
     .getByRole("button", { name: "Retry exact save", exact: true })
@@ -268,7 +270,7 @@ export async function rehearseExternalClients({
     page.getByLabel("Email · optional", { exact: true }),
   ).toHaveValue(athlete.email);
   await expect(
-    page.getByRole("button", { name: "Invite client", exact: true }),
+    page.getByRole("button", { name: "Invite athlete", exact: true }),
   ).toBeEnabled();
   const [latestContact] =
     await database`select revision,name,email from app.coach_external_clients where id=${clientId}::uuid`;
@@ -291,28 +293,28 @@ export async function rehearseExternalClients({
     .getByLabel("Name", { exact: true })
     .fill("My retained stale draft");
   await page
-    .getByRole("button", { name: "Save client details", exact: true })
+    .getByRole("button", { name: "Save athlete details", exact: true })
     .click();
   await expect(
     page.getByRole("complementary", {
-      name: "Current saved client",
+      name: "Current saved athlete",
       exact: true,
     }),
-  ).toContainText("Current saved client: Jamie External");
+  ).toContainText("Current saved athlete: Jamie External");
   await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
     "My retained stale draft",
   );
   await expect(
-    page.getByRole("button", { name: "Invite client", exact: true }),
+    page.getByRole("button", { name: "Invite athlete", exact: true }),
   ).toBeDisabled();
   await page
-    .getByRole("link", { name: "Reload current client details", exact: true })
+    .getByRole("link", { name: "Reload current athlete details", exact: true })
     .click();
   await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
     "Jamie External",
   );
   await page
-    .getByRole("button", { name: "Invite client", exact: true })
+    .getByRole("button", { name: "Invite athlete", exact: true })
     .click();
   const invitationReview = page.getByRole("region", {
     name: "Review invitation",

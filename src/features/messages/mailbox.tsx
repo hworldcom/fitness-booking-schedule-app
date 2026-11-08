@@ -808,7 +808,7 @@ function Conversation({
               detailsRole === "coach"
                 ? details.bookingId
                   ? `/coach/sessions/${details.bookingId}`
-                  : "/coach?view=bookings#booking-requests"
+                  : "/coach?view=bookings&section=requests#booking-requests"
                 : details.bookingId
                   ? `/sessions/${details.bookingId}`
                   : "/sessions#booking-requests"

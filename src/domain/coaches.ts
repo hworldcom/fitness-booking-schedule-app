@@ -293,6 +293,7 @@ export type CoachAvailabilityWorkspaceState =
       rules: readonly OwnedCoachAvailabilityRule[];
       slots: readonly OwnedCoachAvailabilitySlot[];
       actorScope: string;
+      actorIdentity: string;
       ownerDisplayName: string;
       coachAccess: CoachAccessProjection;
     }>

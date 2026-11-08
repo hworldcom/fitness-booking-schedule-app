@@ -6,6 +6,16 @@
 .session-types-page h1 {
   margin: 16px 0 8px;
 }
+.session-types-page.schedule-tab-content {
+  max-width: none;
+  margin: 24px 0 0;
+  padding: 0;
+}
+.schedule-tab-content > h2,
+.schedule-tab-content > header > h2 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
 .session-types-page header p,
 .session-type-card p {
   color: var(--muted, #58616d);
@@ -275,6 +285,41 @@
 .external-client-name,
 .external-client-invitation {
   overflow-wrap: anywhere;
+}
+.external-client-chooser h3 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+.external-client-chooser > p {
+  color: var(--muted, #58616d);
+  line-height: 1.6;
+}
+.external-client-picker-actions {
+  margin: 16px 0;
+  gap: 12px;
+}
+.external-client-picker-actions .button {
+  min-height: 44px;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  justify-content: center;
+  gap: 8px;
+}
+.external-client-picker-actions .button svg {
+  flex-shrink: 0;
+}
+.external-client-picker-actions button + button {
+  margin-left: 0;
+}
+.external-client-picker-actions a[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+@media (max-width: 600px) {
+  .external-client-picker-actions .button {
+    flex: 1 1 100%;
+  }
 }
 .external-client-invitation .button {
   min-height: 44px;

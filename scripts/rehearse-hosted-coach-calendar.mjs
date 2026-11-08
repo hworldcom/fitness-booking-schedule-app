@@ -550,7 +550,7 @@ try {
   });
   await expect(requestLink).toHaveAttribute(
     "href",
-    `/coach?view=bookings&occurrence=${slots[0].id}#coach-occurrence-${slots[0].id}`,
+    `/coach?view=bookings&section=requests&occurrence=${slots[0].id}#coach-occurrence-${slots[0].id}`,
   );
   await requestLink.click();
   await expect(page.locator(`#coach-occurrence-${slots[0].id}`)).toBeVisible();

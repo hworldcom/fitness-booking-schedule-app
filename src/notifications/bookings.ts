@@ -77,7 +77,7 @@ export function bookingNotificationHref(value: BookingNotification) {
   const v = parseBookingNotification(value);
   if (v.sourceKind === "request")
     return v.recipientRole === "coach"
-      ? `/coach?view=bookings&occurrence=${v.slotId}#coach-occurrence-${v.slotId}`
+      ? `/coach?view=bookings&section=requests&occurrence=${v.slotId}#coach-occurrence-${v.slotId}`
       : "/sessions#booking-requests";
   return `${v.recipientRole === "coach" ? "/coach?view=bookings" : "/sessions"}#${v.recipientRole}-booking-${v.sourceId}`;
 }

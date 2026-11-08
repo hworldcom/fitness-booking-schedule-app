@@ -259,3 +259,14 @@
     flex-direction: column;
   }
 }
+
+.my-coaches-tab-content {
+  margin-top: 36px;
+}
+
+.connection-count-retry {
+  min-height: 44px;
+  margin-top: 0;
+  padding: 8px;
+  font-size: 12px;
+}

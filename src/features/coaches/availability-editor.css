@@ -592,6 +592,15 @@
     gap: 8px;
   }
 }
+@media (max-width: 760px) {
+  .availability-savebar {
+    bottom: calc(
+      86px + var(--workspace-switch-clearance, 0px) +
+        env(safe-area-inset-bottom)
+    );
+  }
+}
+
 @media (max-width: 680px) {
   .availability-heading {
     align-items: flex-start;
@@ -673,7 +682,6 @@
     margin: 4px 0 3px 49px;
   }
   .availability-savebar {
-    bottom: calc(86px + env(safe-area-inset-bottom));
     padding: 13px 14px;
     gap: 10px;
     margin-top: 18px;

@@ -11,7 +11,8 @@ import type {
   ConnectionRole,
 } from "@/domain/coach-athlete-connections";
 import {
-  CONNECTION_SECTIONS,
+  connectionSectionsForView,
+  type ConnectionListView,
   connectionStatusLabel,
   connectionPresentation,
   type ConnectionPages,
@@ -45,6 +46,7 @@ export function ConnectionLists({
   renderHistory,
   headingLevel = 2,
   headingActions,
+  view = "all",
 }: {
   role?: ConnectionRole;
   pages: ConnectionPages;
@@ -57,12 +59,30 @@ export function ConnectionLists({
   renderHistory: (row: ConnectionProjection) => ReactNode;
   headingLevel?: 1 | 2;
   headingActions?: ReactNode;
+  view?: ConnectionListView;
 }) {
   const Heading = headingLevel === 1 ? "h1" : "h2";
   const noun = role === "coach" ? "athletes" : "coaches";
-  const title = role === "coach" ? "My athletes" : "My coaches";
+  const title =
+    view === "requests"
+      ? "Connection requests"
+      : view === "connected"
+        ? `Connected ${noun}`
+        : role === "coach"
+          ? "My athletes"
+          : "My coaches";
   const target = role === "coach" ? "my-athletes" : "my-coaches";
-  const labels = { ...sectionLabels, accepted: title };
+  const labels = {
+    ...sectionLabels,
+    accepted:
+      role === "coach"
+        ? view === "connected"
+          ? "Connected athletes"
+          : "My athletes"
+        : view === "connected"
+          ? "Connected coaches"
+          : "My coaches",
+  };
   const empty = {
     ...sectionEmpty,
     accepted: `No connected ${noun} yet. Open Connection options on a shared session to send a request.`,
@@ -96,7 +116,7 @@ export function ConnectionLists({
           </button>
         </div>
       </header>
-      {CONNECTION_SECTIONS.map((section) => {
+      {connectionSectionsForView(view).map((section) => {
         const page = pages[section];
         return (
           <section

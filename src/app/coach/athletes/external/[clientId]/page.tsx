@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { sessionUuid } from "@/domain/session-types";
 import { ExternalClientsWorkspace } from "@/features/external-clients/workspace";
 export const metadata = {
-  title: "Client sessions & notes",
+  title: "Athlete sessions & notes",
   robots: { index: false, follow: false },
 };
 export default async function Page({

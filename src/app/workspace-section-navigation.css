@@ -31,6 +31,24 @@
   outline-offset: 3px;
 }
 
+.workspace-section-navigation a[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.workspace-section-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #e8f1d8;
+  color: #304629;
+  font-size: 12px;
+}
+
 @media (max-width: 760px) {
   .workspace-section-navigation {
     margin-top: 15px;

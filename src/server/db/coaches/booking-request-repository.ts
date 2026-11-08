@@ -70,6 +70,21 @@ export class CoachBookingRequestConflictError extends Error {
   }
 }
 
+export async function currentOwnedPendingCoachBookingRequestCountRecord(
+  transaction: ActorDatabaseTransaction,
+) {
+  const rows = await transaction.execute<{ count: string | number }>(sql`
+    select app.current_owned_pending_coach_booking_request_count() as count
+  `);
+  const value = rows[0]?.count;
+  if (rows.length !== 1 || !/^[0-9]+$/.test(String(value)))
+    throw new CoachBookingRequestConflictError("Invalid pending request count");
+  const count = Number(value);
+  if (!Number.isSafeInteger(count) || count < 0)
+    throw new CoachBookingRequestConflictError("Invalid pending request count");
+  return count;
+}
+
 function isoTimestamp(value: string | Date | null) {
   if (value === null) return null;
   const timestamp = new Date(value);

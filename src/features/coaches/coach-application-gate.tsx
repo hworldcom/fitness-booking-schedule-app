@@ -75,10 +75,13 @@ function ApplicationButton({ resubmit = false }: { resubmit?: boolean }) {
 export function CoachApplicationGate({
   access,
   existingBookings,
+  headingLevel = 1,
 }: {
   access: CoachAccessProjection;
   existingBookings?: ReactNode;
+  headingLevel?: 1 | 2;
 }) {
+  const Heading = headingLevel === 1 ? "h1" : "h2";
   const isPending = access.status === "pending";
   const isRejected = access.status === "rejected";
   const isSuspended = access.status === "suspended";
@@ -102,7 +105,7 @@ export function CoachApplicationGate({
                 ? "APPLICATION NEEDS CHANGES"
                 : "BECOME A COACH"}
         </span>
-        <h1>
+        <Heading>
           {isSuspended
             ? "New coaching activity is paused."
             : isPending
@@ -110,7 +113,7 @@ export function CoachApplicationGate({
               : isRejected
                 ? "Update your coach draft before applying again."
                 : "Apply before publishing coaching."}
-        </h1>
+        </Heading>
         <p>
           {isSuspended
             ? (access.decisionReason ??

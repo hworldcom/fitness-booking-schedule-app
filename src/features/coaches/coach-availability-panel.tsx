@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Eye, Settings2 } from "lucide-react";
 import type { CoachProjection } from "@/domain/coaches";
 import type { CoachWorkspaceView } from "./coach-workspace-view";
-import { CoachWorkspaceHeader } from "./coach-workspace-header";
+import { CoachWorkspaceFrame } from "./coach-workspace-frame";
 
 export function CoachAvailabilityPanel({
   coach,
@@ -21,9 +21,7 @@ export function CoachAvailabilityPanel({
   allowScheduleHistory?: boolean;
 }) {
   return (
-    <div className="coach-workspace">
-      <CoachWorkspaceHeader coach={coach} ownerDisplayName={ownerDisplayName} />
-
+    <CoachWorkspaceFrame coach={coach} ownerDisplayName={ownerDisplayName}>
       {view === "bookings" && coach ? (
         bookingContent
       ) : !coach ? (
@@ -55,6 +53,6 @@ export function CoachAvailabilityPanel({
       ) : (
         scheduleContent
       )}
-    </div>
+    </CoachWorkspaceFrame>
   );
 }

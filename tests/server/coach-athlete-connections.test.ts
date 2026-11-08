@@ -194,3 +194,14 @@ test("connection cache versions bind actor/run/perspective and every authoritati
     ),
   );
 });
+
+test("unknown connection list views fail before actor/database work", async () => {
+  for (const view of ["external", ["connected", "requests"], null, {}, "ALL"]) {
+    assert.deepEqual(await loadConnectionPagesAction("coach", view), {
+      accepted: null,
+      incoming: null,
+      outgoing: null,
+      history: null,
+    });
+  }
+});

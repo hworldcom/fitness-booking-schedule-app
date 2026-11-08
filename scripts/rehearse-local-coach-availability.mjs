@@ -286,10 +286,9 @@ async function addSecondaryGym(page, primaryGymName) {
 }
 
 async function assertCoachPrimaryNavigation(page) {
-  const workspaceLink = page.getByRole("link", {
-    name: "Schedule",
-    exact: true,
-  });
+  const workspaceLink = page
+    .getByRole("navigation", { name: /^(Main|Mobile) navigation$/ })
+    .getByRole("link", { name: "Calendar", exact: true });
   await workspaceLink.first().waitFor();
   assert.equal(await workspaceLink.first().getAttribute("href"), "/coach");
   await workspaceLink.first().focus();

@@ -1,3 +1,4 @@
+import { CoachBookingsLegacyRedirect } from "@/features/coaches/coach-bookings-legacy-redirect";
 import { connectionWorkspaceVersion } from "@/server/connections/workspace-version";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -21,7 +22,13 @@ import { UNAVAILABLE_CONNECTION_PAGES } from "@/features/connections/connection-
 import "@/features/connections/connections.css";
 import { CoachBookingRequestQueue } from "@/features/coaches/coach-booking-request-queue";
 import { resolveCoachWorkspaceView } from "@/features/coaches/coach-workspace-view";
-import { currentOwnedCoachBookingRequestPage } from "@/server/coaches/booking-request-service";
+import {
+  currentOwnedCoachBookingRequestPage,
+  currentOwnedCoachPendingRequestCount,
+} from "@/server/coaches/booking-request-service";
+import { coachBookingsSection } from "@/domain/coach-bookings-navigation";
+import { CoachBookingsNavigation } from "@/features/coaches/coach-bookings-navigation";
+import { CoachWorkspaceOwnerBoundary } from "@/features/coaches/coach-workspace-owner-boundary";
 import { currentPrivateBookingWorkspace } from "@/server/coaches/booking-service";
 import { currentCoachAvailabilityWorkspace } from "@/server/coaches/service";
 import {
@@ -45,6 +52,10 @@ export default async function Page({
 }) {
   const params = await searchParams;
   const view = resolveCoachWorkspaceView(params.view);
+  const bookingSection = coachBookingsSection(
+    params.section,
+    params.occurrence,
+  );
   const selectedDate =
     typeof params.date === "string" && isAvailabilityDate(params.date)
       ? params.date
@@ -73,20 +84,24 @@ export default async function Page({
     history: query.history,
     after: null,
   };
-  const returnTo =
-    view === "bookings"
-      ? "/coach?view=bookings"
-      : section === "calendar"
-        ? calendarHref(selection)
-        : `/coach?view=schedule&section=availability${selectedDate ? `&date=${selectedDate}` : ""}`;
   const occurrence =
     typeof params.occurrence === "string" && isCanonicalUuid(params.occurrence)
       ? params.occurrence
       : undefined;
+  const returnTo =
+    view === "bookings"
+      ? bookingSection === "requests"
+        ? `/coach?view=bookings&section=requests${occurrence ? `&occurrence=${occurrence}` : ""}`
+        : "/coach?view=bookings"
+      : section === "calendar"
+        ? calendarHref(selection)
+        : `/coach?view=schedule&section=availability${selectedDate ? `&date=${selectedDate}` : ""}`;
   const [state, bookingState, requestState] = await Promise.all([
     currentCoachAvailabilityWorkspace(false),
-    view === "bookings" ? currentPrivateBookingWorkspace() : null,
-    view === "bookings"
+    view === "bookings" && bookingSection === "sessions"
+      ? currentPrivateBookingWorkspace()
+      : null,
+    view === "bookings" && bookingSection === "requests"
       ? currentOwnedCoachBookingRequestPage({ pageSize: 20 })
       : null,
   ]);
@@ -134,34 +149,40 @@ export default async function Page({
   const mayInitiate =
     state.coachAccess.status === "approved" ||
     state.coachAccess.status === "demo";
+  const pendingCount =
+    view === "bookings" &&
+    (mayInitiate || state.coachAccess.status === "suspended")
+      ? await currentOwnedCoachPendingRequestCount(state.actorScope)
+      : null;
   const bookingContent = (
     <div className="coach-bookings-workspace">
-      <nav
-        className="coach-connections-shortcuts"
-        aria-label="Bookings sections"
-      >
-        <a href="#booking-requests">Booking requests</a>
-        <a href="#client-bookings">Booked sessions</a>
-      </nav>
-      <CoachBookingRequestQueue
-        key={`${state.actorScope}:${occurrence ?? "all"}`}
-        initialPage={coachRequestPage}
-        selectedSlotId={occurrence}
+      <CoachBookingsLegacyRedirect active={bookingSection} />
+      <CoachBookingsNavigation
+        active={bookingSection}
+        pendingCount={pendingCount}
       />
-      <ConnectionWorkspace
-        role="coach"
-        view="sessions"
-        bookings={coachBookings}
-        referenceTime={new Date().toISOString()}
-        initialPages={UNAVAILABLE_CONNECTION_PAGES}
-        key={state.actorScope}
-        sourceVersion={connectionWorkspaceVersion(state.actorScope, "coach", [
-          coachBookings,
-          coachRequestPage,
-          state.coachAccess.status,
-        ])}
-        mayInitiate={mayInitiate}
-      />
+      {bookingSection === "requests" ? (
+        <CoachBookingRequestQueue
+          key={`${state.actorScope}:${occurrence ?? "all"}`}
+          initialPage={coachRequestPage}
+          selectedSlotId={occurrence}
+        />
+      ) : (
+        <ConnectionWorkspace
+          role="coach"
+          view="sessions"
+          bookings={coachBookings}
+          referenceTime={new Date().toISOString()}
+          initialPages={UNAVAILABLE_CONNECTION_PAGES}
+          key={state.actorScope}
+          sourceVersion={connectionWorkspaceVersion(state.actorScope, "coach", [
+            coachBookings,
+            coachRequestPage,
+            state.coachAccess.status,
+          ])}
+          mayInitiate={mayInitiate}
+        />
+      )}
     </div>
   );
 
@@ -170,7 +191,7 @@ export default async function Page({
     view === "schedule" &&
     section === "calendar";
   if (!mayInitiate && !suspendedCalendar) {
-    return (
+    const gate = (
       <CoachApplicationGate
         access={state.coachAccess}
         existingBookings={
@@ -179,6 +200,18 @@ export default async function Page({
             : undefined
         }
       />
+    );
+    return state.coachAccess.status === "suspended" && view === "bookings" ? (
+      <CoachWorkspaceOwnerBoundary
+        scope={state.actorScope}
+        actorIdentity={state.actorIdentity}
+        returnHref={returnTo}
+        allowSuspended
+      >
+        {gate}
+      </CoachWorkspaceOwnerBoundary>
+    ) : (
+      gate
     );
   }
 
@@ -257,7 +290,16 @@ export default async function Page({
       }
     />
   );
-  return suspendedCalendar ? (
+  return view === "bookings" ? (
+    <CoachWorkspaceOwnerBoundary
+      scope={state.actorScope}
+      actorIdentity={state.actorIdentity}
+      returnHref={returnTo}
+      allowSuspended
+    >
+      {workspace}
+    </CoachWorkspaceOwnerBoundary>
+  ) : suspendedCalendar ? (
     <CoachApplicationGate
       access={state.coachAccess}
       existingBookings={workspace}

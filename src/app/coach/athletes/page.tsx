@@ -1,3 +1,9 @@
+import {
+  coachAthletesHref,
+  coachAthletesSection,
+} from "@/domain/coach-athletes-navigation";
+import { CoachAthletesWorkspace } from "@/features/coaches/coach-athletes-workspace";
+import { CoachWorkspaceOwnerBoundary } from "@/features/coaches/coach-workspace-owner-boundary";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -13,11 +19,18 @@ import "@/features/connections/connections.css";
 
 export const metadata: Metadata = { title: "My athletes" };
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const section = coachAthletesSection(params.section);
+  const returnHref = coachAthletesHref(section);
   const state = await currentCoachAvailabilityWorkspace(false);
-  if (state.status === "signed-out") redirect(signInHref("/coach/athletes"));
+  if (state.status === "signed-out") redirect(signInHref(returnHref));
   if (state.status === "forbidden")
-    redirect(`${signInHref("/coach/athletes")}&reason=forbidden`);
+    redirect(`${signInHref(returnHref)}&reason=forbidden`);
   if (state.status === "preview") {
     return (
       <section className="protected-access-state">
@@ -26,7 +39,7 @@ export default async function Page() {
         <p>
           Your connections and connection requests are private to your account.
         </p>
-        <Link href={signInHref("/coach/athletes")} className="button dark">
+        <Link href={signInHref(returnHref)} className="button dark">
           Go to sign-in
         </Link>
       </section>
@@ -41,25 +54,23 @@ export default async function Page() {
     return <CoachApplicationGate access={state.coachAccess} />;
 
   const [bookingState, pages] = await Promise.all([
-    currentPrivateBookingWorkspace(),
-    loadConnectionPagesAction("coach"),
+    section === "connected" ? currentPrivateBookingWorkspace() : null,
+    loadConnectionPagesAction("coach", section),
   ]);
   const bookings =
-    bookingState.status === "authorized" ? bookingState.coachBookings : null;
+    bookingState?.status === "authorized" ? bookingState.coachBookings : null;
   const content = (
     <div className="coach-bookings-workspace">
       <ConnectionWorkspace
-        key={state.actorScope}
+        key={`${state.actorScope}:${section}`}
         role="coach"
         view="connections"
         mayInitiate={mayInitiate}
-        headingActions={
-          <Link className="button dark" href="/coach/athletes/external">
-            External clients
-          </Link>
-        }
+        connectionView={section}
+        connectionHeadingLevel={2}
         initialPages={pages}
         sourceVersion={connectionWorkspaceVersion(state.actorScope, "coach", [
+          section,
           pages,
           bookings,
           state.coachAccess.status,
@@ -69,12 +80,24 @@ export default async function Page() {
       />
     </div>
   );
-  return state.coachAccess.status === "suspended" ? (
-    <CoachApplicationGate
-      access={state.coachAccess}
-      existingBookings={content}
-    />
-  ) : (
-    content
+  return (
+    <CoachWorkspaceOwnerBoundary
+      scope={state.actorScope}
+      actorIdentity={state.actorIdentity}
+      returnHref={returnHref}
+      allowSuspended
+    >
+      <CoachAthletesWorkspace active={section}>
+        {state.coachAccess.status === "suspended" ? (
+          <CoachApplicationGate
+            access={state.coachAccess}
+            headingLevel={2}
+            existingBookings={content}
+          />
+        ) : (
+          content
+        )}
+      </CoachAthletesWorkspace>
+    </CoachWorkspaceOwnerBoundary>
   );
 }

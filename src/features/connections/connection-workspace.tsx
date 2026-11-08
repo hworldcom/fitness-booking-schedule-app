@@ -31,8 +31,11 @@ import { ClientSessions } from "../profile/client-sessions";
 import { BookingConnectionOptions } from "./booking-connection-options";
 import { ConnectionLists } from "./connection-lists";
 import { ConnectionHistory } from "./connection-history";
+import { useConnectionRequestCount } from "./connection-request-count";
 import {
   applyConnectionResult,
+  connectionSectionsForView,
+  type ConnectionListView,
   connectionReadMessage,
   freshConnectionRange,
   UNAVAILABLE_CONNECTION_PAGES,
@@ -70,6 +73,8 @@ export function ConnectionWorkspace({
   mayInitiate,
   view = "all",
   headingActions,
+  connectionView = "all",
+  connectionHeadingLevel,
 }: {
   role?: ConnectionRole;
   bookings: readonly PrivateBookingProjection[] | null;
@@ -79,8 +84,11 @@ export function ConnectionWorkspace({
   mayInitiate: boolean;
   view?: "all" | "sessions" | "connections";
   headingActions?: ReactNode;
+  connectionView?: ConnectionListView;
+  connectionHeadingLevel?: 1 | 2;
 }) {
   const router = useRouter();
+  const { refresh: refreshPendingCount } = useConnectionRequestCount();
   const [local, setLocal] = useState<{
     source: string;
     pages: ConnectionPages;
@@ -139,20 +147,27 @@ export function ConnectionWorkspace({
     });
   }
   async function refreshPages() {
-    const next = await loadConnectionPagesAction(role);
+    const next = await loadConnectionPagesAction(role, connectionView);
     setLocal({ source: sourceVersion, pages: next });
     return next;
   }
   function refresh() {
     run("refresh", async () => {
+      refreshPendingCount();
       setHistory(null);
       setContexts(null);
       setContextRevision((revision) => revision + 1);
       setLocal({ source: sourceVersion, pages: UNAVAILABLE_CONNECTION_PAGES });
       const next = await refreshPages();
       message(
-        Object.values(next).every(Boolean) ? "saved" : "unavailable",
-        Object.values(next).every(Boolean)
+        connectionSectionsForView(connectionView).every(
+          (section) => next[section] !== null,
+        )
+          ? "saved"
+          : "unavailable",
+        connectionSectionsForView(connectionView).every(
+          (section) => next[section] !== null,
+        )
           ? "Connections updated."
           : "Some connections could not be verified. Retry the affected list.",
       );
@@ -167,7 +182,14 @@ export function ConnectionWorkspace({
           pages: { ...pages, accepted: null },
         });
       }
-      const next = await mutateConnectionAction(idle, form);
+      let next: ConnectionActionState;
+      try {
+        next = await mutateConnectionAction(idle, form);
+      } finally {
+        // Even an uncertain write may have committed. Reread authority rather
+        // than decrementing the badge from a local assumption.
+        refreshPendingCount();
+      }
       setResult(next);
       // An unavailable response may hide a committed operation. Preserve its
       // operation ID until a definitive result or an explicit context read.
@@ -219,6 +241,7 @@ export function ConnectionWorkspace({
   }
   function loadPage(section: ConnectionSection) {
     run(`page:${section}`, async () => {
+      refreshPendingCount();
       const current = pages[section];
       if (section === "accepted") setHistory(null);
       setLocal({ source: sourceVersion, pages: { ...pages, [section]: null } });
@@ -333,7 +356,10 @@ export function ConnectionWorkspace({
       {view !== "sessions" && (
         <ConnectionLists
           role={role}
-          headingLevel={view === "connections" ? 1 : 2}
+          headingLevel={
+            connectionHeadingLevel ?? (view === "connections" ? 1 : 2)
+          }
+          view={connectionView}
           headingActions={headingActions}
           pages={pages}
           busy={busy}
