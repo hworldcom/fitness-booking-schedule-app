@@ -86,11 +86,15 @@ async function sendThrough(page: Page, id: string, role: "athlete" | "coach") {
     "Connection request pending acceptance.",
   );
   await openConnectionList(page);
+  if (role === "athlete")
+    await page.goto(base + "/my-coaches?section=requests");
   await expect(
     page.getByRole("button", { name: "Refresh connections", exact: true }),
   ).toBeEnabled();
 }
 async function acceptThrough(page: Page, id: string) {
+  if (new URL(page.url()).pathname === "/my-coaches")
+    await page.goto(base + "/my-coaches?section=requests");
   if (new URL(page.url()).pathname === "/coach/athletes")
     await page.goto(base + "/coach/athletes?section=requests");
   await openConnectionList(page);
@@ -103,6 +107,11 @@ async function acceptThrough(page: Page, id: string) {
   ).toBeEnabled();
 }
 async function disconnectThrough(page: Page, id: string) {
+  if (
+    new URL(page.url()).pathname === "/my-coaches" &&
+    new URL(page.url()).searchParams.has("section")
+  )
+    await page.goto(base + "/my-coaches");
   await openConnectionList(page);
   await card(page, id)
     .getByRole("button", { name: "Disconnect", exact: true })
@@ -132,10 +141,15 @@ async function disconnectThrough(page: Page, id: string) {
   ).toHaveCount(0);
 }
 async function revealAccepted(page: Page, id: string) {
+  if (
+    new URL(page.url()).pathname === "/my-coaches" &&
+    new URL(page.url()).searchParams.has("section")
+  )
+    await page.goto(base + "/my-coaches");
   await openConnectionList(page);
   while ((await card(page, id).count()) === 0) {
     const count = await page
-      .locator('[aria-label="My coaches"] .coach-connection-card')
+      .locator('[aria-label="Connected coaches"] .coach-connection-card')
       .count();
     await page
       .getByRole("button", { name: "Load more coaches", exact: true })
@@ -143,13 +157,18 @@ async function revealAccepted(page: Page, id: string) {
     await expect
       .poll(() =>
         page
-          .locator('[aria-label="My coaches"] .coach-connection-card')
+          .locator('[aria-label="Connected coaches"] .coach-connection-card')
           .count(),
       )
       .toBeGreaterThan(count);
   }
 }
 async function history(page: Page, id: string) {
+  if (
+    new URL(page.url()).pathname === "/my-coaches" &&
+    new URL(page.url()).searchParams.has("section")
+  )
+    await page.goto(base + "/my-coaches");
   if (
     new URL(page.url()).pathname === "/coach/athletes" &&
     new URL(page.url()).searchParams.get("section") === "requests"
@@ -304,7 +323,9 @@ try {
     let first = (await context(athlete, main.bookingId)).connection;
     assert.ok(first);
     await expect(
-      athletePage.locator('[aria-label="My coaches"] .coach-connection-card'),
+      athletePage.locator(
+        '[aria-label="Connected coaches"] .coach-connection-card',
+      ),
     ).toHaveCount(0);
     await coachPage.goto(base + "/coach/athletes?section=requests");
     await expect(
@@ -371,7 +392,9 @@ try {
     await disconnectThrough(coachPage, next.id);
     await athletePage.reload();
     await expect(
-      athletePage.locator('[aria-label="My coaches"] .coach-connection-card'),
+      athletePage.locator(
+        '[aria-label="Connected coaches"] .coach-connection-card',
+      ),
     ).toHaveCount(0);
     await sendThrough(athletePage, main.bookingId, "athlete");
     next = (await context(athlete, main.bookingId)).connection;
@@ -453,7 +476,7 @@ try {
       coachB,
       "/coach?view=bookings",
     );
-    await athletePage.reload();
+    await athletePage.goto(base + "/my-coaches?section=requests");
     await expect(
       card(athletePage, pending.id).getByRole("button", {
         name: "Accept connection",
@@ -487,7 +510,7 @@ try {
         `#athlete-booking-${race.bookingId} .coach-booking-status`,
       ),
     ).toContainText("Cancelled");
-    await openConnectionList(athletePage);
+    await athletePage.goto(base + "/my-coaches?section=requests");
     await card(athletePage, pending.id)
       .getByRole("button", { name: "Decline connection" })
       .click();
@@ -515,9 +538,11 @@ try {
     ).toHaveCount(0);
     await otherCoachPage.reload();
     await acceptThrough(otherCoachPage, crossed.id);
-    await athletePage.reload();
+    await athletePage.goto(base + "/my-coaches");
     await expect(
-      athletePage.locator('[aria-label="My coaches"] .coach-connection-card'),
+      athletePage.locator(
+        '[aria-label="Connected coaches"] .coach-connection-card',
+      ),
     ).toHaveCount(2);
 
     phase =
@@ -534,7 +559,9 @@ try {
     }
     await athletePage.reload();
     await expect(
-      athletePage.locator('[aria-label="My coaches"] .coach-connection-card'),
+      athletePage.locator(
+        '[aria-label="Connected coaches"] .coach-connection-card',
+      ),
     ).toHaveCount(20);
     await athletePage.route("**/my-coaches", async (route) => {
       if (route.request().method() === "POST") await route.abort();
@@ -544,17 +571,21 @@ try {
       .getByRole("button", { name: "Load more coaches", exact: true })
       .click();
     await expect(
-      athletePage.locator('[aria-label="My coaches"]'),
+      athletePage.locator('[aria-label="Connected coaches"]'),
     ).toContainText("could not be verified");
     await expect(
-      athletePage.locator('[aria-label="My coaches"] .coach-connection-card'),
+      athletePage.locator(
+        '[aria-label="Connected coaches"] .coach-connection-card',
+      ),
     ).toHaveCount(0);
     await athletePage.unroute("**/my-coaches");
     await athletePage
-      .getByRole("button", { name: "Retry my coaches", exact: true })
+      .getByRole("button", { name: "Retry connected coaches", exact: true })
       .click();
     await expect(
-      athletePage.locator('[aria-label="My coaches"] .coach-connection-card'),
+      athletePage.locator(
+        '[aria-label="Connected coaches"] .coach-connection-card',
+      ),
     ).toHaveCount(20);
     const loadMore = athletePage.getByRole("button", {
       name: "Load more coaches",
@@ -564,16 +595,18 @@ try {
     await loadMore.focus();
     await athletePage.keyboard.press("Enter");
     await expect(
-      athletePage.locator('[aria-label="My coaches"] .coach-connection-card'),
+      athletePage.locator(
+        '[aria-label="Connected coaches"] .coach-connection-card',
+      ),
     ).toHaveCount(22);
     await expect(
       athletePage
-        .locator('[aria-label="My coaches"] .coach-connection-card')
+        .locator('[aria-label="Connected coaches"] .coach-connection-card')
         .nth(20),
     ).toBeFocused();
     await expect(loadMore).toHaveCount(0);
     const ids = await athletePage
-      .locator('[aria-label="My coaches"] .coach-connection-card')
+      .locator('[aria-label="Connected coaches"] .coach-connection-card')
       .evaluateAll((nodes) =>
         nodes.map((node) => node.getAttribute("data-pair-id")),
       );
@@ -650,7 +683,7 @@ try {
     );
     await expect(
       coachAsAthlete.locator(
-        '[aria-label="My coaches"] .coach-connection-card',
+        '[aria-label="Connected coaches"] .coach-connection-card',
       ),
     ).toHaveCount(1);
     await expect(coachAsAthlete.locator("body")).not.toContainText(
@@ -670,7 +703,9 @@ try {
     await requestFixture(coachB, stranger, noConfirmed.slotId, "pending");
     const { page: strangerPage } = await actorPage(stranger, "/my-coaches");
     await expect(
-      strangerPage.locator('[aria-label="My coaches"] .coach-connection-card'),
+      strangerPage.locator(
+        '[aria-label="Connected coaches"] .coach-connection-card',
+      ),
     ).toHaveCount(0);
     await strangerPage.goto(base + "/sessions");
     await strangerPage
@@ -692,7 +727,7 @@ try {
       suspendedPendingBooking.bookingId,
     );
     await database`select app.review_coach_application(${coachB.actor.profileId}::uuid,'approved','suspended','Local-only suspension check.','local-test','movx-identity-application-v1')`;
-    await strangerPage.goto(base + "/my-coaches");
+    await strangerPage.goto(base + "/my-coaches?section=requests");
     await expect(
       card(strangerPage, suspendedPending.id).getByRole("button", {
         name: "Accept connection",

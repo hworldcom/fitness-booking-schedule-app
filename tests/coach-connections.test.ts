@@ -704,3 +704,74 @@ test("connected and requests panels keep distinct identities, history and per-li
   assert.match(failed, /Outgoing athlete/);
   assert.doesNotMatch(failed, /Connected athletes could not be verified/);
 });
+
+test("athlete connected/request sections preserve coach identity/public links and distinct pending/history recovery", () => {
+  const data = pages({
+    accepted: {
+      items: [
+        connection(81, {
+          status: "accepted",
+          coachDisplayName: "Connected coach",
+          canDisconnect: true,
+        }),
+      ],
+      nextCursor: null,
+    },
+    incoming: {
+      items: [
+        connection(82, { coachDisplayName: "Incoming coach", canAccept: true }),
+      ],
+      nextCursor: null,
+    },
+    outgoing: {
+      items: [
+        connection(83, {
+          coachDisplayName: "Outgoing coach",
+          canWithdraw: true,
+        }),
+      ],
+      nextCursor: null,
+    },
+    history: {
+      items: [
+        connection(84, {
+          status: "removed",
+          coachDisplayName: "Previous coach",
+          coachPublic: true,
+        }),
+      ],
+      nextCursor: null,
+    },
+  });
+  const render = (view: "connected" | "requests", value = data) =>
+    renderToStaticMarkup(
+      createElement(ConnectionLists, {
+        role: "athlete",
+        view,
+        pages: value,
+        busy: false,
+        mayInitiate: true,
+        onRefresh: noop,
+        onPage: noop,
+        onDecision: noop,
+        onHistory: noop,
+        renderHistory: () => null,
+      }),
+    );
+  const connected = render("connected");
+  assert.match(connected, /Connected coach/);
+  assert.match(connected, /href="\/coaches\/test-coach"/);
+  assert.doesNotMatch(
+    connected,
+    /Incoming coach|Outgoing coach|Previous coach/,
+  );
+  const requests = render("requests");
+  assert.match(requests, /Incoming coach/);
+  assert.match(requests, /Outgoing coach/);
+  assert.match(requests, /Previous coach/);
+  assert.doesNotMatch(requests, /Connected coach/);
+  const failed = render("requests", { ...data, incoming: null });
+  assert.match(failed, /Incoming connection requests could not be verified/);
+  assert.match(failed, /Outgoing coach/);
+  assert.doesNotMatch(failed, /Connected coaches could not be verified/);
+});

@@ -259,3 +259,7 @@
     flex-direction: column;
   }
 }
+
+.my-coaches-tab-content {
+  margin-top: 36px;
+}

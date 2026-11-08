@@ -1,3 +1,8 @@
+import {
+  myCoachesSection,
+  myCoachesHref,
+} from "@/domain/my-coaches-navigation";
+import { MyCoachesWorkspace } from "@/features/connections/my-coaches-workspace";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -7,15 +12,21 @@ import { ConnectionWorkspace } from "@/features/connections/connection-workspace
 import "@/features/connections/connections.css";
 import { ProtectedAccessUnavailable } from "@/features/auth/protected-access";
 import { protectedPageAccess } from "@/server/authorization/page-access";
-import { currentClientSessionWorkspace } from "@/server/coaches/booking-request-service";
+import { currentClientCoachMarketplaceWorkspace } from "@/server/coaches/booking-request-service";
 import { connectionWorkspaceVersion } from "@/server/connections/workspace-version";
 import { currentPendingCoachInvitation } from "@/server/external-clients/pending-invitation";
 import { PendingInvitationNotice } from "@/features/external-clients/pending-invitation-notice";
 
 export const metadata: Metadata = { title: "My coaches" };
 
-export default async function Page() {
-  const access = await protectedPageAccess("/my-coaches");
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const section = myCoachesSection((await searchParams).section);
+  const returnHref = myCoachesHref(section);
+  const access = await protectedPageAccess(returnHref);
   if (access.status === "unavailable") return <ProtectedAccessUnavailable />;
   if (access.status === "preview") {
     return (
@@ -25,7 +36,7 @@ export default async function Page() {
         <p>
           Your connections and connection requests are private to your account.
         </p>
-        <Link href={signInHref("/my-coaches")} className="button dark">
+        <Link href={signInHref(returnHref)} className="button dark">
           Go to sign-in
         </Link>
       </section>
@@ -33,32 +44,39 @@ export default async function Page() {
   }
 
   const [workspace, pages, invitation] = await Promise.all([
-    currentClientSessionWorkspace({ pageSize: 20 }),
-    loadConnectionPagesAction("athlete"),
+    currentClientCoachMarketplaceWorkspace([]),
+    loadConnectionPagesAction("athlete", section),
     currentPendingCoachInvitation(),
   ]);
-  if (workspace.status === "signed-out") redirect(signInHref("/my-coaches"));
+  if (workspace.status === "signed-out") redirect(signInHref(returnHref));
   if (workspace.status === "forbidden")
-    redirect(`${signInHref("/my-coaches")}&reason=forbidden`);
+    redirect(`${signInHref(returnHref)}&reason=forbidden`);
   if (workspace.status !== "authorized") return <ProtectedAccessUnavailable />;
 
+  const scope = [workspace.subject, workspace.actorIdentity].join(":");
   return (
-    <div className="client-session-workspace my-coaches-page">
+    <MyCoachesWorkspace
+      active={section}
+      subject={workspace.subject}
+      actorIdentity={workspace.actorIdentity}
+    >
       <PendingInvitationNotice invitation={invitation} />
       <ConnectionWorkspace
-        key={workspace.actorScope}
+        key={`${scope}:${section}`}
         role="athlete"
         view="connections"
+        connectionView={section}
+        connectionHeadingLevel={2}
         mayInitiate={true}
         initialPages={pages}
-        sourceVersion={connectionWorkspaceVersion(
-          workspace.actorScope,
-          "athlete",
-          [pages, workspace.bookings],
-        )}
+        sourceVersion={connectionWorkspaceVersion(scope, "athlete", [
+          section,
+          pages,
+          workspace.bookings,
+        ])}
         bookings={workspace.bookings}
         referenceTime={new Date().toISOString()}
       />
-    </div>
+    </MyCoachesWorkspace>
   );
 }
