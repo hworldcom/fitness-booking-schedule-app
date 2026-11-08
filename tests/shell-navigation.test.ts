@@ -158,6 +158,7 @@ test("public shell mode is restricted to the adopted marketplace routes", () => 
     "/events/group-00000000000040008000000000000001",
     "/coaches/daniel-park",
     "/how-it-works",
+    "/privacy",
     "/sign-in",
     "/register",
     "/check-email",
@@ -171,6 +172,7 @@ test("public shell mode is restricted to the adopted marketplace routes", () => 
 
   for (const path of [
     "/coaches",
+    "/privacy/another-page",
     "/coaches/daniel-park/schedule",
     "/sessions/calendar",
     "/sessions/groups",

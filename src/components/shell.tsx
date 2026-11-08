@@ -106,6 +106,7 @@ const publicMarketplacePaths = new Set([
   "/explore",
   "/events",
   "/how-it-works",
+  "/privacy",
   "/sign-in",
   "/register",
   "/check-email",
@@ -496,6 +497,11 @@ export function Shell({ children }: { children: ReactNode }) {
             <span>MovX Club © 2026</span>
             <a className="footer-contact" href="mailto:hello@movx.club">
               hello@movx.club
+            </a>
+            {/* A document navigation resets the notice below the sticky header. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a className="footer-contact" href="/privacy">
+              Privacy
             </a>
           </span>
           <span className="footer-tagline">Find a coach. Book your time.</span>
