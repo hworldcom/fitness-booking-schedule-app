@@ -4,7 +4,7 @@ Implementation and remaining live evidence belong to [DEV0287](https://linear.ap
 
 ## Check existing access first
 
-The owner has not confirmed whether a Google client exists. In the owned Google Cloud account, open **Google Auth Platform → Clients** and look for a **Web application** client for MovX. Check the target Supabase project's **Authentication → Sign In / Providers → Google** for the matching client ID. Client IDs are public identifiers; the client secret must stay in managed Auth settings or an ignored local secret environment file. Do not paste secrets in chat, tickets, screenshots or command output. No Google/Supabase administration has been performed by this implementation.
+A Google **Web application** client is configured on the dev/UAT Supabase project `mdzidiqosxbghmfyxphb`; its provider was enabled by the owner and rechecked on 8 November 2026. UAT app activation and real-provider evidence are recorded in [MOV-16](https://linear.app/movx/issue/MOV-16/dev0287-integrate-google-authentication). Check the intended project and matching client in **Google Auth Platform → Clients** and **Supabase → Authentication → Sign In / Providers → Google** before changes. Client IDs are public identifiers; client secrets stay in managed Auth settings or an ignored operator file. Do not paste secrets in chat, tickets, screenshots or command output. The local Docker provider and production configuration remain independent.
 
 Use separate non-production and production OAuth clients and managed Auth projects/settings. Do not add local callbacks to a production client. Do not create another project until existing ownership and configuration have been checked.
 
