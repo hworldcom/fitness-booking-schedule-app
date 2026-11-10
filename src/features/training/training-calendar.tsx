@@ -11,6 +11,7 @@ import {
 } from "./calendar-agenda-model";
 import { useTrainingWorkspace } from "./use-training-workspace";
 import { TrainingFeedback } from "./training-feedback";
+import { TrainingProgressDetails } from "./training-progress";
 import { VideoLinks } from "@/features/notes/video-links";
 import {
   addDays,
@@ -166,6 +167,12 @@ export function TrainingCalendar({
           <strong>{page.monthCount}</strong>
           <span>this month</span>
         </div>
+        <TrainingProgressDetails
+          page={page}
+          scope={scope}
+          timezone={timezone}
+          paused={paused}
+        />
       </section>
       <div className="training-actions">
         <button

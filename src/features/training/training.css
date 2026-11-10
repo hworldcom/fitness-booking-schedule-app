@@ -6,6 +6,7 @@
 }
 .training-summary {
   display: flex;
+  flex-wrap: wrap;
   gap: 32px;
   align-items: center;
   justify-content: space-between;
@@ -14,6 +15,124 @@
   border-radius: 24px;
   padding: 28px;
   margin: 24px 0;
+}
+.training-summary > div:first-child {
+  flex: 1;
+}
+.training-progress {
+  flex-basis: 100%;
+  min-width: 0;
+  border-top: 1px solid #d5ddca;
+  padding-top: 8px;
+}
+.training-progress-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #354a24;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.training-progress-toggle[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+.training-progress-periods {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 12px;
+}
+.training-progress-period {
+  min-width: 0;
+}
+.training-progress-period h3 {
+  font-size: 15px;
+  margin: 0 0 16px;
+}
+.training-progress-period dl {
+  display: grid;
+  grid-template-columns: minmax(85px, 1fr) minmax(0, 2fr);
+  gap: 12px;
+  margin: 0;
+}
+.training-progress-period dt {
+  font-size: 12px;
+  color: #58634e;
+  margin-bottom: 8px;
+}
+.training-progress-period dd {
+  margin: 0;
+}
+.training-hours {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 44px;
+}
+.training-hours span {
+  font-size: 13px;
+  font-weight: 500;
+}
+.training-difficulty {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+}
+.training-difficulty strong,
+.training-difficulty span {
+  display: block;
+}
+.training-difficulty strong {
+  font-size: 16px;
+}
+.training-difficulty span {
+  font-size: 12px;
+  color: #58634e;
+  margin-top: 3px;
+}
+.training-difficulty-gauge {
+  flex: none;
+  width: 52px;
+  height: 38px;
+  overflow: visible;
+}
+.training-difficulty-gauge path {
+  fill: none;
+  stroke-width: 5;
+}
+.gauge-easy {
+  stroke: #6b8452;
+}
+.gauge-moderate {
+  stroke: #c49b4d;
+}
+.gauge-hard {
+  stroke: #b56c51;
+}
+.training-difficulty-gauge.unrated path {
+  stroke: #c1c8b9;
+}
+.training-difficulty-gauge .gauge-needle {
+  stroke: #354a24;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.gauge-hub {
+  fill: #354a24;
+}
+.training-summary .training-progress-help {
+  font-size: 12px;
+  line-height: 1.6;
+  margin-top: 20px;
+  max-width: 760px;
+}
+.training-progress-error button {
+  min-height: 44px;
 }
 .training-summary h2 {
   font-size: clamp(24px, 3vw, 36px);
@@ -343,7 +462,12 @@
     flex-wrap: wrap;
   }
   .training-summary > div:first-child {
+    flex: none;
     width: 100%;
+  }
+  .training-progress-periods {
+    grid-template-columns: 1fr;
+    gap: 24px;
   }
   .training-count {
     flex: 1;

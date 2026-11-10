@@ -125,6 +125,7 @@ return <main className="training-page">{active?.startsWith("coach-")
     let delayedList;
     let remindersEnabled = false;
     let actorChanged = false;
+    let failProgressPage = false;
     await context.route("**/api/auth/actor", (r) =>
       r.fulfill({
         json: {
@@ -155,6 +156,16 @@ return <main className="training-page">{active?.startsWith("coach-")
       const body = route.request().postDataJSON(),
         c = body.command;
       requests.push(c);
+      if (
+        failProgressPage &&
+        c.action === "list" &&
+        c.args.from === "2026-10-01" &&
+        c.args.offset === 100
+      ) {
+        failProgressPage = false;
+        await route.fulfill({ status: 503, json: { status: "unavailable" } });
+        return;
+      }
       if (c.action === "list" && delayedList) await delayedList;
       if (c.action === "list" && failList) {
         failList--;
@@ -261,10 +272,18 @@ return <main className="training-page">{active?.startsWith("coach-")
                   items: matching.slice(offset, offset + 100),
                   next: matching.length > offset + 100 ? offset + 100 : null,
                   now: "2026-10-26T12:00:00Z",
-                  weekCount: items.filter((i) => i.attendance === "attended")
-                    .length,
-                  monthCount: items.filter((i) => i.attendance === "attended")
-                    .length,
+                  // Fixed UTC fixture clock; totals stay current while browsing.
+                  weekCount: items.filter(
+                    (i) =>
+                      i.attendance === "attended" &&
+                      i.startsAt.slice(0, 10) >= "2026-10-26" &&
+                      i.startsAt.slice(0, 10) <= "2026-11-01",
+                  ).length,
+                  monthCount: items.filter(
+                    (i) =>
+                      i.attendance === "attended" &&
+                      i.startsAt.startsWith("2026-10-"),
+                  ).length,
                   remindersEnabled,
                 }
               : { saved: true },
@@ -373,6 +392,166 @@ return <main className="training-page">{active?.startsWith("coach-")
     await expect(
       page.getByRole("button", { name: "Plan training", exact: true }),
     ).toHaveCount(0);
+    const progress = page.locator(".training-progress");
+    await expect(
+      progress.getByRole("button", { name: "View more" }),
+    ).toHaveAttribute("aria-expanded", "false");
+    assert.equal(
+      requests.some((c) => c.action === "list" && c.args.from === "2026-10-01"),
+      false,
+      "Collapsed details must not read the month",
+    );
+    await progress.getByRole("button", { name: "View more" }).focus();
+    await page.keyboard.press("Enter");
+    await expect(
+      progress.getByRole("button", { name: "View less" }),
+    ).toHaveAttribute("aria-expanded", "true");
+    await expect(
+      progress.getByLabel("This week").getByText("Not rated", { exact: true }),
+    ).toBeVisible();
+    await expect(progress.locator(".training-hours").first()).toHaveText(
+      "0.0 hrs",
+    );
+    await expect(progress.locator(".gauge-needle")).toHaveCount(0);
+    await page.keyboard.press("Space");
+    await expect(progress.getByLabel("This week")).toBeHidden();
+    const progressItem = (key, startsAt, overrides = {}) => ({
+      key,
+      source: "personal",
+      title: "Progress workout",
+      startsAt,
+      endsAt: new Date(Date.parse(startsAt) + 3600000).toISOString(),
+      timezone: "UTC",
+      state: "planned",
+      attendance: "attended",
+      notes: "",
+      intensity: null,
+      actualMinutes: null,
+      revision: 1,
+      seriesId: null,
+      planRevision: null,
+      href: null,
+      location: null,
+      ...overrides,
+    });
+    items.push(
+      ...Array.from({ length: 100 }, (_, n) =>
+        progressItem(`progress-plan:${n}`, "2026-10-01T08:00:00Z", {
+          attendance: "planned",
+        }),
+      ),
+      progressItem("progress-month", "2026-10-05T09:00:00Z", {
+        intensity: "Easy",
+        actualMinutes: 90,
+      }),
+      progressItem("progress-week", "2026-10-26T09:00:00Z", {
+        intensity: "Hard",
+        actualMinutes: 45,
+      }),
+    );
+    // Browsing a future week must still show the current week/month details.
+    await page.goto(base + "/sessions/calendar?date=2026-12-07");
+    failProgressPage = true;
+    await progress.getByRole("button", { name: "View more" }).click();
+    await expect(
+      progress.getByText("Training details are unavailable. Try again."),
+    ).toBeVisible();
+    await expect(progress.locator(".training-hours")).toHaveCount(0);
+    await progress
+      .getByRole("button", { name: "Retry training details" })
+      .click();
+    await expect(
+      progress.getByLabel("This week").locator(".training-hours"),
+    ).toHaveText("0.8 hrs");
+    await expect(page.locator(".training-count strong").first()).toHaveText(
+      "1",
+    );
+    await expect(progress.getByLabel("This week")).toContainText("Hard");
+    await expect(
+      progress.getByLabel("This month").locator(".training-hours"),
+    ).toHaveText("2.3 hrs");
+    await expect(progress.getByLabel("This month")).toContainText(
+      "2.0 / 3 · 2 rated",
+    );
+    await expect(
+      progress.getByLabel("This month").locator(".gauge-needle"),
+    ).toHaveAttribute("transform", "rotate(0 32 34)");
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth + 1,
+      ),
+      false,
+      "Progress overflow " + width,
+    );
+    await page.screenshot({
+      path: path.join(evidence, `progress-expanded-${width}.png`),
+      fullPage: true,
+    });
+    await page
+      .getByRole("button", { name: "Log workout", exact: true })
+      .click();
+    await page
+      .getByLabel("Activity", { exact: true })
+      .fill("Progress refresh log");
+    await page.getByText("Optional workout details", { exact: true }).click();
+    await page.getByLabel("Actual minutes", { exact: true }).fill("30");
+    await page
+      .getByRole("combobox", { name: /How did it feel/ })
+      .selectOption("Moderate");
+    await page
+      .getByRole("button", { name: "Save completed workout", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(
+      progress.getByLabel("This week").locator(".training-hours"),
+    ).toHaveText("1.3 hrs");
+    await expect(
+      progress.getByLabel("This month").locator(".training-hours"),
+    ).toHaveText("2.8 hrs");
+    await expect(progress.getByLabel("This month")).toContainText(
+      "2.0 / 3 · 3 rated",
+    );
+    await page.keyboard.press("Tab");
+    await progress.getByRole("button", { name: "View less" }).focus();
+    assert.equal(
+      await progress
+        .getByRole("button", { name: "View less" })
+        .evaluate(
+          (el) =>
+            el.matches(":focus-visible") &&
+            getComputedStyle(el).outlineStyle !== "none",
+        ),
+      true,
+    );
+    await page.keyboard.press("Enter");
+    await expect(progress.getByLabel("This month")).toBeHidden();
+    // An in-flight private read cannot restore details after an actor change.
+    let releaseProgress;
+    delayedList = new Promise((resolve) => {
+      releaseProgress = resolve;
+    });
+    await progress.getByRole("button", { name: "View more" }).click();
+    await expect(progress.getByRole("status")).toHaveText(
+      "Loading training details…",
+    );
+    actorChanged = true;
+    await page.getByRole("button", { name: "Refresh fixture actor" }).click();
+    await expect(progress).toHaveCount(0);
+    releaseProgress();
+    delayedList = undefined;
+    await expect(
+      page.getByText("Sign in again to load your training."),
+    ).toBeVisible();
+    actorChanged = false;
+    items.length = 0;
+    requests.length = 0;
+    await page.goto(base + "/sessions/calendar");
+    await expect(
+      page.getByRole("heading", { name: "My training", exact: true }),
+    ).toBeVisible();
+    checks.push(
+      `${width}px collapsed/lazy progress, keyboard toggle/focus, empty/unrated gauge, complete current periods beyond100 rows while browsing future, later-page failure/retry, numeric/dial averages, refresh after a completed log, actor change during read and overflow`,
+    );
     await page.getByRole("link", { name: "Plan routine", exact: true }).click();
     await expect(
       page.getByRole("heading", { name: "Plan routine", exact: true }),
