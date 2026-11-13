@@ -25,6 +25,7 @@ Start with the [MVP specification](docs/mvp-spec.md), the single current product
 | [supabase/README.md](supabase/README.md)                 | Local database and hosted migration operations.            |
 
 Google sign-in activation and remaining live checks: [provider setup](docs/google-auth-setup.md).
+Optional Google Calendar connection (separate from sign-in; no booking export or busy access yet): [setup and recovery](docs/google-calendar-setup.md).
 
 ## Current foundation
 
@@ -296,6 +297,8 @@ The local stack uses port `55322`. `db:reset` recreates only an explicitly dispo
 npm test
 npm run test:auth
 npm run test:google-auth
+npm run test:google-calendar-db
+npm run test:google-calendar-ui
 npm run test:coach-availability
 npm run test:coach-availability-hosted -- --environment dev --check
 npm run test:coach-locations

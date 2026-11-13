@@ -1,6 +1,7 @@
 export const ACCOUNT_SECTIONS = [
   "personal-details",
   "login-security",
+  "connected-calendars",
   "language",
 ] as const;
 export type AccountSection = (typeof ACCOUNT_SECTIONS)[number];

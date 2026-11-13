@@ -1,0 +1,361 @@
+"use client";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import {
+  calendarId,
+  isCalendarResult,
+  type CalendarCommand,
+  type CalendarResult,
+} from "@/calendar/connection";
+import { useActor } from "@/auth/client/actor-provider";
+import { useAuthSession } from "@/auth/client/session-provider";
+
+async function requestCalendar(
+  input?: CalendarCommand,
+  signal?: AbortSignal,
+): Promise<CalendarResult> {
+  try {
+    const response = await fetch("/api/account/google-calendar", {
+      method: input ? "POST" : "GET",
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: input ? { "content-type": "application/json" } : {},
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(45000)])
+        : AbortSignal.timeout(45000),
+      ...(input ? { body: JSON.stringify(input) } : {}),
+    });
+    const value: unknown = await response.json();
+    return isCalendarResult(value) && (response.ok || value.status !== "ready")
+      ? value
+      : { status: "unavailable" };
+  } catch {
+    return { status: "unavailable" };
+  }
+}
+export function GoogleCalendarConnection({ notice }: { notice?: string } = {}) {
+  const { actor } = useActor(),
+    { session } = useAuthSession();
+  if (actor.status !== "authorized" || session.status !== "signed-in")
+    return (
+      <p role="status">Verify your account to manage calendar connections.</p>
+    );
+  return (
+    <CalendarConnectionControls
+      key={`${session.subject}:${actor.demoRun.slug}:${actor.profile.slug}`}
+      notice={notice}
+    />
+  );
+}
+function CalendarConnectionControls({ notice }: { notice?: string }) {
+  const [result, setResult] = useState<CalendarResult | null>(null),
+    [busy, setBusy] = useState(false),
+    [reload, setReload] = useState(0);
+  const lock = useRef(false),
+    alive = useRef(true),
+    mutation = useRef<AbortController | null>(null);
+  useEffect(() => {
+    alive.current = true;
+    const controller = new AbortController();
+    void requestCalendar(undefined, controller.signal).then((value) => {
+      if (!controller.signal.aborted) setResult(value);
+    });
+    return () => {
+      alive.current = false;
+      controller.abort();
+      mutation.current?.abort();
+    };
+  }, [reload]);
+  async function run(input: CalendarCommand) {
+    if (lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    const controller = new AbortController();
+    mutation.current = controller;
+    const value = await requestCalendar(input, controller.signal);
+    if (alive.current && !controller.signal.aborted) {
+      setResult(value);
+      setBusy(false);
+    }
+    lock.current = false;
+  }
+  return (
+    <GoogleCalendarConnectionView
+      key={reload}
+      result={result}
+      notice={notice}
+      busy={busy}
+      onCommand={(input) => void run(input)}
+      onReload={() => {
+        setResult(null);
+        setReload((n) => n + 1);
+      }}
+    />
+  );
+}
+const callbackNotices = {
+  connected: "Google Calendar connected.",
+  denied:
+    "Calendar permission was not granted. Any existing connection remains unchanged.",
+  unavailable:
+    "The connection attempt could not be verified. Reload the connection status before trying again.",
+  "account-mismatch":
+    "Choose the same Google account when reconnecting. To change Google accounts, disconnect first.",
+  "reconnect-required":
+    "Google authorization needs to be renewed. Reconnect your calendar.",
+  "recovery-required":
+    "Check Google Calendar and recover the existing MovX calendar or confirm a replacement below.",
+};
+const stateLabel = {
+  disconnected: "Not connected",
+  connecting: "Connection in progress",
+  connected: "Connected",
+  "reconnect-required": "Reconnect required",
+  "recovery-required": "Calendar recovery required",
+};
+export function GoogleCalendarConnectionView({
+  result,
+  busy = false,
+  onCommand,
+  onReload,
+  notice,
+}: {
+  result: CalendarResult | null;
+  busy?: boolean;
+  onCommand(input: CalendarCommand): void;
+  onReload(): void;
+  notice?: string;
+}) {
+  const [replacement, setReplacement] = useState(false),
+    [id, setId] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+  const connection = result?.status === "ready" ? result.connection : null;
+  return (
+    <div className="calendar-connection">
+      <h3>Google Calendar</h3>
+      {notice && Object.hasOwn(callbackNotices, notice) && (
+        <p role="status">
+          {callbackNotices[notice as keyof typeof callbackNotices]}
+        </p>
+      )}
+      <p>
+        Connect your Google account to create a separate MovX calendar. The
+        connection stays available after you sign out. Booking synchronization
+        and Google busy-time blocking are not available yet.
+      </p>
+      <p>
+        <Link href="/privacy#privacy-google-calendar">
+          How MovX uses Google Calendar data
+        </Link>
+      </p>
+      <div role="status" aria-live="polite">
+        {busy
+          ? "Updating your calendar connection…"
+          : !result
+            ? "Loading calendar connection…"
+            : connection
+              ? stateLabel[connection.state]
+              : "We couldn’t verify your calendar connection. Reload its status before trying again."}
+      </div>
+      {!connection ? (
+        result && (
+          <button type="button" className="button light" onClick={onReload}>
+            Reload connection status
+          </button>
+        )
+      ) : (
+        <>
+          {connection.email && (
+            <p className="calendar-connection-email">
+              Google account: {connection.email}
+            </p>
+          )}
+          {connection.state === "connected" && (
+            <p>Calendar: MovX. Your Google appointments stay unchanged.</p>
+          )}
+          {connection.checkedAt && (
+            <p>
+              Last checked:{" "}
+              {new Date(connection.checkedAt).toLocaleString("en-GB", {
+                timeZone: "Europe/Berlin",
+              })}{" "}
+              (Europe/Berlin)
+            </p>
+          )}
+          {result?.status === "ready" && !result.enabled && (
+            <p>
+              Google Calendar connection is unavailable right now. You can still
+              disconnect an existing connection.
+            </p>
+          )}
+          <fieldset disabled={busy} className="calendar-connection-controls">
+            <legend className="sr-only">
+              Manage Google Calendar connection
+            </legend>
+            {result?.status === "ready" &&
+              result.enabled &&
+              connection.state !== "connecting" && (
+                <form
+                  method="post"
+                  action="/auth/google-calendar/start"
+                  onSubmit={() =>
+                    setMessage("Opening Google to request your permission…")
+                  }
+                >
+                  <input
+                    type="hidden"
+                    name="generation"
+                    value={connection.generation}
+                  />
+                  <button className="button dark" type="submit">
+                    {connection.state === "disconnected"
+                      ? "Connect Google Calendar"
+                      : "Reconnect Google Calendar"}
+                  </button>
+                </form>
+              )}
+            {connection.state === "connecting" && (
+              <p>
+                A connection attempt is in progress. Complete the Google prompt,
+                reload the status, or disconnect to cancel it.
+              </p>
+            )}
+            <div className="calendar-connection-actions">
+              <button type="button" className="button light" onClick={onReload}>
+                Reload connection status
+              </button>
+              {result?.status === "ready" &&
+                result.enabled &&
+                connection.state !== "disconnected" &&
+                connection.state !== "connecting" && (
+                  <button
+                    type="button"
+                    className="button light"
+                    onClick={() =>
+                      onCommand({
+                        action: "check",
+                        generation: connection.generation,
+                      })
+                    }
+                  >
+                    Check connection
+                  </button>
+                )}
+            </div>
+            {connection.state === "recovery-required" &&
+              result?.status === "ready" &&
+              result.enabled && (
+                <div className="calendar-connection-recovery">
+                  <p>
+                    An earlier attempt may have created a MovX calendar, or the
+                    saved calendar is no longer accessible. Check{" "}
+                    <a
+                      href="https://calendar.google.com/"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Google Calendar
+                    </a>{" "}
+                    before continuing. Existing calendars are never deleted by
+                    this recovery.
+                  </p>
+                  <form
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      if (!calendarId(id.trim())) {
+                        setMessage(
+                          "Enter the existing MovX calendar’s Calendar ID.",
+                        );
+                        return;
+                      }
+                      onCommand({
+                        action: "recover",
+                        generation: connection.generation,
+                        calendarId: id.trim(),
+                      });
+                    }}
+                  >
+                    <label>
+                      Existing MovX calendar ID
+                      <input
+                        value={id}
+                        onChange={(e) => setId(e.target.value)}
+                        maxLength={1024}
+                        required
+                        autoComplete="off"
+                      />
+                    </label>
+                    <p>
+                      Find Calendar ID under that calendar’s Google settings →
+                      Integrate calendar.
+                    </p>
+                    <button className="button light" type="submit">
+                      Recover existing calendar
+                    </button>
+                  </form>
+                  <label className="calendar-connection-confirm">
+                    <input
+                      type="checkbox"
+                      checked={replacement}
+                      onChange={(e) => setReplacement(e.target.checked)}
+                    />
+                    I checked Google Calendar and want to create a replacement.
+                    An earlier calendar may remain.
+                  </label>
+                  <button
+                    className="button light"
+                    type="button"
+                    disabled={!replacement}
+                    onClick={() => {
+                      setReplacement(false);
+                      onCommand({
+                        action: "replace",
+                        generation: connection.generation,
+                        commandId: crypto.randomUUID(),
+                      });
+                    }}
+                  >
+                    Create replacement calendar
+                  </button>
+                </div>
+              )}
+            {connection.state !== "disconnected" && (
+              <details>
+                <summary>Disconnect Google Calendar</summary>
+                <p>
+                  Stop future calendar access and remove MovX’s saved Calendar
+                  credentials. Your MovX bookings and sign-in remain. Your
+                  Google calendar and existing events stay in Google and stop
+                  receiving updates. A request already sent to Google may
+                  finish.
+                </p>
+                <p>
+                  You can also remove permissions in your Google account’s
+                  third-party connections. Google may remove other permissions
+                  granted to MovX there.
+                </p>
+                <button
+                  type="button"
+                  className="button light"
+                  onClick={() =>
+                    onCommand({
+                      action: "disconnect",
+                      generation: connection.generation,
+                    })
+                  }
+                >
+                  Confirm disconnect
+                </button>
+              </details>
+            )}
+          </fieldset>
+        </>
+      )}
+      {message && <p role="status">{message}</p>}
+      <p>
+        To use a different Google account, disconnect first and then connect
+        again. Existing calendars remain with their Google owner.
+      </p>
+    </div>
+  );
+}

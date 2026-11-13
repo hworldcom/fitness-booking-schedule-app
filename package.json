@@ -26,6 +26,8 @@
     "test:db": "DATABASE_TEST_URL=postgresql://postgres:postgres@127.0.0.1:55322/postgres tsx --conditions=react-server --test --test-concurrency=1 tests/database/*.test.ts",
     "test:auth": "node scripts/rehearse-local-email-auth.mjs",
     "test:google-auth": "node scripts/rehearse-google-authentication.mjs",
+    "test:google-calendar-db": "node scripts/rehearse-google-calendar-database.mjs",
+    "test:google-calendar-ui": "node scripts/rehearse-google-calendar-ui.mjs",
     "test:coach-availability": "node scripts/rehearse-local-coach-availability.mjs",
     "test:coach-availability-hosted": "node --env-file=.env.development.local scripts/rehearse-hosted-coach-availability.mjs",
     "test:coach-locations": "node scripts/rehearse-local-coach-locations.mjs",

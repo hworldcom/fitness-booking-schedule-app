@@ -90,9 +90,70 @@ const sections = [
         </p>
         <p>
           This sign-in does not request access to Google Calendar, Gmail,
-          contacts or Drive. Calendar synchronization would require a separate
-          feature and explicit permission. Google account information is used
-          for account access, not advertising.
+          contacts or Drive. Optional Calendar connection has its own permission
+          flow, described below. Google account information is used for account
+          access, not advertising.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "google-calendar",
+    title: "Optional Google Calendar connection",
+    content: (
+      <>
+        <p>
+          Where enabled, you can separately connect Google Calendar from Account
+          settings. You choose the Google account and approve access to a
+          dedicated calendar created for MovX. This does not change your MovX
+          sign-in account. The connection remains available after you sign out
+          until you disconnect or Google requires renewed authorization.
+        </p>
+        <p>
+          For this connection, MovX uses your verified Google account identifier
+          and email, the dedicated calendar identifier, connection and recovery
+          status, and authorization credentials. Refresh credentials and
+          temporary connection proofs are encrypted on the server. Access is
+          restricted; these credentials are not placed in browser storage
+          available to scripts or public account data. A short-lived HttpOnly
+          cookie binds your browser to the connection attempt.
+        </p>
+        <p>
+          The current connection creates or verifies the dedicated MovX
+          calendar. It does not export bookings, read your personal appointments
+          or busy periods, or edit your existing Google events. Those additional
+          capabilities would need their own information and, where necessary,
+          additional permission before activation. Google handles your
+          authorization and calendar under its{" "}
+          <a href="https://policies.google.com/privacy">privacy policy</a>.
+        </p>
+        <p>
+          You can disconnect in Account settings to stop future Calendar access
+          and delete MovX’s saved Calendar credentials. A request already sent
+          to Google may complete. Your MovX account and bookings remain; the
+          Google calendar and existing events remain with their owner. You can
+          also revoke access in your Google account. Google’s revocation may
+          affect other permissions granted to MovX, including requiring renewed
+          sign-in consent.
+        </p>
+        <p>
+          Credentials are retained while connected and deleted on disconnect or
+          account deletion. Connection proofs become unusable after ten minutes
+          and are cleared by a subsequent attempt, resolution or disconnect.
+          Minimal Google account and calendar references, including
+          interrupted-creation records, remain until account deletion to support
+          reconnection without silently creating duplicate calendars. Contact
+          the privacy inbox to request removal. MovX uses this information only
+          to provide and protect the optional connection you request; it is not
+          used for advertising or AI model training.
+        </p>
+        <p>
+          MovX’s use and transfer of information received from Google APIs
+          follows the{" "}
+          <a href="https://developers.google.com/terms/api-services-user-data-policy">
+            Google API Services User Data Policy
+          </a>
+          , including its Limited Use requirements.
         </p>
       </>
     ),
@@ -113,10 +174,10 @@ const sections = [
         </p>
         <p>
           Optional choices include publishing coach content, uploading media,
-          connecting with another participant and enabling personal training
-          reminders. Required fields are identified in the relevant form.
-          Without the necessary account or booking information, MovX cannot
-          provide that feature.
+          connecting Google Calendar, connecting with another participant and
+          enabling personal training reminders. Required fields are identified
+          in the relevant form. Without the necessary account or booking
+          information, MovX cannot provide that feature.
         </p>
         <ul>
           <li>
@@ -235,8 +296,8 @@ const sections = [
           <div>
             <dt>Google, video and external links</dt>
             <dd>
-              Where Google sign-in is enabled, Google handles the sign-in you
-              choose under its own{" "}
+              Where Google sign-in or Calendar connection is enabled, Google
+              handles the authorization you choose under its own{" "}
               <a href="https://policies.google.com/privacy">privacy policy</a>.
               Where coach video uploads and playback are enabled, Mux processes
               the uploaded videos and technical playback information, such as an
@@ -281,10 +342,10 @@ const sections = [
         <p>
           MovX uses authentication cookies and short-lived sign-in, recovery and
           invitation state to maintain access and return you to the right page.
-          The Google sign-in continuation lasts up to ten minutes; the email
-          confirmation/recovery flow lasts up to one hour. These are different
-          from the application’s ordinary session, which has a maximum
-          thirty-day grant.
+          Google sign-in and Calendar connection continuations last up to ten
+          minutes; the email confirmation/recovery flow lasts up to one hour.
+          These are different from the application’s ordinary session, which has
+          a maximum thirty-day grant.
         </p>
         <p>
           Browser session storage remembers the selected athlete or coach
@@ -445,16 +506,16 @@ const sections = [
       <>
         <p>
           We update this notice when our service or data practices change.
-          Native app permissions and future integrations, including Google
-          Calendar synchronization, require corresponding information before
-          they are introduced. We will explain material changes here and use an
-          in-product notice or email where appropriate.
+          Native app permissions and future integrations, including booking
+          export or Google busy-time access, require corresponding information
+          before they are introduced. We will explain material changes here and
+          use an in-product notice or email where appropriate.
         </p>
         <p>
-          This version takes effect on 8 November 2026. It establishes the
-          initial published notice, including optional Google sign-in,
-          purpose-based retention, manual privacy requests and the intended
-          audience of people aged 16 and older.
+          This version takes effect on 11 November 2026 and adds optional Google
+          Calendar connection to the initial notice, including optional Google
+          sign-in, purpose-based retention, manual privacy requests and the
+          intended audience of people aged 16 and older.
         </p>
       </>
     ),
@@ -475,7 +536,7 @@ export function PrivacyNotice() {
         </p>
         <p className="privacy-date">
           Effective and last updated{" "}
-          <time dateTime="2026-11-08">8 November 2026</time>
+          <time dateTime="2026-11-11">11 November 2026</time>
         </p>
       </header>
 

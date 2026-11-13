@@ -8,7 +8,8 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import { Globe2, ShieldCheck, UserRound } from "lucide-react";
+import { CalendarDays, Globe2, ShieldCheck, UserRound } from "lucide-react";
+import { GoogleCalendarConnection } from "./google-calendar-connection";
 import {
   accountDetailsInput,
   defaultFirstName,
@@ -52,7 +53,13 @@ async function requestDetails(
   }
 }
 
-export function AccountSettings({ section }: { section: AccountSection }) {
+export function AccountSettings({
+  section,
+  calendarNotice,
+}: {
+  section: AccountSection;
+  calendarNotice?: string;
+}) {
   const { actor } = useActor();
   const { session } = useAuthSession();
   if (actor.status !== "authorized" || session.status !== "signed-in")
@@ -77,6 +84,7 @@ export function AccountSettings({ section }: { section: AccountSection }) {
       key={`${session.subject}:${actor.demoRun.slug}:${actor.profile.slug}`}
       email={session.email}
       section={section}
+      calendarNotice={calendarNotice}
     />
   );
 }
@@ -84,9 +92,11 @@ export function AccountSettings({ section }: { section: AccountSection }) {
 function AccountEditor({
   email,
   section,
+  calendarNotice,
 }: {
   email: string;
   section: AccountSection;
+  calendarNotice?: string;
 }) {
   const [result, setResult] = useState<AccountResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -309,6 +319,7 @@ function AccountEditor({
   );
   return (
     <AccountSettingsView
+      calendarSettings={<GoogleCalendarConnection notice={calendarNotice} />}
       authenticationSettings={
         <AccountAuthenticationControls key={email} email={email} />
       }
@@ -513,12 +524,14 @@ export function AccountSettingsView({
   personalDetails,
   usernameSettings,
   authenticationSettings,
+  calendarSettings,
 }: {
   email: string;
   section: AccountSection;
   personalDetails?: ReactNode;
   usernameSettings?: ReactNode;
   authenticationSettings?: ReactNode;
+  calendarSettings?: ReactNode;
 }) {
   const content = useRef<HTMLDivElement>(null);
   const previousSection = useRef(section);
@@ -544,6 +557,11 @@ export function AccountSettingsView({
                 key: "login-security",
                 label: "Login & security",
                 Icon: ShieldCheck,
+              },
+              {
+                key: "connected-calendars",
+                label: "Connected calendars",
+                Icon: CalendarDays,
               },
               { key: "language", label: "Language", Icon: Globe2 },
             ] as const
@@ -580,6 +598,17 @@ export function AccountSettingsView({
               <SettingRow title="Email address" value={email} />
             </dl>
             {authenticationSettings}
+          </section>
+        ) : section === "connected-calendars" ? (
+          <section
+            id="connected-calendars"
+            className="account-settings-section"
+            aria-labelledby="connected-calendars-heading"
+          >
+            <h2 id="connected-calendars-heading" tabIndex={-1}>
+              Connected calendars
+            </h2>
+            {calendarSettings}
           </section>
         ) : (
           <section

@@ -1,0 +1,83 @@
+.calendar-connection {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.calendar-connection p {
+  margin: 0;
+  line-height: 1.6;
+}
+.calendar-connection a {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.calendar-connection h3 {
+  margin: 0;
+}
+.calendar-connection-email {
+  overflow-wrap: anywhere;
+}
+.calendar-connection-controls {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 1rem;
+}
+.calendar-connection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.calendar-connection .button {
+  white-space: normal;
+  max-width: 100%;
+  text-align: center;
+}
+.calendar-connection-recovery {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--line, #d5d7d4);
+  border-radius: 12px;
+}
+.calendar-connection-recovery form,
+.calendar-connection-recovery label {
+  display: grid;
+  gap: 0.5rem;
+}
+.calendar-connection-recovery input:not([type="checkbox"]) {
+  min-width: 0;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #90958e;
+  border-radius: 8px;
+  background: white;
+  color: #17231c;
+}
+.calendar-connection .calendar-connection-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  line-height: 1.5;
+}
+.calendar-connection-confirm input {
+  margin-top: 0.25rem;
+  flex-shrink: 0;
+}
+.calendar-connection details {
+  display: grid;
+  gap: 0.75rem;
+}
+.calendar-connection summary {
+  cursor: pointer;
+  text-decoration: underline;
+}
+.calendar-connection details p {
+  margin: 0.75rem 0;
+}
+.calendar-connection :focus-visible {
+  outline: 3px solid #326b4e;
+  outline-offset: 3px;
+}
