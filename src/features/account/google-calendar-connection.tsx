@@ -51,6 +51,7 @@ function CalendarConnectionControls({ notice }: { notice?: string }) {
   const [result, setResult] = useState<CalendarResult | null>(null),
     [busy, setBusy] = useState(false),
     [reload, setReload] = useState(0);
+  const [actionNotice, setActionNotice] = useState<string | undefined>();
   const lock = useRef(false),
     alive = useRef(true),
     mutation = useRef<AbortController | null>(null);
@@ -69,12 +70,19 @@ function CalendarConnectionControls({ notice }: { notice?: string }) {
   async function run(input: CalendarCommand) {
     if (lock.current) return;
     lock.current = true;
+    setActionNotice(undefined);
     setBusy(true);
     const controller = new AbortController();
     mutation.current = controller;
     const value = await requestCalendar(input, controller.signal);
     if (alive.current && !controller.signal.aborted) {
       setResult(value);
+      if (
+        input.action === "delete" &&
+        value.status === "ready" &&
+        value.connection.state === "disconnected"
+      )
+        setActionNotice("deleted");
       setBusy(false);
     }
     lock.current = false;
@@ -83,7 +91,7 @@ function CalendarConnectionControls({ notice }: { notice?: string }) {
     <GoogleCalendarConnectionView
       key={reload}
       result={result}
-      notice={notice}
+      notice={actionNotice ?? notice}
       busy={busy}
       onCommand={(input) => void run(input)}
       onReload={() => {
@@ -94,6 +102,7 @@ function CalendarConnectionControls({ notice }: { notice?: string }) {
   );
 }
 const callbackNotices = {
+  deleted: "Google calendar deleted. MovX is disconnected.",
   connected: "Google Calendar connected.",
   denied:
     "Calendar permission was not granted. Any existing connection remains unchanged.",
@@ -130,6 +139,7 @@ export function GoogleCalendarConnectionView({
 }) {
   const [replacement, setReplacement] = useState(false),
     [id, setId] = useState("");
+  const [deleteConfirmed, setDeleteConfirmed] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const connection = result?.status === "ready" ? result.connection : null;
   return (
@@ -159,6 +169,12 @@ export function GoogleCalendarConnectionView({
               ? stateLabel[connection.state]
               : "We couldn’t verify your calendar connection. Reload its status before trying again."}
       </div>
+      {result?.status === "delete-uncertain" && (
+        <p role="alert">
+          Google calendar deletion could not be confirmed. Reload the connection
+          status and check Google Calendar before trying again.
+        </p>
+      )}
       {!connection ? (
         result && (
           <button type="button" className="button light" onClick={onReload}>
@@ -170,6 +186,12 @@ export function GoogleCalendarConnectionView({
           {connection.email && (
             <p className="calendar-connection-email">
               Google account: {connection.email}
+            </p>
+          )}
+          {connection.state === "disconnected" && connection.calendarId && (
+            <p>
+              To delete the retained Google calendar through MovX, reconnect its
+              Google account first.
             </p>
           )}
           {connection.state === "connected" && (
@@ -263,7 +285,10 @@ export function GoogleCalendarConnectionView({
                       Google Calendar
                     </a>{" "}
                     before continuing. Existing calendars are never deleted by
-                    this recovery.
+                    this recovery. A calendar that may still be deleted cannot
+                    be recovered here. After a failed deletion, reconnect first,
+                    then recover a different existing calendar or explicitly
+                    create a replacement.
                   </p>
                   <form
                     onSubmit={(event) => {
@@ -354,6 +379,48 @@ export function GoogleCalendarConnectionView({
                 </button>
               </details>
             )}
+            {result?.status === "ready" &&
+              result.enabled &&
+              connection.calendarId &&
+              connection.state !== "connecting" &&
+              connection.state !== "disconnected" && (
+                <details>
+                  <summary>Disconnect and delete calendar</summary>
+                  <p>
+                    This permanently deletes this account’s dedicated Google
+                    calendar for this MovX environment and every event inside
+                    it, including events you added yourself. Other calendars and
+                    your MovX bookings remain. This cannot be undone.
+                  </p>
+                  <label className="calendar-connection-confirm">
+                    <input
+                      type="checkbox"
+                      checked={deleteConfirmed}
+                      onChange={(event) =>
+                        setDeleteConfirmed(event.target.checked)
+                      }
+                    />
+                    I want to permanently delete this MovX calendar and all its
+                    events.
+                  </label>
+                  <button
+                    type="button"
+                    className="button light"
+                    disabled={!deleteConfirmed}
+                    onClick={() => {
+                      setDeleteConfirmed(false);
+                      setMessage(null);
+                      onCommand({
+                        action: "delete",
+                        generation: connection.generation,
+                        commandId: crypto.randomUUID(),
+                      });
+                    }}
+                  >
+                    Confirm disconnect and delete calendar
+                  </button>
+                </details>
+              )}
           </fieldset>
         </>
       )}

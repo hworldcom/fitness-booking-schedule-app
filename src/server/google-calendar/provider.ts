@@ -167,10 +167,11 @@ export function googleCalendarProvider(
       accessToken: string,
       id: string,
       checkpoint: () => Promise<void>,
+      upgradeName = true,
     ) {
       if (!calendarId(id)) throw new CalendarProviderError("missing");
       const v = await json(
-        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(id)}?fields=id`,
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(id)}?fields=id,summary,etag`,
         { headers: headers(accessToken) },
       );
       if (v.id !== id) throw new CalendarProviderError("missing");
@@ -183,7 +184,61 @@ export function googleCalendarProvider(
       );
       if (events.kind !== "calendar#events")
         throw new CalendarProviderError("missing");
+      if (
+        upgradeName &&
+        v.summary === "MovX" &&
+        config.calendarName !== "MovX"
+      ) {
+        if (
+          typeof v.etag !== "string" ||
+          !v.etag ||
+          v.etag.length > 512 ||
+          /[\r\n]/.test(v.etag)
+        )
+          throw new CalendarProviderError("unavailable");
+        await checkpoint();
+        const renamed = await json(
+          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(id)}?fields=id`,
+          {
+            method: "PATCH",
+            headers: {
+              ...headers(accessToken),
+              "content-type": "application/json",
+              "if-match": v.etag,
+            },
+            body: JSON.stringify({ summary: config.calendarName }),
+          },
+        );
+        if (renamed.id !== id) throw new CalendarProviderError("unavailable");
+      }
       return id;
+    },
+    async deleteCalendar(accessToken: string, id: string) {
+      if (!calendarId(id)) throw new CalendarProviderError("authorization");
+      try {
+        const response = await transport(
+          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(id)}`,
+          {
+            method: "DELETE",
+            headers: headers(accessToken),
+            cache: "no-store",
+            redirect: "error",
+            signal: AbortSignal.timeout(10000),
+          },
+        );
+        await response.body?.cancel();
+        if (!response.ok)
+          throw new CalendarProviderError(
+            response.status === 401 || response.status === 403
+              ? "authorization"
+              : response.status === 404 || response.status === 410
+                ? "missing"
+                : "unavailable",
+          );
+      } catch (error) {
+        if (error instanceof CalendarProviderError) throw error;
+        throw new CalendarProviderError("unavailable");
+      }
     },
     async createCalendar(accessToken: string) {
       const v = await json("https://www.googleapis.com/calendar/v3/calendars", {
@@ -192,7 +247,10 @@ export function googleCalendarProvider(
           ...headers(accessToken),
           "content-type": "application/json",
         },
-        body: JSON.stringify({ summary: "MovX", timeZone: "Europe/Berlin" }),
+        body: JSON.stringify({
+          summary: config.calendarName,
+          timeZone: "Europe/Berlin",
+        }),
       });
       if (!calendarId(v.id)) throw new CalendarProviderError("unavailable");
       return v.id;

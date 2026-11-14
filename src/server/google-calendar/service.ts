@@ -41,7 +41,11 @@ export type CalendarCallbackFailure = Readonly<{
 export class CalendarServiceError extends Error {
   constructor(
     public readonly status:
-      "signed-out" | "forbidden" | "unavailable" | "conflict",
+      | "signed-out"
+      | "forbidden"
+      | "unavailable"
+      | "conflict"
+      | "delete-uncertain",
   ) {
     super("Calendar connection unavailable.");
   }
@@ -295,7 +299,9 @@ export function calendarConnectionService(deps: Dependencies) {
               error instanceof CalendarProviderError
                 ? (error.reason ?? error.kind)
                 : error instanceof CalendarServiceError
-                  ? error.status
+                  ? error.status === "delete-uncertain"
+                    ? "unavailable"
+                    : error.status
                   : "unavailable",
           });
         } catch {
@@ -317,6 +323,58 @@ export function calendarConnectionService(deps: Dependencies) {
         return;
       }
       if (!config || !provider) throw new CalendarServiceError("unavailable");
+      if (input.action === "delete") {
+        const claimed = await command(ctx, "delete-claim", input.generation, {
+          operationId: input.commandId,
+          clientHash: config.clientHash,
+        });
+        const record = claimed.record;
+        if (!record) throw new CalendarServiceError("unavailable");
+        try {
+          if (
+            record.client_hash !== config.clientHash ||
+            !record.credential_ciphertext ||
+            !claimed.calendarId
+          )
+            throw new CalendarServiceError("unavailable");
+          const refreshToken = unseal(
+            record.credential_ciphertext,
+            aad(ctx, "refresh"),
+            config.keys,
+          );
+          const tokens = await provider.refresh(refreshToken);
+          // Check access only to the pinned app-created target. Never rename a
+          // calendar as a side effect of preparing its deletion.
+          await provider.calendar(
+            tokens.accessToken,
+            claimed.calendarId,
+            async () => {
+              await command(ctx, "heartbeat", record.generation, {
+                operationId: record.operation_id,
+              });
+            },
+            false,
+          );
+          await command(ctx, "delete-dispatch", record.generation, {
+            operationId: record.operation_id,
+          });
+          await provider.deleteCalendar(tokens.accessToken, claimed.calendarId);
+          await command(ctx, "delete-confirm", record.generation, {
+            operationId: record.operation_id,
+          });
+          await deps.cookie.write(null);
+          return;
+        } catch {
+          try {
+            await command(ctx, "delete-fail", record.generation, {
+              operationId: record.operation_id,
+            });
+          } catch {
+            /* Keep the durable target retired; never change a newer connection. */
+          }
+          throw new CalendarServiceError("delete-uncertain");
+        }
+      }
       const claimed = await command(ctx, "claim-check", input.generation, {
         operationId: input.commandId ?? randomUUID(),
       });

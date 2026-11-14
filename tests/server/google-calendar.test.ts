@@ -132,7 +132,7 @@ test("Google protocol requests only app-created calendars and offline PKCE; proo
     "fixture-verifier",
   );
   assert.deepEqual(JSON.parse(calls[3].init.body as string), {
-    summary: "MovX",
+    summary: "MovX (Local)",
     timeZone: "Europe/Berlin",
   });
 });
@@ -247,6 +247,7 @@ function fixture(
     http: string[] = [],
     failures: CalendarCallbackFailure[] = [];
   const provider: GoogleCalendarProvider = {
+    deleteCalendar: async () => {},
     authorize: () => "https://accounts.google.com/o/oauth2/v2/auth",
     exchange:
       options.exchange ??

@@ -27,6 +27,7 @@
     "test:auth": "node scripts/rehearse-local-email-auth.mjs",
     "test:google-auth": "node scripts/rehearse-google-authentication.mjs",
     "test:google-calendar-db": "node scripts/rehearse-google-calendar-database.mjs",
+    "test:google-calendar-deletion-db": "node scripts/rehearse-google-calendar-deletion-database.mjs",
     "test:google-calendar-ui": "node scripts/rehearse-google-calendar-ui.mjs",
     "test:coach-availability": "node scripts/rehearse-local-coach-availability.mjs",
     "test:coach-availability-hosted": "node --env-file=.env.development.local scripts/rehearse-hosted-coach-availability.mjs",

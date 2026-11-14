@@ -49,6 +49,7 @@ let state = "disconnected",
   enabled = true,
   authorizationStarts = 0,
   fault = false,
+  deletionFault = false,
   hold = false,
   release;
 const posts = [];
@@ -174,9 +175,17 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
     if (route.request().method() === "POST") {
       const input = route.request().postDataJSON();
       posts.push(input);
+      if (input.action === "delete" && deletionFault) {
+        state = "recovery-required";
+        return route.fulfill({
+          status: 503,
+          json: { status: "delete-uncertain" },
+        });
+      }
       if (fault)
         return route.fulfill({ status: 503, json: { status: "unavailable" } });
-      if (input.action === "disconnect") state = "disconnected";
+      if (input.action === "disconnect" || input.action === "delete")
+        state = "disconnected";
       else state = "connected";
     }
     await route.fulfill({ json: result() }).catch(() => {});
@@ -250,6 +259,108 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
     );
     pass(
       `${width}px: connect/denial, checked connection, keyboard disconnect and no overflow`,
+    );
+    state = "connected";
+    await open();
+    await page
+      .getByText("Disconnect and delete calendar", { exact: true })
+      .focus();
+    await page.keyboard.press("Enter");
+    const deleteButton = page.getByRole("button", {
+      name: "Confirm disconnect and delete calendar",
+      exact: true,
+    });
+    await expect(deleteButton).toBeDisabled();
+    const beforeDelete = posts.length;
+    await page
+      .getByRole("checkbox", {
+        name: "I want to permanently delete this MovX calendar and all its events.",
+        exact: true,
+      })
+      .focus();
+    await page.keyboard.press("Space");
+    await expect(deleteButton).toBeEnabled();
+    assert.equal(
+      posts.length,
+      beforeDelete,
+      "opening/confirming the explanation sends no delete",
+    );
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+      false,
+    );
+    await page
+      .locator("details")
+      .filter({
+        has: page.getByText("Disconnect and delete calendar", { exact: true }),
+      })
+      .screenshot({ path: path.join(evidence, `delete-confirm-${width}.png`) });
+    await deleteButton.focus();
+    await page.keyboard.press("Enter");
+    await expect(
+      page.getByText("Google calendar deleted. MovX is disconnected.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    assert.equal(posts.length, beforeDelete + 1);
+    assert.deepEqual(Object.keys(posts.at(-1)).sort(), [
+      "action",
+      "commandId",
+      "generation",
+    ]);
+    assert.equal(posts.at(-1).action, "delete");
+    pass(
+      `${width}px: explicit permanent-delete confirmation, keyboard action and target-free request`,
+    );
+    state = "connected";
+    deletionFault = true;
+    await open();
+    await page
+      .getByText("Disconnect and delete calendar", { exact: true })
+      .click();
+    await page
+      .getByRole("checkbox", {
+        name: "I want to permanently delete this MovX calendar and all its events.",
+        exact: true,
+      })
+      .check();
+    await deleteButton.click();
+    await expect(
+      page.getByRole("alert").filter({ hasText: "Google calendar deletion" }),
+    ).toContainText("deletion could not be confirmed");
+    const afterUncertain = posts.length;
+    await expect(
+      page.getByText("Google calendar deleted. MovX is disconnected.", {
+        exact: true,
+      }),
+    ).toHaveCount(0);
+    await page
+      .getByRole("button", { name: "Reload connection status", exact: true })
+      .click();
+    await expect(
+      page.getByText("Calendar recovery required", { exact: true }),
+    ).toBeVisible();
+    assert.equal(
+      posts.length,
+      afterUncertain,
+      "uncertainty/reload never automatically retries deletion",
+    );
+    await expect(
+      page.getByText("Google calendar deleted. MovX is disconnected.", {
+        exact: true,
+      }),
+    ).toHaveCount(0);
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+      false,
+    );
+    deletionFault = false;
+    pass(
+      `${width}px: unknown delete outcome gives recovery guidance without false success or automatic retry`,
     );
     for (const previousState of ["disconnected", "reconnect-required"]) {
       state = previousState;
@@ -361,6 +472,18 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
     page.getByRole("button", { name: "Connect Google Calendar", exact: true }),
   ).toHaveCount(0);
   pass("Feature-disabled state offers no false connection action");
+  state = "connected";
+  await open();
+  await expect(
+    page.getByText("Disconnect and delete calendar", { exact: true }),
+  ).toHaveCount(0);
+  await page.getByText("Disconnect Google Calendar", { exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Confirm disconnect", exact: true }),
+  ).toBeEnabled();
+  pass(
+    "Feature-disabled state preserves ordinary disconnect without offering deletion",
+  );
   enabled = true;
   state = "connected";
   fault = true;

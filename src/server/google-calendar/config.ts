@@ -9,6 +9,7 @@ export type CalendarConfig = Readonly<{
   siteUrl: string;
   callbackUrl: string;
   clientHash: string;
+  calendarName: string;
   keys: readonly Buffer[];
 }>;
 export function calendarSiteUrl(
@@ -61,6 +62,14 @@ export function parseCalendarConfig(
       siteUrl: origin.origin,
       callbackUrl: new URL("/auth/google-calendar/callback", origin).toString(),
       clientHash: createHash("sha256").update(clientId).digest("hex"),
+      calendarName:
+        origin.hostname === "localhost"
+          ? "MovX (Local)"
+          : origin.origin === "https://uat.movx.club"
+            ? "MovX (UAT)"
+            : origin.origin === "https://movx.club"
+              ? "MovX"
+              : "MovX (Test)",
       keys,
     };
   } catch {

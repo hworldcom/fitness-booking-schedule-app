@@ -19,6 +19,7 @@ export function calendarResponse(result: CalendarResult) {
     forbidden: 403,
     conflict: 409,
     unavailable: 503,
+    "delete-uncertain": 503,
   };
   return NextResponse.json(result, {
     status: code[result.status],

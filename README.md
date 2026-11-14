@@ -298,6 +298,7 @@ npm test
 npm run test:auth
 npm run test:google-auth
 npm run test:google-calendar-db
+npm run test:google-calendar-deletion-db
 npm run test:google-calendar-ui
 npm run test:coach-availability
 npm run test:coach-availability-hosted -- --environment dev --check

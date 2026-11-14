@@ -22,7 +22,12 @@ export type CalendarResult =
     }>
   | Readonly<{
       status:
-        "signed-out" | "forbidden" | "unavailable" | "invalid" | "conflict";
+        | "signed-out"
+        | "forbidden"
+        | "unavailable"
+        | "invalid"
+        | "conflict"
+        | "delete-uncertain";
     }>;
 export function calendarUuid(value: unknown): value is string {
   return (
@@ -51,6 +56,7 @@ export function isCalendarResult(value: unknown): value is CalendarResult {
         "unavailable",
         "invalid",
         "conflict",
+        "delete-uncertain",
       ].includes(r.status)
     );
   const c = r.connection;
@@ -70,7 +76,7 @@ export function isCalendarResult(value: unknown): value is CalendarResult {
   );
 }
 export type CalendarCommand = Readonly<{
-  action: "disconnect" | "check" | "recover" | "replace";
+  action: "disconnect" | "delete" | "check" | "recover" | "replace";
   generation: string;
   calendarId?: string;
   commandId?: string;
@@ -80,13 +86,13 @@ export function calendarCommand(value: unknown): CalendarCommand | null {
   const v = value as CalendarCommand;
   if (
     !calendarUuid(v.generation) ||
-    !["disconnect", "check", "recover", "replace"].includes(v.action)
+    !["disconnect", "delete", "check", "recover", "replace"].includes(v.action)
   )
     return null;
   const keys =
     v.action === "recover"
       ? ["action", "generation", "calendarId"]
-      : v.action === "replace"
+      : v.action === "replace" || v.action === "delete"
         ? ["action", "generation", "commandId"]
         : ["action", "generation"];
   if (
@@ -94,6 +100,10 @@ export function calendarCommand(value: unknown): CalendarCommand | null {
     (v.action === "recover" && !calendarId(v.calendarId))
   )
     return null;
-  if (v.action === "replace" && !calendarUuid(v.commandId)) return null;
+  if (
+    (v.action === "replace" || v.action === "delete") &&
+    !calendarUuid(v.commandId)
+  )
+    return null;
   return v;
 }

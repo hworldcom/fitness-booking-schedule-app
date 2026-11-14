@@ -119,9 +119,10 @@ const sections = [
           cookie binds your browser to the connection attempt.
         </p>
         <p>
-          The current connection creates or verifies the dedicated MovX
-          calendar. It does not export bookings, read your personal appointments
-          or busy periods, or edit your existing Google events. Those additional
+          The current connection creates or verifies the dedicated MovX calendar
+          and can update its default name to identify a test environment. It
+          does not export bookings, read your personal appointments or busy
+          periods, or edit your existing Google events. Those additional
           capabilities would need their own information and, where necessary,
           additional permission before activation. Google handles your
           authorization and calendar under its{" "}
@@ -131,21 +132,26 @@ const sections = [
           You can disconnect in Account settings to stop future Calendar access
           and delete MovX’s saved Calendar credentials. A request already sent
           to Google may complete. Your MovX account and bookings remain; the
-          Google calendar and existing events remain with their owner. You can
-          also revoke access in your Google account. Google’s revocation may
-          affect other permissions granted to MovX, including requiring renewed
-          sign-in consent.
+          Google calendar and existing events remain with their owner. A
+          separate “Disconnect and delete calendar” control permanently deletes
+          that dedicated Google calendar and every event inside it only after
+          your explicit confirmation. It does not delete other calendars or MovX
+          bookings. A deletion request already sent may still finish if its
+          outcome cannot be confirmed immediately. You can also revoke access in
+          your Google account. Google’s revocation may affect other permissions
+          granted to MovX, including requiring renewed sign-in consent.
         </p>
         <p>
           Credentials are retained while connected and deleted on disconnect or
           account deletion. Connection proofs become unusable after ten minutes
           and are cleared by a subsequent attempt, resolution or disconnect.
           Minimal Google account and calendar references, including
-          interrupted-creation records, remain until account deletion to support
-          reconnection without silently creating duplicate calendars. Contact
-          the privacy inbox to request removal. MovX uses this information only
-          to provide and protect the optional connection you request; it is not
-          used for advertising or AI model training.
+          interrupted-creation and confirmed or uncertain calendar-deletion
+          records, remain until account deletion to support reconnection without
+          silently creating duplicate calendars. Contact the privacy inbox to
+          request removal. MovX uses this information only to provide and
+          protect the optional connection you request; it is not used for
+          advertising or AI model training.
         </p>
         <p>
           MovX’s use and transfer of information received from Google APIs
@@ -512,10 +518,10 @@ const sections = [
           use an in-product notice or email where appropriate.
         </p>
         <p>
-          This version takes effect on 11 November 2026 and adds optional Google
-          Calendar connection to the initial notice, including optional Google
-          sign-in, purpose-based retention, manual privacy requests and the
-          intended audience of people aged 16 and older.
+          This version takes effect on 14 November 2026 and adds explicit Google
+          calendar deletion and test-environment naming to the notice, including
+          optional Google sign-in, purpose-based retention, manual privacy
+          requests and the intended audience of people aged 16 and older.
         </p>
       </>
     ),
@@ -536,7 +542,7 @@ export function PrivacyNotice() {
         </p>
         <p className="privacy-date">
           Effective and last updated{" "}
-          <time dateTime="2026-11-11">11 November 2026</time>
+          <time dateTime="2026-11-14">14 November 2026</time>
         </p>
       </header>
 
