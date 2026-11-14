@@ -362,6 +362,74 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
     pass(
       `${width}px: unknown delete outcome gives recovery guidance without false success or automatic retry`,
     );
+    for (const previousState of ["connected", "reconnect-required"]) {
+      state = previousState;
+      const beforeMismatch = posts.length;
+      const beforeAuthorization = authorizationStarts;
+      await page.goto(`${base}/calendar-fixture?calendar=account-mismatch`);
+      const warning = page.getByRole("alert", {
+        name: "Different Google account selected",
+        exact: true,
+      });
+      await expect(warning).toBeVisible();
+      await expect(warning).toBeFocused();
+      await expect(warning).toContainText(
+        "Your existing calendar connection was not changed.",
+      );
+      await expect(warning).toContainText(
+        "disconnect first, then connect again",
+      );
+      await expect(
+        page.getByText(
+          previousState === "connected" ? "Connected" : "Reconnect required",
+          { exact: true },
+        ),
+      ).toBeVisible();
+      await expect(
+        page.getByText(
+          "Google account: calendar.owner.with.a.long.address@example.test",
+          { exact: true },
+        ),
+      ).toBeVisible();
+      await expect
+        .poll(async () =>
+          warning.evaluate((element) => {
+            const box = element.getBoundingClientRect();
+            return box.top >= 0 && box.bottom <= innerHeight;
+          }),
+        )
+        .toBe(true);
+      assert.equal(
+        posts.length,
+        beforeMismatch,
+        "account warning must not mutate the preserved connection",
+      );
+      assert.equal(
+        authorizationStarts,
+        beforeAuthorization,
+        "account warning must not automatically repeat authorization",
+      );
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth,
+        ),
+        false,
+      );
+      if (previousState === "connected")
+        await warning.screenshot({
+          path: path.join(evidence, `account-mismatch-${width}.png`),
+        });
+      await page.keyboard.press("Tab");
+      await expect(
+        page.getByRole("link", {
+          name: "How MovX uses Google Calendar data",
+          exact: true,
+        }),
+      ).toBeFocused();
+    }
+    pass(
+      `${width}px: focused account-mismatch warning, preserved identity/truthful status and keyboard continuation without automatic writes`,
+    );
     for (const previousState of ["disconnected", "reconnect-required"]) {
       state = previousState;
       const startCount = posts.length;

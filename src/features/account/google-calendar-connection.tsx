@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import {
   calendarId,
@@ -111,7 +111,7 @@ const callbackNotices = {
   unavailable:
     "The connection attempt could not be verified. Reload the connection status before trying again.",
   "account-mismatch":
-    "Choose the same Google account when reconnecting. To change Google accounts, disconnect first.",
+    "Your existing calendar connection was not changed. To switch accounts, disconnect first, then connect again.",
   "reconnect-required":
     "Google authorization needs to be renewed. Reconnect your calendar.",
   "recovery-required":
@@ -141,15 +141,36 @@ export function GoogleCalendarConnectionView({
     [id, setId] = useState("");
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const accountWarning = useRef<HTMLDivElement>(null);
+  const accountWarningId = useId();
+  useEffect(() => {
+    if (notice === "account-mismatch") {
+      accountWarning.current?.scrollIntoView({ block: "center" });
+      accountWarning.current?.focus({ preventScroll: true });
+    }
+  }, [notice]);
   const connection = result?.status === "ready" ? result.connection : null;
   return (
     <div className="calendar-connection">
       <h3>Google Calendar</h3>
-      {notice && Object.hasOwn(callbackNotices, notice) && (
+      {notice === "account-mismatch" ? (
+        <div
+          className="auth-notice warning"
+          role="alert"
+          aria-labelledby={accountWarningId}
+          tabIndex={-1}
+          ref={accountWarning}
+        >
+          <strong id={accountWarningId}>
+            Different Google account selected
+          </strong>
+          <p>{callbackNotices["account-mismatch"]}</p>
+        </div>
+      ) : notice && Object.hasOwn(callbackNotices, notice) ? (
         <p role="status">
           {callbackNotices[notice as keyof typeof callbackNotices]}
         </p>
-      )}
+      ) : null}
       <p>
         Connect your Google account to create a separate MovX calendar. The
         connection stays available after you sign out. Booking synchronization
