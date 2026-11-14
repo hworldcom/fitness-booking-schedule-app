@@ -47,6 +47,7 @@ const session = {
 const generation = "22222222-2222-4222-8222-222222222222";
 let state = "disconnected",
   enabled = true,
+  authorizationStarts = 0,
   fault = false,
   hold = false,
   release;
@@ -181,6 +182,7 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
     await route.fulfill({ json: result() }).catch(() => {});
   });
   await page.route("**/auth/google-calendar/start", async (route) => {
+    authorizationStarts++;
     assert.equal(route.request().method(), "POST");
     assert.equal(
       new URLSearchParams(route.request().postData()).get("generation"),
@@ -202,6 +204,11 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
       page.getByRole("button", {
         name: "Connect Google Calendar",
         exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("On Google’s permission screen, allow access", {
+        exact: false,
       }),
     ).toBeVisible();
     await page
@@ -243,6 +250,59 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
     );
     pass(
       `${width}px: connect/denial, checked connection, keyboard disconnect and no overflow`,
+    );
+    for (const previousState of ["disconnected", "reconnect-required"]) {
+      state = previousState;
+      const startCount = posts.length;
+      const authorizationCount = authorizationStarts;
+      await page.goto(`${base}/calendar-fixture?calendar=permission-required`);
+      await expect(
+        page.getByText("Google Calendar permission was not granted.", {
+          exact: false,
+        }),
+      ).toBeVisible();
+      await expect(
+        page.getByText("Your previous connection settings are unchanged.", {
+          exact: false,
+        }),
+      ).toBeVisible();
+      const retry = page.getByRole("button", {
+        name:
+          previousState === "disconnected"
+            ? "Connect Google Calendar"
+            : "Reconnect Google Calendar",
+        exact: true,
+      });
+      await expect(retry).toBeVisible();
+      assert.ok(page.url().includes("calendar=permission-required"));
+      assert.equal(
+        posts.length,
+        startCount,
+        "no automatic command on partial consent",
+      );
+      assert.equal(authorizationStarts, authorizationCount);
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth,
+        ),
+        false,
+      );
+      if (previousState === "reconnect-required")
+        await page.screenshot({
+          path: path.join(evidence, `permission-${width}.png`),
+          fullPage: true,
+        });
+      await retry.focus();
+      await page.keyboard.press("Enter");
+      await expect(
+        page.getByText("Calendar permission was not granted.", {
+          exact: false,
+        }),
+      ).toBeVisible();
+      assert.equal(authorizationStarts, authorizationCount + 1);
+    }
+    pass(
+      `${width}px: partial-consent guidance, truthful prior status and user-initiated keyboard retry`,
     );
     state = "recovery-required";
     await open();

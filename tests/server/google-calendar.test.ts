@@ -10,7 +10,10 @@ import {
   CalendarProviderError,
   type GoogleCalendarProvider,
 } from "@/server/google-calendar/provider";
-import { calendarConnectionService } from "@/server/google-calendar/service";
+import {
+  calendarConnectionService,
+  type CalendarCallbackFailure,
+} from "@/server/google-calendar/service";
 import type { CalendarRecord } from "@/server/db/google-calendar/repository";
 
 const env = {
@@ -183,6 +186,34 @@ test("Google malformed/missing scopes, unverified identity and provider failures
     );
   }
 });
+test("Missing-permission guidance is limited to valid token responses without Calendar access", async () => {
+  for (const payload of [
+    { access_token: "a", token_type: "Bearer" },
+    { access_token: "", token_type: "Bearer", scope: "openid email" },
+    {
+      access_token: "a",
+      token_type: "Bearer",
+      scope: "openid email",
+      refresh_token: "",
+    },
+    {
+      access_token: "a",
+      token_type: "Bearer",
+      scope: `${CALENDAR_SCOPE} https://www.googleapis.com/auth/gmail.readonly`,
+    },
+  ]) {
+    const provider = googleCalendarProvider(config, async () =>
+      Response.json(payload),
+    );
+    await assert.rejects(
+      provider.exchange("fixture-private-code", "fixture-private-verifier"),
+      (error) =>
+        error instanceof CalendarProviderError &&
+        error.kind === "authorization" &&
+        error.reason === undefined,
+    );
+  }
+});
 
 const ctx = {
   profileId: "11111111-1111-4111-8111-111111111111",
@@ -207,20 +238,25 @@ function fixture(
     missingRefresh?: boolean;
     uncertain?: boolean;
     createFails?: boolean;
+    exchange?: GoogleCalendarProvider["exchange"];
+    diagnosticsFail?: boolean;
   } = {},
 ) {
   let c = { ...record, ...options.old };
   const commands: { action: string; input: Record<string, unknown> }[] = [],
-    http: string[] = [];
+    http: string[] = [],
+    failures: CalendarCallbackFailure[] = [];
   const provider: GoogleCalendarProvider = {
     authorize: () => "https://accounts.google.com/o/oauth2/v2/auth",
-    exchange: async () => {
-      http.push("exchange");
-      return {
-        accessToken: "fixture-access",
-        refreshToken: options.missingRefresh ? undefined : "fixture-refresh",
-      };
-    },
+    exchange:
+      options.exchange ??
+      (async () => {
+        http.push("exchange");
+        return {
+          accessToken: "fixture-access",
+          refreshToken: options.missingRefresh ? undefined : "fixture-refresh",
+        };
+      }),
     identity: async () => {
       http.push("identity");
       return { sub: options.sub ?? "google-1", email: "owner@example.test" };
@@ -244,6 +280,11 @@ function fixture(
     config,
     provider,
     context: async () => ctx,
+    reportFailure: (failure) => {
+      failures.push(failure);
+      if (options.diagnosticsFail)
+        throw Error("Fixture diagnostic sink failed");
+    },
     cookie: { read: async () => "b".repeat(43), write: async () => {} },
     command: async (_, action, _gen, input) => {
       commands.push({ action, input });
@@ -267,7 +308,7 @@ function fixture(
       return { kind: "ok", record: c };
     },
   });
-  return { service, commands, http };
+  return { service, commands, http, failures };
 }
 const params = () =>
   new URLSearchParams({ state: "s".repeat(43), code: "fixture-code" });
@@ -312,6 +353,77 @@ test("Deny/account mismatch/missing offline credentials preserve identity withou
     /calendar=unavailable$/,
   );
   assert.ok(!missing.http.includes("create"));
+});
+test("Partial Google consent preserves prior connection and gives actionable permission feedback without a second request", async () => {
+  for (const previous_state of [
+    "disconnected",
+    "connected",
+    "reconnect-required",
+  ] as const) {
+    let calls = 0;
+    const provider = googleCalendarProvider(config, async () => {
+      calls++;
+      return Response.json({
+        access_token: "fixture-private-access",
+        refresh_token: "fixture-private-refresh",
+        token_type: "Bearer",
+        scope: "openid https://www.googleapis.com/auth/userinfo.email",
+      });
+    });
+    const f = fixture({
+      old: { previous_state, credential_ciphertext: "existing-envelope" },
+      exchange: provider.exchange,
+    });
+    assert.match(
+      await f.service.callback(params()),
+      /calendar=permission-required$/,
+    );
+    assert.equal(calls, 1);
+    assert.deepEqual(f.http, []);
+    assert.deepEqual(f.commands, [
+      {
+        action: "claim-callback",
+        input: f.commands[0].input,
+      },
+      {
+        action: "finish",
+        input: {
+          operationId: record.operation_id,
+          state: previous_state,
+          verified: false,
+        },
+      },
+    ]);
+    assert.deepEqual(f.failures, [
+      { phase: "code-exchange", reason: "calendar-permission-missing" },
+    ]);
+    assert.ok(!JSON.stringify(f.failures).includes("fixture-private"));
+  }
+});
+test("Unexpected callback diagnostics exclude error details and cannot interrupt cleanup", async () => {
+  for (const diagnosticsFail of [false, true]) {
+    const f = fixture({
+      old: { previous_state: "connected" },
+      exchange: async () => {
+        throw Error("fixture-private-code-token-url-stack");
+      },
+      diagnosticsFail,
+    });
+    assert.match(await f.service.callback(params()), /calendar=unavailable$/);
+    assert.deepEqual(f.commands.at(-1), {
+      action: "finish",
+      input: {
+        operationId: record.operation_id,
+        state: "connected",
+        verified: false,
+      },
+    });
+    assert.deepEqual(f.failures, [
+      { phase: "code-exchange", reason: "unavailable" },
+    ]);
+    assert.ok(!JSON.stringify(f.failures).includes("fixture-private"));
+    assert.deepEqual(f.http, []);
+  }
 });
 test("Uncertain calendar bootstrap never automatically repeats creation and failed creation enters recovery", async () => {
   const uncertain = fixture({ uncertain: true });

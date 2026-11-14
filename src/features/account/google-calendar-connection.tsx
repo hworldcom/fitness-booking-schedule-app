@@ -97,6 +97,8 @@ const callbackNotices = {
   connected: "Google Calendar connected.",
   denied:
     "Calendar permission was not granted. Any existing connection remains unchanged.",
+  "permission-required":
+    "Google Calendar permission was not granted. To connect, allow MovX to create and manage calendars created by MovX on Google’s permission screen. Your previous connection settings are unchanged.",
   unavailable:
     "The connection attempt could not be verified. Reload the connection status before trying again.",
   "account-mismatch":
@@ -202,6 +204,10 @@ export function GoogleCalendarConnectionView({
                     setMessage("Opening Google to request your permission…")
                   }
                 >
+                  <p>
+                    On Google’s permission screen, allow access to calendars
+                    created by MovX to complete the connection.
+                  </p>
                   <input
                     type="hidden"
                     name="generation"

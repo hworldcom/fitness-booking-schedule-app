@@ -6,6 +6,7 @@ import { challenge } from "./crypto";
 export class CalendarProviderError extends Error {
   constructor(
     public readonly kind: "authorization" | "missing" | "unavailable",
+    public readonly reason?: "calendar-permission-missing",
   ) {
     super("Google Calendar request could not be completed.");
   }
@@ -91,9 +92,7 @@ export function googleCalendarProvider(
       typeof result.access_token !== "string" ||
       result.access_token.length > 8192 ||
       !result.access_token ||
-      (requireScope &&
-        (typeof result.scope !== "string" ||
-          !result.scope.split(" ").includes(CALENDAR_SCOPE)))
+      (requireScope && typeof result.scope !== "string")
     )
       throw new CalendarProviderError("authorization");
     if (
@@ -103,6 +102,15 @@ export function googleCalendarProvider(
         result.refresh_token.length > 4096)
     )
       throw new CalendarProviderError("authorization");
+    if (
+      requireScope &&
+      typeof result.scope === "string" &&
+      !result.scope.split(" ").includes(CALENDAR_SCOPE)
+    )
+      throw new CalendarProviderError(
+        "authorization",
+        "calendar-permission-missing",
+      );
     return {
       accessToken: result.access_token,
       refreshToken: result.refresh_token as string | undefined,

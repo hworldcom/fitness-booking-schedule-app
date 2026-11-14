@@ -18,6 +18,26 @@ export type CalendarContext = Readonly<{
   subject: string;
   sessionId: string;
 }>;
+export type CalendarCallbackFailure = Readonly<{
+  phase:
+    | "context"
+    | "callback-claim"
+    | "code-exchange"
+    | "session-check"
+    | "identity"
+    | "offline-access"
+    | "credential-save"
+    | "token-refresh"
+    | "calendar-setup";
+  reason:
+    | "calendar-permission-missing"
+    | "authorization"
+    | "missing"
+    | "unavailable"
+    | "signed-out"
+    | "forbidden"
+    | "conflict";
+}>;
 export class CalendarServiceError extends Error {
   constructor(
     public readonly status:
@@ -30,6 +50,7 @@ type Dependencies = {
   config: CalendarConfig | null;
   provider: GoogleCalendarProvider | null;
   context(): Promise<CalendarContext>;
+  reportFailure?(failure: CalendarCallbackFailure): void;
   command(
     context: CalendarContext,
     action: string,
@@ -171,8 +192,10 @@ export function calendarConnectionService(deps: Dependencies) {
         return notice("unavailable");
       let ctx: CalendarContext | undefined, record: CalendarRecord | undefined;
       let credentialChanged = false;
+      let phase: CalendarCallbackFailure["phase"] = "context";
       try {
         ctx = await deps.context();
+        phase = "callback-claim";
         const result = await command(ctx, "claim-callback", null, {
           stateHash: digest(params.get("state")!),
           browserHash: digest(browser),
@@ -189,13 +212,16 @@ export function calendarConnectionService(deps: Dependencies) {
         const code = params.get("code");
         if (!code || code.length > 4096)
           throw new CalendarServiceError("unavailable");
+        phase = "code-exchange";
         const tokens = await provider.exchange(
           code,
           unseal(result.verifier, aad(ctx, "pkce"), config.keys),
         );
+        phase = "session-check";
         await command(ctx, "heartbeat", record.generation, {
           operationId: record.operation_id,
         });
+        phase = "identity";
         const identity = await provider.identity(tokens.accessToken);
         if (
           record.previous_state !== "disconnected" &&
@@ -205,6 +231,7 @@ export function calendarConnectionService(deps: Dependencies) {
           await finish(ctx, record, record.previous_state);
           return notice("account-mismatch");
         }
+        phase = "offline-access";
         let refreshToken = tokens.refreshToken;
         if (
           !refreshToken &&
@@ -219,6 +246,7 @@ export function calendarConnectionService(deps: Dependencies) {
           );
         }
         if (!refreshToken) throw new CalendarServiceError("unavailable");
+        phase = "credential-save";
         const saved = await command(ctx, "credentials", record.generation, {
           operationId: record.operation_id,
           sub: identity.sub,
@@ -230,8 +258,10 @@ export function calendarConnectionService(deps: Dependencies) {
         record = saved.record;
         credentialChanged = true;
         // Prove refresh credentials work before claiming Connected.
+        phase = "token-refresh";
         const refreshed = await provider.refresh(refreshToken);
         if (refreshed.refreshToken) {
+          phase = "credential-save";
           await command(ctx, "credentials", record.generation, {
             operationId: record.operation_id,
             sub: identity.sub,
@@ -244,8 +274,9 @@ export function calendarConnectionService(deps: Dependencies) {
             ),
           });
         }
+        phase = "calendar-setup";
         return notice(await provision(ctx, record, refreshed.accessToken));
-      } catch {
+      } catch (error) {
         if (ctx && record) {
           try {
             await finish(
@@ -257,7 +288,25 @@ export function calendarConnectionService(deps: Dependencies) {
             /* A newer generation owns the result. */
           }
         }
-        return notice("unavailable");
+        try {
+          deps.reportFailure?.({
+            phase,
+            reason:
+              error instanceof CalendarProviderError
+                ? (error.reason ?? error.kind)
+                : error instanceof CalendarServiceError
+                  ? error.status
+                  : "unavailable",
+          });
+        } catch {
+          /* Diagnostics cannot block callback cleanup or safe recovery. */
+        }
+        return notice(
+          error instanceof CalendarProviderError &&
+            error.reason === "calendar-permission-missing"
+            ? "permission-required"
+            : "unavailable",
+        );
       }
     },
     async run(input: CalendarCommand) {

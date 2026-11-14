@@ -59,6 +59,12 @@ export function calendarRuntime() {
     config,
     provider: config ? googleCalendarProvider(config) : null,
     context,
+    reportFailure({ phase, reason }) {
+      console.warn("Google Calendar connection attempt failed", {
+        phase,
+        reason,
+      });
+    },
     async command(bound, action, expected, input) {
       const verified = await verifiedAuthContext();
       if (
