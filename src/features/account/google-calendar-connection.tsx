@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { GoogleCalendarExport } from "./google-calendar-export";
 import Link from "next/link";
 import {
   calendarId,
@@ -55,6 +56,7 @@ function CalendarConnectionControls({ notice }: { notice?: string }) {
   const lock = useRef(false),
     alive = useRef(true),
     mutation = useRef<AbortController | null>(null);
+  const reloadConnection = useCallback(() => setReload((n) => n + 1), []);
   useEffect(() => {
     alive.current = true;
     const controller = new AbortController();
@@ -88,17 +90,23 @@ function CalendarConnectionControls({ notice }: { notice?: string }) {
     lock.current = false;
   }
   return (
-    <GoogleCalendarConnectionView
-      key={reload}
-      result={result}
-      notice={actionNotice ?? notice}
-      busy={busy}
-      onCommand={(input) => void run(input)}
-      onReload={() => {
-        setResult(null);
-        setReload((n) => n + 1);
-      }}
-    />
+    <>
+      <GoogleCalendarConnectionView
+        key={reload}
+        result={result}
+        notice={actionNotice ?? notice}
+        busy={busy}
+        onCommand={(input) => void run(input)}
+        onReload={() => {
+          setResult(null);
+          setReload((n) => n + 1);
+        }}
+      />
+      <GoogleCalendarExport
+        connection={result}
+        onConnectionChanged={reloadConnection}
+      />
+    </>
   );
 }
 const callbackNotices = {
@@ -173,8 +181,8 @@ export function GoogleCalendarConnectionView({
       ) : null}
       <p>
         Connect your Google account to create a separate MovX calendar. The
-        connection stays available after you sign out. Booking synchronization
-        and Google busy-time blocking are not available yet.
+        connection stays available after you sign out. Booking sync has a
+        separate opt-in below. Google busy-time blocking is not available yet.
       </p>
       <p>
         <Link href="/privacy#privacy-google-calendar">

@@ -4,6 +4,10 @@
   "buildCommand": "npm run build:vercel",
   "regions": ["fra1"],
   "crons": [
-    { "path": "/api/internal/notifications/dispatch", "schedule": "* * * * *" }
+    { "path": "/api/internal/notifications/dispatch", "schedule": "* * * * *" },
+    {
+      "path": "/api/internal/google-calendar/dispatch",
+      "schedule": "* * * * *"
+    }
   ]
 }

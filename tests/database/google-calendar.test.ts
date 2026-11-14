@@ -9,7 +9,7 @@ test(
   {
     skip:
       !target ||
-      !/^\/mov(?:225|230)_[a-f0-9]+_(fresh|upgrade)$/.test(
+      !/^\/mov(?:225|226|230)_[a-f0-9]+_(fresh|upgrade)$/.test(
         new URL(target).pathname,
       ),
   },

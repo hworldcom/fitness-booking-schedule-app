@@ -25,7 +25,7 @@ Start with the [MVP specification](docs/mvp-spec.md), the single current product
 | [supabase/README.md](supabase/README.md)                 | Local database and hosted migration operations.            |
 
 Google sign-in activation and remaining live checks: [provider setup](docs/google-auth-setup.md).
-Optional Google Calendar connection (separate from sign-in; no booking export or busy access yet): [setup and recovery](docs/google-calendar-setup.md).
+Optional Google Calendar connection and separately enabled confirmed-booking export: [setup and recovery](docs/google-calendar-setup.md). Export requires its additive SQL, restricted worker login and explicit server activation; it is initially off for every account. Google busy-time access remains separate work.
 
 ## Current foundation
 

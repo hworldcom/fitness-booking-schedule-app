@@ -15,11 +15,20 @@ import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { chromium, expect } from "@playwright/test";
+import { rehearseCalendarExport } from "./lib/google-calendar-export-ui.mjs";
 
+const exportMode = process.argv.includes("--export");
 const root = process.cwd(),
-  scratch = await mkdtemp(path.join(tmpdir(), "mov225-ui-"));
-const evidence = path.join(root, "test-results/google-calendar-ui"),
-  port = 3206,
+  scratch = await mkdtemp(
+    path.join(tmpdir(), exportMode ? "mov226-ui-" : "mov225-ui-"),
+  );
+const evidence = path.join(
+    root,
+    exportMode
+      ? "test-results/google-calendar-export-ui"
+      : "test-results/google-calendar-ui",
+  ),
+  port = exportMode ? 3207 : 3206,
   base = `http://localhost:${port}`;
 let server,
   browser,
@@ -166,6 +175,26 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
   page.on("pageerror", (error) => errors.push(error.message));
   await page.route("**/api/auth/actor", (route) =>
     route.fulfill({ json: actor }),
+  );
+  await page.route("**/api/account/google-calendar/export", (route) =>
+    route.fulfill({
+      json: {
+        status: "ready",
+        available: false,
+        generation,
+        connectionState: state,
+        export: {
+          enabled: false,
+          version: generation,
+          backfillPending: false,
+          pending: 0,
+          failed: 0,
+          missing: 0,
+          issues: [],
+          lastSyncedAt: null,
+        },
+      },
+    }),
   );
   await page.route("**/api/account/google-calendar", async (route) => {
     if (hold && route.request().method() === "GET")
@@ -589,6 +618,20 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
     }),
   ).toHaveCount(0);
   pass("Account loss clears protected connection and ignores late reads");
+  if (exportMode) {
+    state = "connected";
+    fault = false;
+    await rehearseCalendarExport({
+      page,
+      base,
+      evidence,
+      generation,
+      pass,
+      setState: (next) => {
+        state = next;
+      },
+    });
+  }
   assert.deepEqual(errors, []);
   await writeFile(
     path.join(evidence, "checks.json"),

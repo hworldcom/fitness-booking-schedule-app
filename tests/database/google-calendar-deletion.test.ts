@@ -9,7 +9,9 @@ test(
   {
     skip:
       !target ||
-      !/^\/mov230_[a-f0-9]+_(fresh|upgrade)$/.test(new URL(target).pathname),
+      !/^\/mov(?:226|230)_[a-f0-9]+_(fresh|upgrade)$/.test(
+        new URL(target).pathname,
+      ),
   },
   async () => {
     const url = new URL(target!);

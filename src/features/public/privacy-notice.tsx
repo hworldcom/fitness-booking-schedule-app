@@ -119,14 +119,33 @@ const sections = [
           cookie binds your browser to the connection attempt.
         </p>
         <p>
-          The current connection creates or verifies the dedicated MovX calendar
-          and can update its default name to identify a test environment. It
-          does not export bookings, read your personal appointments or busy
-          periods, or edit your existing Google events. Those additional
-          capabilities would need their own information and, where necessary,
-          additional permission before activation. Google handles your
+          The connection creates or verifies the dedicated MovX calendar and can
+          update its default name to identify a test environment. Where booking
+          export is available, you can separately enable “Sync confirmed
+          bookings.” This starts off. Enabling it adds upcoming confirmed
+          bookings and automatically updates your copies after rescheduling or
+          final cancellation. Each participant controls their own copies. The
+          exported private events contain a generic session title, booked times,
+          the location you are permitted to see and a link to MovX. They do not
+          include attendees, invitations, participant contacts, private notes or
+          health information. MovX reads only the metadata needed to verify and
+          maintain these mapped copies; Google edits never change your MovX
+          booking. Personal workouts and routines are excluded. MovX does not
+          read personal appointments or busy periods. Google handles your
           authorization and calendar under its{" "}
           <a href="https://policies.google.com/privacy">privacy policy</a>.
+        </p>
+        <p>
+          You can turn booking export off while keeping Google connected. This
+          stops future updates and leaves existing copies, including completed
+          session history, in Google. Disconnecting also stops export; a newly
+          connected Google account starts with export off. An already-sent
+          request may still finish. Missing copies or calendars may need your
+          explicit recovery action. MovX retains minimal source-to-event
+          references, earlier event references and delivery/retry status to
+          avoid duplicates and reconcile interrupted requests. The delivery
+          queue does not retain full event-content payloads or raw Google error
+          responses.
         </p>
         <p>
           You can disconnect in Account settings to stop future Calendar access
@@ -147,10 +166,11 @@ const sections = [
           and are cleared by a subsequent attempt, resolution or disconnect.
           Minimal Google account and calendar references, including
           interrupted-creation and confirmed or uncertain calendar-deletion
-          records, remain until account deletion to support reconnection without
-          silently creating duplicate calendars. Contact the privacy inbox to
+          records, and booking-export mapping/delivery references remain until
+          account deletion to support reconnection and recovery without silently
+          creating duplicate calendars or events. Contact the privacy inbox to
           request removal. MovX uses this information only to provide and
-          protect the optional connection you request; it is not used for
+          protect the optional Calendar features you request; it is not used for
           advertising or AI model training.
         </p>
         <p>
@@ -512,16 +532,17 @@ const sections = [
       <>
         <p>
           We update this notice when our service or data practices change.
-          Native app permissions and future integrations, including booking
-          export or Google busy-time access, require corresponding information
-          before they are introduced. We will explain material changes here and
-          use an in-product notice or email where appropriate.
+          Native app permissions and future integrations, including Google
+          busy-time access, require corresponding information before they are
+          introduced. We will explain material changes here and use an
+          in-product notice or email where appropriate.
         </p>
         <p>
           This version takes effect on 14 November 2026 and adds explicit Google
-          calendar deletion and test-environment naming to the notice, including
-          optional Google sign-in, purpose-based retention, manual privacy
-          requests and the intended audience of people aged 16 and older.
+          calendar deletion, test-environment naming and separately enabled
+          confirmed-booking export to the notice, including optional Google
+          sign-in, purpose-based retention, manual privacy requests and the
+          intended audience of people aged 16 and older.
         </p>
       </>
     ),
