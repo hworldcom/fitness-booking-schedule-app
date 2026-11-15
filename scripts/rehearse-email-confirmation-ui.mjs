@@ -13,8 +13,14 @@ import {
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { chromium, webkit, devices, expect } from "@playwright/test";
+import {
+  chromium,
+  webkit,
+  devices,
+  expect as baseExpect,
+} from "@playwright/test";
 
+const expect = baseExpect.configure({ timeout: 20000 });
 const safari = process.argv.includes("--webkit");
 const root = process.cwd(),
   port = safari ? 3211 : 3210,
@@ -35,6 +41,9 @@ let server,
   activePage,
   log = "";
 let proofGate;
+let fixtureSession = { status: "signed-out" };
+let proofResult = { status: "invalid-proof" };
+let passwordResult = { status: "invalid", message: "password-unchanged" };
 let requestResult = { status: "requested", next: "/check-email" };
 const contextQuery = "?returnTo=%2Finvitations&intent=coach";
 const proof = (type = "signup") =>
@@ -43,7 +52,7 @@ async function wire(context) {
   await context.route("**/api/auth/**", async (route) => {
     const request = route.request(),
       pathname = new URL(request.url()).pathname;
-    let body = { status: "signed-out" },
+    let body = fixtureSession,
       status = 200;
     if (pathname === "/api/auth/operations") {
       const command = request.postDataJSON();
@@ -53,16 +62,19 @@ async function wire(context) {
       if (command.action === "confirm-email" && proofGate) await proofGate;
       body =
         command.action === "confirm-email"
-          ? { status: "invalid-proof" }
-          : requestResult;
-      status =
-        body.status === "invalid-proof"
-          ? 400
-          : body.status === "unavailable"
-            ? 503
-            : body.status === "rate-limited"
-              ? 429
-              : 200;
+          ? proofResult
+          : command.action === "reset-password"
+            ? passwordResult
+            : command.action === "sign-out"
+              ? { status: "success", email: null }
+              : requestResult;
+      status = ["invalid-proof", "invalid"].includes(body.status)
+        ? 400
+        : body.status === "unavailable"
+          ? 503
+          : body.status === "rate-limited"
+            ? 429
+            : 200;
     } else if (pathname === "/api/auth/google") body = { available: false };
     await route.fulfill({
       status,
@@ -157,13 +169,21 @@ try {
     .split("\n")
     .filter((line) => /^import ".*(?:\.css|@fontsource[^\"]*)";$/.test(line));
   await writeFile(
+    path.join(scratch, "src/app/auth-test-refresh.tsx"),
+    `'use client';
+import {useAuthSession} from "@/auth/client/session-provider";
+import {useSyncExternalStore} from "react";
+export default function RefreshFixture(){const {refreshSession}=useAuthSession();const ready=useSyncExternalStore(()=>()=>{},()=>true,()=>false);return <button hidden disabled={!ready} onClick={()=>void refreshSession()}>Refresh fixture session</button>;}`,
+  );
+  await writeFile(
     path.join(scratch, "src/app/layout.tsx"),
     `${styles.join("\n")}
 import {AuthSessionProvider} from "@/auth/client/session-provider";
 import {ActorProvider} from "@/auth/client/actor-provider";
+import RefreshFixture from "./auth-test-refresh";
 export default function Layout({children}:{children:React.ReactNode}) {
 return <html lang="en"><body><AuthSessionProvider initialSession={{status:"signed-out"}}>
-<ActorProvider initialActor={{status:"signed-out"}}>{children}</ActorProvider>
+<ActorProvider initialActor={{status:"signed-out"}}><RefreshFixture/>{children}</ActorProvider>
 </AuthSessionProvider></body></html>;}`,
   );
   const env = Object.fromEntries(
@@ -203,7 +223,13 @@ return <html lang="en"><body><AuthSessionProvider initialSession={{status:"signe
   assert.ok(log.includes("Ready"));
   // Compile destinations before mounting a browser so dev Fast Refresh cannot
   // replace the page after its private fragment has already been removed.
-  for (const route of ["/auth/confirm", "/check-email", "/forgot-password"])
+  for (const route of [
+    "/auth/confirm",
+    "/check-email",
+    "/forgot-password",
+    "/sign-in",
+    "/reset-password",
+  ])
     assert.equal((await fetch(base + route)).status, 200);
   browser = safari
     ? await webkit.launch({ headless: true })
@@ -404,10 +430,59 @@ return <html lang="en"><body><AuthSessionProvider initialSession={{status:"signe
     ).toBeEnabled();
     assert.equal(commands.at(-1).type, "recovery");
     assert.equal(new URL(page.url()).hash, "");
+    proofResult = { status: "invalid", message: "recovery-account-conflict" };
+    await page.goto(base + "/auth/confirm" + proof("recovery"), {
+      waitUntil: "commit",
+    });
+    await page.getByRole("button", { name: "Continue securely" }).click();
+    await expect(page.locator(".authentication-error")).toContainText(
+      "different account",
+    );
+    const signOut = page.getByRole("button", {
+      name: "Sign out before resetting",
+    });
+    await expect(signOut).toBeEnabled();
+    await signOut.focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/sign-in/);
+    assert.equal(commands.at(-1).action, "sign-out");
+    proofResult = { status: "invalid-proof" };
+    fixtureSession = { status: "recovery-required" };
+    proofResult = { status: "recovery-required", next: "/reset-password" };
+    await page.goto(base + "/auth/confirm" + proof("recovery"), {
+      waitUntil: "commit",
+    });
+    await page.getByRole("button", { name: "Continue securely" }).click();
+    await expect(page).toHaveURL(/\/reset-password$/);
+    const refreshFixture = page.getByRole("button", {
+      name: "Refresh fixture session",
+      includeHidden: true,
+    });
+    await expect(refreshFixture).toBeEnabled();
+    await refreshFixture.evaluate((button) => button.click());
+    await page
+      .getByLabel("New password", { exact: true })
+      .fill("example unchanged password");
+    await page
+      .getByRole("button", { name: "Save new password", exact: true })
+      .click();
+    await expect(page.locator(".authentication-error")).toContainText(
+      "different from your current password",
+    );
+    await expect(page.locator(".authentication-error")).toBeFocused();
+    await expect(page.getByLabel("New password", { exact: true })).toHaveValue(
+      "example unchanged password",
+    );
+    await expect(
+      page.getByRole("button", { name: "Save new password", exact: true }),
+    ).toBeEnabled();
+    await fits(page, width);
+    fixtureSession = { status: "signed-out" };
+    proofResult = { status: "invalid-proof" };
     await context.close();
     activePage = undefined;
     checks.push(
-      `${width}px: delayed scripts, signup/recovery preview-to-browser handoff, fragment cleanup before explicit POST, confirmation resend, validation, unavailable/rate limits, keyboard, continuation, same-tab recovery and stale-proof fencing`,
+      `${width}px: delayed scripts, signup/recovery preview-to-browser handoff, fragment cleanup before explicit POST, confirmation resend, validation, unavailable/rate limits, keyboard, continuation, same-tab recovery, stale-proof fencing, explicit account-conflict sign-out and retryable password reuse`,
     );
   }
   assert.deepEqual(errors, []);

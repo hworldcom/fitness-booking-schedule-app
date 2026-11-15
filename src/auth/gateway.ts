@@ -19,7 +19,9 @@ export type AuthenticationResult =
         | "password-too-short"
         | "password-too-long"
         | "password-invalid"
-        | "password-unsafe";
+        | "password-unsafe"
+        | "password-unchanged"
+        | "recovery-account-conflict";
     }>
   | Readonly<{
       status:
@@ -141,12 +143,16 @@ export function authenticationResultMessage(
         return "Enter a valid password.";
       case "password-unsafe":
         return "This password isn’t safe to use. Choose a different one.";
+      case "password-unchanged":
+        return "Your new password must be different from your current password. Choose another password.";
+      case "recovery-account-conflict":
+        return "You’re signed in to a different account. Sign out, then reopen the newest password reset email.";
     }
   }
   if (result.status === "invalid-credentials")
     return "The email or password is incorrect. Try again.";
   if (result.status === "invalid-proof")
-    return "We couldn’t use this link in this browser. Open the newest email in the browser where you requested it, or request a new email.";
+    return "We couldn’t verify this link. Open the newest email, or request a new email. Signup confirmation must use the browser where you requested it.";
   if (result.status === "rate-limited")
     return result.retryAfterSeconds === null
       ? "Too many attempts. Please wait before trying again."

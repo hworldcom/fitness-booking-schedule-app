@@ -4,22 +4,22 @@ Use one relevant entry, verify its source and follow additional dependencies onl
 
 For import ownership changes, consult the [enforced dependency rules and exact exception owners](overview.md#dependencies-enforced-rules-and-current-exceptions), then run the [source boundary suite](../../tests/boundaries.test.ts) and [isolated graph cases](../../tests/dependency-graph.test.ts). The capability's extraction issue owns removal of its temporary entries.
 
-| Capability                         | Entry                                                                   |
-| ---------------------------------- | ----------------------------------------------------------------------- |
-| Private booking and session types  | [Detailed path](#private-booking-and-session-types)                     |
-| Coach availability and calendar    | [Detailed path](#coach-availability-and-calendar)                       |
-| Events and group sessions          | [Detailed path](#events-and-group-sessions)                             |
-| Public Home and How it works       | [Presentation and calendar introduction](#public-home-and-how-it-works) |
-| Coach profiles and public websites | [Starting references](#coach-profiles-and-public-websites)              |
-| Authentication and authorization   | [Cross-cutting references](#authentication-and-authorization)           |
-| Google Calendar connection | [Optional connection and recovery](#google-calendar-connection) |
-| Messaging                          | [Starting references](#messaging)                                       |
-| Staff coach application review     | [Authority and separate admin app](#staff-coach-application-review)      |
-| Notifications                      | [Message stage and delivery](#notifications)                            |
-| Connections and reviews            | [Starting references](#connections-and-reviews)                         |
-| Athlete training calendar          | [Calendar, logs and reminders](#athlete-training-calendar)              |
+| Capability                                | Entry                                                                                      |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Private booking and session types         | [Detailed path](#private-booking-and-session-types)                                        |
+| Coach availability and calendar           | [Detailed path](#coach-availability-and-calendar)                                          |
+| Events and group sessions                 | [Detailed path](#events-and-group-sessions)                                                |
+| Public Home and How it works              | [Presentation and calendar introduction](#public-home-and-how-it-works)                    |
+| Coach profiles and public websites        | [Starting references](#coach-profiles-and-public-websites)                                 |
+| Authentication and authorization          | [Cross-cutting references](#authentication-and-authorization)                              |
+| Google Calendar connection                | [Optional connection and recovery](#google-calendar-connection)                            |
+| Messaging                                 | [Starting references](#messaging)                                                          |
+| Staff coach application review            | [Authority and separate admin app](#staff-coach-application-review)                        |
+| Notifications                             | [Message stage and delivery](#notifications)                                               |
+| Connections and reviews                   | [Starting references](#connections-and-reviews)                                            |
+| Athlete training calendar                 | [Calendar, logs and reminders](#athlete-training-calendar)                                 |
 | External clients and targeted invitations | [Coach-owned records and later account access](#external-clients-and-targeted-invitations) |
-| Session notes and video references | [Private and shared training records](#session-notes-and-video-references) |
+| Session notes and video references        | [Private and shared training records](#session-notes-and-video-references)                 |
 
 ## Private booking and session types
 
@@ -174,6 +174,8 @@ Run `node scripts/rehearse-staff-coach-reviews-database.mjs` for fresh/populated
 
 **Email-app browser handoff (MOV-236):** the confirmation screen keeps a structurally valid email fragment until explicit Continue securely, then removes it before the proof POST. Immediate cleanup on page load previously let a first email-view browser forward only `/auth/confirm` to another browser, reproducing missing/expired proof with no server submission. Malformed fragments are scrubbed immediately; stale rendered commands cannot clear a replacement link. The existing Chrome/WebKit rehearsal now simulates preview-to-fresh-browser handoff for signup and recovery at1440/375/320 and checks the complete POST payload, zero automatic verification and cleanup before every proof POST. The original requesting-browser cookie/purpose/expiry/session authority is unchanged; this is synthetic handoff proof, not physical Gmail or cross-browser authentication validation. The real Auth rehearsal helper checks cleanup after the explicit click.
 
+**Portable password recovery (MOV-238):** [recovery orchestration](../../src/server/auth/recovery.ts) validates the active server flow and exact provider-verified email before single-use consumption and restricted grant. [Auth operations](../../src/server/auth/supabase-operations.ts) inspect OTPs in isolated provider storage and adopt cookies only after validation; different signed-in accounts are preserved. [Forward SQL](../../supabase/migrations/20261115000100_portable_password_recovery.sql) adds recovery-only runtime helpers; old signup/browser helpers and all existing records remain. [Provider error translation](../../src/server/auth/provider-failure.ts) separates current-password reuse, invalid login and genuine outage. This later recovery policy supersedes the recovery browser-cookie requirement described in MOV-234/MOV-236 history; [MVP §4.1.2](../mvp-spec.md#412-password-email-verification-and-recovery) owns the product rule. Run `node --import tsx --conditions=react-server --test tests/server/password-recovery.test.ts`, `node scripts/rehearse-portable-recovery-database.mjs`, the existing Chrome/WebKit confirmation UI rehearsal and `node scripts/rehearse-notifications-integration.mjs --password-recovery-only`. The latter uses only its wholly disposable Auth/Mailpit/application stack (55421/55422/55424/3169); see [setup and rollout](../../supabase/README.md#portable-password-recovery). No hosted or physical-phone proof follows from these local checks.
+
 **Hosted production:** [environment setup and launch limits](../../supabase/README.md#initial-production-launch-26-october-2026) identify the independent production project, restricted roles, exact origins and manual deployment target. [MOV-114](https://linear.app/movx/issue/MOV-114/deploy-the-empty-isolated-production-site-and-retire-the-staging) owns the actual empty-site/domain verification. The accepted Free launch retains the existing 30-day MovX application grant without a provider refresh-session timebox; verify these separately under [§4.1.4](../mvp-spec.md#414-sessions-account-security-and-environments). Read-only public checks do not prove production signup/reset delivery. [MOV-143](https://linear.app/movx/issue/MOV-143/activate-production-notification-delivery-with-the-instagram-hotfix) enabled production notification delivery on 30 October 2026; the real minute scheduler sent both queued staff alerts once and Resend reported them Delivered. Video uploads remain unavailable pending separate production provider setup.
 
 Workspace-view navigation uses [route/preference rules](../../src/auth/workspace-view.ts), the [account/dataset-scoped browser preference](../../src/auth/client/use-workspace-view.ts) and [AccountMenu](../../src/components/account-menu.tsx). Profile links follow the selected view; approved/demo Profile switches stay between `/profile` and `/profile/coach`, while Trainings and switches outside Profile retain workspace destinations. Personal Profile explicitly selects athlete view; suspended accounts retain their bounded fallback. Run `node --import tsx --test tests/workspace-view.test.ts tests/account-menu.test.ts tests/account-controls.test.ts tests/shell-navigation.test.ts tests/profile-navigation.test.ts tests/message-shell.test.ts tests/workspace-navigation.test.ts`. The existing `npm run test:coach-media-integration -- --profile-editor --diagnose-storage` also covers real browser/Auth view switching, Profile entry and reload at desktop/mobile before profile-editing journeys; prerequisites/cleanup are in the profile entry above.
@@ -285,7 +287,6 @@ My coaches card identity/profile navigation is owned by [ConnectionLists](../../
 **Instagram input alias (MOV-172):** the shared video validator accepts a specific `/reels/<shortcode>` link and normalizes it to `/reel/<shortcode>/` before either notes or personal-training commands reach storage. The SQL canonical URL allowlist is unchanged; no migration or data rewrite is needed. Notes tests cover supported hosts/trailing/share variants, exact command equivalence and rejected browsing/unsafe paths; the component preview saves the plural input and asserts singular canonical output.
 
 **Checks/preview:** `node --import tsx --test tests/notes.test.ts tests/training.test.ts tests/coach-calendar.test.ts tests/boundaries.test.ts`; `node scripts/rehearse-session-notes-database.mjs` uses only uniquely named movnotes fresh/upgrade scratch databases on Docker55322, pgTAP, schema lint, restricted actor tests and real concurrency, then removes exact targets and checks retained hashes. `node scripts/preview-session-notes.mjs --test` mounts actual components with explicit fictional API/Auth data at3194, checks desktop/430/375/320, keyboard, saves/retry/privacy and overflow; this is presentation proof only. `node scripts/preview-session-notes.mjs` leaves an interactive fixture-only preview at127.0.0.1:3193/notes-preview, with an exact scratch/PID manifest under test-results/session-notes-ui. Stop that process to remove its source copy. The normal disposable `npm run test:coach-media-integration -- --profile-editor --athlete-training --diagnose-storage` additionally runs [real notes Auth/SQL journeys](../../scripts/lib/session-notes-integration.mjs), alongside existing full source/build/media/athlete coverage, with the same isolation/cleanup prerequisites above. Never migrate/reset retained accounts for this preview.
-
 
 ## External clients and targeted invitations
 

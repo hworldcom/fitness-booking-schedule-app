@@ -11,6 +11,8 @@ import { isSignInPassword, validateNewPassword } from "@/auth/password";
 import {
   beginEmailAuthFlow,
   consumeEmailAuthFlow,
+  readRecoveryEmailAuthFlow,
+  consumeRecoveryEmailAuthFlow,
   currentApplicationAuthPurpose,
   currentApplicationAuthContinuation,
   grantApplicationAuthSession,
@@ -22,6 +24,8 @@ import {
 } from "@/server/db/auth/repository";
 import { serverAuthClient, createServerAuthFetch } from "./client";
 import { verifiedProviderContext } from "./session";
+import { acceptRecoveryProof } from "./recovery";
+import { authenticationProviderFailure as failure } from "./provider-failure";
 import {
   authContinuation as continuation,
   withAuthContinuation as withContinuation,
@@ -31,54 +35,6 @@ import {
 const FLOW_COOKIE = "movx-auth-flow";
 const hash = (value: string) =>
   createHash("sha256").update(value).digest("hex");
-
-function failure(
-  error: unknown,
-  operation: "request" | "password" | "proof" | "update",
-): AuthenticationResult {
-  const info =
-    error && typeof error === "object"
-      ? (error as { code?: string; status?: number })
-      : {};
-  if (
-    info.status === 429 ||
-    info.code === "over_email_send_rate_limit" ||
-    info.code === "over_request_rate_limit"
-  )
-    return { status: "rate-limited", retryAfterSeconds: null };
-  if (
-    operation === "request" &&
-    [
-      "user_already_exists",
-      "email_exists",
-      "user_not_found",
-      "signup_disabled",
-      "otp_disabled",
-    ].includes(info.code ?? "")
-  )
-    return { status: "requested", next: "/check-email" };
-  if (info.status && info.status >= 500) return { status: "unavailable" };
-  if (info.code === "weak_password")
-    return { status: "invalid", message: "password-unsafe" };
-  if (
-    operation === "proof" &&
-    [
-      "otp_expired",
-      "validation_failed",
-      "flow_state_expired",
-      "flow_state_not_found",
-    ].includes(info.code ?? "")
-  )
-    return { status: "invalid-proof" };
-  if (
-    operation === "password" &&
-    ["invalid_credentials", "email_not_confirmed", "user_banned"].includes(
-      info.code ?? "",
-    )
-  )
-    return { status: "invalid-credentials" };
-  return { status: "unavailable" };
-}
 
 async function boundFlow(flowValue?: string) {
   const cookie = (await cookies()).get(FLOW_COOKIE)?.value;
@@ -171,10 +127,103 @@ async function requestEmail(
       };
 }
 
+async function acceptPortableRecovery(
+  command: Extract<AuthenticationCommand, { action: "confirm-email" }>,
+  previous: Awaited<ReturnType<typeof verifiedProviderContext>>,
+): Promise<AuthenticationResult> {
+  const config = supabasePublicConfig();
+  if (!config) return { status: "unavailable" };
+  return acceptRecoveryProof(command, previous.session, {
+    read: readRecoveryEmailAuthFlow,
+    consume: consumeRecoveryEmailAuthFlow,
+    async verify(tokenHash) {
+      // Never replace browser cookies while inspecting an untrusted proof.
+      const isolated = createClient(config.url, config.publishableKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
+        global: { fetch: createServerAuthFetch(config.url) },
+      });
+      const proof = await isolated.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: "recovery",
+      });
+      if (proof.error) return failure(proof.error, "proof");
+      const context = await verifiedProviderContext(isolated);
+      const session = proof.data.session;
+      if (
+        context.session.status !== "signed-in" ||
+        !context.authSessionId ||
+        !session
+      ) {
+        await isolated.auth.signOut({ scope: "local" });
+        return {
+          status:
+            context.session.status === "unavailable"
+              ? "unavailable"
+              : "invalid-proof",
+        };
+      }
+      const subject = context.session.subject,
+        email = context.session.email,
+        sessionId = context.authSessionId;
+      return {
+        status: "verified",
+        subject,
+        email,
+        sessionId,
+        async publish() {
+          const browserClient = await serverAuthClient();
+          if (!browserClient) return false;
+          const adopted = await browserClient.auth.setSession({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+          });
+          return (
+            !adopted.error &&
+            adopted.data.user?.id === subject &&
+            normalizeEmail(adopted.data.user.email) === email
+          );
+        },
+        async discard() {
+          await isolated.auth.signOut({ scope: "local" });
+        },
+      };
+    },
+    grant: (proof, flow) =>
+      grantApplicationAuthSession(
+        proof.subject,
+        proof.sessionId,
+        "recovery",
+        flow,
+      ),
+    revoke: (proof) =>
+      revokeApplicationAuthSessions(proof.subject, proof.sessionId),
+    async retirePrevious(proof) {
+      const store = await cookies();
+      if (store.get(FLOW_COOKIE)?.value.startsWith(command.flow + "."))
+        store.delete(FLOW_COOKIE);
+      if (
+        previous.session.status === "signed-in" &&
+        previous.authSessionId &&
+        previous.authSessionId !== proof.sessionId
+      )
+        await revokeApplicationAuthSessions(
+          previous.session.subject,
+          previous.authSessionId,
+        );
+    },
+  });
+}
+
 async function acceptProof(
   command: Extract<AuthenticationCommand, { action: "confirm-email" }>,
   previous: Awaited<ReturnType<typeof verifiedProviderContext>>,
 ): Promise<AuthenticationResult> {
+  if (command.type === "recovery")
+    return acceptPortableRecovery(command, previous);
   const bound = await boundFlow(command.flow);
   if (!bound || bound.flow.purpose === "login")
     return { status: "invalid-proof" };

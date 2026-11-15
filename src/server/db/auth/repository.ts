@@ -48,6 +48,25 @@ export function consumeEmailAuthFlow(idHash: string, bindingHash: string) {
   });
 }
 
+export function readRecoveryEmailAuthFlow(idHash: string) {
+  return withDatabaseConnection(async ({ queryClient }) => {
+    const [row] = await queryClient<{ result: EmailAuthFlow | null }[]>`
+      select app.read_recovery_email_auth_flow(${idHash}) as result`;
+    return row.result;
+  });
+}
+
+export function consumeRecoveryEmailAuthFlow(
+  idHash: string,
+  emailHash: string,
+) {
+  return withDatabaseConnection(async ({ queryClient }) => {
+    const [row] = await queryClient<{ result: boolean }[]>`
+      select app.consume_recovery_email_auth_flow(${idHash},${emailHash}) as result`;
+    return row.result;
+  });
+}
+
 export function grantApplicationAuthSession(
   subject: string,
   sessionId: string,

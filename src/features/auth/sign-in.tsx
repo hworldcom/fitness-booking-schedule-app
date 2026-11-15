@@ -131,6 +131,7 @@ export function SignInScreen({
     undefined,
   );
   const [proofRejected, setProofRejected] = useState(false);
+  const [recoveryAccountConflict, setRecoveryAccountConflict] = useState(false);
   const [busy, setBusy] = useState(false);
   const [googleAvailable, setGoogleAvailable] = useState(false);
 
@@ -180,6 +181,7 @@ export function SignInScreen({
         if (active && generation === proofGeneration.current) {
           setProof(parsed);
           setProofRejected(false);
+          setRecoveryAccountConflict(false);
           setError(null);
         }
       });
@@ -238,6 +240,7 @@ export function SignInScreen({
     lock.current = true;
     setBusy(true);
     setError(null);
+    setRecoveryAccountConflict(false);
     const generation = proofGeneration.current;
     let redirecting = false;
     try {
@@ -278,6 +281,10 @@ export function SignInScreen({
           result.status === "invalid-proof"
         )
           setProofRejected(true);
+        setRecoveryAccountConflict(
+          result.status === "invalid" &&
+            result.message === "recovery-account-conflict",
+        );
         setError(authenticationResultMessage(result));
       }
     } finally {
@@ -640,8 +647,11 @@ export function SignInScreen({
               <div className="authentication-notice">
                 <Mail size={23} aria-hidden="true" />
                 <p>
-                  If an email arrives, open the latest link in the browser where
-                  you requested it. The link works once and expires in one hour.
+                  If an email arrives, open the latest link
+                  {emailPurpose === "recovery"
+                    ? " on the device where you want to reset your password"
+                    : " in the browser where you requested it"}
+                  . The link works once and expires in one hour.
                 </p>
               </div>
               {emailPurpose !== "recovery" && (
@@ -685,8 +695,12 @@ export function SignInScreen({
                 <>
                   <p>
                     If you opened this from an email app, use Open in browser
-                    before continuing. Use the browser where you requested the
-                    email, then choose Continue securely.
+                    before continuing.{" "}
+                    {proof.action === "confirm-email" &&
+                    proof.type === "recovery"
+                      ? "You can reset your password on this device, even if you requested the email elsewhere."
+                      : "Use the browser where you requested the confirmation email."}{" "}
+                    Then choose Continue securely.
                   </p>
                   <button
                     type="button"
@@ -696,6 +710,16 @@ export function SignInScreen({
                   >
                     {busy ? "Checking…" : "Continue securely"}
                   </button>
+                  {recoveryAccountConflict && (
+                    <button
+                      type="button"
+                      className="button secondary full"
+                      disabled={!ready || busy}
+                      onClick={() => void run({ action: "sign-out" })}
+                    >
+                      Sign out before resetting
+                    </button>
+                  )}
                 </>
               ) : (
                 <>
@@ -706,8 +730,10 @@ export function SignInScreen({
                   </p>
                   <p>
                     Enter your email below and submit the request. If an email
-                    arrives, open only the latest link in this same browser
-                    within one hour, then choose Continue securely.
+                    arrives, open only the latest link within one hour, then
+                    choose Continue securely. Password reset links can be opened
+                    on another device; signup confirmation uses the requesting
+                    browser.
                   </p>
                   {emailRequestForm(
                     proof?.action === "confirm-email" &&
