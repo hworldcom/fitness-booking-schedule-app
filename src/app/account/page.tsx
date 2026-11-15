@@ -10,8 +10,16 @@ export default async function Page({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const section = accountSection((await searchParams).section);
+  const params = await searchParams;
+  const section = accountSection(params.section);
   const access = await protectedPageAccess(accountSectionHref(section));
   if (access.status === "unavailable") return <ProtectedAccessUnavailable />;
-  return <AccountSettings section={section} />;
+  return (
+    <AccountSettings
+      section={section}
+      calendarNotice={
+        typeof params.calendar === "string" ? params.calendar : undefined
+      }
+    />
+  );
 }

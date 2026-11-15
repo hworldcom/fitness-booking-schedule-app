@@ -30,6 +30,51 @@ function run(environment: NodeJS.ProcessEnv) {
   });
 }
 
+test("Calendar export build validation requires a separate worker for the same project and cron authorization", () => {
+  const environment = {
+    ...validEnvironment,
+    MOVX_GOOGLE_CALENDAR_EXPORT_ENABLED: "true",
+    MOVX_GOOGLE_CALENDAR_ENABLED: "true",
+    CRON_SECRET: "fixture-calendar-cron-credential-32-characters",
+    GOOGLE_CALENDAR_WORKER_DATABASE_URL: validEnvironment.DATABASE_URL!.replace(
+      "movx_dev_runtime_login",
+      "movx_dev_calendar_worker_login",
+    ),
+  };
+  assert.equal(run(environment).status, 0);
+  for (const changes of [
+    { CRON_SECRET: "short" },
+    { MOVX_GOOGLE_CALENDAR_ENABLED: "false" },
+    { GOOGLE_CALENDAR_WORKER_DATABASE_URL: validEnvironment.DATABASE_URL },
+    {
+      GOOGLE_CALENDAR_WORKER_DATABASE_URL:
+        environment.GOOGLE_CALENDAR_WORKER_DATABASE_URL.replace(
+          "mdzidiqosxbghmfyxphb",
+          "another-project",
+        ),
+    },
+    {
+      GOOGLE_CALENDAR_WORKER_DATABASE_URL:
+        environment.GOOGLE_CALENDAR_WORKER_DATABASE_URL.replace(
+          "/postgres",
+          "/another_database",
+        ),
+    },
+  ]) {
+    const result = run({ ...environment, ...changes });
+    assert.notEqual(result.status, 0);
+    assert.doesNotMatch(
+      result.stdout + result.stderr,
+      /test-only|fixture-calendar-cron/,
+    );
+  }
+  assert.notEqual(
+    run({ ...baseEnvironment, MOVX_GOOGLE_CALENDAR_EXPORT_ENABLED: "true" })
+      .status,
+    0,
+  );
+});
+
 test("Vercel validation accepts configuration-free public preview mode", () => {
   const output = execFileSync(process.execPath, [script], {
     cwd: root,

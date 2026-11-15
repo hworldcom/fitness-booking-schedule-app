@@ -25,6 +25,7 @@ Start with the [MVP specification](docs/mvp-spec.md), the single current product
 | [supabase/README.md](supabase/README.md)                 | Local database and hosted migration operations.            |
 
 Google sign-in activation and remaining live checks: [provider setup](docs/google-auth-setup.md).
+Optional Google Calendar connection and separately enabled confirmed-booking export: [setup and recovery](docs/google-calendar-setup.md). Export requires its additive SQL, restricted worker login and explicit server activation; it is initially off for every account. Google busy-time access remains separate work.
 
 ## Current foundation
 
@@ -165,6 +166,10 @@ The local launcher reads the local public `API_URL` and `PUBLISHABLE_KEY` (or le
 
 Open `/register` to create an email/password account, open the captured confirmation email in the same browser and choose a unique username, private full name and display name. You can then add an optional private account picture or choose **Do this later**; it remains editable from personal Profile. Returning users use `/sign-in`; existing passwordless accounts use **Forgot password?** to set a password on the same account. Read confirmation/reset messages from local Mailpit at [127.0.0.1:55324](http://127.0.0.1:55324). **Forgot password?** sends the password reset/setup email. After changing a password, sign in again on your devices. Google is truthfully unavailable until DEV0287 configures and proves it. See [Auth rollout and recovery](supabase/README.md#password-authentication-rollout) before using these flows on hosted dev. `Find a coach` continues as an athlete; `Become a coach` submits a coach application on the same account. Applicants may prepare a hidden coach profile, but only platform-approved coaches may publish or manage availability.
 
+Password reset links support requesting on a computer and opening on a phone after the [portable recovery migration](supabase/README.md#portable-password-recovery) and consumer are installed. They grant password-reset access only. Reusing the current password shows a validation message and allows another attempt. Signup confirmation still requires the requesting browser. Run `node scripts/rehearse-portable-recovery-database.mjs` and `node scripts/rehearse-notifications-integration.mjs --password-recovery-only` for isolated SQL and real two-browser loopback Auth/Mailpit evidence; their prerequisites and cleanup are documented in that guide.
+
+The confirmation page first reads the email link in the browser; enable JavaScript if requested. When opening from an email app, use Open in browser before Continue securely and use the requesting browser for signup confirmation; recovery may use another device. A valid fragment stays available for that handoff and is removed before the explicit verification POST; malformed fragments are removed immediately. If the link is incomplete or rejected, enter your address and choose **Request confirmation email** on that page. Open only the newest email within one hour, then choose **Continue securely**. Recovery can use another device; signup confirmation uses the requesting browser. The separately labelled password-reset link opens its form; navigation alone sends no email. `node scripts/rehearse-email-confirmation-ui.mjs` checks this presentation with synthetic API/proof fixtures at desktop/mobile widths, including delayed/disabled scripts, keyboard and failed requests. It needs Node24, installed dependencies, Chrome and free localhost3210. Add `--webkit` for desktop/iPhone emulation with the installed Playwright WebKit browser and free localhost3211. Both modes cover same-tab replacement links, remove only their owned source copy and send no real email; actual local Auth/Mailpit proof remains `npm run test:auth`. Emulation does not establish physical iPhone behavior.
+
 For Docker athlete-account testing, sign in with `hoang@users.movx.test`. `npm run dev`, `dev:local` and `dev:docker` create this exact local-only account automatically and preserve its profile and private avatar on later starts. It starts without a user-set password and has no coach authority: choose **Forgot password?** on `/sign-in`, open the reset link in Mailpit in that same browser and set a password. Later startups preserve the password you set. You can also repair/provision it explicitly with `npm run auth:provision:test-user`. A deliberate `npm run db:reset` recreates the identity on the next Docker start but cannot restore a deleted uploaded image. This athlete test account and the six fictional coach accounts below are local-only.
 
 To exercise owner flows as the six fictional coaches:
@@ -296,6 +301,9 @@ The local stack uses port `55322`. `db:reset` recreates only an explicitly dispo
 npm test
 npm run test:auth
 npm run test:google-auth
+npm run test:google-calendar-db
+npm run test:google-calendar-deletion-db
+npm run test:google-calendar-ui
 npm run test:coach-availability
 npm run test:coach-availability-hosted -- --environment dev --check
 npm run test:coach-locations
@@ -397,7 +405,6 @@ For the athlete **My training** Calendar and **Plan routine** weekly planner (in
 ### New-member welcome validation
 
 `node scripts/rehearse-member-welcome-database.mjs` validates atomic new registration, private read-only MovX welcomes and existing registration/chat regression in disposable local scratch databases. `npm run test:coach-media-integration -- --member-welcome --diagnose-storage` adds actual profile completion, inbox/unread/read/reload/desktop/mobile/help/privacy checks to the wholly disposable real Auth/SQL/Storage production rehearsal above. No old-account backfill, external welcome email or retained fixture mutation occurs. See [setup, prerequisites and recovery](supabase/README.md#new-member-welcome); install its exact forward SQL through the backed-up retained-target procedure before using version2 consumers on local/UAT/production.
-
 
 For coach **External clients**, use **My athletes → External clients · sessions & notes**, or choose **External client** in **Schedule a client**. A name is enough to reserve real sessions; add an email later and review/send an invitation. A verified matching account must explicitly accept before it can access the original shared session history. Private coach notes stay private. See [contract](docs/mvp-spec.md#22-external-clients-and-invitation-based-session-access), [feature map](docs/architecture/feature-map.md#external-clients-and-targeted-invitations) and [SQL/setup/recovery](supabase/README.md#external-clients-and-targeted-invitations). Install both November1 migrations before these consumers; do not reset retained accounts.
 

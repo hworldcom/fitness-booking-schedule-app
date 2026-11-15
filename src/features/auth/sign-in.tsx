@@ -32,6 +32,7 @@ import {
   type AuthenticationCommand,
 } from "@/auth/operations";
 import { safeReturnTo } from "@/auth/return-to";
+import { normalizeEmail } from "@/auth/email";
 
 export type AuthenticationStage =
   | "sign-in"
@@ -126,7 +127,11 @@ export function SignInScreen({
   const [identity, setIdentity] = useState<ApplicationIdentitySnapshot | null>(
     null,
   );
-  const [proof, setProof] = useState<AuthenticationCommand | null>(null);
+  const [proof, setProof] = useState<AuthenticationCommand | null | undefined>(
+    undefined,
+  );
+  const [proofRejected, setProofRejected] = useState(false);
+  const [recoveryAccountConflict, setRecoveryAccountConflict] = useState(false);
   const [busy, setBusy] = useState(false);
   const [googleAvailable, setGoogleAvailable] = useState(false);
 
@@ -144,32 +149,48 @@ export function SignInScreen({
   const proofCache = useRef<AuthenticationCommand | null | undefined>(
     undefined,
   );
+  const proofGeneration = useRef(0);
   const link = (name: string) => stageHref(name, target, intent);
   const context = { returnTo: target, ...(intent ? { intent } : {}) };
 
   useEffect(() => {
     if (stage !== "confirm") return;
-    if (proofCache.current === undefined) {
-      const params = new URLSearchParams(window.location.hash.slice(1));
-      proofCache.current = parseAuthenticationCommand({
-        action: "confirm-email",
-        flow: params.get("flow"),
-        tokenHash: params.get("token_hash"),
-        type: params.get("type"),
-      });
-      window.history.replaceState(
-        null,
-        "",
-        window.location.pathname + window.location.search,
-      );
-    }
-    const parsed = proofCache.current;
     let active = true;
-    queueMicrotask(() => {
-      if (active) setProof(parsed);
-    });
+    const readProof = () => {
+      if (window.location.hash || proofCache.current === undefined) {
+        const params = new URLSearchParams(window.location.hash.slice(1));
+        proofCache.current = parseAuthenticationCommand({
+          action: "confirm-email",
+          flow: params.get("flow"),
+          tokenHash: params.get("token_hash"),
+          type: params.get("type"),
+        });
+        proofGeneration.current += 1;
+        // Keep a valid link intact while an email app hands this page to the
+        // requesting browser. Scrub malformed fragments without submitting them.
+        if (!proofCache.current)
+          window.history.replaceState(
+            null,
+            "",
+            window.location.pathname + window.location.search,
+          );
+      }
+      const parsed = proofCache.current;
+      const generation = proofGeneration.current;
+      queueMicrotask(() => {
+        if (active && generation === proofGeneration.current) {
+          setProof(parsed);
+          setProofRejected(false);
+          setRecoveryAccountConflict(false);
+          setError(null);
+        }
+      });
+    };
+    readProof();
+    window.addEventListener("hashchange", readProof);
     return () => {
       active = false;
+      window.removeEventListener("hashchange", readProof);
     };
   }, [stage]);
 
@@ -195,12 +216,42 @@ export function SignInScreen({
 
   async function run(command: AuthenticationCommand) {
     if (lock.current || !ready) return;
+    if (command.action === "confirm-email") {
+      // A hash navigation can arrive before its event updates the rendered
+      // button/cache. Never let that old button erase the replacement link.
+      if (window.location.hash) {
+        const params = new URLSearchParams(window.location.hash.slice(1));
+        if (
+          params.get("flow") !== command.flow ||
+          params.get("token_hash") !== command.tokenHash ||
+          params.get("type") !== command.type
+        )
+          return;
+      }
+      const current = proofCache.current;
+      if (
+        current?.action !== "confirm-email" ||
+        current.flow !== command.flow ||
+        current.tokenHash !== command.tokenHash ||
+        current.type !== command.type
+      )
+        return;
+    }
     lock.current = true;
     setBusy(true);
     setError(null);
+    setRecoveryAccountConflict(false);
+    const generation = proofGeneration.current;
     let redirecting = false;
     try {
+      if (command.action === "confirm-email")
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + window.location.search,
+        );
       const result = await authenticationGateway.execute(command);
+      if (stage === "confirm" && generation !== proofGeneration.current) return;
       if (result.status === "redirecting") {
         redirecting = true;
         // The adapter has submitted the navigation POST; retain disabled controls.
@@ -224,7 +275,18 @@ export function SignInScreen({
         navigate(
           result.next ?? (command.action === "sign-out" ? "/sign-in" : target),
         );
-      } else setError(authenticationResultMessage(result));
+      } else {
+        if (
+          command.action === "confirm-email" &&
+          result.status === "invalid-proof"
+        )
+          setProofRejected(true);
+        setRecoveryAccountConflict(
+          result.status === "invalid" &&
+            result.message === "recovery-account-conflict",
+        );
+        setError(authenticationResultMessage(result));
+      }
     } finally {
       if (!redirecting) {
         lock.current = false;
@@ -329,6 +391,51 @@ export function SignInScreen({
     (stage === "reset-password" && recovery) ||
     (authEntry && !signedIn && !recovery);
   const needsPassword = stage === "reset-password" || authEntry;
+  const emailRequestForm = (
+    purpose: "confirmation" | "recovery",
+    label: string,
+  ) => (
+    <form
+      className="authentication-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        const normalized = normalizeEmail(email);
+        if (!normalized) {
+          setError("Enter a valid email address.");
+          return;
+        }
+        void run({
+          action:
+            purpose === "recovery" ? "request-recovery" : "resend-confirmation",
+          email: normalized,
+          ...context,
+        });
+      }}
+      noValidate
+    >
+      <fieldset disabled={!ready || busy}>
+        <legend className="sr-only">{label}</legend>
+        <label htmlFor="auth-request-email">
+          Email address
+          <input
+            id="auth-request-email"
+            type="email"
+            name="email"
+            autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            maxLength={254}
+            required
+          />
+        </label>
+        <button type="submit" className="button secondary full">
+          {busy ? "Please wait…" : label}
+        </button>
+      </fieldset>
+    </form>
+  );
   return (
     <section className="authentication-page">
       <aside className="authentication-story" aria-label="Welcome to MovX Club">
@@ -540,8 +647,11 @@ export function SignInScreen({
               <div className="authentication-notice">
                 <Mail size={23} aria-hidden="true" />
                 <p>
-                  If an email arrives, open the latest link in the browser where
-                  you requested it. The link works once and expires in one hour.
+                  If an email arrives, open the latest link
+                  {emailPurpose === "recovery"
+                    ? " on the device where you want to reset your password"
+                    : " in the browser where you requested it"}
+                  . The link works once and expires in one hour.
                 </p>
               </div>
               {emailPurpose !== "recovery" && (
@@ -556,43 +666,12 @@ export function SignInScreen({
                   </Link>
                 </div>
               )}
-              <form
-                className="authentication-form"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void run({
-                    action:
-                      emailPurpose === "recovery"
-                        ? "request-recovery"
-                        : "resend-confirmation",
-                    email,
-                    ...context,
-                  });
-                }}
-                noValidate
-              >
-                <fieldset disabled={!ready || busy}>
-                  <legend className="sr-only">Resend confirmation</legend>
-                  <label>
-                    Email address
-                    <input
-                      type="email"
-                      name="email"
-                      autoComplete="email"
-                      autoCapitalize="none"
-                      spellCheck={false}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      maxLength={254}
-                    />
-                  </label>
-                  <button type="submit" className="button secondary full">
-                    {emailPurpose === "recovery"
-                      ? "Resend reset link"
-                      : "Resend confirmation email"}
-                  </button>
-                </fieldset>
-              </form>
+              {emailRequestForm(
+                emailPurpose,
+                emailPurpose === "recovery"
+                  ? "Resend reset link"
+                  : "Resend confirmation email",
+              )}
               <Link
                 href={link("forgot-password")}
                 className="authentication-inline-link"
@@ -603,11 +682,25 @@ export function SignInScreen({
           )}
           {stage === "confirm" && (
             <div className="authentication-notice">
-              {proof ? (
+              {proof === undefined ? (
+                <>
+                  <p role="status">Reading your email link…</p>
+                  <p>
+                    If this message stays here, enable JavaScript, then reopen
+                    your latest confirmation or password reset email in this
+                    browser.
+                  </p>
+                </>
+              ) : proof && !proofRejected ? (
                 <>
                   <p>
-                    Continue to verify your email or start the password reset
-                    you requested.
+                    If you opened this from an email app, use Open in browser
+                    before continuing.{" "}
+                    {proof.action === "confirm-email" &&
+                    proof.type === "recovery"
+                      ? "You can reset your password on this device, even if you requested the email elsewhere."
+                      : "Use the browser where you requested the confirmation email."}{" "}
+                    Then choose Continue securely.
                   </p>
                   <button
                     type="button"
@@ -617,18 +710,46 @@ export function SignInScreen({
                   >
                     {busy ? "Checking…" : "Continue securely"}
                   </button>
+                  {recoveryAccountConflict && (
+                    <button
+                      type="button"
+                      className="button secondary full"
+                      disabled={!ready || busy}
+                      onClick={() => void run({ action: "sign-out" })}
+                    >
+                      Sign out before resetting
+                    </button>
+                  )}
                 </>
               ) : (
                 <>
                   <p>
-                    This link is missing, expired or already used. Request a
-                    fresh email in this browser.
+                    {proofRejected
+                      ? "We couldn’t verify this link. Request a new email in this browser."
+                      : "This link is incomplete or no longer available. Request a new email in this browser."}
                   </p>
+                  <p>
+                    Enter your email below and submit the request. If an email
+                    arrives, open only the latest link within one hour, then
+                    choose Continue securely. Password reset links can be opened
+                    on another device; signup confirmation uses the requesting
+                    browser.
+                  </p>
+                  {emailRequestForm(
+                    proof?.action === "confirm-email" &&
+                      proof.type === "recovery"
+                      ? "recovery"
+                      : "confirmation",
+                    proof?.action === "confirm-email" &&
+                      proof.type === "recovery"
+                      ? "Request password reset email"
+                      : "Request confirmation email",
+                  )}
                   <Link
                     href={link("forgot-password")}
-                    className="button secondary full"
+                    className="authentication-inline-link"
                   >
-                    Request a fresh reset link
+                    Open password reset form
                   </Link>
                 </>
               )}

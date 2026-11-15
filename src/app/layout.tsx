@@ -18,6 +18,7 @@ import "@/features/reviews/reviews.css";
 import "./account-menu.css";
 import "./notifications.css";
 import "./account-settings.css";
+import "@/features/account/google-calendar-connection.css";
 import "./authentication.css";
 import "./public-marketplace-accessibility.css";
 import "./coach-directory-cards.css";

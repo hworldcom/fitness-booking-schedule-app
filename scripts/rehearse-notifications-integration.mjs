@@ -1,3 +1,4 @@
+import { rehearsePortableRecovery } from "./lib/portable-recovery-integration.mjs";
 import { rehearseStaffCoachApproval } from "./lib/staff-coach-approval-integration.mjs";
 import { verifiedDatabaseFingerprints } from "./lib/database-fingerprints.mjs";
 import { rehearseCoachApplicationEmail } from "./lib/coach-application-email-integration.mjs";
@@ -35,10 +36,12 @@ assert.ok(
         "--person-conversations",
         "--booking-rescheduling",
         "--booking-rescheduling-only",
+        "--password-recovery-only",
       ].includes(arg),
     ),
 );
 const webpack = process.argv.includes("--webpack");
+const recoveryOnly = process.argv.includes("--password-recovery-only");
 const adminOnly = process.argv.includes("--admin-only");
 const bookingOnly = process.argv.includes("--booking-rescheduling-only");
 const adminEnabled = process.argv.includes("--admin") || adminOnly;
@@ -688,6 +691,19 @@ try {
   );
   pass("three independent real browser password sessions");
 
+  if (recoveryOnly) {
+    phase = "portable password recovery";
+    await rehearsePortableRecovery({
+      base,
+      browser,
+      database,
+      auth,
+      mail,
+      pass,
+      output,
+      secrets,
+    });
+  }
   if (bookingOnly || process.argv.includes("--booking-rescheduling")) {
     phase = "coach booking rescheduling";
     await rehearseBookingRescheduling({
@@ -712,12 +728,14 @@ try {
       output,
     });
   }
-  if (adminOnly || bookingOnly) {
+  if (adminOnly || bookingOnly || recoveryOnly) {
     assert.deepEqual(errors, []);
     pass(
-      bookingOnly
-        ? "focused coach rescheduling acceptance without repeating the independent five-minute message journey"
-        : "focused two-app admin acceptance without repeating unchanged five-minute message journey",
+      recoveryOnly
+        ? "focused cross-device recovery acceptance without the independent five-minute message journey"
+        : bookingOnly
+          ? "focused coach rescheduling acceptance without repeating the independent five-minute message journey"
+          : "focused two-app admin acceptance without repeating unchanged five-minute message journey",
     );
   } else {
     phase = "real inquiry capture and recipient authorization";

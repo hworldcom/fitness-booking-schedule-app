@@ -9,6 +9,7 @@ import {
   SignInScreen,
   type AuthenticationStage,
 } from "@/features/auth/sign-in";
+import { authenticationResultMessage } from "@/auth/gateway";
 
 function screen(
   stage: AuthenticationStage,
@@ -135,10 +136,27 @@ test("recovery sessions never see ordinary credential entry or profile completio
   assert.doesNotMatch(missingProof, /name="password"/);
 });
 
-test("missing proof, resend and coach continuation remain safe public recovery paths", () => {
+test("unchecked email fragments are not labelled expired by server rendering", () => {
   const confirm = screen("confirm");
-  assert.match(confirm, /This link is missing, expired or already used/);
+  assert.match(confirm, /Reading your email link/);
+  assert.match(confirm, /enable JavaScript/);
+  assert.doesNotMatch(confirm, /expired|already used|no longer available/);
   assert.doesNotMatch(confirm, /Continue securely/);
+  assert.doesNotMatch(
+    confirm,
+    /token_hash|access_token|Request a fresh reset link/,
+  );
+});
+
+test("a rejected email proof offers browser recovery without asserting expiry", () => {
+  const message = authenticationResultMessage({ status: "invalid-proof" });
+  assert.match(message, /newest email/);
+  assert.match(message, /browser where you requested/);
+  assert.match(message, /request a new email/);
+  assert.doesNotMatch(message, /expired/);
+});
+
+test("resend and coach continuation remain safe public recovery paths", () => {
   const resend = screen("check-email");
   assert.match(resend, /<input[^>]*autoComplete="email"[^>]*name="email"/);
   assert.match(resend, /If this address is eligible/);

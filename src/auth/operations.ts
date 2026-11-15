@@ -142,6 +142,8 @@ export function isAuthenticationResult(
       "password-too-long",
       "password-invalid",
       "password-unsafe",
+      "password-unchanged",
+      "recovery-account-conflict",
     ].includes(input.message as string)
   )
     return false;

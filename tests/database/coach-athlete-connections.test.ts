@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import test, { before, after } from "node:test";
 import postgres from "postgres";
 import { localDateTimeValue } from "@/domain/coaches";
@@ -12,6 +13,7 @@ import {
   ActorContextRejectedError,
   withActorDatabaseContext,
 } from "@/server/db/authorization/repository";
+import { saveOwnedCoachApplicationContact } from "@/server/db/coaches/application-contact-repository";
 import { submitOwnedCoachApplicationRecord } from "@/server/db/coaches/application-repository";
 import { createOwnedCoachAvailabilityRecord } from "@/server/db/coaches/availability-repository";
 import {
@@ -37,6 +39,7 @@ import {
   decideConnectionRecord,
   sendConnectionRecord,
 } from "@/server/db/connections/repository";
+import { personCommand } from "./person-conversation-fixture";
 import { enrollApplicationProfile } from "@/server/db/identity/repository";
 import {
   bookingRequestClientAvatarReference,
@@ -72,6 +75,11 @@ const isolatedRun = "9a221000-0000-4000-8000-000000000901";
 let coach: AuthorizedActor, reverseCoach: AuthorizedActor;
 const athletes: AuthorizedActor[] = [];
 let hours = 2;
+const cancelledCoachFixtures: {
+  bookingId: string;
+  attemptId: string;
+  athlete: AuthorizedActor;
+}[] = [];
 const work = <T>(
   actor: AuthorizedActor,
   fn: Parameters<typeof withActorDatabaseContext<T>>[1],
@@ -175,8 +183,20 @@ async function cleanup() {
     await admin`delete from app.coach_training_locations where profile_id in ${admin(ids)}`;
     await admin`delete from app.coach_profile_disciplines where profile_id in ${admin(ids)}`;
     await admin`delete from app.coach_profiles where profile_id in ${admin(ids)}`;
+    if (
+      (
+        await admin`select to_regclass('app.coach_approval_notifications') present`
+      )[0].present
+    )
+      await admin`delete from app.coach_approval_notifications where profile_id in ${admin(ids)}`;
     await admin`delete from app.coach_application_review_events where profile_id in ${admin(ids)}`;
     await admin`delete from app.coach_applications where profile_id in ${admin(ids)}`;
+    if (
+      (
+        await admin`select to_regclass('app.booking_notification_events') present`
+      )[0].present
+    )
+      await admin`delete from app.booking_notification_events where coach_profile_id in ${admin(ids)} or athlete_profile_id in ${admin(ids)}`;
     await admin`delete from app.demo_run_participants where profile_id in ${admin(ids)}`;
     await admin`delete from app.profiles where id in ${admin(ids)}`;
   }
@@ -207,6 +227,18 @@ before(async () => {
   for (const owner of [coach, reverseCoach]) {
     await work(owner, submitOwnedCoachApplicationRecord);
     await work(owner, (tx) =>
+      saveOwnedCoachApplicationContact(
+        tx,
+        {
+          phoneNumber: "+4915123456789",
+          instagramUrl: null,
+          facebookUrl: null,
+          linkedinUrl: null,
+        },
+        0,
+      ),
+    );
+    await work(owner, (tx) =>
       upsertOwnedCoachProfileRecord(tx, {
         displayName:
           owner === coach ? "Connection Coach" : "Reverse Connection Coach",
@@ -221,6 +253,59 @@ before(async () => {
     await admin`select app.review_coach_application(${owner.profileId}::uuid,'pending','approved','Connection test reviewed complete coach profile.','database-test','movx-identity-application-v1')`;
     await admin`update app.coach_profiles set visibility='visible' where profile_id=${owner.profileId}::uuid`;
   }
+  // In upgrade mode these pending requests predate the forward migration.
+  for (const [index, cancellingCoach] of [
+    [14, true],
+    [15, false],
+  ] as const) {
+    const athlete = athletes[index];
+    const b = await booking(athlete);
+    const pending = await send(athlete, b.id);
+    await work(cancellingCoach ? coach : athlete, (tx) =>
+      cancelDirectPrivateBookingRecord(tx, b.id),
+    );
+    cancelledCoachFixtures.push({
+      bookingId: b.id,
+      attemptId: pending.id,
+      athlete,
+    });
+  }
+  if (process.env.CONNECTION_CANCELLATION_UPGRADE === "1") {
+    const target = new URL(url);
+    assert.equal(target.hostname, "127.0.0.1");
+    assert.equal(target.port, "55322");
+    assert.match(target.pathname, /^\/mov239_[a-f0-9]{12}_upgrade$/);
+    for (const fixture of cancelledCoachFixtures)
+      assert.equal(
+        (await context(coach, fixture.bookingId)).connection?.canAccept,
+        false,
+      );
+    const snapshot = async () =>
+      JSON.stringify(
+        await admin`
+      select schemaname,tablename,
+        (xpath('/table/row/hash/text()',query_to_xml(format(
+          'select md5(coalesce(jsonb_agg(to_jsonb(x) order by to_jsonb(x)::text)::text,''[]'')) hash from %I.%I x',
+          schemaname,tablename),false,false,'')))[1]::text hash
+      from pg_tables where schemaname='app' or schemaname='auth'
+        or (schemaname='storage' and tablename in ('buckets','objects'))
+      order by schemaname,tablename`,
+      );
+    const before = await snapshot();
+    const migration = readFileSync(
+      "supabase/migrations/20261115000200_coach_cancelled_connection_acceptance.sql",
+      "utf8",
+    );
+    // Migrations run only in the harness-owned database, never a retained target.
+    await admin.begin(async (tx) => {
+      await tx.unsafe(migration);
+    });
+    assert.equal(
+      await snapshot(),
+      before,
+      "Migration must preserve every application/Auth/Storage row",
+    );
+  }
 });
 after(async () => {
   try {
@@ -232,6 +317,14 @@ after(async () => {
 });
 
 test("raw tables and internal helper functions cannot bypass consent", async () => {
+  await assert.rejects(
+    runtime`select app.coach_connection_acceptance_eligible(null::app.coach_athlete_connection_pairs)`,
+    /permission denied/,
+  );
+  await assert.rejects(
+    runtime`select app.lock_coach_connection_acceptance_eligibility(null::app.coach_athlete_connection_pairs)`,
+    /permission denied/,
+  );
   await assert.rejects(
     runtime`select * from app.coach_athlete_connection_attempts`,
     /permission denied/,
@@ -321,6 +414,27 @@ test("pending-only, cancelled-only, unrelated, spoofed and cross-dataset context
     ),
     ActorContextRejectedError,
   );
+});
+test("a pending row without shared booking history cannot grant coach acceptance", async () => {
+  const athlete = athletes[17];
+  const [pair] =
+    await admin`insert into app.coach_athlete_connection_pairs(run_id,coach_profile_id,athlete_profile_id)
+    values(${coach.runId}::uuid,${coach.profileId}::uuid,${athlete.profileId}::uuid) returning id`;
+  const [attempt] =
+    await admin`insert into app.coach_athlete_connection_attempts(id,run_id,pair_id,attempt_number,sender_profile_id,recipient_profile_id,status)
+    values(${randomUUID()}::uuid,${coach.runId}::uuid,${pair.id}::uuid,1,${athlete.profileId}::uuid,${coach.profileId}::uuid,'pending') returning id`;
+  const incoming = await work(coach, (tx) =>
+    connectionPageRecord(tx, "coach", "incoming"),
+  );
+  assert.equal(
+    incoming.items.find((row) => row.id === attempt.id)?.canAccept,
+    false,
+  );
+  await assert.rejects(
+    decide(coach, attempt.id, "accept"),
+    ConnectionConflictError,
+  );
+  await decide(coach, attempt.id, "decline");
 });
 test("concurrent crossed sends require consent and stale send operations cannot reconnect", async () => {
   const b = await booking(athletes[3]);
@@ -443,6 +557,126 @@ test("cancellation first makes pending acceptance ineligible after the lock wait
   assert.equal((await context(coach, b.id)).connection?.status, "pending");
   assert.equal((await context(coach, b.id)).connection?.canAccept, false);
   await decide(athletes[7], pending.id, "decline");
+});
+test("recipient coach accepts retained requests after either participant cancels the only shared session", async () => {
+  for (const fixture of cancelledCoachFixtures) {
+    const [before] =
+      await admin`select to_jsonb(b) value from app.coach_private_bookings b where id=${fixture.bookingId}::uuid`;
+    const current = await context(coach, fixture.bookingId);
+    assert.equal(current.connection?.id, fixture.attemptId);
+    assert.equal(current.connection?.status, "pending");
+    assert.equal(current.connection?.canAccept, true);
+    assert.equal(current.canSend, false);
+    const incoming = await work(coach, (tx) =>
+      connectionPageRecord(tx, "coach", "incoming"),
+    );
+    assert.equal(
+      incoming.items.find((row) => row.id === fixture.attemptId)?.canAccept,
+      true,
+    );
+    await assert.rejects(
+      decide(fixture.athlete, fixture.attemptId, "accept"),
+      ConnectionConflictError,
+    );
+    await assert.rejects(
+      decide(athletes[0], fixture.attemptId, "accept"),
+      ConnectionConflictError,
+    );
+    await assert.rejects(
+      work({ ...coach, runId: isolatedRun }, (tx) =>
+        decideConnectionRecord(tx, fixture.attemptId, "accept"),
+      ),
+      ActorContextRejectedError,
+    );
+    const accepted = await Promise.all([
+      decide(coach, fixture.attemptId, "accept"),
+      decide(coach, fixture.attemptId, "accept"),
+    ]);
+    assert.deepEqual(accepted[0], accepted[1]);
+    assert.equal(accepted[0].status, "accepted");
+    const history = await collect(coach, accepted[0].pairId);
+    assert.equal(
+      history.find((row) => row.bookingId === fixture.bookingId)?.bookingStatus,
+      "cancelled",
+    );
+    const [after] =
+      await admin`select to_jsonb(b) value from app.coach_private_bookings b where id=${fixture.bookingId}::uuid`;
+    assert.deepEqual(after, before);
+    await decide(coach, fixture.attemptId, "disconnect");
+    assert.equal(
+      (await context(fixture.athlete, fixture.bookingId)).canSend,
+      false,
+    );
+    await assert.rejects(
+      send(fixture.athlete, fixture.bookingId),
+      ConnectionConflictError,
+    );
+  }
+});
+test("coach acceptance waits for an overlapping cancellation and then retains both outcomes", async () => {
+  const athlete = athletes[16];
+  const b = await booking(athlete);
+  const pending = await send(athlete, b.id);
+  const reached = barrier(),
+    release = barrier();
+  const cancellation = work(athlete, async (tx) => {
+    await cancelDirectPrivateBookingRecord(tx, b.id);
+    reached.release();
+    await release.promise;
+  });
+  await reached.promise;
+  const accepting = decide(coach, pending.id, "accept");
+  try {
+    await waitBlocked("decide_coach_athlete_connection");
+  } finally {
+    release.release();
+  }
+  await cancellation;
+  assert.equal((await accepting).status, "accepted");
+  const [row] =
+    await admin`select status from app.coach_private_bookings where id=${b.id}::uuid`;
+  assert.equal(row.status, "cancelled");
+});
+test("cancelled-history exception retains active membership and block authority", async () => {
+  const athlete = athletes[17];
+  const b = await booking(athlete);
+  const pending = await send(athlete, b.id);
+  await work(coach, (tx) => cancelDirectPrivateBookingRecord(tx, b.id));
+  for (const actor of [athlete, coach]) {
+    await admin`update app.demo_run_participants set status='revoked',revoked_at=statement_timestamp() where run_id=${actor.runId}::uuid and profile_id=${actor.profileId}::uuid`;
+    try {
+      if (actor === athlete) {
+        assert.equal((await context(coach, b.id)).connection?.canAccept, false);
+        await assert.rejects(
+          decide(coach, pending.id, "accept"),
+          ConnectionConflictError,
+        );
+      } else {
+        await assert.rejects(
+          decide(coach, pending.id, "accept"),
+          ActorContextRejectedError,
+        );
+      }
+    } finally {
+      await admin`update app.demo_run_participants set status='active',revoked_at=null where run_id=${actor.runId}::uuid and profile_id=${actor.profileId}::uuid`;
+    }
+  }
+  const person = {
+    auth: athlete.authUserId,
+    id: athlete.profileId,
+    run: athlete.runId,
+  };
+  const opened = await personCommand(admin, person, "contact", {
+    coachId: coach.profileId,
+  });
+  await personCommand(admin, person, "block", {
+    conversationId: opened.conversationId,
+  });
+  await assert.rejects(
+    decide(coach, pending.id, "accept"),
+    ConnectionConflictError,
+  );
+  assert.equal((await context(coach, b.id)).connection?.status, "withdrawn");
 });
 test("complete retained history survives repeated either-side disconnection and reconnection", async () => {
   const athlete = athletes[8],
@@ -750,9 +984,16 @@ test("suspension blocks new consent while existing reads and safe resolutions su
   const connected = await send(reverseCoach, b.id);
   await decide(athletes[12], connected.id, "accept");
   const pending = await send(athletes[13], other.id);
+  await work(reverseCoach, (tx) =>
+    cancelDirectPrivateBookingRecord(tx, other.id),
+  );
+  assert.equal(
+    (await context(reverseCoach, other.id)).connection?.canAccept,
+    true,
+  );
   await admin`select app.review_coach_application(${reverseCoach.profileId}::uuid,'approved','suspended','Connection test suspends authority.','database-test','movx-identity-application-v1')`;
   assert.equal(
-    (await context(athletes[13], other.id)).connection?.canAccept,
+    (await context(reverseCoach, other.id)).connection?.canAccept,
     false,
   );
   await assert.rejects(

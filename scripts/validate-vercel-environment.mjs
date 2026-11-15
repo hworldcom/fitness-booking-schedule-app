@@ -1,4 +1,5 @@
 import { hostedRuntimeConfiguration } from "./lib/hosted-environment.mjs";
+import { calendarExportTargetMatches } from "../src/server/google-calendar/export-target.mjs";
 
 const CORE_VARIABLES = [
   "DATABASE_URL",
@@ -179,6 +180,16 @@ function main() {
   }
   const target = hostedEnvironment(vercelEnvironment);
   const runtimeMode = validateCoreEnvironment(vercelEnvironment, target);
+  if (
+    value("MOVX_GOOGLE_CALENDAR_EXPORT_ENABLED") === "true" &&
+    (runtimeMode !== "hosted-runtime" ||
+      value("MOVX_GOOGLE_CALENDAR_ENABLED") !== "true" ||
+      !calendarExportTargetMatches(process.env) ||
+      value("CRON_SECRET").length < 32)
+  )
+    fail(
+      "Calendar booking export requires the same database target, a separate restricted worker login, Calendar configuration and a CRON_SECRET of at least 32 characters.",
+    );
   const geoapifyEnabled = validateGeoapifyEnvironment();
   console.log(
     `Validated ${vercelEnvironment} Vercel build in ${runtimeMode} mode (OpenFreeMap enabled; Geoapify search ${geoapifyEnabled ? "configured" : "disabled"}) without printing environment values.`,
