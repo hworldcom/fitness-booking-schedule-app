@@ -124,8 +124,8 @@ async function confirm(page, link) {
   await expect(
     page.getByRole("button", { name: "Continue securely" }),
   ).toBeEnabled();
-  assert.equal(new URL(page.url()).hash, "");
   await page.getByRole("button", { name: "Continue securely" }).click();
+  assert.equal(new URL(page.url()).hash, "");
 }
 async function open(page, path) {
   await page.goto(base + path, { waitUntil: "domcontentloaded" });

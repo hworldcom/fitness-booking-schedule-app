@@ -146,7 +146,7 @@ export function authenticationResultMessage(
   if (result.status === "invalid-credentials")
     return "The email or password is incorrect. Try again.";
   if (result.status === "invalid-proof")
-    return "That link is invalid or expired. Request a fresh email and try again.";
+    return "We couldn’t use this link in this browser. Open the newest email in the browser where you requested it, or request a new email.";
   if (result.status === "rate-limited")
     return result.retryAfterSeconds === null
       ? "Too many attempts. Please wait before trying again."
