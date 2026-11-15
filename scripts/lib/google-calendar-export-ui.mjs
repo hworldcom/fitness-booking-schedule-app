@@ -14,6 +14,7 @@ export async function rehearseCalendarExport({
   let enabled = false,
     available = true,
     backfillPending = false,
+    pending = 0,
     failed = 0,
     missing = 0,
     issues = [],
@@ -33,7 +34,7 @@ export async function rehearseCalendarExport({
       enabled,
       version: generation,
       backfillPending,
-      pending: backfillPending ? 2 : 0,
+      pending,
       failed,
       missing,
       issues,
@@ -100,6 +101,7 @@ export async function rehearseCalendarExport({
     enabled = false;
     available = true;
     backfillPending = false;
+    pending = 0;
     failed = 0;
     missing = 0;
     issues = [];
@@ -117,10 +119,16 @@ export async function rehearseCalendarExport({
     await page.keyboard.press("Space");
     await expect(toggle).toBeChecked();
     await expect(
-      region.getByText("Preparing upcoming confirmed bookings…", {
+      region.getByText("Finding upcoming confirmed bookings…", {
         exact: true,
       }),
     ).toBeVisible();
+    await expect(
+      region.getByText("Update counts will be available after preparation.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(region.getByText(/0 pending/)).toHaveCount(0);
     assert.equal(posts.length, before + 1);
     assert.equal(posts.at(-1).action, "enable");
     assert.equal(
@@ -132,6 +140,27 @@ export async function rehearseCalendarExport({
     await region.screenshot({
       path: path.join(evidence, `booking-sync-${width}.png`),
     });
+    pending = 2;
+    await page.evaluate(() =>
+      document.dispatchEvent(new Event("visibilitychange")),
+    );
+    await expect(
+      region.getByText(
+        "2 pending updates · 0 need attention · Finding more bookings…",
+        { exact: true },
+      ),
+    ).toBeVisible();
+    backfillPending = false;
+    pending = 0;
+    await page.evaluate(() =>
+      document.dispatchEvent(new Event("visibilitychange")),
+    );
+    await expect(
+      region.getByText("No pending booking updates.", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      region.getByText("0 pending updates · 0 need attention", { exact: true }),
+    ).toBeVisible();
     await toggle.focus();
     await page.keyboard.press("Space");
     await expect(toggle).not.toBeChecked();
@@ -141,7 +170,7 @@ export async function rehearseCalendarExport({
       }),
     ).toBeVisible();
     pass(
-      `${width}px: saved-off default, one keyboard opt-in/backfill, disable and no horizontal overflow`,
+      `${width}px: saved-off default, one keyboard opt-in, discovery/queued/delivered counts, disable and no horizontal overflow`,
     );
   }
   enabled = true;
@@ -198,6 +227,9 @@ export async function rehearseCalendarExport({
   issues = ["event-missing"];
   backfillPending = false;
   await open();
+  await expect(
+    region.getByText("0 pending updates · 1 need attention", { exact: true }),
+  ).toBeVisible();
   await region
     .getByText("Repair missing booking copies", { exact: true })
     .click();

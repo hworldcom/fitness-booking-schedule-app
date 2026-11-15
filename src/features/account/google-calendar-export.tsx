@@ -247,7 +247,7 @@ export function GoogleCalendarExportView({
                   : result.connectionState !== "connected"
                     ? "Booking sync is paused. Restore your Calendar connection to continue."
                     : result.export.backfillPending
-                      ? "Preparing upcoming confirmed bookings…"
+                      ? "Finding upcoming confirmed bookings…"
                       : result.export.failed > 0
                         ? "Some booking copies need attention."
                         : result.export.pending > 0
@@ -256,8 +256,11 @@ export function GoogleCalendarExportView({
           </p>
           {result.export.enabled && (
             <p>
-              {result.export.pending} pending · {result.export.failed} need
-              attention
+              {result.export.backfillPending &&
+              result.export.pending === 0 &&
+              result.export.failed === 0
+                ? "Update counts will be available after preparation."
+                : `${result.export.pending} pending updates · ${result.export.failed} need attention${result.export.backfillPending ? " · Finding more bookings…" : ""}`}
             </p>
           )}
           {result.export.lastSyncedAt && (
