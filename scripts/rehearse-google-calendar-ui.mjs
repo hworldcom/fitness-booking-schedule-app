@@ -81,6 +81,21 @@ function pass(text) {
   checks.push(text);
   console.log(`PASS ${text}`);
 }
+async function showDisconnect(page, choice = "keep") {
+  const section = page.locator(".calendar-disconnect");
+  if ((await section.getAttribute("open")) === null)
+    await section.locator("summary").click();
+  await page
+    .getByRole("radio", {
+      name:
+        choice === "delete"
+          ? "Disconnect and delete calendar"
+          : "Just disconnect",
+      exact: true,
+    })
+    .check();
+}
+
 try {
   const probe = createServer();
   await new Promise((resolve, reject) => {
@@ -262,13 +277,88 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
     await expect(
       page.getByText("Calendar: MovX.", { exact: false }),
     ).toBeVisible();
+    for (const name of ["Reload connection status", "Check connection"]) {
+      const style = await page
+        .getByRole("button", { name, exact: true })
+        .evaluate((button) => {
+          const css = getComputedStyle(button);
+          return {
+            height: button.getBoundingClientRect().height,
+            background: css.backgroundColor,
+            border: Number.parseFloat(css.borderTopWidth),
+            borderStyle: css.borderTopStyle,
+            color: css.color,
+          };
+        });
+      assert.ok(style.height >= 44, `${name} needs a mobile touch target`);
+      assert.ok(
+        style.border >= 1 && style.borderStyle !== "none",
+        `${name} needs a visible border`,
+      );
+      assert.notEqual(style.background, "rgba(0, 0, 0, 0)");
+      const luminance = (color) => {
+        const rgb = color
+          .match(/[\d.]+/g)
+          .slice(0, 3)
+          .map(Number)
+          .map((v) => v / 255)
+          .map((v) =>
+            v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4,
+          );
+        return rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
+      };
+      const values = [luminance(style.background), luminance(style.color)].sort(
+        (a, b) => b - a,
+      );
+      assert.ok(
+        (values[0] + 0.05) / (values[1] + 0.05) >= 4.5,
+        `${name} text needs readable contrast`,
+      );
+    }
+    await expect(page.locator(".calendar-disconnect > summary")).toHaveCount(1);
+    const order = await page
+      .getByRole("region", { name: "Google booking sync" })
+      .evaluate((sync) => {
+        const actions = document.querySelector(".calendar-connection-actions"),
+          disconnect = document.querySelector(".calendar-disconnect");
+        return (
+          !!(
+            actions.compareDocumentPosition(sync) &
+            Node.DOCUMENT_POSITION_FOLLOWING
+          ) &&
+          !!(
+            sync.compareDocumentPosition(disconnect) &
+            Node.DOCUMENT_POSITION_FOLLOWING
+          )
+        );
+      });
+    assert.equal(
+      order,
+      true,
+      "Booking sync must follow connection actions and precede disconnection",
+    );
+    const beforeReload = posts.length;
+    await page
+      .getByRole("button", { name: "Reload connection status", exact: true })
+      .click();
+    await expect(
+      page.getByRole("button", { name: "Check connection", exact: true }),
+    ).toBeVisible();
+    assert.equal(posts.length, beforeReload, "Reload must remain read-only");
+    await page.screenshot({
+      path: path.join(evidence, `connected-settings-${width}.png`),
+      fullPage: true,
+    });
+    pass(
+      `${width}px: visible bordered status buttons, touch size/contrast, read-only reload and connection/sync/disconnect order`,
+    );
     await page
       .getByRole("button", { name: "Check connection", exact: true })
       .click();
     await expect(
       page.getByRole("button", { name: "Check connection", exact: true }),
     ).toBeEnabled();
-    await page.getByText("Disconnect Google Calendar", { exact: true }).focus();
+    await page.getByText("Disconnect calendar", { exact: true }).focus();
     await page.keyboard.press("Enter");
     await expect(
       page.getByRole("button", { name: "Confirm disconnect" }),
@@ -291,10 +381,18 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
     );
     state = "connected";
     await open();
-    await page
-      .getByText("Disconnect and delete calendar", { exact: true })
-      .focus();
+    await page.getByText("Disconnect calendar", { exact: true }).focus();
     await page.keyboard.press("Enter");
+    await page
+      .getByRole("radio", { name: "Just disconnect", exact: true })
+      .focus();
+    await page.keyboard.press("ArrowDown");
+    await expect(
+      page.getByRole("radio", {
+        name: "Disconnect and delete calendar",
+        exact: true,
+      }),
+    ).toBeChecked();
     const deleteButton = page.getByRole("button", {
       name: "Confirm disconnect and delete calendar",
       exact: true,
@@ -314,6 +412,23 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
       beforeDelete,
       "opening/confirming the explanation sends no delete",
     );
+    await page
+      .getByRole("radio", { name: "Just disconnect", exact: true })
+      .check();
+    await page
+      .getByRole("radio", {
+        name: "Disconnect and delete calendar",
+        exact: true,
+      })
+      .check();
+    const deleteAcknowledgement = page.getByRole("checkbox", {
+      name: "I want to permanently delete this MovX calendar and all its events.",
+      exact: true,
+    });
+    await expect(deleteAcknowledgement).not.toBeChecked();
+    await expect(deleteButton).toBeDisabled();
+    await deleteAcknowledgement.check();
+
     assert.equal(
       await page.evaluate(
         () => document.documentElement.scrollWidth > innerWidth,
@@ -346,9 +461,7 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
     state = "connected";
     deletionFault = true;
     await open();
-    await page
-      .getByText("Disconnect and delete calendar", { exact: true })
-      .click();
+    await showDisconnect(page, "delete");
     await page
       .getByRole("checkbox", {
         name: "I want to permanently delete this MovX calendar and all its events.",
@@ -571,15 +684,24 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
   pass("Feature-disabled state offers no false connection action");
   state = "connected";
   await open();
+  await showDisconnect(page);
   await expect(
-    page.getByText("Disconnect and delete calendar", { exact: true }),
+    page.getByRole("radio", {
+      name: "Disconnect and delete calendar",
+      exact: true,
+    }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", {
+      name: "Confirm disconnect and delete calendar",
+      exact: true,
+    }),
   ).toHaveCount(0);
-  await page.getByText("Disconnect Google Calendar", { exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Confirm disconnect", exact: true }),
   ).toBeEnabled();
   pass(
-    "Feature-disabled state preserves ordinary disconnect without offering deletion",
+    "Feature-disabled state preserves ordinary disconnect and disables deletion",
   );
   enabled = true;
   state = "connected";

@@ -115,6 +115,22 @@ export async function rehearseCalendarExport({
       before,
       "loading a connection never opts into export",
     );
+    await page
+      .getByRole("button", { name: "Check connection", exact: true })
+      .focus();
+    await page.keyboard.press("Tab");
+    await expect(
+      region.getByRole("link", {
+        name: "Booking sync privacy details",
+        exact: true,
+      }),
+    ).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(toggle).toBeFocused();
+    assert.equal(posts.length, before, "Keyboard navigation never opts in");
+    pass(
+      `${width}px: booking sync follows connection controls in keyboard order`,
+    );
     await toggle.focus();
     await page.keyboard.press("Space");
     await expect(toggle).toBeChecked();

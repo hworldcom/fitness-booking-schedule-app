@@ -180,7 +180,10 @@ export function GoogleCalendarExportView({
 }) {
   const [repair, setRepair] = useState(false);
   return (
-    <section aria-label="Google booking sync" className="calendar-connection">
+    <section
+      aria-label="Google booking sync"
+      className="calendar-connection calendar-export"
+    >
       <h3>Booking sync</h3>
       <p>
         Choose once for your account. When enabled, upcoming confirmed bookings
