@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowRight, CalendarDays, Check, LockKeyhole } from "lucide-react";
+import { accountSectionHref } from "@/account/sections";
 
 const exampleWorkouts = [
   {
@@ -41,9 +42,18 @@ export function TrainingCalendarIntro({
         <span className="eyebrow">YOUR PERSONAL CALENDAR</span>
         <h2 id={id}>{title}</h2>
         <p>{description}</p>
+        <p className="public-training-calendar-google">
+          Automatically sync your confirmed MovX sessions to Google Calendar.
+        </p>
         <div className="public-training-calendar-actions">
           <Link className="text-link" href="/sessions/calendar">
             Open my calendar <ArrowRight size={17} aria-hidden="true" />
+          </Link>
+          <Link
+            className="button secondary calendar-connect-link"
+            href={accountSectionHref("connected-calendars")}
+          >
+            Connect Google Calendar
           </Link>
           {showGuideLink && (
             <Link className="text-link" href="/how-it-works">

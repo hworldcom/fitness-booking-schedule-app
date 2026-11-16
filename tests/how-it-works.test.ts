@@ -45,6 +45,7 @@ test("athlete and coach actions reach real discovery and application routes", ()
     ["Become a coach", "/sign-in?intent=coach&returnTo=%2Fprofile%2Fcoach"],
     ["Plan my routine", "/sessions/routine"],
     ["Open my calendar", "/sessions/calendar"],
+    ["Connect Google Calendar", "/account?section=connected-calendars"],
   ])
     assert.deepEqual(
       links.find((link) => link.label === label),
@@ -77,8 +78,8 @@ test("group explanation distinguishes a reserved seat, minimum and coach decisio
 });
 
 test("native FAQs expose payment, cancellation and confirmation guidance without client state", () => {
-  assert.equal((html.match(/<details>/g) ?? []).length, 6);
-  assert.equal((html.match(/<summary>/g) ?? []).length, 6);
+  assert.equal((html.match(/<details>/g) ?? []).length, 7);
+  assert.equal((html.match(/<summary>/g) ?? []).length, 7);
   assert.match(
     text,
     /A private session is confirmed when the coach accepts your request/,

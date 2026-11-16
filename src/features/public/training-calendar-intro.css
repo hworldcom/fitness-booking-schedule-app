@@ -43,6 +43,17 @@
   flex-wrap: wrap;
   column-gap: 24px;
 }
+.public-training-calendar-copy .public-training-calendar-google {
+  margin-top: 12px;
+}
+.public-training-calendar-actions .calendar-connect-link {
+  align-self: center;
+  max-width: 100%;
+  min-height: 44px;
+  margin-top: 18px;
+  color: #61417b;
+  font-size: 13px;
+}
 .public-training-calendar-copy a:focus-visible {
   outline: 3px solid #61417b;
   outline-offset: 4px;

@@ -234,6 +234,20 @@ test("how it works guides athletes and coaches through real training choices", a
   ).toBeVisible();
   await page.keyboard.press("Enter");
   await expect(confirmation.locator("..")).not.toHaveAttribute("open");
+  const google = page
+    .locator("summary")
+    .filter({ hasText: "Can I connect Google Calendar?" });
+  await google.focus();
+  await page.keyboard.press("Enter");
+  await expect(google.locator("..")).toHaveAttribute("open");
+  await expect(
+    google.locator("..").getByText(/upcoming confirmed sessions/),
+  ).toBeVisible();
+  await expect(
+    google.locator("..").getByText(/Personal workouts aren’t exported/),
+  ).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(google.locator("..")).not.toHaveAttribute("open");
   await expect(
     page.getByRole("link", { name: "Find a coach", exact: true }),
   ).toHaveAttribute("href", "/explore");
@@ -249,4 +263,83 @@ test("how it works guides athletes and coaches through real training choices", a
     path: testInfo.outputPath("athlete-coach-how-it-works.png"),
     fullPage: true,
   });
+});
+
+test("public calendar settings links remain visible and usable at desktop and phone widths", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  const writes: string[] = [];
+  const configured = Boolean(
+    process.env.DATABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY &&
+    process.env.NEXT_PUBLIC_SITE_URL,
+  );
+  page.on("request", (request) => {
+    if (request.method() !== "GET" && request.method() !== "HEAD")
+      writes.push(new URL(request.url()).pathname);
+  });
+  for (const width of [1440, 375, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const pathname of ["/", "/how-it-works"]) {
+      await page.goto(pathname);
+      const calendar = page.locator(".public-training-calendar");
+      const connect = calendar.getByRole("link", {
+        name: "Connect Google Calendar",
+        exact: true,
+      });
+      await expect(connect).toHaveAttribute(
+        "href",
+        "/account?section=connected-calendars",
+      );
+      await expect(
+        calendar.getByRole("link", { name: "Open my calendar" }),
+      ).toBeVisible();
+      await connect.focus();
+      await expect(connect).toBeFocused();
+      await connect.scrollIntoViewIfNeeded();
+      const style = await connect.evaluate((link) => {
+        const css = getComputedStyle(link);
+        return {
+          height: link.getBoundingClientRect().height,
+          border: Number.parseFloat(css.borderTopWidth),
+          background: css.backgroundColor,
+        };
+      });
+      expect(style.height).toBeGreaterThanOrEqual(44);
+      expect(style.border).toBeGreaterThanOrEqual(1);
+      expect(style.background).not.toBe("rgba(0, 0, 0, 0)");
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+      await calendar.screenshot({
+        path: testInfo.outputPath(
+          `calendar-connect-${pathname === "/" ? "home" : "guide"}-${width}.png`,
+        ),
+      });
+      await page.keyboard.press("Enter");
+      if (configured) {
+        await expect(page).toHaveURL(/\/sign-in\?returnTo=/);
+        expect(new URL(page.url()).searchParams.get("returnTo")).toBe(
+          "/account?section=connected-calendars",
+        );
+      } else {
+        // The unconfigured preview still gates account controls behind sign-in.
+        await expect(page).toHaveURL(/\/account\?section=connected-calendars$/);
+        await expect(
+          page.getByRole("heading", { name: "Account settings", exact: true }),
+        ).toBeVisible();
+        await expect(
+          page.getByRole("link", { name: "Check sign-in", exact: true }),
+        ).toHaveAttribute(
+          "href",
+          "/sign-in?returnTo=%2Faccount%3Fsection%3Dconnected-calendars",
+        );
+      }
+    }
+  }
+  expect(writes).toEqual([]);
 });
