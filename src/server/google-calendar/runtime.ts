@@ -10,6 +10,12 @@ import {
   calendarCommandRecord,
   calendarStatusRecord,
 } from "@/server/db/google-calendar/repository";
+import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
+import {
+  enableCalendarSync,
+  prepareCalendarSync,
+} from "@/server/db/google-calendar/setup-repository";
+import { calendarExportAvailable } from "./export-worker";
 import { calendarConfig } from "./config";
 import { googleCalendarProvider } from "./provider";
 import {
@@ -55,10 +61,52 @@ export function calendarRuntime() {
       sessionId: verified.authSessionId,
     };
   }
+  async function withBoundContext<T>(
+    bound: CalendarContext,
+    work: (tx: ActorDatabaseTransaction) => Promise<T>,
+  ): Promise<T> {
+    const verified = await verifiedAuthContext();
+    if (
+      verified.authSessionId !== bound.sessionId ||
+      verified.session.status !== "signed-in" ||
+      verified.session.subject !== bound.subject
+    )
+      throw new CalendarServiceError("forbidden");
+    const result = await withAuthorizedSession(
+      verified.session,
+      async (tx, actor) => {
+        if (actor.profileId !== bound.profileId || actor.runId !== bound.runId)
+          throw new CalendarServiceError("forbidden");
+        return work(tx);
+      },
+      { rethrow: (error) => error instanceof CalendarServiceError },
+    );
+    if (result.status !== "authorized")
+      throw new CalendarServiceError(
+        result.status === "forbidden" ? "forbidden" : "unavailable",
+      );
+    return result.value;
+  }
   return calendarConnectionService({
     config,
     provider: config ? googleCalendarProvider(config) : null,
     context,
+    bookingSync: {
+      async prepare(bound, generation) {
+        return withBoundContext(bound, (tx) =>
+          calendarExportAvailable()
+            ? prepareCalendarSync(tx, generation)
+            : Promise.resolve(null),
+        );
+      },
+      async enable(bound, generation, intent) {
+        return withBoundContext(bound, (tx) =>
+          calendarExportAvailable()
+            ? enableCalendarSync(tx, generation, intent)
+            : Promise.resolve("unavailable" as const),
+        );
+      },
+    },
     reportFailure({ phase, reason }) {
       console.warn("Google Calendar connection attempt failed", {
         phase,
@@ -66,29 +114,9 @@ export function calendarRuntime() {
       });
     },
     async command(bound, action, expected, input) {
-      const verified = await verifiedAuthContext();
-      if (
-        verified.authSessionId !== bound.sessionId ||
-        verified.session.status !== "signed-in" ||
-        verified.session.subject !== bound.subject
-      )
-        throw new CalendarServiceError("forbidden");
-      const result = await withAuthorizedSession(
-        verified.session,
-        async (tx, actor) => {
-          if (
-            actor.profileId !== bound.profileId ||
-            actor.runId !== bound.runId
-          )
-            throw new CalendarServiceError("forbidden");
-          return calendarCommandRecord(tx, action, expected, input);
-        },
+      return withBoundContext(bound, (tx) =>
+        calendarCommandRecord(tx, action, expected, input),
       );
-      if (result.status !== "authorized")
-        throw new CalendarServiceError(
-          result.status === "forbidden" ? "forbidden" : "unavailable",
-        );
-      return result.value;
     },
     cookie: {
       async read() {

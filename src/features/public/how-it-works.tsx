@@ -432,6 +432,20 @@ export function HowItWorksStory() {
           </details>
           <details>
             <summary>
+              Can I connect Google Calendar?
+              <Plus className="icon" aria-hidden="true" />
+            </summary>
+            <p>
+              Yes. Open Account → Connected calendars to connect Google Calendar
+              and enable booking sync. Your upcoming confirmed sessions are
+              added automatically, including updates after rescheduling or final
+              cancellation. You can pause sync anytime in account settings.
+              Personal workouts aren’t exported, and changes in Google Calendar
+              don’t change your MovX bookings.
+            </p>
+          </details>
+          <details>
+            <summary>
               When is my session confirmed?
               <Plus className="icon" aria-hidden="true" />
             </summary>

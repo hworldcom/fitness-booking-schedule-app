@@ -281,6 +281,10 @@ test("home keeps discovery first and independent planning paths available in eve
     assert.match(markup, /Your calendar and notes stay private/);
     assert.match(markup, /href="\/sessions\/routine"/);
     assert.match(markup, /href="\/sessions\/calendar"/);
+    assert.match(
+      markup,
+      /href="\/account\?section=connected-calendars"[^>]*>Connect Google Calendar<\/a>/,
+    );
     assert.match(markup, /href="\/how-it-works"/);
     assert.match(markup, /href="\/how-it-works#coaches"/);
     assert.doesNotMatch(markup, /coach-step-grid|marketplace-home-coach-cta/);

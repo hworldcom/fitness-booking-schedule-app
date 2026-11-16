@@ -13,6 +13,12 @@
 }
 .calendar-connection h3 {
   margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.calendar-connection > [role="status"] {
+  font-weight: 600;
 }
 .calendar-connection-email {
   overflow-wrap: anywhere;
@@ -31,9 +37,29 @@
   gap: 0.75rem;
 }
 .calendar-connection .button {
+  min-height: 44px;
+  font-size: 0.875rem;
   white-space: normal;
   max-width: 100%;
   text-align: center;
+}
+.calendar-connection .button.light {
+  background: #fff;
+  border: 1px solid #89978c;
+  color: #213c2b;
+}
+.calendar-connection .button.light:hover:not(:disabled) {
+  background: #eff4ee;
+  border-color: #42684e;
+}
+.calendar-connection .button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+.calendar-export {
+  border-top: 1px solid var(--line, #d5d7d4);
+  padding-top: 1.5rem;
 }
 .calendar-connection-recovery {
   display: grid;
@@ -76,6 +102,68 @@
 }
 .calendar-connection details p {
   margin: 0.75rem 0;
+}
+.calendar-connection .calendar-disconnect {
+  border: 1px solid var(--line, #d5d7d4);
+  border-radius: 12px;
+  padding: 1rem;
+}
+.calendar-disconnect > summary {
+  font-weight: 700;
+  text-decoration: none;
+  min-height: 44px;
+  align-content: center;
+}
+.calendar-disconnect[open] > summary {
+  margin-bottom: 1rem;
+}
+.calendar-disconnect-options {
+  display: grid;
+  gap: 0.75rem;
+}
+.calendar-disconnect-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--line, #d5d7d4);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+}
+.calendar-disconnect-option:has(input:checked) {
+  border-color: #42684e;
+  background: #f2f6f0;
+}
+.calendar-disconnect-option:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.calendar-disconnect-option > input {
+  margin: 0.2rem 0 0;
+  flex-shrink: 0;
+  accent-color: #326b4e;
+}
+.calendar-disconnect-option > span {
+  display: grid;
+  min-width: 0;
+  gap: 0.3rem;
+  line-height: 1.5;
+}
+.calendar-disconnect-option > span > span {
+  font-size: 0.875rem;
+  color: #4c5a50;
+}
+.calendar-connection .calendar-disconnect p {
+  margin: 0;
+}
+.calendar-connection .calendar-disconnect-delete {
+  border: 1px solid #bd766d;
+  background: #fff3f0;
+  color: #962c20;
+}
+.calendar-connection .calendar-disconnect-delete:hover:not(:disabled) {
+  background: #fce6e0;
 }
 .calendar-connection :focus-visible {
   outline: 3px solid #326b4e;

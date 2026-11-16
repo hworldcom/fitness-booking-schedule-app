@@ -1,11 +1,19 @@
 "use client";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { GoogleCalendarExport } from "./google-calendar-export";
 import Link from "next/link";
 import {
   calendarId,
   isCalendarResult,
   type CalendarCommand,
+  type CalendarConnection,
   type CalendarResult,
 } from "@/calendar/connection";
 import { useActor } from "@/auth/client/actor-provider";
@@ -53,6 +61,7 @@ function CalendarConnectionControls({ notice }: { notice?: string }) {
     [busy, setBusy] = useState(false),
     [reload, setReload] = useState(0);
   const [actionNotice, setActionNotice] = useState<string | undefined>();
+  const [syncAvailable, setSyncAvailable] = useState<boolean | null>(null);
   const lock = useRef(false),
     alive = useRef(true),
     mutation = useRef<AbortController | null>(null);
@@ -90,28 +99,39 @@ function CalendarConnectionControls({ notice }: { notice?: string }) {
     lock.current = false;
   }
   return (
-    <>
-      <GoogleCalendarConnectionView
-        key={reload}
-        result={result}
-        notice={actionNotice ?? notice}
-        busy={busy}
-        onCommand={(input) => void run(input)}
-        onReload={() => {
-          setResult(null);
-          setReload((n) => n + 1);
-        }}
-      />
-      <GoogleCalendarExport
-        connection={result}
-        onConnectionChanged={reloadConnection}
-      />
-    </>
+    <GoogleCalendarConnectionView
+      key={reload}
+      result={result}
+      notice={actionNotice ?? notice}
+      busy={busy}
+      syncAvailable={syncAvailable}
+      onCommand={(input) => void run(input)}
+      onReload={() => {
+        setResult(null);
+        setSyncAvailable(null);
+        setReload((n) => n + 1);
+      }}
+      bookingSync={
+        <GoogleCalendarExport
+          connection={result}
+          onConnectionChanged={reloadConnection}
+          onAvailabilityChanged={setSyncAvailable}
+        />
+      }
+    />
   );
 }
 const callbackNotices = {
   deleted: "Google calendar deleted. MovX is disconnected.",
   connected: "Google Calendar connected.",
+  "connected-sync-enabled":
+    "Google Calendar connected. Booking sync is on. Upcoming confirmed bookings will be added automatically.",
+  "sync-unavailable":
+    "Booking sync is unavailable right now. Reload its status before trying Connect & sync again.",
+  "sync-settings-changed":
+    "Your calendar or booking sync settings changed during setup. Your latest settings were kept. Review the status below.",
+  "sync-setup-incomplete":
+    "Booking sync setup could not be confirmed. Reload the connection and sync status before trying again.",
   denied:
     "Calendar permission was not granted. Any existing connection remains unchanged.",
   "permission-required":
@@ -138,16 +158,19 @@ export function GoogleCalendarConnectionView({
   onCommand,
   onReload,
   notice,
+  bookingSync,
+  syncAvailable = false,
 }: {
   result: CalendarResult | null;
   busy?: boolean;
   onCommand(input: CalendarCommand): void;
   onReload(): void;
   notice?: string;
+  bookingSync?: ReactNode;
+  syncAvailable?: boolean | null;
 }) {
   const [replacement, setReplacement] = useState(false),
     [id, setId] = useState("");
-  const [deleteConfirmed, setDeleteConfirmed] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const accountWarning = useRef<HTMLDivElement>(null);
   const accountWarningId = useId();
@@ -180,9 +203,8 @@ export function GoogleCalendarConnectionView({
         </p>
       ) : null}
       <p>
-        Connect your Google account to create a separate MovX calendar. The
-        connection stays available after you sign out. Booking sync has a
-        separate opt-in below. Google busy-time blocking is not available yet.
+        Connect your Google account to create a separate MovX calendar. Your
+        connection stays available after you sign out.
       </p>
       <p>
         <Link href="/privacy#privacy-google-calendar">
@@ -256,6 +278,9 @@ export function GoogleCalendarConnectionView({
                   }
                 >
                   <p>
+                    {connection.state === "disconnected" && syncAvailable
+                      ? "Connect and automatically sync your upcoming confirmed bookings and future changes. "
+                      : ""}
                     On Google’s permission screen, allow access to calendars
                     created by MovX to complete the connection.
                   </p>
@@ -264,11 +289,30 @@ export function GoogleCalendarConnectionView({
                     name="generation"
                     value={connection.generation}
                   />
-                  <button className="button dark" type="submit">
+                  {connection.state === "disconnected" && syncAvailable && (
+                    <input type="hidden" name="intent" value="sync" />
+                  )}
+                  <button
+                    className="button dark"
+                    type="submit"
+                    disabled={
+                      connection.state === "disconnected" &&
+                      syncAvailable === null
+                    }
+                  >
                     {connection.state === "disconnected"
-                      ? "Connect Google Calendar"
+                      ? syncAvailable !== false
+                        ? "Connect & sync Google Calendar"
+                        : "Connect Google Calendar"
                       : "Reconnect Google Calendar"}
                   </button>
+                  {connection.state === "disconnected" &&
+                    syncAvailable === false && (
+                      <p>
+                        Connecting alone keeps booking sync off. Reload booking
+                        sync below when delivery is available.
+                      </p>
+                    )}
                 </form>
               )}
             {connection.state === "connecting" && (
@@ -379,77 +423,6 @@ export function GoogleCalendarConnectionView({
                   </button>
                 </div>
               )}
-            {connection.state !== "disconnected" && (
-              <details>
-                <summary>Disconnect Google Calendar</summary>
-                <p>
-                  Stop future calendar access and remove MovX’s saved Calendar
-                  credentials. Your MovX bookings and sign-in remain. Your
-                  Google calendar and existing events stay in Google and stop
-                  receiving updates. A request already sent to Google may
-                  finish.
-                </p>
-                <p>
-                  You can also remove permissions in your Google account’s
-                  third-party connections. Google may remove other permissions
-                  granted to MovX there.
-                </p>
-                <button
-                  type="button"
-                  className="button light"
-                  onClick={() =>
-                    onCommand({
-                      action: "disconnect",
-                      generation: connection.generation,
-                    })
-                  }
-                >
-                  Confirm disconnect
-                </button>
-              </details>
-            )}
-            {result?.status === "ready" &&
-              result.enabled &&
-              connection.calendarId &&
-              connection.state !== "connecting" &&
-              connection.state !== "disconnected" && (
-                <details>
-                  <summary>Disconnect and delete calendar</summary>
-                  <p>
-                    This permanently deletes this account’s dedicated Google
-                    calendar for this MovX environment and every event inside
-                    it, including events you added yourself. Other calendars and
-                    your MovX bookings remain. This cannot be undone.
-                  </p>
-                  <label className="calendar-connection-confirm">
-                    <input
-                      type="checkbox"
-                      checked={deleteConfirmed}
-                      onChange={(event) =>
-                        setDeleteConfirmed(event.target.checked)
-                      }
-                    />
-                    I want to permanently delete this MovX calendar and all its
-                    events.
-                  </label>
-                  <button
-                    type="button"
-                    className="button light"
-                    disabled={!deleteConfirmed}
-                    onClick={() => {
-                      setDeleteConfirmed(false);
-                      setMessage(null);
-                      onCommand({
-                        action: "delete",
-                        generation: connection.generation,
-                        commandId: crypto.randomUUID(),
-                      });
-                    }}
-                  >
-                    Confirm disconnect and delete calendar
-                  </button>
-                </details>
-              )}
           </fieldset>
         </>
       )}
@@ -458,6 +431,153 @@ export function GoogleCalendarConnectionView({
         To use a different Google account, disconnect first and then connect
         again. Existing calendars remain with their Google owner.
       </p>
+      {bookingSync}
+      {connection && connection.state !== "disconnected" && (
+        <DisconnectCalendar
+          key={`${connection.generation}:${connection.calendarId}:${connection.state}:${result?.status === "ready" && result.enabled}`}
+          connection={connection}
+          busy={busy}
+          deleteAvailable={
+            result?.status === "ready" &&
+            result.enabled &&
+            !!connection.calendarId &&
+            connection.state !== "connecting"
+          }
+          onCommand={(input) => {
+            setMessage(null);
+            onCommand(input);
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function DisconnectCalendar({
+  connection,
+  busy,
+  deleteAvailable,
+  onCommand,
+}: {
+  connection: CalendarConnection;
+  busy: boolean;
+  deleteAvailable: boolean;
+  onCommand(input: CalendarCommand): void;
+}) {
+  const [choice, setChoice] = useState<"keep" | "delete">("keep");
+  const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+  const id = useId();
+  const deleting = deleteAvailable && choice === "delete";
+  return (
+    <details className="calendar-disconnect">
+      <summary>Disconnect calendar</summary>
+      <fieldset disabled={busy} className="calendar-connection-controls">
+        <legend className="sr-only">Disconnect options</legend>
+        <div className="calendar-disconnect-options">
+          <label className="calendar-disconnect-option">
+            <input
+              type="radio"
+              name={id}
+              checked={!deleting}
+              aria-labelledby={`${id}-keep-title`}
+              aria-describedby={`${id}-keep-description`}
+              onChange={() => {
+                setChoice("keep");
+                setDeleteConfirmed(false);
+              }}
+            />
+            <span>
+              <strong id={`${id}-keep-title`}>Just disconnect</strong>
+              <span id={`${id}-keep-description`}>
+                Keep your MovX calendar and existing events in Google. They stop
+                receiving booking updates.
+              </span>
+            </span>
+          </label>
+          <label className="calendar-disconnect-option">
+            <input
+              type="radio"
+              name={id}
+              checked={deleting}
+              disabled={!deleteAvailable}
+              aria-labelledby={`${id}-delete-title`}
+              aria-describedby={`${id}-delete-description`}
+              onChange={() => {
+                setChoice("delete");
+                setDeleteConfirmed(false);
+              }}
+            />
+            <span>
+              <strong id={`${id}-delete-title`}>
+                Disconnect and delete calendar
+              </strong>
+              <span id={`${id}-delete-description`}>
+                Permanently delete this MovX calendar and every event inside it.
+                {!deleteAvailable &&
+                  " Calendar deletion is currently unavailable."}
+              </span>
+            </span>
+          </label>
+        </div>
+        <p>
+          Disconnecting removes MovX’s saved Calendar access and turns booking
+          sync off. Your MovX bookings and sign-in remain. A request already
+          sent to Google may finish.
+        </p>
+        {deleting ? (
+          <>
+            <p>
+              This permanently deletes this account’s dedicated Google calendar
+              for this MovX environment and every event inside it, including
+              events you added yourself. Other calendars and your MovX bookings
+              remain. This cannot be undone.
+            </p>
+            <label className="calendar-connection-confirm">
+              <input
+                type="checkbox"
+                checked={deleteConfirmed}
+                onChange={(event) => setDeleteConfirmed(event.target.checked)}
+              />
+              I want to permanently delete this MovX calendar and all its
+              events.
+            </label>
+            <button
+              type="button"
+              className="button calendar-disconnect-delete"
+              disabled={!deleteConfirmed}
+              onClick={() => {
+                if (!deleteConfirmed) return;
+                setDeleteConfirmed(false);
+                onCommand({
+                  action: "delete",
+                  generation: connection.generation,
+                  commandId: crypto.randomUUID(),
+                });
+              }}
+            >
+              Confirm disconnect and delete calendar
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            className="button light"
+            onClick={() =>
+              onCommand({
+                action: "disconnect",
+                generation: connection.generation,
+              })
+            }
+          >
+            Confirm disconnect
+          </button>
+        )}
+        <p>
+          You can also remove permissions in your Google account’s third-party
+          connections. Google may remove other permissions granted to MovX
+          there.
+        </p>
+      </fieldset>
+    </details>
   );
 }

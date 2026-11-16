@@ -11,6 +11,12 @@ import type {
 import type { CalendarConfig } from "./config";
 import { digest, seal, secret, unseal } from "./crypto";
 import { CalendarProviderError, type GoogleCalendarProvider } from "./provider";
+import {
+  authorizationProof,
+  readAuthorizationProof,
+  type CalendarSyncIntent,
+  type CalendarSyncOutcome,
+} from "./setup-intent";
 
 export type CalendarContext = Readonly<{
   profileId: string;
@@ -28,7 +34,8 @@ export type CalendarCallbackFailure = Readonly<{
     | "offline-access"
     | "credential-save"
     | "token-refresh"
-    | "calendar-setup";
+    | "calendar-setup"
+    | "booking-sync";
   reason:
     | "calendar-permission-missing"
     | "authorization"
@@ -55,6 +62,17 @@ type Dependencies = {
   provider: GoogleCalendarProvider | null;
   context(): Promise<CalendarContext>;
   reportFailure?(failure: CalendarCallbackFailure): void;
+  bookingSync?: {
+    prepare(
+      context: CalendarContext,
+      generation: string,
+    ): Promise<string | null>;
+    enable(
+      context: CalendarContext,
+      generation: string,
+      intent: CalendarSyncIntent,
+    ): Promise<CalendarSyncOutcome>;
+  };
   command(
     context: CalendarContext,
     action: string,
@@ -163,10 +181,15 @@ export function calendarConnectionService(deps: Dependencies) {
     }
   }
   return {
-    async start(generation: string) {
+    async start(generation: string, syncBookings = false) {
       if (!config || !provider) return notice("unavailable");
       try {
         const ctx = await deps.context();
+        const version = syncBookings
+          ? await deps.bookingSync?.prepare(ctx, generation)
+          : undefined;
+        if (syncBookings && !version) return notice("sync-unavailable");
+        const sync = version ? { version, commandId: randomUUID() } : undefined;
         const state = secret(),
           browser = secret(),
           verifier = secret();
@@ -174,7 +197,11 @@ export function calendarConnectionService(deps: Dependencies) {
           stateHash: digest(state),
           browserHash: digest(browser),
           sessionId: ctx.sessionId,
-          verifier: seal(verifier, aad(ctx, "pkce"), config.keys),
+          verifier: seal(
+            authorizationProof(verifier, sync),
+            aad(ctx, "pkce"),
+            config.keys,
+          ),
         });
         await deps.cookie.write(browser);
         return provider.authorize(state, verifier);
@@ -217,10 +244,10 @@ export function calendarConnectionService(deps: Dependencies) {
         if (!code || code.length > 4096)
           throw new CalendarServiceError("unavailable");
         phase = "code-exchange";
-        const tokens = await provider.exchange(
-          code,
+        const proof = readAuthorizationProof(
           unseal(result.verifier, aad(ctx, "pkce"), config.keys),
         );
+        const tokens = await provider.exchange(code, proof.verifier);
         phase = "session-check";
         await command(ctx, "heartbeat", record.generation, {
           operationId: record.operation_id,
@@ -279,7 +306,37 @@ export function calendarConnectionService(deps: Dependencies) {
           });
         }
         phase = "calendar-setup";
-        return notice(await provision(ctx, record, refreshed.accessToken));
+        const state = await provision(ctx, record, refreshed.accessToken);
+        if (state !== "connected" || !proof.sync) return notice(state);
+        phase = "booking-sync";
+        try {
+          const outcome = await deps.bookingSync?.enable(
+            ctx,
+            record.generation,
+            proof.sync,
+          );
+          return notice(
+            outcome === "enabled"
+              ? "connected-sync-enabled"
+              : outcome === "changed"
+                ? "sync-settings-changed"
+                : "sync-setup-incomplete",
+          );
+        } catch (error) {
+          if (
+            error instanceof CalendarServiceError &&
+            (error.status === "signed-out" || error.status === "forbidden")
+          )
+            throw error;
+          // The connection is ready. An uncertain opt-in is read back by the
+          // existing controls; never undo readiness or blindly retry it here.
+          try {
+            deps.reportFailure?.({ phase, reason: "unavailable" });
+          } catch {
+            /* Diagnostic failures cannot change setup authority or outcome. */
+          }
+          return notice("sync-setup-incomplete");
+        }
       } catch (error) {
         if (ctx && record) {
           try {
