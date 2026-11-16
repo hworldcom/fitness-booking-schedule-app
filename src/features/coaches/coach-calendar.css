@@ -19,6 +19,21 @@
   font-size: 14px;
   color: #7b8475;
 }
+.coach-calendar-heading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.coach-calendar-heading-actions .coach-calendar-connect {
+  min-height: 44px;
+  max-width: 100%;
+}
+.coach-calendar-connect:focus-visible {
+  outline: 3px solid #47613c;
+  outline-offset: 3px;
+}
 .coach-calendar-timezone {
   display: flex;
   align-items: center;
@@ -650,6 +665,9 @@
   }
   .coach-calendar-heading h2 {
     font-size: 33px;
+  }
+  .coach-calendar-heading-actions {
+    justify-content: flex-start;
   }
   .coach-calendar-heading p {
     font-size: 13px;

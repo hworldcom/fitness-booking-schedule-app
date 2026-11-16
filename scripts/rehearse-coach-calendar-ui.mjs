@@ -233,6 +233,65 @@ try {
       .selectOption(value);
   const reload = () =>
     page.getByRole("button", { name: "Reload calendar", exact: true });
+  const settingsWrites = [];
+  const trackSettings = (request) => {
+    if (!["GET", "HEAD"].includes(request.method()))
+      settingsWrites.push(new URL(request.url()).pathname);
+  };
+  page.on("request", trackSettings);
+  for (const width of [1440, 375, 320]) {
+    await page.setViewportSize({ width, height: 1040 });
+    await open();
+    const connect = page
+      .locator(".coach-calendar-heading")
+      .getByRole("link", { name: "Connect Google Calendar", exact: true });
+    assert.equal(
+      await connect.getAttribute("href"),
+      "/account?section=connected-calendars",
+    );
+    await connect.focus();
+    assert.equal(
+      await connect.evaluate((link) => link === document.activeElement),
+      true,
+    );
+    const style = await connect.evaluate((link) => {
+      const css = getComputedStyle(link);
+      return {
+        height: link.getBoundingClientRect().height,
+        border: Number.parseFloat(css.borderTopWidth),
+        outline: css.outlineStyle,
+      };
+    });
+    assert.ok(style.height >= 44);
+    assert.ok(style.border >= 1);
+    assert.notEqual(style.outline, "none");
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      true,
+    );
+    await page.screenshot({
+      path: path.join(output, `calendar-connect-${width}.png`),
+      fullPage: true,
+    });
+    await page.keyboard.press("Enter");
+    await page.waitForURL(
+      (url) =>
+        url.pathname === "/account" &&
+        url.searchParams.get("section") === "connected-calendars",
+    );
+    record(
+      `${width}px workspace Calendar heading: visible44px settings button, focus, keyboard destination and no overflow`,
+    );
+  }
+  page.off("request", trackSettings);
+  assert.deepEqual(
+    settingsWrites,
+    [],
+    "Opening Calendar settings must not mutate preferences or start OAuth",
+  );
+  await page.setViewportSize({ width: 1440, height: 1040 });
   await open();
   assert.equal(
     await views()
@@ -518,6 +577,13 @@ try {
     .getByRole("heading", { name: "Calendar access changed", exact: true })
     .waitFor();
   assert.equal(await page.locator(".coach-calendar-item").count(), 0);
+  assert.equal(
+    await page
+      .getByRole("link", { name: "Connect Google Calendar", exact: true })
+      .count(),
+    0,
+    "Access loss removes the calendar and its settings affordance",
+  );
   record(
     "unavailable page preserves loaded data; changed-page version requires reload; revoked access clears the calendar",
   );

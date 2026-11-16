@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { accountSectionHref } from "@/account/sections";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -335,10 +336,18 @@ export function CoachCalendar({
           <h2>Calendar</h2>
           <p>Private training and group sessions, together.</p>
         </div>
-        <span className="coach-calendar-timezone">
-          <Clock3 size={15} />
-          Europe/Berlin
-        </span>
+        <div className="coach-calendar-heading-actions">
+          <Link
+            className="button secondary coach-calendar-connect"
+            href={accountSectionHref("connected-calendars")}
+          >
+            Connect Google Calendar
+          </Link>
+          <span className="coach-calendar-timezone">
+            <Clock3 size={15} />
+            Europe/Berlin
+          </span>
+        </div>
       </header>
       <div className="coach-calendar-toolbar">
         <div className="coach-calendar-period-controls">
