@@ -2,6 +2,13 @@ import assert from "node:assert/strict";
 import { randomUUID, createHash, randomBytes } from "node:crypto";
 import test from "node:test";
 import postgres from "postgres";
+import { PgDialect } from "drizzle-orm/pg-core";
+import type { SQL } from "drizzle-orm";
+import type { ActorDatabaseTransaction } from "@/server/db/authorization/repository";
+import {
+  prepareCalendarSync,
+  enableCalendarSync,
+} from "@/server/db/google-calendar/setup-repository";
 import { withCalendarExportWorker } from "@/server/db/google-calendar/export-worker";
 
 const target = process.env.DATABASE_TEST_URL;
@@ -60,6 +67,19 @@ test(
       );
     }
     const json = (value: unknown) => value as postgres.ParameterOrJSON<never>;
+    const dialect = new PgDialect();
+    function setupTx(tx: postgres.TransactionSql) {
+      return {
+        execute(query: SQL) {
+          const parsed = dialect.sqlToQuery(query);
+          return tx.unsafe(
+            parsed.sql,
+            parsed.params as postgres.ParameterOrJSON<never>[],
+          );
+        },
+      } as unknown as ActorDatabaseTransaction;
+    }
+
     async function worker(
       name: string,
       ...args: postgres.ParameterOrJSON<never>[]
@@ -242,6 +262,118 @@ test(
         throw Error("Stopped dependent export journey after a failed check.");
     }
     try {
+      await step(
+        "combined setup uses actual restricted owner commands with version, generation, idempotency and rollback fences",
+        async () => {
+          const owner = await person("Combined setup owner"),
+            foreign = await person("Combined setup foreign");
+          const initial = await connection(owner);
+          const version = await as(owner, (tx) =>
+            prepareCalendarSync(setupTx(tx), initial.generation),
+          );
+          assert.equal(version, zero);
+          assert.equal(
+            await as(owner, (tx) =>
+              prepareCalendarSync(setupTx(tx), randomUUID()),
+            ),
+            null,
+          );
+          await connect(owner);
+          const active = await connection(owner),
+            intent = { version: version!, commandId: randomUUID() };
+          assert.equal(
+            await as(owner, (tx) =>
+              prepareCalendarSync(setupTx(tx), active.generation),
+            ),
+            null,
+            "Reconnect does not acquire initial setup intent",
+          );
+          assert.equal(
+            await as(owner, (tx) =>
+              enableCalendarSync(setupTx(tx), active.generation, intent),
+            ),
+            "enabled",
+          );
+          const enabledVersion = (await status(owner)).version;
+          assert.equal((await status(owner)).backfillPending, true);
+          assert.equal(
+            await as(owner, (tx) =>
+              enableCalendarSync(setupTx(tx), active.generation, intent),
+            ),
+            "enabled",
+          );
+          assert.equal(
+            (await status(owner)).version,
+            enabledVersion,
+            "same command is idempotent",
+          );
+          assert.equal(
+            await as(foreign, (tx) =>
+              enableCalendarSync(setupTx(tx), active.generation, intent),
+            ),
+            "changed",
+          );
+          await assert.rejects(
+            as({ ...owner, run: randomUUID() }, (tx) =>
+              enableCalendarSync(setupTx(tx), active.generation, intent),
+            ),
+          );
+          await preference(owner, "disable");
+          assert.equal(
+            await as(owner, (tx) =>
+              enableCalendarSync(setupTx(tx), active.generation, intent),
+            ),
+            "changed",
+            "later pause wins",
+          );
+          const pausedVersion = (await status(owner)).version;
+          await assert.rejects(
+            as(owner, async (tx) => {
+              assert.equal(
+                await enableCalendarSync(setupTx(tx), active.generation, {
+                  version: pausedVersion,
+                  commandId: randomUUID(),
+                }),
+                "enabled",
+              );
+              throw Error("rollback-combined-opt-in");
+            }),
+            /rollback-combined-opt-in/,
+          );
+          assert.equal((await status(owner)).enabled, false);
+          assert.equal((await status(owner)).version, pausedVersion);
+          await connCommand(owner, "disconnect", active.generation);
+          assert.equal(
+            await as(owner, (tx) =>
+              enableCalendarSync(setupTx(tx), active.generation, {
+                version: pausedVersion,
+                commandId: randomUUID(),
+              }),
+            ),
+            "changed",
+            "disconnect fences old setup generation",
+          );
+          const disconnected = await connection(owner);
+          const pendingVersion = await as(owner, (tx) =>
+            prepareCalendarSync(setupTx(tx), disconnected.generation),
+          );
+          await preference(owner, "disable");
+          await connect(owner);
+          assert.equal(
+            await as(owner, async (tx) =>
+              enableCalendarSync(
+                setupTx(tx),
+                (await connection(owner)).generation,
+                { version: pendingVersion!, commandId: randomUUID() },
+              ),
+            ),
+            "changed",
+            "a preference changed while Google authorization was open",
+          );
+          assert.equal((await status(owner)).enabled, false);
+          await settleAll();
+        },
+      );
       const coach = await person("Calendar export coach", true),
         athlete = await person("Calendar export athlete"),
         other = await person("Calendar unrelated athlete");
@@ -800,7 +932,7 @@ test(
             await db`insert into app.coach_group_sessions(id,run_id,coach_profile_id,slug,title,description,discipline,intended_level,training_location_id,venue_snapshot,starts_at,ends_at,decision_deadline_at,minimum_participants,maximum_participants,price_cents,status,published_at,confirmed_at,confirmed_by_profile_id)
             select ${id}::uuid,${coach.run}::uuid,${coach.profile}::uuid,${"group-" + id.replaceAll("-", "")},'Bounded backfill fixture','Disposable fixture','Boxing','All levels',l.id,
             jsonb_build_object('id',l.id,'name',l.public_name,'label',l.public_location_label,'kind',l.location_kind,'latitude',l.latitude,'longitude',l.longitude),
-            clock_timestamp()+make_interval(days=>10+${index}::int),clock_timestamp()+make_interval(days=>10+${index}::int,hours=>1),clock_timestamp()+interval '2 days',1,4,0,'confirmed',clock_timestamp(),clock_timestamp(),${coach.profile}::uuid
+            ((clock_timestamp() at time zone 'Europe/Berlin')::date + 10 + ${index}::int + time '12:00') at time zone 'Europe/Berlin',((clock_timestamp() at time zone 'Europe/Berlin')::date + 10 + ${index}::int + time '13:00') at time zone 'Europe/Berlin',clock_timestamp()+interval '2 days',1,4,0,'confirmed',clock_timestamp(),clock_timestamp(),${coach.profile}::uuid
             from app.coach_training_locations l where l.profile_id=${coach.profile}::uuid and l.is_primary`;
           }
           assert.equal(

@@ -61,6 +61,7 @@ function CalendarConnectionControls({ notice }: { notice?: string }) {
     [busy, setBusy] = useState(false),
     [reload, setReload] = useState(0);
   const [actionNotice, setActionNotice] = useState<string | undefined>();
+  const [syncAvailable, setSyncAvailable] = useState<boolean | null>(null);
   const lock = useRef(false),
     alive = useRef(true),
     mutation = useRef<AbortController | null>(null);
@@ -103,15 +104,18 @@ function CalendarConnectionControls({ notice }: { notice?: string }) {
       result={result}
       notice={actionNotice ?? notice}
       busy={busy}
+      syncAvailable={syncAvailable}
       onCommand={(input) => void run(input)}
       onReload={() => {
         setResult(null);
+        setSyncAvailable(null);
         setReload((n) => n + 1);
       }}
       bookingSync={
         <GoogleCalendarExport
           connection={result}
           onConnectionChanged={reloadConnection}
+          onAvailabilityChanged={setSyncAvailable}
         />
       }
     />
@@ -120,6 +124,14 @@ function CalendarConnectionControls({ notice }: { notice?: string }) {
 const callbackNotices = {
   deleted: "Google calendar deleted. MovX is disconnected.",
   connected: "Google Calendar connected.",
+  "connected-sync-enabled":
+    "Google Calendar connected. Booking sync is on. Upcoming confirmed bookings will be added automatically.",
+  "sync-unavailable":
+    "Booking sync is unavailable right now. Reload its status before trying Connect & sync again.",
+  "sync-settings-changed":
+    "Your calendar or booking sync settings changed during setup. Your latest settings were kept. Review the status below.",
+  "sync-setup-incomplete":
+    "Booking sync setup could not be confirmed. Reload the connection and sync status before trying again.",
   denied:
     "Calendar permission was not granted. Any existing connection remains unchanged.",
   "permission-required":
@@ -147,6 +159,7 @@ export function GoogleCalendarConnectionView({
   onReload,
   notice,
   bookingSync,
+  syncAvailable = false,
 }: {
   result: CalendarResult | null;
   busy?: boolean;
@@ -154,6 +167,7 @@ export function GoogleCalendarConnectionView({
   onReload(): void;
   notice?: string;
   bookingSync?: ReactNode;
+  syncAvailable?: boolean | null;
 }) {
   const [replacement, setReplacement] = useState(false),
     [id, setId] = useState("");
@@ -264,6 +278,9 @@ export function GoogleCalendarConnectionView({
                   }
                 >
                   <p>
+                    {connection.state === "disconnected" && syncAvailable
+                      ? "Connect and automatically sync your upcoming confirmed bookings and future changes. "
+                      : ""}
                     On Google’s permission screen, allow access to calendars
                     created by MovX to complete the connection.
                   </p>
@@ -272,11 +289,30 @@ export function GoogleCalendarConnectionView({
                     name="generation"
                     value={connection.generation}
                   />
-                  <button className="button dark" type="submit">
+                  {connection.state === "disconnected" && syncAvailable && (
+                    <input type="hidden" name="intent" value="sync" />
+                  )}
+                  <button
+                    className="button dark"
+                    type="submit"
+                    disabled={
+                      connection.state === "disconnected" &&
+                      syncAvailable === null
+                    }
+                  >
                     {connection.state === "disconnected"
-                      ? "Connect Google Calendar"
+                      ? syncAvailable !== false
+                        ? "Connect & sync Google Calendar"
+                        : "Connect Google Calendar"
                       : "Reconnect Google Calendar"}
                   </button>
+                  {connection.state === "disconnected" &&
+                    syncAvailable === false && (
+                      <p>
+                        Connecting alone keeps booking sync off. Reload booking
+                        sync below when delivery is available.
+                      </p>
+                    )}
                 </form>
               )}
             {connection.state === "connecting" && (

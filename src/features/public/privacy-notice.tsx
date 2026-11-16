@@ -121,31 +121,33 @@ const sections = [
         <p>
           The connection creates or verifies the dedicated MovX calendar and can
           update its default name to identify a test environment. Where booking
-          export is available, you can separately enable “Sync confirmed
-          bookings.” This starts off. Enabling it adds upcoming confirmed
-          bookings and automatically updates your copies after rescheduling or
-          final cancellation. Each participant controls their own copies. The
-          exported private events contain a generic session title, booked times,
-          the location you are permitted to see and a link to MovX. They do not
-          include attendees, invitations, participant contacts, private notes or
-          health information. MovX reads only the metadata needed to verify and
-          maintain these mapped copies; Google edits never change your MovX
-          booking. Personal workouts and routines are excluded. MovX does not
-          read personal appointments or busy periods. Google handles your
-          authorization and calendar under its{" "}
+          export is available, choose “Connect & sync Google Calendar” to
+          connect and enable booking sync together. Existing connections keep
+          their current sync setting; you can enable “Sync confirmed bookings”
+          separately and pause it afterward. Enabling sync adds upcoming
+          confirmed bookings and automatically updates your copies after
+          rescheduling or final cancellation. Each participant controls their
+          own copies. The exported private events contain a generic session
+          title, booked times, the location you are permitted to see and a link
+          to MovX. They do not include attendees, invitations, participant
+          contacts, private notes or health information. MovX reads only the
+          metadata needed to verify and maintain these mapped copies; Google
+          edits never change your MovX booking. Personal workouts and routines
+          are excluded. MovX does not read personal appointments or busy
+          periods. Google handles your authorization and calendar under its{" "}
           <a href="https://policies.google.com/privacy">privacy policy</a>.
         </p>
         <p>
           You can turn booking export off while keeping Google connected. This
           stops future updates and leaves existing copies, including completed
-          session history, in Google. Disconnecting also stops export; a newly
-          connected Google account starts with export off. An already-sent
-          request may still finish. Missing copies or calendars may need your
-          explicit recovery action. MovX retains minimal source-to-event
-          references, earlier event references and delivery/retry status to
-          avoid duplicates and reconcile interrupted requests. The delivery
-          queue does not retain full event-content payloads or raw Google error
-          responses.
+          session history, in Google. Disconnecting also stops export. When
+          connecting again, choosing “Connect & sync Google Calendar” enables it
+          for the new connection. An already-sent request may still finish.
+          Missing copies or calendars may need your explicit recovery action.
+          MovX retains minimal source-to-event references, earlier event
+          references and delivery/retry status to avoid duplicates and reconcile
+          interrupted requests. The delivery queue does not retain full
+          event-content payloads or raw Google error responses.
         </p>
         <p>
           You can disconnect in Account settings to stop future Calendar access
@@ -538,11 +540,11 @@ const sections = [
           in-product notice or email where appropriate.
         </p>
         <p>
-          This version takes effect on 14 November 2026 and adds explicit Google
-          calendar deletion, test-environment naming and separately enabled
-          confirmed-booking export to the notice, including optional Google
-          sign-in, purpose-based retention, manual privacy requests and the
-          intended audience of people aged 16 and older.
+          This version takes effect on 15 November 2026 and explains combined
+          Calendar connection and booking sync setup, alongside explicit Google
+          calendar deletion and test-environment naming. It includes optional
+          Google sign-in, purpose-based retention, manual privacy requests and
+          the intended audience of people aged 16 and older.
         </p>
       </>
     ),
@@ -563,7 +565,7 @@ export function PrivacyNotice() {
         </p>
         <p className="privacy-date">
           Effective and last updated{" "}
-          <time dateTime="2026-11-14">14 November 2026</time>
+          <time dateTime="2026-11-15">15 November 2026</time>
         </p>
       </header>
 

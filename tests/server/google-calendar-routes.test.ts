@@ -55,6 +55,9 @@ test("Calendar route writes reject foreign, malformed, oversized and actor-beari
   assert.equal(r.status, 403);
   for (const body of [
     "generation=bad",
+    "generation=00000000-0000-0000-0000-000000000000&intent=enable",
+    "generation=00000000-0000-0000-0000-000000000000&intent=sync&intent=sync",
+    "generation=00000000-0000-0000-0000-000000000000&intent=sync&version=00000000-0000-0000-0000-000000000000",
     `generation=00000000-0000-0000-0000-000000000000&profileId=other`,
     `generation=00000000-0000-0000-0000-000000000000&generation=00000000-0000-0000-0000-000000000000`,
   ]) {

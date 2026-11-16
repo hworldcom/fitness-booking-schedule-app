@@ -61,6 +61,13 @@ let state = "disconnected",
   deletionFault = false,
   hold = false,
   release;
+let setupAvailable = false,
+  setupSync = false,
+  setupFault = false,
+  setupOutcome = "denied",
+  holdExport = false,
+  releaseExport;
+const setupForms = [];
 const posts = [];
 const result = () => ({
   status: "ready",
@@ -191,17 +198,28 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
   await page.route("**/api/auth/actor", (route) =>
     route.fulfill({ json: actor }),
   );
-  await page.route("**/api/account/google-calendar/export", (route) =>
-    route.fulfill({
+  await page.route("**/api/account/google-calendar/export", async (route) => {
+    assert.equal(
+      route.request().method(),
+      "GET",
+      "initial setup never posts an unbound client enable",
+    );
+    if (holdExport)
+      await new Promise((resolve) => {
+        releaseExport = resolve;
+      });
+    if (setupFault)
+      return route.fulfill({ status: 503, json: { status: "unavailable" } });
+    return route.fulfill({
       json: {
         status: "ready",
-        available: false,
+        available: setupAvailable,
         generation,
         connectionState: state,
         export: {
-          enabled: false,
+          enabled: setupSync,
           version: generation,
-          backfillPending: false,
+          backfillPending: setupSync,
           pending: 0,
           failed: 0,
           missing: 0,
@@ -209,8 +227,8 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
           lastSyncedAt: null,
         },
       },
-    }),
-  );
+    });
+  });
   await page.route("**/api/account/google-calendar", async (route) => {
     if (hold && route.request().method() === "GET")
       await new Promise((r) => {
@@ -241,9 +259,19 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
       new URLSearchParams(route.request().postData()).get("generation"),
       generation,
     );
+    const form = new URLSearchParams(route.request().postData());
+    setupForms.push(Object.fromEntries(form));
+    assert.deepEqual(
+      [...form.keys()].sort(),
+      form.has("intent") ? ["generation", "intent"] : ["generation"],
+    );
+    if (setupOutcome !== "denied") state = "connected";
+    if (setupOutcome === "connected-sync-enabled") setupSync = true;
     await route.fulfill({
       status: 303,
-      headers: { location: `${base}/calendar-fixture?calendar=denied` },
+      headers: {
+        location: `${base}/calendar-fixture?calendar=${setupOutcome}`,
+      },
     });
   });
   const open = () => page.goto(`${base}/calendar-fixture`);
@@ -726,6 +754,137 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
   pass(
     "Uncertain/error response requires read-only status reload before another mutation",
   );
+  // These are controlled callback/status fixtures, not real Google acceptance.
+  setupAvailable = true;
+  const setupButton = page.getByRole("button", {
+    name: "Connect & sync Google Calendar",
+    exact: true,
+  });
+  const syncRegion = page.getByRole("region", { name: "Google booking sync" });
+  for (const width of [1440, 375, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    state = "disconnected";
+    setupSync = false;
+    setupOutcome = "denied";
+    await open();
+    await expect(setupButton).toBeEnabled();
+    await expect(
+      syncRegion.getByRole("checkbox", {
+        name: "Sync confirmed bookings",
+        exact: true,
+      }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByText(
+        "Connect and automatically sync your upcoming confirmed bookings",
+        { exact: false },
+      ),
+    ).toBeVisible();
+    await page.screenshot({
+      path: path.join(evidence, `combined-setup-${width}.png`),
+      fullPage: true,
+    });
+    await setupButton.focus();
+    await page.keyboard.press("Enter");
+    await expect(
+      page.getByText("Calendar permission was not granted.", { exact: false }),
+    ).toBeVisible();
+    assert.deepEqual(setupForms.at(-1), { generation, intent: "sync" });
+    assert.equal(setupSync, false);
+    setupOutcome = "connected-sync-enabled";
+    await setupButton.click();
+    await expect(
+      page.getByText("Google Calendar connected. Booking sync is on.", {
+        exact: false,
+      }),
+    ).toBeVisible();
+    const toggle = syncRegion.getByRole("checkbox", {
+      name: "Sync confirmed bookings",
+      exact: true,
+    });
+    await expect(toggle).toBeChecked();
+    await expect(
+      syncRegion.getByText("Finding upcoming confirmed bookings…", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      syncRegion.getByText(
+        "Update counts will be available after preparation.",
+      ),
+    ).toBeVisible();
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+      false,
+    );
+    await page.screenshot({
+      path: path.join(evidence, `combined-connected-${width}.png`),
+      fullPage: true,
+    });
+    setupSync = false;
+    setupOutcome = "connected";
+    await open();
+    await expect(toggle).not.toBeChecked();
+    await page
+      .getByRole("button", { name: "Reconnect Google Calendar", exact: true })
+      .click();
+    await expect(toggle).not.toBeChecked();
+    assert.deepEqual(setupForms.at(-1), { generation });
+    pass(
+      `${width}px: explicit combined setup/denial, server callback opt-in, truthful preparation, keyboard/mobile and paused reconnect`,
+    );
+  }
+  state = "disconnected";
+  setupSync = false;
+  holdExport = true;
+  await open();
+  await expect(setupButton).toBeDisabled();
+  await expect(syncRegion.getByText("Loading booking sync…")).toBeVisible();
+  holdExport = false;
+  setupFault = true;
+  releaseExport?.();
+  await expect(
+    syncRegion.getByText("Booking sync is unavailable.", { exact: false }),
+  ).toBeVisible();
+  await expect(setupButton).toBeDisabled();
+  setupFault = false;
+  await syncRegion
+    .getByRole("button", { name: "Reload booking sync", exact: true })
+    .click();
+  await expect(setupButton).toBeEnabled();
+  pass(
+    "Unknown/failed export status cannot imply connect-only availability; read-only reload restores setup",
+  );
+  for (const outcome of ["sync-setup-incomplete", "sync-settings-changed"]) {
+    state = "disconnected";
+    setupSync = false;
+    setupOutcome = outcome;
+    await open();
+    await setupButton.click();
+    await expect(
+      syncRegion.getByRole("checkbox", {
+        name: "Sync confirmed bookings",
+        exact: true,
+      }),
+    ).not.toBeChecked();
+    await expect(
+      page.getByText(
+        outcome === "sync-setup-incomplete"
+          ? "Booking sync setup could not be confirmed."
+          : "Your calendar or booking sync settings changed during setup.",
+        { exact: false },
+      ),
+    ).toBeVisible();
+  }
+  pass(
+    "Partial setup and newer settings are visible without automatic client enable or false delivered success",
+  );
+  setupAvailable = false;
+  setupSync = false;
+  setupOutcome = "denied";
+  state = "connected";
   hold = true;
   await open();
   await page.getByRole("button", { name: "Sign out fixture" }).click();
@@ -769,6 +928,7 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
   throw error;
 } finally {
   release?.();
+  releaseExport?.();
   await browser?.close();
   if (server && server.exitCode === null) {
     server.kill("SIGTERM");

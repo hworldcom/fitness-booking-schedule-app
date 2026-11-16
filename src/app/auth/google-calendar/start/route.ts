@@ -17,8 +17,11 @@ export async function POST(request: Request) {
       await calendarBody(request, "application/x-www-form-urlencoded"),
     );
     if (
-      [...form.keys()].some((k) => k !== "generation") ||
+      [...form.keys()].some((k) => k !== "generation" && k !== "intent") ||
       form.getAll("generation").length !== 1 ||
+      (form.has("intent") &&
+        (form.getAll("intent").length !== 1 ||
+          form.get("intent") !== "sync")) ||
       !calendarUuid(form.get("generation"))
     )
       return calendarResponse({ status: "invalid" });
@@ -26,6 +29,9 @@ export async function POST(request: Request) {
     return calendarResponse({ status: "invalid" });
   }
   return calendarRedirect(
-    await calendarRuntime().start(form.get("generation")!),
+    await calendarRuntime().start(
+      form.get("generation")!,
+      form.get("intent") === "sync",
+    ),
   );
 }

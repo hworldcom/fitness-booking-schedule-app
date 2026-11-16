@@ -33,9 +33,11 @@ async function requestExport(
 export function GoogleCalendarExport({
   connection,
   onConnectionChanged,
+  onAvailabilityChanged,
 }: {
   connection: CalendarResult | null;
   onConnectionChanged(): void;
+  onAvailabilityChanged?(available: boolean | null): void;
 }) {
   if (!connection || connection.status !== "ready") return null;
   return (
@@ -43,15 +45,18 @@ export function GoogleCalendarExport({
       key={connection.connection.generation + ":" + connection.connection.state}
       connection={connection}
       onConnectionChanged={onConnectionChanged}
+      onAvailabilityChanged={onAvailabilityChanged}
     />
   );
 }
 function ExportControls({
   connection,
   onConnectionChanged,
+  onAvailabilityChanged,
 }: {
   connection: Extract<CalendarResult, { status: "ready" }>;
   onConnectionChanged(): void;
+  onAvailabilityChanged?(available: boolean | null): void;
 }) {
   const [result, setResult] = useState<CalendarExportResult | null>(null),
     [busy, setBusy] = useState(false),
@@ -70,6 +75,13 @@ function ExportControls({
     void requestExport(undefined, controller.signal).then((value) => {
       if (controller.signal.aborted) return;
       setResult(value);
+      onAvailabilityChanged?.(
+        value.status === "ready" &&
+          value.generation === generation &&
+          value.connectionState === connectionState
+          ? value.available
+          : null,
+      );
       if (
         value.status === "ready" &&
         (value.generation !== generation ||
@@ -82,7 +94,13 @@ function ExportControls({
       controller.abort();
       mutation.current?.abort();
     };
-  }, [reload, generation, connectionState, onConnectionChanged]);
+  }, [
+    reload,
+    generation,
+    connectionState,
+    onConnectionChanged,
+    onAvailabilityChanged,
+  ]);
   const polling =
     result?.status === "ready" &&
     result.available &&
@@ -186,10 +204,10 @@ export function GoogleCalendarExportView({
     >
       <h3>Booking sync</h3>
       <p>
-        Choose once for your account. When enabled, upcoming confirmed bookings
-        are added to your dedicated Google calendar. Later confirmations,
-        rescheduling and final cancellations update your copies automatically.
-        Each participant controls their own copies.
+        Automatically add upcoming confirmed bookings to your dedicated Google
+        calendar. Later confirmations, rescheduling and final cancellations
+        update your copies automatically. Each participant controls their own
+        copies.
       </p>
       <p>
         Copies contain a generic session title, booked times, your permitted
@@ -225,21 +243,31 @@ export function GoogleCalendarExportView({
         </>
       ) : (
         <>
-          <label className="calendar-connection-confirm">
-            <input
-              type="checkbox"
-              checked={result.export.enabled}
-              disabled={
-                busy ||
-                (!result.export.enabled &&
-                  (!result.available || result.connectionState !== "connected"))
-              }
-              onChange={(e) =>
-                onCommand(e.target.checked ? "enable" : "disable")
-              }
-            />
-            Sync confirmed bookings
-          </label>
+          {result.connectionState === "disconnected" &&
+          !result.export.enabled ? (
+            <p>
+              {result.available
+                ? "Use Connect & sync Google Calendar above to connect and turn on booking sync together."
+                : "Connect your calendar first. Booking sync can be enabled when delivery is available."}
+            </p>
+          ) : (
+            <label className="calendar-connection-confirm">
+              <input
+                type="checkbox"
+                checked={result.export.enabled}
+                disabled={
+                  busy ||
+                  (!result.export.enabled &&
+                    (!result.available ||
+                      result.connectionState !== "connected"))
+                }
+                onChange={(e) =>
+                  onCommand(e.target.checked ? "enable" : "disable")
+                }
+              />
+              Sync confirmed bookings
+            </label>
+          )}
           <p role="status">
             {busy
               ? "Updating booking sync…"
