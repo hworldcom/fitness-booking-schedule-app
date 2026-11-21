@@ -1,10 +1,19 @@
 import Link from "next/link";
 
-export function ProtectedAccessUnavailable() {
+export function ProtectedAccessUnavailable({
+  headingLevel = 1,
+}: {
+  headingLevel?: 1 | 2;
+} = {}) {
+  const Heading = headingLevel === 2 ? "h2" : "h1";
   return (
     <section className="protected-access-state" role="alert">
       <span className="eyebrow">Private area unavailable</span>
-      <h1>We couldn’t verify access right now.</h1>
+      <Heading
+        className={headingLevel === 2 ? "protected-access-title" : undefined}
+      >
+        We couldn’t verify access right now.
+      </Heading>
       <p>
         Your session or the local database may be unavailable. No private data
         was shown and no action was performed.

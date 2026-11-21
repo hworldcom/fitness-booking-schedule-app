@@ -1,41 +1,52 @@
 import { connectionWorkspaceVersion } from "@/server/connections/workspace-version";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BriefcaseBusiness } from "lucide-react";
 import { signInHref } from "@/auth/return-to";
 import { ProtectedAccessUnavailable } from "@/features/auth/protected-access";
 import { ClientBookingRequests } from "@/features/profile/client-booking-requests";
-import {
-  MySessionsHeading,
-  MySessionsNavigation,
-} from "@/features/profile/my-sessions-navigation";
+import { BookingPageFrame } from "@/features/profile/booking-page-frame";
 import { ConnectionWorkspace } from "@/features/connections/connection-workspace";
-import { loadConnectionPagesAction } from "@/app/connections/actions";
+import { UNAVAILABLE_CONNECTION_PAGES } from "@/features/connections/connection-model";
 import "@/features/connections/connections.css";
-import { protectedPageAccess } from "@/server/authorization/page-access";
 import { currentClientSessionWorkspace } from "@/server/coaches/booking-request-service";
 import { currentCoachAccess } from "@/server/coaches/service";
+import { BookingPageLoading } from "@/features/profile/booking-page-loading";
 
 export const metadata: Metadata = { title: "Bookings" };
 
-export default async function Page() {
-  const access = await protectedPageAccess("/sessions");
-  if (access.status === "unavailable") {
-    return (
-      <div className="my-session-recovery">
-        <MySessionsNavigation active="private" />
-        <ProtectedAccessUnavailable />
-      </div>
-    );
+export default function Page() {
+  return (
+    <BookingPageFrame active="private">
+      <Suspense fallback={<BookingPageLoading active="private" />}>
+        <PrivateSessionsContent />
+      </Suspense>
+    </BookingPageFrame>
+  );
+}
+
+async function PrivateSessionsContent() {
+  // Both services verify the current actor before querying owned records.
+  const [bookingState, coachState] = await Promise.all([
+    currentClientSessionWorkspace({ pageSize: 20 }),
+    currentCoachAccess(),
+  ]);
+  if (bookingState.status === "signed-out") {
+    redirect(signInHref("/sessions"));
   }
-  if (access.status === "preview") {
+  if (bookingState.status === "forbidden") {
+    redirect(`${signInHref("/sessions")}&reason=forbidden`);
+  }
+  if (bookingState.status === "preview") {
     return (
       <div className="my-session-recovery">
-        <MySessionsNavigation active="private" />
         <section className="protected-access-state">
           <span className="eyebrow">BOOKINGS</span>
-          <h1>Sign in to see your future sessions.</h1>
+          <h2 className="protected-access-title">
+            Sign in to see your future sessions.
+          </h2>
           <p>
             MovX shows only bookings owned by the verified account. Public coach
             discovery remains available without signing in.
@@ -52,27 +63,14 @@ export default async function Page() {
       </div>
     );
   }
-
-  const [bookingState, coachState] = await Promise.all([
-    currentClientSessionWorkspace({ pageSize: 20 }),
-    currentCoachAccess(),
-  ]);
-  if (bookingState.status === "signed-out") {
-    redirect(signInHref("/sessions"));
-  }
-  if (bookingState.status === "forbidden") {
-    redirect(`${signInHref("/sessions")}&reason=forbidden`);
-  }
   if (bookingState.status !== "authorized") {
     return (
       <div className="my-session-recovery">
-        <MySessionsNavigation active="private" />
-        <ProtectedAccessUnavailable />
+        <ProtectedAccessUnavailable headingLevel={2} />
       </div>
     );
   }
 
-  const connectionPages = await loadConnectionPagesAction("athlete");
   const coachCanOpenWorkspace =
     coachState.status === "authorized" &&
     ["approved", "demo", "suspended"].includes(coachState.coachAccess.status);
@@ -80,7 +78,6 @@ export default async function Page() {
   return (
     <div className="client-session-workspace">
       <div>
-        <MySessionsHeading active="private" />
         <nav
           className="client-session-section-links"
           aria-label="Private booking sections"
@@ -106,12 +103,12 @@ export default async function Page() {
         view="sessions"
         role="athlete"
         mayInitiate={true}
-        initialPages={connectionPages}
+        initialPages={UNAVAILABLE_CONNECTION_PAGES}
         key={bookingState.actorScope}
         sourceVersion={connectionWorkspaceVersion(
           bookingState.actorScope,
           "athlete",
-          [connectionPages, bookingState.bookings, bookingState.requests],
+          [bookingState.bookings, bookingState.requests],
         )}
         bookings={bookingState.bookings}
         referenceTime={new Date().toISOString()}
