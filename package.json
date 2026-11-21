@@ -45,6 +45,7 @@
     "notifications:dispatch": "node --import tsx --conditions=react-server scripts/dispatch-notifications.ts",
     "test:athlete-connections": "tsx --conditions=react-server scripts/rehearse-local-athlete-connections.ts",
     "test:client-requests": "node scripts/rehearse-local-client-booking-requests.mjs",
+    "test:profile-images-compatibility": "node scripts/rehearse-profile-image-compatibility.mjs",
     "test:profile-images": "node scripts/rehearse-local-profile-images.mjs",
     "test:profile-storage": "node --import tsx --conditions=react-server scripts/rehearse-local-storage-adapter.ts",
     "test:shared-coach-picture": "node --import tsx --conditions=react-server scripts/rehearse-local-shared-coach-picture.ts",

@@ -5,6 +5,7 @@ import {
   PROFILE_IMAGE_DIMENSION,
   PROFILE_IMAGE_MAX_CANONICAL_BYTES,
   PROFILE_IMAGE_MIME_TYPE,
+  PROFILE_IMAGE_MAX_PREPARED_BYTES,
   PROFILE_IMAGE_WEBP_QUALITY,
 } from "@/profile-images/contracts";
 
@@ -18,7 +19,7 @@ export class InvalidProfileImageError extends Error {
 export async function normalizeCanonicalProfileImage(input: Uint8Array) {
   if (
     input.byteLength === 0 ||
-    input.byteLength > PROFILE_IMAGE_MAX_CANONICAL_BYTES
+    input.byteLength > PROFILE_IMAGE_MAX_PREPARED_BYTES
   ) {
     throw new InvalidProfileImageError();
   }
@@ -31,7 +32,7 @@ export async function normalizeCanonicalProfileImage(input: Uint8Array) {
     });
     const metadata = await source.metadata();
     if (
-      metadata.format !== "webp" ||
+      !["webp", "jpeg", "png"].includes(metadata.format ?? "") ||
       metadata.width !== PROFILE_IMAGE_DIMENSION ||
       metadata.height !== PROFILE_IMAGE_DIMENSION ||
       (metadata.pages ?? 1) !== 1

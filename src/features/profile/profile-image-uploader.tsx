@@ -4,10 +4,7 @@ import { useRef, useState } from "react";
 import { ImagePlus, LoaderCircle, Trash2 } from "lucide-react";
 import { useActor } from "@/auth/client/actor-provider";
 import { Avatar } from "@/components/ui";
-import {
-  isProfileImageMutationSnapshot,
-  PROFILE_IMAGE_MIME_TYPE,
-} from "@/profile-images/contracts";
+import { isProfileImageMutationSnapshot } from "@/profile-images/contracts";
 import {
   BrowserProfileImageError,
   normalizeProfileImageInBrowser,
@@ -72,7 +69,7 @@ export function ProfileImageUploader({
       const response = await fetch(endpoint, {
         method: "POST",
         body,
-        headers: { "content-type": PROFILE_IMAGE_MIME_TYPE },
+        headers: { "content-type": body.type },
       });
       const value: unknown = await response.json();
       if (!isProfileImageMutationSnapshot(value) || value.status !== "saved") {

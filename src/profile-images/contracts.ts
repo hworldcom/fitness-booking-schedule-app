@@ -2,6 +2,18 @@ export { isPublicCoachPortraitUrl } from "@/domain/profile-images";
 export const PROFILE_IMAGE_DIMENSION = 512;
 export const PROFILE_IMAGE_MAX_SOURCE_BYTES = 8 * 1024 * 1024;
 export const PROFILE_IMAGE_MAX_CANONICAL_BYTES = 512 * 1024;
+export const PROFILE_IMAGE_MAX_PREPARED_BYTES =
+  PROFILE_IMAGE_MAX_CANONICAL_BYTES;
+export const PROFILE_IMAGE_PREPARED_MIME_TYPES = [
+  "image/webp",
+  "image/jpeg",
+  "image/png",
+] as const;
+export function isPreparedProfileImageType(
+  value: unknown,
+): value is (typeof PROFILE_IMAGE_PREPARED_MIME_TYPES)[number] {
+  return PROFILE_IMAGE_PREPARED_MIME_TYPES.some((type) => type === value);
+}
 export const PROFILE_IMAGE_MIME_TYPE = "image/webp";
 export const PROFILE_IMAGE_WEBP_QUALITY = 82;
 
