@@ -148,6 +148,10 @@ Run `npm run test:coach-media-integration -- --profile-editor --diagnose-storage
 
 For the accepted-request rescheduling regression, run `node scripts/rehearse-request-booking-rescheduling-database.mjs`. It checks the current migration chain in fresh and upgrade scratch databases, including an accepted request created before the fix, exact retained-row hashes and existing typed/legacy suites, then removes its own databases. It never migrates or resets the retained local or hosted database.
 
+### Manual client booking validation
+
+Manual coach bookings for connected and external clients need no saved Availability. Public athlete booking still uses working hours; existing rescheduling retains its outside-hours acknowledgement. Run `npm run test:manual-client-booking-db` for isolated SQL authority, fresh/populated migration, rollback, concurrency and preservation checks (Node24, Docker55322; serial DB rehearsal; retained app stopped). Run `node scripts/rehearse-notifications-ui.mjs --manual-client-booking` for the mounted new-booking form at desktop/mobile widths, keyboard, review/confirm and error/retry behavior (Chrome, free3168; explicit fixtures only). See [SQL setup and recovery](supabase/README.md#manual-client-creation-without-working-hours); these checks do not install retained or hosted SQL.
+
 ### Events banners and directory validation
 
 Group-session banners, public card fallbacks, cursor Load more and the loaded-session venue map follow [the Events contract](docs/mvp-spec.md#151-confirmed-choices-and-implementation-defaults). The local launcher applies the additive event-banner migration while preserving existing sessions; hosted rollout is separate. Coaches add an optional event image from a saved group session’s detail or draft editor.

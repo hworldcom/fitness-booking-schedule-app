@@ -16,7 +16,7 @@ const allowed =
   selected &&
   ["127.0.0.1", "localhost"].includes(selected.hostname) &&
   selected.port === "55322" &&
-  /^\/mov181_[a-f0-9]+_(fresh|upgrade)$/.test(selected.pathname);
+  /^\/(mov181|mov251)_[a-f0-9]+_(fresh|upgrade)$/.test(selected.pathname);
 type Fixture = {
   database: string;
   coach: AuthorizedActor;
