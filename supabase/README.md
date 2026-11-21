@@ -143,6 +143,10 @@ Before hosted dev rollout, inventory `movx-dev`'s actual migration ledger, Auth 
 
 Recovery during rollout: stop new Auth entry/mutations while investigating, preserve the new verified-session guard and session registry, and leave additive migrations/data in place. Roll back the failing operation/UI to a compatible revision that retains recovery restrictions, or restore the recorded Auth configuration while entry is disabled. A rollback to pre-registry authorization can make still-issued recovery tokens ordinary sessions: it requires a maintenance window, revocation of affected managed/application sessions and expiry of issued tokens before reopening. Never drop session/credential-fence records or revert signup confirmation while the new flows are in use. Reverting application code does not restore a user's previous password; affected users recover through fresh verified email. No automatic hosted rollback, account reset, seed or deletion is part of this change.
 
+## Latest connection request cards
+
+MOV-255's `20261121000300_latest_connection_requests.sql` replaces only `current_coach_athlete_connections`, preserving its signature/owner/grants and all retained records. Latest attempt selection precedes section/cursor/limit; pending/accepted reconnections hide older terminal cards. `npm run test:connection-history-db` requires Node24/Docker55322 and creates only unique `mov255_*` fresh/upgrade scratch databases/runtime logins. It reuses the notification fixture in those scratch databases, checks populated row/function-authority preservation and atomic replacement rollback, exercises restricted current/history reads, then drops exact owned resources and compares retained app/Auth/Storage/credential hashes. Never apply this rehearsal to retained or hosted data. Install SQL before matching UI. Roll back the read function/consumer together without deleting attempt/notification/read history; hosted activation follows fresh backup/restore guidance below.
+
 ## Runtime authority
 
 - Supabase Auth establishes email identity.

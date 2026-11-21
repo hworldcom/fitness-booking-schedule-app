@@ -14,6 +14,7 @@ import {
   connectionSectionsForView,
   type ConnectionListView,
   connectionStatusLabel,
+  connectionRequestDate,
   connectionPresentation,
   type ConnectionPages,
 } from "./connection-model";
@@ -196,6 +197,12 @@ export function ConnectionLists({
                         </>
                       )}
                     </header>
+                    <p className="coach-connection-request-date">
+                      Requested{" "}
+                      <time dateTime={row.createdAt}>
+                        {connectionRequestDate(row.createdAt)}
+                      </time>
+                    </p>
                     {role === "athlete" &&
                       row.status === "accepted" &&
                       !row.coachPublic && (
