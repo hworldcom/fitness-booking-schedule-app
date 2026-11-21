@@ -1,10 +1,7 @@
+import { readPreparedProfileImage } from "@/server/profile-images/upload-request";
 import { NextResponse } from "next/server";
 import { supabasePublicConfig } from "@/auth/config";
-import {
-  PROFILE_IMAGE_MAX_CANONICAL_BYTES,
-  PROFILE_IMAGE_MIME_TYPE,
-  type ProfileImageMutationSnapshot,
-} from "@/profile-images/contracts";
+import { type ProfileImageMutationSnapshot } from "@/profile-images/contracts";
 import {
   removeCurrentCoachPortrait,
   uploadCurrentCoachPortrait,
@@ -30,29 +27,11 @@ function mutationResponse(snapshot: ProfileImageMutationSnapshot) {
 }
 
 export async function POST(request: Request) {
-  const config = supabasePublicConfig();
-  const contentLengthValue = request.headers.get("content-length");
-  const contentLength = contentLengthValue ? Number(contentLengthValue) : null;
-  if (
-    !config ||
-    request.headers.get("origin") !== config.siteUrl ||
-    request.headers.get("content-type")?.split(";", 1)[0] !==
-      PROFILE_IMAGE_MIME_TYPE ||
-    (contentLength !== null &&
-      (Number.isNaN(contentLength) ||
-        contentLength <= 0 ||
-        contentLength > PROFILE_IMAGE_MAX_CANONICAL_BYTES))
-  ) {
-    return mutationResponse({ status: "invalid", imageUrl: null });
-  }
-
-  const bytes = new Uint8Array(await request.arrayBuffer());
-  if (
-    bytes.byteLength === 0 ||
-    bytes.byteLength > PROFILE_IMAGE_MAX_CANONICAL_BYTES
-  ) {
-    return mutationResponse({ status: "invalid", imageUrl: null });
-  }
+  const bytes = await readPreparedProfileImage(
+    request,
+    supabasePublicConfig()?.siteUrl,
+  );
+  if (!bytes) return mutationResponse({ status: "invalid", imageUrl: null });
   return mutationResponse(await uploadCurrentCoachPortrait(bytes));
 }
 

@@ -143,3 +143,10 @@ test("shared coach picture URLs expose only a profile marker and checked version
   assert.equal(sharedCoachPictureUrl("../other", version), null);
   assert.equal(sharedCoachPictureUrl(id, "invalid"), null);
 });
+
+test("an empty source is reported separately from an oversized source", () => {
+  assert.equal(
+    validateProfileImageSource({ type: "image/png", size: 0 }),
+    "This image file is empty. Choose a different image.",
+  );
+});

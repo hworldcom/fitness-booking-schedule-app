@@ -390,6 +390,13 @@ return <main className="training-page">{active?.startsWith("coach-")
       page.getByRole("heading", { name: "My training", exact: true }),
     ).toBeVisible();
     await expect(
+      page.getByText("Times shown in UTC", { exact: true }),
+    ).toBeVisible();
+    await expect(page.locator('input[name="timezone"]')).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Apply timezone", exact: true }),
+    ).toHaveCount(0);
+    await expect(
       page.getByRole("button", { name: "Plan training", exact: true }),
     ).toHaveCount(0);
     const progress = page.locator(".training-progress");
@@ -1723,6 +1730,43 @@ return <main className="training-page">{active?.startsWith("coach-")
     );
     checks.push(
       `${width}px create/default60, checkbox sizing, skip/clear, edit details, weekly/series/occurrence/cancel, completed log/count, exact retry, reminders, failed reload/recovery, week/month/Back, keyboard/focus, pagination103, source logs/links, actor change and overflow`,
+    );
+    actorChanged = false;
+    const timezoneHref =
+      "/sessions/calendar?date=2026-10-26&view=week&timezone=Europe%2FBerlin";
+    await page.goto(base + timezoneHref);
+    await expect(
+      page.getByText("Times shown in Europe/Berlin", { exact: true }),
+    ).toBeVisible();
+    const monthLink = page.getByRole("link", { name: "Month", exact: true });
+    await monthLink.focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(
+      base + timezoneHref.replace("view=week", "view=month"),
+    );
+    await expect(page.locator(".training-day")).toHaveCount(42);
+    await page.goBack();
+    await expect(page).toHaveURL(base + timezoneHref);
+    await expect(
+      page.getByText("Times shown in Europe/Berlin", { exact: true }),
+    ).toBeVisible();
+    await page.reload();
+    await expect(
+      page.getByText("Times shown in Europe/Berlin", { exact: true }),
+    ).toBeVisible();
+    await expect(page.locator('input[name="timezone"]')).toHaveCount(0);
+    await page.screenshot({
+      path: path.join(evidence, `timezone-read-only-${width}.png`),
+      fullPage: true,
+    });
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth + 1,
+      ),
+      false,
+    );
+    checks.push(
+      `${width}px read-only display timezone, valid timezone deep link, keyboard Month/week/Back/reload and no overflow`,
     );
     await context.close();
   }

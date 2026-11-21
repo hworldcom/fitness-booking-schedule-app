@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SessionLinkPending } from "./session-link-pending";
 import {
   CalendarDays,
   SlidersHorizontal,
@@ -7,6 +8,16 @@ import {
 } from "lucide-react";
 
 type SessionType = "calendar" | "routine" | "private" | "group";
+export type SessionNavigationAction = (
+  type: SessionType,
+  href: string,
+  event: { preventDefault: () => void },
+) => void;
+type NavigationProps = {
+  active: SessionType;
+  onNavigate?: SessionNavigationAction;
+  pending?: boolean;
+};
 
 const sessionTypes = [
   {
@@ -39,7 +50,11 @@ function isBookingView(type: SessionType) {
   return type === "private" || type === "group";
 }
 
-export function MySessionsNavigation({ active }: { active: SessionType }) {
+export function MySessionsNavigation({
+  active,
+  onNavigate,
+  pending,
+}: NavigationProps) {
   return (
     <nav
       className="workspace-section-navigation my-session-types"
@@ -51,16 +66,31 @@ export function MySessionsNavigation({ active }: { active: SessionType }) {
           <Link
             key={type}
             href={href}
+            prefetch={isBookingView(type) ? false : undefined}
+            aria-label={label}
             aria-current={active === type ? "page" : undefined}
+            onNavigate={
+              onNavigate ? (event) => onNavigate(type, href, event) : undefined
+            }
           >
-            <Icon size={16} aria-hidden="true" /> {label}
+            <SessionLinkPending
+              label={label}
+              pending={pending && active === type}
+            >
+              <Icon size={16} aria-hidden="true" />
+            </SessionLinkPending>{" "}
+            {label}
           </Link>
         ))}
     </nav>
   );
 }
 
-export function MySessionsHeading({ active }: { active: SessionType }) {
+export function MySessionsHeading({
+  active,
+  onNavigate,
+  pending,
+}: NavigationProps) {
   return (
     <header className="client-session-page-heading">
       <span className="eyebrow">
@@ -76,7 +106,11 @@ export function MySessionsHeading({ active }: { active: SessionType }) {
               ? "Your one-to-one coaching: booking requests, confirmed sessions and past training."
               : "Your group seat reservations and registration history. A seat reservation alone does not confirm a session."}
       </p>
-      <MySessionsNavigation active={active} />
+      <MySessionsNavigation
+        active={active}
+        onNavigate={onNavigate}
+        pending={pending}
+      />
     </header>
   );
 }

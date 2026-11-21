@@ -41,13 +41,6 @@ test("the server rejects non-canonical and malformed upload bytes", async () => 
     normalizeCanonicalProfileImage(await webp(256, 512)),
     InvalidProfileImageError,
   );
-  const png = await sharp(await webp())
-    .png()
-    .toBuffer();
-  await assert.rejects(
-    normalizeCanonicalProfileImage(png),
-    InvalidProfileImageError,
-  );
   await assert.rejects(
     normalizeCanonicalProfileImage(new Uint8Array([1, 2, 3])),
     InvalidProfileImageError,
@@ -55,6 +48,59 @@ test("the server rejects non-canonical and malformed upload bytes", async () => 
   await assert.rejects(
     normalizeCanonicalProfileImage(
       new Uint8Array(PROFILE_IMAGE_MAX_CANONICAL_BYTES + 1),
+    ),
+    InvalidProfileImageError,
+  );
+});
+
+test("prepared JPEG and PNG are validated then stored as metadata-free canonical WebP", async () => {
+  for (const format of ["jpeg", "png"] as const) {
+    const input = await sharp(await webp())
+      .withMetadata()
+      .toFormat(format)
+      .toBuffer();
+    const result = await normalizeCanonicalProfileImage(input);
+    const metadata = await sharp(result.bytes).metadata();
+    assert.equal(result.contentType, "image/webp");
+    assert.equal(metadata.format, "webp");
+    assert.equal(metadata.width, 512);
+    assert.equal(metadata.height, 512);
+    assert.equal(metadata.pages ?? 1, 1);
+    assert.equal(metadata.exif, undefined);
+    assert.equal(metadata.icc, undefined);
+    assert.ok(result.bytes.length <= PROFILE_IMAGE_MAX_CANONICAL_BYTES);
+  }
+});
+test("other encodings, animated images and oversized dimensions cannot bypass prepared validation", async () => {
+  for (const format of ["gif", "avif", "tiff"] as const) {
+    await assert.rejects(
+      normalizeCanonicalProfileImage(
+        await sharp(await webp())
+          .toFormat(format)
+          .toBuffer(),
+      ),
+      InvalidProfileImageError,
+    );
+  }
+  const frames = Buffer.alloc(512 * 1024 * 3);
+  frames.fill(255, 512 * 512 * 3);
+  const animated = await sharp(frames, {
+    raw: { width: 512, height: 1024, channels: 3, pageHeight: 512 },
+  })
+    .webp({ loop: 0 })
+    .toBuffer();
+  assert.equal((await sharp(animated).metadata()).pages, 2);
+  await assert.rejects(
+    normalizeCanonicalProfileImage(animated),
+    InvalidProfileImageError,
+  );
+  await assert.rejects(
+    normalizeCanonicalProfileImage(
+      await sharp({
+        create: { width: 513, height: 512, channels: 3, background: "red" },
+      })
+        .png()
+        .toBuffer(),
     ),
     InvalidProfileImageError,
   );

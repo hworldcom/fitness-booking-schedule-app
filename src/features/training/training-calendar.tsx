@@ -17,7 +17,6 @@ import {
   addDays,
   calendarPeriod,
   localDate,
-  validTimezone,
   type TrainingCommand,
   type TrainingItem,
   type TrainingPage,
@@ -250,31 +249,7 @@ export function TrainingCalendar({
             </Link>
           </div>
         </div>
-        <form
-          className="training-zone"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const tz = String(new FormData(e.currentTarget).get("timezone"));
-            if (!validTimezone(tz)) {
-              workspace.reportError(
-                "Enter a valid timezone, such as Europe/Berlin or UTC.",
-              );
-              return;
-            }
-            router.push(href(date, view, tz));
-          }}
-        >
-          <label>
-            Display timezone{" "}
-            <input
-              name="timezone"
-              defaultValue={timezone}
-              maxLength={80}
-              required
-            />
-          </label>
-          <button type="submit">Apply timezone</button>
-        </form>
+        <p className="training-zone">Times shown in {timezone}</p>
         <p className="training-help training-calendar-help">
           Select a personal workout to edit its details or log.
         </p>

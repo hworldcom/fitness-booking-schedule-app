@@ -1,7 +1,7 @@
+import { readPreparedProfileImage } from "@/server/profile-images/upload-request";
 import { NextResponse } from "next/server";
 import { supabasePublicConfig } from "@/auth/config";
 import {
-  PROFILE_IMAGE_MAX_CANONICAL_BYTES,
   PROFILE_IMAGE_MIME_TYPE,
   type ProfileImageMutationSnapshot,
 } from "@/profile-images/contracts";
@@ -28,22 +28,6 @@ function mutationResponse(snapshot: ProfileImageMutationSnapshot) {
     status: responseStatus[snapshot.status],
     headers: { "cache-control": "private, no-store" },
   });
-}
-
-function hasCanonicalRequestHeaders(request: Request) {
-  const config = supabasePublicConfig();
-  const contentLengthValue = request.headers.get("content-length");
-  const contentLength = contentLengthValue ? Number(contentLengthValue) : null;
-  return (
-    config !== null &&
-    request.headers.get("origin") === config.siteUrl &&
-    request.headers.get("content-type")?.split(";", 1)[0] ===
-      PROFILE_IMAGE_MIME_TYPE &&
-    (contentLength === null ||
-      (!Number.isNaN(contentLength) &&
-        contentLength > 0 &&
-        contentLength <= PROFILE_IMAGE_MAX_CANONICAL_BYTES))
-  );
 }
 
 export async function GET() {
@@ -73,16 +57,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (!hasCanonicalRequestHeaders(request)) {
-    return mutationResponse({ status: "invalid", imageUrl: null });
-  }
-  const bytes = new Uint8Array(await request.arrayBuffer());
-  if (
-    bytes.byteLength === 0 ||
-    bytes.byteLength > PROFILE_IMAGE_MAX_CANONICAL_BYTES
-  ) {
-    return mutationResponse({ status: "invalid", imageUrl: null });
-  }
+  const bytes = await readPreparedProfileImage(
+    request,
+    supabasePublicConfig()?.siteUrl,
+  );
+  if (!bytes) return mutationResponse({ status: "invalid", imageUrl: null });
   return mutationResponse(await uploadCurrentAccountAvatar(bytes));
 }
 

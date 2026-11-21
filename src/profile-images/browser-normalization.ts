@@ -1,8 +1,8 @@
 import {
   PROFILE_IMAGE_DIMENSION,
-  PROFILE_IMAGE_MAX_CANONICAL_BYTES,
+  PROFILE_IMAGE_MAX_PREPARED_BYTES,
+  PROFILE_IMAGE_PREPARED_MIME_TYPES,
   PROFILE_IMAGE_MAX_SOURCE_BYTES,
-  PROFILE_IMAGE_MIME_TYPE,
   PROFILE_IMAGE_WEBP_QUALITY,
 } from "./contracts";
 
@@ -23,30 +23,38 @@ export function validateProfileImageSource(file: Pick<File, "size" | "type">) {
   if (!ACCEPTED_SOURCE_TYPES.includes(file.type)) {
     return "Choose a JPEG, PNG or WebP image.";
   }
-  if (file.size <= 0 || file.size > PROFILE_IMAGE_MAX_SOURCE_BYTES) {
+  if (file.size <= 0)
+    return "This image file is empty. Choose a different image.";
+  if (file.size > PROFILE_IMAGE_MAX_SOURCE_BYTES) {
     return "Choose an image no larger than 8 MB.";
   }
   return null;
 }
 
-function canvasWebp(canvas: HTMLCanvasElement) {
-  return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) {
-          reject(
-            new BrowserProfileImageError(
-              "This browser could not prepare the image as WebP.",
-            ),
-          );
-          return;
-        }
-        resolve(blob);
-      },
-      PROFILE_IMAGE_MIME_TYPE,
-      PROFILE_IMAGE_WEBP_QUALITY / 100,
-    );
-  });
+async function prepareCanvasImage(canvas: HTMLCanvasElement) {
+  let oversized = false;
+  // Unsupported canvas encoders can silently return PNG. Try each supported
+  // transport explicitly; the server validates and stores only canonical WebP.
+  for (const type of PROFILE_IMAGE_PREPARED_MIME_TYPES) {
+    const blob = await new Promise<Blob | null>((resolve) => {
+      try {
+        canvas.toBlob(resolve, type, PROFILE_IMAGE_WEBP_QUALITY / 100);
+      } catch {
+        resolve(null);
+      }
+    });
+    if (!blob || blob.type !== type || blob.size === 0) continue;
+    if (blob.size > PROFILE_IMAGE_MAX_PREPARED_BYTES) {
+      oversized = true;
+      continue;
+    }
+    return blob;
+  }
+  throw new BrowserProfileImageError(
+    oversized
+      ? "The prepared image exceeds 512 KB. Choose a smaller or less detailed photo."
+      : "Your browser could not prepare this image. Try another browser or a different photo.",
+  );
 }
 
 export async function normalizeProfileImageInBrowser(file: File) {
@@ -89,16 +97,7 @@ export async function normalizeProfileImageInBrowser(file: File) {
       PROFILE_IMAGE_DIMENSION,
       PROFILE_IMAGE_DIMENSION,
     );
-    const result = await canvasWebp(canvas);
-    if (
-      result.type !== PROFILE_IMAGE_MIME_TYPE ||
-      result.size > PROFILE_IMAGE_MAX_CANONICAL_BYTES
-    ) {
-      throw new BrowserProfileImageError(
-        "The prepared image is still too large. Choose a simpler image.",
-      );
-    }
-    return result;
+    return await prepareCanvasImage(canvas);
   } finally {
     bitmap.close();
   }

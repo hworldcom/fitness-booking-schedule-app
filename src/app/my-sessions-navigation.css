@@ -1,7 +1,65 @@
-.group-history-page > .client-session-page-heading {
+.group-history-page > .client-session-page-heading,
+.events-page.booking-page-frame > .client-session-page-heading {
   margin-bottom: 24px;
 }
 
 .my-session-recovery > .my-session-types {
   margin-bottom: 24px;
+}
+
+.session-link-pending {
+  animation: session-link-spin 1s linear infinite;
+}
+
+.booking-content-loading {
+  margin-top: 24px;
+}
+
+.booking-content-loading > p {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #58634e;
+}
+
+.booking-loading-cards {
+  display: grid;
+  gap: 16px;
+}
+
+.booking-loading-card {
+  display: grid;
+  gap: 14px;
+  padding: 24px;
+  border: 1px solid #dedbd6;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.booking-loading-card span {
+  height: 12px;
+  max-width: 360px;
+  border-radius: 6px;
+  background: #edf0e9;
+}
+
+.booking-loading-card span:first-child {
+  width: 55%;
+  height: 18px;
+}
+
+.booking-loading-card span:last-child {
+  width: 75%;
+}
+
+@keyframes session-link-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .session-link-pending {
+    animation: none;
+  }
 }

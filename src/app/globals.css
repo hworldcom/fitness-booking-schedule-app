@@ -1844,7 +1844,8 @@ h1 {
   background: var(--surface);
   padding: clamp(24px, 5vw, 48px);
 }
-.protected-access-state h1 {
+.protected-access-state h1,
+.protected-access-state .protected-access-title {
   margin: 8px 0 12px;
 }
 .protected-access-state > p {
