@@ -15,7 +15,7 @@ import type {
 const url = process.env.DATABASE_TEST_URL;
 const allowed =
   url &&
-  /^postgresql:\/\/postgres:postgres@127\.0\.0\.1:55322\/mov255_[a-f0-9]{12}_(fresh|upgrade)$/.test(
+  /^postgresql:\/\/postgres:postgres@127\.0\.0\.1:55322\/mov257_[a-f0-9]{12}_(fresh|upgrade)$/.test(
     url,
   );
 test(
@@ -32,6 +32,7 @@ test(
       bookingId: string;
       oldRequest: string;
       latest?: string;
+      active?: string;
     };
     const run = (actor: AuthorizedActor, q: ReturnType<typeof sql>) =>
       withActorDatabaseContext(actor, (tx) => tx.execute(q));
@@ -62,6 +63,8 @@ test(
         const id = await send(f.oldRequest);
         await decide(f.athlete, id, "decline");
         f.latest = id;
+        f.active = await send(id);
+        await decide(f.athlete, f.active, "accept");
         writeFileSync(file, JSON.stringify(f), { mode: 0o600 });
         return;
       }
@@ -87,20 +90,31 @@ test(
           }
           const [r] =
             await admin`select count(*)::int n from app.coach_athlete_connection_attempts where pair_id=(select pair_id from app.coach_athlete_connection_attempts where id=${latest}::uuid)`;
-          assert.equal(r.n, 2);
+          assert.equal(r.n, 3);
+          assert.deepEqual(
+            (await page(f.athlete, "athlete", "accepted")).items.map(
+              (x) => x.id,
+            ),
+            [f.active],
+          );
         },
       );
       await t.test(
-        "pending and mutually accepted reconnection supersede old history",
+        "pending and accepted reconnection preserve the latest previous request",
         async () => {
+          await decide(f.coach, f.active!, "disconnect");
+          latest = f.active!;
+          const previousHistory = latest;
           latest = await send(latest);
-          assert.equal(
-            (await page(f.coach, "coach", "history")).items.length,
-            0,
+          assert.deepEqual(
+            (await page(f.coach, "coach", "history")).items.map((x) => x.id),
+            [previousHistory],
           );
-          assert.equal(
-            (await page(f.athlete, "athlete", "history")).items.length,
-            0,
+          assert.deepEqual(
+            (await page(f.athlete, "athlete", "history")).items.map(
+              (x) => x.id,
+            ),
+            [previousHistory],
           );
           assert.deepEqual(
             (await page(f.athlete, "athlete", "incoming")).items.map(
@@ -113,7 +127,10 @@ test(
             [f.coach, "coach"],
             [f.athlete, "athlete"],
           ] as const) {
-            assert.equal((await page(actor, role, "history")).items.length, 0);
+            assert.deepEqual(
+              (await page(actor, role, "history")).items.map((x) => x.id),
+              [previousHistory],
+            );
             assert.deepEqual(
               (await page(actor, role, "accepted")).items.map((x) => x.id),
               [latest],
@@ -153,7 +170,7 @@ test(
           assert.deepEqual([...first.items, ...second.items], all.items);
           const older =
             await admin`select count(*)::int n from app.coach_athlete_connection_attempts where run_id=${f.coach.runId}::uuid and sender_profile_id=${f.coach.profileId}::uuid`;
-          assert.equal(older[0].n, 6);
+          assert.equal(older[0].n, 7);
         },
       );
       await t.test(

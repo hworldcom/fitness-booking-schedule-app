@@ -150,7 +150,7 @@ For the accepted-request rescheduling regression, run `node scripts/rehearse-req
 
 ### Connection request history validation
 
-Connection lists show the latest request once per coach–athlete pair, with its original request date. Reconnecting removes old history cards. Run `npm run test:connection-history-db` for owned fresh/populated/rollback SQL and permission/paging checks (Node24/Docker55322); `node scripts/rehearse-connection-profile-links-ui.mjs` verifies dates, reconnection, keyboard and mobile/error behavior with isolated UI fixtures (Chrome/free3199). [Installation/recovery](supabase/README.md#latest-connection-request-cards) keeps all underlying attempts and notifications. Local validation does not deploy SQL.
+Previous connection requests shows the latest ended request once per coach–athlete pair, with its original date, even after reconnection. Current pending/accepted consent remains separate. Run `npm run test:connection-history-db` for owned fresh/populated/rollback SQL and permission/paging checks (Node24/Docker55322); `node scripts/rehearse-connection-profile-links-ui.mjs` verifies dates, reconnection, keyboard and mobile/error behavior with isolated UI fixtures (Chrome/free3199). [Installation/recovery](supabase/README.md#latest-connection-request-cards) keeps all underlying attempts and notifications. Local validation does not deploy SQL.
 
 ### Connection request notification validation
 

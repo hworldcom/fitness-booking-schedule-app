@@ -196,20 +196,31 @@ try {
     });
     await reconnect.focus();
     await page.keyboard.press("Enter");
-    await expect(page.locator(".coach-connection-card")).toHaveCount(1);
+    await expect(page.locator(".coach-connection-card")).toHaveCount(2);
     await expect(
       page.getByRole("region", {
         name: "Previous connection requests",
         exact: true,
       }),
-    ).toContainText("No previous connection requests.");
-    await expect(page.locator(".coach-connection-card time")).toHaveText(
-      "20 Nov 2026",
-    );
+    ).toContainText("Fixture Coach");
+    await expect(
+      page
+        .getByRole("article", {
+          name: "Fixture Coach · Awaiting acceptance",
+          exact: true,
+        })
+        .locator("time"),
+    ).toHaveText("20 Nov 2026");
+    const previous = page.getByRole("region", {
+      name: "Previous connection requests",
+      exact: true,
+    });
+    await expect(previous.locator(".coach-connection-card")).toHaveCount(1);
+    await expect(previous.locator("time")).toHaveText("7 Nov 2026");
     await page
       .getByRole("button", { name: "Accept reconnection fixture", exact: true })
       .click();
-    await expect(page.locator(".coach-connection-card")).toHaveCount(1);
+    await expect(page.locator(".coach-connection-card")).toHaveCount(2);
     await expect(
       page.getByRole("article", {
         name: "Fixture Coach · Connected",
@@ -221,7 +232,7 @@ try {
         name: "Previous connection requests",
         exact: true,
       }),
-    ).toContainText("No previous connection requests.");
+    ).toContainText("Fixture Coach");
     assert.ok(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -232,7 +243,7 @@ try {
       fullPage: true,
     });
     checks.push(
-      `${width}px: disconnect keeps public identity/action navigation, request dates, pending/accepted reconnection without duplicate history, keyboard/avatar clicks, publication and unavailable-read gates, no overflow`,
+      `${width}px: disconnect keeps public identity/action navigation, request dates, pending/accepted reconnection retains one dated previous request, keyboard/avatar clicks, publication and unavailable-read gates, no overflow`,
     );
     console.log("PASS " + checks.at(-1));
   }

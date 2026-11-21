@@ -68,22 +68,30 @@ export function applyConnectionResult(
   row: ConnectionProjection,
   role: ConnectionRole = "coach",
 ): ConnectionPages {
-  // A late result for an older attempt must never resurrect its history card.
-  if (
-    CONNECTION_SECTIONS.some((section) =>
-      pages[section]?.items.some(
-        (item) =>
-          item.pairId === row.pairId && item.attemptNumber > row.attemptNumber,
-      ),
-    )
-  )
-    return pages;
   const target = connectionSection(row, role);
+  // Active consent and terminal history advance independently. A late ended
+  // request may update history without replacing a newer accepted connection.
+  const newerKnownAttempt = CONNECTION_SECTIONS.some((section) =>
+    pages[section]?.items.some(
+      (item) =>
+        item.pairId === row.pairId && item.attemptNumber > row.attemptNumber,
+    ),
+  );
   return Object.freeze(
     Object.fromEntries(
       CONNECTION_SECTIONS.map((section) => {
         const page = pages[section];
         if (!page) return [section, null];
+        if (
+          section === "history" &&
+          (target !== "history" ||
+            page.items.some(
+              (item) =>
+                item.pairId === row.pairId &&
+                item.attemptNumber > row.attemptNumber,
+            ))
+        )
+          return [section, page];
         const remaining = page.items.filter(
           (item) =>
             item.id !== row.id &&
@@ -97,7 +105,10 @@ export function applyConnectionResult(
           Object.freeze({
             ...page,
             items: Object.freeze(
-              section === target ? [row, ...remaining] : remaining,
+              section === target &&
+                (section === "history" || !newerKnownAttempt)
+                ? [row, ...remaining]
+                : remaining,
             ),
           }),
         ];

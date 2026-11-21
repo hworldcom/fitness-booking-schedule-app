@@ -138,7 +138,7 @@ test("overlapping older pages preserve stable identities, server order and micro
   assert.equal(second.status, "pending");
 });
 
-test("fresh consent replaces older pair cards and ignores late older results", () => {
+test("fresh consent keeps latest ended history independently of newer active consent", () => {
   const accepted = connection(2, {
     status: "accepted",
     athleteAvatarUrl: "/api/connections/old/athlete-avatar",
@@ -161,7 +161,10 @@ test("fresh consent replaces older pair cards and ignores late older results", (
   const pending = connection(3);
   const fresh = applyConnectionResult(before, pending);
   assert.equal(fresh.accepted?.items.length, 0);
-  assert.equal(fresh.history?.items.length, 0);
+  assert.deepEqual(
+    fresh.history?.items.map((row) => row.id),
+    [historical.id],
+  );
   assert.equal(fresh.outgoing?.items[0].id, pending.id);
   const reconnected = applyConnectionResult(fresh, {
     ...pending,
@@ -175,7 +178,19 @@ test("fresh consent replaces older pair cards and ignores late older results", (
     athleteAvatarUrl: null,
   });
   assert.equal(stale.accepted?.items[0].id, pending.id);
-  assert.equal(stale.history?.items.length, 0);
+  assert.deepEqual(
+    stale.history?.items.map((row) => row.id),
+    [accepted.id],
+  );
+  const oldest = applyConnectionResult(stale, {
+    ...historical,
+    status: "removed",
+  });
+  assert.deepEqual(
+    oldest.history?.items.map((row) => row.id),
+    [accepted.id],
+  );
+  assert.equal(oldest.accepted?.items[0].id, pending.id);
 });
 
 test("pending and terminal lists never render connection-derived avatar bytes", () => {
@@ -778,7 +793,7 @@ test("athlete connected/request sections preserve coach identity/public links an
   assert.doesNotMatch(failed, /Connected coaches could not be verified/);
 });
 
-test("acceptance clears prior history even when accepted list is unloaded", () => {
+test("acceptance retains prior history even when accepted list is unloaded", () => {
   const value = pages({
     accepted: null,
     history: {
@@ -792,7 +807,7 @@ test("acceptance clears prior history even when accepted list is unloaded", () =
     "athlete",
   );
   assert.equal(result.accepted, null);
-  assert.deepEqual(result.history?.items, []);
+  assert.deepEqual(result.history?.items, value.history?.items);
 });
 
 test("connection cards label original request dates with stable UTC calendar dates", () => {
@@ -813,4 +828,22 @@ test("connection cards label original request dates with stable UTC calendar dat
     html,
     /Requested <time dateTime="2026-11-20T23:30:00.123456\+00:00">20 Nov 2026<\/time>/,
   );
+});
+
+test("an older active response cannot restore consent after newer terminal history", () => {
+  const previous = pages({
+    history: {
+      items: [connection(2, { status: "removed" })],
+      nextCursor: null,
+    },
+  });
+  const next = applyConnectionResult(
+    previous,
+    connection(1, {
+      status: "accepted",
+      athleteAvatarUrl: "/private-old-avatar",
+    }),
+  );
+  assert.deepEqual(next.accepted?.items, []);
+  assert.deepEqual(next.history, previous.history);
 });

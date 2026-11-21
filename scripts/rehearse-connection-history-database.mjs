@@ -1,4 +1,4 @@
-// MOV-255: exact disposable databases; retained local infrastructure is read-only.
+// MOV-257: exact disposable databases; retained local infrastructure is read-only.
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -10,8 +10,8 @@ import {
 } from "./lib/local-supabase-project.mjs";
 assert.equal(process.argv.length, 2);
 assertLocalSupabaseConfiguration(readFileSync("supabase/config.toml", "utf8"));
-const temporary = mkdtempSync("/tmp/mov255-sql-");
-const target = "20261121000300_latest_connection_requests.sql",
+const temporary = mkdtempSync("/tmp/mov257-sql-");
+const target = "20261121000400_reconnected_request_history.sql",
   created = [],
   logins = [];
 const files = readdirSync("supabase/migrations")
@@ -69,7 +69,7 @@ try {
     "--schema-only",
   ]);
   for (const mode of ["fresh", "upgrade"]) {
-    const name = `mov255_${randomUUID().replaceAll("-", "").slice(0, 12)}_${mode}`;
+    const name = `mov257_${randomUUID().replaceAll("-", "").slice(0, 12)}_${mode}`;
     docker(["createdb", "-U", "supabase_admin", "-O", "postgres", name]);
     created.push(name);
     query(name, infrastructure + "\nDROP SCHEMA app CASCADE;");
@@ -78,7 +78,7 @@ try {
     query(name, readFileSync("supabase/seed.sql", "utf8"));
     const url = `postgresql://supabase_admin:postgres@127.0.0.1:55322/${name}`;
     const login =
-        "mov255_runtime_" + randomUUID().replaceAll("-", "").slice(0, 12),
+        "mov257_runtime_" + randomUUID().replaceAll("-", "").slice(0, 12),
       password = randomUUID();
     query(
       name,
@@ -171,7 +171,7 @@ try {
     );
     console.log(output);
     console.log(
-      `PASS MOV-255 ${mode}: original rows/authority preserved and latest pair selection, paging, permissions and retained history`,
+      `PASS MOV-257 ${mode}: original rows/authority preserved and latest pair selection, paging, permissions and retained history`,
     );
   }
 } catch (error) {
