@@ -423,6 +423,79 @@ try {
   console.log(
     "PASS group title/snapshot/owner destination and explicit read in mixed history",
   );
+  // MOV-253: both recipient roles use the same bell and independent read controls.
+  for (const width of [1440, 375, 320]) {
+    await page.setViewportSize({ width, height: 812 });
+    for (const recipientRole of ["coach", "athlete"]) {
+      const senderName =
+        recipientRole === "coach"
+          ? "Athlete request sender"
+          : "Coach request sender";
+      items[0] = {
+        id: items[0].id,
+        createdAt: items[0].createdAt,
+        readAt: null,
+        kind: "connection-request",
+        requestId: randomUUID(),
+        senderName,
+        recipientRole,
+      };
+      const beforeWrites = writes.length;
+      await page.keyboard.press("Escape");
+      await bell().click();
+      const link = dialog().getByRole("link", {
+        name: new RegExp("Connection request from " + senderName),
+      });
+      await expect(link).toHaveAttribute(
+        "href",
+        recipientRole === "coach"
+          ? "/coach/athletes?section=requests"
+          : "/my-coaches?section=requests",
+      );
+      await expect(link).toContainText("They sent you a connection request.");
+      await expect(bell()).toHaveAttribute(
+        "aria-label",
+        "Notifications, 1 unread",
+      );
+      assert.equal(
+        writes.length,
+        beforeWrites,
+        "Opening connection notice must not mark it read or accept it",
+      );
+      await link.focus();
+      await page.keyboard.press("Tab");
+      const mark = dialog().getByRole("button", {
+        name: "Mark connection request from " + senderName + " as read",
+        exact: true,
+      });
+      await expect(mark).toBeFocused();
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth,
+        ),
+        false,
+      );
+      await dialog().screenshot({
+        path: path.join(
+          output,
+          `connection-request-${recipientRole}-${width}.png`,
+        ),
+      });
+      await page.keyboard.press("Enter");
+      await expect(bell()).toHaveAttribute(
+        "aria-label",
+        "Notifications, 0 unread",
+      );
+      assert.deepEqual(writes.at(-1), {
+        action: "read",
+        args: { id: items[0].id },
+      });
+    }
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  console.log(
+    "PASS connection request bell in mixed history: both recipient destinations, sender/title, no auto-read/decision, keyboard read and1440/375/320 bounds",
+  );
   await page.screenshot({
     path: path.join(output, "desktop.png"),
     fullPage: true,

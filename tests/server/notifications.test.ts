@@ -23,7 +23,7 @@ const payload = {
   conversationId: randomUUID(),
   email: "athlete@example.test",
 };
-test("cached notification clients retain versions1–4 while athlete booking clients opt into5", async () => {
+test("cached notification clients retain versions1–5 while connection request clients opt into6", async () => {
   const versions: number[] = [];
   const handler = notificationHandlers(
     async (_input, version) => {
@@ -95,18 +95,32 @@ test("cached notification clients retain versions1–4 while athlete booking cli
     ).status,
     200,
   );
-  assert.deepEqual(versions, [1, 2, 2, 3, 4, 5]);
+  for (const method of ["GET", "POST"] as const) {
+    const request = new Request(site + "/api/notifications", {
+      method,
+      headers: {
+        origin: site,
+        "content-type": "application/json",
+        [NOTIFICATION_VERSION_HEADER]: "6",
+      },
+      ...(method === "POST"
+        ? { body: JSON.stringify({ action: "read", args: { id: payload.id } }) }
+        : {}),
+    });
+    assert.equal((await handler[method](request)).status, 200);
+  }
+  assert.deepEqual(versions, [1, 2, 2, 3, 4, 5, 6, 6]);
   assert.equal(
     (
       await handler.GET(
         new Request(site + "/api/notifications", {
-          headers: { [NOTIFICATION_VERSION_HEADER]: "6" },
+          headers: { [NOTIFICATION_VERSION_HEADER]: "7" },
         }),
       )
     ).status,
     400,
   );
-  assert.equal(versions.length, 6);
+  assert.equal(versions.length, 8);
 });
 test("booking receipts preserve semantic snapshots, escaping and two independent recipient idempotency keys", async () => {
   const event: BookingNotification = {
