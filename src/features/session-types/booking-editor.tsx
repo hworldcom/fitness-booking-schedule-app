@@ -628,7 +628,7 @@ function Editor({
           <p>
             {detail
               ? "Choose a free time. If the full session falls outside your saved working hours, we’ll ask you to confirm this one-booking exception. Your regular hours and session type stay the same."
-              : "Use a free time within your saved availability. Your session type stays the same."}
+              : "Choose a free time, even outside your saved availability. You don’t need to set working hours first. Your session type stays the same."}
           </p>
           {!detail && clientKind === "platform" && (
             <>

@@ -9,6 +9,11 @@ import {
 } from "./groups";
 import { isCanonicalUuid } from "@/domain/coach-bookings";
 import {
+  parseConnectionRequestNotification,
+  connectionRequestNotificationHref,
+  type ConnectionRequestNotification,
+} from "./connections";
+import {
   bookingNotificationHref,
   parseBookingNotification,
   type BookingNotification,
@@ -25,6 +30,7 @@ export type NotificationItem = NotificationIdentity &
     | BookingNotification
     | GroupNotification
     | CoachApprovalNotification
+    | ConnectionRequestNotification
     | Readonly<{
         kind?: "message";
         conversationId: string;
@@ -110,6 +116,20 @@ export function parseNotificationPage(value: unknown): NotificationPage {
   return {
     items: page.items.map((value) => {
       const item = object(value);
+      if (item.kind === "connection-request") {
+        if (
+          !id(item.id) ||
+          !timestamp(item.createdAt) ||
+          (item.readAt !== null && !timestamp(item.readAt))
+        )
+          throw Error("Invalid notification response.");
+        return {
+          ...parseConnectionRequestNotification(item),
+          id: item.id,
+          createdAt: item.createdAt,
+          readAt: item.readAt,
+        };
+      }
       if (item.kind === "coach-approval") {
         if (
           !id(item.id) ||
@@ -196,8 +216,11 @@ export function notificationHref(
       >
     | BookingNotification
     | GroupNotification
-    | CoachApprovalNotification,
+    | CoachApprovalNotification
+    | ConnectionRequestNotification,
 ) {
+  if ("kind" in item && item.kind === "connection-request")
+    return connectionRequestNotificationHref(item);
   if ("kind" in item && item.kind === "coach-approval") {
     parseCoachApprovalNotification(item);
     return "/profile/coach";

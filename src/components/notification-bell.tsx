@@ -11,6 +11,7 @@ import {
   MessageSquare,
   CalendarCheck,
   BadgeCheck,
+  UserRoundPlus,
 } from "lucide-react";
 import {
   BOOKING_EVENTS,
@@ -266,6 +267,8 @@ function RecipientBell({ actorKey }: { actorKey: string }) {
                       <span className="notification-item-icon">
                         {item.kind === "coach-approval" ? (
                           <BadgeCheck size={16} aria-hidden="true" />
+                        ) : item.kind === "connection-request" ? (
+                          <UserRoundPlus size={16} aria-hidden="true" />
                         ) : item.kind === "booking" || item.kind === "group" ? (
                           <CalendarCheck size={16} aria-hidden="true" />
                         ) : (
@@ -280,20 +283,24 @@ function RecipientBell({ actorKey }: { actorKey: string }) {
                           <strong>
                             {item.kind === "coach-approval"
                               ? COACH_APPROVAL_TITLE
-                              : item.kind === "group"
-                                ? GROUP_EVENTS[item.event]
-                                : item.kind === "booking"
-                                  ? BOOKING_EVENTS[item.event]
-                                  : `New message from ${item.senderName}`}
+                              : item.kind === "connection-request"
+                                ? `Connection request from ${item.senderName}`
+                                : item.kind === "group"
+                                  ? GROUP_EVENTS[item.event]
+                                  : item.kind === "booking"
+                                    ? BOOKING_EVENTS[item.event]
+                                    : `New message from ${item.senderName}`}
                           </strong>
                           <span>
                             {item.kind === "coach-approval"
                               ? COACH_APPROVAL_NEXT_STEPS
-                              : item.kind === "group"
-                                ? groupNotificationSummary(item)
-                                : item.kind === "booking"
-                                  ? bookingNotificationSummary(item)
-                                  : "Open your conversation to read and reply."}
+                              : item.kind === "connection-request"
+                                ? "They sent you a connection request. Open your requests for the current status."
+                                : item.kind === "group"
+                                  ? groupNotificationSummary(item)
+                                  : item.kind === "booking"
+                                    ? bookingNotificationSummary(item)
+                                    : "Open your conversation to read and reply."}
                           </span>
                         </NotificationDestination>
                         <time dateTime={item.createdAt}>
@@ -315,11 +322,13 @@ function RecipientBell({ actorKey }: { actorKey: string }) {
                             aria-label={
                               item.kind === "coach-approval"
                                 ? "Mark coach approval notification as read"
-                                : item.kind === "group"
-                                  ? `Mark ${GROUP_EVENTS[item.event].toLowerCase()} notification as read`
-                                  : item.kind === "booking"
-                                    ? `Mark ${BOOKING_EVENTS[item.event].toLowerCase()} notification as read`
-                                    : `Mark message notification from ${item.senderName} as read`
+                                : item.kind === "connection-request"
+                                  ? `Mark connection request from ${item.senderName} as read`
+                                  : item.kind === "group"
+                                    ? `Mark ${GROUP_EVENTS[item.event].toLowerCase()} notification as read`
+                                    : item.kind === "booking"
+                                      ? `Mark ${BOOKING_EVENTS[item.event].toLowerCase()} notification as read`
+                                      : `Mark message notification from ${item.senderName} as read`
                             }
                           >
                             Mark read

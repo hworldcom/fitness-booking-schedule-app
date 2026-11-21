@@ -83,6 +83,16 @@ try {
   }
   const bookingActions = process.argv.includes("--booking-actions");
   const startPicker = process.argv.includes("--booking-start-picker");
+  const manualBooking = process.argv.includes("--manual-client-booking");
+  if (manualBooking) {
+    await mkdir(path.join(checkout, "src/app/coach/manual-booking-fixture"), {
+      recursive: true,
+    });
+    await cp(
+      path.join(root, "tests/fixtures/manual-client-booking-page.tsx"),
+      path.join(checkout, "src/app/coach/manual-booking-fixture/page.tsx"),
+    );
+  }
   if (startPicker) {
     await mkdir(path.join(checkout, "src/app/coach/booking-picker-fixture"), {
       recursive: true,
@@ -413,6 +423,79 @@ try {
   console.log(
     "PASS group title/snapshot/owner destination and explicit read in mixed history",
   );
+  // MOV-253: both recipient roles use the same bell and independent read controls.
+  for (const width of [1440, 375, 320]) {
+    await page.setViewportSize({ width, height: 812 });
+    for (const recipientRole of ["coach", "athlete"]) {
+      const senderName =
+        recipientRole === "coach"
+          ? "Athlete request sender"
+          : "Coach request sender";
+      items[0] = {
+        id: items[0].id,
+        createdAt: items[0].createdAt,
+        readAt: null,
+        kind: "connection-request",
+        requestId: randomUUID(),
+        senderName,
+        recipientRole,
+      };
+      const beforeWrites = writes.length;
+      await page.keyboard.press("Escape");
+      await bell().click();
+      const link = dialog().getByRole("link", {
+        name: new RegExp("Connection request from " + senderName),
+      });
+      await expect(link).toHaveAttribute(
+        "href",
+        recipientRole === "coach"
+          ? "/coach/athletes?section=requests"
+          : "/my-coaches?section=requests",
+      );
+      await expect(link).toContainText("They sent you a connection request.");
+      await expect(bell()).toHaveAttribute(
+        "aria-label",
+        "Notifications, 1 unread",
+      );
+      assert.equal(
+        writes.length,
+        beforeWrites,
+        "Opening connection notice must not mark it read or accept it",
+      );
+      await link.focus();
+      await page.keyboard.press("Tab");
+      const mark = dialog().getByRole("button", {
+        name: "Mark connection request from " + senderName + " as read",
+        exact: true,
+      });
+      await expect(mark).toBeFocused();
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth,
+        ),
+        false,
+      );
+      await dialog().screenshot({
+        path: path.join(
+          output,
+          `connection-request-${recipientRole}-${width}.png`,
+        ),
+      });
+      await page.keyboard.press("Enter");
+      await expect(bell()).toHaveAttribute(
+        "aria-label",
+        "Notifications, 0 unread",
+      );
+      assert.deepEqual(writes.at(-1), {
+        action: "read",
+        args: { id: items[0].id },
+      });
+    }
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  console.log(
+    "PASS connection request bell in mixed history: both recipient destinations, sender/title, no auto-read/decision, keyboard read and1440/375/320 bounds",
+  );
   await page.screenshot({
     path: path.join(output, "desktop.png"),
     fullPage: true,
@@ -553,6 +636,170 @@ try {
     }
     console.log(
       "PASS direct Reschedule action, details/reschedule/cancel keyboard order,1440/375/320 Bookings/shared athlete layouts and no past/cancelled/completed/unsupported shortcut",
+    );
+  }
+  if (manualBooking) {
+    const fixtureId = "25100000-0000-4000-8000-000000000001";
+    const posts = [];
+    let outcome = "conflict";
+    await page.route("**/api/session-bookings?*", (route) => {
+      if (route.request().method() === "POST") {
+        posts.push(route.request().postDataJSON());
+        return route.fulfill({
+          status: outcome === "conflict" ? 409 : 503,
+          json: { status: outcome },
+        });
+      }
+      return route.fulfill({
+        json: {
+          status: "ready",
+          types: [
+            {
+              id: fixtureId,
+              format: "private",
+              name: "Manual fixture",
+              durationMinutes: 60,
+              defaultLocationId: fixtureId,
+              archived: false,
+              bookable: true,
+              revision: 0,
+            },
+          ],
+          locations: [{ id: fixtureId, name: "Fixture studio" }],
+          athletes: {
+            items: [
+              {
+                id: fixtureId,
+                athleteProfileId: fixtureId,
+                athleteDisplayName: "Connected fixture",
+              },
+            ],
+            nextCursor: null,
+          },
+          externalClients: {
+            items: [
+              {
+                id: fixtureId,
+                name: "External fixture",
+                email: null,
+                linkedProfileId: null,
+                revision: 0,
+              },
+            ],
+            next: null,
+          },
+        },
+      });
+    });
+    await context.addCookies([
+      { name: "mov81-actor", value: "owner", url: base },
+    ]);
+    for (const width of [1440, 375, 320]) {
+      await page.setViewportSize({ width, height: 812 });
+      for (const kind of ["platform", "external"]) {
+        posts.length = 0;
+        outcome = "conflict";
+        await page.goto(base + "/coach/manual-booking-fixture");
+        await expect(
+          page.getByText("You don’t need to set working hours first.", {
+            exact: false,
+          }),
+        ).toBeVisible();
+        await page
+          .getByLabel("Athlete type", { exact: true })
+          .selectOption(kind);
+        await page
+          .getByLabel(kind === "platform" ? "Athlete" : "External athlete", {
+            exact: true,
+          })
+          .selectOption(fixtureId);
+        await page
+          .getByLabel("Session type", { exact: true })
+          .selectOption(fixtureId);
+        await page
+          .getByRole("button", { name: "Start · Berlin time", exact: true })
+          .click();
+        const picker = page.getByRole("dialog", {
+          name: "Choose session date and time",
+          exact: true,
+        });
+        await picker.getByLabel("Date", { exact: true }).fill("2030-11-09");
+        await picker.getByLabel("Hour", { exact: true }).selectOption("12");
+        await picker.getByLabel("Minute", { exact: true }).selectOption("30");
+        await picker
+          .getByRole("button", { name: "Apply date and time", exact: true })
+          .click();
+        const review = page.getByRole("button", {
+          name: "Review session",
+          exact: true,
+        });
+        await review.focus();
+        await page.keyboard.press("Enter");
+        const confirmation = page.getByRole("region", {
+          name: "Review booking change",
+          exact: true,
+        });
+        await expect(confirmation).toBeFocused();
+        await expect(confirmation).toContainText("12:30");
+        await expect(page.getByRole("checkbox")).toHaveCount(0);
+        assert.equal(
+          posts.length,
+          0,
+          "Review must not save or require working hours",
+        );
+        const confirm = confirmation.getByRole("button", {
+          name: "Confirm session",
+          exact: true,
+        });
+        await confirm.focus();
+        await page.keyboard.press("Enter");
+        await expect(
+          page.getByRole("status").filter({
+            hasText: "The class, connection, booking or time changed.",
+          }),
+        ).toBeFocused();
+        assert.equal(posts.length, 1);
+        assert.equal(posts[0].action, "create");
+        assert.equal(
+          posts[0][kind === "platform" ? "athleteId" : "externalClientId"],
+          fixtureId,
+        );
+        assert.equal(posts[0].outsideHoursConfirmed, undefined);
+        await expect(
+          page.getByRole("button", {
+            name: "Start · Berlin time",
+            exact: true,
+          }),
+        ).toContainText("12:30");
+        outcome = "unavailable";
+        await confirm.click();
+        const retry = page.getByRole("button", {
+          name: "Retry same session",
+          exact: true,
+        });
+        await expect(retry).toBeVisible();
+        await retry.click();
+        await expect.poll(() => posts.length).toBe(3);
+        assert.deepEqual(
+          posts[2],
+          posts[0],
+          "unknown recovery retains the exact original reviewed command",
+        );
+        await expect(retry).toBeEnabled();
+        assert.equal(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth > innerWidth,
+          ),
+          false,
+        );
+        await page.screenshot({
+          path: path.join(output, `manual-booking-${kind}-${width}.png`),
+          fullPage: true,
+        });
+      }
+    }
+    console.log(
+      "PASS manual connected/external form guidance, no hours acknowledgement, separate keyboard Review/Confirm, conflict draft retention and exact unknown retry at1440/375/320 (explicit fixtures only)",
     );
   }
   if (startPicker) {
