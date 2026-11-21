@@ -148,6 +148,10 @@ Run `npm run test:coach-media-integration -- --profile-editor --diagnose-storage
 
 For the accepted-request rescheduling regression, run `node scripts/rehearse-request-booking-rescheduling-database.mjs`. It checks the current migration chain in fresh and upgrade scratch databases, including an accepted request created before the fix, exact retained-row hashes and existing typed/legacy suites, then removes its own databases. It never migrates or resets the retained local or hosted database.
 
+### Connection request history validation
+
+Previous connection requests shows the latest ended request once per coach–athlete pair, with its original date, even after reconnection. Current pending/accepted consent remains separate. Run `npm run test:connection-history-db` for owned fresh/populated/rollback SQL and permission/paging checks (Node24/Docker55322); `node scripts/rehearse-connection-profile-links-ui.mjs` verifies dates, reconnection, keyboard and mobile/error behavior with isolated UI fixtures (Chrome/free3199). [Installation/recovery](supabase/README.md#latest-connection-request-cards) keeps all underlying attempts and notifications. Local validation does not deploy SQL.
+
 ### Connection request notification validation
 
 New incoming connection requests alert their recipient in the bell, for coaches and athletes; no email is sent. Run `npm run test:connection-request-notifications-db` for isolated fresh/populated migration, no-backfill/rollback, restricted send/read/version/privacy/concurrency and preservation checks (Node24/Docker55322; serial SQL rehearsal; retained app stopped). Run `npm run test:notifications-ui` for the shared bell’s desktop/mobile, keyboard, recipient links and explicit read/error behavior (Chrome/free3168; Auth/API fixtures). See [installation/recovery](supabase/README.md#connection-request-bell-notifications); local validation does not install retained or hosted SQL.

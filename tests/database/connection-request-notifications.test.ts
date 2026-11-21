@@ -14,7 +14,7 @@ import {
 const url = process.env.DATABASE_TEST_URL;
 const allowed =
   url &&
-  /^postgresql:\/\/postgres:postgres@127\.0\.0\.1:55322\/mov253_[a-f0-9]{12}_(fresh|upgrade)$/.test(
+  /^postgresql:\/\/postgres:postgres@127\.0\.0\.1:55322\/mov(?:253|255|257)_[a-f0-9]{12}_(fresh|upgrade)$/.test(
     url,
   );
 type Fixture = {

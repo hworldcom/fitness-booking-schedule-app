@@ -69,16 +69,33 @@ export function applyConnectionResult(
   role: ConnectionRole = "coach",
 ): ConnectionPages {
   const target = connectionSection(row, role);
+  // Active consent and terminal history advance independently. A late ended
+  // request may update history without replacing a newer accepted connection.
+  const newerKnownAttempt = CONNECTION_SECTIONS.some((section) =>
+    pages[section]?.items.some(
+      (item) =>
+        item.pairId === row.pairId && item.attemptNumber > row.attemptNumber,
+    ),
+  );
   return Object.freeze(
     Object.fromEntries(
       CONNECTION_SECTIONS.map((section) => {
         const page = pages[section];
         if (!page) return [section, null];
+        if (
+          section === "history" &&
+          (target !== "history" ||
+            page.items.some(
+              (item) =>
+                item.pairId === row.pairId &&
+                item.attemptNumber > row.attemptNumber,
+            ))
+        )
+          return [section, page];
         const remaining = page.items.filter(
           (item) =>
             item.id !== row.id &&
             !(
-              section !== "history" &&
               item.pairId === row.pairId &&
               item.attemptNumber <= row.attemptNumber
             ),
@@ -88,7 +105,10 @@ export function applyConnectionResult(
           Object.freeze({
             ...page,
             items: Object.freeze(
-              section === target ? [row, ...remaining] : remaining,
+              section === target &&
+                (section === "history" || !newerKnownAttempt)
+                ? [row, ...remaining]
+                : remaining,
             ),
           }),
         ];
@@ -105,6 +125,15 @@ export function connectionStatusLabel(status: ConnectionProjection["status"]) {
     withdrawn: "Withdrawn",
     removed: "Disconnected",
   }[status];
+}
+
+export function connectionRequestDate(createdAt: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(createdAt));
 }
 
 export function connectionHistoryStatus(row: ConnectionHistoryReference) {

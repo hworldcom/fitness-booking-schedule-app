@@ -70,6 +70,46 @@ export default function ConnectionProfileLinksFixture() {
         <button type="button" onClick={() => setUnavailable(true)}>
           Simulate unavailable read
         </button>
+        <button
+          type="button"
+          onClick={() =>
+            setPages((previous) =>
+              applyConnectionResult(
+                previous,
+                {
+                  ...coach,
+                  id: "92010000-0000-4000-8000-000000000005",
+                  attemptNumber: 2,
+                  status: "pending",
+                  canDisconnect: false,
+                  createdAt: "2026-11-20T23:30:00Z",
+                },
+                "athlete",
+              ),
+            )
+          }
+        >
+          Reconnect fixture
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            setPages((previous) =>
+              applyConnectionResult(
+                previous,
+                {
+                  ...coach,
+                  id: "92010000-0000-4000-8000-000000000005",
+                  attemptNumber: 2,
+                  createdAt: "2026-11-20T23:30:00Z",
+                },
+                "athlete",
+              ),
+            )
+          }
+        >
+          Accept reconnection fixture
+        </button>
       </div>
       <ConnectionLists
         role="athlete"
