@@ -35,22 +35,7 @@
   white-space: nowrap;
 }
 .notes-tabs {
-  display: flex;
-  gap: 1.5rem;
-  border-bottom: 1px solid #dce0d5;
-  margin-bottom: 1.5rem;
-}
-.notes-tabs button {
-  padding: 0.7rem 0.1rem;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: none;
-  color: #74796e;
-  font-weight: 600;
-}
-.notes-tabs button[aria-pressed="true"] {
-  color: #304b32;
-  border-bottom-color: #657d4c;
+  margin: 0 0 1.5rem;
 }
 .notes-grid {
   display: grid;

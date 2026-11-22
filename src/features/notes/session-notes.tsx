@@ -282,7 +282,10 @@ function NotesWorkspace({
         </span>
       </header>
       {shared?.viewerIsCoach && (
-        <nav className="notes-tabs" aria-label="Note visibility">
+        <nav
+          className="workspace-section-navigation notes-tabs"
+          aria-label="Note visibility"
+        >
           <button
             disabled={paused || !!editor}
             aria-pressed={kind === "shared"}

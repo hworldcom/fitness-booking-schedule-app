@@ -537,7 +537,10 @@ export function AvailabilityEditor({
         </span>
       </header>
       <div className="availability-toolbar">
-        <div className="availability-tabs" aria-label="Availability sections">
+        <div
+          className="workspace-section-navigation availability-tabs"
+          aria-label="Availability sections"
+        >
           {(["weekly", "dates"] as const).map((t) => (
             <button
               key={t}

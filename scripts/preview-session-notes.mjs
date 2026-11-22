@@ -507,7 +507,7 @@ try {
       });
       await page.goto(base + "/qa-notes-navigation?coach=false");
       await expect(
-        page.getByRole("link", { name: "← My training", exact: true }),
+        page.getByRole("link", { name: "← Bookings", exact: true }),
       ).toHaveAttribute("href", "/sessions");
       await page.goto(base + "/qa-notes-navigation?coach=true");
       await expect(

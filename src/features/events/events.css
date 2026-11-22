@@ -22,7 +22,7 @@
   line-height: 1.7;
   color: #4f6258;
 }
-.events-page a:not(.button) {
+.events-page a:not(.button, .workspace-section-navigation a) {
   color: #255844;
   text-underline-offset: 4px;
 }

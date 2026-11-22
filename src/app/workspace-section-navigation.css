@@ -1,39 +1,55 @@
 .workspace-section-navigation {
   display: flex;
   flex-wrap: wrap;
-  gap: 23px;
+  gap: 8px;
   margin: 24px 0 0;
-  border-bottom: 1px solid #dce3d5;
 }
 
-.workspace-section-navigation a {
-  display: flex;
+.workspace-section-navigation > :is(a, button) {
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 15px 2px 13px;
-  color: #7b8475;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 11px 16px;
+  border: 1px solid #b9c7b1;
+  border-radius: 10px;
+  background: #fff;
+  color: #3b5134;
   font-size: 13px;
   font-weight: 650;
-  border-bottom: 2px solid transparent;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
 }
 
-.workspace-section-navigation a > svg {
+.workspace-section-navigation > :is(a, button) > svg {
   flex-shrink: 0;
 }
 
-.workspace-section-navigation a[aria-current="page"] {
-  color: #314f2b;
-  border-color: #5a7c41;
+.workspace-section-navigation
+  > :is(a, button):hover:where(:not([aria-disabled="true"], :disabled)) {
+  background: #edf3e7;
+  border-color: #759364;
 }
 
-.workspace-section-navigation a:focus-visible {
+.workspace-section-navigation
+  > :is(a, button):is([aria-current="page"], [aria-pressed="true"]) {
+  background: #314f2b;
+  color: #fff;
+  border-color: #314f2b;
+  box-shadow: 0 1px 2px #22391d1a;
+}
+
+.workspace-section-navigation > :is(a, button):focus-visible {
   outline: 3px solid #759952;
   outline-offset: 3px;
 }
 
-.workspace-section-navigation a[aria-disabled="true"] {
+.workspace-section-navigation > :is([aria-disabled="true"], :disabled) {
   cursor: not-allowed;
-  opacity: 0.55;
+  opacity: 0.65;
 }
 
 .workspace-section-count {
@@ -47,6 +63,7 @@
   background: #e8f1d8;
   color: #304629;
   font-size: 12px;
+  flex-shrink: 0;
 }
 
 @media (max-width: 760px) {

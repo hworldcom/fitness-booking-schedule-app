@@ -38,25 +38,7 @@
   margin-bottom: 22px;
 }
 .availability-tabs {
-  display: flex;
-  padding: 4px;
-  background: #e9eddf;
-  border-radius: 12px;
-}
-.availability-tabs button {
-  min-height: 42px;
-  border: 0;
-  background: transparent;
-  padding: 10px 19px;
-  color: #687463;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 650;
-}
-.availability-tabs button[aria-pressed="true"] {
-  background: white;
-  color: #213b29;
-  box-shadow: 0 1px 4px #1d322417;
+  margin: 0;
 }
 .availability-fields {
   min-width: 0;
@@ -620,7 +602,6 @@
   }
   .availability-tabs button {
     flex: 1;
-    padding: 10px;
   }
   .availability-toolbar > button {
     margin-left: auto;
