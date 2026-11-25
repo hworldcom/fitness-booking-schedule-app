@@ -81,7 +81,6 @@ function draft(workspace: ReviewWorkspace) {
     attribution: "  Chosen public name  ",
     comment: " Helpful\r\ntraining ",
   });
-  workspace.preview(booking.coachSlug);
 }
 
 test("review entries exclude future/cancelled/malformed bookings and the API controls actual eligibility", async () => {
@@ -124,7 +123,7 @@ test("private responses are validated and stripped; malformed author/moderation 
     assert.equal(parseAuthorResult(invalid), null);
 });
 
-test("different eligible booking entries share one draft/review; explicit preview and consent are required each time", async () => {
+test("different eligible booking entries share one draft/review; fresh direct-publication consent is required each time", async () => {
   const { workspace, writes } = setup();
   await tick();
   workspace.ensure({ ...booking, id: "93180000-0000-4000-8000-000000000002" });
@@ -136,17 +135,20 @@ test("different eligible booking entries share one draft/review; explicit previe
     comment: "",
   });
   draft(workspace);
-  assert.equal(pair(workspace).draft?.comment, "Helpful\ntraining");
+  assert.equal(pair(workspace).draft?.comment, " Helpful\r\ntraining ");
   await workspace.publish(booking.coachSlug);
   assert.equal(writes.length, 0);
   workspace.consent(booking.coachSlug, true);
   workspace.edit(booking.coachSlug);
   assert.equal(pair(workspace).consent, false);
-  workspace.preview(booking.coachSlug);
   workspace.consent(booking.coachSlug, true);
   await workspace.publish(booking.coachSlug);
   assert.equal(writes.length, 1);
   assert.equal(writes[0].expectedRevision, 0);
+  assert.equal(
+    writes[0].action === "publish" && writes[0].comment,
+    "Helpful\ntraining",
+  );
   assert.equal(pair(workspace).saved?.review?.id, id);
   assert.equal(pair(workspace).draft, null);
   workspace.edit(booking.coachSlug);
@@ -177,7 +179,7 @@ test("uncertain writes retain the identical command, lock repeated clicks, survi
   workspace.change(booking.coachSlug, {
     comment: "Changed during uncertainty",
   });
-  assert.equal(pair(workspace).draft?.comment, "Helpful\ntraining");
+  assert.equal(pair(workspace).draft?.comment, " Helpful\r\ntraining ");
   await workspace.retry(booking.coachSlug);
   assert.equal(commands.length, 2);
   assert.deepEqual(commands[0], commands[1]);
@@ -200,7 +202,7 @@ test("stale edits keep drafts and require an explicit latest-revision choice plu
   current = ready({ ...row, revision: 2, comment: "Changed in another tab" });
   await workspace.publish(booking.coachSlug);
   assert.equal(pair(workspace).recovery, "conflict");
-  assert.equal(pair(workspace).draft?.comment, "Helpful\ntraining");
+  assert.equal(pair(workspace).draft?.comment, " Helpful\r\ntraining ");
   assert.equal(
     pair(workspace).saved?.review?.comment,
     "Changed in another tab",
@@ -290,7 +292,7 @@ test("lost access clears every pair/draft; disposed workspaces ignore late priva
   assert.deepEqual(pending.workspace.getSnapshot().pairs, {});
 });
 
-test("preview exposes only consented fields and form starts without account identity, with semantic rating/consent controls", async () => {
+test("direct publication exposes only consented fields and keeps semantic rating/consent controls", async () => {
   const markup = renderToStaticMarkup(
     createElement(ReviewPublication, {
       review: {
@@ -317,7 +319,7 @@ test("preview exposes only consented fields and form starts without account iden
     createElement(ReviewPanel, { pair: pair(workspace), workspace }),
   );
   assert.match(preview, /type="checkbox"/);
-  assert.doesNotMatch(preview, /checked=""/);
+  assert.doesNotMatch(preview, /<input[^>]*type="checkbox"[^>]*checked/);
   assert.match(preview, /disabled="">Publish review/);
   const invalidDraft = {
     ...pair(workspace),
@@ -368,4 +370,31 @@ test("older aggregate reads cannot overwrite a later withdrawal and failed publi
   assert.equal(pair(workspace).summary, "unavailable");
   await workspace.load(booking.coachSlug);
   assert.equal(pair(workspace).summary, null);
+});
+
+test("publish directly from edit requires fresh consent and keeps exact uncertain retries", async () => {
+  const { workspace, writes } = setup();
+  await tick();
+  workspace.edit(booking.coachSlug);
+  workspace.change(booking.coachSlug, {
+    rating: 5,
+    attribution: "Public athlete",
+    comment: "Helpful",
+  });
+  await workspace.publish(booking.coachSlug);
+  assert.equal(writes.length, 0);
+  workspace.consent(booking.coachSlug, true);
+  workspace.change(booking.coachSlug, { comment: "Updated" });
+  await workspace.publish(booking.coachSlug);
+  assert.equal(writes.length, 0);
+  workspace.consent(booking.coachSlug, true);
+  const html = renderToStaticMarkup(
+    createElement(ReviewPanel, { pair: pair(workspace), workspace }),
+  );
+  assert.equal(html.includes("Preview public review"), false);
+  assert.ok(html.includes("Publish review"));
+  await workspace.publish(booking.coachSlug);
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].action, "publish");
+  workspace.dispose();
 });

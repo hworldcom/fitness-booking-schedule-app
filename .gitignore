@@ -86,3 +86,7 @@ Thumbs.db
 # Retired standalone design prototypes (DEV0390)
 /previews/
 /docs/previews/
+
+# Optional standalone UX rehearsal retained locally (MOV-274)
+/scripts/rehearse-direct-submissions-ui.mjs
+/tests/fixtures/direct-submissions-ui.tsx

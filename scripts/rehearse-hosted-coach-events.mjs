@@ -314,11 +314,11 @@ function draft(p, title, days = 3, priceCents = 0, minimum = 2) {
 async function decision(page, label) {
   const path = new URL(page.url()).pathname;
   const button = page.getByRole("button", { name: label, exact: true });
-  await page
+  const checkbox = page
     .locator("form")
     .filter({ has: button })
-    .getByRole("checkbox")
-    .check();
+    .getByRole("checkbox");
+  if (await checkbox.count()) await checkbox.check();
   const [response] = await Promise.all([
     page.waitForResponse(
       (response) =>
@@ -559,14 +559,12 @@ try {
     const input = draft(coach, "paid UI session", 3, 1550);
     input.id = new URL(page.url()).searchParams.get("draftId");
     await fillDraft(page, input);
-    await page
-      .getByRole("button", { name: "Save draft and review", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Save draft", exact: true }).click();
     const detail = base + `/coach/events/${input.id}`;
     await page.waitForURL(detail);
     await page.reload();
     await expect(
-      page.getByRole("heading", { name: "Publication review", exact: true }),
+      page.getByRole("heading", { name: "Draft session", exact: true }),
     ).toBeVisible();
     assert.match(await page.locator("main").innerText(), /€15.50 per person/);
     assert.equal(
@@ -580,22 +578,18 @@ try {
     await page
       .getByLabel("Session title", { exact: true })
       .fill(input.title + " reviewed");
-    await page
-      .getByRole("button", { name: "Save draft and review", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Save draft", exact: true }).click();
     await page.waitForURL(detail);
     ownerQuery(
       `update app.coach_training_locations set public_name='DEV0239 updated fixture venue',updated_at=clock_timestamp() where id=${uuid(coach.venue)} and profile_id=${uuid(coach.profileId)};select true changed;`,
     );
-    await decision(page, "Publish session");
+    await decision(page, "Submit");
     await page.waitForURL(/issue=venue-changed/);
     await expect(
       page.getByRole("alert").filter({ hasText: "venue changed" }),
     ).toBeVisible();
     await page.getByRole("link", { name: "Edit draft", exact: true }).click();
-    await page
-      .getByRole("button", { name: "Save draft and review", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Save draft", exact: true }).click();
     await page.waitForURL(detail);
     const changed = (await command(coach, "detail", { id: input.id })).session;
     await command(coach, "save-draft", {
@@ -603,13 +597,13 @@ try {
       title: input.title + " newer revision",
       expectedRevision: changed.revision,
     });
-    await decision(page, "Publish session");
+    await decision(page, "Submit");
     await page.waitForURL(/issue=draft-changed/);
     await expect(
       page.getByRole("alert").filter({ hasText: "draft changed" }),
     ).toBeVisible();
     await page.goto(detail);
-    await decision(page, "Publish session");
+    await decision(page, "Submit");
     await page.waitForURL(detail);
     await expect(
       page.getByText("Waiting for coach confirmation", { exact: true }),
@@ -821,9 +815,7 @@ async function runRemaining({
     title: stale.title + " concurrent",
     expectedRevision: 1,
   });
-  await page
-    .getByRole("button", { name: "Save draft and review", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
   await expect(
     page.getByRole("alert").filter({ hasText: "session, roster" }),
   ).toBeVisible();
@@ -843,9 +835,7 @@ async function runRemaining({
   await owner.context.addCookies(
     other.cookies.map((cookie) => ({ ...cookie, url: base, sameSite: "Lax" })),
   );
-  await page
-    .getByRole("button", { name: "Save draft and review", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
   await expect(
     page.getByRole("alert").filter({ hasText: "signed-in account changed" }),
   ).toBeVisible();
@@ -921,7 +911,7 @@ async function runRemaining({
   await command(coach, "save-draft", overlap);
   const overlapUrl = base + `/coach/events/${overlap.id}`;
   await page.goto(overlapUrl);
-  await decision(page, "Publish session");
+  await decision(page, "Submit");
   await page.waitForURL(/issue=schedule-conflict/);
   await expect(
     page
@@ -937,7 +927,7 @@ async function runRemaining({
     (tx) => tx`select app.withdraw_owned_coach_availability(${slot}::uuid)`,
   );
   await page.goto(overlapUrl);
-  await decision(page, "Publish session");
+  await decision(page, "Submit");
   await page.waitForURL(overlapUrl);
   assert.equal(
     (await command(coach, "detail", { id: overlap.id })).session.status,
@@ -1040,9 +1030,7 @@ async function runRemaining({
     forwarded = true;
     await route.abort("failed");
   });
-  await page
-    .getByRole("button", { name: "Save draft and review", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
   await expect(
     page.getByRole("heading", {
       name: "Coach Events could not be verified",
@@ -1115,18 +1103,18 @@ async function runRemaining({
   const free = draft(coach, "native Free", 9, 0);
   await fillDraft(native.page, free);
   await native.page
-    .getByRole("button", { name: "Save draft and review", exact: true })
+    .getByRole("button", { name: "Save draft", exact: true })
     .focus();
   await native.page.keyboard.press("Enter");
   await native.page.waitForURL(/\/coach\/events\/[a-f0-9-]{36}$/);
   await expect(
     native.page.getByRole("heading", {
-      name: "Publication review",
+      name: "Draft session",
       exact: true,
     }),
   ).toBeVisible();
   assert.match(await native.page.locator("main").innerText(), /Free/);
-  await decision(native.page, "Publish session");
+  await decision(native.page, "Submit");
   await expect(
     native.page.getByRole("heading", {
       name: "Published session",

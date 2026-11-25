@@ -123,6 +123,42 @@ export async function reviewCoachBooking(
   throw Error("The booking change could not be reviewed");
 }
 
+// A direct Save still checks current fit. Publish the exact prepared command
+// before writing so an uncertain response can retry it without another preview.
+export async function submitCoachBooking(
+  command: CoachSessionCommand,
+  options: RequestOptions & {
+    onPrepared: (command: CoachSessionCommand, outsideHours: boolean) => void;
+  },
+) {
+  let prepared = command;
+  let outsideHours = false;
+  if (command.action === "override") {
+    const checked = await reviewCoachBooking(command, options);
+    outsideHours = checked.outsideWorkingHours;
+    prepared = { ...command, outsideHoursConfirmed: outsideHours };
+  }
+  options.onPrepared(prepared, outsideHours);
+  let result = await saveCoachBooking(prepared, options);
+  // Hours can change between the fit check and write. The same explicit Save
+  // authorizes that exception; a definitive rejection has committed no change.
+  if (
+    result.status === "outside-hours" &&
+    prepared.action === "override" &&
+    !outsideHours
+  ) {
+    outsideHours = true;
+    prepared = {
+      ...prepared,
+      commandId: crypto.randomUUID(),
+      outsideHoursConfirmed: true,
+    };
+    options.onPrepared(prepared, outsideHours);
+    result = await saveCoachBooking(prepared, options);
+  }
+  return result;
+}
+
 export async function reloadSavedBooking(
   bookingId: string,
   minimumRevision: number,

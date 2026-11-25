@@ -39,7 +39,7 @@ export function BookingStartPicker({
       className="booking-start-dialog"
       onClose={onCancel}
     >
-      <p>Apply selects the time. Review and Save confirm the booking change.</p>
+      <p>Apply selects the time. Save booking change submits the change.</p>
       <form
         onSubmit={(event) => {
           event.preventDefault();

@@ -278,6 +278,8 @@ export async function changeOwnedGroupEvent(
     };
     store[id] = current;
     write(store);
+    if (a.fault === "save-lost")
+      throw new Error("Fixture response lost after draft save");
     return ready({ outcome: "saved", session: current });
   }
   if (!current) return { status: "conflict" as const };
@@ -336,6 +338,8 @@ export async function changeOwnedGroupEvent(
   }
   store[id] = current;
   write(store);
+  if (command.action === "publish" && a.fault === "publish-lost")
+    throw new Error("Fixture response lost after publication");
   return ready({
     outcome:
       command.action === "publish"

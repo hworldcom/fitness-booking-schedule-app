@@ -17,7 +17,6 @@ import type { PrivateBookingProjection } from "@/domain/coach-bookings";
 import type { PublicReview } from "@/domain/coach-reviews";
 import {
   browserReviewTransport,
-  previewCommand,
   ReviewWorkspace,
   type PairWorkspace,
 } from "./review-workspace-model";
@@ -178,16 +177,11 @@ export function ReviewPanel({
   const { slug, saved, draft } = pair;
   const disabled =
     pair.busy || pair.loading || pair.readFailed || !!pair.recovery;
-  const command = previewCommand(pair);
   const review = saved?.review;
   return (
     <div className="athlete-review-panel" aria-busy={pair.busy || pair.loading}>
       <h3 ref={heading} tabIndex={-1}>
-        {pair.phase === "preview"
-          ? "Preview your review"
-          : pair.phase === "edit"
-            ? "Write your review"
-            : "Your review"}
+        {pair.phase === "edit" ? "Write your review" : "Your review"}
       </h3>
       <p>
         One review of this coach, across all your private sessions. You can edit
@@ -337,7 +331,7 @@ export function ReviewPanel({
           className="athlete-review-form"
           onSubmit={(event) => {
             event.preventDefault();
-            workspace.preview(slug);
+            void workspace.publish(slug);
           }}
         >
           <fieldset disabled={disabled}>
@@ -397,31 +391,10 @@ export function ReviewPanel({
             {[...draft.comment].length.toLocaleString("en-GB")} / 2,000
             characters. Avoid private contact or session details.
           </small>
-          <button className="button dark" type="submit" disabled={disabled}>
-            Preview public review
-          </button>
-          <button
-            className="button secondary"
-            type="button"
-            disabled={disabled}
-            onClick={() => workspace.discard(slug)}
-          >
-            Discard draft
-          </button>
-        </form>
-      )}
-      {draft && pair.phase === "preview" && command && (
-        <section
-          aria-label="Public review preview"
-          className="athlete-review-preview"
-        >
-          <h3>What people will see</h3>
-          <ReviewPublication
-            review={{ ...command, createdAt: "", updatedAt: "" }}
-          />
           <label className="athlete-review-consent">
             <input
               type="checkbox"
+              required
               checked={pair.consent}
               disabled={disabled}
               onChange={(event) =>
@@ -433,29 +406,26 @@ export function ReviewPanel({
               MOVX.
             </span>
           </label>
-          <div className="athlete-review-actions">
-            <button
-              className="button dark"
-              type="button"
-              disabled={disabled || !pair.consent || !saved?.eligible}
-              onClick={() => void workspace.publish(slug)}
-            >
-              {pair.busy
-                ? "Saving…"
-                : review?.published
-                  ? "Publish changes"
-                  : "Publish review"}
-            </button>
-            <button
-              className="button secondary"
-              type="button"
-              disabled={disabled}
-              onClick={() => workspace.edit(slug)}
-            >
-              Back to editing
-            </button>
-          </div>
-        </section>
+          <button
+            className="button dark"
+            type="submit"
+            disabled={disabled || !pair.consent || !saved?.eligible}
+          >
+            {pair.busy
+              ? "Saving…"
+              : review?.published
+                ? "Publish changes"
+                : "Publish review"}
+          </button>
+          <button
+            className="button secondary"
+            type="button"
+            disabled={disabled}
+            onClick={() => workspace.discard(slug)}
+          >
+            Discard draft
+          </button>
+        </form>
       )}
       {pair.summary && (
         <p className="athlete-review-summary" role="status">

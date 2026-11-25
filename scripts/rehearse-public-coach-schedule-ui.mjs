@@ -23,7 +23,6 @@ for (const entry of [
   "scripts",
   "supabase",
   "docs",
-  "tickets",
   "README.md",
   "AGENTS.md",
   "package.json",
@@ -137,15 +136,14 @@ try {
     await expect(page.getByTestId("fixture-ready")).toHaveText("Ready");
     await expect(times()).toHaveCount(18);
   }
-  async function review() {
-    await area()
-      .getByRole("button", { name: "Review request", exact: false })
-      .click();
-    await expect(page.getByRole("dialog")).toBeVisible();
+  async function expectSendReady() {
+    await expect(
+      area().getByRole("button", { name: "Send request", exact: true }),
+    ).toBeEnabled();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
   }
   async function send() {
-    await page
-      .getByRole("dialog")
+    await area()
       .getByRole("button", { name: "Send request", exact: true })
       .click();
   }
@@ -156,7 +154,7 @@ try {
     area().getByRole("button", { name: "Previous 7 days" }),
   ).toBeDisabled();
   await expect(
-    area().getByRole("button", { name: "Review request", exact: false }),
+    area().getByRole("button", { name: "Send request", exact: false }),
   ).toBeDisabled();
   assert.equal((await commands()).length, 0);
   for (const date of ["2026-10-23", "2026-10-30", "2026-11-06", "2026-11-13"]) {
@@ -183,7 +181,7 @@ try {
     .getByLabel("Venue", { exact: true })
     .selectOption("b0399000-0000-4000-8000-000000000002");
   await expect(
-    area().getByRole("button", { name: "Review request", exact: false }),
+    area().getByRole("button", { name: "Send request", exact: false }),
   ).toBeDisabled();
   await expect(times()).toHaveCount(18);
   await expect(times().first()).toHaveAccessibleName(/12:00/);
@@ -213,7 +211,7 @@ try {
   await control("Revise class details").click();
   await expect(times()).toHaveCount(18);
   await expect(
-    area().getByRole("button", { name: "Review request", exact: false }),
+    area().getByRole("button", { name: "Send request", exact: false }),
   ).toBeDisabled();
   record(
     "catalog revision changes clear old time/terms without inventing an offer",
@@ -285,20 +283,17 @@ try {
 
   await times().first().click();
   const reviewButton = area().getByRole("button", {
-    name: "Review request",
+    name: "Send request",
     exact: false,
   });
   await reviewButton.focus();
-  await page.keyboard.press("Enter");
-  await expect(page.getByRole("dialog")).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).not.toBeVisible();
   await expect(reviewButton).toBeFocused();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   assert.equal((await commands()).length, 0);
   await page
     .getByLabel("Fixture request result", { exact: true })
     .selectOption("unknown");
-  await review();
+  await expectSendReady();
   await send();
   await expect(control("Retry the same request")).toBeVisible();
   await expect(page.getByLabel("Session type", { exact: true })).toBeDisabled();
@@ -320,7 +315,7 @@ try {
   assert.equal(written.length, 3);
   assert.deepEqual(written[0], written[2]);
   record(
-    "keyboard review/Escape/focus, no automatic submission, exact same-command retries and coach-pending success",
+    "keyboard Send focus, no automatic submission, exact same-command retries and coach-pending success",
   );
 
   await control("Choose another time").click();
@@ -329,9 +324,8 @@ try {
     .getByLabel("Fixture request result", { exact: true })
     .selectOption("slow");
   await times().first().click();
-  await review();
-  await page
-    .getByRole("dialog")
+  await expectSendReady();
+  await area()
     .getByRole("button", { name: "Send request", exact: true })
     .click({ clickCount: 2 });
   await expect.poll(async () => (await commands()).length).toBe(4);
@@ -343,7 +337,7 @@ try {
     area().getByRole("heading", { name: /Request sent/ }),
   ).toHaveCount(0);
   await expect(
-    area().getByRole("button", { name: "Review request", exact: false }),
+    area().getByRole("button", { name: "Send request", exact: false }),
   ).toBeDisabled();
   assert.equal((await commands()).length, 4);
   record(
@@ -354,7 +348,7 @@ try {
     .selectOption("conflict");
   const oldName = await times().first().getAttribute("aria-label");
   await times().first().click();
-  await review();
+  await expectSendReady();
   await send();
   await expect(area()).toContainText("This time or class has changed");
   await expect(times()).toHaveCount(17);
@@ -362,14 +356,14 @@ try {
     area().getByRole("button", { name: oldName, exact: true }),
   ).toHaveCount(0);
   await expect(
-    area().getByRole("button", { name: "Review request", exact: false }),
+    area().getByRole("button", { name: "Send request", exact: false }),
   ).toBeDisabled();
   await control("Coach owner").click();
   await expect(times()).toHaveCount(17);
   await times().first().click();
   await expect(area()).toContainText("This is your coaching profile");
   await expect(
-    area().getByRole("button", { name: "Review request", exact: false }),
+    area().getByRole("button", { name: "Send request", exact: false }),
   ).toBeDisabled();
   for (const account of ["Changed account", "Unverified account", "Guest"]) {
     await control(account).click();
@@ -386,7 +380,7 @@ try {
   await expect(times()).toHaveCount(18);
   await expect(cards()).toHaveCount(7);
   await expect(
-    area().getByRole("button", { name: "Review request", exact: false }),
+    area().getByRole("button", { name: "Send request", exact: false }),
   ).toBeDisabled();
   record(
     "conflict refresh removes stale time; own-coach, account changes, guest concealment and safe date return",
@@ -402,7 +396,7 @@ try {
   const original = await area()
     .locator("li[data-slot-id]")
     .getAttribute("data-slot-id");
-  await review();
+  await expectSendReady();
   await send();
   await expect(
     area().getByText("Awaiting coach confirmation", { exact: true }).first(),
@@ -415,7 +409,7 @@ try {
   await page
     .getByLabel("Fixture request result", { exact: true })
     .selectOption("conflict");
-  await review();
+  await expectSendReady();
   await send();
   await expect(
     page.getByText("That hour is no longer available.", { exact: true }),
@@ -431,7 +425,7 @@ try {
   await times().filter({ hasText: "Requested" }).click();
   await expect(control("Withdraw request")).toBeVisible();
   record(
-    "legacy original IDs, actual venues, explicit request review, pending/withdrawal/conflict and week navigation",
+    "legacy original IDs, actual venues, direct request submission, pending/withdrawal/conflict and week navigation",
   );
 
   await control("Class booking").click();
@@ -479,18 +473,15 @@ try {
       path: path.join(output, `schedule-${width}.png`),
     });
     await times().first().click();
-    await review();
-    await expect(page.getByRole("dialog")).toBeVisible();
-    const dialogBox = await page.getByRole("dialog").boundingBox();
+    await expectSendReady();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    const sendBox = await area()
+      .getByRole("button", { name: "Send request", exact: true })
+      .boundingBox();
     assert.ok(
-      dialogBox && Math.abs(dialogBox.x + dialogBox.width / 2 - width / 2) < 2,
-      `dialog centered at ${width}`,
+      sendBox && sendBox.height >= 44,
+      `direct send target at ${width}`,
     );
-    assert.ok(
-      dialogBox.y >= 12 && dialogBox.y + dialogBox.height <= 909,
-      `dialog contained at ${width}`,
-    );
-    await page.keyboard.press("Escape");
     for (const scenario of ["empty", "retry"]) {
       await page
         .getByLabel("Fixture availability", { exact: true })
@@ -517,7 +508,7 @@ try {
     await expect(times()).toHaveCount(18);
   }
   record(
-    "1440/320/375/430-pixel layouts, 44-pixel controls, keyboard dialogs and empty/error/retry states",
+    "1440/320/375/430-pixel layouts, 44-pixel controls, keyboard controls and empty/error/retry states",
   );
   for (const [query, notice] of [
     ["?date=broken", "invalid"],
@@ -528,7 +519,7 @@ try {
     await expect(area()).toContainText(`That date is ${notice}`);
     await expect(area().locator(".seven-day-range")).toContainText("16 Oct");
     await expect(
-      area().getByRole("button", { name: "Review request", exact: false }),
+      area().getByRole("button", { name: "Send request", exact: false }),
     ).toBeDisabled();
   }
   record(
