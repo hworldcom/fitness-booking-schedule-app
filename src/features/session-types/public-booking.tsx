@@ -21,7 +21,6 @@ import {
   publicScheduleDateLabel,
   publicScheduleTimeRange,
 } from "@/features/coaches/public-schedule-model";
-import { SessionRequestReview } from "@/features/coaches/session-request-review";
 import "./session-types.css";
 
 export type PublicBookingTransport = Readonly<{
@@ -117,7 +116,6 @@ function BookingForm({
     time: SessionTime;
   } | null>(null);
   const selected = selectionState?.key === key ? selectionState.time : null;
-  const [reviewOpen, setReviewOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
@@ -158,7 +156,6 @@ function BookingForm({
       setPending(null);
       setSent(false);
       setMessage("");
-      setReviewOpen(false);
       setDateNotice(
         next.invalid
           ? "That date is invalid. Showing this week."
@@ -175,7 +172,6 @@ function BookingForm({
     setMessage("");
     setPending(null);
     setSent(false);
-    setReviewOpen(false);
   }
   useEffect(
     () => () => {
@@ -250,7 +246,6 @@ function BookingForm({
         setMessage("");
         setPending(null);
         setSent(false);
-        setReviewOpen(false);
         setDateNotice(
           context.invalid
             ? "That date is invalid. Showing this week."
@@ -304,14 +299,12 @@ function BookingForm({
       ) {
         setSent(true);
         setPending(null);
-        setReviewOpen(false);
         setMessage(
           "Request sent. Check My training for the coach’s confirmation.",
         );
       } else if (result?.status === "conflict") {
         setPending(null);
         setSelectionState(null);
-        setReviewOpen(false);
         setAttempt((value) => value + 1);
         setMessage(
           "This time or class has changed. Choose a current time from the refreshed week.",
@@ -322,7 +315,6 @@ function BookingForm({
       ) {
         setPending(null);
         setSelectionState(null);
-        setReviewOpen(false);
         setMessage(
           result?.status === "signed-out"
             ? "Sign in before requesting this class."
@@ -330,14 +322,12 @@ function BookingForm({
         );
         router.refresh();
       } else {
-        setReviewOpen(false);
         setMessage(
           "We couldn’t verify the request. Retry the same request or check My training before choosing another time.",
         );
       }
     } catch {
       if (view === generation.current) {
-        setReviewOpen(false);
         setMessage(
           "We couldn’t verify the request. Retry the same request or check My training before choosing another time.",
         );
@@ -510,7 +500,7 @@ function BookingForm({
             <p>
               {selected && type
                 ? `${type.name} · ${type.durationMinutes} min · ${catalog.locations.find((location) => location.id === locationId)?.name}`
-                : "You’ll review the details before sending a request."}
+                : "Choose a time to send a request. The coach must accept it before your session is confirmed."}
             </p>
             {own && (
               <p>
@@ -533,9 +523,9 @@ function BookingForm({
               type="button"
               className="button dark"
               disabled={!selected || own || status !== "ready"}
-              onClick={() => setReviewOpen(true)}
+              onClick={() => void request()}
             >
-              Review request →
+              Send request
             </button>
           ) : (
             <Link
@@ -560,14 +550,6 @@ function BookingForm({
           )}
         </p>
       )}
-      <SessionRequestReview
-        open={reviewOpen && !!selected}
-        onClose={() => setReviewOpen(false)}
-        onSubmit={() => void request()}
-        busy={sending}
-      >
-        {details}
-      </SessionRequestReview>
       {catalog.types.some((item) => item.format === "group") && (
         <section className="session-type-editor">
           <h3>Group classes</h3>

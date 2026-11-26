@@ -402,15 +402,13 @@ try {
   await cp.getByLabel("Venue", { exact: true }).selectOption(venue.id);
   await chooseStart(clock.target + "T14:00");
   await cp.getByLabel("Duration", { exact: true }).selectOption("90");
-  await cp.getByRole("button", { name: "Review session", exact: true }).click();
   await cp
-    .getByRole("button", { name: "Confirm session", exact: true })
+    .getByRole("button", { name: "Schedule session", exact: true })
     .click();
   await expect(cp).toHaveURL(/\/sessions\//);
   const manualId = cp.url().split("/").at(-1)!;
   await chooseStart(clock.target + "T14:15");
   await cp.getByLabel("Duration", { exact: true }).selectOption("75");
-  await cp.getByRole("button", { name: "Review change", exact: true }).click();
   await cp
     .getByRole("button", { name: "Save booking change", exact: true })
     .click();
@@ -432,7 +430,7 @@ try {
   await cp.locator('input[name="startsAt"]').fill(clock.target + "T20:00");
   await cp
     .getByRole("button", {
-      name: "Use type defaults · review before saving",
+      name: "Use type defaults",
       exact: true,
     })
     .click();
@@ -449,18 +447,15 @@ try {
   await cp.locator('input[name="minimumParticipants"]').fill("1");
   await cp.locator('input[name="maximumParticipants"]').fill("3");
   await cp.locator('input[name="price"]').fill("0");
-  await cp
-    .getByRole("button", { name: "Save draft and review", exact: true })
-    .click();
+  await cp.getByRole("button", { name: "Save draft", exact: true }).click();
   await expect(
-    cp.getByRole("button", { name: "Publish session", exact: true }),
+    cp.getByRole("button", { name: "Submit", exact: true }),
   ).toBeVisible();
   const publishForm = cp.locator("form").filter({
-    has: cp.getByRole("button", { name: "Publish session", exact: true }),
+    has: cp.getByRole("button", { name: "Submit", exact: true }),
   });
-  await publishForm.locator('input[name="acknowledge"]').check();
   await publishForm
-    .getByRole("button", { name: "Publish session", exact: true })
+    .getByRole("button", { name: "Submit", exact: true })
     .click();
   await expect(
     cp.getByText("Published session", { exact: true }),

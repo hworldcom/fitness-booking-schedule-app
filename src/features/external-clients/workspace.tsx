@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type {
   ExternalClient,
@@ -71,7 +71,10 @@ function Workspace({
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
     [version, setVersion] = useState(0),
-    [review, setReview] = useState<Record<string, unknown> | null>(null),
+    [pendingAction, setPendingAction] = useState<Record<
+      string,
+      unknown
+    > | null>(null),
     [unknown, setUnknown] = useState(false),
     [clientPending, setClientPending] = useState(false);
   useEffect(() => {
@@ -142,9 +145,18 @@ function Workspace({
           : null,
       );
   }
-  function invitationReview(action: string) {
-    if (!detail) return;
-    setReview({
+  const invitationLock = useRef(false);
+  const [clientDirty, setClientDirty] = useState(false);
+  function sendInvitation(action: string) {
+    if (
+      !detail ||
+      invitationLock.current ||
+      unknown ||
+      clientPending ||
+      (clientDirty && action !== "revoke")
+    )
+      return;
+    void invite({
       action,
       operationId: crypto.randomUUID(),
       externalClientId: detail.client.id,
@@ -154,23 +166,25 @@ function Workspace({
     });
     setMessage("");
   }
-  async function invite() {
-    if (!review) return;
+  async function invite(command = pendingAction) {
+    if (!command || invitationLock.current) return;
+    invitationLock.current = true;
+    setPendingAction(command);
     setBusy(true);
     try {
       const r = await (
         await fetch("/api/coach/external-clients?invitation=true", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify(review),
+          body: JSON.stringify(command),
         })
       ).json();
       if (r.status === "ready") {
-        setReview(null);
+        setPendingAction(null);
         setUnknown(false);
         setVersion((v) => v + 1);
         setMessage(
-          review.action === "revoke"
+          command.action === "revoke"
             ? "Invitation revoked."
             : "Invitation saved. Check its delivery status below.",
         );
@@ -178,7 +192,7 @@ function Workspace({
         ["invalid", "conflict", "forbidden", "signed-out"].includes(r.status)
       ) {
         setUnknown(false);
-        setReview(null);
+        setPendingAction(null);
         setMessage(
           "Invitation wasn’t changed. Reload current details and check your email, access and resend limit (one minute between sends; five per day).",
         );
@@ -192,6 +206,7 @@ function Workspace({
       setUnknown(true);
       setMessage("Invitation outcome is unverified. Retry this exact action.");
     } finally {
+      invitationLock.current = false;
       setBusy(false);
     }
   }
@@ -259,8 +274,9 @@ function Workspace({
           <ClientForm
             key={`${c.id}:${c.revision}`}
             client={c}
+            onDirtyChange={setClientDirty}
             onSaved={saved}
-            disabled={busy || !!review}
+            disabled={busy || !!pendingAction}
             onPendingChange={pendingChanged}
           />
           <section
@@ -299,8 +315,14 @@ function Workspace({
                   <button
                     type="button"
                     className="button dark"
-                    disabled={!c.email || busy || !!review || clientPending}
-                    onClick={() => invitationReview(inv ? "resend" : "send")}
+                    disabled={
+                      !c.email ||
+                      busy ||
+                      !!pendingAction ||
+                      clientPending ||
+                      clientDirty
+                    }
+                    onClick={() => sendInvitation(inv ? "resend" : "send")}
                   >
                     {inv ? "Resend invitation" : "Invite athlete"}
                   </button>
@@ -308,14 +330,17 @@ function Workspace({
                     <button
                       type="button"
                       className="button secondary"
-                      disabled={busy || !!review || clientPending}
-                      onClick={() => invitationReview("revoke")}
+                      disabled={busy || !!pendingAction || clientPending}
+                      onClick={() => sendInvitation("revoke")}
                     >
                       Revoke invitation
                     </button>
                   )}
                 </div>
-                <p>You’ll confirm the email address before sending.</p>
+                <p>
+                  Invitations use the saved email above. Save any edited athlete
+                  details before sending or resending.
+                </p>
                 {inv && (
                   <p>
                     Sending again replaces older pending links. Wait at least
@@ -335,45 +360,15 @@ function Workspace({
                 . Expires {new Date(inv.expiresAt).toLocaleDateString("en-GB")}.
               </p>
             )}
-            {review && (
-              <div role="region" aria-label="Review invitation">
-                <h3>
-                  {review.action === "revoke"
-                    ? "Revoke this invitation?"
-                    : "Confirm invitation email"}
-                </h3>
-                <p>
-                  {review.action === "revoke"
-                    ? "The current link will stop granting access."
-                    : `An invitation will be sent to ${c.email}. Accepting connects this athlete’s original sessions and shared notes to their verified account.`}
-                </p>
-                <div className="session-type-toolbar">
-                  <button
-                    type="button"
-                    className="button dark"
-                    disabled={busy}
-                    onClick={() => void invite()}
-                  >
-                    {busy
-                      ? "Saving…"
-                      : unknown
-                        ? "Retry exact action"
-                        : review.action === "revoke"
-                          ? "Confirm revocation"
-                          : "Send email invitation"}
-                  </button>
-                  {!unknown && (
-                    <button
-                      type="button"
-                      className="button secondary"
-                      disabled={busy}
-                      onClick={() => setReview(null)}
-                    >
-                      Cancel
-                    </button>
-                  )}
-                </div>
-              </div>
+            {unknown && pendingAction && (
+              <button
+                type="button"
+                className="button dark"
+                disabled={busy}
+                onClick={() => void invite()}
+              >
+                {busy ? "Saving…" : "Retry exact invitation"}
+              </button>
             )}
           </section>
           <section

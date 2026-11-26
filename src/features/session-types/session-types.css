@@ -80,6 +80,29 @@
 .session-booking-change {
   scroll-margin-top: 95px;
 }
+.session-booking-change > form {
+  scroll-margin-top: 95px;
+}
+.session-booking-change :is(input, select, button, a) {
+  scroll-margin-block: 95px;
+}
+@media (max-width: 760px) {
+  .session-booking-change :is(input, select, button, a) {
+    scroll-margin-bottom: calc(
+      88px + var(--workspace-switch-clearance, 0px) +
+        env(safe-area-inset-bottom)
+    );
+  }
+}
+.session-booking-change .external-client-picker {
+  margin: 20px 0;
+  border-block: 1px solid #d5dbe2;
+}
+.session-booking-change .external-client-picker .session-type-editor {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
 .session-booking-feedback {
   scroll-margin-block: 95px;
   overflow-wrap: anywhere;

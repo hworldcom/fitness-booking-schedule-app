@@ -5,6 +5,7 @@ import {
   reloadSavedBooking,
   saveCoachBooking,
   reviewCoachBooking,
+  submitCoachBooking,
 } from "@/features/session-types/booking-client";
 import type { CoachSessionCommand } from "@/domain/typed-sessions";
 
@@ -230,4 +231,92 @@ test("server review checks the exact proposed interval before asking for a worki
       request: request({ status: "reviewed", outsideWorkingHours: true }, 409),
     }),
   );
+});
+
+test("direct reschedule checks fit and warns without another user confirmation", async () => {
+  const sent: CoachSessionCommand[] = [];
+  let prepared: CoachSessionCommand | undefined;
+  const result = await submitCoachBooking(command, {
+    onPrepared(value, outside) {
+      prepared = value;
+      assert.equal(outside, true);
+    },
+    request: async (url, init) => {
+      if (String(url).includes("review=true"))
+        return Response.json({ status: "reviewed", outsideWorkingHours: true });
+      sent.push(JSON.parse(String(init?.body)));
+      return Response.json(saved);
+    },
+  });
+  assert.equal(result.status, "saved");
+  assert.equal(sent.length, 1);
+  assert.deepEqual(sent[0], { ...command, outsideHoursConfirmed: true });
+  assert.deepEqual(prepared, sent[0]);
+});
+test("changed hours between fit and Save are handled within the same direct submission", async () => {
+  const sent: CoachSessionCommand[] = [];
+  const warnings: boolean[] = [];
+  const result = await submitCoachBooking(command, {
+    onPrepared(_value, outside) {
+      warnings.push(outside);
+    },
+    request: async (url, init) => {
+      if (String(url).includes("review=true"))
+        return Response.json({
+          status: "reviewed",
+          outsideWorkingHours: false,
+        });
+      sent.push(JSON.parse(String(init?.body)));
+      return sent.length === 1
+        ? Response.json({ status: "outside-hours" }, { status: 409 })
+        : Response.json(saved);
+    },
+  });
+  assert.equal(result.status, "saved");
+  assert.deepEqual(warnings, [false, true]);
+  assert.equal(sent.length, 2);
+  assert.equal(
+    sent[1].action === "override" && sent[1].outsideHoursConfirmed,
+    true,
+  );
+  assert.notEqual(sent[1].commandId, sent[0].commandId);
+});
+test("failed direct fit sends no write; uncertain write exposes the exact retry command", async () => {
+  let prepared: CoachSessionCommand | undefined;
+  let writes = 0;
+  await assert.rejects(
+    submitCoachBooking(command, {
+      onPrepared(value) {
+        prepared = value;
+      },
+      request: async () => {
+        throw Error("offline");
+      },
+    }),
+  );
+  assert.equal(prepared, undefined);
+  await assert.rejects(
+    submitCoachBooking(command, {
+      onPrepared(value) {
+        prepared = value;
+      },
+      request: async (url) => {
+        if (String(url).includes("review=true"))
+          return Response.json({
+            status: "reviewed",
+            outsideWorkingHours: true,
+          });
+        writes++;
+        throw Error("lost response");
+      },
+    }),
+  );
+  assert.equal(writes, 1);
+  assert.deepEqual(prepared, { ...command, outsideHoursConfirmed: true });
+  await saveCoachBooking(prepared!, {
+    request: async (_url, init) => {
+      assert.deepEqual(JSON.parse(String(init?.body)), prepared);
+      return Response.json(saved);
+    },
+  });
 });

@@ -520,7 +520,7 @@ try {
   await coachPage.getByLabel("Minimum participants", { exact: true }).fill("1");
   await coachPage.getByLabel("Maximum participants", { exact: true }).fill("2");
   await coachPage
-    .getByRole("button", { name: "Save draft and review", exact: true })
+    .getByRole("button", { name: "Save draft", exact: true })
     .click();
   await expect(coachPage).toHaveURL(/\/coach\/events\/[a-f0-9-]{36}$/);
   const ownerPath = new URL(coachPage.url()).pathname;
@@ -531,11 +531,12 @@ try {
     const form = area
       .locator("form")
       .filter({ has: page.getByRole("button", { name: label, exact: true }) });
-    await form.getByRole("checkbox").check();
+    if (await form.getByRole("checkbox").count())
+      await form.getByRole("checkbox").check();
     await button.focus();
     await page.keyboard.press("Enter");
   };
-  await decide(coachPage, "Publish session");
+  await decide(coachPage, "Submit");
   await expect(
     coachPage.getByRole("heading", { name: "Published session", exact: true }),
   ).toBeVisible();

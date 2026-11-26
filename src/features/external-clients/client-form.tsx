@@ -1,16 +1,18 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { clientFields, type ExternalClient } from "@/domain/external-clients";
 export function ClientForm({
   client,
   onSaved,
   disabled = false,
   onPendingChange,
+  onDirtyChange,
 }: {
   client?: ExternalClient;
   onSaved: (client: ExternalClient) => void;
   disabled?: boolean;
   onPendingChange?: (pending: boolean) => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const [name, setName] = useState(client?.name ?? ""),
     [email, setEmail] = useState(client?.email ?? ""),
@@ -18,6 +20,11 @@ export function ClientForm({
     [message, setMessage] = useState(""),
     [current, setCurrent] = useState<ExternalClient | null>(null);
   const [command, setCommand] = useState<Record<string, unknown> | null>(null);
+  useEffect(() => {
+    onDirtyChange?.(
+      name !== (client?.name ?? "") || email !== (client?.email ?? ""),
+    );
+  }, [name, email, client?.name, client?.email, onDirtyChange]);
   async function save() {
     const fields = clientFields({ name, email });
     if (!fields) {

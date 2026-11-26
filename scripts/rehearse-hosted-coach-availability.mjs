@@ -127,24 +127,8 @@ async function run() {
       .getByRole("button", { name: "Date overrides", exact: true })
       .click();
   }
-  async function review() {
-    const began = Date.now();
-    await page
-      .getByRole("button", { name: "Review changes", exact: true })
-      .click();
-    await expect(
-      dialog().getByRole("heading", {
-        name: "Review availability changes",
-        exact: true,
-      }),
-    ).toBeVisible({ timeout: 90000 });
-    console.log(
-      `Review completed in ${((Date.now() - began) / 1000).toFixed(1)} seconds.`,
-    );
-  }
   async function save() {
-    await review();
-    await dialog()
+    await page
       .getByRole("button", { name: "Save availability", exact: true })
       .click();
     await expect(
@@ -344,11 +328,12 @@ async function run() {
   await page
     .getByLabel("Date override range 1 venue", { exact: true })
     .selectOption(venueB);
-  await review();
+  await save();
+  const impact = page.locator(".availability-saved-impact");
   await expect(
-    dialog().getByText("2 pending requests", { exact: true }),
+    impact.getByText("2 pending requests", { exact: true }),
   ).toBeVisible();
-  const warning = dialog().getByRole("link", {
+  const warning = impact.getByRole("link", {
     name: "View group session in a new tab",
     exact: true,
   });
@@ -364,16 +349,13 @@ async function run() {
   const [before] = await h.ownerQuery(
     `select count(*)::int n from app.coach_booking_requests where slot_id=${h.uuid(pending.id)} and status='pending';`,
   );
-  assert.equal(before.n, 2, "Preview does not close requests.");
+  assert.equal(before.n, 0, "Direct save closes the pending requests once.");
   await expect(
-    dialog().getByRole("link", {
+    impact.getByRole("link", {
       name: "View private session in a new tab",
       exact: true,
     }),
   ).toHaveAttribute("href", `/coach?view=bookings#coach-booking-${booking}`);
-  await dialog()
-    .getByRole("button", { name: "Save availability", exact: true })
-    .click();
   await expect(
     page.getByText("Availability saved.", { exact: false }),
   ).toBeVisible();
@@ -515,11 +497,10 @@ async function run() {
       await route.abort("failed");
     } else await route.continue();
   });
-  await review();
-  await dialog()
+  await page
     .getByRole("button", { name: "Save availability", exact: true })
     .click();
-  await expect(dialog().getByRole("alert")).toHaveText(
+  await expect(page.getByRole("alert")).toHaveText(
     /The save response was interrupted/,
   );
   assert.ok(
@@ -528,7 +509,7 @@ async function run() {
   );
   await page.unroute("**/coach?**");
   const revision = (await getPolicy()).revision;
-  await dialog()
+  await page
     .getByRole("button", { name: "Retry same save", exact: true })
     .click();
   await expect(
@@ -561,10 +542,10 @@ async function run() {
       tx`select app.save_owned_effective_coach_availability(${tx.json({ operationId: randomUUID(), expectedRevision: revision, kind: "dates", dates: [{ date: plus(8), mode: "unavailable", hours: [] }] })})`,
   );
   await page
-    .getByRole("button", { name: "Review changes", exact: true })
+    .getByRole("button", { name: "Save availability", exact: true })
     .click();
   await expect(
-    page.getByText(/Availability changed elsewhere\. Your draft is unchanged/),
+    page.getByText(/Availability changed elsewhere\. Your draft was kept/),
   ).toBeVisible();
   await expect(
     page.getByLabel("Monday range 1 end", { exact: true }),
@@ -572,7 +553,7 @@ async function run() {
   h.record(
     "DEV0253: real committed-but-interrupted save recovers one receipt/revision; altered replay and stale baseline preserve the draft",
   );
-  phase = "inactive venue and unavailable preview preserve draft";
+  phase = "inactive venue and unavailable save preserve draft";
   const venueC = await h.asActor(
     owner,
     async (tx) =>
@@ -594,7 +575,7 @@ async function run() {
   );
   const beforeInvalid = (await getPolicy()).revision;
   await page
-    .getByRole("button", { name: "Review changes", exact: true })
+    .getByRole("button", { name: "Save availability", exact: true })
     .click();
   await expect(
     page.getByText(
@@ -619,22 +600,24 @@ async function run() {
     if (
       route.request().method() === "POST" &&
       Array.isArray(payload) &&
-      payload[2] === true
+      payload[2] === false
     )
       await route.abort("failed");
     else await route.continue();
   });
   await page
-    .getByRole("button", { name: "Review changes", exact: true })
+    .getByRole("button", { name: "Save availability", exact: true })
     .click();
-  await expect(page.getByText(/The review could not be loaded/)).toBeVisible();
+  await expect(
+    page.getByText(/The save response was interrupted/),
+  ).toBeVisible();
   await expect(
     page.getByLabel("Monday range 1 end", { exact: true }),
   ).toHaveValue("14:00");
   assert.equal((await getPolicy()).revision, beforeInvalid);
   await page.unroute("**/coach?**");
   h.record(
-    "DEV0253: inactive venue and interrupted preview retain the unsaved draft without changing SQL revision",
+    "DEV0253: inactive venue and interrupted direct save retain the draft without changing SQL revision",
   );
   phase = "public thirty dates and sign-in return";
   await h.probePublicBoundaries(owner, athlete);
@@ -976,7 +959,7 @@ async function exerciseClosedSelection(owner, athlete) {
   );
 }
 async function inactiveVenueScenario() {
-  phase = "inactive venue after review";
+  phase = "inactive venue before direct save";
   await h.start();
   const owner = await h.person("Owner", true),
     venue = await raceVenue(owner);
@@ -1003,16 +986,6 @@ async function exerciseInactiveVenueRace(owner, page, venue) {
   await page
     .getByLabel("Monday range 1 venue", { exact: true })
     .selectOption(venue);
-  await page
-    .getByRole("button", { name: "Review changes", exact: true })
-    .click();
-  const dialog = page.getByRole("dialog");
-  await expect(
-    dialog.getByRole("heading", {
-      name: "Review availability changes",
-      exact: true,
-    }),
-  ).toBeVisible({ timeout: 90000 });
   const [state] = await h.ownerQuery(
     `select to_jsonb(updated_at)#>>'{}' stamp from app.coach_training_locations where id=${h.uuid(venue)};`,
   );
@@ -1024,7 +997,7 @@ async function exerciseInactiveVenueRace(owner, page, venue) {
   const [before] = await h.ownerQuery(
     `select coalesce((select revision from app.coach_availability_policies where profile_id=${h.uuid(owner.profileId)}),0) revision,(select count(*)::int from app.coach_availability_operations where profile_id=${h.uuid(owner.profileId)}) receipts;`,
   );
-  await dialog
+  await page
     .getByRole("button", { name: "Save availability", exact: true })
     .click();
   await expect(
@@ -1050,7 +1023,7 @@ async function exerciseInactiveVenueRace(owner, page, venue) {
   );
   assert.deepEqual(saved, before);
   h.record(
-    "DEV0253: venue deactivated after review returns invalid, keeps the editable draft and adds no revision or receipt",
+    "DEV0253: venue deactivated before direct save returns invalid, keeps the editable draft and adds no revision or receipt",
   );
   return before;
 }

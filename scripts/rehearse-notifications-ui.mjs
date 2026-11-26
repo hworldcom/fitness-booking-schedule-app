@@ -705,14 +705,37 @@ try {
             exact: false,
           }),
         ).toBeVisible();
-        await page
-          .getByLabel("Athlete type", { exact: true })
-          .selectOption(kind);
-        await page
-          .getByLabel(kind === "platform" ? "Athlete" : "External athlete", {
+        await expect(
+          page.getByLabel("Athlete type", { exact: true }),
+        ).toHaveCount(0);
+        const athlete = page.getByLabel("Athlete", { exact: true });
+        await expect(athlete.locator('option[value=""]')).toHaveText(
+          "Choose athlete",
+        );
+        await expect(
+          athlete.getByRole("option", {
+            name: "Add external athlete",
             exact: true,
-          })
-          .selectOption(fixtureId);
+          }),
+        ).toHaveAttribute("value", "external");
+        assert.equal(
+          await athlete.evaluate(
+            (el) =>
+              el.validity.valueMissing &&
+              el.form?.getAttribute("aria-labelledby") ===
+                "booking-change-heading",
+          ),
+          true,
+          "Empty athlete selection participates in native booking-form validation",
+        );
+        await athlete.selectOption(
+          kind === "platform" ? fixtureId : "external",
+        );
+        if (kind === "external")
+          await page
+            .getByLabel("External athlete", { exact: true })
+            .selectOption(fixtureId);
+        assert.equal(await page.locator("form form").count(), 0);
         await page
           .getByLabel("Session type", { exact: true })
           .selectOption(fixtureId);
@@ -729,28 +752,28 @@ try {
         await picker
           .getByRole("button", { name: "Apply date and time", exact: true })
           .click();
-        const review = page.getByRole("button", {
-          name: "Review session",
+        const confirm = page.getByRole("button", {
+          name: "Schedule session",
           exact: true,
         });
-        await review.focus();
-        await page.keyboard.press("Enter");
-        const confirmation = page.getByRole("region", {
-          name: "Review booking change",
-          exact: true,
-        });
-        await expect(confirmation).toBeFocused();
-        await expect(confirmation).toContainText("12:30");
         await expect(page.getByRole("checkbox")).toHaveCount(0);
+        assert.equal(posts.length, 0, "Selecting terms must not submit");
+        // Changing the selected participant must not submit a booking.
+        await athlete.selectOption(
+          kind === "platform" ? "external" : fixtureId,
+        );
         assert.equal(
           posts.length,
           0,
-          "Review must not save or require working hours",
+          "Switching athletes must not create contacts or bookings",
         );
-        const confirm = confirmation.getByRole("button", {
-          name: "Confirm session",
-          exact: true,
-        });
+        await athlete.selectOption(
+          kind === "platform" ? fixtureId : "external",
+        );
+        if (kind === "external")
+          await page
+            .getByLabel("External athlete", { exact: true })
+            .selectOption(fixtureId);
         await confirm.focus();
         await page.keyboard.press("Enter");
         await expect(
@@ -763,6 +786,11 @@ try {
         assert.equal(
           posts[0][kind === "platform" ? "athleteId" : "externalClientId"],
           fixtureId,
+        );
+        assert.equal(
+          posts[0][kind === "platform" ? "externalClientId" : "athleteId"],
+          undefined,
+          "Only the selected participant kind is sent",
         );
         assert.equal(posts[0].outsideHoursConfirmed, undefined);
         await expect(
@@ -778,12 +806,13 @@ try {
           exact: true,
         });
         await expect(retry).toBeVisible();
+        await expect(athlete).toBeDisabled();
         await retry.click();
         await expect.poll(() => posts.length).toBe(3);
         assert.deepEqual(
           posts[2],
-          posts[0],
-          "unknown recovery retains the exact original reviewed command",
+          posts[1],
+          "unknown recovery retains the exact submitted command",
         );
         await expect(retry).toBeEnabled();
         assert.equal(
@@ -799,7 +828,7 @@ try {
       }
     }
     console.log(
-      "PASS manual connected/external form guidance, no hours acknowledgement, separate keyboard Review/Confirm, conflict draft retention and exact unknown retry at1440/375/320 (explicit fixtures only)",
+      "PASS manual connected/external form guidance, no hours acknowledgement, direct keyboard submission, conflict draft retention and exact unknown retry at1440/375/320 (explicit fixtures only)",
     );
   }
   if (startPicker) {

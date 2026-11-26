@@ -92,20 +92,24 @@ export function SessionHistoryPreviewContent({
         </p>
       </header>
       <nav
-        className="history-preview-tabs"
+        className="workspace-section-navigation history-preview-tabs"
         aria-label="Private session sections"
       >
         <a
           href={historyPreviewHref("upcoming")}
           aria-current={view === "upcoming" ? "page" : undefined}
         >
-          Upcoming <span>{groups.upcoming.length}</span>
+          Upcoming{" "}
+          <span className="workspace-section-count">
+            {groups.upcoming.length}
+          </span>
         </a>
         <a
           href={historyPreviewHref("past")}
           aria-current={view === "past" ? "page" : undefined}
         >
-          Past sessions <span>{groups.past.length}</span>
+          Past sessions{" "}
+          <span className="workspace-section-count">{groups.past.length}</span>
         </a>
         <a
           href={historyPreviewHref("requests")}

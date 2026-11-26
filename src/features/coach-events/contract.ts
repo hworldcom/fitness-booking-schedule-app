@@ -21,7 +21,12 @@ export const DRAFT_FIELDS = [
 
 export type DraftValues = Record<(typeof DRAFT_FIELDS)[number], string>;
 
-export type DraftFormState = { issue: string | null; values?: DraftValues };
+export type DraftFormState = {
+  issue: string | null;
+  values?: DraftValues;
+  revision?: number;
+  pending?: Record<string, string>;
+};
 
 export function ownerEventId(value: string) {
   const command = parseGroupSessionCommand({

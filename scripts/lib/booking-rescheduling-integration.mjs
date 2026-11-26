@@ -282,22 +282,6 @@ export async function rehearseBookingRescheduling({
       .getByLabel("Date override range 1 start", { exact: true })
       .selectOption("11:00");
     await coach.page
-      .getByRole("button", { name: "Review changes", exact: true })
-      .click();
-    const availabilityReview = coach.page.getByRole("dialog", {
-      name: "Review availability changes",
-      exact: true,
-    });
-    await expect(
-      availabilityReview.getByRole("heading", {
-        name: "These sessions stay scheduled",
-        exact: true,
-      }),
-    ).toBeVisible();
-    await expect(availabilityReview).toContainText(
-      "Changing availability does not cancel or move them.",
-    );
-    await availabilityReview
       .getByRole("button", { name: "Save availability", exact: true })
       .click();
     await expect(
@@ -400,29 +384,12 @@ export async function rehearseBookingRescheduling({
       coach.page.getByLabel("Session type", { exact: true }),
     ).toHaveValue(type.id);
     await chooseStart(day.date + "T11:00");
-    const reviewButton = coach.page.getByRole("button", {
-      name: "Review change",
-      exact: true,
-    });
-    await reviewButton.evaluate((el) => el.scrollIntoView({ block: "end" }));
-    await reviewButton.click();
-    const review = coach.page.getByRole("region", {
-      name: "Review booking change",
-      exact: true,
-    });
-    // Check before focusing/clicking Save: Playwright's automatic scrolling can
-    // otherwise hide a confirmation appended below the phone viewport.
-    await expect(review).toBeFocused();
-    await expect(
-      coach.page.getByRole("heading", {
-        name: "Confirm schedule change",
-        exact: true,
-      }),
-    ).toBeInViewport();
+    const review = coach.page.locator(".session-booking-change");
     const save = coach.page.getByRole("button", {
       name: "Save booking change",
       exact: true,
     });
+    await save.focus();
     await expect(save).toBeInViewport();
     assert.equal(
       await save.evaluate((el) => {
@@ -436,7 +403,6 @@ export async function rehearseBookingRescheduling({
       true,
       "Mobile navigation must not cover the Save target",
     );
-    await coach.page.keyboard.press("Tab");
     await expect(save).toBeFocused();
     for (const width of [1440, 375, 320]) {
       await coach.page.setViewportSize({ width, height: 1000 });
@@ -508,7 +474,6 @@ export async function rehearseBookingRescheduling({
     await expect(feedback).toBeFocused();
     await expect(feedback).toBeInViewport();
     await coach.page.unroute("**/api/session-bookings?coach=true");
-    await reviewButton.click();
     const releaseSave = Promise.withResolvers(),
       lateSaveDone = Promise.withResolvers();
     const releaseRead = Promise.withResolvers(),
@@ -716,7 +681,6 @@ export async function rehearseBookingRescheduling({
       "Save progress/errors stay visible; stalled committed POST and refresh recover after real15s deadlines, late replies stay fenced, exact retry creates one revision/email each and original request/booking/plan survive",
     );
     await chooseStart(day.date + "T12:00");
-    await reviewButton.click();
     await save.click();
     await expect(feedback).toContainText("Session saved.");
     await expect(feedback).not.toContainText("Checking");
@@ -812,7 +776,6 @@ export async function rehearseBookingRescheduling({
     );
 
     await coach.page.goto(base + "/coach/sessions/" + bookingId);
-    await reviewButton.click();
     await expect(review).toBeVisible();
     await expect(save).toBeEnabled();
     await expect(
@@ -847,29 +810,23 @@ export async function rehearseBookingRescheduling({
         ],
       );
     await setHours(policyBefore.revision, ["11:00"]);
-    await save.click();
-    await expect(
-      coach.page.getByRole("heading", {
-        name: "Outside your working hours",
-        exact: true,
-      }),
-    ).toBeVisible();
-    await expect(
-      coach.page.getByLabel("Reschedule outside my saved working hours", {
-        exact: true,
-      }),
-    ).not.toBeChecked();
-    await expect(save).toBeDisabled();
+    const currentForRace = (await api(coach, "?bookingId=" + bookingId)).data
+      .detail;
+    const rejectedOutside = await api(coach, "?coach=true", {
+      ...command,
+      commandId: randomUUID(),
+      expectedRevision: 2,
+      startsAt: currentForRace.startsAt,
+      outsideHoursConfirmed: false,
+    });
+    assert.equal(rejectedOutside.status, 409);
     assert.equal(
       (await api(coach, "?bookingId=" + bookingId)).data.detail.revision,
       2,
     );
-    await coach.page
-      .getByRole("button", { name: "Cancel review", exact: true })
-      .click();
     await setHours(policyBefore.revision + 1, ["11:00", "12:00"]);
     pass(
-      "a valid in-hours review becoming outside-hours before Save cannot commit; the actual response asks for a fresh unchecked acknowledgement and no extra revision/email",
+      "the low-level API still rejects a missing outside-hours flag without an extra revision/email; direct Save intent is covered by client race tests",
     );
     const [hoursBeforeException] =
       await database`select to_jsonb(p) policy,to_jsonb(d) dates from app.coach_availability_policies p join app.coach_availability_date_overrides d using(run_id,profile_id) where p.profile_id=${coach.profileId}::uuid and d.local_date=${day.date}::date`;
@@ -971,44 +928,33 @@ export async function rehearseBookingRescheduling({
     for (const minute of ["15", "30"]) {
       await chooseStart(day.date + "T19:" + minute);
       await expect(start).not.toHaveAttribute("aria-invalid", "true");
-      await reviewButton.focus();
-      await coach.page.keyboard.press("Enter");
-      await expect(
-        coach.page.getByRole("heading", {
-          name: "Outside your working hours",
-          exact: true,
-        }),
-      ).toBeVisible();
-      await coach.page
-        .getByRole("button", { name: "Cancel review", exact: true })
-        .click();
+      assert.equal(
+        (await api(coach, "?bookingId=" + bookingId)).data.detail.revision,
+        2,
+      );
     }
     assert.equal(
       (await api(coach, "?bookingId=" + bookingId)).data.detail.revision,
       2,
     );
     pass(
-      "quarter-hour picker at1440/375/320 applies or discards selection with check/cross/keyboard/focus and zero review/save requests; server rejects off-grid and applied19:15/19:30 reach real outside-hours review without saving",
+      "quarter-hour picker at1440/375/320 applies or discards selection with check/cross/keyboard/focus and zero review/save requests; server rejects off-grid and applied19:15/19:30 remain editable without saving",
     );
     await chooseStart(day.date + "T19:00");
     await coach.page.getByLabel("Duration", { exact: true }).selectOption("75");
-    await reviewButton.click();
-    const acknowledgement = coach.page.getByLabel(
-      "Reschedule outside my saved working hours",
-      { exact: true },
-    );
     await expect(
-      coach.page.getByRole("heading", {
-        name: "Outside your working hours",
+      coach.page.getByRole("button", { name: /^Review / }),
+    ).toHaveCount(0);
+    await expect(
+      coach.page.getByLabel("Reschedule outside my saved working hours", {
         exact: true,
       }),
-    ).toBeVisible();
-    await expect(acknowledgement).not.toBeChecked();
-    await expect(save).toBeDisabled();
+    ).toHaveCount(0);
     for (const width of [1440, 375, 320]) {
       await coach.page.setViewportSize({ width, height: 1000 });
-      await acknowledgement.focus();
-      await expect(acknowledgement).toBeFocused();
+      await save.focus();
+      await expect(save).toBeEnabled();
+      await expect(save).toBeFocused();
       assert.equal(
         await coach.page.evaluate(
           () => document.documentElement.scrollWidth > innerWidth,
@@ -1016,50 +962,13 @@ export async function rehearseBookingRescheduling({
         false,
       );
       await review.screenshot({
-        path: path.join(output, `outside-hours-review-${width}.png`),
+        path: path.join(output, `outside-hours-direct-${width}.png`),
       });
     }
-    await coach.page
-      .getByRole("button", { name: "Cancel review", exact: true })
-      .click();
-    await expect(reviewButton).toBeFocused();
     assert.equal(
       (await api(coach, "?bookingId=" + bookingId)).data.detail.revision,
       2,
     );
-    await reviewButton.click();
-    await expect(acknowledgement).not.toBeChecked();
-    await acknowledgement.focus();
-    await coach.page.keyboard.press("Space");
-    await expect(acknowledgement).toBeChecked();
-    await expect(acknowledgement).toBeFocused();
-    await start.click();
-    await picker.getByLabel("Minute", { exact: true }).selectOption("30");
-    await picker
-      .getByRole("button", {
-        name: "Cancel date and time selection",
-        exact: true,
-      })
-      .click();
-    await expect(acknowledgement).toBeChecked();
-    await expect(save).toBeEnabled();
-    await expect(start).toContainText("19:00");
-    await chooseStart(day.date + "T19:15");
-    await expect(review).toHaveCount(0);
-    await reviewButton.click();
-    await expect(acknowledgement).not.toBeChecked();
-    await expect(save).toBeDisabled();
-    await chooseStart(day.date + "T19:00");
-    await reviewButton.click();
-    await acknowledgement.check();
-    await coach.page.getByLabel("Duration", { exact: true }).selectOption("60");
-    await reviewButton.click();
-    await expect(acknowledgement).not.toBeChecked();
-    await expect(save).toBeDisabled();
-    await coach.page.getByLabel("Duration", { exact: true }).selectOption("75");
-    await reviewButton.click();
-    await expect(acknowledgement).not.toBeChecked();
-    await acknowledgement.check();
     await save.click();
     await expect(feedback).toContainText("Session saved.");
     const changed = await api(coach, "?bookingId=" + bookingId);
@@ -1095,7 +1004,7 @@ export async function rehearseBookingRescheduling({
       );
     }
     pass(
-      "outside-hours19:00/75 review requires unchecked explicit acknowledgement; cancel/field changes save nothing, desktop/375/320 keyboard fits, confirmed third change preserves regular hours and sends exactly one athlete/coach local receipt",
+      "outside-hours19:00/75 saves directly without Review or checkbox; desktop/375/320 keyboard fits, third change preserves regular hours and sends exactly one athlete/coach local receipt",
     );
     await athleteBell(bookingId, "changed", 375);
     await coach.page.goto(base + "/coach?view=bookings");

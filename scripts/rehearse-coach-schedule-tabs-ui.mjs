@@ -599,7 +599,7 @@ try {
       await expect(nav()).toBeVisible();
     }
     await open(`/coach/bookings/new?externalClientId=${id}`);
-    await expect(page.getByLabel("Athlete type", { exact: true })).toHaveValue(
+    await expect(page.getByLabel("Athlete", { exact: true })).toHaveValue(
       "external",
     );
     await expect(
@@ -644,7 +644,7 @@ try {
       emptyClients = true;
       await open(tabs[3][1]);
       await page
-        .getByLabel("Athlete type", { exact: true })
+        .getByLabel("Athlete", { exact: true })
         .selectOption("external");
       await expect(
         picker().getByText(
@@ -686,6 +686,11 @@ try {
       await addClient().focus();
       await page.keyboard.press("Enter");
       await expect(page.getByLabel("Name", { exact: true })).toBeFocused();
+      assert.equal(
+        await page.locator("form form").count(),
+        0,
+        "Contact and booking forms must remain separate",
+      );
       await expect(closeClient()).toHaveAttribute("aria-expanded", "true");
       await closeClient().scrollIntoViewIfNeeded();
       await expect(closeClient()).toBeVisible();
@@ -710,9 +715,31 @@ try {
     await open(`/coach/bookings/new?externalClientId=${id}`);
     await addClient().click();
     await page.getByLabel("Name", { exact: true }).fill("New picker client");
-    await page
-      .getByRole("button", { name: "Save athlete", exact: true })
-      .click();
+    const saveClient = page.getByRole("button", {
+      name: "Save athlete",
+      exact: true,
+    });
+    await saveClient.scrollIntoViewIfNeeded();
+    await expect(saveClient).toBeInViewport({ ratio: 1 });
+    await page.screenshot({
+      path: path.join(output, "375-external-client-save.png"),
+      fullPage: false,
+    });
+    await expect
+      .poll(
+        () =>
+          saveClient.evaluate((el) => {
+            const box = el.getBoundingClientRect();
+            const hit = document.elementFromPoint(
+              box.x + box.width / 2,
+              box.y + box.height / 2,
+            );
+            return hit === el || el.contains(hit);
+          }),
+        { timeout: 15000 },
+      )
+      .toBe(true);
+    await saveClient.click();
     await expect(
       page.getByRole("button", { name: "Retry exact save", exact: true }),
     ).toBeVisible();

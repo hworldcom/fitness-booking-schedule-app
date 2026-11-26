@@ -75,7 +75,7 @@ export function CoachEventDetail({
         <EventStatus session={session} />
         <p>
           {session.status === "draft"
-            ? "Review every term before you publish. This draft is private and blocks no coach time."
+            ? "This draft is private and blocks no coach time. Edit it or submit it to publish for registration."
             : "These are the published terms. Corrections require cancelling this session and creating a new draft; registrations never transfer."}
         </p>
       </header>
@@ -83,9 +83,7 @@ export function CoachEventDetail({
       <div className="coach-event-detail-grid">
         <section className="coach-event-panel" aria-label="Session terms">
           <h2>
-            {session.status === "draft"
-              ? "Publication review"
-              : "Published session"}
+            {session.status === "draft" ? "Draft session" : "Published session"}
           </h2>
           <p className="coach-event-description">
             {session.description || "No additional description."}
@@ -117,7 +115,7 @@ export function CoachEventDetail({
                   scope={context.scope}
                   revision={session.revision}
                   intent="publish"
-                  label="Publish session"
+                  label="Submit"
                   acknowledgement="I reviewed the terms above. Publishing freezes them and reserves my coach time; the session still needs my manual confirmation."
                 />
               ) : (

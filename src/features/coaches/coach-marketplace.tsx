@@ -27,7 +27,6 @@ import {
   publicScheduleSlots,
 } from "@/domain/public-coach-schedule";
 import { SevenDaySchedule } from "./seven-day-schedule";
-import { SessionRequestReview } from "./session-request-review";
 import { publicScheduleTimeRange } from "./public-schedule-model";
 import "./public-schedule.css";
 
@@ -171,7 +170,6 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
     selection.dates.includes(calendarDate(slot.startsAt)),
   );
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
-  const [reviewOpen, setReviewOpen] = useState(false);
   const selectedSlot = slots.find((slot) => slot.id === selectedSlotId);
   const signIn =
     "/sign-in?returnTo=" +
@@ -257,7 +255,6 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
       });
     } finally {
       setBusyKey(null);
-      setReviewOpen(false);
     }
   }
 
@@ -458,11 +455,15 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
                       type="button"
                       className="button secondary"
                       disabled={busyKey !== null}
-                      onClick={() => setReviewOpen(true)}
+                      onClick={() =>
+                        void runAction("request:" + slot.id, () =>
+                          actions.request(slot.id),
+                        )
+                      }
                     >
                       {busyKey === "request:" + slot.id
                         ? "Saving request…"
-                        : "Review request"}
+                        : "Send request"}
                     </button>
                   ) : props.actor.status === "unavailable" ? (
                     <button type="button" className="button secondary" disabled>
@@ -479,41 +480,10 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
           </ol>
         ) : (
           <p className="seven-day-notice">
-            Choose a time above to review the session and its training place.
+            Choose a time above. The coach must accept your request before the
+            session is confirmed.
           </p>
         )}
-        <SessionRequestReview
-          open={reviewOpen && !!selectedSlot}
-          onClose={() => setReviewOpen(false)}
-          busy={busyKey !== null}
-          onSubmit={() => {
-            if (
-              selectedSlot &&
-              props.actor.status === "authorized" &&
-              !isOwnSchedule &&
-              !pendingBySlot.has(selectedSlot.id)
-            )
-              void runAction("request:" + selectedSlot.id, () =>
-                actions.request(selectedSlot.id),
-              );
-          }}
-        >
-          {selectedSlot && (
-            <>
-              <p>
-                <strong>Private session · 60 minutes</strong>
-              </p>
-              <p>
-                {slotDay(selectedSlot)} · {slotTime(selectedSlot)} Berlin time
-              </p>
-              <p>
-                {selectedSlot.location.name}
-                <br />
-                {selectedSlot.location.label}
-              </p>
-            </>
-          )}
-        </SessionRequestReview>
         <form
           action={
             props.schedulePath ??

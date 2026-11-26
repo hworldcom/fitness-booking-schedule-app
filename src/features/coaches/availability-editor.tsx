@@ -183,7 +183,7 @@ export function AvailabilityEditor({
     ),
   );
   const [dateTouched, setDateTouched] = useState(false);
-  const [busy, setBusy] = useState<"preview" | "save" | "load" | null>(null);
+  const [busy, setBusy] = useState<"save" | "load" | null>(null);
   const [message, setMessage] = useState<{
     kind: "error" | "success";
     text: string;
@@ -191,10 +191,6 @@ export function AvailabilityEditor({
   const [copy, setCopy] = useState<{
     source: number;
     targets: readonly number[];
-  } | null>(null);
-  const [review, setReview] = useState<{
-    command: EffectiveAvailabilityCommand;
-    result: SavedProjection;
   } | null>(null);
   const [savedImpact, setSavedImpact] = useState<SavedProjection | null>(null);
   const [uncertain, setUncertain] =
@@ -225,7 +221,7 @@ export function AvailabilityEditor({
       });
     } catch {}
   }
-  const dirty = weekDirty || dateDirty || !!uncertain || !!review;
+  const dirty = weekDirty || dateDirty || !!uncertain;
   const dirtyRef = useRef(dirty);
   useEffect(() => {
     dirtyRef.current = dirty;
@@ -240,7 +236,6 @@ export function AvailabilityEditor({
     weekStash.current = AVAILABILITY_DAYS.map(() => []);
     setRanges([]);
     setDates([]);
-    setReview(null);
     setUncertain(null);
     setSavedImpact(null);
     setMessage(null);
@@ -359,7 +354,6 @@ export function AvailabilityEditor({
       ),
     );
     setDateTouched(false);
-    setReview(null);
     clearFeedback();
   }
   async function reload() {
@@ -406,48 +400,24 @@ export function AvailabilityEditor({
       dates: dates.map((date) => ({ date, mode, hours })),
     };
   }
-  async function preview() {
+  function saveCurrent() {
     if (!data || busy || uncertain) return;
-    setMessage(null);
     setSavedImpact(null);
     if (tab === "dates") setDateTouched(true);
-    let next: EffectiveAvailabilityCommand;
     try {
-      next = command();
+      void save(command());
     } catch (error) {
       afterSave.current = null;
       setMessage({
         kind: "error",
-        text: error instanceof Error ? error.message : "Review these ranges.",
+        text: error instanceof Error ? error.message : "Check these ranges.",
       });
-      return;
-    }
-    setBusy("preview");
-    try {
-      const result = await actions.change(next, data.scope, true);
-      if (result.status === "denied") clearAccess();
-      else if (result.status !== "ready") {
-        afterSave.current = null;
-        setMessage({ kind: "error", text: result.message });
-      } else if (result.result.outcome === "conflict") {
-        afterSave.current = null;
-        setMessage({
-          kind: "error",
-          text: "Availability changed elsewhere. Your draft is unchanged. Reload the saved version before reviewing a new save.",
-        });
-      } else setReview({ command: next, result: result.result });
-    } catch {
-      afterSave.current = null;
-      setMessage({
-        kind: "error",
-        text: "The review could not be loaded. Your draft is still here; no availability was saved by this preview.",
-      });
-    } finally {
-      setBusy(null);
     }
   }
+  const saveLock = useRef(false);
   async function save(next: EffectiveAvailabilityCommand) {
-    if (!data || busy) return;
+    if (!data || busy || saveLock.current) return;
+    saveLock.current = true;
     setBusy("save");
     setUncertain(next);
     setMessage(null);
@@ -459,12 +429,10 @@ export function AvailabilityEditor({
       else if (response.status === "invalid") {
         afterSave.current = null;
         setUncertain(null);
-        setReview(null);
         setMessage({ kind: "error", text: response.message });
       } else if (response.result.outcome === "conflict") {
         afterSave.current = null;
         setUncertain(null);
-        setReview(null);
         setMessage({
           kind: "error",
           text: "Availability changed elsewhere. Your draft was kept. Reload the saved version before making a new save.",
@@ -480,7 +448,6 @@ export function AvailabilityEditor({
           weekStash.current = weeklyRanges(updated.weeklyHours);
         setLatestRevision((known) => Math.max(known, updated.revision));
         setUncertain(null);
-        setReview(null);
         setDateTouched(false);
         setSavedImpact(response.result);
         setMessage({
@@ -503,6 +470,7 @@ export function AvailabilityEditor({
         text: "The save response was interrupted. It may have been applied. Retry the same save to check its recorded outcome.",
       });
     } finally {
+      saveLock.current = false;
       setBusy(null);
     }
   }
@@ -537,7 +505,10 @@ export function AvailabilityEditor({
         </span>
       </header>
       <div className="availability-toolbar">
-        <div className="availability-tabs" aria-label="Availability sections">
+        <div
+          className="workspace-section-navigation availability-tabs"
+          aria-label="Availability sections"
+        >
           {(["weekly", "dates"] as const).map((t) => (
             <button
               key={t}
@@ -805,7 +776,8 @@ export function AvailabilityEditor({
                   })}
                   <small>
                     Existing bookings, group reservations and manually closed
-                    hours stay protected. Review shows the current save impact.
+                    hours stay protected. Any effects on requests are shown
+                    after saving.
                   </small>
                 </div>
               )}
@@ -900,10 +872,10 @@ export function AvailabilityEditor({
           disabled={
             disabled || (tab === "weekly" ? !weekDirty : past || !dates.length)
           }
-          onClick={() => void preview()}
+          onClick={saveCurrent}
         >
           <Save size={16} />
-          {busy === "preview" ? "Preparing review…" : "Review changes"}
+          {busy === "save" ? "Saving…" : "Save availability"}
         </button>
       </footer>
       {savedImpact && (
@@ -972,54 +944,6 @@ export function AvailabilityEditor({
           </div>
         </AvailabilityDialog>
       )}
-      {review && (
-        <AvailabilityDialog
-          title="Review availability changes"
-          busy={!!busy}
-          onClose={() => {
-            setReview(null);
-            afterSave.current = null;
-          }}
-        >
-          <p>
-            {review.command.kind === "weekly"
-              ? "Save the complete weekly schedule?"
-              : `${review.command.dates.length} date(s) will use ${review.command.dates[0].mode === "unavailable" ? "all day unavailable" : review.command.dates[0].mode === "weekly" ? "the current normal week" : "the selected custom hours"} across all venues.`}
-          </p>
-          <RetainedSessions result={review.result} />
-          {message?.kind === "error" && (
-            <p role="alert" className="availability-notice error">
-              {message.text}
-            </p>
-          )}
-          {uncertain && !busy && (
-            <p>Retry the exact save to verify its outcome.</p>
-          )}
-          <div className="availability-dialog-actions">
-            <button
-              className="button secondary"
-              disabled={!!busy || !!uncertain}
-              onClick={() => {
-                setReview(null);
-                afterSave.current = null;
-              }}
-            >
-              Keep editing
-            </button>
-            <button
-              className="button dark"
-              disabled={!!busy}
-              onClick={() => void save(uncertain ?? review.command)}
-            >
-              {busy === "save"
-                ? "Saving…"
-                : uncertain
-                  ? "Retry same save"
-                  : "Save availability"}
-            </button>
-          </div>
-        </AvailabilityDialog>
-      )}
       {navigation && (
         <AvailabilityDialog
           title={
@@ -1063,10 +987,10 @@ export function AvailabilityEditor({
                 afterSave.current = navigation;
                 setNavigation(null);
                 if (uncertain) void save(uncertain);
-                else void preview();
+                else saveCurrent();
               }}
             >
-              {uncertain ? "Verify save" : "Review & save"}
+              {uncertain ? "Verify save" : "Save and continue"}
             </button>
           </div>
         </AvailabilityDialog>

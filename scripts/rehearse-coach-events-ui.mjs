@@ -147,11 +147,11 @@ try {
   };
   const decision = async (label) => {
     const button = page.getByRole("button", { name: label, exact: true });
-    await page
+    const ack = page
       .locator("form")
       .filter({ has: button })
-      .getByRole("checkbox")
-      .check();
+      .getByRole("checkbox");
+    if (await ack.count()) await ack.check();
     await button.click();
   };
   await open();
@@ -185,9 +185,7 @@ try {
   await page
     .getByLabel("Price per person (EUR)", { exact: true })
     .fill("15.50");
-  await page
-    .getByRole("button", { name: "Save draft and review", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
   await page
     .getByRole("alert")
     .filter({ hasText: "Check all fields" })
@@ -197,28 +195,24 @@ try {
     "Fixture new footwork",
   );
   await page.getByLabel("Minimum participants", { exact: true }).fill("2");
-  await page
-    .getByRole("button", { name: "Save draft and review", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
   await page.waitForURL(/\/coach\/events\/[a-f0-9-]{36}$/);
   const savedPath = new URL(page.url()).pathname;
   await page
-    .getByRole("heading", { name: "Publication review", exact: true })
+    .getByRole("heading", { name: "Draft session", exact: true })
     .waitFor();
   assert.match(await page.locator("main").innerText(), /€15.50 per person/);
   assert.match(await page.locator("main").innerText(), /18:00/);
   assert.equal(await page.locator("main script").count(), 0);
   report(
-    "draft validation retains fields; real Server Action redirects to review with Berlin time, literal description and exact EUR terms (fixture service)",
+    "draft validation retains fields; real Server Action redirects to saved draft with Berlin time, literal description and exact EUR terms (fixture service)",
   );
   await page.getByRole("link", { name: "Edit draft", exact: true }).click();
   await page
     .getByLabel("Session title", { exact: true })
     .fill("Fixture reviewed footwork");
   await cookie("fault", "save-conflict");
-  await page
-    .getByRole("button", { name: "Save draft and review", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
   await page
     .getByRole("alert")
     .filter({ hasText: "session, roster" })
@@ -228,12 +222,10 @@ try {
     "Fixture reviewed footwork",
   );
   await cookie("fault", "none");
-  await page
-    .getByRole("button", { name: "Save draft and review", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
   await page.waitForURL(base + savedPath);
   await cookie("fault", "schedule-conflict");
-  await decision("Publish session");
+  await decision("Submit");
   await page.waitForURL(/issue=schedule-conflict/);
   await page
     .getByRole("alert")
@@ -245,12 +237,12 @@ try {
   );
   await cookie("fault", "venue-changed");
   await open(savedPath);
-  await decision("Publish session");
+  await decision("Submit");
   await page.waitForURL(/issue=venue-changed/);
   await page.getByRole("alert").filter({ hasText: "venue changed" }).waitFor();
   await cookie("fault", "none");
   await open(savedPath);
-  await decision("Publish session");
+  await decision("Submit");
   await page.waitForURL(base + savedPath);
   await page
     .getByRole("heading", { name: "Published session", exact: true })
@@ -263,6 +255,61 @@ try {
   assert.equal(new URL(page.url()).pathname, savedPath);
   report(
     "stale saves retain proposed fields; publication conflict/venue recovery and frozen published terms",
+  );
+  for (const fault of ["schedule-conflict", "save-lost", "publish-lost"]) {
+    await cookie("fault", fault);
+    await open("/coach/events/new");
+    await page
+      .getByLabel("Session title", { exact: true })
+      .fill("Direct Submit " + fault);
+    await page
+      .getByLabel("Starts at", { exact: true })
+      .fill("2027-09-21T18:00");
+    await page.getByLabel("Ends at", { exact: true }).fill("2027-09-21T19:00");
+    await page
+      .getByLabel("Coach decision deadline", { exact: true })
+      .fill("2027-09-20T18:00");
+    const formPath = page.url();
+    await page.getByRole("button", { name: "Submit", exact: true }).focus();
+    await page.keyboard.press("Enter");
+    if (fault === "schedule-conflict") {
+      await page
+        .getByRole("alert")
+        .filter({ hasText: "overlaps your private availability" })
+        .waitFor();
+      assert.equal(page.url(), formPath);
+      assert.equal(
+        await page.getByLabel("Session title", { exact: true }).isEnabled(),
+        true,
+      );
+      await cookie("fault", "none");
+      await page.getByRole("button", { name: "Submit", exact: true }).click();
+    } else {
+      const retry = page.getByRole("button", {
+        name: "Retry same submission",
+        exact: true,
+      });
+      await retry.waitFor();
+      assert.equal(
+        await page.getByLabel("Session title", { exact: true }).isDisabled(),
+        true,
+      );
+      await retry.click();
+    }
+    await page
+      .getByRole("heading", { name: "Published session", exact: true })
+      .waitFor();
+    const store = JSON.parse(await readFile(env.DEV0239_FIXTURE_STORE, "utf8"));
+    assert.equal(
+      Object.values(store).filter((x) => x.title === "Direct Submit " + fault)
+        .length,
+      1,
+      "Recovery retains one original group",
+    );
+  }
+  await cookie("fault", "none");
+  report(
+    "direct Submit handles known publication conflict and lost draft/publication responses without duplicate groups",
   );
   await open(`/coach/events/${original}`);
   await cookie("fault", "approval");
@@ -398,9 +445,7 @@ try {
     .getByLabel("Coach decision deadline", { exact: true })
     .fill("2027-07-31T18:00");
   await cookie("actor", "other");
-  await page
-    .getByRole("button", { name: "Save draft and review", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
   await page
     .getByRole("alert")
     .filter({ hasText: "signed-in account changed" })
@@ -473,9 +518,7 @@ try {
     .getByLabel("Coach decision deadline", { exact: true })
     .fill("2027-08-19T18:00");
   await np.getByLabel("Minimum participants", { exact: true }).fill("20");
-  await np
-    .getByRole("button", { name: "Save draft and review", exact: true })
-    .focus();
+  await np.getByRole("button", { name: "Save draft", exact: true }).focus();
   await np.keyboard.press("Enter");
   await np.getByRole("alert").filter({ hasText: "Check all fields" }).waitFor();
   assert.equal(
@@ -483,29 +526,13 @@ try {
     "Fixture native free session",
   );
   await np.getByLabel("Minimum participants", { exact: true }).fill("2");
-  await np
-    .getByRole("button", { name: "Save draft and review", exact: true })
-    .focus();
+  await np.getByRole("button", { name: "Submit", exact: true }).focus();
   await np.keyboard.press("Enter");
   await np.waitForURL(/\/coach\/events\/[a-f0-9-]{36}$/);
   await np
-    .getByRole("heading", { name: "Publication review", exact: true })
-    .waitFor();
-  assert.match(await np.locator("main").innerText(), /Free/);
-  const publish = np.getByRole("button", {
-    name: "Publish session",
-    exact: true,
-  });
-  await np
-    .locator("form")
-    .filter({ has: publish })
-    .getByRole("checkbox")
-    .check();
-  await publish.focus();
-  await np.keyboard.press("Enter");
-  await np
     .getByRole("heading", { name: "Published session", exact: true })
     .waitFor();
+  assert.match(await np.locator("main").innerText(), /Free/);
   const cancel = np.getByRole("button", {
     name: "Cancel session",
     exact: true,
@@ -520,7 +547,7 @@ try {
   await np.getByText("Cancelled", { exact: true }).waitFor();
   await native.close();
   report(
-    "four responsive widths, keyboard skip focus and no-JavaScript validation retention/Free draft/review/publication/cancellation through native Enter submits",
+    "four responsive widths, keyboard skip focus and no-JavaScript validation retention/direct Free publication/cancellation through native Enter submits",
   );
   assert.deepEqual(errors, []);
   console.log(

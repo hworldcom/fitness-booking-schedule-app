@@ -211,11 +211,9 @@ export default async function Page({searchParams}:{searchParams:Promise<{view?:s
       page.getByText("My private notes", { exact: true }),
     ).toHaveCount(0);
     await expect(
-      page.getByRole("link", { name: "← My training", exact: true }),
+      page.getByRole("link", { name: "← Bookings", exact: true }),
     ).toHaveAttribute("href", "/sessions/preview?view=past");
-    await page
-      .getByRole("link", { name: "← My training", exact: true })
-      .click();
+    await page.getByRole("link", { name: "← Bookings", exact: true }).click();
     await expect(page).toHaveURL(/\/sessions\/preview\?view=past$/);
     await expect(
       page.getByRole("heading", { name: "Past sessions", exact: true }),
@@ -292,7 +290,7 @@ export default async function Page({searchParams}:{searchParams:Promise<{view?:s
       page.getByRole("region", { name: "Session notes and videos" }),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "← My training", exact: true }),
+      page.getByRole("link", { name: "← Bookings", exact: true }),
     ).toHaveAttribute("href", "/sessions");
     await page.goto(base + "/sessions/preview?view=past");
     foreign = true;

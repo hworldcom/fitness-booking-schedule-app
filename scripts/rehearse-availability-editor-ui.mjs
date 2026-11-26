@@ -102,18 +102,15 @@ try {
       .filter({ hasText: "Ready" })
       .waitFor();
   };
-  const review = () =>
-    page.getByRole("button", { name: "Review changes", exact: true });
+  const saveButton = () =>
+    page.getByRole("button", { name: "Save availability", exact: true });
   const dialog = () => page.getByRole("dialog");
   const scenario = async (value) =>
     page.getByLabel("Response scenario").selectOption(value);
   const setEnd = async (value) =>
     page.getByLabel("Monday range 1 end", { exact: true }).selectOption(value);
   const save = async () => {
-    await review().click();
-    await dialog()
-      .getByRole("button", { name: "Save availability", exact: true })
-      .click();
+    await saveButton().click();
     await page.getByText("Availability saved.", { exact: false }).waitFor();
   };
   await open();
@@ -132,7 +129,7 @@ try {
   await page
     .getByLabel("Monday range 2 start", { exact: true })
     .selectOption("10:00");
-  await review().click();
+  await saveButton().click();
   await page
     .getByRole("alert")
     .filter({ hasText: "Availability ranges overlap" })
@@ -177,18 +174,17 @@ try {
       .inputValue(),
     "60000000-0000-4000-8000-000000000002",
   );
-  await review().click();
-  await dialog()
-    .getByRole("heading", { name: "Review availability changes", exact: true })
-    .waitFor();
+  assert.equal(await page.getByTestId("operation-audit").textContent(), "");
+  await save();
+  const impact = page.locator(".availability-saved-impact");
   assert.equal(
-    await dialog()
+    await impact
       .getByRole("link", { name: /View (?:private|group) session/ })
       .count(),
     2,
   );
-  await dialog().getByText("2 pending requests", { exact: true }).waitFor();
-  const retainedGroup = dialog().getByRole("link", {
+  await impact.getByText("2 pending requests", { exact: true }).waitFor();
+  const retainedGroup = impact.getByRole("link", {
     name: "View group session in a new tab",
     exact: true,
   });
@@ -199,7 +195,7 @@ try {
   assert.equal(await retainedGroup.getAttribute("target"), "_blank");
   assert.equal(await retainedGroup.getAttribute("rel"), "noopener");
   assert.equal(
-    await dialog()
+    await impact
       .getByRole("link", {
         name: "View private session in a new tab",
         exact: true,
@@ -207,23 +203,9 @@ try {
       .getAttribute("href"),
     "/coach?view=bookings#coach-booking-10000000-0000-4000-8000-000000000001",
   );
-  assert.equal(await page.getByTestId("operation-audit").textContent(), "");
-  await dialog()
-    .getByRole("button", { name: "Save availability", exact: true })
-    .click();
-  await page.getByText("Availability saved.", { exact: false }).waitFor();
-  assert.equal(
-    await page
-      .getByRole("link", {
-        name: "View group session in a new tab",
-        exact: true,
-      })
-      .getAttribute("href"),
-    "/coach/events/20000000-0000-4000-8000-000000000001",
-  );
-  assert.equal(await review().isDisabled(), true);
+  assert.equal(await saveButton().isDisabled(), true);
   record(
-    "weekly ranges, cross-venue overlap, deliberate copy replacement, keyboard trap/restore and one atomic reviewed save",
+    "weekly ranges, cross-venue overlap, deliberate copy replacement, keyboard trap/restore and one atomic direct save",
   );
 
   await page
@@ -245,20 +227,11 @@ try {
     2,
   );
   await page.getByRole("radio", { name: /Custom hours/ }).check();
-  await review().click();
-  const reviewBox = await dialog().boundingBox();
-  assert.ok(
-    Math.abs(reviewBox.x + reviewBox.width / 2 - 720) < 2,
-    "review dialog is centered",
-  );
+  await save();
   await page.screenshot({
-    path: path.join(output, "desktop-date-review.png"),
+    path: path.join(output, "desktop-date-saved.png"),
     fullPage: true,
   });
-  await dialog()
-    .getByRole("button", { name: "Save availability", exact: true })
-    .click();
-  await page.getByText("Availability saved.", { exact: false }).waitFor();
   await page.getByRole("radio", { name: /Use normal week/ }).check();
   await page.getByText("Current weekly hours", { exact: true }).waitFor();
   await save();
@@ -283,10 +256,7 @@ try {
     .getByRole("button", { name: "Date overrides", exact: true })
     .click();
   await dialog()
-    .getByRole("button", { name: "Review & save", exact: true })
-    .click();
-  await dialog()
-    .getByRole("button", { name: "Save availability", exact: true })
+    .getByRole("button", { name: "Save and continue", exact: true })
     .click();
   await page
     .getByRole("heading", { name: "Make an exception", exact: true })
@@ -332,7 +302,7 @@ try {
     await page.getByLabel("Monday range 1 end", { exact: true }).inputValue(),
     "13:00",
   );
-  await review().click();
+  await saveButton().click();
   await page
     .getByRole("alert")
     .filter({ hasText: "Availability changed elsewhere" })
@@ -353,7 +323,7 @@ try {
   );
   await setEnd("13:00");
   await scenario("invalid");
-  await review().click();
+  await saveButton().click();
   await page
     .getByRole("alert")
     .filter({ hasText: "That venue has changed" })
@@ -363,30 +333,27 @@ try {
     "13:00",
   );
   await scenario("unavailable");
-  await review().click();
+  await saveButton().click();
   await page
     .getByRole("alert")
     .filter({ hasText: "Fixture network unavailable" })
     .waitFor();
   record(
-    "new server props preserve dirty drafts; stale revision, inactive venue and unavailable preview keep explicit recovery",
+    "new server props preserve dirty drafts; stale revision, inactive venue and unavailable save keep explicit recovery",
   );
 
   await open();
   await setEnd("13:00");
   await scenario("lost");
-  await review().click();
-  await dialog()
-    .getByRole("button", { name: "Save availability", exact: true })
-    .click();
-  await dialog()
+  await saveButton().click();
+  await page
     .getByRole("button", { name: "Retry same save", exact: true })
     .waitFor();
   assert.equal(
     await page.getByLabel("Monday range 1 end", { exact: true }).isDisabled(),
     true,
   );
-  await dialog()
+  await page
     .getByRole("button", { name: "Retry same save", exact: true })
     .click();
   await page.getByText("Availability saved.", { exact: false }).waitFor();
@@ -397,7 +364,7 @@ try {
   assert.deepEqual(audit[0], audit[1]);
   await setEnd("14:00");
   await scenario("denied");
-  await review().click();
+  await saveButton().click();
   await page
     .getByRole("heading", { name: "Coach access changed", exact: true })
     .waitFor();
@@ -451,13 +418,11 @@ try {
       path: path.join(output, `mobile-${width}-dates.png`),
       fullPage: true,
     });
-    await review().click();
-    await dialog()
-      .getByRole("button", { name: "Keep editing", exact: true })
-      .click();
+    await save();
+    assert.equal(await dialog().count(), 0);
   }
   record(
-    "375/430px weekly/date views, long venues, copy/save dialogs and keyboard Escape",
+    "375/430px weekly/date views, long venues, copy dialogs and direct saves and keyboard Escape",
   );
   assert.deepEqual(errors, [], "no browser runtime errors");
   await writeFile(

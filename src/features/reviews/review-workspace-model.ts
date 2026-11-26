@@ -341,7 +341,7 @@ export class ReviewWorkspace {
   consent(slug: string, consent: boolean) {
     const pair = this.snapshot.pairs[slug];
     if (
-      pair?.phase === "preview" &&
+      (pair?.phase === "edit" || pair?.phase === "preview") &&
       !pair.busy &&
       !pair.recovery &&
       !pair.loading
@@ -384,7 +384,7 @@ export class ReviewWorkspace {
     if (
       !pair ||
       !pair.saved?.eligible ||
-      pair.phase !== "preview" ||
+      (pair.phase !== "edit" && pair.phase !== "preview") ||
       !pair.consent ||
       pair.recovery ||
       pair.readFailed ||
@@ -393,6 +393,11 @@ export class ReviewWorkspace {
       return;
     const command = previewCommand(pair);
     if (command) await this.send(slug, command);
+    else
+      this.patch(slug, {
+        message:
+          "Choose 1–5 stars, a public name of 2–80 characters and a plain-text comment of up to 2,000 characters.",
+      });
   }
   async withdraw(slug: string) {
     const pair = this.snapshot.pairs[slug];

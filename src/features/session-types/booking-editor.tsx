@@ -4,7 +4,7 @@ import type { ExternalClientPage } from "@/domain/external-clients";
 import { SessionNotes } from "@/features/notes/session-notes";
 import { berlinLocalInstant as berlinInstant } from "@/features/coach-events/contract";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays } from "lucide-react";
 import { useActor } from "@/auth/client/actor-provider";
@@ -13,7 +13,7 @@ import { SessionActorBoundary } from "./actor-boundary";
 import { BookingStartPicker } from "./booking-start-picker";
 import {
   reloadSavedBooking,
-  reviewCoachBooking,
+  submitCoachBooking,
   saveCoachBooking,
 } from "./booking-client";
 
@@ -39,7 +39,7 @@ type Options = {
 };
 const START_TIME_GUIDANCE =
   "Choose a start time at :00, :15, :30 or :45 (15-minute intervals).";
-const START_TIME_REQUIRED = "Choose a date and time before reviewing.";
+const START_TIME_REQUIRED = "Choose a date and time before saving.";
 const dateLabel = (s: string) =>
   new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Berlin",
@@ -106,6 +106,7 @@ function Editor({
   initialExternalClientId?: string;
 }) {
   const router = useRouter();
+  const bookingFormId = useId();
   const { actor } = useActor();
   const { session } = useAuthSession();
   const [options, setOptions] = useState<Options | null>(null);
@@ -127,9 +128,8 @@ function Editor({
   const [locationId, setLocationId] = useState("");
   const [localTime, setLocalTime] = useState("");
   const [duration, setDuration] = useState<SessionDuration>(60);
-  const [review, setReview] = useState<CoachSessionCommand | null>(null);
-  const reviewPanel = useRef<HTMLElement>(null);
-  const reviewButton = useRef<HTMLButtonElement>(null);
+  const [pendingCommand, setPendingCommand] =
+    useState<CoachSessionCommand | null>(null);
   const changeForm = useRef<HTMLFormElement>(null);
   const startInput = useRef<HTMLButtonElement>(null);
   const [pickingStart, setPickingStart] = useState(false);
@@ -147,12 +147,6 @@ function Editor({
     saveNotice.current.focus({ preventScroll: true });
     saveNotice.current.scrollIntoView({ block: "center" });
   }, [message, saveFeedback]);
-  const reviewId = review?.commandId;
-  useEffect(() => {
-    if (!reviewId || !reviewPanel.current) return;
-    reviewPanel.current.focus({ preventScroll: true });
-    reviewPanel.current.scrollIntoView({ block: "start", behavior: "instant" });
-  }, [reviewId]);
   useEffect(() => {
     let active = true;
     async function load() {
@@ -274,40 +268,9 @@ function Editor({
       setBusy(false);
     }
   }
-  async function checkReview(command: CoachSessionCommand) {
-    if (saveController.current) return;
-    const controller = new AbortController();
-    saveController.current = controller;
-    setBusy(true);
-    setReview(null);
-    setSaveFeedback(true);
-    setMessage("Checking this booking change…");
-    try {
-      const result = await reviewCoachBooking(command, {
-        signal: controller.signal,
-      });
-      if (controller.signal.aborted) return;
-      setOutsideWorkingHours(result.outsideWorkingHours);
-      setReview(command);
-      setMessage("");
-      setSaveFeedback(false);
-    } catch {
-      if (!controller.signal.aborted)
-        setMessage(
-          "This change could not be reviewed. Check the full duration, venue and any overlapping sessions, then try Review again. Reload if the booking or class changed.",
-        );
-    } finally {
-      saveController.current = null;
-      if (!controller.signal.aborted) setBusy(false);
-    }
-  }
-  async function save() {
-    if (
-      !review ||
-      saveController.current ||
-      (outsideWorkingHours && !review.outsideHoursConfirmed)
-    )
-      return;
+  async function save(command = pendingCommand) {
+    if (!command || saveController.current) return;
+    let writeStarted = uncertain;
     const controller = new AbortController();
     saveController.current = controller;
     setBusy(true);
@@ -315,7 +278,16 @@ function Editor({
     setDetailsNeedRefresh(true);
     setMessage(detail ? "Saving booking change…" : "Saving session…");
     try {
-      const r = await saveCoachBooking(review, { signal: controller.signal });
+      const r = uncertain
+        ? await saveCoachBooking(command, { signal: controller.signal })
+        : await submitCoachBooking(command, {
+            signal: controller.signal,
+            onPrepared(prepared, outsideHours) {
+              writeStarted = true;
+              setPendingCommand(prepared);
+              setOutsideWorkingHours(outsideHours);
+            },
+          });
       if (controller.signal.aborted) return;
       if (r.status === "saved") {
         setUncertain(false);
@@ -340,13 +312,10 @@ function Editor({
         setOutsideWorkingHours(true);
         setUncertain(false);
         setDetailsNeedRefresh(false);
-        setReview({
-          ...review,
-          commandId: crypto.randomUUID(),
-          outsideHoursConfirmed: false,
-        });
-        setMessage("");
-        setSaveFeedback(false);
+        setPendingCommand(null);
+        setMessage(
+          "Working hours changed again. Your draft is kept. Save again to check the current time.",
+        );
       } else {
         setUncertain(
           !["invalid", "conflict", "forbidden", "signed-out"].includes(
@@ -355,21 +324,27 @@ function Editor({
         );
         setMessage(
           r.status === "conflict"
-            ? "The class, connection, booking or time changed. Reload and review the current details."
+            ? "The class, connection, booking or time changed. Reload and check the current details."
             : r.status === "invalid"
-              ? "Review the duration and Berlin start time."
+              ? "Check the duration and Berlin start time."
               : r.status === "signed-out"
                 ? "Your sign-in expired. Sign in again, then reload this booking before saving."
                 : r.status === "forbidden"
                   ? "This account cannot change this booking. Reload to check your current access."
-                  : "We couldn’t verify the save. Retry this exact review or reload to check the booking.",
+                  : "We couldn’t verify the save. Retry this exact submission or reload to check the booking.",
         );
       }
     } catch {
       if (controller.signal.aborted) return;
-      setUncertain(true);
+      setUncertain(writeStarted);
+      if (!writeStarted) {
+        setPendingCommand(null);
+        setDetailsNeedRefresh(false);
+      }
       setMessage(
-        "We couldn’t verify the save. Retry this exact review or reload to check the booking.",
+        writeStarted
+          ? "We couldn’t verify the save. Retry this exact submission or reload to check the booking."
+          : "The time could not be checked. Your draft is kept; try saving again.",
       );
     } finally {
       saveController.current = null;
@@ -512,6 +487,12 @@ function Editor({
           </span>
         )}
       </p>
+      {outsideWorkingHours && (
+        <p className="session-booking-hours-warning" role="note">
+          Outside your working hours. This change applies only to this booking;
+          your regular availability stays the same.
+        </p>
+      )}
       {detail && (
         <>
           {detail.viewerIsCoach && !detail.athleteId && (
@@ -523,136 +504,43 @@ function Editor({
           <SessionNotes bookingId={detail.bookingId} />
         </>
       )}
-      {editable && !detail && !saved && (
-        <>
-          <div className="session-type-editor">
-            <label>
-              Athlete type
-              <select
-                aria-label="Athlete type"
-                value={clientKind}
-                disabled={busy || uncertain || clientPending}
-                onChange={(e) => {
-                  setClientKind(e.target.value);
-                  setReview(null);
-                }}
-              >
-                <option value="platform">Connected athlete</option>
-                <option value="external">External athlete</option>
-              </select>
-            </label>
-          </div>
-          {clientKind === "external" && (
-            <ExternalClientPicker
-              initial={options.externalClients}
-              initialId={initialExternalClientId}
-              value={externalClientId}
-              onChange={(id) => {
-                setExternalClientId(id);
-                setReview(null);
-              }}
-              disabled={busy || uncertain}
-              onPendingChange={(pending) => {
-                setClientPending(pending);
-                if (pending) setReview(null);
-              }}
-            />
-          )}
-        </>
-      )}
       {editable && !saved && (
-        <form
-          ref={changeForm}
-          id={detail ? "reschedule" : undefined}
-          tabIndex={-1}
-          aria-labelledby="booking-change-heading"
-          className="session-type-editor session-booking-change"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (pickingStart) return;
-            const startsAt = berlinInstant(localTime);
-            if (!startsAt || Date.parse(startsAt) % 900000 !== 0) {
-              setMessage(startsAt ? START_TIME_GUIDANCE : START_TIME_REQUIRED);
-              setSaveFeedback(false);
-              startInput.current?.focus({ preventScroll: true });
-              startInput.current?.scrollIntoView({
-                block: "center",
-                behavior: "instant",
-              });
-              return;
-            }
-            if (
-              clientPending ||
-              !startsAt ||
-              !type ||
-              (!detail &&
-                !(clientKind === "external" ? externalClientId : athleteId))
-            ) {
-              setMessage(
-                "Choose a valid, unambiguous Berlin time and current class.",
-              );
-              return;
-            }
-            setMessage("");
-            setSaveFeedback(false);
-            const command: CoachSessionCommand = {
-              commandId: crypto.randomUUID(),
-              typeId: type.id,
-              typeRevision: type.revision,
-              locationId,
-              startsAt,
-              durationMinutes: duration,
-              ...(detail
-                ? {
-                    action: "override",
-                    bookingId: detail.bookingId,
-                    expectedRevision: detail.revision,
-                  }
-                : {
-                    action: "create",
-                    ...(clientKind === "external"
-                      ? { externalClientId }
-                      : { athleteId }),
-                  }),
-            };
-            if (detail) void checkReview(command);
-            else {
-              setOutsideWorkingHours(false);
-              setReview(command);
-            }
-          }}
-        >
-          <h2 id="booking-change-heading">
-            {detail ? "Change this booking" : "New confirmed session"}
-          </h2>
-          <p>
-            {detail
-              ? "Choose a free time. If the full session falls outside your saved working hours, we’ll ask you to confirm this one-booking exception. Your regular hours and session type stay the same."
-              : "Choose a free time, even outside your saved availability. You don’t need to set working hours first. Your session type stays the same."}
-          </p>
-          {!detail && clientKind === "platform" && (
+        <section className="session-type-editor session-booking-change">
+          {!detail && (
             <>
+              <h2 id="booking-change-heading">New confirmed session</h2>
+              <p>
+                Choose a free time, even outside your saved availability. You
+                don’t need to set working hours first. Your session type stays
+                the same.
+              </p>
               <label>
                 Athlete
                 <select
                   required
+                  form={bookingFormId}
                   aria-label="Athlete"
-                  value={athleteId}
+                  value={clientKind === "external" ? "external" : athleteId}
                   disabled={busy || uncertain || clientPending}
                   onChange={(e) => {
-                    setAthleteId(e.target.value);
-                    setReview(null);
+                    const value = e.target.value;
+                    setClientKind(
+                      value === "external" ? "external" : "platform",
+                    );
+                    if (value !== "external") setAthleteId(value);
+                    setPendingCommand(null);
                   }}
                 >
-                  <option value="">Choose a connected athlete</option>
+                  <option value="">Choose athlete</option>
                   {options.athletes.items.map((a) => (
                     <option key={a.id} value={a.athleteProfileId}>
                       {a.athleteDisplayName}
                     </option>
                   ))}
+                  <option value="external">Add external athlete</option>
                 </select>
               </label>
-              {options.athletes.nextCursor && (
+              {clientKind === "platform" && options.athletes.nextCursor && (
                 <button
                   type="button"
                   disabled={busy || uncertain || clientPending}
@@ -661,115 +549,204 @@ function Editor({
                   Load more athletes
                 </button>
               )}
-              {options.athletes.items.length === 0 && (
-                <p>
-                  Choose External athlete to book someone who hasn’t joined
-                  MovX.
-                </p>
+              {clientKind === "platform" &&
+                options.athletes.items.length === 0 && (
+                  <p>
+                    Use Add external athlete to book someone who hasn’t joined
+                    MovX.
+                  </p>
+                )}
+              {clientKind === "external" && (
+                <ExternalClientPicker
+                  initial={options.externalClients}
+                  initialId={initialExternalClientId}
+                  value={externalClientId}
+                  onChange={(id) => {
+                    setExternalClientId(id);
+                    setPendingCommand(null);
+                  }}
+                  disabled={busy || uncertain}
+                  onPendingChange={(pending) => {
+                    setClientPending(pending);
+                    if (pending) setPendingCommand(null);
+                  }}
+                />
               )}
             </>
           )}
-          <label>
-            Session type
-            <select
-              required
-              disabled={busy || uncertain || clientPending}
-              aria-label="Session type"
-              value={typeId}
-              onChange={(e) => {
-                const t = activeTypes.find((x) => x.id === e.target.value);
-                setTypeId(e.target.value);
-                if (t) {
-                  setDuration(t.durationMinutes);
-                  setLocationId(t.defaultLocationId ?? "");
-                }
-                setReview(null);
-              }}
-            >
-              <option value="">Choose a class</option>
-              {activeTypes.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} · {t.durationMinutes} min
-                </option>
-              ))}
-            </select>
-          </label>
-          {activeTypes.length === 0 && (
-            <Link href="/coach/session-types">
-              Create or restore a private session type
-            </Link>
-          )}
-          <label>
-            Venue
-            <select
-              required
-              aria-label="Venue"
-              value={locationId}
-              disabled={busy || uncertain || clientPending}
-              onChange={(e) => {
-                setLocationId(e.target.value);
-                setReview(null);
-              }}
-            >
-              <option value="">Choose a venue</option>
-              {options.locations.map((l) => (
-                <option value={l.id} key={l.id}>
-                  {l.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="session-type-fields">
-            <div className="booking-start-field">
-              <span>Start · Berlin time</span>
-              <button
-                ref={startInput}
-                type="button"
-                className="booking-start-trigger"
-                aria-label="Start · Berlin time"
-                aria-haspopup="dialog"
-                aria-expanded={pickingStart && !pickerSuspended}
-                aria-describedby="booking-start-guidance"
-                disabled={busy || uncertain || clientPending}
-                onClick={() => setPickingStart(true)}
-              >
-                <CalendarDays size={18} aria-hidden="true" />
-                {selectedStart
-                  ? dateLabel(selectedStart)
-                  : "Choose date and time"}
-              </button>
-            </div>
+          <form
+            ref={changeForm}
+            id={detail ? "reschedule" : bookingFormId}
+            tabIndex={-1}
+            aria-labelledby="booking-change-heading"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (pickingStart) return;
+              const startsAt = berlinInstant(localTime);
+              if (!startsAt || Date.parse(startsAt) % 900000 !== 0) {
+                setMessage(
+                  startsAt ? START_TIME_GUIDANCE : START_TIME_REQUIRED,
+                );
+                setSaveFeedback(false);
+                startInput.current?.focus({ preventScroll: true });
+                startInput.current?.scrollIntoView({
+                  block: "center",
+                  behavior: "instant",
+                });
+                return;
+              }
+              if (
+                clientPending ||
+                !startsAt ||
+                !type ||
+                (!detail &&
+                  !(clientKind === "external" ? externalClientId : athleteId))
+              ) {
+                setMessage(
+                  "Choose a valid, unambiguous Berlin time and current class.",
+                );
+                return;
+              }
+              setMessage("");
+              setSaveFeedback(false);
+              const command: CoachSessionCommand = {
+                commandId: crypto.randomUUID(),
+                typeId: type.id,
+                typeRevision: type.revision,
+                locationId,
+                startsAt,
+                durationMinutes: duration,
+                ...(detail
+                  ? {
+                      action: "override",
+                      bookingId: detail.bookingId,
+                      expectedRevision: detail.revision,
+                    }
+                  : {
+                      action: "create",
+                      ...(clientKind === "external"
+                        ? { externalClientId }
+                        : { athleteId }),
+                    }),
+              };
+              void save(command);
+            }}
+          >
+            {detail && (
+              <>
+                <h2 id="booking-change-heading">Change this booking</h2>
+                <p>
+                  Choose a free time. Changes outside your saved working hours
+                  show a warning and apply only to this booking. Your regular
+                  hours and session type stay the same.
+                </p>
+              </>
+            )}
             <label>
-              Duration
+              Session type
               <select
-                aria-label="Duration"
-                value={duration}
+                required
                 disabled={busy || uncertain || clientPending}
+                aria-label="Session type"
+                value={typeId}
                 onChange={(e) => {
-                  setDuration(Number(e.target.value) as SessionDuration);
-                  setReview(null);
+                  const t = activeTypes.find((x) => x.id === e.target.value);
+                  setTypeId(e.target.value);
+                  if (t) {
+                    setDuration(t.durationMinutes);
+                    setLocationId(t.defaultLocationId ?? "");
+                  }
+                  setPendingCommand(null);
                 }}
               >
-                {SESSION_DURATIONS.map((n) => (
-                  <option key={n} value={n}>
-                    {n} minutes
+                <option value="">Choose a class</option>
+                {activeTypes.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} · {t.durationMinutes} min
                   </option>
                 ))}
               </select>
             </label>
-          </div>
-          <p id="booking-start-guidance">{START_TIME_GUIDANCE}</p>
-          <button
-            ref={reviewButton}
-            type="submit"
-            className="button dark"
-            disabled={
-              busy || uncertain || clientPending || pickingStart || !type
-            }
-          >
-            Review {detail ? "change" : "session"}
-          </button>
-        </form>
+            {activeTypes.length === 0 && (
+              <Link href="/coach/session-types">
+                Create or restore a private session type
+              </Link>
+            )}
+            <label>
+              Venue
+              <select
+                required
+                aria-label="Venue"
+                value={locationId}
+                disabled={busy || uncertain || clientPending}
+                onChange={(e) => {
+                  setLocationId(e.target.value);
+                  setPendingCommand(null);
+                }}
+              >
+                <option value="">Choose a venue</option>
+                {options.locations.map((l) => (
+                  <option value={l.id} key={l.id}>
+                    {l.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="session-type-fields">
+              <div className="booking-start-field">
+                <span>Start · Berlin time</span>
+                <button
+                  ref={startInput}
+                  type="button"
+                  className="booking-start-trigger"
+                  aria-label="Start · Berlin time"
+                  aria-haspopup="dialog"
+                  aria-expanded={pickingStart && !pickerSuspended}
+                  aria-describedby="booking-start-guidance"
+                  disabled={busy || uncertain || clientPending}
+                  onClick={() => setPickingStart(true)}
+                >
+                  <CalendarDays size={18} aria-hidden="true" />
+                  {selectedStart
+                    ? dateLabel(selectedStart)
+                    : "Choose date and time"}
+                </button>
+              </div>
+              <label>
+                Duration
+                <select
+                  aria-label="Duration"
+                  value={duration}
+                  disabled={busy || uncertain || clientPending}
+                  onChange={(e) => {
+                    setDuration(Number(e.target.value) as SessionDuration);
+                    setPendingCommand(null);
+                  }}
+                >
+                  {SESSION_DURATIONS.map((n) => (
+                    <option key={n} value={n}>
+                      {n} minutes
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <p id="booking-start-guidance">{START_TIME_GUIDANCE}</p>
+            <button
+              type="submit"
+              className="button dark"
+              disabled={
+                busy || uncertain || clientPending || pickingStart || !type
+              }
+            >
+              {busy
+                ? "Saving…"
+                : detail
+                  ? "Save booking change"
+                  : "Schedule session"}
+            </button>
+          </form>
+        </section>
       )}
       {pickingStart && editable && !saved && (
         <BookingStartPicker
@@ -779,7 +756,7 @@ function Editor({
           onApply={(value) => {
             if (value !== localTime) {
               setLocalTime(value);
-              setReview(null);
+              setPendingCommand(null);
               setOutsideWorkingHours(false);
               if (
                 message === START_TIME_GUIDANCE ||
@@ -790,91 +767,6 @@ function Editor({
             setPickingStart(false);
           }}
         />
-      )}
-      {review && !saved && (
-        <section
-          ref={reviewPanel}
-          tabIndex={-1}
-          className="session-type-editor session-booking-review"
-          aria-label="Review booking change"
-        >
-          <h2>{detail ? "Confirm schedule change" : "Confirm session"}</h2>
-          <p>
-            {type?.name} · {duration} minutes
-            <br />
-            {dateLabel(review.startsAt)} –{" "}
-            {dateLabel(
-              new Date(
-                Date.parse(review.startsAt) + review.durationMinutes * 60000,
-              ).toISOString(),
-            )}{" "}
-            · {options?.locations.find((l) => l.id === locationId)?.name}
-          </p>
-          {outsideWorkingHours && (
-            <div className="session-booking-hours-warning" role="note">
-              <h3>Outside your working hours</h3>
-              <p id="booking-hours-warning">
-                This session extends beyond your saved working hours or falls on
-                a day off. Do you want to reschedule it anyway? This changes
-                only this booking; your regular availability stays the same.
-              </p>
-              <label className="session-booking-hours-confirmation">
-                <input
-                  type="checkbox"
-                  checked={review.outsideHoursConfirmed === true}
-                  disabled={busy || uncertain}
-                  aria-describedby="booking-hours-warning"
-                  onChange={(e) =>
-                    setReview({
-                      ...review,
-                      outsideHoursConfirmed: e.target.checked,
-                    })
-                  }
-                />
-                Reschedule outside my saved working hours
-              </label>
-            </div>
-          )}
-          <p>
-            {detail
-              ? "Messages and notes stay with this booking. Original schedule details remain in its change history."
-              : clientKind === "external"
-                ? "This reserves a confirmed session for the selected external athlete. They gain shared history access after accepting an invitation."
-                : "This coach action confirms the session for the selected connected athlete."}
-          </p>
-          {!uncertain && (
-            <button
-              type="button"
-              className="button dark"
-              disabled={
-                busy ||
-                clientPending ||
-                (outsideWorkingHours && !review.outsideHoursConfirmed)
-              }
-              onClick={() => void save()}
-            >
-              {busy
-                ? "Saving…"
-                : detail
-                  ? "Save booking change"
-                  : "Confirm session"}
-            </button>
-          )}
-          {!uncertain && (
-            <button
-              type="button"
-              className="button secondary"
-              disabled={busy}
-              onClick={() => {
-                setReview(null);
-                setOutsideWorkingHours(false);
-                reviewButton.current?.focus();
-              }}
-            >
-              Cancel review
-            </button>
-          )}
-        </section>
       )}
       {!loading && !(saveFeedback && message) && (
         <a className="button secondary" href={reloadHref}>

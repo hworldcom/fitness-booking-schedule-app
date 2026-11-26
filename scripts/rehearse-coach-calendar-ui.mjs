@@ -635,9 +635,9 @@ try {
       .getByLabel("Monday range 1 end", { exact: true })
       .selectOption("13:00");
     await page
-      .getByRole("button", { name: "Review changes", exact: true })
+      .getByRole("button", { name: "Save availability", exact: true })
       .click();
-    const review = page.getByRole("dialog");
+    const review = page.locator(".availability-saved-impact");
     const retainedLink = review.getByRole("link", {
       name: "View group session in a new tab",
       exact: true,
@@ -693,13 +693,11 @@ try {
       "13:00",
     );
     assert.equal(
-      await page.getByTestId("operation-audit").textContent(),
-      "",
-      "opening warning does not save availability",
+      JSON.parse(await page.getByTestId("operation-audit").textContent())
+        .length,
+      1,
+      "Opening a saved-impact link adds no mutation",
     );
-    await review
-      .getByRole("button", { name: "Save availability", exact: true })
-      .click();
     await page.getByText("Availability saved.", { exact: false }).waitFor();
     const savedLink = page.getByRole("link", {
       name: "View group session in a new tab",
@@ -724,7 +722,7 @@ try {
     );
   }
   record(
-    "desktop/375/430 retained-group links reach the real owner page before/after save in opener-free tabs and preserve the draft/review/private anchors",
+    "desktop/375/430 retained-group links reach the real owner page after direct save in opener-free tabs and preserve the saved hours/private anchors",
   );
 
   for (const width of [375, 430]) {
