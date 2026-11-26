@@ -1,6 +1,10 @@
 import { verifiedDatabaseFingerprints } from "./lib/database-fingerprints.mjs";
 // MOV-19: real photo UI/Auth/SQL/Storage in a wholly disposable stack. Mux needs separate live credentials.
 import assert from "node:assert/strict";
+import {
+  reloadFixturePage,
+  returnToVisiblePage,
+} from "./lib/browser-visibility.mjs";
 import { spawn, spawnSync, execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
@@ -613,6 +617,17 @@ async function run() {
     })
     .click();
   const editor = coachPage.locator(".coach-media-editor");
+  async function reloadMediaFixture() {
+    await reloadFixturePage(coachPage);
+    await coachPage
+      .getByRole("button", {
+        name: "Edit training photos and video",
+        exact: true,
+      })
+      .click();
+    await expect(editor).toBeVisible();
+  }
+
   await expect(editor.getByText("0 / 6 photos", { exact: true })).toBeVisible();
   await expect(
     editor.getByLabel("Training video file", { exact: true }),
@@ -658,7 +673,9 @@ async function run() {
     .getByRole("button", { name: "Upload to draft", exact: true })
     .click();
   await expect(
-    editor.getByRole("status").filter({ hasText: "couldn’t confirm" }),
+    editor
+      .getByRole("status")
+      .filter({ hasText: "Training media could not be refreshed" }),
   ).toBeVisible();
   await editor
     .getByRole("button", { name: "Upload to draft", exact: true })
@@ -878,9 +895,7 @@ async function run() {
       })
       .catch(() => {});
   });
-  await editor
-    .getByRole("button", { name: "Reload media", exact: true })
-    .click();
+  await reloadMediaFixture();
   await expect(
     editor.getByLabel("Training video file", { exact: true }),
   ).toBeEnabled();
@@ -911,7 +926,7 @@ async function run() {
     .click();
   releaseTransfer();
   await expect(
-    editor.getByRole("button", { name: "Reload media", exact: true }),
+    editor.getByLabel("Training video file", { exact: true }),
   ).toBeEnabled();
   await expect(
     editor.getByRole("button", { name: "Cancel upload", exact: true }),
@@ -946,9 +961,7 @@ async function run() {
         .catch(() => {}); // The first request is deliberately aborted on close.
     },
   );
-  await editor
-    .getByRole("button", { name: "Reload media", exact: true })
-    .click();
+  await reloadMediaFixture();
   const videoButton = editor.getByRole("button", {
     name: "Watch video: Introduction fixture",
     exact: true,
@@ -1053,9 +1066,7 @@ async function run() {
   }
   await coachPage.unroute("**/api/coach/media");
   await coachPage.unroute(endpoint);
-  await editor
-    .getByRole("button", { name: "Reload media", exact: true })
-    .click();
+  await reloadMediaFixture();
   await expect(videoButton).toHaveCount(0);
   pass(
     "HTTP video fixtures: real UpChunk pause/resume/cancel, cover-triggered access without preload, close/reopen and explicit error retry, Escape focus (not live Mux)",
@@ -1065,11 +1076,11 @@ async function run() {
   await coachPage.route("**/api/coach/media", (route) =>
     route.fulfill({ status: 503, json: { status: "unavailable" } }),
   );
-  await editor
-    .getByRole("button", { name: "Reload media", exact: true })
-    .click();
+  await returnToVisiblePage(coachPage);
   await expect(
-    editor.getByRole("status").filter({ hasText: "couldn’t confirm" }),
+    editor
+      .getByRole("status")
+      .filter({ hasText: "Training media could not be refreshed" }),
   ).toBeVisible();
   await expect(
     editor.getByRole("button", {
@@ -1079,17 +1090,14 @@ async function run() {
   ).toBeVisible();
   await coachPage.unroute("**/api/coach/media");
   await editor
-    .getByRole("button", { name: "Reload media", exact: true })
+    .getByRole("button", { name: "Check saved media", exact: true })
     .click();
   await expect(editor.getByText("2 / 6 photos", { exact: true })).toBeVisible();
   await database`update app.coach_applications set status='suspended' where profile_id=${coach.profileId}::uuid`;
   assert.equal((await guest.request.get(base + publicPath)).status(), 404);
-  await editor
-    .getByRole("button", { name: "Reload media", exact: true })
-    .click({ timeout: 3000 })
-    .catch(async () => {
-      await expect(coachPage.locator(".coach-profile-canvas")).toHaveCount(0);
-    });
+  await returnToVisiblePage(coachPage).catch(async () => {
+    await expect(coachPage.locator(".coach-profile-canvas")).toHaveCount(0);
+  });
   await expect(
     coachPage.getByRole("heading", {
       name: /^(Profile editing access changed|Reload your coach profile)$/,

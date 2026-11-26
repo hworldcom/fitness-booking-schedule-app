@@ -1,6 +1,7 @@
 // MOV-225: mounted connection UI with explicit Auth/API fixtures. No real grant,
 // database, environment files, retained account or Google calendar is used.
 import assert from "node:assert/strict";
+import { returnToVisiblePage } from "./lib/browser-visibility.mjs";
 import { spawn } from "node:child_process";
 import {
   cp,
@@ -69,6 +70,7 @@ let setupAvailable = false,
   releaseExport;
 const setupForms = [];
 const posts = [];
+let fixtureSignedOut = false;
 const result = () => ({
   status: "ready",
   enabled,
@@ -146,7 +148,7 @@ import {ActorProvider} from "@/auth/client/actor-provider";
 import {AccountSettingsView} from "@/features/account/account-settings";
 import {GoogleCalendarConnection} from "@/features/account/google-calendar-connection";
 export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState(false);return <>
-<button onClick={()=>setOut(true)}>Sign out fixture</button>
+<button onClick={()=>{document.documentElement.dataset.calendarFixtureSignedOut="true";setOut(true)}}>Sign out fixture</button>
 <AuthSessionProvider key={String(out)} initialSession={out?{status:"signed-out"}:${JSON.stringify(session)} as const}>
 <ActorProvider initialActor={out?{status:"signed-out"}:${JSON.stringify(actor)} as const}>
 <AccountSettingsView email="fixture@example.test" section="connected-calendars" calendarSettings={<GoogleCalendarConnection notice={notice}/>}/>
@@ -195,6 +197,11 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
   browser = await chromium.launch({ channel: "chrome", headless: true });
   const page = await browser.newPage();
   page.on("pageerror", (error) => errors.push(error.message));
+  await page.route("**/api/auth/session", (route) =>
+    route.fulfill({
+      json: fixtureSignedOut ? { status: "signed-out" } : session,
+    }),
+  );
   await page.route("**/api/auth/actor", (route) =>
     route.fulfill({ json: actor }),
   );
@@ -274,7 +281,10 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
       },
     });
   });
-  const open = () => page.goto(`${base}/calendar-fixture`);
+  const open = () => {
+    fixtureSignedOut = false;
+    return page.goto(`${base}/calendar-fixture`);
+  };
   for (const width of [1440, 375, 320]) {
     await page.setViewportSize({ width, height: 900 });
     state = "disconnected";
@@ -305,7 +315,7 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
     await expect(
       page.getByText("Calendar: MovX.", { exact: false }),
     ).toBeVisible();
-    for (const name of ["Reload connection status", "Check connection"]) {
+    for (const name of ["Check connection"]) {
       const style = await page
         .getByRole("button", { name, exact: true })
         .evaluate((button) => {
@@ -366,9 +376,13 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
       "Booking sync must follow connection actions and precede disconnection",
     );
     const beforeReload = posts.length;
-    await page
-      .getByRole("button", { name: "Reload connection status", exact: true })
-      .click();
+    await expect(
+      page.getByRole("button", {
+        name: "Reload connection status",
+        exact: true,
+      }),
+    ).toHaveCount(0);
+    await returnToVisiblePage(page);
     await expect(
       page.getByRole("button", { name: "Check connection", exact: true }),
     ).toBeVisible();
@@ -391,6 +405,36 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
     await expect(
       page.getByRole("button", { name: "Confirm disconnect" }),
     ).toBeVisible();
+    if (width === 1440) {
+      const beforeStatusRead = posts.length;
+      state = "reconnect-required";
+      const sync = page.getByRole("region", { name: "Google booking sync" });
+      await Promise.all([
+        page.waitForResponse(
+          (r) =>
+            r.url().endsWith("/api/account/google-calendar/export") &&
+            r.request().method() === "GET",
+        ),
+        sync.getByRole("button", { name: "Try again", exact: true }).click(),
+      ]);
+      await expect(sync.getByText("Loading booking sync…")).toHaveCount(0);
+      await expect(
+        page.getByRole("button", { name: "Confirm disconnect", exact: true }),
+      ).toBeVisible();
+      assert.equal(posts.length, beforeStatusRead);
+      state = "connected";
+      await Promise.all([
+        page.waitForResponse(
+          (r) =>
+            r.url().endsWith("/api/account/google-calendar/export") &&
+            r.request().method() === "GET",
+        ),
+        sync.getByRole("button", { name: "Try again", exact: true }).click(),
+      ]);
+      pass(
+        "Late export status mismatch preserves an open disconnect confirmation without submitting changes",
+      );
+    }
     await page.getByRole("button", { name: "Confirm disconnect" }).click();
     await expect(
       page.getByRole("button", {
@@ -506,9 +550,7 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
         exact: true,
       }),
     ).toHaveCount(0);
-    await page
-      .getByRole("button", { name: "Reload connection status", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Try again", exact: true }).click();
     await expect(
       page.getByText("Calendar recovery required", { exact: true }),
     ).toBeVisible();
@@ -747,7 +789,7 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
     page.getByRole("button", { name: "Check connection", exact: true }),
   ).toHaveCount(0);
   fault = false;
-  await page.getByRole("button", { name: "Reload connection status" }).click();
+  await page.getByRole("button", { name: "Try again" }).click();
   await expect(
     page.getByRole("button", { name: "Check connection", exact: true }),
   ).toBeVisible();
@@ -851,7 +893,7 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
   await expect(setupButton).toBeDisabled();
   setupFault = false;
   await syncRegion
-    .getByRole("button", { name: "Reload booking sync", exact: true })
+    .getByRole("button", { name: "Try again", exact: true })
     .click();
   await expect(setupButton).toBeEnabled();
   pass(
@@ -887,6 +929,7 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
   state = "connected";
   hold = true;
   await open();
+  fixtureSignedOut = true;
   await page.getByRole("button", { name: "Sign out fixture" }).click();
   await expect(
     page.getByText("Verify your account to manage calendar connections."),
@@ -900,6 +943,7 @@ export function Controls({notice}:{notice?:string}) {const [out,setOut]=useState
   ).toHaveCount(0);
   pass("Account loss clears protected connection and ignores late reads");
   if (exportMode) {
+    fixtureSignedOut = false;
     state = "connected";
     fault = false;
     await rehearseCalendarExport({

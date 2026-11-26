@@ -199,6 +199,7 @@ export function AvailabilityEditor({
   const afterSave = useRef<(() => void) | null>(null);
   const bypass = useRef(false);
   const [latestRevision, setLatestRevision] = useState(initial.policy.revision);
+  const [reloadRequired, setReloadRequired] = useState(false);
   const month = availabilityMonth(initialDate);
   let weekDirty = true;
   let hourCount = 0;
@@ -370,6 +371,7 @@ export function AvailabilityEditor({
         setPolicy(result.data.policy);
         resetDrafts(result.data.policy);
         setLatestRevision(result.data.policy.revision);
+        setReloadRequired(false);
       } else setMessage({ kind: "error", text: result.message });
     } catch {
       setMessage({
@@ -431,12 +433,10 @@ export function AvailabilityEditor({
         setUncertain(null);
         setMessage({ kind: "error", text: response.message });
       } else if (response.result.outcome === "conflict") {
+        setReloadRequired(true);
         afterSave.current = null;
         setUncertain(null);
-        setMessage({
-          kind: "error",
-          text: "Availability changed elsewhere. Your draft was kept. Reload the saved version before making a new save.",
-        });
+        setMessage(null);
       } else {
         const updated = applyAvailabilityCommand(
           policy,
@@ -526,23 +526,25 @@ export function AvailabilityEditor({
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          className="availability-text-button"
-          disabled={disabled}
-          onClick={() =>
-            requestNavigation(() => {
-              void reload();
-            })
-          }
-        >
-          Reload saved version
-        </button>
       </div>
-      {Math.max(initial.policy.revision, latestRevision) > policy.revision && (
-        <p className="availability-notice" role="status">
-          A newer saved version is available. Your draft has been kept. Reload
-          to review the current hours.
+      {(reloadRequired ||
+        Math.max(initial.policy.revision, latestRevision) >
+          policy.revision) && (
+        <p
+          className="availability-notice"
+          role={reloadRequired ? "alert" : "status"}
+        >
+          {reloadRequired
+            ? "Availability changed elsewhere. Your draft was kept."
+            : "A newer saved version is available. Your draft has been kept."}{" "}
+          <button
+            type="button"
+            className="availability-text-button"
+            disabled={disabled}
+            onClick={() => requestNavigation(() => void reload())}
+          >
+            Load latest changes
+          </button>
         </p>
       )}
       {message && (

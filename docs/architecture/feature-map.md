@@ -6,6 +6,7 @@ For import ownership changes, consult the [enforced dependency rules and exact e
 
 | Capability                                | Entry                                                                                      |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Refresh and recovery controls             | [Contextual recovery and visible return](#refresh-and-recovery-controls)                   |
 | Private booking and session types         | [Detailed path](#private-booking-and-session-types)                                        |
 | Coach availability and calendar           | [Detailed path](#coach-availability-and-calendar)                                          |
 | Events and group sessions                 | [Detailed path](#events-and-group-sessions)                                                |
@@ -20,6 +21,12 @@ For import ownership changes, consult the [enforced dependency rules and exact e
 | Athlete training calendar                 | [Calendar, logs and reminders](#athlete-training-calendar)                                 |
 | External clients and targeted invitations | [Coach-owned records and later account access](#external-clients-and-targeted-invitations) |
 | Session notes and video references        | [Private and shared training records](#session-notes-and-video-references)                 |
+
+## Refresh and recovery controls
+
+MOV-287 removes generic refresh controls from healthy booking/catalog, connections, calendar, availability, routine, media and Google Calendar views. [Visible-return subscription](../../src/browser/visible-return.ts) deduplicates focus/visibility events; [the client hook](../../src/components/use-refresh-on-return.ts) uses current caller guards and cleans up on unmount. Catalog/connection/calendar/routine/media callers fence active drafts, confirmations, writes and transfers. Availability retains its existing newer-revision check and shows contextual Load latest changes; booking preserves exact uncertain retries and failed-read recovery. Google export retains its pending-work poll, with visible-return reads only outside that poll; connection/consent/replacement forms use existing initial/after-command reads. Legacy public times retain contextual error recovery. None of these reads grants actor or write authority. [MVP §2](../mvp-spec.md#2-confirmed-target-and-decisions) owns the shared behavior.
+
+First checks: `node --import tsx --test tests/refresh-controls.test.ts tests/coach-connections.test.ts tests/booking-save.test.ts tests/availability-editor.test.ts tests/coach-calendar.test.ts tests/training.test.ts`. Existing UI rehearsal commands/prerequisites remain in the capability entries. [Browser visibility helper](../../scripts/lib/browser-visibility.mjs) models tab return in headless rehearsals; tests must trigger that read or contextual recovery rather than depend on a removed toolbar button. No SQL/schema/environment change.
 
 ## Private booking and session types
 
@@ -90,7 +97,7 @@ node --import tsx --conditions=react-server --test tests/server/coach-calendar-a
 
 ## Events and group sessions
 
-**Start:** [Events page](../../src/app/events/page.tsx) → [EventResults](../../src/features/events/event-results.tsx); directory [UI helpers](../../src/features/events/directory-contract.ts) compose view links, fetch/append pages and derive venue pins. Shared [query helpers](../../src/events/queries.ts) encode filters/cursors and query identity; [parsers](../../src/events/parsers.ts) validate directory queries, public pages and participation forms. The existing failed-load branch retains results and allows retry; map-provider recovery is a separate flow. Owner/participation work starts in [coach Events](../../src/app/coach/events/) and [athlete group sessions](../../src/app/sessions/groups/), respectively.
+**Start:** [Events page](../../src/app/events/page.tsx) → [EventResults](../../src/features/events/event-results.tsx); directory [UI helpers](../../src/features/events/directory-contract.ts) compose view links, fetch/append pages and derive venue pins. Shared [query helpers](../../src/events/queries.ts) encode filters/cursors and query identity; [parsers](../../src/events/parsers.ts) validate directory queries, public pages and participation forms. The existing failed-load branch retains results and allows retry; map-provider recovery is a separate flow. [ParticipationForm](../../src/features/events/participation-form.tsx) omits its permanent status-refresh link (MOV-287); join/withdraw still redirect to a fresh server detail, whose action-error and unavailable-permission branches retain contextual recovery. Owner/participation work starts in [coach Events](../../src/app/coach/events/) and [athlete group sessions](../../src/app/sessions/groups/), respectively.
 
 **Trace:** `fetchEventPage` → [events GET handler](../../src/app/api/events/route.ts) → [directory service](../../src/server/group-sessions/directory-service.ts) → public session and media projections. [Group service](../../src/server/group-sessions/service.ts) separates public discovery from actor-authorized commands; [group repository](../../src/server/db/group-sessions/repository.ts) calls SQL. Discovery does not require sign-in; owner/participation mutations do. Public SQL/media projection checks protect visibility and participant privacy independently of browser filters.
 

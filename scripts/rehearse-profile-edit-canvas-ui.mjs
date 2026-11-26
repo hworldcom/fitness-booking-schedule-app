@@ -1,5 +1,6 @@
 // Actual components with isolated Auth/transport fixtures; no real accounts or DB writes.
 import assert from "node:assert/strict";
+import { returnToVisiblePage } from "./lib/browser-visibility.mjs";
 import { spawn } from "node:child_process";
 import {
   cp,
@@ -200,13 +201,28 @@ export const updateCoachTrainingLocationAction=createCoachTrainingLocationAction
       ],
     }),
   );
+  await context.route("**/api/auth/session", (route) =>
+    json(
+      route,
+      actorResult.status === "signed-out"
+        ? { status: "signed-out" }
+        : {
+            status: "signed-in",
+            subject: "a0255000-0000-4000-8000-000000000001",
+            email: "fixture@example.invalid",
+            expiresAt: null,
+          },
+    ),
+  );
   await context.route("**/api/auth/actor", (route) => {
     actorReads++;
     return json(route, actorResult);
   });
-  let mediaDenial = null;
-  await context.route("**/api/coach/media", (route) =>
-    mediaDenial
+  let mediaDenial = null,
+    mediaReads = 0;
+  await context.route("**/api/coach/media", (route) => {
+    mediaReads++;
+    return mediaDenial
       ? mediaDenial.malformed
         ? route.fulfill({
             status: mediaDenial.status,
@@ -214,8 +230,8 @@ export const updateCoachTrainingLocationAction=createCoachTrainingLocationAction
             body: "Access denied",
           })
         : json(route, { status: "forbidden" }, mediaDenial.status)
-      : json(route, { status: "ready", media }),
-  );
+      : json(route, { status: "ready", media });
+  });
   await context.route("**/api/coach/website", async (route) => {
     if (route.request().method() === "GET") {
       if (websiteMode === "unavailable")
@@ -485,6 +501,12 @@ export const updateCoachTrainingLocationAction=createCoachTrainingLocationAction
     }),
     true,
   );
+  const beforeDraftReturn = mediaReads;
+  await returnToVisiblePage(page);
+  assert.equal(mediaReads, beforeDraftReturn);
+  await expect(dialog.getByLabel("Describe this photo")).toHaveValue(
+    "A media selection that survives closing the drawer.",
+  );
   await dialog
     .getByRole("button", { name: "Clear selection", exact: true })
     .click();
@@ -510,9 +532,7 @@ export const updateCoachTrainingLocationAction=createCoachTrainingLocationAction
       ),
     }),
   );
-  await dialog
-    .getByRole("button", { name: "Reload media", exact: true })
-    .click();
+  await returnToVisiblePage(page);
   const ownerDrawer = page.locator("dialog.profile-edit-drawer");
   const nestedTrigger = ownerDrawer.getByRole("button", {
     name: "View photo: Nested photo preview",
@@ -528,9 +548,7 @@ export const updateCoachTrainingLocationAction=createCoachTrainingLocationAction
   media.photos = [];
   media.published = { photos: [], video: null };
   media.revision++;
-  await ownerDrawer
-    .getByRole("button", { name: "Reload media", exact: true })
-    .click();
+  await returnToVisiblePage(page);
   report(
     "Escape closes a nested media preview while retaining the editing drawer and restoring focus",
   );
@@ -689,11 +707,11 @@ export const updateCoachTrainingLocationAction=createCoachTrainingLocationAction
         exact: true,
       })
       .click();
+    await expect(
+      denied.getByLabel("Training photo file", { exact: true }),
+    ).toBeEnabled();
     mediaDenial = denial;
-    await denied
-      .locator(".coach-media-editor")
-      .getByRole("button", { name: "Reload media", exact: true })
-      .click();
+    await returnToVisiblePage(denied);
     await expect(denied.locator(".coach-profile-canvas")).toHaveCount(0);
     await denied.close();
   }

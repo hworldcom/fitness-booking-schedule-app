@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type Ref,
 } from "react";
 import { GoogleCalendarExport } from "./google-calendar-export";
 import Link from "next/link";
@@ -65,7 +66,18 @@ function CalendarConnectionControls({ notice }: { notice?: string }) {
   const lock = useRef(false),
     alive = useRef(true),
     mutation = useRef<AbortController | null>(null);
-  const reloadConnection = useCallback(() => setReload((n) => n + 1), []);
+  const container = useRef<HTMLDivElement>(null);
+  const reloadConnection = useCallback(() => {
+    // A late sync-status read must not dismiss connection consent or deletion.
+    if (
+      lock.current ||
+      container.current?.querySelector(
+        "details[open], form:focus-within, .calendar-connection-recovery",
+      )
+    )
+      return;
+    setReload((n) => n + 1);
+  }, []);
   useEffect(() => {
     alive.current = true;
     const controller = new AbortController();
@@ -100,6 +112,7 @@ function CalendarConnectionControls({ notice }: { notice?: string }) {
   }
   return (
     <GoogleCalendarConnectionView
+      containerRef={container}
       key={reload}
       result={result}
       notice={actionNotice ?? notice}
@@ -153,6 +166,7 @@ const stateLabel = {
   "recovery-required": "Calendar recovery required",
 };
 export function GoogleCalendarConnectionView({
+  containerRef,
   result,
   busy = false,
   onCommand,
@@ -161,6 +175,7 @@ export function GoogleCalendarConnectionView({
   bookingSync,
   syncAvailable = false,
 }: {
+  containerRef?: Ref<HTMLDivElement>;
   result: CalendarResult | null;
   busy?: boolean;
   onCommand(input: CalendarCommand): void;
@@ -182,7 +197,7 @@ export function GoogleCalendarConnectionView({
   }, [notice]);
   const connection = result?.status === "ready" ? result.connection : null;
   return (
-    <div className="calendar-connection">
+    <div ref={containerRef} className="calendar-connection">
       <h3>Google Calendar</h3>
       {notice === "account-mismatch" ? (
         <div
@@ -229,7 +244,7 @@ export function GoogleCalendarConnectionView({
       {!connection ? (
         result && (
           <button type="button" className="button light" onClick={onReload}>
-            Reload connection status
+            Try again
           </button>
         )
       ) : (
@@ -322,9 +337,18 @@ export function GoogleCalendarConnectionView({
               </p>
             )}
             <div className="calendar-connection-actions">
-              <button type="button" className="button light" onClick={onReload}>
-                Reload connection status
-              </button>
+              {(connection.state === "connecting" ||
+                (result?.status === "ready" && !result.enabled) ||
+                notice === "unavailable" ||
+                notice === "sync-setup-incomplete") && (
+                <button
+                  type="button"
+                  className="button light"
+                  onClick={onReload}
+                >
+                  Check connection status
+                </button>
+              )}
               {result?.status === "ready" &&
                 result.enabled &&
                 connection.state !== "disconnected" &&

@@ -1,10 +1,11 @@
 "use client";
-import { coachProfileHref, coachRedirectHref } from "@/domain/coach-public-url";
+import { coachRedirectHref } from "@/domain/coach-public-url";
 
 import { Clock3, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { useRefreshOnReturn } from "@/components/use-refresh-on-return";
 import {
   cancelPrivateBookingAction,
   requestPrivateSessionAction,
@@ -212,6 +213,13 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
   const isOwnSchedule =
     props.actor.status === "authorized" &&
     props.actor.actorProfileId === props.coachProfileId;
+  const refreshHref = props.schedulePath
+    ? `${props.schedulePath}?date=${selection.date}`
+    : publicScheduleHref(props.coachSlug, selection.date, props.publicPath);
+  useRefreshOnReturn(
+    () => router.refresh(),
+    !busyKey && !selectedSlotId && !result,
+  );
 
   async function runAction(
     key: string,
@@ -270,6 +278,11 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
           aria-live="polite"
         >
           <p>{result.message}</p>
+          {result.status !== "saved" && (
+            <a className="button secondary" href={refreshHref}>
+              Check current status
+            </a>
+          )}
           {result.status === "saved" && result.request && (
             <div className="coach-request-saved-detail">
               <strong>Awaiting coach confirmation</strong>
@@ -484,34 +497,15 @@ function CoachMarketplaceContent(props: CoachMarketplaceProps) {
             session is confirmed.
           </p>
         )}
-        <form
-          action={
-            props.schedulePath ??
-            coachProfileHref({
-              slug: props.coachSlug,
-              publicPath: props.publicPath,
-            })
-          }
-          onSubmit={
-            props.schedulePath
-              ? (event) => {
-                  event.preventDefault();
-                  router.refresh();
-                }
-              : undefined
-          }
-        >
-          <input type="hidden" name="date" value={selection.date} />
-          <button type="submit" className="public-schedule-reload">
-            Refresh available times
-          </button>
-        </form>
       </section>
 
       {props.actor.status === "unavailable" && (
         <p className="coach-marketplace-message error" role="alert">
           Session requests are unavailable because MovX could not verify your
-          account. No personal schedule was shown.
+          account. No personal schedule was shown.{" "}
+          <a className="button secondary" href={refreshHref}>
+            Try again
+          </a>
         </p>
       )}
     </aside>

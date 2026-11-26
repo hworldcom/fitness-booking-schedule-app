@@ -40,7 +40,6 @@ export function ConnectionLists({
   pages,
   busy,
   mayInitiate,
-  onRefresh,
   onPage,
   onDecision,
   onHistory,
@@ -53,7 +52,6 @@ export function ConnectionLists({
   pages: ConnectionPages;
   busy: boolean;
   mayInitiate: boolean;
-  onRefresh: () => void;
   onPage: (section: ConnectionSection) => void;
   onDecision: (row: ConnectionProjection, intent: ConnectionDecision) => void;
   onHistory: (row: ConnectionProjection) => void;
@@ -107,14 +105,6 @@ export function ConnectionLists({
         </div>
         <div className="coach-connections-heading-actions">
           {headingActions}
-          <button
-            type="button"
-            className="button secondary"
-            disabled={busy}
-            onClick={onRefresh}
-          >
-            Refresh connections
-          </button>
         </div>
       </header>
       {connectionSectionsForView(view).map((section) => {

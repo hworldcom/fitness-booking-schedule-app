@@ -1,5 +1,6 @@
 // Actual route/components with isolated Auth/service/API fixtures; no .env, SQL or hosted writes.
 import assert from "node:assert/strict";
+import { returnToVisiblePage } from "./lib/browser-visibility.mjs";
 import { spawn } from "node:child_process";
 import {
   cp,
@@ -14,7 +15,8 @@ import path from "node:path";
 import { tmpdir } from "node:os";
 import { chromium, expect } from "@playwright/test";
 
-const countsOnly = process.argv.includes("--connection-counts");
+const refreshOnly = process.argv.includes("--refresh-recovery");
+const countsOnly = process.argv.includes("--connection-counts") || refreshOnly;
 const myCoachesOnly = process.argv.includes("--my-coaches") || countsOnly;
 const root = process.cwd(),
   port = 3196,
@@ -320,7 +322,9 @@ try {
     createdAt: "2026-11-01T12:00:00Z",
     updatedAt: "2026-11-01T12:00:00Z",
   };
-  let rosterMode = "off";
+  let rosterMode = "off",
+    catalogReads = 0;
+  const catalogCommands = [];
   let failCatalog = false,
     failOptions = false,
     emptyClients = false,
@@ -380,11 +384,19 @@ try {
             : { status: "unavailable" },
       });
     }
+    if (
+      url.pathname === "/api/coach/session-types" &&
+      request.method() === "POST"
+    ) {
+      catalogCommands.push(request.postDataJSON());
+      return route.fulfill({ status: 503, json: { status: "unavailable" } });
+    }
     if (request.method() !== "GET") {
       writes.push(url.pathname);
       return route.fulfill({ status: 503, json: { status: "unavailable" } });
     }
-    if (url.pathname === "/api/coach/session-types")
+    if (url.pathname === "/api/coach/session-types") {
+      catalogReads++;
       return route.fulfill({
         json: failCatalog
           ? { status: "unavailable" }
@@ -394,6 +406,7 @@ try {
               locations: [{ id, name: "Fixture studio" }],
             },
       });
+    }
     if (url.pathname === "/api/session-bookings") {
       if (!url.searchParams.has("options"))
         return route.fulfill({ status: 503, json: { status: "unavailable" } });
@@ -434,6 +447,75 @@ try {
     page
       .getByRole("button", { name: "Refresh fixture account", exact: true })
       .click();
+  if (refreshOnly) {
+    await cookie();
+    for (const width of [1440, 375, 320]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await open("/coach/session-types");
+      const create = page.getByRole("button", {
+        name: "Create session type",
+        exact: true,
+      });
+      await expect(create).toBeEnabled();
+      await expect(
+        page.getByRole("button", { name: "Reload catalog", exact: true }),
+      ).toHaveCount(0);
+      const beforeReturn = catalogReads,
+        beforeWrites = catalogCommands.length;
+      await returnToVisiblePage(page);
+      await expect.poll(() => catalogReads).toBe(beforeReturn + 1);
+      await expect(create).toBeEnabled();
+      assert.equal(catalogCommands.length, beforeWrites);
+      await create.click();
+      await page
+        .getByLabel("Name", { exact: true })
+        .fill("Retained catalog draft");
+      const drafting = catalogReads;
+      await returnToVisiblePage(page);
+      await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
+        "Retained catalog draft",
+      );
+      assert.equal(catalogReads, drafting);
+      await page
+        .getByRole("button", { name: "Save type", exact: true })
+        .click();
+      await expect(
+        page.getByRole("button", { name: "Retry the same save", exact: true }),
+      ).toBeVisible();
+      const unknown = catalogCommands.at(-1),
+        pendingReads = catalogReads;
+      await returnToVisiblePage(page);
+      assert.equal(catalogReads, pendingReads);
+      await page
+        .getByRole("button", { name: "Retry the same save", exact: true })
+        .click();
+      await expect.poll(() => catalogCommands.length).toBe(beforeWrites + 2);
+      assert.deepEqual(catalogCommands.at(-1), unknown);
+      failCatalog = true;
+      await open("/coach/session-types");
+      await expect(
+        page.getByRole("button", { name: "Try again", exact: true }),
+      ).toBeVisible();
+      failCatalog = false;
+      await page
+        .getByRole("button", { name: "Try again", exact: true })
+        .click();
+      await expect(create).toBeEnabled();
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        true,
+      );
+      await page.screenshot({
+        path: path.join(output, `catalog-refresh-${width}.png`),
+      });
+      record(
+        `${width}px catalog: no normal reload, one return GET, retained draft/unknown command and contextual failed-read retry`,
+      );
+    }
+    assert.equal(catalogCommands.length, 6);
+  }
   if (!myCoachesOnly) {
     const tabs = [
       ["Schedule", "/coach?view=schedule&section=calendar"],
@@ -794,15 +876,21 @@ try {
     failCatalog = true;
     await open(tabs[2][1]);
     await expect(
-      page.getByText(
-        "We couldn’t verify the save. Retry the same action or reload to check.",
-        { exact: true },
-      ),
+      page.getByText("Session types could not be loaded. Try again.", {
+        exact: true,
+      }),
     ).toBeVisible();
     await expect(nav()).toBeVisible();
     failCatalog = false;
+    await page.getByRole("button", { name: "Try again", exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: "Create session type", exact: true }),
+    ).toBeEnabled();
+    await expect(
+      page.getByRole("button", { name: "Reload catalog", exact: true }),
+    ).toHaveCount(0);
     record(
-      "catalog/options errors retain shared navigation and truthful recovery states",
+      "catalog/options errors retain shared navigation and contextual retry restores the catalog",
     );
     await open(tabs[2][1]);
     await page
@@ -811,6 +899,10 @@ try {
     await page
       .getByLabel("Name", { exact: true })
       .fill("Retained layout draft");
+    await returnToVisiblePage(page);
+    await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
+      "Retained layout draft",
+    );
     await cookie("owner", "checking");
     await refresh();
     await expect(
@@ -1502,9 +1594,7 @@ try {
     await page
       .context()
       .addCookies([{ name: "mov210-incoming", value: "decline", url: base }]);
-    await page
-      .getByRole("button", { name: "Refresh connections", exact: true })
-      .click();
+    await returnToVisiblePage(page);
     await expect(count()).toHaveText("0");
     record(
       `${actor} count123 desktop/375/320/keyboard, exact incoming decisions/withdraw, zero, independent unavailable/retry/refresh`,

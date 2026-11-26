@@ -1,6 +1,7 @@
 import { verifiedDatabaseFingerprints } from "./lib/database-fingerprints.mjs";
 // MOV-19: explicit opt-in live Mux rehearsal; real provider assets are created and cleaned by exact IDs.
 import assert from "node:assert/strict";
+import { reloadFixturePage } from "./lib/browser-visibility.mjs";
 import { spawn, spawnSync, execFileSync } from "node:child_process";
 import {
   randomUUID,
@@ -774,6 +775,17 @@ try {
   });
   await expect(mediaDrawer).toBeVisible();
   const editor = coachPage.locator(".coach-media-editor");
+  async function reloadMediaFixture() {
+    await reloadFixturePage(coachPage);
+    await coachPage
+      .getByRole("button", {
+        name: "Edit training photos and video",
+        exact: true,
+      })
+      .click();
+    await expect(editor).toBeVisible();
+  }
+
   await expect(
     editor.getByLabel("Training video file", { exact: true }),
   ).toBeEnabled();
@@ -821,9 +833,7 @@ try {
     return (await videoRows()).some((row) => row.status === "ready");
   }, 180000);
   await coachPage.unroute("**/api/coach/media");
-  await editor
-    .getByRole("button", { name: "Reload media", exact: true })
-    .click();
+  await reloadMediaFixture();
   await expect(
     editor.getByRole("button", {
       name: "Watch video: Temporary coach introduction",
@@ -1043,9 +1053,7 @@ try {
   const [nearClip, longClip] = await clips([59.5, 61]);
   pass("generated near-60-second and over-limit fixtures");
   phase = "real over-limit rejection preserves publication";
-  await editor
-    .getByRole("button", { name: "Reload media", exact: true })
-    .click();
+  await reloadMediaFixture();
   await choose(longClip, "Over-limit temporary video");
   let longRow;
   await waitUntil(async () => {
@@ -1098,9 +1106,7 @@ try {
   );
 
   phase = "real near-limit replacement and exact old-asset cleanup";
-  await editor
-    .getByRole("button", { name: "Reload media", exact: true })
-    .click();
+  await reloadMediaFixture();
   await choose(nearClip, "Near-limit temporary replacement");
   let replacementRow;
   await waitUntil(async () => {

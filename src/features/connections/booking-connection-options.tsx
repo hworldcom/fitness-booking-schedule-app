@@ -147,14 +147,6 @@ export function BookingConnectionOptions({
                 />
               </>
             )}
-            <button
-              type="button"
-              className="coach-connection-text-button"
-              disabled={busy}
-              onClick={onLoad}
-            >
-              Refresh connection status
-            </button>
           </div>
           {!context.canSend && !connection && (
             <p>

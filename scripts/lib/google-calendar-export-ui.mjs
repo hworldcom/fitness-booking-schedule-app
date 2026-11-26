@@ -233,9 +233,7 @@ export async function rehearseCalendarExport({
   ).toBeVisible();
   await expect(toggle).toHaveCount(0);
   conflict = false;
-  await region
-    .getByRole("button", { name: "Reload booking sync", exact: true })
-    .click();
+  await region.getByRole("button", { name: "Try again", exact: true }).click();
   await expect(toggle).toBeChecked();
   pass("Conflicting preference requires a fresh read before another command");
   failed = 1;

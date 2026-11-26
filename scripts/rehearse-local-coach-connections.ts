@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { returnToVisiblePage } from "./lib/browser-visibility.mjs";
 import { mkdir } from "node:fs/promises";
 import { chromium, expect, type Page } from "@playwright/test";
 import sharp from "sharp";
@@ -231,9 +232,7 @@ try {
     ).connection!;
     await decide(athlete, pending.id, "accept");
     await page.goto(base + "/coach/athletes");
-    await page
-      .getByRole("button", { name: "Refresh connections", exact: true })
-      .click();
+    await returnToVisiblePage(page);
     await expect(
       page.locator(
         `[aria-label="Connected athletes"] .coach-connection-card[data-connection-id="${pending.id}"]`,
@@ -307,15 +306,11 @@ try {
     const recovered = await historyIds(page, inbound.id);
     assert.deepEqual(recovered, original);
     await decide(athlete, inbound.id, "disconnect");
-    await page
-      .getByRole("button", { name: "Refresh connections", exact: true })
-      .click();
+    await returnToVisiblePage(page);
     await expect(page.locator(".coach-connection-history")).toHaveCount(0);
     const again = await send(athlete, main.bookingId);
     await page.goto(base + "/coach/athletes?section=requests");
-    await page
-      .getByRole("button", { name: "Refresh connections", exact: true })
-      .click();
+    await returnToVisiblePage(page);
     await page
       .locator(`.coach-connection-card[data-connection-id="${again.id}"]`)
       .getByRole("button", { name: "Accept connection" })
@@ -329,9 +324,7 @@ try {
     phase =
       "conflicting cancellation, decline, media fallback and safe suspension";
     const declined = await send(other, otherBooking.bookingId);
-    await page
-      .getByRole("button", { name: "Refresh connections", exact: true })
-      .click();
+    await returnToVisiblePage(page);
     const declineCard = page.locator(
       `.coach-connection-card[data-connection-id="${declined.id}"]`,
     );
@@ -342,9 +335,7 @@ try {
       "Connection request declined.",
     );
     const stale = await send(other, otherBooking.bookingId);
-    await page
-      .getByRole("button", { name: "Refresh connections", exact: true })
-      .click();
+    await returnToVisiblePage(page);
     await expect(
       page
         .locator(`[data-connection-id="${stale.id}"]`)

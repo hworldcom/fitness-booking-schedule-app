@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRefreshOnReturn } from "@/components/use-refresh-on-return";
 import type { CalendarResult } from "@/calendar/connection";
 import {
   isCalendarExportResult,
@@ -197,6 +198,18 @@ export function GoogleCalendarExportView({
   onRetry(): void;
 }) {
   const [repair, setRepair] = useState(false);
+  useRefreshOnReturn(
+    onReload,
+    result?.status === "ready" &&
+      result.available &&
+      !busy &&
+      !pending &&
+      !repair &&
+      !(
+        result.export.enabled &&
+        (result.export.pending > 0 || result.export.backfillPending)
+      ),
+  );
   return (
     <section
       aria-label="Google booking sync"
@@ -365,14 +378,18 @@ export function GoogleCalendarExportView({
           </p>
         </>
       )}
-      <button
-        type="button"
-        className="button light"
-        disabled={busy}
-        onClick={onReload}
-      >
-        Reload booking sync
-      </button>
+      {result &&
+        (result.status !== "ready" || !result.available) &&
+        !pending && (
+          <button
+            type="button"
+            className="button light"
+            disabled={busy}
+            onClick={onReload}
+          >
+            Try again
+          </button>
+        )}
     </section>
   );
 }

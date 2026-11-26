@@ -1,5 +1,6 @@
 // Mounted real calendar with explicit Auth/API fixtures. No retained accounts or DB.
 import assert from "node:assert/strict";
+import { returnToVisiblePage } from "./lib/browser-visibility.mjs";
 import { spawn } from "node:child_process";
 import {
   cp,
@@ -290,6 +291,67 @@ return <main className="training-page">{active?.startsWith("coach-")
         },
       });
     });
+    if (process.argv.includes("--routine-recovery")) {
+      await page.goto(base + "/sessions/routine");
+      const add = page.getByRole("button", {
+        name: "Add Monday workout",
+        exact: true,
+      });
+      await expect(add).toBeEnabled();
+      await expect(
+        page.getByRole("button", { name: "Reload saved version", exact: true }),
+      ).toHaveCount(0);
+      const reads = () => requests.filter((c) => c.action === "list").length;
+      const before = reads();
+      await returnToVisiblePage(page);
+      await expect.poll(reads).toBe(before + 1);
+      await expect(add).toBeEnabled();
+      await add.click();
+      await page
+        .getByLabel("Activity", { exact: true })
+        .fill("Retained routine draft");
+      const drafting = reads();
+      await returnToVisiblePage(page);
+      await expect(page.getByLabel("Activity", { exact: true })).toHaveValue(
+        "Retained routine draft",
+      );
+      assert.equal(reads(), drafting);
+      await page.getByLabel("Time", { exact: true }).fill("14:00");
+      await page.getByLabel("Planned minutes").fill("40");
+      fail = true;
+      await page
+        .getByRole("button", { name: "Save workout", exact: true })
+        .click();
+      await expect(page.getByRole("dialog").getByRole("alert")).toBeVisible();
+      const unknown = requests.findLast((c) => c.action === "save");
+      await page.getByRole("button", { name: "Cancel", exact: true }).click();
+      await expect(add).toBeDisabled();
+      const unresolved = reads();
+      await returnToVisiblePage(page);
+      assert.equal(reads(), unresolved);
+      await page
+        .getByRole("button", { name: "Retry last save", exact: true })
+        .click();
+      await expect(add).toBeEnabled();
+      assert.deepEqual(
+        requests.findLast((c) => c.action === "save"),
+        unknown,
+      );
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        true,
+      );
+      await page.screenshot({
+        path: path.join(evidence, `routine-recovery-${width}.png`),
+      });
+      checks.push(
+        `${width}px routine: no permanent reload, one return read, retained editor, uncertain-write pause and identical retry`,
+      );
+      await context.close();
+      continue;
+    }
     let referenceTabStyle;
     for (const active of [
       "coach-calendar",
@@ -380,8 +442,9 @@ return <main className="training-page">{active?.startsWith("coach-")
       });
     }
     await page.goto(base + "/qa-navigation?active=calendar");
-    await page.getByRole("link", { name: "Calendar", exact: true }).focus();
-    await page.keyboard.press("Enter");
+    await page
+      .getByRole("link", { name: "Calendar", exact: true })
+      .press("Enter");
     await expect(page).toHaveURL(base + "/sessions/calendar");
     checks.push(
       `${width}px all athlete/coach active tabs, matching styles, compact layout, routes, keyboard focus/Enter and no overflow`,
@@ -703,7 +766,7 @@ return <main className="training-page">{active?.startsWith("coach-")
     ).toBeDisabled();
     await expect(
       page.getByRole("button", { name: "Reload saved version", exact: true }),
-    ).toBeDisabled();
+    ).toHaveCount(0);
     await page
       .getByRole("button", { name: "Retry last save", exact: true })
       .click();

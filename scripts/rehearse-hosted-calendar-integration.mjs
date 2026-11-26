@@ -1,5 +1,6 @@
 // DEV0256: one real fixture cohort across calendar, editor and public requests.
 import assert from "node:assert/strict";
+import { returnToVisiblePage } from "./lib/browser-visibility.mjs";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { expect as baseExpect } from "@playwright/test";
@@ -209,9 +210,7 @@ async function calendarStage(stage, c) {
         ? route.abort("failed")
         : route.continue(),
     );
-    await page
-      .getByRole("button", { name: "Reload calendar", exact: true })
-      .click();
+    await returnToVisiblePage(page);
     await expect(
       calendar
         .getByRole("alert")
@@ -219,9 +218,7 @@ async function calendarStage(stage, c) {
     ).toBeVisible();
     await expect(items()).toHaveCount(9);
     await page.unroute("**/coach?**");
-    await page
-      .getByRole("button", { name: "Reload calendar", exact: true })
-      .click();
+    await returnToVisiblePage(page);
     await expect(calendar).toHaveAttribute("aria-busy", "false");
     const futureGroup = await draftGroup(
       c,

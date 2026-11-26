@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
+import { useRefreshOnReturn } from "@/components/use-refresh-on-return";
 import {
   loadBookingConnectionContextAction,
   loadConnectionPagesAction,
@@ -102,6 +103,8 @@ export function ConnectionWorkspace({
   const [pending, startTransition] = useTransition();
   const lock = useRef(false);
   const feedback = useRef<HTMLParagraphElement>(null);
+  const focusFeedback = useRef(true);
+  const workspace = useRef<HTMLDivElement>(null);
   // Revalidation includes a fresh RSC tree. Results from the preceding tree
   // cannot overwrite the new server authority or restore removed media/history.
   const pages = local?.source === sourceVersion ? local.pages : initialPages;
@@ -115,10 +118,47 @@ export function ConnectionWorkspace({
       ? history
       : null;
   const busy = pending || busyKey !== null;
+  useRefreshOnReturn(
+    () => {
+      if (workspace.current?.querySelector(".coach-connection-confirmation"))
+        return;
+      run("return", async () => {
+        refreshPendingCount();
+        if (view !== "sessions") await refreshPages();
+        const open = (bookings ?? []).filter(
+          (booking) => booking.id in contextEntries,
+        );
+        if (open.length) {
+          const rows = await Promise.all(
+            open.map(async (booking) => {
+              const next = await loadBookingConnectionContextAction(booking.id);
+              return [
+                booking.id,
+                {
+                  value: next.status === "ready" ? next.value : null,
+                  message:
+                    next.status === "ready"
+                      ? null
+                      : connectionReadMessage(next.status),
+                },
+              ] as const;
+            }),
+          );
+          setContexts({
+            source: sourceVersion,
+            entries: Object.fromEntries(rows),
+          });
+        }
+      });
+    },
+    !busy &&
+      (view !== "sessions" || Object.keys(contextEntries).length > 0) &&
+      result?.status !== "unavailable",
+  );
   const SessionCards = role === "coach" ? CoachClientCards : ClientSessions;
   const bookingIds = new Set(bookings?.map((row) => row.id));
   useEffect(() => {
-    if (result) feedback.current?.focus();
+    if (result && focusFeedback.current) feedback.current?.focus();
   }, [result]);
   useEffect(() => {
     if (focusTarget)
@@ -130,6 +170,7 @@ export function ConnectionWorkspace({
   }
   function run(key: string, work: () => Promise<void>) {
     if (lock.current || pending) return;
+    focusFeedback.current = key !== "return";
     lock.current = true;
     setBusyKey(key);
     startTransition(async () => {
@@ -323,7 +364,11 @@ export function ConnectionWorkspace({
     });
   }
   return (
-    <div className="coach-connections-workspace">
+    <div
+      ref={workspace}
+      className="coach-connections-workspace"
+      aria-busy={busy}
+    >
       {result && (
         <p
           ref={feedback}
@@ -332,6 +377,16 @@ export function ConnectionWorkspace({
           role={result.status === "saved" ? "status" : "alert"}
         >
           {result.message}
+          {result.status !== "saved" && (
+            <button
+              type="button"
+              className="button secondary"
+              disabled={busy}
+              onClick={refresh}
+            >
+              Check current status
+            </button>
+          )}
         </p>
       )}
       {view !== "connections" && (
@@ -364,7 +419,6 @@ export function ConnectionWorkspace({
           pages={pages}
           busy={busy}
           mayInitiate={mayInitiate}
-          onRefresh={refresh}
           onPage={loadPage}
           onDecision={decide}
           onHistory={(row) => loadHistory(row)}

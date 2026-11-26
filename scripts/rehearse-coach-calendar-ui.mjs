@@ -1,5 +1,6 @@
 // UI-only rehearsal. Uses an isolated checkout and explicit fixtures; never loads .env or runs migrations.
 import assert from "node:assert/strict";
+import { returnToVisiblePage } from "./lib/browser-visibility.mjs";
 import {
   cp,
   mkdir,
@@ -47,6 +48,11 @@ await cp(
   path.join(checkout, "src/tests-fixtures"),
   { recursive: true },
 );
+// This rehearsal tests the settings destination without real account/Auth services.
+await writeFile(
+  path.join(checkout, "src/app/account/page.tsx"),
+  `import {AccountSettingsView} from "@/features/account/account-settings";export default function Page(){return <AccountSettingsView section="connected-calendars" email="fixture@users.movx.test" calendarSettings={<p>Explicit read-only calendar settings destination fixture.</p>}/>;}`,
+);
 // Render the actual profile editor at the notice link's destination without
 // loading account data or submitting any changes in this isolated checkout.
 await writeFile(
@@ -76,6 +82,10 @@ for (const name of ["src/app/layout.tsx", "src/app/api/auth/actor/route.ts"]) {
     );
   await writeFile(target, source);
 }
+await writeFile(
+  path.join(checkout, "src/app/api/auth/session/route.ts"),
+  `import{initialAuthorizationState}from"@/tests-fixtures/coach-events-auth";export async function GET(){return Response.json((await initialAuthorizationState()).session,{headers:{"cache-control":"private, no-store"}})}`,
+);
 await writeFile(
   path.join(checkout, "src/server/group-sessions/owner-service.ts"),
   (
@@ -232,7 +242,7 @@ try {
       .getByLabel("Calendar response scenario", { exact: true })
       .selectOption(value);
   const reload = () =>
-    page.getByRole("button", { name: "Reload calendar", exact: true });
+    page.getByRole("button", { name: "Load latest changes", exact: true });
   const settingsWrites = [];
   const trackSettings = (request) => {
     if (!["GET", "HEAD"].includes(request.method()))
@@ -275,7 +285,7 @@ try {
       path: path.join(output, `calendar-connect-${width}.png`),
       fullPage: true,
     });
-    await page.keyboard.press("Enter");
+    await connect.press("Enter");
     await page.waitForURL(
       (url) =>
         url.pathname === "/account" &&
@@ -572,7 +582,7 @@ try {
   await reload().click();
   await agenda().waitFor();
   await scenario("denied");
-  await reload().click();
+  await returnToVisiblePage(page);
   await page
     .getByRole("heading", { name: "Calendar access changed", exact: true })
     .waitFor();
@@ -828,14 +838,14 @@ try {
     );
     // Reach the action through the actual Tab order, then activate it with Enter.
     await page
-      .getByRole("button", { name: "Reload calendar", exact: true })
+      .getByRole("button", { name: "Apply filters", exact: true })
       .focus();
     await page.keyboard.press("Tab");
     assert.equal(
       await profileLink.evaluate((node) => node === document.activeElement),
       true,
     );
-    await page.keyboard.press("Enter");
+    await profileLink.press("Enter");
     await page.waitForURL(/\/profile\/coach#coach-profile-visibility$/, {
       waitUntil: "domcontentloaded",
     });
