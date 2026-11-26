@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
 import { Modal } from "@/components/ui";
 import { berlinLocalInstant } from "@/features/coach-events/contract";
@@ -21,13 +21,26 @@ export function BookingStartPicker({
   onApply: (value: string) => void;
   onCancel: () => void;
 }) {
+  const groupId = useId();
   const [date, setDate] = useState(value.slice(0, 10));
-  const [hour, setHour] = useState(value.slice(11, 13));
+  const [hour, setHour] = useState(
+    HOURS.includes(value.slice(11, 13)) ? value.slice(11, 13) : "",
+  );
   const [minute, setMinute] = useState(
     MINUTES.includes(value.slice(14, 16)) ? value.slice(14, 16) : "",
   );
   const [error, setError] = useState("");
   const dateInput = useRef<HTMLInputElement>(null);
+  const dateInstant = new Date(`${date}T12:00:00Z`);
+  const dateLabel = Number.isNaN(dateInstant.getTime())
+    ? "Choose a date"
+    : new Intl.DateTimeFormat("en-GB", {
+        weekday: "short",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+      }).format(dateInstant);
 
   // Keep the draft, but remove the top-layer dialog while access is checked.
   if (suspended) return null;
@@ -35,11 +48,11 @@ export function BookingStartPicker({
   return (
     <Modal
       title="Choose session date and time"
-      eyebrow="Berlin time"
+      eyebrow="Berlin time · 24-hour clock"
       className="booking-start-dialog"
       onClose={onCancel}
     >
-      <p>Apply selects the time. Save booking change submits the change.</p>
+      <p>Choose a time in 15-minute intervals.</p>
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -74,47 +87,52 @@ export function BookingStartPicker({
               }}
             />
           </label>
-          <div className="booking-start-clock">
-            <label>
-              Hour
-              <select
-                aria-label="Hour"
-                required
-                value={hour}
-                onChange={(event) => {
-                  setHour(event.target.value);
-                  setError("");
-                }}
+          {[
+            { label: "Hour", values: HOURS, selected: hour, choose: setHour },
+            {
+              label: "Minutes",
+              values: MINUTES,
+              selected: minute,
+              choose: setMinute,
+            },
+          ].map(({ label, values, selected, choose }) => (
+            <fieldset className="booking-start-options" key={label}>
+              <legend>{label}</legend>
+              <div
+                className={`booking-start-grid ${label === "Hour" ? "booking-start-hours" : "booking-start-minutes"}`}
               >
-                <option value="">Choose hour</option>
-                {HOURS.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
+                {values.map((item) => (
+                  <label className="booking-start-choice" key={item}>
+                    <input
+                      type="radio"
+                      name={`${groupId}-${label}`}
+                      value={item}
+                      checked={selected === item}
+                      required
+                      onChange={() => {
+                        choose(item);
+                        setError("");
+                      }}
+                    />
+                    <span>{item}</span>
+                  </label>
                 ))}
-              </select>
-            </label>
-            <label>
-              Minute
-              <select
-                aria-label="Minute"
-                required
-                value={minute}
-                onChange={(event) => {
-                  setMinute(event.target.value);
-                  setError("");
-                }}
-              >
-                <option value="">Choose minute</option>
-                {MINUTES.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </label>
+              </div>
+            </fieldset>
+          ))}
+        </div>
+        <div
+          className="booking-start-selection"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <div>
+            <small>Selected start · Berlin time</small>
+            <p>{dateLabel}</p>
           </div>
-          <p>Start times are available at :00, :15, :30 and :45.</p>
+          <strong>
+            {hour && minute ? `${hour}:${minute}` : "Choose a time"}
+          </strong>
         </div>
         {error && <p role="alert">{error}</p>}
         <div className="booking-start-actions">

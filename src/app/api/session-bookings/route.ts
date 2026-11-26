@@ -27,6 +27,9 @@ function response(result: { status: string }) {
 export async function GET(request: Request) {
   const q = new URL(request.url).searchParams;
   if (q.has("options")) {
+    const purpose = q.get("options") === "edit" ? "edit" : "create";
+    if (purpose === "edit" && q.has("cursor"))
+      return response({ status: "invalid" });
     let options;
     try {
       options = q.has("cursor")
@@ -35,7 +38,7 @@ export async function GET(request: Request) {
     } catch {
       return response({ status: "invalid" });
     }
-    return response(await coachSessionBookingOptions(options));
+    return response(await coachSessionBookingOptions(options, purpose));
   }
   return response(
     await sessionBookingDetail(

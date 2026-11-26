@@ -25,6 +25,7 @@ import {
 import type {
   SessionBookingDetail,
   CoachSessionCommand,
+  InitialSessionBooking,
 } from "@/domain/typed-sessions";
 import type {
   ConnectionPage,
@@ -34,8 +35,8 @@ import "./session-types.css";
 type Options = {
   types: readonly SessionType[];
   locations: readonly { id: string; name: string }[];
-  athletes: ConnectionPage<ConnectionProjection>;
-  externalClients: ExternalClientPage;
+  athletes?: ConnectionPage<ConnectionProjection>;
+  externalClients?: ExternalClientPage;
 };
 const START_TIME_GUIDANCE =
   "Choose a start time at :00, :15, :30 or :45 (15-minute intervals).";
@@ -64,12 +65,14 @@ export function BookingEditor({
   returnHref,
   initialExternalClientId,
   embedded = false,
+  initialBooking,
 }: {
   bookingId?: string;
   coachView?: boolean;
   returnHref?: string;
   initialExternalClientId?: string;
   embedded?: boolean;
+  initialBooking?: InitialSessionBooking;
 }) {
   const Heading = embedded ? "h2" : "h1";
   return (
@@ -86,12 +89,19 @@ export function BookingEditor({
         </Link>
       )}
       <Heading>{bookingId ? "Session details" : "Schedule a client"}</Heading>
-      <SessionActorBoundary>
-        {(identity) => (
+      <SessionActorBoundary initialIdentity={initialBooking?.identity}>
+        {(identity, canUseInitial) => (
           <Editor
             key={`${identity}:${bookingId ?? "new"}`}
             bookingId={bookingId}
             initialExternalClientId={initialExternalClientId}
+            initialDetail={
+              canUseInitial &&
+              initialBooking &&
+              initialBooking.detail.bookingId === bookingId
+                ? initialBooking.detail
+                : undefined
+            }
           />
         )}
       </SessionActorBoundary>
@@ -101,21 +111,28 @@ export function BookingEditor({
 function Editor({
   bookingId,
   initialExternalClientId,
+  initialDetail,
 }: {
   bookingId?: string;
   initialExternalClientId?: string;
+  initialDetail?: SessionBookingDetail;
 }) {
   const router = useRouter();
   const bookingFormId = useId();
   const { actor } = useActor();
   const { session } = useAuthSession();
   const [options, setOptions] = useState<Options | null>(null);
-  const [detail, setDetail] = useState<SessionBookingDetail | null>(null);
+  // A server snapshot is only an initial value. Refreshes must not replace a
+  // user's in-progress change, and the actor boundary controls its lifetime.
+  const [initial] = useState(initialDetail);
+  const [detail, setDetail] = useState<SessionBookingDetail | null>(
+    initial ?? null,
+  );
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(0);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const [typeId, setTypeId] = useState("");
+  const [typeId, setTypeId] = useState(initial?.sessionType?.id ?? "");
   const [athleteId, setAthleteId] = useState("");
   const [clientKind, setClientKind] = useState(
     initialExternalClientId ? "external" : "platform",
@@ -125,9 +142,16 @@ function Editor({
   );
   const [uncertain, setUncertain] = useState(false);
   const [clientPending, setClientPending] = useState(false);
-  const [locationId, setLocationId] = useState("");
-  const [localTime, setLocalTime] = useState("");
-  const [duration, setDuration] = useState<SessionDuration>(60);
+  const [locationId, setLocationId] = useState(initial?.locationId ?? "");
+  const [localTime, setLocalTime] = useState(
+    initial ? berlinInput(initial.startsAt) : "",
+  );
+  const [duration, setDuration] = useState<SessionDuration>(
+    initial
+      ? (((Date.parse(initial.endsAt) - Date.parse(initial.startsAt)) /
+          60000) as SessionDuration)
+      : 60,
+  );
   const [pendingCommand, setPendingCommand] =
     useState<CoachSessionCommand | null>(null);
   const changeForm = useRef<HTMLFormElement>(null);
@@ -151,13 +175,15 @@ function Editor({
     let active = true;
     async function load() {
       try {
-        const d = bookingId
-          ? await (
-              await fetch(`/api/session-bookings?bookingId=${bookingId}`, {
-                cache: "no-store",
-              })
-            ).json()
-          : null;
+        const d = initial
+          ? { status: "ready", detail: initial }
+          : bookingId
+            ? await (
+                await fetch(`/api/session-bookings?bookingId=${bookingId}`, {
+                  cache: "no-store",
+                })
+              ).json()
+            : null;
         if (!active) return;
         if (d && d.status !== "ready") {
           setMessage(
@@ -177,11 +203,19 @@ function Editor({
         }
         if (!d || d.detail.viewerIsCoach) {
           const r = await (
-            await fetch("/api/session-bookings?options=1", {
-              cache: "no-store",
-            })
+            await fetch(
+              `/api/session-bookings?options=${bookingId ? "edit" : "1"}`,
+              {
+                cache: "no-store",
+              },
+            )
           ).json();
-          if (active && r.status === "ready") setOptions(r);
+          if (
+            active &&
+            r.status === "ready" &&
+            (bookingId || (r.athletes && r.externalClients))
+          )
+            setOptions(r);
           else if (active)
             setMessage(
               "Coach scheduling options are unavailable. Check your access and reload.",
@@ -201,15 +235,16 @@ function Editor({
     return () => {
       active = false;
     };
-  }, [bookingId]);
+  }, [bookingId, initial]);
   async function more() {
-    if (!options?.athletes.nextCursor) return;
+    const athletes = options?.athletes;
+    if (!options || !athletes?.nextCursor) return;
     setBusy(true);
     try {
       const r = await (
         await fetch(
           "/api/session-bookings?options=1&cursor=" +
-            encodeURIComponent(JSON.stringify(options.athletes.nextCursor)),
+            encodeURIComponent(JSON.stringify(athletes.nextCursor)),
           { cache: "no-store" },
         )
       ).json();
@@ -218,10 +253,10 @@ function Editor({
           ...options,
           athletes: {
             items: [
-              ...options.athletes.items,
+              ...athletes.items,
               ...r.athletes.items.filter(
                 (n: ConnectionProjection) =>
-                  !options.athletes.items.some((p) => p.id === n.id),
+                  !athletes.items.some((p) => p.id === n.id),
               ),
             ],
             nextCursor: r.athletes.nextCursor,
@@ -395,7 +430,11 @@ function Editor({
     : "/coach/bookings/new";
   return (
     <>
-      {loading && <p role="status">Loading session…</p>}
+      {loading && (
+        <p role="status">
+          {detail ? "Loading booking options…" : "Loading session…"}
+        </p>
+      )}
       {detail && (
         <section className="session-type-editor">
           <h2>{detail.sessionType?.name ?? "Private session"}</h2>
@@ -506,7 +545,7 @@ function Editor({
       )}
       {editable && !saved && (
         <section className="session-type-editor session-booking-change">
-          {!detail && (
+          {!detail && options.athletes && options.externalClients && (
             <>
               <h2 id="booking-change-heading">New confirmed session</h2>
               <p>

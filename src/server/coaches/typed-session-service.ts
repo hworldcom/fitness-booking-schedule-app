@@ -176,8 +176,12 @@ export async function sessionBookingDetail(
 }
 export async function coachSessionBookingOptions(
   options: ConnectionPageOptions = {},
+  purpose: "create" | "edit" = "create",
 ) {
-  if (!validConnectionPageOptions(options))
+  if (
+    !validConnectionPageOptions(options) ||
+    (purpose === "edit" && options.cursor)
+  )
     return { status: "invalid" as const };
   const r = await withAuthorizedActor(async (tx, actor) => {
     const owner = await currentActorProjection(tx, actor);
@@ -186,12 +190,62 @@ export async function coachSessionBookingOptions(
     return {
       status: "ready" as const,
       types: await ownedSessionTypes(tx, actor),
-      externalClients: await externalClientsPage(tx, null, true),
-      athletes: await connectionPageRecord(tx, "coach", "accepted", options),
+      ...(purpose === "create"
+        ? {
+            externalClients: await externalClientsPage(tx, null, true),
+            athletes: await connectionPageRecord(
+              tx,
+              "coach",
+              "accepted",
+              options,
+            ),
+          }
+        : {}),
       locations: await ownedSessionTypeLocations(tx, actor),
     };
   });
   return r.status === "authorized"
     ? r.value
     : { status: r.status === "preview" ? ("forbidden" as const) : r.status };
+}
+
+export async function coachSessionBookingPage(id: string) {
+  if (!sessionUuid(id)) return { status: "invalid" as const };
+  try {
+    const result = await withAuthorizedActor(
+      async (tx, actor) => {
+        const detail = await sessionBookingDetailRecord(tx, id);
+        if (!detail.viewerIsCoach) return { status: "forbidden" as const };
+        const owner = await currentActorProjection(tx, actor);
+        return {
+          status: "ready" as const,
+          initialBooking: {
+            identity: [
+              actor.authUserId,
+              owner.profileSlug,
+              owner.runSlug,
+              actor.runRole,
+            ].join(":"),
+            detail,
+          },
+        };
+      },
+      { rethrow: (e) => e instanceof SessionTypeError },
+    );
+    return result.status === "authorized"
+      ? result.value
+      : {
+          status:
+            result.status === "preview"
+              ? ("forbidden" as const)
+              : result.status,
+        };
+  } catch (error) {
+    return {
+      status:
+        error instanceof SessionTypeError
+          ? error.status
+          : ("unavailable" as const),
+    };
+  }
 }

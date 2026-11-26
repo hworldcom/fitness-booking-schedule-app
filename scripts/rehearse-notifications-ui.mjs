@@ -1,7 +1,7 @@
 // MOV-81: actual shared headers/controller, isolated Auth/API fixtures only.
 // No environment files, real accounts, databases or external delivery.
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import {
   cp,
   mkdir,
@@ -14,12 +14,17 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { chromium, expect } from "@playwright/test";
+import { chromium, expect as baseExpect } from "@playwright/test";
 
 const root = process.cwd(),
   checkout = await mkdtemp(path.join(tmpdir(), "mov81-notifications-ui-"));
 const output = path.join(root, "test-results/notifications");
 const base = "http://127.0.0.1:3168";
+const bookingLoadBaseline = process.argv.includes("--booking-load-baseline");
+const bookingLoad =
+  bookingLoadBaseline || process.argv.includes("--booking-load-performance");
+const expect = baseExpect.configure({ timeout: bookingLoad ? 20000 : 5000 });
+let pageForFailure;
 let server,
   browser,
   log = "";
@@ -35,6 +40,23 @@ try {
     await cp(path.join(root, name), path.join(checkout, name), {
       recursive: true,
     });
+  if (bookingLoadBaseline) {
+    for (const file of [
+      "src/app/coach/sessions/[bookingId]/page.tsx",
+      "src/app/api/session-bookings/route.ts",
+      "src/server/coaches/typed-session-service.ts",
+      "src/features/session-types/booking-editor.tsx",
+      "src/features/session-types/actor-boundary.tsx",
+      "src/domain/typed-sessions.ts",
+    ])
+      await writeFile(
+        path.join(checkout, file),
+        execFileSync("git", [
+          "show",
+          `75fa0fe954a95ff9e8ea0baeb668285f116481e7:${file}`,
+        ]),
+      );
+  }
   await symlink(
     path.join(root, "node_modules"),
     path.join(checkout, "node_modules"),
@@ -48,7 +70,17 @@ try {
   );
   await writeFile(
     path.join(checkout, "src/tests-fixtures/notification-auth.ts"),
-    auth.replaceAll("dev0239-actor", "mov81-actor"),
+    auth
+      .replaceAll("dev0239-actor", "mov81-actor")
+      .replaceAll("dev0239-fault", "mov81-fault")
+      .replace(
+        'slug: "fixture",',
+        'slug: actor === "other-run" ? "another-run" : "fixture",',
+      )
+      .replace(
+        'role: "member",',
+        'role: actor === "operator" ? "operator" : "member",',
+      ),
   );
   for (const file of [
     "src/app/layout.tsx",
@@ -79,6 +111,72 @@ try {
     await writeFile(
       path.join(checkout, `src/app/${route}/page.tsx`),
       `import {Controls} from "@/tests-fixtures/controls";export default function Fixture(){return <><h1>Explicit notification UI fixture</h1><p>No real Auth, database writes or email.</p><Controls/></>}`,
+    );
+  }
+  if (bookingLoad) {
+    const configFile = path.join(checkout, "next.config.ts");
+    await writeFile(
+      configFile,
+      (await readFile(configFile, "utf8")).replace(
+        "const nextConfig: NextConfig = {",
+        "const nextConfig: NextConfig = { reactStrictMode: false,",
+      ),
+    );
+    const notesRoute = path.join(
+      checkout,
+      "src/app/api/session-notes/route.ts",
+    );
+    await writeFile(
+      notesRoute,
+      (await readFile(notesRoute, "utf8")).replace(
+        'from "@/app/api/coach/website/_http"',
+        'from "@/tests-fixtures/booking-load-authorization"',
+      ),
+    );
+    await writeFile(
+      path.join(checkout, "src/tests-fixtures/booking-load-authorization.ts"),
+      (
+        await readFile(
+          path.join(root, "tests/fixtures/booking-load-authorization.ts"),
+          "utf8",
+        )
+      ).replace('"./coach-events-auth"', '"./notification-auth"'),
+    );
+    for (const file of [
+      "src/server/coaches/typed-session-service.ts",
+      "src/server/notes/service.ts",
+      "src/app/coach/sessions/[bookingId]/page.tsx",
+    ]) {
+      const target = path.join(checkout, file);
+      await writeFile(
+        target,
+        (await readFile(target, "utf8")).replaceAll(
+          'from "@/server/authorization/service"',
+          'from "@/tests-fixtures/booking-load-authorization"',
+        ),
+      );
+    }
+    await mkdir(path.join(checkout, "src/app/api/booking-load-fixture"), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(checkout, "src/app/api/booking-load-fixture/route.ts"),
+      `import {counts,reset} from "@/tests-fixtures/booking-load-authorization"; export const dynamic="force-dynamic"; export async function GET(request:Request){if(new URL(request.url).searchParams.has("reset"))reset();return Response.json(counts());}`,
+    );
+    await writeFile(
+      path.join(checkout, "src/tests-fixtures/booking-load-controls.tsx"),
+      `"use client";import {useEffect} from "react";import {useRouter} from "next/navigation";import {useActor} from "@/auth/client/actor-provider";import {useAuthSession} from "@/auth/client/session-provider";export function Controls(){const {actor,refreshActor}=useActor(),{refreshSession}=useAuthSession(),router=useRouter();useEffect(()=>{const a=()=>void refreshActor(),s=()=>void refreshSession(),r=()=>router.refresh();window.addEventListener("mov279-refresh",a);window.addEventListener("mov279-session",s);window.addEventListener("mov279-page",r);return()=>{window.removeEventListener("mov279-refresh",a);window.removeEventListener("mov279-session",s);window.removeEventListener("mov279-page",r);};},[refreshActor,refreshSession,router]);return <><span data-testid="booking-load-identity">{actor.status==="authorized"?[actor.profile.slug,actor.demoRun.slug,actor.role].join(":"):actor.status}</span><button onClick={()=>router.push("/explore")}>Back to fixture explore</button></>;}export function Navigation(){const router=useRouter();return <button onClick={()=>router.push("/coach/sessions/19700000-0000-4000-8000-000000000001?probe="+crypto.randomUUID()+"#reschedule")}>Open fixture session</button>;}`,
+    );
+    await writeFile(
+      path.join(checkout, "src/app/explore/page.tsx"),
+      `import {Navigation} from "@/tests-fixtures/booking-load-controls";export default function Fixture(){return <><h1>Explicit booking load fixture</h1><Navigation/></>}`,
+    );
+    await mkdir(path.join(checkout, "src/app/coach/sessions"), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(checkout, "src/app/coach/sessions/layout.tsx"),
+      `import {Controls} from "@/tests-fixtures/booking-load-controls";export default function Layout({children}:{children:React.ReactNode}){return <><Controls/>{children}</>}`,
     );
   }
   const bookingActions = process.argv.includes("--booking-actions");
@@ -162,6 +260,7 @@ try {
     viewport: { width: 1440, height: 1000 },
   });
   const page = await context.newPage();
+  pageForFailure = page;
   let items = Array.from({ length: 23 }, (_, i) => ({
     id: randomUUID(),
     conversationId: randomUUID(),
@@ -232,359 +331,382 @@ try {
   });
   const bell = () => page.getByRole("button", { name: /^Notifications,/ });
   const dialog = () => page.getByRole("dialog", { name: "Notifications" });
-  for (const route of ["explore", "coach", "messages", "account", "profile"]) {
-    await page.goto(base + "/" + route);
+  if (!bookingLoad) {
+    for (const route of [
+      "explore",
+      "coach",
+      "messages",
+      "account",
+      "profile",
+    ]) {
+      await page.goto(base + "/" + route);
+      await expect(bell()).toHaveAttribute(
+        "aria-label",
+        "Notifications, 23 unread",
+      );
+      await bell().click();
+      await expect(dialog()).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(dialog()).toHaveCount(0);
+      await expect(bell()).toBeFocused();
+    }
+    console.log(
+      "PASS all signed-in header placements and native keyboard dismissal/focus return",
+    );
+    await page.goto(base + "/explore");
     await expect(bell()).toHaveAttribute(
       "aria-label",
       "Notifications, 23 unread",
     );
     await bell().click();
-    await expect(dialog()).toBeVisible();
-    await page.keyboard.press("Escape");
-    await expect(dialog()).toHaveCount(0);
-    await expect(bell()).toBeFocused();
-  }
-  console.log(
-    "PASS all signed-in header placements and native keyboard dismissal/focus return",
-  );
-  await page.goto(base + "/explore");
-  await expect(bell()).toHaveAttribute(
-    "aria-label",
-    "Notifications, 23 unread",
-  );
-  await bell().click();
-  await expect(dialog().getByRole("link")).toHaveCount(20);
-  assert.equal(writes.length, 0, "Bell opening wrote read state");
-  const link = dialog().getByRole("link").first();
-  assert.match(await link.getAttribute("href"), /^\/messages\?conversation=/);
-  failWrites = true;
-  await dialog()
-    .getByRole("button", { name: /Mark message notification from Coach 01/ })
-    .click();
-  await expect(dialog().getByRole("status")).toContainText("unavailable");
-  await expect(bell()).toHaveAttribute(
-    "aria-label",
-    "Notifications, 23 unread",
-  );
-  failWrites = false;
-  await dialog()
-    .getByRole("button", { name: /Mark message notification from Coach 01/ })
-    .click();
-  await expect(bell()).toHaveAttribute(
-    "aria-label",
-    "Notifications, 22 unread",
-  );
-  await dialog().getByRole("button", { name: "Older", exact: true }).click();
-  await expect(dialog().getByRole("link")).toHaveCount(3);
-  await expect(dialog().getByRole("link").first()).toContainText("Coach 21");
-  const before = reads.length;
-  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
-  await expect.poll(() => reads.length).toBeGreaterThan(before);
-  assert.ok(reads.at(-1).includes("beforeId="));
-  await expect(dialog().getByRole("link").first()).toContainText("Coach 21");
-  await dialog().getByRole("button", { name: "Newer", exact: true }).click();
-  await expect(dialog().getByRole("link")).toHaveCount(20);
-  failReads = true;
-  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
-  await expect(dialog().getByRole("status")).toContainText(
-    "Showing the last loaded",
-  );
-  await expect(bell()).toHaveAttribute(
-    "aria-label",
-    "Notifications, count unavailable",
-  );
-  failReads = false;
-  await dialog()
-    .getByRole("button", { name: "Try again", exact: true })
-    .click();
-  await expect(bell()).toHaveAttribute(
-    "aria-label",
-    "Notifications, 22 unread",
-  );
-  await dialog()
-    .getByRole("button", { name: "Mark all read", exact: true })
-    .click();
-  await expect(bell()).toHaveAttribute("aria-label", "Notifications, 0 unread");
-  assert.ok(writes.at(-1).args.throughAt);
-  await dialog().getByRole("button", { name: "Unread", exact: true }).click();
-  await expect(dialog()).toContainText("You’re all caught up");
-  console.log(
-    "PASS explicit read controls, bounded paging, stable focus refresh, unavailable and mutation retry states",
-  );
-  await dialog().getByRole("button", { name: "All", exact: true }).click();
-  await expect(dialog().getByRole("link")).toHaveCount(20);
-  // MOV-85: mixed booking/text history uses the same controller and recovery.
-  const bookingSlot = randomUUID();
-  items[0] = {
-    id: items[0].id,
-    createdAt: items[0].createdAt,
-    readAt: null,
-    kind: "booking",
-    event: "requested",
-    sourceKind: "request",
-    sourceId: randomUUID(),
-    slotId: bookingSlot,
-    recipientRole: "coach",
-    startsAt: "2026-10-26T09:00:00.000Z",
-    endsAt: "2026-10-26T10:15:00.000Z",
-    venueName: "Berlin training studio",
-  };
-  await page.keyboard.press("Escape");
-  await bell().click();
-  await expect(
-    dialog().getByRole("link", { name: /Booking request submitted/ }),
-  ).toHaveAttribute(
-    "href",
-    `/coach?view=bookings&section=requests&occurrence=${bookingSlot}#coach-occurrence-${bookingSlot}`,
-  );
-  await expect(dialog()).toContainText("75 min · Berlin training studio");
-  await dialog()
-    .getByRole("button", {
-      name: "Mark booking request submitted notification as read",
-      exact: true,
-    })
-    .click();
-  await expect(bell()).toHaveAttribute("aria-label", "Notifications, 0 unread");
-  console.log(
-    "PASS booking event title/snapshot/safe destination and explicit read in mixed history",
-  );
-  // MOV-185: affected athletes share the existing bell/read controller.
-  const athleteBooking = randomUUID();
-  for (const [event, title, width] of [
-    ["confirmed", "Booking confirmed", 1440],
-    ["changed", "Booking rescheduled", 375],
-    ["cancelled", "Booking cancelled", 320],
-  ]) {
-    items[0] = {
-      ...items[0],
-      event,
-      sourceKind: "booking",
-      sourceId: athleteBooking,
-      recipientRole: "athlete",
-      readAt: null,
-    };
-    await page.keyboard.press("Escape");
-    await page.setViewportSize({ width, height: 900 });
-    await bell().click();
-    await expect(
-      dialog().getByRole("link", { name: new RegExp(title) }),
-    ).toHaveAttribute("href", `/sessions#athlete-booking-${athleteBooking}`);
-    assert.equal(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth > innerWidth,
-      ),
-      false,
+    await expect(dialog().getByRole("link")).toHaveCount(20);
+    assert.equal(writes.length, 0, "Bell opening wrote read state");
+    const link = dialog().getByRole("link").first();
+    assert.match(await link.getAttribute("href"), /^\/messages\?conversation=/);
+    failWrites = true;
+    await dialog()
+      .getByRole("button", { name: /Mark message notification from Coach 01/ })
+      .click();
+    await expect(dialog().getByRole("status")).toContainText("unavailable");
+    await expect(bell()).toHaveAttribute(
+      "aria-label",
+      "Notifications, 23 unread",
     );
-    const mark = dialog().getByRole("button", {
-      name: `Mark ${title.toLowerCase()} notification as read`,
-      exact: true,
-    });
-    await mark.focus();
-    await page.keyboard.press("Enter");
+    failWrites = false;
+    await dialog()
+      .getByRole("button", { name: /Mark message notification from Coach 01/ })
+      .click();
+    await expect(bell()).toHaveAttribute(
+      "aria-label",
+      "Notifications, 22 unread",
+    );
+    await dialog().getByRole("button", { name: "Older", exact: true }).click();
+    await expect(dialog().getByRole("link")).toHaveCount(3);
+    await expect(dialog().getByRole("link").first()).toContainText("Coach 21");
+    const before = reads.length;
+    await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+    await expect.poll(() => reads.length).toBeGreaterThan(before);
+    assert.ok(reads.at(-1).includes("beforeId="));
+    await expect(dialog().getByRole("link").first()).toContainText("Coach 21");
+    await dialog().getByRole("button", { name: "Newer", exact: true }).click();
+    await expect(dialog().getByRole("link")).toHaveCount(20);
+    failReads = true;
+    await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+    await expect(dialog().getByRole("status")).toContainText(
+      "Showing the last loaded",
+    );
+    await expect(bell()).toHaveAttribute(
+      "aria-label",
+      "Notifications, count unavailable",
+    );
+    failReads = false;
+    await dialog()
+      .getByRole("button", { name: "Try again", exact: true })
+      .click();
+    await expect(bell()).toHaveAttribute(
+      "aria-label",
+      "Notifications, 22 unread",
+    );
+    await dialog()
+      .getByRole("button", { name: "Mark all read", exact: true })
+      .click();
     await expect(bell()).toHaveAttribute(
       "aria-label",
       "Notifications, 0 unread",
     );
-  }
-  console.log(
-    "PASS athlete confirmed/rescheduled/cancelled entries:1440/375/320 layout, correct private destination and keyboard mark-read",
-  );
-  // MOV-86: group notices use the same recipient/read/recovery controller.
-  const groupId = randomUUID();
-  items[0] = {
-    id: items[0].id,
-    createdAt: items[0].createdAt,
-    readAt: null,
-    kind: "group",
-    event: "approval-expired",
-    sessionId: groupId,
-    recipientRole: "coach",
-    title: "Group practice",
-    startsAt: "2026-10-29T17:00:00.000Z",
-    endsAt: "2026-10-29T18:00:00.000Z",
-    venueName: "Berlin studio",
-    eventStatus: "confirmed",
-    participationStatus: null,
-    affectedCount: 12,
-  };
-  await page.keyboard.press("Escape");
-  await bell().click();
-  await expect(
-    dialog().getByRole("link", { name: /Group approval deadline passed/ }),
-  ).toHaveAttribute("href", `/coach/events/${groupId}`);
-  await expect(dialog()).toContainText("Group practice");
-  await dialog()
-    .getByRole("button", {
-      name: "Mark group approval deadline passed notification as read",
-      exact: true,
-    })
-    .click();
-  await expect(bell()).toHaveAttribute("aria-label", "Notifications, 0 unread");
-  console.log(
-    "PASS group title/snapshot/owner destination and explicit read in mixed history",
-  );
-  // MOV-253: both recipient roles use the same bell and independent read controls.
-  for (const width of [1440, 375, 320]) {
-    await page.setViewportSize({ width, height: 812 });
-    for (const recipientRole of ["coach", "athlete"]) {
-      const senderName =
-        recipientRole === "coach"
-          ? "Athlete request sender"
-          : "Coach request sender";
-      items[0] = {
-        id: items[0].id,
-        createdAt: items[0].createdAt,
-        readAt: null,
-        kind: "connection-request",
-        requestId: randomUUID(),
-        senderName,
-        recipientRole,
-      };
-      const beforeWrites = writes.length;
-      await page.keyboard.press("Escape");
-      await bell().click();
-      const link = dialog().getByRole("link", {
-        name: new RegExp("Connection request from " + senderName),
-      });
-      await expect(link).toHaveAttribute(
-        "href",
-        recipientRole === "coach"
-          ? "/coach/athletes?section=requests"
-          : "/my-coaches?section=requests",
-      );
-      await expect(link).toContainText("They sent you a connection request.");
-      await expect(bell()).toHaveAttribute(
-        "aria-label",
-        "Notifications, 1 unread",
-      );
-      assert.equal(
-        writes.length,
-        beforeWrites,
-        "Opening connection notice must not mark it read or accept it",
-      );
-      await link.focus();
-      await page.keyboard.press("Tab");
-      const mark = dialog().getByRole("button", {
-        name: "Mark connection request from " + senderName + " as read",
+    assert.ok(writes.at(-1).args.throughAt);
+    await dialog().getByRole("button", { name: "Unread", exact: true }).click();
+    await expect(dialog()).toContainText("You’re all caught up");
+    console.log(
+      "PASS explicit read controls, bounded paging, stable focus refresh, unavailable and mutation retry states",
+    );
+    await dialog().getByRole("button", { name: "All", exact: true }).click();
+    await expect(dialog().getByRole("link")).toHaveCount(20);
+    // MOV-85: mixed booking/text history uses the same controller and recovery.
+    const bookingSlot = randomUUID();
+    items[0] = {
+      id: items[0].id,
+      createdAt: items[0].createdAt,
+      readAt: null,
+      kind: "booking",
+      event: "requested",
+      sourceKind: "request",
+      sourceId: randomUUID(),
+      slotId: bookingSlot,
+      recipientRole: "coach",
+      startsAt: "2026-10-26T09:00:00.000Z",
+      endsAt: "2026-10-26T10:15:00.000Z",
+      venueName: "Berlin training studio",
+    };
+    await page.keyboard.press("Escape");
+    await bell().click();
+    await expect(
+      dialog().getByRole("link", { name: /Booking request submitted/ }),
+    ).toHaveAttribute(
+      "href",
+      `/coach?view=bookings&section=requests&occurrence=${bookingSlot}#coach-occurrence-${bookingSlot}`,
+    );
+    await expect(dialog()).toContainText("75 min · Berlin training studio");
+    await dialog()
+      .getByRole("button", {
+        name: "Mark booking request submitted notification as read",
         exact: true,
-      });
-      await expect(mark).toBeFocused();
+      })
+      .click();
+    await expect(bell()).toHaveAttribute(
+      "aria-label",
+      "Notifications, 0 unread",
+    );
+    console.log(
+      "PASS booking event title/snapshot/safe destination and explicit read in mixed history",
+    );
+    // MOV-185: affected athletes share the existing bell/read controller.
+    const athleteBooking = randomUUID();
+    for (const [event, title, width] of [
+      ["confirmed", "Booking confirmed", 1440],
+      ["changed", "Booking rescheduled", 375],
+      ["cancelled", "Booking cancelled", 320],
+    ]) {
+      items[0] = {
+        ...items[0],
+        event,
+        sourceKind: "booking",
+        sourceId: athleteBooking,
+        recipientRole: "athlete",
+        readAt: null,
+      };
+      await page.keyboard.press("Escape");
+      await page.setViewportSize({ width, height: 900 });
+      await bell().click();
+      await expect(
+        dialog().getByRole("link", { name: new RegExp(title) }),
+      ).toHaveAttribute("href", `/sessions#athlete-booking-${athleteBooking}`);
       assert.equal(
         await page.evaluate(
           () => document.documentElement.scrollWidth > innerWidth,
         ),
         false,
       );
-      await dialog().screenshot({
-        path: path.join(
-          output,
-          `connection-request-${recipientRole}-${width}.png`,
-        ),
+      const mark = dialog().getByRole("button", {
+        name: `Mark ${title.toLowerCase()} notification as read`,
+        exact: true,
       });
+      await mark.focus();
       await page.keyboard.press("Enter");
       await expect(bell()).toHaveAttribute(
         "aria-label",
         "Notifications, 0 unread",
       );
-      assert.deepEqual(writes.at(-1), {
-        action: "read",
-        args: { id: items[0].id },
-      });
     }
-  }
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  console.log(
-    "PASS connection request bell in mixed history: both recipient destinations, sender/title, no auto-read/decision, keyboard read and1440/375/320 bounds",
-  );
-  await page.screenshot({
-    path: path.join(output, "desktop.png"),
-    fullPage: true,
-  });
-  for (const width of [375, 320]) {
-    await page.setViewportSize({ width, height: 812 });
-    const box = await dialog().boundingBox();
-    assert.ok(box && box.x >= 0 && box.x + box.width <= width + 1);
+    console.log(
+      "PASS athlete confirmed/rescheduled/cancelled entries:1440/375/320 layout, correct private destination and keyboard mark-read",
+    );
+    // MOV-86: group notices use the same recipient/read/recovery controller.
+    const groupId = randomUUID();
+    items[0] = {
+      id: items[0].id,
+      createdAt: items[0].createdAt,
+      readAt: null,
+      kind: "group",
+      event: "approval-expired",
+      sessionId: groupId,
+      recipientRole: "coach",
+      title: "Group practice",
+      startsAt: "2026-10-29T17:00:00.000Z",
+      endsAt: "2026-10-29T18:00:00.000Z",
+      venueName: "Berlin studio",
+      eventStatus: "confirmed",
+      participationStatus: null,
+      affectedCount: 12,
+    };
+    await page.keyboard.press("Escape");
+    await bell().click();
+    await expect(
+      dialog().getByRole("link", { name: /Group approval deadline passed/ }),
+    ).toHaveAttribute("href", `/coach/events/${groupId}`);
+    await expect(dialog()).toContainText("Group practice");
+    await dialog()
+      .getByRole("button", {
+        name: "Mark group approval deadline passed notification as read",
+        exact: true,
+      })
+      .click();
+    await expect(bell()).toHaveAttribute(
+      "aria-label",
+      "Notifications, 0 unread",
+    );
+    console.log(
+      "PASS group title/snapshot/owner destination and explicit read in mixed history",
+    );
+    // MOV-253: both recipient roles use the same bell and independent read controls.
+    for (const width of [1440, 375, 320]) {
+      await page.setViewportSize({ width, height: 812 });
+      for (const recipientRole of ["coach", "athlete"]) {
+        const senderName =
+          recipientRole === "coach"
+            ? "Athlete request sender"
+            : "Coach request sender";
+        items[0] = {
+          id: items[0].id,
+          createdAt: items[0].createdAt,
+          readAt: null,
+          kind: "connection-request",
+          requestId: randomUUID(),
+          senderName,
+          recipientRole,
+        };
+        const beforeWrites = writes.length;
+        await page.keyboard.press("Escape");
+        await bell().click();
+        const link = dialog().getByRole("link", {
+          name: new RegExp("Connection request from " + senderName),
+        });
+        await expect(link).toHaveAttribute(
+          "href",
+          recipientRole === "coach"
+            ? "/coach/athletes?section=requests"
+            : "/my-coaches?section=requests",
+        );
+        await expect(link).toContainText("They sent you a connection request.");
+        await expect(bell()).toHaveAttribute(
+          "aria-label",
+          "Notifications, 1 unread",
+        );
+        assert.equal(
+          writes.length,
+          beforeWrites,
+          "Opening connection notice must not mark it read or accept it",
+        );
+        await link.focus();
+        await page.keyboard.press("Tab");
+        const mark = dialog().getByRole("button", {
+          name: "Mark connection request from " + senderName + " as read",
+          exact: true,
+        });
+        await expect(mark).toBeFocused();
+        assert.equal(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth > innerWidth,
+          ),
+          false,
+        );
+        await dialog().screenshot({
+          path: path.join(
+            output,
+            `connection-request-${recipientRole}-${width}.png`,
+          ),
+        });
+        await page.keyboard.press("Enter");
+        await expect(bell()).toHaveAttribute(
+          "aria-label",
+          "Notifications, 0 unread",
+        );
+        assert.deepEqual(writes.at(-1), {
+          action: "read",
+          args: { id: items[0].id },
+        });
+      }
+    }
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    console.log(
+      "PASS connection request bell in mixed history: both recipient destinations, sender/title, no auto-read/decision, keyboard read and1440/375/320 bounds",
+    );
+    await page.screenshot({
+      path: path.join(output, "desktop.png"),
+      fullPage: true,
+    });
+    for (const width of [375, 320]) {
+      await page.setViewportSize({ width, height: 812 });
+      const box = await dialog().boundingBox();
+      assert.ok(box && box.x >= 0 && box.x + box.width <= width + 1);
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        true,
+        `Header overflows at ${width}px`,
+      );
+      await page.screenshot({
+        path: path.join(output, `mobile-${width}.png`),
+        fullPage: true,
+      });
+      await page.keyboard.press("Shift+Tab");
+      await expect
+        .poll(() =>
+          dialog().evaluate((node) => node.contains(document.activeElement)),
+        )
+        .toBe(true);
+    }
+    await page.keyboard.press("Escape");
+    await context.addCookies([
+      { name: "mov81-actor", value: "athlete", url: base },
+    ]);
+    await page.reload();
+    await page.setViewportSize({ width: 320, height: 812 });
+    await expect(bell()).toHaveAttribute(
+      "aria-label",
+      "Notifications, 0 unread",
+    );
     assert.equal(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
       true,
-      `Header overflows at ${width}px`,
+      "Athlete header with coach entry overflows at 320px",
     );
     await page.screenshot({
-      path: path.join(output, `mobile-${width}.png`),
+      path: path.join(output, "athlete-header-320.png"),
       fullPage: true,
     });
-    await page.keyboard.press("Shift+Tab");
-    await expect
-      .poll(() =>
-        dialog().evaluate((node) => node.contains(document.activeElement)),
-      )
-      .toBe(true);
+    const hiddenReads = reads.length;
+    await page.evaluate(() => {
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        get: () => "hidden",
+      });
+      window.dispatchEvent(new Event("focus"));
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    await new Promise((resolve) => setTimeout(resolve, 31000));
+    assert.equal(
+      reads.length,
+      hiddenReads,
+      "Hidden page still polled notifications",
+    );
+    await page.evaluate(() => {
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        get: () => "visible",
+      });
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    await expect.poll(() => reads.length).toBeGreaterThan(hiddenReads);
+    console.log(
+      "PASS compact athlete header and hidden-page polling pause/resume",
+    );
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    holdNext = true;
+    await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+    await expect.poll(() => !!releaseOld).toBe(true);
+    await page.getByRole("button", { name: "Switch fixture actor" }).click();
+    await expect(page.getByTestId("fixture-current-actor")).toHaveText(
+      "fixture-other",
+    );
+    await expect(bell()).toHaveAttribute(
+      "aria-label",
+      "Notifications, 0 unread",
+    );
+    releaseOld();
+    await bell().click();
+    await expect(dialog()).toContainText("No notifications yet");
+    await expect(dialog()).not.toContainText("Coach 01");
+    await page.keyboard.press("Escape");
+    await context.addCookies([
+      { name: "mov81-actor", value: "signed-out", url: base },
+    ]);
+    await page.reload();
+    await expect(bell()).toHaveCount(0);
   }
-  await page.keyboard.press("Escape");
-  await context.addCookies([
-    { name: "mov81-actor", value: "athlete", url: base },
-  ]);
-  await page.reload();
-  await page.setViewportSize({ width: 320, height: 812 });
-  await expect(bell()).toHaveAttribute("aria-label", "Notifications, 0 unread");
-  assert.equal(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-    true,
-    "Athlete header with coach entry overflows at 320px",
-  );
-  await page.screenshot({
-    path: path.join(output, "athlete-header-320.png"),
-    fullPage: true,
-  });
-  const hiddenReads = reads.length;
-  await page.evaluate(() => {
-    Object.defineProperty(document, "visibilityState", {
-      configurable: true,
-      get: () => "hidden",
-    });
-    window.dispatchEvent(new Event("focus"));
-    document.dispatchEvent(new Event("visibilitychange"));
-  });
-  await new Promise((resolve) => setTimeout(resolve, 31000));
-  assert.equal(
-    reads.length,
-    hiddenReads,
-    "Hidden page still polled notifications",
-  );
-  await page.evaluate(() => {
-    Object.defineProperty(document, "visibilityState", {
-      configurable: true,
-      get: () => "visible",
-    });
-    document.dispatchEvent(new Event("visibilitychange"));
-  });
-  await expect.poll(() => reads.length).toBeGreaterThan(hiddenReads);
-  console.log(
-    "PASS compact athlete header and hidden-page polling pause/resume",
-  );
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  holdNext = true;
-  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
-  await expect.poll(() => !!releaseOld).toBe(true);
-  await page.getByRole("button", { name: "Switch fixture actor" }).click();
-  await expect(page.getByTestId("fixture-current-actor")).toHaveText(
-    "fixture-other",
-  );
-  await expect(bell()).toHaveAttribute("aria-label", "Notifications, 0 unread");
-  releaseOld();
-  await bell().click();
-  await expect(dialog()).toContainText("No notifications yet");
-  await expect(dialog()).not.toContainText("Coach 01");
-  await page.keyboard.press("Escape");
-  await context.addCookies([
-    { name: "mov81-actor", value: "signed-out", url: base },
-  ]);
-  await page.reload();
-  await expect(bell()).toHaveCount(0);
   if (bookingActions) {
     await context.addCookies([
       { name: "mov81-actor", value: "owner", url: base },
@@ -746,9 +868,45 @@ try {
           name: "Choose session date and time",
           exact: true,
         });
+        await expect(picker.getByRole("radio", { checked: true })).toHaveCount(
+          0,
+        );
+        await expect(picker.locator(".booking-start-selection")).toContainText(
+          "Choose a time",
+        );
         await picker.getByLabel("Date", { exact: true }).fill("2030-11-09");
-        await picker.getByLabel("Hour", { exact: true }).selectOption("12");
-        await picker.getByLabel("Minute", { exact: true }).selectOption("30");
+        await picker
+          .getByRole("button", { name: "Apply date and time", exact: true })
+          .click();
+        await expect(
+          picker
+            .getByRole("group", { name: "Hour", exact: true })
+            .getByRole("radio", { name: "00", exact: true }),
+        ).toBeFocused();
+        await expect(picker.getByRole("radio", { checked: true })).toHaveCount(
+          0,
+        );
+        await picker
+          .getByRole("group", { name: "Hour", exact: true })
+          .getByRole("radio", { name: "12", exact: true })
+          .check();
+        await picker
+          .getByRole("button", { name: "Apply date and time", exact: true })
+          .click();
+        await expect(
+          picker
+            .getByRole("group", { name: "Minutes", exact: true })
+            .getByRole("radio", { name: "00", exact: true }),
+        ).toBeFocused();
+        await expect(
+          picker
+            .getByRole("group", { name: "Minutes", exact: true })
+            .getByRole("radio", { checked: true }),
+        ).toHaveCount(0);
+        await picker
+          .getByRole("group", { name: "Minutes", exact: true })
+          .getByRole("radio", { name: "30", exact: true })
+          .check();
         await picker
           .getByRole("button", { name: "Apply date and time", exact: true })
           .click();
@@ -918,28 +1076,83 @@ try {
       await trigger().focus();
       await page.keyboard.press("Enter");
       await expect(picker()).toBeVisible();
-      await expect(
-        picker().getByLabel("Minute", { exact: true }),
-      ).toBeVisible();
+      const hours = picker().getByRole("group", { name: "Hour", exact: true });
+      const minutes = picker().getByRole("group", {
+        name: "Minutes",
+        exact: true,
+      });
+      await expect(minutes).toBeVisible();
       assert.deepEqual(
         await picker()
-          .getByLabel("Minute", { exact: true })
-          .locator("option")
+          .getByRole("group", { name: "Minutes", exact: true })
+          .getByRole("radio")
           .evaluateAll((items) => items.map((x) => x.value).filter(Boolean)),
         ["00", "15", "30", "45"],
       );
+      await expect(hours.getByRole("radio")).toHaveCount(24);
+      await expect(picker().getByRole("combobox")).toHaveCount(0);
+      await expect(
+        hours.getByRole("radio", { name: "18", exact: true }),
+      ).toBeChecked();
+      await expect(
+        minutes.getByRole("radio", { name: "00", exact: true }),
+      ).toBeChecked();
       assert.equal(
         await picker()
-          .getByLabel("Hour", { exact: true })
-          .locator("option")
-          .count(),
-        25,
+          .getByRole("radio")
+          .evaluateAll((items) =>
+            items.every((item) => {
+              const bounds = item.getBoundingClientRect();
+              return bounds.width >= 44 && bounds.height >= 44;
+            }),
+          ),
+        true,
+        "Every time choice has a 44px touch target",
       );
-      await picker().getByLabel("Hour", { exact: true }).selectOption("19");
-      await picker().getByLabel("Minute", { exact: true }).selectOption("30");
+      await picker()
+        .getByRole("group", { name: "Hour", exact: true })
+        .getByRole("radio", { name: "19", exact: true })
+        .check();
+      await picker()
+        .getByRole("group", { name: "Minutes", exact: true })
+        .getByRole("radio", { name: "30", exact: true })
+        .check();
       await expect(trigger()).toContainText("18:00");
+      await expect(picker().locator(".booking-start-selection")).toContainText(
+        "19:30",
+      );
+      await expect(picker().locator(".booking-start-selection")).toContainText(
+        "9 November 2030",
+      );
+      await hours.getByRole("radio", { name: "19", exact: true }).focus();
+      await page.keyboard.press("ArrowRight");
+      await expect(
+        hours.getByRole("radio", { name: "20", exact: true }),
+      ).toBeChecked();
+      await page.keyboard.press("ArrowLeft");
+      await expect(
+        hours.getByRole("radio", { name: "19", exact: true }),
+      ).toBeChecked();
+      await page.keyboard.press("Tab");
+      await expect(
+        minutes.getByRole("radio", { name: "30", exact: true }),
+      ).toBeFocused();
+      await page.keyboard.press("ArrowRight");
+      await expect(
+        minutes.getByRole("radio", { name: "45", exact: true }),
+      ).toBeChecked();
+      await page.keyboard.press("ArrowLeft");
+      await expect(
+        minutes.getByRole("radio", { name: "30", exact: true }),
+      ).toBeChecked();
+      await expect(picker().locator(".booking-start-selection")).toContainText(
+        "19:30",
+      );
       await expect(apply()).toBeInViewport({ ratio: 1 });
       await expect(cancel()).toBeInViewport({ ratio: 1 });
+      await expect(picker().locator(".booking-start-selection")).toBeInViewport(
+        { ratio: 1 },
+      );
       assert.equal(await page.locator("form form").count(), 0);
       assert.equal(
         await page.evaluate(
@@ -963,7 +1176,10 @@ try {
       await expect(trigger()).toContainText("18:00");
       for (const method of ["Escape", "close", "backdrop"]) {
         await trigger().click();
-        await picker().getByLabel("Hour", { exact: true }).selectOption("22");
+        await picker()
+          .getByRole("group", { name: "Hour", exact: true })
+          .getByRole("radio", { name: "22", exact: true })
+          .check();
         if (method === "Escape") await page.keyboard.press("Escape");
         else if (method === "close")
           await picker()
@@ -975,8 +1191,14 @@ try {
         await expect(trigger()).toContainText("18:00");
       }
       await trigger().click();
-      await picker().getByLabel("Hour", { exact: true }).selectOption("19");
-      await picker().getByLabel("Minute", { exact: true }).selectOption("15");
+      await picker()
+        .getByRole("group", { name: "Hour", exact: true })
+        .getByRole("radio", { name: "19", exact: true })
+        .check();
+      await picker()
+        .getByRole("group", { name: "Minutes", exact: true })
+        .getByRole("radio", { name: "15", exact: true })
+        .check();
       await apply().focus();
       await page.keyboard.press("Enter");
       await expect(picker()).toHaveCount(0);
@@ -989,43 +1211,58 @@ try {
         }),
       ).toHaveCount(0);
       await trigger().click();
-      await expect(picker().getByLabel("Minute", { exact: true })).toHaveValue(
-        "15",
-      );
+      await expect(
+        picker()
+          .getByRole("group", { name: "Minutes", exact: true })
+          .getByRole("radio", { name: "15", exact: true }),
+      ).toBeChecked();
       await cancel().click();
       assert.equal(posts.length, 0);
     }
-    // Invalid and ambiguous local dates cannot be applied, even with forged DOM options.
+    // Invalid and ambiguous local dates cannot be applied. Off-grid API rejection
+    // remains covered by the server contracts and rescheduling integration.
     await trigger().click();
     await picker().getByLabel("Date", { exact: true }).fill("");
     await apply().click();
     await expect(picker().getByLabel("Date", { exact: true })).toBeFocused();
     await expect(trigger()).toContainText("19:15");
     await picker().getByLabel("Date", { exact: true }).fill("2030-11-09");
+    await expect(
+      picker()
+        .getByRole("group", { name: "Minutes", exact: true })
+        .getByRole("radio", { name: "20", exact: true }),
+    ).toHaveCount(0);
     await picker()
-      .getByLabel("Minute", { exact: true })
-      .evaluate((el) => {
-        el.add(new Option("20", "20"));
-      });
-    await picker().getByLabel("Minute", { exact: true }).selectOption("20");
-    await apply().click();
-    await expect(picker().getByRole("alert")).toContainText(
-      "valid, unambiguous Berlin",
-    );
-    await expect(picker().getByRole("alert")).toBeInViewport({ ratio: 1 });
-    await expect(apply()).toBeInViewport({ ratio: 1 });
-    await expect(cancel()).toBeInViewport({ ratio: 1 });
-    await expect(trigger()).toContainText("19:15");
-    await picker().getByLabel("Minute", { exact: true }).selectOption("15");
+      .getByRole("group", { name: "Minutes", exact: true })
+      .getByRole("radio", { name: "15", exact: true })
+      .check();
     for (const date of ["2027-03-28", "2027-10-31"]) {
       await picker().getByLabel("Date", { exact: true }).fill(date);
-      await picker().getByLabel("Hour", { exact: true }).selectOption("02");
+      await picker()
+        .getByRole("group", { name: "Hour", exact: true })
+        .getByRole("radio", { name: "02", exact: true })
+        .check();
       await apply().click();
-      await expect(picker().getByRole("alert")).toBeVisible();
+      await expect(picker().getByRole("alert")).toContainText(
+        "valid, unambiguous Berlin",
+      );
+      await expect(picker().getByRole("alert")).toBeInViewport({ ratio: 1 });
+      await expect(apply()).toBeInViewport({ ratio: 1 });
+      await expect(cancel()).toBeInViewport({ ratio: 1 });
+      await expect(picker().locator(".booking-start-selection")).toBeInViewport(
+        { ratio: 1 },
+      );
+      await expect(trigger()).toContainText("19:15");
     }
     await picker().getByLabel("Date", { exact: true }).fill("2030-11-09");
-    await picker().getByLabel("Hour", { exact: true }).selectOption("19");
-    await picker().getByLabel("Minute", { exact: true }).selectOption("30");
+    await picker()
+      .getByRole("group", { name: "Hour", exact: true })
+      .getByRole("radio", { name: "19", exact: true })
+      .check();
+    await picker()
+      .getByRole("group", { name: "Minutes", exact: true })
+      .getByRole("radio", { name: "30", exact: true })
+      .check();
     // Actual provider revalidation suspends the top layer but retains the same actor's draft.
     await page.route("**/api/auth/actor", (route) =>
       route.fulfill({ status: 503, json: { status: "unavailable" } }),
@@ -1042,14 +1279,19 @@ try {
       window.dispatchEvent(new Event("mov197-refresh")),
     );
     await expect(picker()).toBeVisible();
-    await expect(picker().getByLabel("Minute", { exact: true })).toHaveValue(
-      "30",
-    );
+    await expect(
+      picker()
+        .getByRole("group", { name: "Minutes", exact: true })
+        .getByRole("radio", { name: "30", exact: true }),
+    ).toBeChecked();
     await cancel().click();
     await expect(trigger()).toBeFocused();
     await expect(trigger()).toContainText("19:15");
     await trigger().click();
-    await picker().getByLabel("Minute", { exact: true }).selectOption("45");
+    await picker()
+      .getByRole("group", { name: "Minutes", exact: true })
+      .getByRole("radio", { name: "45", exact: true })
+      .check();
     await context.addCookies([
       { name: "mov81-actor", value: "other", url: base },
     ]);
@@ -1072,9 +1314,11 @@ try {
     );
     await expect(trigger()).toContainText("18:00");
     await trigger().click();
-    await expect(picker().getByLabel("Minute", { exact: true })).toHaveValue(
-      "00",
-    );
+    await expect(
+      picker()
+        .getByRole("group", { name: "Minutes", exact: true })
+        .getByRole("radio", { name: "00", exact: true }),
+    ).toBeChecked();
     await context.addCookies([
       { name: "mov81-actor", value: "signed-out", url: base },
     ]);
@@ -1089,15 +1333,374 @@ try {
       }),
     ).toBeVisible();
     assert.equal(posts.length, 0);
+    await context.addCookies([
+      { name: "mov81-actor", value: "owner", url: base },
+    ]);
+    await page.setViewportSize({ width: 568, height: 320 });
+    await page.goto(base + "/coach/booking-picker-fixture");
+    await trigger().click();
+    await picker().getByLabel("Date", { exact: true }).fill("2027-03-28");
+    await picker()
+      .getByRole("group", { name: "Hour", exact: true })
+      .getByRole("radio", { name: "02", exact: true })
+      .check();
+    await picker()
+      .getByRole("group", { name: "Minutes", exact: true })
+      .getByRole("radio", { name: "45", exact: true })
+      .check();
+    await apply().click();
+    await expect(picker().getByRole("alert")).toBeInViewport({ ratio: 1 });
+    await expect(apply()).toBeInViewport({ ratio: 1 });
+    await expect(cancel()).toBeInViewport({ ratio: 1 });
+    await expect(picker().locator(".booking-start-selection")).toBeInViewport({
+      ratio: 1,
+    });
+    await picker()
+      .getByRole("group", { name: "Hour", exact: true })
+      .getByRole("radio", { name: "23", exact: true })
+      .check();
+    await expect(
+      picker()
+        .getByRole("group", { name: "Hour", exact: true })
+        .getByRole("radio", { name: "23", exact: true }),
+    ).toBeInViewport({ ratio: 1 });
+    await page.screenshot({
+      path: path.join(output, "booking-start-picker-landscape.png"),
+    });
+    await cancel().click();
+    await expect(trigger()).toContainText("18:00");
+    assert.equal(posts.length, 0);
     console.log(
-      "PASS real booking picker: quarter-hour options, Apply/Cancel/Escape/close/backdrop, keyboard/focus/viewport1440/375/320x568, invalid/DST refusal, actual account-check draft suspension/resume and actor/sign-out clearing; zero Review/Save traffic",
+      "PASS real booking picker: 24 hours/four quarter-hours, 44px targets, summary, native keyboard arrows/Tab, Apply/Cancel/Escape/close/backdrop, focus/viewport 1440/375/320x568/568x320, invalid/DST refusal, actual account-check draft suspension/resume and actor/sign-out clearing; zero Review/Save traffic",
     );
+  }
+  if (bookingLoad) {
+    const id = "19700000-0000-4000-8000-000000000001";
+    const href = base + "/coach/sessions/" + id;
+    const visit = async (url) => {
+      await page.goto(base + "/explore");
+      return page.goto(url);
+    };
+    const summary = () =>
+      page.getByRole("heading", { name: "Booking load fixture", exact: true });
+    const start = () =>
+      page.getByRole("button", { name: "Start · Berlin time", exact: true });
+    const cookie = async (actor = "owner", fault = "none") =>
+      context.addCookies([
+        { name: "mov81-actor", value: actor, url: base },
+        { name: "mov81-fault", value: fault, url: base },
+      ]);
+    const counter = async (reset = false) =>
+      (
+        await context.request.get(
+          base + "/api/booking-load-fixture" + (reset ? "?reset=1" : ""),
+        )
+      ).json();
+    const event = async (name) =>
+      page.evaluate((name) => window.dispatchEvent(new Event(name)), name);
+    const detailGets = [];
+    page.on("request", (request) => {
+      const url = new URL(request.url());
+      if (
+        url.pathname === "/api/session-bookings" &&
+        request.method() === "GET" &&
+        url.searchParams.has("bookingId")
+      )
+        detailGets.push(request.url());
+    });
+    await cookie();
+    const actorReady = page.waitForResponse(
+      (response) => new URL(response.url()).pathname === "/api/auth/actor",
+    );
+    await visit(href);
+    await actorReady;
+    await expect(start()).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Add a note", exact: true }),
+    ).toBeEnabled();
+    // Warm the actual SPA transition too: its first RSC/chunk compilation is
+    // development overhead, not the controlled read waterfall being measured.
+    await page
+      .getByRole("button", { name: "Back to fixture explore", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Open fixture session", exact: true })
+      .click();
+    await expect(start()).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Add a note", exact: true }),
+    ).toBeEnabled();
+    const results = [];
+    for (const width of [1440, 375, 320]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page
+        .getByRole("button", { name: "Back to fixture explore", exact: true })
+        .click();
+      await expect(
+        page.getByRole("button", { name: "Open fixture session", exact: true }),
+      ).toBeVisible();
+      await counter(true);
+      detailGets.length = 0;
+      const began = performance.now();
+      await page
+        .getByRole("button", { name: "Open fixture session", exact: true })
+        .click();
+      await expect(summary()).toBeVisible();
+      const summaryMs = performance.now() - began;
+      await expect(start()).toBeVisible();
+      await expect(page.locator("#reschedule")).toBeFocused();
+      const editorMs = performance.now() - began;
+      await expect(
+        page.getByRole("button", { name: "Add a note", exact: true }),
+      ).toBeEnabled();
+      const c = await counter();
+      assert.equal(c.detail, 1);
+      assert.equal(detailGets.length, bookingLoadBaseline ? 1 : 0);
+      assert.equal(c.notes, bookingLoadBaseline ? 2 : 1);
+      assert.equal(c.externalClients ?? 0, bookingLoadBaseline ? 1 : 0);
+      assert.equal(c.athletes ?? 0, bookingLoadBaseline ? 1 : 0);
+      assert.equal(c.authorization, bookingLoadBaseline ? 4 : 3);
+      assert.equal(c.pageActor ?? 0, bookingLoadBaseline ? 1 : 0);
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth,
+        ),
+        false,
+      );
+      await page.screenshot({
+        path: path.join(
+          output,
+          `booking-load-${bookingLoadBaseline ? "baseline" : "current"}-${width}.png`,
+        ),
+      });
+      results.push({
+        width,
+        summaryMs,
+        editorMs,
+        detailGets: detailGets.length,
+        counts: c,
+      });
+    }
+    await writeFile(
+      path.join(
+        output,
+        `booking-load-${bookingLoadBaseline ? "baseline" : "current"}.json`,
+      ),
+      JSON.stringify(results, null, 2),
+    );
+    console.log("TIMING controlled booking load", JSON.stringify(results));
+    if (!bookingLoadBaseline) {
+      // Notes and edit-options reads cannot gate the canonical summary.
+      let release;
+      const held = new Promise((resolve) => {
+        release = resolve;
+      });
+      await page.route(
+        "**/api/session-bookings?options=edit",
+        async (route) => {
+          await held;
+          await route.continue();
+        },
+      );
+      await page.route("**/api/session-notes", (route) =>
+        route.fulfill({ status: 503, json: { status: "unavailable" } }),
+      );
+      await visit(href);
+      await expect(summary()).toBeVisible();
+      await expect(
+        page.getByText("Loading booking options…", { exact: true }),
+      ).toBeVisible();
+      await expect(
+        page.getByText("Session notes could not be loaded. Try again.", {
+          exact: true,
+        }),
+      ).toBeVisible();
+      release();
+      await expect(start()).toBeVisible();
+      await page.unroute("**/api/session-bookings?options=edit");
+      await page.unroute("**/api/session-notes");
+      await cookie("owner", "options");
+      await visit(href);
+      await expect(summary()).toBeVisible();
+      await expect(
+        page.getByText(
+          "Coach scheduling options are unavailable. Check your access and reload.",
+          { exact: true },
+        ),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Add a note", exact: true }),
+      ).toBeEnabled();
+      // Real page denial/error boundaries use the actual service and repositories.
+      for (const actor of ["other", "athlete", "signed-out"]) {
+        await cookie(actor);
+        const response = await visit(href);
+        assert.equal(
+          response.status(),
+          404,
+          actor + " cannot open the coach page",
+        );
+        await expect(summary()).toHaveCount(0);
+      }
+      await cookie("athlete");
+      await counter(true);
+      detailGets.length = 0;
+      await visit(base + "/sessions/" + id);
+      await expect(summary()).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Add a note", exact: true }),
+      ).toBeEnabled();
+      await expect(start()).toHaveCount(0);
+      assert.equal(
+        detailGets.length,
+        1,
+        "Nonseeded athlete detail retains its authorized GET",
+      );
+      assert.equal(
+        (await counter()).types ?? 0,
+        0,
+        "Athlete detail never loads coach edit options",
+      );
+      console.log(
+        "PASS nonseeded athlete detail: one authorized GET, no coach options, independent notes",
+      );
+      await cookie("owner", "booking");
+      await visit(href);
+      await expect(
+        page.getByRole("heading", { name: "Session unavailable", exact: true }),
+      ).toBeVisible();
+      await expect(summary()).toHaveCount(0);
+      await cookie();
+      for (const suffix of [
+        "invalid",
+        "19700000-0000-4000-8000-000000000002",
+      ]) {
+        const response = await visit(base + "/coach/sessions/" + suffix);
+        assert.equal(response.status(), 404);
+        await expect(summary()).toHaveCount(0);
+      }
+      await counter(true);
+      const invalid = await context.request.get(
+        base + "/api/session-bookings?options=edit&cursor=null",
+      );
+      assert.equal(invalid.status(), 400);
+      assert.equal((await counter()).authorization ?? 0, 0);
+      for (const actor of ["athlete", "suspended", "signed-out"]) {
+        await cookie(actor);
+        const r = await context.request.get(
+          base + "/api/session-bookings?options=edit",
+        );
+        assert.equal(r.status(), actor === "signed-out" ? 401 : 403);
+      }
+      // Seeded editor drafts survive same-actor verification and fresh page props.
+      await cookie();
+      await visit(href);
+      await expect(start()).toContainText("18:00");
+      await expect(
+        page.getByRole("button", { name: "Add a note", exact: true }),
+      ).toBeEnabled();
+      detailGets.length = 0;
+      await start().click();
+      const picker = page.getByRole("dialog", {
+        name: "Choose session date and time",
+        exact: true,
+      });
+      await picker
+        .getByRole("group", { name: "Hour", exact: true })
+        .getByRole("radio", { name: "19", exact: true })
+        .check();
+      await picker
+        .getByRole("group", { name: "Minutes", exact: true })
+        .getByRole("radio", { name: "30", exact: true })
+        .check();
+      await picker
+        .getByRole("button", { name: "Apply date and time", exact: true })
+        .click();
+      await page.route("**/api/auth/actor", (route) =>
+        route.fulfill({ status: 503, json: { status: "unavailable" } }),
+      );
+      await event("mov279-refresh");
+      await expect(
+        page.getByText("Checking your account…", { exact: true }).first(),
+      ).toBeVisible();
+      await expect(summary()).toHaveCount(0);
+      await page.unroute("**/api/auth/actor");
+      await event("mov279-refresh");
+      await expect(start()).toContainText("19:30");
+      assert.equal(detailGets.length, 0);
+      await cookie("owner", "changed");
+      const refreshed = page.waitForResponse(
+        (response) =>
+          new URL(response.url()).pathname === "/coach/sessions/" + id &&
+          response.request().headers()["rsc"] === "1",
+      );
+      await event("mov279-page");
+      await (await refreshed).finished();
+      await page.evaluate(
+        () =>
+          new Promise((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve)),
+          ),
+      );
+      await expect
+        .poll(async () => (await counter()).detail)
+        .toBeGreaterThanOrEqual(2);
+      await expect(start()).toContainText("19:30");
+      // Once the actor/dataset/role leaves, even the original actor must fetch.
+      for (const actor of ["other", "other-run", "operator", "signed-out"]) {
+        detailGets.length = 0;
+        await cookie(actor, "changed");
+        await event("mov279-session");
+        await expect(page.getByTestId("booking-load-identity")).toHaveText(
+          actor === "signed-out"
+            ? "signed-out"
+            : actor === "other"
+              ? "fixture-other:fixture:member"
+              : actor === "other-run"
+                ? "fixture-owner:another-run:member"
+                : "fixture-owner:fixture:operator",
+        );
+        if (actor === "operator") {
+          await expect(start()).toContainText("20:00");
+          assert.ok(
+            detailGets.length > 0,
+            "Role changes cannot reuse the original snapshot",
+          );
+        } else await expect(summary()).toHaveCount(0);
+        await cookie("owner", "changed");
+        await event("mov279-session");
+        await expect(page.getByTestId("booking-load-identity")).toHaveText(
+          "fixture-owner:fixture:member",
+        );
+        await expect(start()).toContainText("20:00");
+        assert.ok(
+          detailGets.length > 0,
+          "Returning to the original identity must read current details",
+        );
+      }
+      console.log(
+        "PASS seeded coach page: real service/repository counters, no client detail request/unused lists/duplicate notes; summary independent of options/notes errors; owner/guest/athlete/other access; invalid edit cursor; initial data fenced across actor/dataset/role/sign-out and page refresh; keyboard/mobile",
+      );
+    }
   }
   console.log(
     "PASS desktop/mobile bounds, keyboard containment, stale actor response isolation and signed-out exclusion",
   );
 } catch (error) {
   console.error(error.stack ?? error);
+  if (bookingLoad && pageForFailure) {
+    await pageForFailure
+      .screenshot({ path: path.join(output, "booking-load-failure.png") })
+      .catch(() => {});
+    console.error(
+      (
+        await pageForFailure
+          .locator("main")
+          .innerText()
+          .catch(() => "")
+      ).slice(0, 2000),
+    );
+  }
   console.error(log.slice(-2500));
   process.exitCode = 1;
 } finally {

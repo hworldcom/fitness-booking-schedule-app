@@ -383,11 +383,13 @@ try {
     });
     await picker.getByLabel("Date", { exact: true }).fill(value.slice(0, 10));
     await picker
-      .getByLabel("Hour", { exact: true })
-      .selectOption(value.slice(11, 13));
+      .getByRole("group", { name: "Hour", exact: true })
+      .getByRole("radio", { name: value.slice(11, 13), exact: true })
+      .check();
     await picker
-      .getByLabel("Minute", { exact: true })
-      .selectOption(value.slice(14, 16));
+      .getByRole("group", { name: "Minutes", exact: true })
+      .getByRole("radio", { name: value.slice(14, 16), exact: true })
+      .check();
     await picker
       .getByRole("button", { name: "Apply date and time", exact: true })
       .click();
