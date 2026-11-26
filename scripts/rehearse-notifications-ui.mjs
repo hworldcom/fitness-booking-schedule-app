@@ -746,9 +746,45 @@ try {
           name: "Choose session date and time",
           exact: true,
         });
+        await expect(picker.getByRole("radio", { checked: true })).toHaveCount(
+          0,
+        );
+        await expect(picker.locator(".booking-start-selection")).toContainText(
+          "Choose a time",
+        );
         await picker.getByLabel("Date", { exact: true }).fill("2030-11-09");
-        await picker.getByLabel("Hour", { exact: true }).selectOption("12");
-        await picker.getByLabel("Minute", { exact: true }).selectOption("30");
+        await picker
+          .getByRole("button", { name: "Apply date and time", exact: true })
+          .click();
+        await expect(
+          picker
+            .getByRole("group", { name: "Hour", exact: true })
+            .getByRole("radio", { name: "00", exact: true }),
+        ).toBeFocused();
+        await expect(picker.getByRole("radio", { checked: true })).toHaveCount(
+          0,
+        );
+        await picker
+          .getByRole("group", { name: "Hour", exact: true })
+          .getByRole("radio", { name: "12", exact: true })
+          .check();
+        await picker
+          .getByRole("button", { name: "Apply date and time", exact: true })
+          .click();
+        await expect(
+          picker
+            .getByRole("group", { name: "Minutes", exact: true })
+            .getByRole("radio", { name: "00", exact: true }),
+        ).toBeFocused();
+        await expect(
+          picker
+            .getByRole("group", { name: "Minutes", exact: true })
+            .getByRole("radio", { checked: true }),
+        ).toHaveCount(0);
+        await picker
+          .getByRole("group", { name: "Minutes", exact: true })
+          .getByRole("radio", { name: "30", exact: true })
+          .check();
         await picker
           .getByRole("button", { name: "Apply date and time", exact: true })
           .click();
@@ -918,28 +954,83 @@ try {
       await trigger().focus();
       await page.keyboard.press("Enter");
       await expect(picker()).toBeVisible();
-      await expect(
-        picker().getByLabel("Minute", { exact: true }),
-      ).toBeVisible();
+      const hours = picker().getByRole("group", { name: "Hour", exact: true });
+      const minutes = picker().getByRole("group", {
+        name: "Minutes",
+        exact: true,
+      });
+      await expect(minutes).toBeVisible();
       assert.deepEqual(
         await picker()
-          .getByLabel("Minute", { exact: true })
-          .locator("option")
+          .getByRole("group", { name: "Minutes", exact: true })
+          .getByRole("radio")
           .evaluateAll((items) => items.map((x) => x.value).filter(Boolean)),
         ["00", "15", "30", "45"],
       );
+      await expect(hours.getByRole("radio")).toHaveCount(24);
+      await expect(picker().getByRole("combobox")).toHaveCount(0);
+      await expect(
+        hours.getByRole("radio", { name: "18", exact: true }),
+      ).toBeChecked();
+      await expect(
+        minutes.getByRole("radio", { name: "00", exact: true }),
+      ).toBeChecked();
       assert.equal(
         await picker()
-          .getByLabel("Hour", { exact: true })
-          .locator("option")
-          .count(),
-        25,
+          .getByRole("radio")
+          .evaluateAll((items) =>
+            items.every((item) => {
+              const bounds = item.getBoundingClientRect();
+              return bounds.width >= 44 && bounds.height >= 44;
+            }),
+          ),
+        true,
+        "Every time choice has a 44px touch target",
       );
-      await picker().getByLabel("Hour", { exact: true }).selectOption("19");
-      await picker().getByLabel("Minute", { exact: true }).selectOption("30");
+      await picker()
+        .getByRole("group", { name: "Hour", exact: true })
+        .getByRole("radio", { name: "19", exact: true })
+        .check();
+      await picker()
+        .getByRole("group", { name: "Minutes", exact: true })
+        .getByRole("radio", { name: "30", exact: true })
+        .check();
       await expect(trigger()).toContainText("18:00");
+      await expect(picker().locator(".booking-start-selection")).toContainText(
+        "19:30",
+      );
+      await expect(picker().locator(".booking-start-selection")).toContainText(
+        "9 November 2030",
+      );
+      await hours.getByRole("radio", { name: "19", exact: true }).focus();
+      await page.keyboard.press("ArrowRight");
+      await expect(
+        hours.getByRole("radio", { name: "20", exact: true }),
+      ).toBeChecked();
+      await page.keyboard.press("ArrowLeft");
+      await expect(
+        hours.getByRole("radio", { name: "19", exact: true }),
+      ).toBeChecked();
+      await page.keyboard.press("Tab");
+      await expect(
+        minutes.getByRole("radio", { name: "30", exact: true }),
+      ).toBeFocused();
+      await page.keyboard.press("ArrowRight");
+      await expect(
+        minutes.getByRole("radio", { name: "45", exact: true }),
+      ).toBeChecked();
+      await page.keyboard.press("ArrowLeft");
+      await expect(
+        minutes.getByRole("radio", { name: "30", exact: true }),
+      ).toBeChecked();
+      await expect(picker().locator(".booking-start-selection")).toContainText(
+        "19:30",
+      );
       await expect(apply()).toBeInViewport({ ratio: 1 });
       await expect(cancel()).toBeInViewport({ ratio: 1 });
+      await expect(picker().locator(".booking-start-selection")).toBeInViewport(
+        { ratio: 1 },
+      );
       assert.equal(await page.locator("form form").count(), 0);
       assert.equal(
         await page.evaluate(
@@ -963,7 +1054,10 @@ try {
       await expect(trigger()).toContainText("18:00");
       for (const method of ["Escape", "close", "backdrop"]) {
         await trigger().click();
-        await picker().getByLabel("Hour", { exact: true }).selectOption("22");
+        await picker()
+          .getByRole("group", { name: "Hour", exact: true })
+          .getByRole("radio", { name: "22", exact: true })
+          .check();
         if (method === "Escape") await page.keyboard.press("Escape");
         else if (method === "close")
           await picker()
@@ -975,8 +1069,14 @@ try {
         await expect(trigger()).toContainText("18:00");
       }
       await trigger().click();
-      await picker().getByLabel("Hour", { exact: true }).selectOption("19");
-      await picker().getByLabel("Minute", { exact: true }).selectOption("15");
+      await picker()
+        .getByRole("group", { name: "Hour", exact: true })
+        .getByRole("radio", { name: "19", exact: true })
+        .check();
+      await picker()
+        .getByRole("group", { name: "Minutes", exact: true })
+        .getByRole("radio", { name: "15", exact: true })
+        .check();
       await apply().focus();
       await page.keyboard.press("Enter");
       await expect(picker()).toHaveCount(0);
@@ -989,43 +1089,58 @@ try {
         }),
       ).toHaveCount(0);
       await trigger().click();
-      await expect(picker().getByLabel("Minute", { exact: true })).toHaveValue(
-        "15",
-      );
+      await expect(
+        picker()
+          .getByRole("group", { name: "Minutes", exact: true })
+          .getByRole("radio", { name: "15", exact: true }),
+      ).toBeChecked();
       await cancel().click();
       assert.equal(posts.length, 0);
     }
-    // Invalid and ambiguous local dates cannot be applied, even with forged DOM options.
+    // Invalid and ambiguous local dates cannot be applied. Off-grid API rejection
+    // remains covered by the server contracts and rescheduling integration.
     await trigger().click();
     await picker().getByLabel("Date", { exact: true }).fill("");
     await apply().click();
     await expect(picker().getByLabel("Date", { exact: true })).toBeFocused();
     await expect(trigger()).toContainText("19:15");
     await picker().getByLabel("Date", { exact: true }).fill("2030-11-09");
+    await expect(
+      picker()
+        .getByRole("group", { name: "Minutes", exact: true })
+        .getByRole("radio", { name: "20", exact: true }),
+    ).toHaveCount(0);
     await picker()
-      .getByLabel("Minute", { exact: true })
-      .evaluate((el) => {
-        el.add(new Option("20", "20"));
-      });
-    await picker().getByLabel("Minute", { exact: true }).selectOption("20");
-    await apply().click();
-    await expect(picker().getByRole("alert")).toContainText(
-      "valid, unambiguous Berlin",
-    );
-    await expect(picker().getByRole("alert")).toBeInViewport({ ratio: 1 });
-    await expect(apply()).toBeInViewport({ ratio: 1 });
-    await expect(cancel()).toBeInViewport({ ratio: 1 });
-    await expect(trigger()).toContainText("19:15");
-    await picker().getByLabel("Minute", { exact: true }).selectOption("15");
+      .getByRole("group", { name: "Minutes", exact: true })
+      .getByRole("radio", { name: "15", exact: true })
+      .check();
     for (const date of ["2027-03-28", "2027-10-31"]) {
       await picker().getByLabel("Date", { exact: true }).fill(date);
-      await picker().getByLabel("Hour", { exact: true }).selectOption("02");
+      await picker()
+        .getByRole("group", { name: "Hour", exact: true })
+        .getByRole("radio", { name: "02", exact: true })
+        .check();
       await apply().click();
-      await expect(picker().getByRole("alert")).toBeVisible();
+      await expect(picker().getByRole("alert")).toContainText(
+        "valid, unambiguous Berlin",
+      );
+      await expect(picker().getByRole("alert")).toBeInViewport({ ratio: 1 });
+      await expect(apply()).toBeInViewport({ ratio: 1 });
+      await expect(cancel()).toBeInViewport({ ratio: 1 });
+      await expect(picker().locator(".booking-start-selection")).toBeInViewport(
+        { ratio: 1 },
+      );
+      await expect(trigger()).toContainText("19:15");
     }
     await picker().getByLabel("Date", { exact: true }).fill("2030-11-09");
-    await picker().getByLabel("Hour", { exact: true }).selectOption("19");
-    await picker().getByLabel("Minute", { exact: true }).selectOption("30");
+    await picker()
+      .getByRole("group", { name: "Hour", exact: true })
+      .getByRole("radio", { name: "19", exact: true })
+      .check();
+    await picker()
+      .getByRole("group", { name: "Minutes", exact: true })
+      .getByRole("radio", { name: "30", exact: true })
+      .check();
     // Actual provider revalidation suspends the top layer but retains the same actor's draft.
     await page.route("**/api/auth/actor", (route) =>
       route.fulfill({ status: 503, json: { status: "unavailable" } }),
@@ -1042,14 +1157,19 @@ try {
       window.dispatchEvent(new Event("mov197-refresh")),
     );
     await expect(picker()).toBeVisible();
-    await expect(picker().getByLabel("Minute", { exact: true })).toHaveValue(
-      "30",
-    );
+    await expect(
+      picker()
+        .getByRole("group", { name: "Minutes", exact: true })
+        .getByRole("radio", { name: "30", exact: true }),
+    ).toBeChecked();
     await cancel().click();
     await expect(trigger()).toBeFocused();
     await expect(trigger()).toContainText("19:15");
     await trigger().click();
-    await picker().getByLabel("Minute", { exact: true }).selectOption("45");
+    await picker()
+      .getByRole("group", { name: "Minutes", exact: true })
+      .getByRole("radio", { name: "45", exact: true })
+      .check();
     await context.addCookies([
       { name: "mov81-actor", value: "other", url: base },
     ]);
@@ -1072,9 +1192,11 @@ try {
     );
     await expect(trigger()).toContainText("18:00");
     await trigger().click();
-    await expect(picker().getByLabel("Minute", { exact: true })).toHaveValue(
-      "00",
-    );
+    await expect(
+      picker()
+        .getByRole("group", { name: "Minutes", exact: true })
+        .getByRole("radio", { name: "00", exact: true }),
+    ).toBeChecked();
     await context.addCookies([
       { name: "mov81-actor", value: "signed-out", url: base },
     ]);
@@ -1089,8 +1211,45 @@ try {
       }),
     ).toBeVisible();
     assert.equal(posts.length, 0);
+    await context.addCookies([
+      { name: "mov81-actor", value: "owner", url: base },
+    ]);
+    await page.setViewportSize({ width: 568, height: 320 });
+    await page.goto(base + "/coach/booking-picker-fixture");
+    await trigger().click();
+    await picker().getByLabel("Date", { exact: true }).fill("2027-03-28");
+    await picker()
+      .getByRole("group", { name: "Hour", exact: true })
+      .getByRole("radio", { name: "02", exact: true })
+      .check();
+    await picker()
+      .getByRole("group", { name: "Minutes", exact: true })
+      .getByRole("radio", { name: "45", exact: true })
+      .check();
+    await apply().click();
+    await expect(picker().getByRole("alert")).toBeInViewport({ ratio: 1 });
+    await expect(apply()).toBeInViewport({ ratio: 1 });
+    await expect(cancel()).toBeInViewport({ ratio: 1 });
+    await expect(picker().locator(".booking-start-selection")).toBeInViewport({
+      ratio: 1,
+    });
+    await picker()
+      .getByRole("group", { name: "Hour", exact: true })
+      .getByRole("radio", { name: "23", exact: true })
+      .check();
+    await expect(
+      picker()
+        .getByRole("group", { name: "Hour", exact: true })
+        .getByRole("radio", { name: "23", exact: true }),
+    ).toBeInViewport({ ratio: 1 });
+    await page.screenshot({
+      path: path.join(output, "booking-start-picker-landscape.png"),
+    });
+    await cancel().click();
+    await expect(trigger()).toContainText("18:00");
+    assert.equal(posts.length, 0);
     console.log(
-      "PASS real booking picker: quarter-hour options, Apply/Cancel/Escape/close/backdrop, keyboard/focus/viewport1440/375/320x568, invalid/DST refusal, actual account-check draft suspension/resume and actor/sign-out clearing; zero Review/Save traffic",
+      "PASS real booking picker: 24 hours/four quarter-hours, 44px targets, summary, native keyboard arrows/Tab, Apply/Cancel/Escape/close/backdrop, focus/viewport 1440/375/320x568/568x320, invalid/DST refusal, actual account-check draft suspension/resume and actor/sign-out clearing; zero Review/Save traffic",
     );
   }
   console.log(

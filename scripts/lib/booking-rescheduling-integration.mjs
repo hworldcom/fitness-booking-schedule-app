@@ -29,11 +29,13 @@ export async function rehearseBookingRescheduling({
     });
     await picker.getByLabel("Date", { exact: true }).fill(value.slice(0, 10));
     await picker
-      .getByLabel("Hour", { exact: true })
-      .selectOption(value.slice(11, 13));
+      .getByRole("group", { name: "Hour", exact: true })
+      .getByRole("radio", { name: value.slice(11, 13), exact: true })
+      .check();
     await picker
-      .getByLabel("Minute", { exact: true })
-      .selectOption(value.slice(14, 16));
+      .getByRole("group", { name: "Minutes", exact: true })
+      .getByRole("radio", { name: value.slice(14, 16), exact: true })
+      .check();
     await picker
       .getByRole("button", { name: "Apply date and time", exact: true })
       .click();
@@ -855,16 +857,22 @@ export async function rehearseBookingRescheduling({
       await coach.page.keyboard.press("Enter");
       assert.deepEqual(
         await picker
-          .getByLabel("Minute", { exact: true })
-          .locator("option")
+          .getByRole("group", { name: "Minutes", exact: true })
+          .getByRole("radio")
           .evaluateAll((items) =>
             items.map((item) => item.value).filter(Boolean),
           ),
         ["00", "15", "30", "45"],
       );
       await picker.getByLabel("Date", { exact: true }).fill(day.date);
-      await picker.getByLabel("Hour", { exact: true }).selectOption("19");
-      await picker.getByLabel("Minute", { exact: true }).selectOption("30");
+      await picker
+        .getByRole("group", { name: "Hour", exact: true })
+        .getByRole("radio", { name: "19", exact: true })
+        .check();
+      await picker
+        .getByRole("group", { name: "Minutes", exact: true })
+        .getByRole("radio", { name: "30", exact: true })
+        .check();
       await picker
         .getByRole("button", {
           name: "Cancel date and time selection",
@@ -876,8 +884,14 @@ export async function rehearseBookingRescheduling({
       // Cancel leaves the last applied form value unchanged.
       await expect(start).toContainText(width === 1440 ? "12:00" : "19:15");
       await start.click();
-      await picker.getByLabel("Hour", { exact: true }).selectOption("19");
-      await picker.getByLabel("Minute", { exact: true }).selectOption("15");
+      await picker
+        .getByRole("group", { name: "Hour", exact: true })
+        .getByRole("radio", { name: "19", exact: true })
+        .check();
+      await picker
+        .getByRole("group", { name: "Minutes", exact: true })
+        .getByRole("radio", { name: "15", exact: true })
+        .check();
       const apply = picker.getByRole("button", {
         name: "Apply date and time",
         exact: true,
@@ -905,7 +919,10 @@ export async function rehearseBookingRescheduling({
       await expect(start).toContainText("19:15");
       await expect(review).toHaveCount(0);
       await start.click();
-      await picker.getByLabel("Minute", { exact: true }).selectOption("45");
+      await picker
+        .getByRole("group", { name: "Minutes", exact: true })
+        .getByRole("radio", { name: "45", exact: true })
+        .check();
       await coach.page.keyboard.press("Escape");
       await expect(start).toBeFocused();
       await expect(start).toContainText("19:15");

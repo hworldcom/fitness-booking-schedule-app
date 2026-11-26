@@ -135,8 +135,14 @@ export async function rehearseExternalClients({
     exact: true,
   });
   await startPicker.getByLabel("Date", { exact: true }).fill(day.date);
-  await startPicker.getByLabel("Hour", { exact: true }).selectOption("09");
-  await startPicker.getByLabel("Minute", { exact: true }).selectOption("00");
+  await startPicker
+    .getByRole("group", { name: "Hour", exact: true })
+    .getByRole("radio", { name: "09", exact: true })
+    .check();
+  await startPicker
+    .getByRole("group", { name: "Minutes", exact: true })
+    .getByRole("radio", { name: "00", exact: true })
+    .check();
   await startPicker
     .getByRole("button", { name: "Apply date and time", exact: true })
     .click();
