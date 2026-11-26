@@ -6,9 +6,11 @@ import { useAuthSession } from "@/auth/client/session-provider";
 export function SessionActorBoundary({
   children,
   publicWhenSignedOut = false,
+  initialIdentity,
 }: {
-  children: (identity: string) => ReactNode;
+  children: (identity: string, canUseInitial: boolean) => ReactNode;
   publicWhenSignedOut?: boolean;
+  initialIdentity?: string;
 }) {
   const { actor } = useActor();
   const { session } = useAuthSession();
@@ -24,6 +26,15 @@ export function SessionActorBoundary({
   const pending =
     actor.status === "unavailable" || session.status === "unavailable";
   const [remembered, setRemembered] = useState(verified);
+  const [initialAllowed, setInitialAllowed] = useState(true);
+  // Once a known account change occurs, returning to the old account must read
+  // again rather than resurrect the page's original server snapshot.
+  if (
+    initialAllowed &&
+    initialIdentity &&
+    ((verified && verified !== initialIdentity) || (!pending && !verified))
+  )
+    setInitialAllowed(false);
   if (verified && verified !== remembered) setRemembered(verified);
   const identity =
     verified ||
@@ -33,7 +44,7 @@ export function SessionActorBoundary({
       {pending && <p role="status">Checking your account…</p>}
       <div hidden={pending}>
         {identity
-          ? children(identity)
+          ? children(identity, initialAllowed && identity === initialIdentity)
           : !pending && (
               <p role="status">
                 Sign in with the appropriate account to continue.

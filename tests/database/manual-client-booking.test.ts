@@ -11,6 +11,9 @@ import {
   decideConnectionRecord,
 } from "@/server/db/connections/repository";
 
+import { sessionBookingDetailRecord } from "@/server/db/coaches/typed-session-repository";
+import { currentActorProjection } from "@/server/db/authorization/repository";
+
 const url = process.env.DATABASE_TEST_URL;
 const allowed =
   url &&
@@ -405,6 +408,46 @@ test(
             payload(await at("13:30", dates.next_value), ext, 90),
           );
           assert.deepEqual(await hours(), before);
+        },
+      );
+      await t.test(
+        "booking detail and owner projection preserve coach, participant and dataset boundaries",
+        async () => {
+          const detail = (actor: AuthorizedActor, id: string) =>
+            withActorDatabaseContext(actor, (tx) =>
+              sessionBookingDetailRecord(tx, id),
+            );
+          const externalDetail = await detail(coach, externalBooking.bookingId);
+          assert.equal(externalDetail.viewerIsCoach, true);
+          assert.equal(
+            externalDetail.status,
+            "cancelled",
+            "Owner history remains readable",
+          );
+          assert.equal(externalDetail.externalClient?.id, external.client.id);
+          for (const denied of [
+            athlete,
+            outsider,
+            otherCoach,
+            { ...coach, runId: randomUUID() },
+            { ...coach, authUserId: athlete.authUserId },
+          ])
+            await assert.rejects(detail(denied, externalBooking.bookingId));
+          const [connectedBooking] =
+            await admin`select id from app.coach_private_bookings where coach_profile_id=${coach.profileId}::uuid and client_profile_id=${athlete.profileId}::uuid limit 1`;
+          assert.ok(connectedBooking);
+          const participant = await detail(athlete, connectedBooking.id);
+          assert.equal(
+            participant.viewerIsCoach,
+            false,
+            "Participant detail cannot authorize the coach page",
+          );
+          assert.equal(participant.externalClient, null);
+          const owner = await withActorDatabaseContext(coach, (tx) =>
+            currentActorProjection(tx, coach),
+          );
+          assert.ok(owner.profileSlug && owner.runSlug);
+          assert.equal(owner.role, coach.runRole);
         },
       );
     } finally {

@@ -54,6 +54,11 @@ export type SessionBookingDetail = Readonly<{
     newTerms: { startsAt: string; endsAt: string; venue: string };
   }[];
 }>;
+export type InitialSessionBooking = Readonly<{
+  // Same auth-user/profile/dataset/role identity used by SessionActorBoundary.
+  identity: string;
+  detail: SessionBookingDetail;
+}>;
 export function parseTypedRequest(
   value: unknown,
   coach = false,

@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
-import { currentActorSnapshot } from "@/server/authorization/service";
-import { sessionNotesCommand } from "@/server/notes/service";
+import { coachSessionBookingPage } from "@/server/coaches/typed-session-service";
 import { BookingEditor } from "@/features/session-types/booking-editor";
 export const metadata = {
   title: "Session notes & videos",
@@ -13,12 +12,7 @@ export default async function Page({
   params: Promise<{ bookingId: string }>;
 }) {
   const { bookingId } = await params;
-  const actor = await currentActorSnapshot();
-  if (actor.status !== "authorized") notFound();
-  const result = await sessionNotesCommand(
-    { action: "read", args: { bookingId, kind: "shared" } },
-    `${actor.demoRun.slug}:${actor.profile.slug}`,
-  );
+  const result = await coachSessionBookingPage(bookingId);
   if (result.status === "unavailable")
     return (
       <section role="alert">
@@ -26,6 +20,12 @@ export default async function Page({
         <p>Your session could not be loaded. Please try again.</p>
       </section>
     );
-  if (result.status !== "ready" || !result.value.viewerIsCoach) notFound();
-  return <BookingEditor bookingId={bookingId} coachView />;
+  if (result.status !== "ready") notFound();
+  return (
+    <BookingEditor
+      bookingId={bookingId}
+      coachView
+      initialBooking={result.initialBooking}
+    />
+  );
 }
