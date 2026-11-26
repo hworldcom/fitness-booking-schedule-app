@@ -53,6 +53,9 @@ import { publicCoachWebsiteCards } from "@/server/db/coaches/website-repository"
 import { publicCoachWebsite } from "./website-service";
 import { directoryReviewSummaries } from "./directory-reviews";
 import { directoryAreaLabel } from "./directory-area";
+import { directoryGroupCoachSlugs } from "./directory-groups";
+import { publicGroupSessions } from "@/server/group-sessions/service";
+import { parseGroupSessionResult } from "@/domain/group-sessions";
 
 function canPrepareCoachProfile(status: string) {
   return (
@@ -73,15 +76,29 @@ export async function publicCoachDirectory(
   try {
     const entries = await publicCoachDirectoryRecords(filters);
     const slugs = entries.map((entry) => entry.coach.slug);
-    const [paths, websites, reviews] = await Promise.all([
+    const [paths, websites, reviews, groupCoaches] = await Promise.all([
       publicCoachPathsRecord(slugs),
       publicCoachWebsiteCards(entries.map((entry) => entry.coach.profileId)),
       directoryReviewSummaries(slugs),
+      filters.sessionFormat === "group"
+        ? directoryGroupCoachSlugs(async (after) => {
+            const result = await publicGroupSessions({
+              action: "list",
+              args: { after },
+            });
+            return result.status === "ready"
+              ? parseGroupSessionResult("public-list", result.value)
+              : null;
+          })
+        : Promise.resolve(undefined),
     ]);
+    if (groupCoaches === null)
+      throw new Error("Public group discovery unavailable.");
     return Object.freeze({
       status: "ready",
       entries: Object.freeze(
         entries.flatMap((entry) => {
+          if (groupCoaches && !groupCoaches.has(entry.coach.slug)) return [];
           const website = websites.get(entry.coach.profileId);
           // A visibility change between queries removes the entry rather than
           // presenting stale public website content as an empty successful read.

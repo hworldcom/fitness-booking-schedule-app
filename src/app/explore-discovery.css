@@ -1,423 +1,970 @@
-/* Explore shares Home's discovery controls; all overrides are route-scoped. */
-.coach-discovery {
-  padding: 14px 0 48px;
+/* Explore owns these layouts; Home and public coach pages keep their shared cards. */
+.coach-discovery.explore-discovery {
+  --explore-accent: var(--public-purple, #61417b);
+  --explore-border: #e2dce9;
+  --explore-soft: #f6f3fa;
+  padding: 10px 0 40px;
+  min-width: 0;
 }
-.coach-directory-heading {
+.explore-discovery .explore-page-heading {
   display: flex;
-  align-items: end;
+  align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  margin: 0 0 24px;
+  gap: 12px;
+  margin-bottom: 15px;
 }
-.coach-directory-heading h1 {
-  margin: 8px 0 10px;
-  color: var(--coach-forest);
-  font-size: clamp(30px, 3.4vw, 40px);
-  line-height: 1.12;
-  letter-spacing: -1.5px;
-}
-.coach-directory-heading p {
-  color: var(--muted);
-  font-size: 13px;
-}
-.coach-directory-heading .coach-back-link {
+.explore-discovery h1 {
   margin: 0;
-  flex: none;
+  font-size: 28px;
+  letter-spacing: -0.8px;
+  color: #2d2635;
+}
+.explore-discovery .explore-browser-places {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 1px solid var(--explore-border);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--explore-accent);
+  font-size: 12px;
+}
+.explore-search-toolbar {
+  margin-bottom: 20px;
+}
+.explore-search-toolbar .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.explore-search-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+.explore-search-input {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 15px;
+  border: 1px solid var(--explore-border);
+  border-radius: 13px;
+  background: var(--explore-soft);
+}
+.explore-search-input > svg {
+  flex-shrink: 0;
+  color: #756b7e;
+}
+.explore-search-input input {
+  min-width: 0;
+  width: 100%;
+  min-height: 24px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 15px;
+  color: #2d2635;
+}
+.explore-search-input:focus-within {
+  outline: 2px solid var(--explore-accent);
+  outline-offset: 2px;
+}
+.explore-search-input input:focus-visible {
+  outline: 0;
+}
+.explore-discovery .explore-submit-search {
+  min-width: 100px;
+  padding: 10px 17px;
+  border: 1px solid var(--explore-accent);
+  border-radius: 12px;
+  background: var(--explore-accent);
+  color: #fff;
+}
+.explore-filter-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.explore-discovery .explore-filter-row :is(select, button, summary) {
   min-height: 44px;
+  font-size: 12px;
 }
-.explore-marketplace-search {
+.explore-discovery .explore-filter-row select {
+  width: auto;
+  max-width: 100%;
+  border: 1px solid var(--explore-border);
+  border-radius: 10px;
+  background: #fff;
+  color: #403449;
+  padding: 9px 30px 9px 11px;
+}
+.explore-discovery .explore-saved-filter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--explore-border);
+  border-radius: 10px;
+  padding: 9px 12px;
+  background: #fff;
+  color: #403449;
+}
+.explore-discovery .explore-saved-filter.active {
+  background: var(--explore-soft);
+  color: var(--explore-accent);
+  border-color: #a78bbd;
+}
+.explore-location-filter {
   position: relative;
-  margin-bottom: 25px;
 }
-.explore-coach-search.has-query {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr) minmax(0, 1.1fr) auto;
+.explore-location-filter summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 11px;
+  border: 1px solid var(--explore-border);
+  border-radius: 10px;
+  background: #fff;
+  color: #403449;
+  cursor: pointer;
+  list-style: none;
 }
-.explore-coach-search input[type="hidden"] {
+.explore-location-filter summary::-webkit-details-marker {
   display: none;
 }
-.coach-discovery .home-discipline-navigation {
-  margin-top: 18px;
+.explore-location-filter > div {
+  position: absolute;
+  z-index: 8;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 280px;
+  max-width: calc(100vw - 40px);
+  padding: 17px;
+  background: #fff;
+  border: 1px solid var(--explore-border);
+  border-radius: 14px;
+  box-shadow: 0 10px 28px #2b163a1a;
 }
-.coach-discovery .home-discipline-shortcut {
-  flex-basis: 118px;
-  min-height: 76px;
+.explore-location-filter label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
 }
-.explore-clear-search {
+.explore-location-filter input {
+  width: 100%;
+  margin: 0;
+  font-size: 16px;
+  border: 1px solid var(--explore-border);
+  border-radius: 9px;
+  background: #fff;
+}
+.explore-location-filter button {
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid var(--explore-border);
+  border-radius: 9px;
+  background: var(--explore-soft);
+  color: var(--explore-accent);
+}
+.explore-filter-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--explore-accent);
+}
+.explore-discovery .explore-clear-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  margin: 0;
+  padding: 4px;
+  color: var(--explore-accent);
+  font-size: 12px;
+}
+.explore-discovery .coach-results-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 0 18px;
+}
+.explore-discovery .coach-results-summary > div {
+  display: block;
+  min-width: 0;
+}
+.explore-discovery .coach-results-summary h2 {
+  margin: 0;
+  font-size: 19px;
+  letter-spacing: -0.3px;
+  color: #2d2635;
+}
+.explore-discovery .coach-results-summary small {
+  display: block;
+  margin-top: 5px;
+  color: #706779;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.explore-results-view-control {
+  display: flex;
+  flex-shrink: 0;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--explore-border);
+  border-radius: 11px;
+  background: var(--explore-soft);
+}
+.explore-results-view-control a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  color: #594866;
+  font-size: 12px;
+  text-decoration: none;
+}
+.explore-results-view-control a.active {
+  background: var(--explore-accent);
+  color: #fff;
+}
+.explore-results-view-control [aria-disabled="true"] {
+  opacity: 0.55;
+}
+.explore-discovery .coach-directory-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 230px;
+  padding: 30px 18px;
+  border: 1px solid var(--explore-border);
+  border-radius: 16px;
+  background: #fff;
+  text-align: center;
+}
+.explore-discovery .coach-directory-state h2 {
+  font-size: 20px;
+  margin: 0;
+}
+.explore-discovery .coach-directory-state p {
+  margin: 0;
+  font-size: 14px;
+}
+.explore-notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 13px 15px;
+  border: 1px solid var(--explore-border);
+  border-radius: 12px;
+  background: var(--explore-soft);
+  color: #584663;
+  font-size: 13px;
+}
+.explore-notice button {
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid #c9b9d5;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--explore-accent);
+}
+.explore-discovery.explore-enhanced.explore-map-view .explore-profiles {
+  display: none;
+}
+.explore-discovery .explore-profiles .coach-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+.explore-discovery .explore-profiles .compact-coach-card.result {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
+  padding: 16px;
+  border: 1px solid var(--explore-border);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: none;
+}
+.explore-profiles .compact-coach-card.result.selected {
+  outline: 0;
+}
+.explore-profiles .compact-coach-card > header {
+  display: block;
+  position: relative;
+}
+.explore-profiles .compact-coach-identity {
+  display: block;
+  min-width: 0;
+}
+.explore-profiles .compact-coach-card h3 {
+  font-size: 19px;
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.explore-discovery .explore-profiles .compact-coach-card .coach-card-media {
+  width: calc(100% + 32px);
+  margin: -16px -16px 39px;
+  aspect-ratio: 16 / 7;
+  border-radius: 17px 17px 0 0;
+}
+.explore-profiles .compact-coach-card .coach-card-media > .avatar {
+  width: 76px;
+  height: 76px;
+  bottom: -28px;
+}
+.explore-discovery .explore-profiles .coach-card-media:not(.has-banner) {
+  margin-bottom: 16px;
+}
+.explore-profiles .coach-card-media:not(.has-banner) > .avatar {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: inherit;
+  box-shadow: none;
+  background: transparent;
+  font-size: 42px;
+}
+.explore-profiles .coach-card-media:not(.has-banner) > .avatar img {
+  object-position: center 35%;
+}
+.explore-discovery .compact-coach-card .pill {
+  min-height: 22px;
+  font-size: 11px;
+}
+.explore-discovery .compact-coach-disciplines span {
+  font-size: 11px;
+}
+.explore-profiles .compact-coach-card .coach-card-introduction {
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-line-clamp: 3;
+}
+.explore-profiles .compact-coach-card .compact-coach-disciplines {
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+.explore-profiles .compact-coach-location {
+  margin-top: 2px;
+}
+.explore-profiles .compact-coach-card .compact-coach-actions {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+.explore-profiles .compact-coach-card .compact-coach-link {
+  flex: 1;
+  min-height: 44px;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--explore-accent);
+  color: #fff;
+  font-size: 13px;
+  text-decoration: none;
+}
+.explore-profiles .compact-coach-card .compact-coach-map-button {
+  flex: 0 0 44px;
+  display: inline-grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid var(--explore-border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--explore-accent);
+}
+.explore-discovery .explore-coach-distance {
+  margin: 0;
+  color: #65576f;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.explore-discovery .explore-save-coach {
+  position: absolute;
+  z-index: 2;
+  top: 9px;
+  right: 9px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 7px;
+  border: 1px solid var(--explore-border);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--explore-accent);
+}
+.explore-save-coach[aria-pressed="true"] {
+  background: var(--explore-soft);
+}
+.explore-discovery > .explore-floating-view {
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  margin: 0;
+}
+.explore-discovery > .explore-places-dialog {
+  width: min(620px, calc(100vw - 28px));
+  margin: auto;
+}
+.explore-profiles .compact-coach-card > header > .pill {
+  max-width: calc(100% - 52px);
+}
+.explore-map-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 330px) minmax(0, 1fr);
+  gap: 16px;
+  height: 650px;
+  max-height: 850px;
+}
+.explore-map-layout[hidden] {
+  display: none;
+}
+.explore-map-list {
+  min-width: 0;
+  overflow: auto;
+  padding: 3px 8px 3px 3px;
+  scrollbar-width: thin;
+}
+.explore-map-surface {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--explore-border);
+  border-radius: 18px;
+  background: #f4f1f7;
+}
+.explore-map-surface .coach-map-canvas {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: 0;
+}
+.explore-map-list .compact-coach-card,
+.explore-map-sheet .compact-coach-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  min-height: 0;
+  padding: 15px;
+  margin-bottom: 12px;
+  border: 1px solid var(--explore-border);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: none;
+}
+.explore-map-list .compact-coach-card.selected {
+  border-color: #a98abb;
+  outline: 1px solid #a98abb;
+  background: #faf7fd;
+}
+.explore-map-list .compact-coach-card:focus {
+  outline: 3px solid var(--explore-accent);
+  outline-offset: 0;
+}
+.explore-map-list .compact-coach-card > header,
+.explore-map-sheet .compact-coach-card > header {
+  display: block;
+  position: relative;
+  padding-right: 30px;
+}
+.explore-map-list .compact-coach-identity,
+.explore-map-sheet .compact-coach-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.explore-map-list .coach-card-media,
+.explore-map-sheet .coach-card-media {
+  display: block;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  aspect-ratio: auto;
+  margin: 0;
+}
+.explore-map-list .coach-card-cover,
+.explore-map-sheet .coach-card-cover {
+  display: none;
+}
+.explore-map-list .coach-card-media > .avatar,
+.explore-map-sheet .coach-card-media > .avatar {
+  position: static;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 12px;
+  box-shadow: none;
+  font-size: 18px;
+}
+.explore-map-list .compact-coach-card h3,
+.explore-map-sheet .compact-coach-card h3 {
+  margin: 0;
+  font-size: 15px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.explore-map-list .compact-coach-card > header > .pill,
+.explore-map-sheet .compact-coach-card > header > .pill {
+  position: static;
+  display: inline-flex;
+  width: fit-content;
+  margin: 5px 0 0 62px;
+  font-size: 10px;
+}
+.explore-map-list
+  :is(.coach-card-introduction, .coach-card-focus, .coach-today-availability),
+.explore-map-sheet
+  :is(.coach-card-introduction, .coach-card-focus, .coach-today-availability) {
+  display: none;
+}
+.explore-map-list .compact-coach-location,
+.explore-map-sheet .compact-coach-location {
+  margin: 0;
+  font-size: 12px;
+}
+.explore-map-list .compact-coach-location small,
+.explore-map-sheet .compact-coach-location small {
+  display: none;
+}
+.explore-map-list .compact-coach-card .compact-coach-actions,
+.explore-map-sheet .compact-coach-card .compact-coach-actions {
+  display: block;
+  margin: 0;
+}
+.explore-map-list .compact-coach-card .compact-coach-link,
+.explore-map-sheet .compact-coach-card .compact-coach-link {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.explore-map-tools {
+  position: absolute;
+  z-index: 2;
+  right: 10px;
+  top: 115px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.explore-map-tools button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+  border: 1px solid var(--explore-border);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--explore-accent);
+  box-shadow: 0 3px 10px #2b163a13;
+}
+.explore-search-area {
+  position: absolute;
+  z-index: 2;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin: 8px 0 0;
   min-height: 44px;
-  color: var(--coach-forest);
-  font-size: 11px;
+  padding: 9px 13px;
+  border: 1px solid var(--explore-border);
+  border-radius: 22px;
+  background: #fff;
+  color: var(--explore-accent);
+  box-shadow: 0 4px 16px #2b163a20;
+  white-space: nowrap;
+  font-size: 12px;
 }
-.coach-discovery .coach-results-summary {
-  align-items: center;
-  margin-bottom: 21px;
-}
-.coach-results-summary > div {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.coach-results-summary h2 {
-  margin: 0;
-  color: var(--ink);
-  font-size: 23px;
-  font-weight: 600;
-  letter-spacing: -0.5px;
-}
-.coach-discovery .coach-results-summary span {
-  font-size: 11px;
-  color: var(--muted);
-  font-weight: 500;
-}
-.coach-discovery .coach-results-summary small {
-  font-size: 11px;
-}
-.coach-discovery .coach-explore-layout {
-  gap: 28px;
-}
-.coach-discovery .coach-card-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 30px 20px;
-}
-.coach-discovery .compact-coach-card.result {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  min-height: 0;
-}
-.coach-discovery .compact-coach-card.result.selected {
-  border-color: #86609f;
-  outline: 2px solid #aa91be;
-  outline-offset: 3px;
-  border-radius: 20px;
-  box-shadow: none;
-}
-.coach-discovery .compact-coach-card.result:focus {
-  outline: 3px solid var(--public-purple, #61417b);
-  outline-offset: 3px;
-}
-.coach-discovery .compact-coach-card.result > header {
-  display: block;
-  position: relative;
-}
-.coach-discovery .compact-coach-card.result .compact-coach-identity {
-  display: block;
-}
-.coach-discovery .compact-coach-card.result .compact-coach-identity > .avatar {
-  display: grid;
-  width: 100%;
-  height: 172px;
-  margin-bottom: 12px;
-  border-radius: 16px;
-  background: #edf2e8;
-  color: #66765b;
-  font-size: 40px;
-  place-items: center;
-}
-.coach-discovery .compact-coach-identity img {
-  object-position: center 30%;
-}
-.coach-discovery .compact-coach-identity h3 {
-  overflow: visible;
-  white-space: normal;
-  text-overflow: clip;
-  font-size: 16px;
-  letter-spacing: -0.2px;
-  line-height: 1.35;
-}
-.coach-discovery .compact-coach-card > header > .pill {
+.explore-map-message {
   position: absolute;
-  top: 9px;
-  left: 9px;
-  background: var(--white);
-  color: var(--coach-forest);
-  font-size: 10px;
+  z-index: 3;
+  top: 12px;
+  left: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13px;
 }
-.coach-discovery .compact-coach-disciplines {
-  gap: 4px;
-}
-.coach-discovery .compact-coach-disciplines span {
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 500;
-}
-.coach-discovery .compact-coach-location {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  gap: 7px;
-}
-.coach-discovery .compact-coach-location > svg {
+.explore-map-sheet,
+.explore-floating-view {
   display: none;
 }
-.coach-discovery .compact-coach-location small {
-  font-size: 9px;
-  letter-spacing: 0;
+.explore-places-dialog .dialog-copy {
+  margin: 12px 0 20px;
+  font-size: 14px;
 }
-.coach-discovery .compact-coach-location strong {
-  margin: 2px 0 0;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--muted);
+.explore-saved-place-list {
+  display: grid;
+  gap: 13px;
 }
-.coach-discovery .compact-coach-location em {
-  font-size: 10px;
-  margin-top: 2px;
-}
-.coach-discovery .compact-coach-card.result > .coach-today-availability {
-  padding: 10px 0 0;
-  border: 0;
-  border-top: 1px solid var(--line);
-  background: transparent;
-}
-.coach-discovery .coach-today-availability header {
+.explore-saved-place-list > section {
   display: flex;
+  align-items: flex-start;
   flex-wrap: wrap;
-  gap: 5px;
-}
-.coach-discovery .coach-today-availability header span {
-  font-size: 10px;
-}
-.coach-discovery .coach-today-availability header strong {
-  font-size: 11px;
-  margin-left: 0;
-}
-.coach-discovery .coach-today-availability li {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-.coach-discovery .coach-today-availability li > span {
-  flex-basis: 100%;
-  padding-left: 18px;
-  min-width: 0;
-}
-.coach-discovery .coach-today-availability time,
-.coach-discovery .coach-today-availability li strong {
-  font-size: 11px;
-  overflow-wrap: anywhere;
-}
-.coach-discovery .coach-today-availability li small,
-.coach-discovery .coach-today-more {
-  font-size: 10px;
-  overflow-wrap: anywhere;
-}
-.coach-discovery .compact-coach-actions {
-  margin-top: auto;
-  gap: 6px;
-  padding: 0;
-  border: 0;
-  flex-wrap: wrap;
-}
-.coach-discovery .compact-coach-link {
-  flex: 1 0 100%;
-  justify-content: flex-start;
-  gap: 6px;
-  min-height: 44px;
-  font-size: 11px;
-}
-.coach-discovery .compact-coach-map-button {
-  min-height: 44px;
-  padding: 0;
-  background: transparent;
-  color: var(--muted);
-  font-size: 11px;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.coach-discovery .compact-coach-map-button[aria-pressed="true"] {
-  color: var(--coach-forest);
-  font-weight: 800;
-}
-.coach-discovery .coach-map-panel {
-  border-radius: 18px;
-  box-shadow: none;
-}
-.coach-discovery .coach-map-heading {
-  gap: 8px;
-  padding: 17px 18px;
-}
-.coach-discovery .coach-map-heading h2 {
-  font-size: 19px;
-  margin: 4px 0 0;
-}
-.coach-discovery .coach-map-heading p {
-  font-size: 11px;
-}
-.coach-discovery .coach-map-detail {
   gap: 10px;
-  background: var(--white);
+  padding: 14px 0;
+  border-top: 1px solid #e4ddeb;
 }
-.coach-discovery .coach-map-primary small {
-  font-size: 9px;
+.explore-saved-place-list > section > div:first-of-type {
+  flex: 1;
+  min-width: 120px;
 }
-.coach-discovery .coach-map-primary strong,
-.coach-discovery .coach-map-primary em,
-.coach-discovery .coach-map-detail > a {
-  font-size: 11px;
+.explore-saved-place-list h3 {
+  margin: 0;
+  font-size: 16px;
 }
-.coach-discovery .coach-map-primary em {
+.explore-saved-place-list p {
+  margin: 5px 0 0;
+  font-size: 13px;
   overflow-wrap: anywhere;
 }
-.coach-discovery .coach-map-detail > a {
+.explore-saved-place-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.explore-places-dialog button:not(.icon-button),
+.explore-location-choice-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid #d9cce4;
+  border-radius: 10px;
+  background: #fff;
+  color: #61417b;
+  font-size: 13px;
 }
-.coach-discovery .coach-directory-state {
-  margin-top: 20px;
-  background: #edf2e8;
-  border-radius: 16px;
+.explore-place-editor {
+  display: grid;
+  gap: 13px;
+  padding-top: 18px;
+  border-top: 1px solid #e4ddeb;
 }
-@media (min-width: 981px) and (max-width: 1100px) {
-  .coach-discovery .coach-explore-layout {
-    grid-template-columns: minmax(0, 1fr) minmax(340px, 0.9fr);
-    gap: 24px;
-  }
-  .coach-discovery .coach-explore-layout.map-unavailable {
-    grid-template-columns: minmax(0, 1fr) minmax(250px, 0.36fr);
-  }
-  .coach-discovery .coach-card-grid {
-    gap: 25px 16px;
-  }
-  .coach-discovery
-    .compact-coach-card.result
-    .compact-coach-identity
-    > .avatar {
-    height: 150px;
-  }
-  .explore-coach-search label {
-    padding-inline: 12px;
-  }
+.explore-place-editor > h3 {
+  margin: 0;
 }
-@media (max-width: 980px) {
-  .coach-discovery .coach-explore-layout {
-    grid-template-columns: 1fr;
-  }
-  .explore-coach-search.has-query {
-    grid-template-columns: 1fr 1fr;
-    border-radius: 22px;
-  }
-  .explore-coach-search.has-query > label:first-child {
-    grid-column: 1 / -1;
-    border-bottom: 1px solid var(--line);
-    margin-bottom: 6px;
-    padding-bottom: 10px;
-  }
-  .explore-coach-search.has-query > label:nth-child(2) {
-    border-left: 0;
-  }
-  .explore-coach-search.has-query > button {
-    grid-column: 1 / -1;
-    width: 100%;
-    margin-top: 8px;
-    border-radius: 28px;
-  }
-  .coach-discovery .coach-card-grid {
+.explore-place-editor label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+}
+.explore-place-editor input {
+  width: 100%;
+  min-width: 0;
+  font-size: 16px;
+}
+.explore-location-help {
+  margin: 0;
+  font-size: 12px;
+  color: #70627a;
+  overflow-wrap: anywhere;
+}
+.explore-location-choice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.explore-place-candidates {
+  display: grid;
+  gap: 7px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.explore-place-candidates button {
+  width: 100%;
+  text-align: left;
+  justify-content: flex-start !important;
+  overflow-wrap: anywhere;
+}
+.explore-coordinate-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+.explore-places-dialog summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+@media (max-width: 1100px) {
+  .explore-discovery .explore-profiles .coach-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+  .explore-map-layout {
+    grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
   }
 }
-@media (max-width: 600px) {
-  .coach-discovery {
-    padding-top: 5px;
+@media (max-width: 760px) {
+  .coach-discovery.explore-discovery {
+    padding-top: 0;
+    padding-bottom: 88px;
   }
-  .coach-directory-heading {
-    margin-bottom: 20px;
+  .explore-discovery h1 {
+    font-size: 25px;
   }
-  .coach-directory-heading h1 {
-    font-size: 30px;
-    letter-spacing: -1px;
+  .explore-discovery .explore-page-heading {
+    margin-bottom: 12px;
   }
-  .coach-directory-heading p {
-    font-size: 12px;
+  .explore-search-toolbar {
+    margin-bottom: 15px;
   }
-  .coach-directory-heading .coach-back-link {
-    display: none;
-  }
-  .explore-coach-search label {
-    padding-inline: 10px;
-  }
-  .coach-discovery .home-discipline-shortcut {
-    flex-basis: 100px;
-    min-height: 70px;
-  }
-  .coach-discovery .coach-results-summary {
+  .explore-search-row {
     gap: 8px;
   }
-  .coach-results-summary > div {
-    gap: 7px;
+  .explore-search-input {
+    padding: 10px;
+    gap: 8px;
   }
-  .coach-results-summary h2 {
-    font-size: 21px;
+  .explore-search-input input {
+    font-size: 16px;
   }
-  .coach-discovery .coach-results-summary small {
+  .explore-discovery .explore-submit-search {
+    min-width: 44px;
+    width: 44px;
+    padding: 10px;
+  }
+  .explore-submit-search > span {
     display: none;
   }
-  .coach-discovery .coach-card-grid {
-    gap: 25px 16px;
+  .explore-filter-row {
+    gap: 6px;
+    margin-top: 9px;
   }
-  .coach-discovery
-    .compact-coach-card.result
-    .compact-coach-identity
-    > .avatar {
-    height: 155px;
-    font-size: 32px;
+  .explore-select-filter {
+    flex: 1;
+    min-width: 0;
   }
-  .coach-discovery .compact-coach-identity h3 {
-    overflow: visible;
-    white-space: normal;
-    text-overflow: clip;
-    font-size: 15px;
+  .explore-discovery .explore-filter-row select {
+    width: 100%;
+    min-width: 0;
+    padding-left: 8px;
+    padding-right: 23px;
+    max-width: none;
+    font-size: 12px;
   }
-  .coach-discovery .compact-coach-location small {
-    font-size: 9px;
+  .explore-discovery .explore-saved-filter {
+    flex: 0 0 44px;
+    padding: 9px;
   }
-}
-@media (max-width: 370px) {
-  .coach-discovery .coach-card-grid {
-    grid-template-columns: 1fr;
+  .explore-saved-filter > span {
+    display: none;
   }
-}
-
-.coach-discovery .coach-today-availability li :is(strong, small) {
-  overflow: visible;
-  white-space: normal;
-  text-overflow: clip;
-}
-
-/* Keep actions inside each narrow card; wrapping a column flexbox creates
-   a second horizontal column when a link takes the available height. */
-.coach-discovery .compact-coach-actions {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0;
-}
-.coach-discovery .compact-coach-link {
-  flex: none;
-  min-width: 0;
-  max-width: 100%;
-  white-space: normal;
-}
-.coach-discovery .compact-coach-link > svg {
-  flex-shrink: 0;
-}
-.coach-discovery .compact-coach-map-button {
-  width: auto;
-  max-width: 100%;
-  justify-self: start;
-}
-.coach-discovery .compact-coach-location :is(strong, em) {
-  overflow: visible;
-  white-space: normal;
-  text-overflow: clip;
+  .explore-discovery .explore-filter-row .explore-location-filter summary {
+    width: 44px;
+    padding: 9px;
+  }
+  .explore-location-filter summary > span:not(.explore-filter-dot) {
+    display: none;
+  }
+  .explore-location-filter > div {
+    right: 0;
+  }
+  .explore-discovery .coach-results-summary {
+    margin-bottom: 13px;
+  }
+  .explore-discovery .coach-results-summary h2 {
+    font-size: 16px;
+  }
+  .explore-discovery .coach-results-summary small {
+    font-size: 11px;
+  }
+  .explore-results-view-control {
+    display: none;
+  }
+  .explore-discovery .explore-profiles .coach-card-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+  }
+  .explore-discovery .explore-profiles .compact-coach-card.result {
+    gap: 10px;
+  }
+  .explore-map-layout {
+    display: block;
+    height: auto;
+    max-height: none;
+  }
+  .explore-map-list {
+    display: none;
+  }
+  .explore-map-surface {
+    height: var(--explore-map-height, 520px);
+    min-height: 440px;
+    border-radius: 16px;
+  }
+  .explore-map-surface .coach-map-canvas {
+    height: calc(100% - var(--explore-sheet-height, 264px));
+    min-height: 120px;
+  }
+  .explore-map-sheet {
+    position: absolute;
+    z-index: 3;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: block;
+    max-height: 60%;
+    overflow: auto;
+    padding: 0 12px 56px;
+    border-top: 1px solid var(--explore-border);
+    border-radius: 20px 20px 0 0;
+    background: #fff;
+    box-shadow: 0 -4px 22px #2b163a12;
+    scrollbar-width: thin;
+  }
+  .explore-map-sheet.expanded {
+    max-height: 85%;
+  }
+  .explore-map-surface:has(.explore-map-sheet.expanded) .explore-map-tools {
+    visibility: hidden;
+  }
+  .explore-map-sheet .compact-coach-card {
+    margin: 0 0 10px;
+    padding: 12px;
+  }
+  .explore-map-sheet:not(.expanded) .compact-coach-card {
+    gap: 4px;
+    margin-bottom: 0;
+    padding: 9px 12px;
+  }
+  .explore-map-sheet:not(.expanded)
+    :is(
+      .coach-card-reviews,
+      .compact-coach-disciplines,
+      .coach-card-format,
+      .compact-coach-location,
+      .coach-card-rate
+    ) {
+    display: none;
+  }
+  .explore-map-sheet:not(.expanded) .compact-coach-actions {
+    padding-top: 0;
+    border-top: 0;
+  }
+  .explore-map-sheet:not(.expanded) .explore-coach-distance {
+    margin: 0;
+    font-size: 11px;
+  }
+  .explore-map-tools {
+    top: 12px;
+  }
+  .explore-map-surface .maplibregl-ctrl-top-right {
+    right: auto;
+    left: 0;
+  }
+  .explore-sheet-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    width: 100%;
+    min-height: 44px;
+    padding: 9px 0;
+    border: 0;
+    background: transparent;
+    color: #4b3c56;
+    font-size: 13px;
+  }
+  .explore-sheet-grip {
+    height: 4px;
+    width: 27px;
+    border-radius: 4px;
+    background: #d7cddd;
+  }
+  .explore-map-sheet > section:focus {
+    outline: 2px solid var(--explore-accent);
+    outline-offset: -2px;
+    border-radius: 10px;
+  }
+  .explore-map-surface .maplibregl-ctrl-bottom-right {
+    bottom: 4px;
+  }
+  .explore-floating-view {
+    position: fixed;
+    z-index: 25;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: var(--explore-nav-clearance, 16px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 46px;
+    padding: 12px 19px;
+    border: 1px solid var(--explore-accent);
+    border-radius: 26px;
+    background: var(--explore-accent);
+    color: #fff;
+    box-shadow: 0 6px 24px #2e184333;
+    font-size: 13px;
+    font-weight: 650;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .explore-floating-view:hover {
+    background: #513267;
+    color: #fff;
+  }
+  .explore-floating-view[aria-disabled="true"] {
+    background: #766980;
+    border-color: #766980;
+  }
+  .explore-map-sheet .coach-directory-state {
+    min-height: 140px;
+    padding: 15px;
+  }
+  .explore-map-sheet .coach-directory-state h2 {
+    font-size: 16px;
+  }
+  .explore-places-dialog {
+    width: calc(100vw - 28px);
+    padding: 20px;
+  }
+  .explore-coordinate-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

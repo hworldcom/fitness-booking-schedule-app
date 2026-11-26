@@ -1,6 +1,6 @@
 import { coachProfileHref } from "@/domain/coach-public-url";
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, MapPin } from "lucide-react";
+import { ArrowRight, BadgeCheck, Heart, MapPin } from "lucide-react";
 import type { FocusEventHandler, Ref } from "react";
 import { profileInitials } from "@/auth/profile-presentation";
 import { Pill } from "@/components/ui";
@@ -17,6 +17,16 @@ type CompactCoachCardProps = Readonly<{
   onFocusCapture?: FocusEventHandler<HTMLElement>;
   onShowOnMap?: () => void;
   availabilityLimit?: number;
+  distanceLabel?: string;
+  distanceOrigin?: string;
+  saved?: boolean;
+  onToggleSaved?: () => void;
+  formatLabel?: string;
+  profileActionLabel?: string;
+  compactMapAction?: boolean;
+  hideEmptyAvailability?: boolean;
+  hidePrivateSessionDetails?: boolean;
+  focusable?: boolean;
 }>;
 
 export function CompactCoachCard({
@@ -27,6 +37,16 @@ export function CompactCoachCard({
   onFocusCapture,
   onShowOnMap,
   availabilityLimit = 1,
+  distanceLabel,
+  distanceOrigin,
+  saved = false,
+  onToggleSaved,
+  formatLabel,
+  profileActionLabel = "View profile and schedule",
+  compactMapAction = false,
+  hideEmptyAvailability = false,
+  hidePrivateSessionDetails = false,
+  focusable = false,
 }: CompactCoachCardProps) {
   const { coach, primaryLocation } = entry;
   const profileHref = coachProfileHref(coach);
@@ -44,7 +64,7 @@ export function CompactCoachCard({
       className={`compact-coach-card ${variant}${selected ? " selected" : ""}`}
       data-selected={selected ? "true" : undefined}
       ref={cardRef}
-      tabIndex={variant === "result" ? -1 : undefined}
+      tabIndex={variant === "result" || focusable ? -1 : undefined}
       onFocusCapture={onFocusCapture}
     >
       <header>
@@ -79,6 +99,21 @@ export function CompactCoachCard({
           {trustLabel}
         </Pill>
       </header>
+      {onToggleSaved && (
+        <button
+          type="button"
+          className="explore-save-coach"
+          aria-label={`${saved ? "Unsave" : "Save"} ${coach.displayName}`}
+          aria-pressed={saved}
+          onClick={onToggleSaved}
+        >
+          <Heart
+            size={19}
+            fill={saved ? "currentColor" : "none"}
+            aria-hidden="true"
+          />
+        </button>
+      )}
 
       <CoachCardReviews summary={entry.reviewSummary} concise={isHome} />
 
@@ -93,9 +128,21 @@ export function CompactCoachCard({
         ))}
       </div>
 
-      {!isHome && <p className="coach-card-format">Private coaching</p>}
-      {entry.website?.introduction && (
-        <p className="coach-card-introduction">{entry.website.introduction}</p>
+      {!isHome && (
+        <p className="coach-card-format">{formatLabel ?? "Private coaching"}</p>
+      )}
+      {(entry.website?.introduction || (distanceLabel && coach.bio)) && (
+        <p className="coach-card-introduction">
+          {entry.website?.introduction || coach.bio}
+        </p>
+      )}
+      {distanceLabel && (
+        <p className="explore-coach-distance">
+          {distanceLabel.startsWith("under")
+            ? distanceLabel
+            : `About ${distanceLabel}`}{" "}
+          from {distanceOrigin}
+        </p>
       )}
       {!!entry.website?.focusLabels.length && (
         <p className="coach-card-focus" aria-label="Coaching focus">
@@ -116,13 +163,15 @@ export function CompactCoachCard({
         </div>
       )}
 
-      {entry.website?.startingRate && (
+      {!hidePrivateSessionDetails && entry.website?.startingRate && (
         <p className="coach-card-rate">{entry.website.startingRate.label}</p>
       )}
 
-      {variant !== "marketplace" && (
-        <CoachTodayAvailability entry={entry} limit={availabilityLimit} />
-      )}
+      {variant !== "marketplace" &&
+        !hidePrivateSessionDetails &&
+        (!hideEmptyAvailability || entry.todaySlots.length > 0) && (
+          <CoachTodayAvailability entry={entry} limit={availabilityLimit} />
+        )}
 
       <div className="compact-coach-actions">
         {onShowOnMap && (
@@ -133,11 +182,15 @@ export function CompactCoachCard({
             aria-label={`Show ${coach.displayName} on the map`}
             aria-pressed={selected}
           >
-            Show on map
+            {compactMapAction ? (
+              <MapPin size={18} aria-hidden="true" />
+            ) : (
+              "Show on map"
+            )}
           </button>
         )}
         <Link className="compact-coach-link" href={profileHref}>
-          View profile and schedule <ArrowRight size={16} aria-hidden="true" />
+          {profileActionLabel} <ArrowRight size={16} aria-hidden="true" />
         </Link>
       </div>
     </article>

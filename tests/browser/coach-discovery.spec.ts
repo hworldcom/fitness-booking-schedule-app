@@ -1,479 +1,217 @@
 import directoryFixture from "../fixtures/public-browser-directory.json" with { type: "json" };
 import { expect, test } from "@playwright/test";
 
-test("desktop guest browses and filters the persistent coach directory", async ({
+test.beforeEach(async ({ page }) => {
+  await page.route("https://tiles.openfreemap.org/**", (route) =>
+    route.fulfill({
+      json: {
+        version: 8,
+        sources: {},
+        layers: [
+          {
+            id: "background",
+            type: "background",
+            paint: { "background-color": "#edf2e8" },
+          },
+        ],
+      },
+    }),
+  );
+});
+
+test("desktop discovery starts with real profiles and filters the public directory", async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop");
   await page.goto("/explore");
-
   await expect(page).toHaveTitle(/Explore coaches/);
   await expect(
-    page.getByRole("heading", {
-      name: "Find your discipline. Meet your coach.",
-    }),
+    page.getByRole("heading", { level: 1, name: "Explore", exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByText(`${directoryFixture.coaches.length} coaches`, {
-      exact: true,
-    }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Sam Lee", exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Daniel Park" }),
-  ).toBeVisible();
-  const danielCard = page.locator(".compact-coach-card.result").filter({
-    has: page.getByRole("heading", { name: "Daniel Park" }),
-  });
-  const elifCard = page.locator(".compact-coach-card.result").filter({
-    has: page.getByRole("heading", { name: "Elif Demir" }),
-  });
-  await expect(
-    danielCard.getByText("Primary training location", { exact: true }),
-  ).toBeVisible();
-  const danielTodaySummary = danielCard.getByText(
-    /^(?:\d+ open times?|No availability today)$/,
-  );
-  await expect(danielTodaySummary).toBeVisible();
-  const danielTodayLabel = await danielTodaySummary.innerText();
-  await expect(
-    elifCard.getByText("No availability today", { exact: true }),
-  ).toBeVisible();
-  await expect(
-    danielCard.getByText("Demo coach", { exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Map of matching coaches" }),
-  ).toBeVisible();
-  const mapCanvas = page.getByLabel("Matching coach locations");
-  const unavailableState = page.getByText("Map unavailable", { exact: true });
-  await expect(mapCanvas.or(unavailableState)).toBeVisible({ timeout: 30_000 });
-  if (await mapCanvas.isVisible()) {
-    const markers = page.locator("button.location-map-marker");
-    await expect(markers).toHaveCount(directoryFixture.coaches.length);
-    const danielMarker = page.getByRole("button", {
-      name: /Select Daniel Park at primary training location/,
+  await expect(page.locator(".marketplace-explore-hero")).toHaveCount(0);
+  const profiles = page.locator(".explore-profiles");
+  const cards = profiles.locator(".compact-coach-card.result");
+  await expect(cards).toHaveCount(directoryFixture.coaches.length);
+  await expect(page.locator(".explore-map-layout")).toHaveCount(0);
+  for (const name of directoryFixture.coaches) {
+    const card = cards.filter({
+      has: page.getByRole("heading", { name, exact: true }),
     });
-    await expect(danielMarker.locator("img")).toHaveAttribute(
-      "src",
-      "/images/coaches/daniel-park.webp",
+    await expect(
+      card.getByText("Primary training location", { exact: true }),
+    ).toBeVisible();
+    await expect(card.getByText("Demo coach", { exact: true })).toBeVisible();
+    await expect(
+      card.getByRole("link", { name: "View profile", exact: true }),
+    ).toHaveAttribute("href", /^\/coaches\/[a-z0-9-]+$/);
+    await expect(card.locator(".explore-coach-distance")).toContainText(
+      /Berlin centre/,
     );
     await expect(
-      page.getByRole("button", { name: /Select Sam Lee at/ }).locator("img"),
+      card.getByText("No availability today", { exact: true }),
     ).toHaveCount(0);
-    const noraMarker = page.getByRole("button", {
-      name: /Select Nora Klein at primary training location/,
-    });
-    const idrisMarker = page.getByRole("button", {
-      name: /Select Idris Malik at primary training location/,
-    });
-    await expect(noraMarker).toHaveAttribute("data-coincident-count", "2");
-    await expect(idrisMarker).toHaveAttribute("data-coincident-count", "2");
-    expect(await noraMarker.getAttribute("data-marker-offset")).not.toBe(
-      await idrisMarker.getAttribute("data-marker-offset"),
-    );
-
-    const danielMapButton = danielCard.getByRole("button", {
-      name: "Show Daniel Park on the map",
-    });
-    await danielMapButton.focus();
-    await expect(danielMapButton).toBeFocused();
-    await danielMapButton.press("Enter");
-    await expect(danielMapButton).toHaveAttribute("aria-pressed", "true");
-    await expect(danielMarker).toHaveAttribute("aria-pressed", "true");
-
-    await danielMarker.click();
-    await expect(danielMarker).toHaveAttribute("aria-pressed", "true");
-    await expect(danielCard).toHaveAttribute("data-selected", "true");
-    await expect
-      .poll(() =>
-        danielCard.evaluate((card) => document.activeElement === card),
-      )
-      .toBe(true);
-    const danielMapDetail = page.getByRole("region", {
-      name: "Daniel Park map details",
-    });
-    await expect(danielMapDetail).toBeVisible();
-    await expect(
-      danielMapDetail.getByText("Primary training location", { exact: true }),
-    ).toBeVisible();
-    await expect(
-      danielMapDetail.getByText(danielTodayLabel, { exact: true }),
-    ).toBeVisible();
-    await page.screenshot({
-      path: testInfo.outputPath("coach-map-selected.png"),
-      fullPage: true,
-    });
-    await page.screenshot({
-      path: testInfo.outputPath("coach-map-selected-viewport.png"),
-    });
-    await danielMarker.locator("img").evaluate((image) => {
-      image.dispatchEvent(new Event("error"));
-    });
-    await expect(danielMarker.locator("img")).toHaveCount(0);
-    await expect(
-      danielMarker.locator(".location-map-marker-initials"),
-    ).toHaveText("DP");
-    await expect(page.locator(".maplibregl-ctrl-attrib")).toBeVisible();
-  } else {
-    await expect(page.getByText(/public map could not load/)).toBeVisible();
   }
+  await page.getByLabel("Categories", { exact: true }).selectOption("Boxing");
+  await expect(page.getByLabel("Categories", { exact: true })).toHaveValue(
+    "Boxing",
+  );
+  await expect(cards).toHaveCount(2);
+  expect((await cards.locator("h3").allTextContents()).sort()).toEqual([
+    "Daniel Park",
+    "Sam Lee",
+  ]);
+  await page.getByRole("link", { name: "Clear search", exact: true }).click();
+  await expect(cards).toHaveCount(directoryFixture.coaches.length);
+  const search = page.getByRole("form", { name: "Search coaches" });
+  await search.locator("summary").click();
+  await search.getByLabel("Where in Berlin?").fill("Tempelhofer");
+  await search.getByRole("button", { name: "Apply location" }).click();
+  await expect(cards).toHaveCount(1);
+  await expect(cards).toContainText(["Daniel Park"]);
+  await cards.getByRole("link", { name: "View profile", exact: true }).click();
+  await expect(page).toHaveURL(/\/coaches\/daniel-park$/);
+});
 
-  const discipline = page
-    .getByRole("navigation", { name: "Browse coaches by discipline" })
-    .getByRole("link", { name: "Muay Thai", exact: true });
-  await discipline.focus();
-  await expect(discipline).toBeFocused();
-  await page.keyboard.press("Enter");
-
-  await expect(page).toHaveURL(/discipline=Muay(\+|%20)Thai/);
-  const filteredCards = page.locator(".compact-coach-card.result");
-  await expect(filteredCards.first()).toBeVisible();
-  const filteredCount = await filteredCards.count();
+test("desktop Map is a distinct layout with public primary markers and keyboard selection", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  await page.goto("/explore?view=list");
+  const controls = page.getByRole("navigation", {
+    name: "Explore results view",
+  });
   await expect(
-    page.getByText(`${filteredCount} coach${filteredCount === 1 ? "" : "es"}`, {
-      exact: true,
-    }),
-  ).toBeVisible();
-  for (const card of await filteredCards.all()) {
-    await expect(
-      card
-        .locator(".compact-coach-disciplines span")
-        .filter({ hasText: /^Muay Thai(?:\s*·)?$/ }),
-    ).toBeVisible();
-  }
-  await expect(page.getByRole("heading", { name: "Sam Lee" })).toBeVisible();
-  const filteredMap = page.getByLabel("Matching coach locations");
-  const filteredMapUnavailable = page.getByText("Map unavailable", {
-    exact: true,
+    page.getByRole("button", { name: "Save Daniel Park", exact: true }).first(),
+  ).toBeEnabled();
+  await page.waitForLoadState("networkidle");
+  await expect(
+    controls.getByRole("link", { name: "Profiles", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
+  let reads = 0;
+  page.on("request", (request) => {
+    if (request.headers().rsc && new URL(request.url()).pathname === "/explore")
+      reads++;
   });
-  await expect(filteredMap.or(filteredMapUnavailable)).toBeVisible({
-    timeout: 30_000,
+  await controls.getByRole("link", { name: "Map", exact: true }).click();
+  await expect(page.locator(".explore-map-layout")).toBeVisible();
+  await expect(page.locator(".explore-profiles")).toBeHidden();
+  await expect(page.locator("button.location-map-marker")).toHaveCount(
+    directoryFixture.coaches.length,
+  );
+  const daniel = page.getByRole("button", {
+    name: /Select Daniel Park at primary training location/,
   });
-  if (await filteredMap.isVisible()) {
-    await expect(
-      page.getByRole("button", { name: /Select Sam Lee at/ }),
-    ).toBeVisible();
-    await expect(page.locator("button.location-map-marker")).toHaveCount(
-      filteredCount,
-    );
-  }
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
-    ),
-  ).toBe(true);
+  await expect(daniel.locator("img")).toHaveAttribute(
+    "src",
+    "/images/coaches/daniel-park.webp",
+  );
+  await expect(
+    page.getByRole("button", { name: /Select Sam Lee at/ }).locator("img"),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: /Select .* Chimosa/ }),
+  ).toHaveCount(0);
+  const nora = page.getByRole("button", {
+    name: /Select Nora Klein at primary/,
+  });
+  const idris = page.getByRole("button", {
+    name: /Select Idris Malik at primary/,
+  });
+  await expect(nora).toHaveAttribute("data-coincident-count", "2");
+  await expect(idris).toHaveAttribute("data-coincident-count", "2");
+  expect(await nora.getAttribute("data-marker-offset")).not.toBe(
+    await idris.getAttribute("data-marker-offset"),
+  );
+  await daniel.focus();
+  await page.keyboard.press("Enter");
+  const card = page.locator(".explore-map-list article").filter({
+    has: page.getByRole("heading", { name: "Daniel Park", exact: true }),
+  });
+  await expect(card).toHaveAttribute("data-selected", "true");
+  await expect(card).toBeFocused();
+  await controls.getByRole("link", { name: "Profiles", exact: true }).click();
+  await expect(page.locator(".explore-profiles")).toBeVisible();
+  expect(reads).toBe(0);
+  await page.goBack();
+  await expect(page.locator(".explore-map-layout")).toBeVisible();
   await page.screenshot({
-    path: testInfo.outputPath("coach-directory-filtered.png"),
+    path: testInfo.outputPath("explore-desktop-map.png"),
     fullPage: true,
   });
 });
 
-test("desktop Explore keeps a bounded 60/40 comparison layout across breakpoints", async ({
-  page,
-}) => {
-  await page.goto("/explore");
-  await expect(
-    page.getByText(`${directoryFixture.coaches.length} coaches`, {
-      exact: true,
-    }),
-  ).toBeVisible();
-
-  for (const viewport of [
-    { width: 1440, height: 1040, columns: true },
-    { width: 1024, height: 900, columns: true },
-    { width: 768, height: 900, columns: false },
-  ]) {
-    await page.setViewportSize(viewport);
-    const measurements = await page
-      .locator(".coach-explore-layout")
-      .evaluate((layout) => {
-        const list = layout.querySelector(".coach-card-grid");
-        const map = layout.querySelector(".coach-map-panel");
-        if (!(list instanceof HTMLElement) || !(map instanceof HTMLElement)) {
-          throw new Error("Explore layout regions are missing");
-        }
-        const layoutBounds = layout.getBoundingClientRect();
-        const listBounds = list.getBoundingClientRect();
-        const mapBounds = map.getBoundingClientRect();
-        return {
-          listRatio: listBounds.width / layoutBounds.width,
-          sideBySide: Math.abs(listBounds.top - mapBounds.top) < 2,
-          mapPosition: getComputedStyle(map).position,
-          mapTop: Number.parseFloat(getComputedStyle(map).top),
-          mapMaxHeight: getComputedStyle(map).maxHeight,
-          noOverflow: document.documentElement.scrollWidth <= window.innerWidth,
-        };
-      });
-
-    expect(measurements.noOverflow).toBe(true);
-    expect(measurements.sideBySide).toBe(viewport.columns);
-    if (viewport.columns) {
-      expect(measurements.listRatio).toBeGreaterThan(0.5);
-      expect(measurements.listRatio).toBeLessThan(0.7);
-      expect(measurements.mapPosition).toBe("sticky");
-      expect(measurements.mapTop).toBeGreaterThanOrEqual(76);
-      expect(measurements.mapMaxHeight).not.toBe("none");
-    } else {
-      expect(measurements.mapPosition).toBe("static");
-      expect(measurements.mapMaxHeight).toBe("none");
-    }
-  }
-});
-
-test("desktop Explore keeps every coach and profile link when the map provider fails", async ({
+test("map provider failure retains public profiles and offers retry", async ({
   page,
 }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop");
   await page.route("https://tiles.openfreemap.org/**", (route) =>
-    route.abort("failed"),
+    route.abort(),
   );
-  await page.goto("/explore");
-
-  await expect(
-    page
-      .getByLabel("Coach location map")
-      .getByText("Map unavailable", { exact: true }),
-  ).toBeVisible({ timeout: 30_000 });
-  const cards = page.locator(".compact-coach-card.result");
-  await expect(cards).toHaveCount(directoryFixture.coaches.length);
-  await expect(
-    page.getByRole("link", { name: /View Daniel Park's coach profile/ }),
-  ).toHaveAttribute("href", "/coaches/daniel-park");
-  await expect(
-    page.getByRole("button", { name: /Show .* on the map/ }),
-  ).toHaveCount(0);
-  await expect(page.locator(".coach-explore-layout")).toHaveClass(
-    /map-unavailable/,
-  );
-  const listRatio = await page
-    .locator(".coach-explore-layout")
-    .evaluate(
-      (layout) =>
-        (layout.querySelector(".coach-card-grid")?.getBoundingClientRect()
-          .width ?? 0) / layout.getBoundingClientRect().width,
-    );
-  expect(listRatio).toBeGreaterThan(0.68);
-  await expect(
-    page.getByText(/same coach results remain available in the list/i),
-  ).toBeVisible();
-});
-
-test("desktop Explore keeps both result surfaces for a mobile view URL", async ({
-  page,
-}, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop", "Desktop non-regression only");
   await page.goto("/explore?view=map");
-
+  await expect(
+    page.getByText(/Map unavailable. The same coach results/),
+  ).toBeVisible();
+  await expect(page.locator(".explore-profiles")).toBeVisible();
   await expect(page.locator(".compact-coach-card.result")).toHaveCount(
     directoryFixture.coaches.length,
   );
-  await expect(page.getByLabel("Coach location map")).toBeVisible();
   await expect(
-    page.getByRole("navigation", { name: "Explore results view" }),
-  ).toBeHidden();
-});
-
-test("mobile Explore preserves filters and browser history while switching views", async ({
-  page,
-}, testInfo) => {
-  test.skip(testInfo.project.name !== "mobile", "Mobile view-state only");
-  await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto("/explore?discipline=Boxing");
-
-  const viewSwitch = page.getByRole("navigation", {
-    name: "Explore results view",
-  });
-  const listView = viewSwitch.getByRole("link", { name: /List/ });
-  const mapView = viewSwitch.getByRole("link", { name: "Map", exact: true });
-  await expect(listView).toHaveAttribute("aria-current", "page");
-  await expect(
-    page.locator(".compact-coach-card.result").first(),
+    page.getByRole("button", { name: "Retry map", exact: true }),
   ).toBeVisible();
-  await expect(page.getByLabel("Coach location map")).toBeHidden();
-
-  await mapView.click();
-  await expect(page).toHaveURL(/discipline=Boxing.*view=map/);
-  await expect(mapView).toHaveAttribute("aria-current", "page");
-  await expect(page.getByLabel("Coach location map")).toBeVisible();
-  await expect(page.locator(".compact-coach-card.result").first()).toBeHidden();
-  const mapViewport = await page
-    .locator(".coach-map-canvas")
-    .evaluate((map) => {
-      const bounds = map.getBoundingClientRect();
-      return { height: bounds.height, viewportHeight: window.innerHeight };
-    });
-  expect(mapViewport.height / mapViewport.viewportHeight).toBeGreaterThan(0.5);
-  await expect(page.locator(".maplibregl-ctrl-attrib")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "No coaches match these filters." }),
+  ).toHaveCount(0);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
   await page.screenshot({
-    path: testInfo.outputPath("mobile-map-view.png"),
+    path: testInfo.outputPath("explore-provider-failure.png"),
+    fullPage: true,
   });
-
-  await page.reload();
-  await expect(page).toHaveURL(/discipline=Boxing.*view=map/);
-  await expect(page.getByLabel("Coach location map")).toBeVisible();
-  await page.getByRole("link", { name: "Back to list" }).click();
-  await expect(page).toHaveURL(/discipline=Boxing.*view=list/);
-  await expect(
-    page.locator(".compact-coach-card.result").first(),
-  ).toBeVisible();
-
-  await page.goBack();
-  await expect(page).toHaveURL(/discipline=Boxing.*view=map/);
-  await expect(page.getByLabel("Coach location map")).toBeVisible();
-  await page.goBack();
-  await expect(page).toHaveURL(/\/explore\?discipline=Boxing$/);
-  await expect(
-    page.locator(".compact-coach-card.result").first(),
-  ).toBeVisible();
-
-  await page.goto("/explore?discipline=Boxing&view=grid");
-  await expect(page).toHaveURL(/\/explore\?discipline=Boxing$/);
-  await expect(listView).toHaveAttribute("aria-current", "page");
-
-  await page.setViewportSize({ width: 430, height: 932 });
-  const controlSizes = await viewSwitch.locator("a").evaluateAll((controls) =>
-    controls.map((control) => {
-      const bounds = control.getBoundingClientRect();
-      return { width: bounds.width, height: bounds.height };
-    }),
-  );
-  for (const size of controlSizes) {
-    expect(size.width).toBeGreaterThanOrEqual(44);
-    expect(size.height).toBeGreaterThanOrEqual(44);
-  }
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
-    ),
-  ).toBe(true);
-
-  await page.setViewportSize({ width: 667, height: 375 });
-  await viewSwitch.getByRole("link", { name: "Map", exact: true }).click();
-  await expect(page.getByRole("link", { name: "Back to list" })).toBeVisible();
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
-    ),
-  ).toBe(true);
 });
 
-test("mobile card selection opens a focused truthful map preview", async ({
+test("mobile starts on Map and keeps search, selection and history across the floating view control", async ({
   page,
 }, testInfo) => {
-  test.skip(testInfo.project.name !== "mobile", "Mobile map preview only");
-  await page.setViewportSize({ width: 430, height: 932 });
-  await page.goto("/explore?discipline=Boxing");
-
-  const danielCard = page.locator(".compact-coach-card.result").filter({
-    has: page.getByRole("heading", { name: "Daniel Park" }),
+  test.skip(testInfo.project.name !== "mobile");
+  await page.goto("/explore?q=footwork&discipline=Boxing&location=Berlin");
+  const map = page.locator(".explore-map-layout"),
+    floating = page.locator(".explore-floating-view");
+  await expect(map).toBeVisible();
+  await expect(floating).toHaveText("Show profiles");
+  await floating.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".explore-profiles")).toBeVisible();
+  await expect(page).toHaveURL(
+    /q=footwork&discipline=Boxing&location=Berlin&view=list$/,
+  );
+  const card = page.locator(".compact-coach-card.result").filter({
+    has: page.getByRole("heading", { name: "Daniel Park", exact: true }),
   });
-  await danielCard
+  await card
     .getByRole("button", { name: "Show Daniel Park on the map" })
     .click();
-  await expect(page).toHaveURL(/discipline=Boxing.*view=map/);
-
-  const danielPreview = page.getByRole("region", {
-    name: "Daniel Park map details",
-  });
-  await expect(danielPreview).toBeVisible();
-  await expect(danielPreview).toBeFocused();
+  const detail = page.getByRole("region", { name: "Daniel Park map details" });
+  await expect(detail).toBeVisible();
+  await expect(detail).toBeFocused();
   await expect(
-    danielPreview.getByText("Primary training location", { exact: true }),
-  ).toBeVisible();
-  await expect(
-    danielPreview.getByRole("link", {
-      name: "View profile and schedule",
-    }),
+    detail.getByRole("link", { name: "View profile", exact: true }),
   ).toHaveAttribute("href", "/coaches/daniel-park");
-  await expect(
-    danielPreview.getByRole("button", { name: /request|book/i }),
-  ).toHaveCount(0);
-  const selectedLayout = await page.evaluate(() => {
-    const preview = document.querySelector(".coach-map-detail");
-    const map = document.querySelector(".coach-map-canvas");
-    if (!preview || !map) return null;
-    const previewBounds = preview.getBoundingClientRect();
-    const mapBounds = map.getBoundingClientRect();
-    return {
-      mapHeight: mapBounds.height,
-      viewportHeight: window.innerHeight,
-      previewBottom: previewBounds.bottom,
-      mapTop: mapBounds.top,
-    };
-  });
-  expect(selectedLayout).not.toBeNull();
+  await floating.click();
+  await expect(page.locator(".explore-profiles")).toBeVisible();
+  await page.goBack();
+  await expect(map).toBeVisible();
+  await expect(detail).toBeVisible();
   expect(
-    selectedLayout!.mapHeight / selectedLayout!.viewportHeight,
-  ).toBeGreaterThan(0.45);
-  expect(selectedLayout!.previewBottom).toBeLessThanOrEqual(
-    selectedLayout!.mapTop + 1,
-  );
-  await expect(page.locator(".maplibregl-ctrl-attrib")).toBeVisible();
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
   await page.screenshot({
-    path: testInfo.outputPath("mobile-selected-coach-map.png"),
+    path: testInfo.outputPath("explore-mobile-map.png"),
+    fullPage: true,
   });
-
-  const mapPanel = page.getByLabel("Coach location map");
-  for (let zoomStep = 0; zoomStep < 3; zoomStep += 1) {
-    await mapPanel.getByRole("button", { name: "Zoom out" }).click();
-    await page.waitForTimeout(250);
-  }
-  const samMarker = page.getByRole("button", { name: /Select Sam Lee at/ });
-  await expect(samMarker).toBeVisible({ timeout: 30_000 });
-  await expect
-    .poll(async () => {
-      const marker = await samMarker.boundingBox();
-      const canvas = await page
-        .getByLabel("Matching coach locations")
-        .boundingBox();
-      return Boolean(
-        marker &&
-        canvas &&
-        marker.x >= canvas.x &&
-        marker.y >= canvas.y &&
-        marker.x + marker.width <= canvas.x + canvas.width &&
-        marker.y + marker.height <= canvas.y + canvas.height,
-      );
-    })
-    .toBe(true);
-  await samMarker.click();
-  const samPreview = page.getByRole("region", { name: "Sam Lee map details" });
-  await expect(samPreview).toBeVisible();
-  await expect(samPreview).toBeFocused();
-  await expect(
-    samPreview.getByText("No availability today", { exact: true }),
-  ).toBeVisible();
-});
-
-test("mobile map failure replaces the failed view with the complete list", async ({
-  page,
-}, testInfo) => {
-  test.skip(testInfo.project.name !== "mobile", "Mobile recovery only");
-  await page.route("https://tiles.openfreemap.org/**", (route) =>
-    route.abort("failed"),
-  );
-  await page.goto("/explore?discipline=Boxing&view=map");
-
-  await expect(page).toHaveURL(/discipline=Boxing.*view=list/, {
-    timeout: 30_000,
-  });
-  await expect(
-    page.locator(".compact-coach-card.result").first(),
-  ).toBeVisible();
-  await expect(
-    page.getByText("Map unavailable. Showing the complete coach list."),
-  ).toBeVisible();
-  const viewSwitch = page.getByRole("navigation", {
-    name: "Explore results view",
-  });
-  await expect(
-    viewSwitch.getByRole("link", { name: "Map", exact: true }),
-  ).toHaveCount(0);
-  await expect(viewSwitch.getByText("Map unavailable")).toBeVisible();
-  await expect(page.getByLabel("Coach location map")).toBeHidden();
 });
 
 test("selected coach profile location stays geographically anchored while zooming out", async ({

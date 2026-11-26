@@ -1,3 +1,4 @@
+/* eslint-disable react/no-children-prop -- Nested provider props keep this server-rendered fixture typed. */
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createElement } from "react";
@@ -20,6 +21,22 @@ import {
   normalizeHomeSearch,
 } from "@/features/coaches/home-marketplace-contract";
 import { directoryEntry } from "./fixtures/coach-directory";
+import { ActorProvider } from "@/auth/client/actor-provider";
+import { AuthSessionProvider } from "@/auth/client/session-provider";
+import { PREVIEW_ACTOR } from "@/auth/actor-contracts";
+import { DISABLED_AUTH_SESSION } from "@/auth/contracts";
+
+function renderExplore(state: CoachDirectoryState) {
+  return renderToStaticMarkup(
+    createElement(AuthSessionProvider, {
+      initialSession: DISABLED_AUTH_SESSION,
+      children: createElement(ActorProvider, {
+        initialActor: PREVIEW_ACTOR,
+        children: createElement(CoachDirectory, { state }),
+      }),
+    }),
+  );
+}
 
 const filters = normalizeCoachDirectoryFilters({});
 const background = {
@@ -207,25 +224,19 @@ test("compact result card exposes truthful comparison and selection boundaries",
 });
 
 test("Explore keeps explicit empty and unavailable directory states", () => {
-  const empty = renderToStaticMarkup(
-    createElement(CoachDirectory, {
-      background,
-      state: Object.freeze({
-        status: "ready" as const,
-        entries: Object.freeze([]),
-        filters,
-      }),
+  const empty = renderExplore(
+    Object.freeze({
+      status: "ready" as const,
+      entries: Object.freeze([]),
+      filters,
     }),
   );
   assert.match(empty, /No coaches match these filters/);
   assert.match(empty, /Clear filters/);
   assert.doesNotMatch(empty, /coach-map-panel|compact-coach-card result/);
 
-  const unavailable = renderToStaticMarkup(
-    createElement(CoachDirectory, {
-      background,
-      state: Object.freeze({ status: "unavailable" as const, filters }),
-    }),
+  const unavailable = renderExplore(
+    Object.freeze({ status: "unavailable" as const, filters }),
   );
   assert.match(unavailable, /Coach discovery is temporarily unavailable/);
   assert.match(unavailable, /Coach profiles could not be loaded/);

@@ -40,11 +40,8 @@ test("Fitness works across canonical filtering, shortcut selection and owner val
       filters: normalizeCoachDirectoryFilters({ discipline: "Fitness" }),
     }),
   );
-  assert.match(html, /type="hidden" name="discipline" value="Fitness"/);
-  assert.match(
-    html,
-    /aria-current="page"[^>]*href="\/explore\?discipline=Fitness"/,
-  );
+  assert.match(html, /<select[^>]*name="discipline"/);
+  assert.match(html, /<option value="Fitness" selected="">Fitness<\/option>/);
   const input = {
     displayName: "Fitness Coach",
     bio: "Approachable strength and conditioning with practical feedback and steady progress.",

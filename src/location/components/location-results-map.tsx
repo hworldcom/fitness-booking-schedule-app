@@ -2,7 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as maplibregl from "maplibre-gl";
-import type { LocationMapPoint } from "../contracts";
+import type {
+  LocationMapPoint,
+  LocationMapViewport,
+  LocationMapCamera,
+} from "../contracts";
 import { layoutLocationMapMarkers } from "../marker-layout";
 import { MAPLIBRE_WORKER_URL } from "../providers/maplibre";
 import { OPENFREEMAP_STYLE_URL } from "../providers/openfreemap";
@@ -32,6 +36,10 @@ export function LocationResultsMap({
   coincidentItemLabel = "Coach",
   recenterOnSelection = true,
   markerVariant = "badge",
+  camera,
+  autoFit = true,
+  onViewportChange,
+  cooperativeGestures = true,
 }: {
   points: readonly LocationMapPoint[];
   selectedPointId: string | null;
@@ -41,12 +49,20 @@ export function LocationResultsMap({
   coincidentItemLabel?: string;
   recenterOnSelection?: boolean;
   markerVariant?: "badge" | "pin";
+  camera?: LocationMapCamera | null;
+  autoFit?: boolean;
+  onViewportChange?: (
+    viewport: LocationMapViewport,
+    userInitiated: boolean,
+  ) => void;
+  cooperativeGestures?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef(new Map<string, MarkerEntry>());
   const onSelectRef = useRef(onSelectPoint);
   const onUnavailableRef = useRef(onUnavailable);
+  const onViewportRef = useRef(onViewportChange);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -55,6 +71,9 @@ export function LocationResultsMap({
   useEffect(() => {
     onUnavailableRef.current = onUnavailable;
   }, [onUnavailable]);
+  useEffect(() => {
+    onViewportRef.current = onViewportChange;
+  }, [onViewportChange]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -68,7 +87,7 @@ export function LocationResultsMap({
         center: [13.405, 52.52],
         zoom: 10.5,
         attributionControl: { compact: false },
-        cooperativeGestures: true,
+        cooperativeGestures,
       });
       mapRef.current = map;
       const resizeObserver =
@@ -81,14 +100,40 @@ export function LocationResultsMap({
         "top-right",
       );
       map.getCanvas().setAttribute("aria-label", canvasAriaLabel);
-      const handleLoad = () => active && setReady(true);
+      const reportViewport = (userInitiated: boolean) => {
+        if (!active || !onViewportRef.current) return;
+        const bounds = map.getBounds(),
+          center = map.getCenter();
+        onViewportRef.current(
+          {
+            latitude: center.lat,
+            longitude: center.lng,
+            west: bounds.getWest(),
+            south: bounds.getSouth(),
+            east: bounds.getEast(),
+            north: bounds.getNorth(),
+          },
+          userInitiated,
+        );
+      };
+      const handleLoad = () => {
+        if (active) {
+          setReady(true);
+          reportViewport(false);
+        }
+      };
+      const handleMove = (
+        event: maplibregl.MapLibreEvent & { originalEvent?: Event },
+      ) => reportViewport(Boolean(event.originalEvent));
       const handleError = () => active && onUnavailableRef.current();
       map.once("load", handleLoad);
       map.on("error", handleError);
+      map.on("moveend", handleMove);
       return () => {
         active = false;
         resizeObserver?.disconnect();
         map.off("error", handleError);
+        map.off("moveend", handleMove);
         for (const entry of markers.values()) removeMarkerEntry(entry);
         markers.clear();
         map.remove();
@@ -97,7 +142,7 @@ export function LocationResultsMap({
     } catch {
       onUnavailableRef.current();
     }
-  }, [canvasAriaLabel]);
+  }, [canvasAriaLabel, cooperativeGestures]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -195,6 +240,7 @@ export function LocationResultsMap({
       bounds.extend(coordinates);
     }
 
+    if (!autoFit) return;
     if (points.length === 1) {
       map.jumpTo({
         center: [points[0]!.longitude, points[0]!.latitude],
@@ -203,7 +249,16 @@ export function LocationResultsMap({
     } else if (!bounds.isEmpty()) {
       map.fitBounds(bounds, { padding: 54, maxZoom: 13, duration: 0 });
     }
-  }, [coincidentItemLabel, markerVariant, points, ready]);
+  }, [autoFit, coincidentItemLabel, markerVariant, points, ready]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !camera) return;
+    map.jumpTo({
+      center: [camera.longitude, camera.latitude],
+      zoom: camera.zoom,
+    });
+  }, [camera, ready]);
 
   useEffect(() => {
     for (const [pointId, entry] of markersRef.current) {

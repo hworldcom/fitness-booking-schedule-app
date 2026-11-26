@@ -40,6 +40,9 @@ export type CoachDirectoryFilters = Readonly<{
   discipline: CoachDiscipline | null;
   location: string;
   serviceMode: "private-training" | null;
+  /** Explore-only filters; omitted by legacy and Home callers. */
+  sessionFormat?: "private" | "group";
+  savedOnly?: boolean;
 }>;
 
 export type CoachProfileInput = Readonly<{

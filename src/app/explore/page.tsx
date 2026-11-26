@@ -9,7 +9,7 @@ import {
   normalizeCoachExploreFilters,
 } from "@/features/coaches/marketplace-search-contract";
 import { publicCoachDirectory } from "@/server/coaches/service";
-import exploreBackground from "../../../public/images/explore-training.jpg";
+import { resolveLocationSearchConfiguration } from "@/location";
 
 export const metadata: Metadata = {
   title: "Explore coaches",
@@ -32,10 +32,12 @@ export default async function Page({
   }
   return (
     <CoachDirectory
-      background={exploreBackground}
       state={await publicCoachDirectory(filters)}
       view={normalizeCoachExploreView(rawSearchParams)}
       searchView={explicitView}
+      locationSearchConfiguration={resolveLocationSearchConfiguration(
+        process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY,
+      )}
     />
   );
 }

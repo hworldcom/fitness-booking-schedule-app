@@ -12,9 +12,16 @@ export function normalizeCoachExploreFilters(
   const value = Array.isArray(searchParams.discipline)
     ? searchParams.discipline[0]
     : searchParams.discipline;
-  return normalizeCoachDirectoryFilters({
+  const filters = normalizeCoachDirectoryFilters({
     ...searchParams,
     discipline: marketplaceDiscipline(value ?? "") ?? undefined,
+  });
+  return Object.freeze({
+    ...filters,
+    ...(searchParams.session === "private" || searchParams.session === "group"
+      ? { sessionFormat: searchParams.session }
+      : {}),
+    ...(searchParams.saved === "1" ? { savedOnly: true } : {}),
   });
 }
 
@@ -22,6 +29,8 @@ export type CoachDirectoryFilterOverrides = Readonly<{
   query?: string;
   discipline?: CoachDiscipline | null;
   location?: string;
+  sessionFormat?: "private" | "group" | null;
+  savedOnly?: boolean;
 }>;
 
 export type CoachExploreView = "list" | "map";
@@ -49,6 +58,13 @@ export function coachDirectoryHref(
     searchParams.set("discipline", normalized.discipline);
   }
   if (normalized.location) searchParams.set("location", normalized.location);
+  const format =
+    overrides.sessionFormat === undefined
+      ? filters.sessionFormat
+      : overrides.sessionFormat;
+  if (format === "private" || format === "group")
+    searchParams.set("session", format);
+  if (overrides.savedOnly ?? filters.savedOnly) searchParams.set("saved", "1");
   if (view) searchParams.set("view", view);
   const query = searchParams.toString();
   return query ? `/explore?${query}` : "/explore";

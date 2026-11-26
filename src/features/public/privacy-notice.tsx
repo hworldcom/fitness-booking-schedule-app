@@ -376,6 +376,19 @@ const sections = [
           a maximum thirty-day grant.
         </p>
         <p>
+          Explore can remember saved coaches, a preferred Map or Profiles view,
+          and optional Home and Work locations in this browser’s local storage.
+          Signed-in preferences are separated by account and dataset; guests use
+          separate browser preferences. They do not sync across devices or grant
+          access to private data. They remain until you remove a saved item,
+          reset Explore’s browser settings or clear this browser’s data. Your
+          device location is requested only when you choose the location
+          control. Saved and device coordinates do not enter shared URLs or
+          public coach records. Optional address lookup sends the search text to
+          Geoapify when you choose Search address; maps request the resources
+          needed to show the area you view.
+        </p>
+        <p>
           Browser session storage remembers the selected athlete or coach
           workspace for the account and dataset. It does not grant access to
           private data. Blocking necessary storage may prevent sign-in or affect
@@ -540,11 +553,13 @@ const sections = [
           in-product notice or email where appropriate.
         </p>
         <p>
-          This version takes effect on 15 November 2026 and explains combined
-          Calendar connection and booking sync setup, alongside explicit Google
-          calendar deletion and test-environment naming. It includes optional
-          Google sign-in, purpose-based retention, manual privacy requests and
-          the intended audience of people aged 16 and older.
+          This version takes effect on 26 November 2026 and adds Explore’s
+          browser-local saved coaches, view preference and optional Home and
+          Work locations. It retains combined Calendar connection and booking
+          sync setup, explicit Google calendar deletion and test-environment
+          naming. It includes optional Google sign-in, purpose-based retention,
+          manual privacy requests and the intended audience of people aged 16
+          and older.
         </p>
       </>
     ),
@@ -565,7 +580,7 @@ export function PrivacyNotice() {
         </p>
         <p className="privacy-date">
           Effective and last updated{" "}
-          <time dateTime="2026-11-15">15 November 2026</time>
+          <time dateTime="2026-11-26">26 November 2026</time>
         </p>
       </header>
 

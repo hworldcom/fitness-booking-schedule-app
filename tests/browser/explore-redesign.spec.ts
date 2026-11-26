@@ -21,26 +21,24 @@ test.beforeEach(async ({ page }) => {
   );
 });
 
-test("Explore typed filters, shortcuts and clear preserve the active view through history", async ({
+test("Explore typed filters, native categories and clear preserve the active view through history", async ({
   page,
 }) => {
   await page.goto("/explore?q=footwork&location=Berlin&view=map");
   const search = page.getByRole("form", { name: "Search coaches" });
-  const shortcuts = page.getByRole("navigation", {
-    name: "Browse coaches by discipline",
-  });
-  const discipline = search.locator('input[type="hidden"][name="discipline"]');
-  await shortcuts.getByRole("link", { name: "Boxing", exact: true }).click();
+  const discipline = search.getByLabel("Categories", { exact: true });
+  await discipline.selectOption("Boxing");
   await expect(page).toHaveURL(
     /q=footwork&discipline=Boxing&location=Berlin&view=map$/,
   );
   await expect(discipline).toHaveValue("Boxing");
+  await search.locator("summary").click();
   await search.getByLabel("Where in Berlin?").press("Enter");
   await expect(page).toHaveURL(
     /q=footwork&discipline=Boxing&location=Berlin&view=map$/,
   );
   await expect(discipline).toHaveValue("Boxing");
-  await shortcuts.getByRole("link", { name: "Muay Thai", exact: true }).click();
+  await discipline.selectOption("Muay Thai");
   await expect(page).toHaveURL(
     /q=footwork&discipline=Muay\+Thai&location=Berlin&view=map$/,
   );
@@ -48,7 +46,7 @@ test("Explore typed filters, shortcuts and clear preserve the active view throug
   await expect(discipline).toHaveValue("Muay Thai");
   await page.getByRole("link", { name: "Clear search" }).click();
   await expect(page).toHaveURL(/\/explore\?view=map$/);
-  await expect(discipline).toHaveCount(0);
+  await expect(discipline).toHaveValue("");
   await expect(search.getByLabel("Search coach or focus")).toHaveValue("");
   await page.goBack();
   await expect(discipline).toHaveValue("Muay Thai");
@@ -65,7 +63,7 @@ test("Explore typed filters, shortcuts and clear preserve the active view throug
     page.getByRole("heading", { name: "No coaches match these filters." }),
   ).toBeVisible();
   await expect(page.locator(".compact-coach-card.result")).toHaveCount(0);
-  await expect(page.locator(".coach-map-panel")).toHaveCount(0);
+  await expect(page.locator(".location-map-marker")).toHaveCount(0);
   await page.getByRole("link", { name: "Clear filters" }).click();
   await expect(page).toHaveURL(/\/explore\?view=map$/);
   await expect(page.locator(".compact-coach-card.result")).toHaveCount(
@@ -80,23 +78,26 @@ test("Explore shares Home's search and cards without introducing a Home query fi
     testInfo.project.name === "mobile" ? [375, 430] : [768, 1024, 1440];
   for (const width of widths) {
     await page.setViewportSize({ width, height: 1040 });
-    await page.goto("/explore");
+    await page.goto("/explore?view=list");
     const search = page.getByRole("form", { name: "Search coaches" });
     const query = search.getByLabel("Search coach or focus");
     await query.focus();
-    await page.keyboard.press("Tab");
-    await expect(search.getByLabel("Where in Berlin?")).toBeFocused();
     await page.keyboard.press("Tab");
     await expect(
       search.getByRole("button", { name: "Search coaches" }),
     ).toBeFocused();
     const cards = page.locator(".compact-coach-card.result");
     await expect(cards).toHaveCount(directoryFixture.coaches.length);
-    await expect(cards.locator(".compact-coach-bio")).toHaveCount(0);
-    await expect(cards.first().locator(".avatar img")).toHaveAttribute(
-      "src",
-      "/images/coaches/daniel-park.webp",
-    );
+    await expect(
+      cards.first().locator(".coach-card-introduction"),
+    ).toBeVisible();
+    await expect(
+      cards
+        .filter({
+          has: page.getByRole("heading", { name: "Daniel Park", exact: true }),
+        })
+        .locator(".avatar img"),
+    ).toHaveAttribute("src", "/images/coaches/daniel-park.webp");
     const sam = cards.filter({
       has: page.getByRole("heading", { name: "Sam Lee", exact: true }),
     });
@@ -123,7 +124,7 @@ test("Explore shares Home's search and cards without introducing a Home query fi
         (element) =>
           getComputedStyle(element).gridTemplateColumns.split(" ").length,
       );
-    expect(gridColumns).toBe(width < 600 ? 1 : 2);
+    expect(gridColumns).toBe(width <= 760 ? 1 : width <= 1100 ? 2 : 3);
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -172,6 +173,7 @@ test("Explore discipline aliases and explicit view survive query GET without Jav
     await page.goto("/explore?discipline=bjj&view=list");
     const search = page.getByRole("form", { name: "Search coaches" });
     await search.getByLabel("Search coach or focus").fill("escapes");
+    await search.locator("summary").click();
     await search.getByLabel("Where in Berlin?").fill(" Berlin ");
     await search
       .getByRole("button", { name: "Search coaches" })
@@ -179,9 +181,9 @@ test("Explore discipline aliases and explicit view survive query GET without Jav
     await expect(page).toHaveURL(
       /q=escapes&discipline=Brazilian\+Jiu-Jitsu&location=Berlin&view=list$/,
     );
-    await expect(
-      search.locator('input[type="hidden"][name="discipline"]'),
-    ).toHaveValue("Brazilian Jiu-Jitsu");
+    await expect(search.getByLabel("Categories", { exact: true })).toHaveValue(
+      "Brazilian Jiu-Jitsu",
+    );
     await expect(
       page.getByRole("heading", { name: "Idris Malik", exact: true }),
     ).toBeVisible();

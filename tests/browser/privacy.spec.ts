@@ -13,7 +13,17 @@ test("privacy notice is readable without JavaScript or an account", async ({
       page.getByRole("heading", { level: 1, name: "Privacy notice" }),
     ).toBeVisible();
     await expect(page.locator(".privacy-date")).toContainText(
-      "14 November 2026",
+      "26 November 2026",
+    );
+    await expect(page.locator(".privacy-date time")).toHaveAttribute(
+      "datetime",
+      "2026-11-26",
+    );
+    await expect(page.locator("#privacy-storage")).toContainText(
+      "optional Home and Work locations",
+    );
+    await expect(page.locator("#privacy-storage")).toContainText(
+      "They do not sync across devices",
     );
     await expect(
       page.getByText("DRAFT FOR REVIEW", { exact: true }),

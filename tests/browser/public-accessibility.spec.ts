@@ -163,7 +163,7 @@ test("reduced motion uses instant map-selection scrolling and keeps profile acce
       },
     }),
   );
-  await page.goto("/explore");
+  await page.goto("/explore?view=list");
   const cards = page.locator(".compact-coach-card.result");
   test.skip(
     (await cards.count()) === 0,
@@ -174,13 +174,18 @@ test("reduced motion uses instant map-selection scrolling and keeps profile acce
   await card.getByRole("button", { name: `Show ${name} on the map` }).click();
   if (testInfo.project.name === "mobile") {
     await expect(page).toHaveURL(/view=map/);
-    await expect(page.locator(".coach-map-detail")).toBeFocused();
+    await expect(page.locator(".explore-map-sheet > section")).toBeFocused();
   }
   const marker = page.locator(".location-map-marker").first();
   await expect(marker).toBeVisible();
   await marker.focus();
   await page.keyboard.press("Enter");
-  if (testInfo.project.name === "desktop") await expect(card).toBeFocused();
+  if (testInfo.project.name === "desktop")
+    await expect(
+      page
+        .locator(".explore-map-list article")
+        .filter({ has: page.getByRole("heading", { name, exact: true }) }),
+    ).toBeFocused();
   await expect
     .poll(() =>
       page.evaluate(
@@ -210,9 +215,12 @@ test("reduced motion uses instant map-selection scrolling and keeps profile acce
   const profileLink =
     testInfo.project.name === "mobile"
       ? page
-          .locator(".coach-map-detail")
-          .getByRole("link", { name: "View profile and schedule" })
-      : card.locator(".compact-coach-link");
+          .locator(".explore-map-sheet > section")
+          .getByRole("link", { name: "View profile", exact: true })
+      : page
+          .locator(".explore-map-list article")
+          .filter({ has: page.getByRole("heading", { name, exact: true }) })
+          .locator(".compact-coach-link");
   await expect(profileLink).toBeVisible();
   await expect(profileLink).toHaveAttribute("href", /^\/coaches\/[a-z0-9-]+$/);
   await expectNoOverflow(page);

@@ -29,6 +29,13 @@ for (const { width, height, pixelRatio } of cases) {
       for (const path of ["/", "/explore", "/events"]) {
         await page.goto(path, { waitUntil: "domcontentloaded" });
         const image = page.locator(".marketplace-home-hero-image");
+        if (path === "/explore") {
+          await expect(image).toHaveCount(0);
+          await expect(
+            page.getByRole("form", { name: "Search coaches" }),
+          ).toBeVisible();
+          continue;
+        }
         await expect
           .poll(
             () =>
