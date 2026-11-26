@@ -255,7 +255,7 @@ test("home discovery keeps empty and unavailable data states honest", () => {
   assert.doesNotMatch(unavailable, /compact-coach-card/);
 });
 
-test("home keeps discovery first and independent planning paths available in every directory state", () => {
+test("home keeps discovery first and calendar access available in every directory state", () => {
   for (const directory of [
     { status: "ready", entries, filters },
     { status: "ready", entries: [], filters },
@@ -279,7 +279,10 @@ test("home keeps discovery first and independent planning paths available in eve
     assert.ok(invitationIndex > calendarIndex);
     assert.match(markup, /Example training week/);
     assert.match(markup, /Your calendar and notes stay private/);
-    assert.match(markup, /href="\/sessions\/routine"/);
+    assert.doesNotMatch(
+      markup,
+      /Explore coaches|Plan my routine|home-training-actions/,
+    );
     assert.match(markup, /href="\/sessions\/calendar"/);
     assert.match(
       markup,

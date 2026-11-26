@@ -31,6 +31,9 @@ test("home keeps discovery and the calendar together with a concise coach invita
   await expect(page.locator(".marketplace-home-confirmation-note")).toHaveCount(
     0,
   );
+  await expect(
+    page.locator(".home-training-intro").getByRole("link"),
+  ).toHaveCount(0);
   const previewGrid = page.locator(".home-coach-grid");
   const previewState = page.locator(".home-coach-discovery-state");
   await expect(previewGrid.or(previewState)).toBeVisible();
@@ -118,6 +121,7 @@ test("home marketplace remains usable at the adopted review widths", async ({
 }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop");
   for (const [width, height] of [
+    [320, 568],
     [375, 812],
     [393, 852],
     [430, 900],
@@ -149,6 +153,11 @@ test("home marketplace remains usable at the adopted review widths", async ({
     expect(headlineBounds!.y + headlineBounds!.height).toBeLessThanOrEqual(
       imageBounds!.y + imageBounds!.height + 1,
     );
+    if (width === 320 || width === 375) {
+      await page.screenshot({
+        path: testInfo.outputPath(`home-discovery-intro-${width}.png`),
+      });
+    }
     const coachNames = page.locator(
       ".home-coach-grid .compact-coach-identity h3",
     );

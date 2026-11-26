@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { type CoachDirectoryState } from "@/domain/coaches";
 import { HomeCoachDiscovery } from "@/features/coaches/home-coach-discovery";
@@ -28,14 +27,6 @@ export function CoachStoryHome({
           Discover coaches and group sessions, plan your weekly workouts and
           recovery, and track your activity in one personal calendar.
         </p>
-        <div className="home-training-actions">
-          <Link className="button primary" href="/explore">
-            Explore coaches
-          </Link>
-          <Link className="button secondary" href="/sessions/routine">
-            Plan my routine
-          </Link>
-        </div>
       </div>
       <HomeMarketplaceSearch filters={directory.filters} />
 
