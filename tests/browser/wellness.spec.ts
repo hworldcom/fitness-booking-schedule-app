@@ -39,10 +39,11 @@ test("Wellness stays visible and selected through keyboard discovery and reload"
   await expect(page).toHaveURL(
     /\/explore\?discipline=Wellness(?:&view=(?:list|map))?$/,
   );
-  const category = page.getByLabel("Categories", { exact: true });
-  await expect(category).toHaveValue("Wellness");
+  const category = page.locator('input[name="discipline"][value="Wellness"]');
+  await expect(category).toBeChecked();
   await page.reload();
-  await expect(category).toHaveValue("Wellness");
+  await expect(category).toBeChecked();
+  await page.locator(".explore-category-filter summary").press("Enter");
   await category.focus();
   await expect(category).toBeFocused();
   await expect(category).toHaveCSS("outline-style", "solid");

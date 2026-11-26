@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("unavailable Explore retains compact search, view and retry without substitute inventory", async ({
   page,
 }, testInfo) => {
-  await page.goto("/explore?discipline=Boxing&view=map");
+  await page.goto("/explore?discipline=Boxing&discipline=Fitness&view=map");
   const unavailable = page.getByRole("heading", {
     name: "Coach discovery is temporarily unavailable.",
   });
@@ -24,10 +24,13 @@ test("unavailable Explore retains compact search, view and retry without substit
   ).toBeVisible();
   const search = page.getByRole("form", { name: "Search coaches" });
   await expect(search).toBeVisible();
+  await expect(search.locator('input[name="discipline"]:checked')).toHaveCount(
+    2,
+  );
   await search.getByLabel("Search coach or focus").fill("patient footwork");
   await search.getByRole("button", { name: "Search coaches" }).click();
   await expect(page).toHaveURL(
-    /q=patient\+footwork&discipline=Boxing&view=list$/,
+    /q=patient\+footwork&discipline=Boxing&discipline=Fitness&view=list$/,
   );
   await expect(unavailable).toBeVisible();
   await expect(page.locator(".compact-coach-card")).toHaveCount(0);
@@ -35,7 +38,7 @@ test("unavailable Explore retains compact search, view and retry without substit
   const retry = page.getByRole("link", { name: "Try again", exact: true });
   await expect(retry).toHaveAttribute(
     "href",
-    "/explore?q=patient+footwork&discipline=Boxing&view=list",
+    "/explore?q=patient+footwork&discipline=Boxing&discipline=Fitness&view=list",
   );
   await retry.click();
   await expect(unavailable).toBeVisible();

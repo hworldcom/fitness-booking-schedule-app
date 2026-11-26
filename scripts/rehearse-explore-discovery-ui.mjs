@@ -1,4 +1,4 @@
-// MOV-281/MOV-285: real Explore/Shell/MapLibre with fictional public and identity adapters.
+// MOV-281/MOV-285/MOV-286: real Explore/Shell/MapLibre with fictional public and identity adapters.
 // Owned source only, no environment files, Auth accounts, databases or retained writes.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -217,6 +217,25 @@ try {
   const profiles = page.locator(".explore-profiles"),
     map = page.locator(".explore-map-layout"),
     controls = page.getByRole("navigation", { name: "Explore results view" });
+  const categories = page.locator(".explore-category-filter");
+  const setCategories = async (selected) => {
+    if ((await categories.getAttribute("open")) === null)
+      await categories.locator("summary").click();
+    await categories
+      .getByRole("button", { name: "Clear selection", exact: true })
+      .click();
+    for (const category of selected)
+      await categories
+        .getByRole("checkbox", { name: category, exact: true })
+        .check();
+    await categories
+      .getByRole("button", { name: "Apply categories", exact: true })
+      .click();
+    await expect
+      .poll(() => new URL(page.url()).searchParams.getAll("discipline").sort())
+      .toEqual([...selected].sort());
+    await page.waitForLoadState("networkidle");
+  };
   await profiles.waitFor();
   await page
     .getByRole("button", { name: "Save Near Coach", exact: true })
@@ -408,14 +427,65 @@ try {
     "",
   );
   await expect(profiles.locator(".compact-coach-card.result")).toHaveCount(3);
-  await page.getByLabel("Categories", { exact: true }).selectOption("Boxing");
+  await setCategories(["Boxing"]);
   await page.waitForURL(/discipline=Boxing/);
   await expect(profiles.locator(".compact-coach-card.result")).toHaveCount(2);
   await page.getByRole("link", { name: "Clear search", exact: true }).click();
-  await expect(page.getByLabel("Categories", { exact: true })).toHaveValue("");
+  await expect(
+    categories.locator('input[name="discipline"]:checked'),
+  ).toHaveCount(0);
   await expect(profiles.locator(".compact-coach-card.result")).toHaveCount(3);
   report(
     "real native category/session GET controls and filter-clearing navigation",
+  );
+  await page
+    .getByRole("button", { name: "Use current location", exact: true })
+    .click();
+  await expect(
+    page.getByText("Nearest to Current location", { exact: true }),
+  ).toBeVisible();
+  await setCategories(["Boxing"]);
+  await expect(profiles.locator(".compact-coach-card.result")).toHaveCount(2);
+  await categories.locator("summary").click();
+  await categories
+    .getByRole("checkbox", { name: "Fitness", exact: true })
+    .check();
+  await expect(profiles.locator(".compact-coach-card.result")).toHaveCount(2);
+  assert.deepEqual(new URL(page.url()).searchParams.getAll("discipline"), [
+    "Boxing",
+  ]);
+  await categories
+    .getByRole("button", { name: "Apply categories", exact: true })
+    .click();
+  await expect(profiles.locator(".compact-coach-card.result")).toHaveCount(3);
+  await expect(categories.locator("summary")).toHaveAttribute(
+    "aria-label",
+    "Categories, 2 selected",
+  );
+  await expect(
+    page.getByText("Nearest to Current location", { exact: true }),
+  ).toBeVisible();
+  const beforeViews = routeReads;
+  await controls.getByRole("link", { name: "Map", exact: true }).click();
+  await expect(page.locator(".location-map-marker")).toHaveCount(3);
+  await controls.getByRole("link", { name: "Profiles", exact: true }).click();
+  assert.equal(routeReads, beforeViews);
+  await page.reload();
+  await expect(
+    categories.locator('input[name="discipline"]:checked'),
+  ).toHaveCount(2);
+  await page.goBack();
+  await expect(map).toBeVisible();
+  await page.goForward();
+  await expect(profiles).toBeVisible();
+  assert.deepEqual(new URL(page.url()).searchParams.getAll("discipline"), [
+    "Boxing",
+    "Fitness",
+  ]);
+  await setCategories([]);
+  await expect(profiles.locator(".compact-coach-card.result")).toHaveCount(3);
+  report(
+    "multiple category drafts apply as a union, preserve location/view/history and reload, and clear independently",
   );
   const search = page.getByRole("form", { name: "Search coaches" });
   await search.getByLabel("Search coach or focus").fill("No such coach");
@@ -569,6 +639,35 @@ try {
         true,
         `overflow at ${width}/${view}`,
       );
+      if (view === "list") {
+        await categories.locator("summary").click();
+        await categories
+          .getByRole("checkbox", { name: "Boxing", exact: true })
+          .focus();
+        await page.keyboard.press("Space");
+        await expect(
+          categories.getByRole("checkbox", { name: "Boxing", exact: true }),
+        ).toBeChecked();
+        const panel = await categories
+          .locator(".explore-category-panel")
+          .boundingBox();
+        assert.ok(
+          panel && panel.x >= 0 && panel.x + panel.width <= width,
+          "Category popup must fit the viewport",
+        );
+        await page.screenshot({
+          path: path.join(evidence, `categories-${width}.png`),
+          fullPage: true,
+        });
+        await page.keyboard.press("Escape");
+        await expect(categories).not.toHaveAttribute("open", "");
+        await expect(categories.locator("summary")).toBeFocused();
+        await categories.locator("summary").click();
+        await page
+          .getByRole("heading", { name: "Explore", exact: true, level: 1 })
+          .click();
+        await expect(categories).not.toHaveAttribute("open", "");
+      }
       await page.screenshot({
         path: path.join(evidence, `${width}-${view}.png`),
         fullPage: true,
@@ -869,8 +968,29 @@ try {
   await nojsPage.getByLabel("Search coach or focus").fill("Near");
   await nojsPage.getByRole("button", { name: "Search coaches" }).click();
   assert.equal(await nojsPage.locator(".compact-coach-card.result").count(), 1);
+  await nojsPage
+    .getByRole("link", { name: "Clear search", exact: true })
+    .click();
+  const nojsCategories = nojsPage.locator(".explore-category-filter");
+  await nojsCategories.locator("summary").click();
+  await nojsCategories
+    .getByRole("checkbox", { name: "Boxing", exact: true })
+    .check();
+  await nojsCategories
+    .getByRole("checkbox", { name: "Fitness", exact: true })
+    .check();
+  await nojsCategories
+    .getByRole("button", { name: "Apply categories", exact: true })
+    .click();
+  assert.deepEqual(new URL(nojsPage.url()).searchParams.getAll("discipline"), [
+    "Boxing",
+    "Fitness",
+  ]);
+  assert.equal(await nojsPage.locator(".compact-coach-card.result").count(), 3);
   await nojs.close();
-  report("no-JavaScript map URLs retain profiles and native GET search");
+  report(
+    "no-JavaScript map URLs retain profiles and native GET search with multiple categories",
+  );
   assert.deepEqual(errors, []);
   passed = true;
 } catch (error) {

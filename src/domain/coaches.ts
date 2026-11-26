@@ -41,6 +41,7 @@ export type CoachDirectoryFilters = Readonly<{
   location: string;
   serviceMode: "private-training" | null;
   /** Explore-only filters; omitted by legacy and Home callers. */
+  disciplines?: readonly CoachDiscipline[];
   sessionFormat?: "private" | "group";
   savedOnly?: boolean;
 }>;
@@ -250,6 +251,29 @@ export type CoachDirectoryState =
       filters: CoachDirectoryFilters;
     }>
   | Readonly<{ status: "unavailable"; filters: CoachDirectoryFilters }>;
+
+export function coachDirectoryDisciplines(
+  filters: CoachDirectoryFilters,
+): readonly CoachDiscipline[] {
+  const requested =
+    filters.disciplines ?? (filters.discipline ? [filters.discipline] : []);
+  return COACH_DISCIPLINES.filter((discipline) =>
+    requested.includes(discipline),
+  );
+}
+
+/** Public category alternatives are a union; each directory row appears once. */
+export function filterCoachDirectoryDisciplines(
+  entries: readonly CoachDirectoryEntry[],
+  filters: CoachDirectoryFilters,
+) {
+  const selected = coachDirectoryDisciplines(filters);
+  return selected.length
+    ? entries.filter(({ coach }) =>
+        selected.some((discipline) => coach.disciplines.includes(discipline)),
+      )
+    : entries;
+}
 
 export function resolveCoachPrimaryLocation(
   coach: CoachProjection,

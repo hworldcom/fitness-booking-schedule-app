@@ -40,8 +40,13 @@ test("Fitness works across canonical filtering, shortcut selection and owner val
       filters: normalizeCoachDirectoryFilters({ discipline: "Fitness" }),
     }),
   );
-  assert.match(html, /<select[^>]*name="discipline"/);
-  assert.match(html, /<option value="Fitness" selected="">Fitness<\/option>/);
+  assert.match(html, /type="checkbox"[^>]*name="discipline"/);
+  assert.ok(
+    [...html.matchAll(/<input[^>]*>/g)].some(
+      ([input]) =>
+        input.includes('value="Fitness"') && input.includes('checked=""'),
+    ),
+  );
   const input = {
     displayName: "Fitness Coach",
     bio: "Approachable strength and conditioning with practical feedback and steady progress.",

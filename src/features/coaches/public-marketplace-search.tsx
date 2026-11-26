@@ -3,15 +3,18 @@
 import Form from "next/form";
 import Link from "next/link";
 import { Search, SlidersHorizontal, X } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import {
-  COACH_DISCIPLINES,
+  coachDirectoryDisciplines,
   type CoachDirectoryFilters,
 } from "@/domain/coaches";
 import {
   coachDirectoryHref,
+  normalizeCoachExploreFilters,
+  canonicalCoachExploreView,
   type CoachExploreView,
 } from "./marketplace-search-contract";
+import { ExploreCategoryFilter } from "./explore-category-filter";
 
 export function PublicMarketplaceSearch({
   filters,
@@ -25,9 +28,39 @@ export function PublicMarketplaceSearch({
   onSearch?: () => void;
 }) {
   const searchFilters = filters;
+  const form = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    const element = form.current;
+    if (!element) return;
+    // Native GET and Next Form both consume FormData. Omit empty controls and
+    // normalize values here to avoid a redirect that resets the visit's origin.
+    const canonicalize = (event: FormDataEvent) => {
+      const data = event.formData;
+      const raw = {
+        q: String(data.get("q") ?? ""),
+        discipline: data.getAll("discipline").map(String),
+        location: String(data.get("location") ?? ""),
+        session: String(data.get("session") ?? ""),
+        saved: String(data.get("saved") ?? ""),
+        view: String(data.get("view") ?? ""),
+      };
+      const canonical = new URL(
+        coachDirectoryHref(
+          normalizeCoachExploreFilters(raw),
+          {},
+          canonicalCoachExploreView(raw),
+        ),
+        window.location.origin,
+      ).searchParams;
+      for (const key of Object.keys(raw)) data.delete(key);
+      for (const [key, value] of canonical) data.append(key, value);
+    };
+    element.addEventListener("formdata", canonicalize);
+    return () => element.removeEventListener("formdata", canonicalize);
+  }, [searchFilters]);
   const hasActiveFilters = Boolean(
     searchFilters.query ||
-    searchFilters.discipline ||
+    coachDirectoryDisciplines(searchFilters).length ||
     searchFilters.location ||
     searchFilters.sessionFormat ||
     searchFilters.savedOnly,
@@ -46,13 +79,18 @@ export function PublicMarketplaceSearch({
   return (
     <div className="explore-search-toolbar">
       <Form
+        ref={form}
         action="/explore"
         id="explore-search-form"
         className="explore-search-form"
         aria-label="Search coaches"
         scroll={false}
         key={coachDirectoryHref(searchFilters, { savedOnly: false })}
-        onSubmit={onSearch}
+        onSubmit={(event) => {
+          for (const details of event.currentTarget.querySelectorAll("details"))
+            details.open = false;
+          onSearch?.();
+        }}
       >
         <div className="explore-search-row">
           <label htmlFor="explore-query" className="explore-search-input">
@@ -77,22 +115,9 @@ export function PublicMarketplaceSearch({
         </div>
         <div className="explore-filter-row">
           {children}
-          <label className="explore-select-filter">
-            <span className="sr-only">Categories</span>
-            <select
-              name="discipline"
-              aria-label="Categories"
-              defaultValue={searchFilters.discipline ?? ""}
-              onChange={(event) => event.currentTarget.form?.requestSubmit()}
-            >
-              <option value="">Categories</option>
-              {COACH_DISCIPLINES.map((discipline) => (
-                <option key={discipline} value={discipline}>
-                  {discipline}
-                </option>
-              ))}
-            </select>
-          </label>
+          <ExploreCategoryFilter
+            initialSelection={coachDirectoryDisciplines(searchFilters)}
+          />
           <label className="explore-select-filter">
             <span className="sr-only">Session type</span>
             <select

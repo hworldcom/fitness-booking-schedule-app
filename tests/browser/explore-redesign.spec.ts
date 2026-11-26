@@ -1,3 +1,4 @@
+import { setExploreCategories } from "./explore-controls";
 import directoryFixture from "../fixtures/public-browser-directory.json" with { type: "json" };
 import { expect, test } from "@playwright/test";
 
@@ -26,30 +27,38 @@ test("Explore typed filters, native categories and clear preserve the active vie
 }) => {
   await page.goto("/explore?q=footwork&location=Berlin&view=map");
   const search = page.getByRole("form", { name: "Search coaches" });
-  const discipline = search.getByLabel("Categories", { exact: true });
-  await discipline.selectOption("Boxing");
+  const discipline = search.locator(
+    'input[type="checkbox"][name="discipline"][value="Muay Thai"]',
+  );
+  await setExploreCategories(page, ["Boxing"]);
   await expect(page).toHaveURL(
     /q=footwork&discipline=Boxing&location=Berlin&view=map$/,
   );
-  await expect(discipline).toHaveValue("Boxing");
-  await search.locator("summary").click();
+  await expect(
+    search.locator('input[name="discipline"][value="Boxing"]'),
+  ).toBeChecked();
+  await search.locator(".explore-location-filter summary").click();
   await search.getByLabel("Where in Berlin?").press("Enter");
   await expect(page).toHaveURL(
     /q=footwork&discipline=Boxing&location=Berlin&view=map$/,
   );
-  await expect(discipline).toHaveValue("Boxing");
-  await discipline.selectOption("Muay Thai");
+  await expect(
+    search.locator('input[name="discipline"][value="Boxing"]'),
+  ).toBeChecked();
+  await setExploreCategories(page, ["Muay Thai"]);
   await expect(page).toHaveURL(
     /q=footwork&discipline=Muay\+Thai&location=Berlin&view=map$/,
   );
   await page.reload();
-  await expect(discipline).toHaveValue("Muay Thai");
+  await expect(discipline).toBeChecked();
   await page.getByRole("link", { name: "Clear search" }).click();
   await expect(page).toHaveURL(/\/explore\?view=map$/);
-  await expect(discipline).toHaveValue("");
+  await expect(search.locator('input[name="discipline"]:checked')).toHaveCount(
+    0,
+  );
   await expect(search.getByLabel("Search coach or focus")).toHaveValue("");
   await page.goBack();
-  await expect(discipline).toHaveValue("Muay Thai");
+  await expect(discipline).toBeChecked();
   await expect(search.getByLabel("Search coach or focus")).toHaveValue(
     "footwork",
   );
@@ -173,7 +182,7 @@ test("Explore discipline aliases and explicit view survive query GET without Jav
     await page.goto("/explore?discipline=bjj&view=list");
     const search = page.getByRole("form", { name: "Search coaches" });
     await search.getByLabel("Search coach or focus").fill("escapes");
-    await search.locator("summary").click();
+    await search.locator(".explore-location-filter summary").click();
     await search.getByLabel("Where in Berlin?").fill(" Berlin ");
     await search
       .getByRole("button", { name: "Search coaches" })
@@ -181,9 +190,9 @@ test("Explore discipline aliases and explicit view survive query GET without Jav
     await expect(page).toHaveURL(
       /q=escapes&discipline=Brazilian\+Jiu-Jitsu&location=Berlin&view=list$/,
     );
-    await expect(search.getByLabel("Categories", { exact: true })).toHaveValue(
-      "Brazilian Jiu-Jitsu",
-    );
+    await expect(
+      search.locator('input[name="discipline"][value="Brazilian Jiu-Jitsu"]'),
+    ).toBeChecked();
     await expect(
       page.getByRole("heading", { name: "Idris Malik", exact: true }),
     ).toBeVisible();

@@ -986,3 +986,150 @@
 .explore-use-location:disabled {
   opacity: 0.65;
 }
+
+.explore-category-filter {
+  position: relative;
+  min-width: 0;
+}
+.explore-category-filter summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 9px 11px;
+  border: 1px solid var(--explore-border);
+  border-radius: 10px;
+  background: #fff;
+  color: #403449;
+  cursor: pointer;
+  list-style: none;
+}
+.explore-category-filter summary::-webkit-details-marker {
+  display: none;
+}
+.explore-category-filter summary > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.explore-category-filter summary > :is(b, svg) {
+  flex-shrink: 0;
+}
+.explore-category-filter summary b {
+  font-size: 10px;
+  font-weight: 700;
+}
+.explore-category-filter summary.active {
+  background: var(--explore-soft);
+  border-color: #a78bbd;
+  color: var(--explore-accent);
+}
+.explore-category-panel {
+  position: absolute;
+  z-index: 9;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 350px;
+  max-width: calc(100vw - 36px);
+  padding: 15px;
+  border: 1px solid var(--explore-border);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 10px 28px #2b163a1a;
+}
+.explore-category-panel > p {
+  margin: 0 0 8px;
+  color: #706779;
+  font-size: 12px;
+}
+.explore-discovery .explore-category-options {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 3px 8px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.explore-discovery .explore-category-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 5px 2px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.explore-discovery .explore-category-options input {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  padding: 0;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--explore-accent);
+}
+.explore-category-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+}
+.explore-discovery .explore-category-actions button {
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--explore-border);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--explore-accent);
+  font-size: 12px;
+}
+.explore-discovery .explore-category-actions .dark {
+  background: var(--explore-accent);
+  color: #fff;
+  border-color: var(--explore-accent);
+}
+@media (max-width: 760px) {
+  .explore-search-form,
+  .explore-filter-row {
+    position: relative;
+  }
+  .explore-category-filter {
+    position: static;
+    flex: 1;
+    min-width: 80px;
+  }
+  .explore-select-filter {
+    min-width: 80px;
+  }
+  .explore-discovery .explore-filter-row .explore-category-filter summary {
+    gap: 3px;
+    padding-inline: 4px;
+    font-size: 11px;
+  }
+  .explore-category-filter summary > svg {
+    width: 10px;
+  }
+  .explore-discovery .explore-filter-row select {
+    font-size: 11px;
+    padding-inline: 6px 20px;
+  }
+  .explore-category-panel {
+    max-width: 100%;
+  }
+  .explore-discovery .explore-clear-search {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 15px);
+    margin: 0;
+    z-index: 1;
+  }
+  .explore-discovery:has(.explore-clear-search) .coach-results-summary > div {
+    padding-right: 95px;
+  }
+}

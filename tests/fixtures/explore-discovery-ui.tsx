@@ -6,7 +6,10 @@ import type { AuthSessionSnapshot } from "@/auth/contracts";
 import { ActorProvider } from "@/auth/client/actor-provider";
 import { AuthSessionProvider } from "@/auth/client/session-provider";
 import { Shell } from "@/components/shell";
-import type { CoachDirectoryFilters } from "@/domain/coaches";
+import {
+  filterCoachDirectoryDisciplines,
+  type CoachDirectoryFilters,
+} from "@/domain/coaches";
 import { publicCoachStartingRate } from "@/domain/coach-starting-rate";
 import { CoachDirectory } from "@/features/coaches/coach-discovery";
 import type { CoachExploreView } from "@/features/coaches/marketplace-search-contract";
@@ -91,14 +94,12 @@ export function ExploreDiscoveryFixture({
             email: `${viewer}@fixture.movx.test`,
             expiresAt: null,
           };
-  const entries = rows.filter(
+  const entries = filterCoachDirectoryDisciplines(rows, filters).filter(
     (entry) =>
       (!filters.query ||
         `${entry.coach.displayName} ${entry.coach.bio}`
           .toLowerCase()
           .includes(filters.query.toLowerCase())) &&
-      (!filters.discipline ||
-        entry.coach.disciplines.includes(filters.discipline)) &&
       (!filters.location ||
         entry.primaryLocation.location.label
           .toLowerCase()

@@ -1,3 +1,4 @@
+import { setExploreCategories } from "./explore-controls";
 import directoryFixture from "../fixtures/public-browser-directory.json" with { type: "json" };
 import { expect, test } from "@playwright/test";
 
@@ -51,10 +52,7 @@ test("desktop discovery starts with real profiles and filters the public directo
       card.getByText("No availability today", { exact: true }),
     ).toHaveCount(0);
   }
-  await page.getByLabel("Categories", { exact: true }).selectOption("Boxing");
-  await expect(page.getByLabel("Categories", { exact: true })).toHaveValue(
-    "Boxing",
-  );
+  await setExploreCategories(page, ["Boxing"]);
   await expect(cards).toHaveCount(2);
   expect((await cards.locator("h3").allTextContents()).sort()).toEqual([
     "Daniel Park",
@@ -63,7 +61,7 @@ test("desktop discovery starts with real profiles and filters the public directo
   await page.getByRole("link", { name: "Clear search", exact: true }).click();
   await expect(cards).toHaveCount(directoryFixture.coaches.length);
   const search = page.getByRole("form", { name: "Search coaches" });
-  await search.locator("summary").click();
+  await search.locator(".explore-location-filter summary").click();
   await search.getByLabel("Where in Berlin?").fill("Tempelhofer");
   await search.getByRole("button", { name: "Apply location" }).click();
   await expect(cards).toHaveCount(1);

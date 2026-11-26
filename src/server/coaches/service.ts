@@ -15,7 +15,12 @@ import type {
   CoachTrainingLocationInput,
   PublicCoachProfileState,
 } from "@/domain/coaches";
-import { isCoachPublicSlug, isCoachTrainingLocationId } from "@/domain/coaches";
+import {
+  isCoachPublicSlug,
+  isCoachTrainingLocationId,
+  coachDirectoryDisciplines,
+  filterCoachDirectoryDisciplines,
+} from "@/domain/coaches";
 import { withAuthorizedActor } from "@/server/authorization/service";
 import { currentActorProjection } from "@/server/db/authorization/repository";
 import {
@@ -74,7 +79,13 @@ export async function publicCoachDirectory(
   filters: CoachDirectoryFilters,
 ): Promise<CoachDirectoryState> {
   try {
-    const entries = await publicCoachDirectoryRecords(filters);
+    const selected = coachDirectoryDisciplines(filters);
+    const entries = filterCoachDirectoryDisciplines(
+      await publicCoachDirectoryRecords(
+        selected.length > 1 ? { ...filters, discipline: null } : filters,
+      ),
+      filters,
+    );
     const slugs = entries.map((entry) => entry.coach.slug);
     const [paths, websites, reviews, groupCoaches] = await Promise.all([
       publicCoachPathsRecord(slugs),

@@ -64,7 +64,7 @@ test("mobile Explore view state is bounded and defaults safely to list", () => {
   assert.equal(canonicalCoachExploreView({ view: "grid" }), null);
 });
 
-test("canonical search rejects blank, repeated, legacy and unknown parameters", () => {
+test("canonical search rejects blank, repeated scalar, legacy and unknown parameters", () => {
   assert.equal(
     isCanonicalCoachDirectorySearch(
       {
@@ -117,7 +117,7 @@ test("canonical search rejects blank, repeated, legacy and unknown parameters", 
   );
 });
 
-test("Explore search renders one GET contract and a selected native category filter", () => {
+test("Explore search renders one GET contract and selected native category checkboxes", () => {
   const html = renderToStaticMarkup(
     createElement(PublicMarketplaceSearch, { filters: FILTERS }),
   );
@@ -131,9 +131,11 @@ test("Explore search renders one GET contract and a selected native category fil
     /<form[^>]*>[\s\S]*<input[^>]*id="explore-query"[^>]*name="q"[\s\S]*<\/form>/,
   );
   assert.equal([...html.matchAll(/name="q"/g)].length, 1);
-  assert.match(
-    html,
-    /<option value="Muay Thai" selected="">Muay Thai<\/option>/,
+  assert.ok(
+    [...html.matchAll(/<input[^>]*>/g)].some(
+      ([input]) =>
+        input.includes('value="Muay Thai"') && input.includes('checked=""'),
+    ),
   );
   assert.doesNotMatch(
     html,
@@ -149,7 +151,7 @@ test("Explore search renders one GET contract and a selected native category fil
   assert.doesNotMatch(html, /name="when"|price|rating|distance/i);
 });
 
-test("Explore has one coach/focus search and a native all-categories option", () => {
+test("Explore has one coach/focus search and all categories when no checkbox is selected", () => {
   const html = renderToStaticMarkup(
     createElement(PublicMarketplaceSearch, {
       filters: normalizeCoachDirectoryFilters({
@@ -163,7 +165,10 @@ test("Explore has one coach/focus search and a native all-categories option", ()
   assert.match(html, /name="location"[^>]*value="Berlin"/);
   assert.match(html, /Search coach or focus/);
   assert.doesNotMatch(html, /type="hidden" name="discipline"|<datalist/);
-  assert.match(html, /<option value="" selected="">Categories<\/option>/);
+  assert.equal(
+    [...html.matchAll(/<input[^>]*type="checkbox"[^>]*checked=""/g)].length,
+    0,
+  );
   assert.match(html, /href="\/explore"/);
 });
 
@@ -210,7 +215,12 @@ test("Explore's search and clear retain the explicit view and applied category",
     );
     assert.match(html, new RegExp('name="view"[^>]*value="' + view + '"'));
     assert.ok(html.includes('href="/explore?view=' + view + '"'));
-    assert.match(html, /<option value="Muay Thai" selected="">/);
+    assert.ok(
+      [...html.matchAll(/<input[^>]*>/g)].some(
+        ([input]) =>
+          input.includes('value="Muay Thai"') && input.includes('checked=""'),
+      ),
+    );
     assert.doesNotMatch(html, /id="home-discipline"|name="page"/);
   }
 });

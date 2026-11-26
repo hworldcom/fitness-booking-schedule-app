@@ -3,10 +3,16 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 async function expectTouchTargets(controls: Locator) {
   const sizes = await controls.evaluateAll((elements) =>
     elements
-      .filter((element) => element.getClientRects().length > 0)
+      .filter((element) => element.checkVisibility())
       .map((element) => {
-        const { width, height } = element.getBoundingClientRect();
-        return { name: element.textContent?.trim(), width, height };
+        // A native checkbox/radio's associated label is also its touch target.
+        const target =
+          element instanceof HTMLInputElement &&
+          (element.type === "checkbox" || element.type === "radio")
+            ? (element.labels?.[0] ?? element)
+            : element;
+        const { width, height } = target.getBoundingClientRect();
+        return { name: target.textContent?.trim(), width, height };
       }),
   );
   for (const size of sizes) {
@@ -67,9 +73,15 @@ test("public landmarks, headings, skip focus and touch controls fit every breakp
       );
       await expectTouchTargets(
         page.locator(
-          ".public-header a, .demo-strip button, .footer-contact, main input, main select, main button, main .button, .marketplace-discipline-chip, .compact-coach-link, main .text-link",
+          ".public-header a, .demo-strip button, .footer-contact, main input, main select, main button, main summary, main .button, .marketplace-discipline-chip, .compact-coach-link, main .text-link",
         ),
       );
+      if (route === "/explore") {
+        const categories = page.locator(".explore-category-filter");
+        await categories.locator("summary").click();
+        await expectTouchTargets(categories.locator("input, button, summary"));
+        await categories.locator("summary").click();
+      }
       await expectNoOverflow(page);
     }
   }
