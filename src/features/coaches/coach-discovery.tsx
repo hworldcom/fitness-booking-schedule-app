@@ -7,7 +7,10 @@ import { CoachExploreResults } from "./coach-explore-results";
 import { useActor } from "@/auth/client/actor-provider";
 import { useAuthSession } from "@/auth/client/session-provider";
 import type { LocationSearchConfiguration } from "@/location";
-import { explorePreferenceScope } from "./explore-discovery-model";
+import {
+  explorePreferenceScope,
+  exploreVisitScope,
+} from "./explore-discovery-model";
 import { type CoachExploreView } from "./marketplace-search-contract";
 
 export function CoachDirectory({
@@ -26,7 +29,7 @@ export function CoachDirectory({
   const scope = explorePreferenceScope(session, actor);
   return (
     <CoachExploreResults
-      key={scope ?? "unverified"}
+      key={exploreVisitScope(session, actor)}
       state={state}
       preferenceScope={scope}
       requestedView={searchView ?? (view === "map" ? "map" : null)}

@@ -968,3 +968,21 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.explore-discovery .explore-use-location {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-top: 7px;
+  padding: 6px 10px;
+  border: 1px solid var(--explore-border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--explore-accent);
+  font-size: 12px;
+}
+.explore-use-location:disabled {
+  opacity: 0.65;
+}

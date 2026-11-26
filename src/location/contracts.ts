@@ -58,6 +58,13 @@ export type LocationMapCamera = Readonly<{
   longitude: number;
   zoom: number;
   revision: number;
+  accuracyMeters?: number | null;
+}>;
+
+export type LocationDevicePosition = Readonly<{
+  latitude: number;
+  longitude: number;
+  accuracyMeters: number | null;
 }>;
 
 export type LocationSearchFailure =

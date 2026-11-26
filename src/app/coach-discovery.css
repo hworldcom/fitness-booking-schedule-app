@@ -2966,3 +2966,26 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* A device reading is separate from selectable public coach markers. */
+.location-device-dot {
+  width: 18px;
+  height: 18px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #1769e0;
+  box-shadow:
+    0 0 0 2px #1769e04d,
+    0 2px 7px #173e6940;
+  pointer-events: none;
+  z-index: 2;
+}
+.location-device-accuracy {
+  border: 1px solid #1769e080;
+  border-radius: 50%;
+  background: #1769e01c;
+  pointer-events: none;
+}
+.location-device-accuracy[hidden] {
+  display: none;
+}

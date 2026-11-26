@@ -44,6 +44,17 @@ export function explorePreferenceScope(
 export function exploreStorageKey(scope: string) {
   return `movx:explore:v1:${encodeURIComponent(scope)}`;
 }
+
+/** Ephemeral location must also reset when a known session changes while actor verification is unavailable. */
+export function exploreVisitScope(
+  session: AuthSessionSnapshot,
+  actor: ActorSnapshot,
+) {
+  return (
+    explorePreferenceScope(session, actor) ??
+    `unverified:${session.status}:${session.status === "signed-in" ? session.subject : ""}`
+  );
+}
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }

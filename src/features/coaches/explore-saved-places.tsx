@@ -16,6 +16,8 @@ import {
   type LocationSearchConfiguration,
 } from "@/location";
 import { LocationSearchAttribution } from "@/location/components/location-search-attribution";
+import { readDeviceCoordinates } from "@/location/device-position";
+import type { LocationDevicePosition } from "@/location/contracts";
 import {
   isExplorePlace,
   type ExplorePlace,
@@ -23,7 +25,9 @@ import {
   type ExplorePreferences,
 } from "./explore-discovery-model";
 
-export function readDeviceLocation(): Promise<ExplorePlace> {
+export function readDeviceLocation(): Promise<
+  ExplorePlace & LocationDevicePosition
+> {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(
@@ -34,12 +38,18 @@ export function readDeviceLocation(): Promise<ExplorePlace> {
       return;
     }
     navigator.geolocation.getCurrentPosition(
-      ({ coords }) =>
-        resolve({
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          label: "Current location",
-        }),
+      ({ coords }) => {
+        const point = readDeviceCoordinates(coords);
+        if (!point) {
+          reject(
+            new Error(
+              "Your device returned an invalid location. Try again or choose a saved place.",
+            ),
+          );
+          return;
+        }
+        resolve({ ...point, label: "Current location" });
+      },
       (error) =>
         reject(
           new Error(
@@ -48,7 +58,7 @@ export function readDeviceLocation(): Promise<ExplorePlace> {
               : "Your location could not be found. Try again or choose a saved place.",
           ),
         ),
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 60_000 },
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 0 },
     );
   });
 }
@@ -148,7 +158,11 @@ export function ExploreSavedPlaces({
     try {
       const point = await readDeviceLocation();
       if (token === generation.current) {
-        setDraft({ ...point, label: query.trim() || "My saved location" });
+        setDraft({
+          latitude: point.latitude,
+          longitude: point.longitude,
+          label: query.trim() || "My saved location",
+        });
         setCandidates([]);
       }
     } catch (error) {

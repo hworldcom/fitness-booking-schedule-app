@@ -8,6 +8,7 @@ import {
   EMPTY_EXPLORE_PREFERENCES,
   distanceInKm,
   explorePreferenceScope,
+  exploreVisitScope,
   exploreStorageKey,
   isExplorePlace,
   parseExplorePreferences,
@@ -169,4 +170,30 @@ test("preference identity separates accounts/datasets/guests and conceals data w
   );
   assert.equal(explorePreferenceScope({ status: "unavailable" }, actor), null);
   assert.doesNotMatch(exploreStorageKey(own!), /private@example/);
+});
+
+test("ephemeral visits cannot share a prior device position across sessions whose actors are still unavailable", () => {
+  const session: AuthSessionSnapshot = {
+    status: "signed-in",
+    subject: "account-a",
+    email: "a@example.test",
+    expiresAt: null,
+  };
+  const unavailable = { status: "unavailable" } as const;
+  assert.notEqual(
+    exploreVisitScope(session, unavailable),
+    exploreVisitScope({ ...session, subject: "account-b" }, unavailable),
+  );
+  assert.notEqual(
+    exploreVisitScope(session, unavailable),
+    exploreVisitScope({ status: "signed-out" }, unavailable),
+  );
+  assert.equal(
+    exploreVisitScope(session, unavailable),
+    exploreVisitScope({ ...session }, unavailable),
+  );
+  assert.notEqual(
+    exploreVisitScope({ status: "unavailable" }, unavailable),
+    exploreVisitScope({ status: "signed-out" }, unavailable),
+  );
 });

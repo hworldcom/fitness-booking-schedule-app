@@ -32,9 +32,11 @@ import type {
 } from "@/domain/coaches";
 import type {
   LocationMapCamera,
+  LocationDevicePosition,
   LocationMapViewport,
   LocationSearchConfiguration,
 } from "@/location/contracts";
+import { deviceAccuracyLabel } from "@/location/device-position";
 import { CompactCoachCard } from "./compact-coach-card";
 import { PublicMarketplaceSearch } from "./public-marketplace-search";
 import {
@@ -171,6 +173,8 @@ export function CoachExploreResults({
   const [selectedCoachId, setSelectedCoachId] = useState<string | null>(null);
   const [selectionRequest, setSelectionRequest] = useState(0);
   const [origin, setOrigin] = useState<ExplorePlace>(BERLIN_SEARCH_ORIGIN);
+  const [devicePosition, setDevicePosition] =
+    useState<LocationDevicePosition | null>(null);
   const [camera, setCamera] = useState<LocationMapCamera | null>(null);
   const [areaSelection, setAreaSelection] = useState<{
     queryKey: string;
@@ -279,6 +283,7 @@ export function CoachExploreResults({
     const root = rootRef.current;
     const navigation = document.querySelector<HTMLElement>(".mobile-nav");
     const toolbar = root.querySelector<HTMLElement>(".explore-search-toolbar");
+    const summary = root.querySelector<HTMLElement>(".coach-results-summary");
     const measure = () => {
       const clearance = (navigation?.getBoundingClientRect().height ?? 0) + 16;
       root.style.setProperty("--explore-nav-clearance", `${clearance}px`);
@@ -290,6 +295,7 @@ export function CoachExploreResults({
     };
     const observer = new ResizeObserver(measure);
     if (toolbar) observer.observe(toolbar);
+    if (summary) observer.observe(summary);
     if (navigation) observer.observe(navigation);
     window.addEventListener("resize", measure);
     measure();
@@ -384,19 +390,23 @@ export function CoachExploreResults({
   }, []);
   const applyPlace = (
     kind: "home" | "work" | "current",
-    place: ExplorePlace,
+    place: ExplorePlace & Partial<LocationDevicePosition>,
   ) => {
     generation.current++;
     setLocating(false);
     const label =
       kind === "home" ? "Home" : kind === "work" ? "Work" : "Current location";
-    setOrigin({ ...place, label });
+    setOrigin({ latitude: place.latitude, longitude: place.longitude, label });
+    setExpanded(false);
+    if (kind !== "current") setDevicePosition(null);
     setArea(null);
     setAreaChanged(false);
     setLocationMessage("");
     setCamera((previous) => ({
-      ...place,
-      zoom: 12.5,
+      latitude: place.latitude,
+      longitude: place.longitude,
+      zoom: kind === "current" ? 15 : 12.5,
+      accuracyMeters: kind === "current" ? place.accuracyMeters : undefined,
       revision: (previous?.revision ?? 0) + 1,
     }));
     setPlacesOpen(false);
@@ -407,8 +417,10 @@ export function CoachExploreResults({
     setLocationMessage("");
     try {
       const point = await readDeviceLocation();
-      if (active.current && token === generation.current)
+      if (active.current && token === generation.current) {
+        setDevicePosition(point);
         applyPlace("current", point);
+      }
     } catch (error) {
       if (active.current && token === generation.current)
         setLocationMessage(
@@ -596,6 +608,23 @@ export function CoachExploreResults({
               Nearest to {origin.label}
               {area ? " · In this map area" : ""}
             </small>
+            {view === "list" && (
+              <button
+                type="button"
+                className="explore-use-location"
+                aria-label="Use current location"
+                disabled={!hydrated || locating}
+                onClick={() => void locate()}
+              >
+                <LocateFixed size={16} aria-hidden="true" />
+                {locating ? "Finding your location…" : "Use current location"}
+              </button>
+            )}
+            {devicePosition && origin.label === "Current location" && (
+              <small role="status">
+                {deviceAccuracyLabel(devicePosition.accuracyMeters)}
+              </small>
+            )}
           </div>
           <nav
             className="explore-results-view-control"
@@ -683,6 +712,7 @@ export function CoachExploreResults({
                     onSelectPoint={selectCoach}
                     onUnavailable={unavailable}
                     camera={camera}
+                    devicePosition={devicePosition}
                     autoFit={false}
                     recenterOnSelection={false}
                     cooperativeGestures={false}
@@ -695,6 +725,7 @@ export function CoachExploreResults({
                       onClick={() => {
                         generation.current++;
                         setLocating(false);
+                        setDevicePosition(null);
                         setArea(viewport);
                         setOrigin({
                           latitude: viewport.latitude,

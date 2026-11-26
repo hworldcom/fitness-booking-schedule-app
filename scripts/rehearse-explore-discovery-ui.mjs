@@ -1,4 +1,4 @@
-// MOV-281: real Explore/Shell/MapLibre with fictional public and identity adapters.
+// MOV-281/MOV-285: real Explore/Shell/MapLibre with fictional public and identity adapters.
 // Owned source only, no environment files, Auth accounts, databases or retained writes.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -161,8 +161,18 @@ try {
   let addressReads = 0;
   const context = await browser.newContext({
     viewport: { width: 1440, height: 1000 },
-    geolocation: { latitude: 52.52, longitude: 13.405 },
+    geolocation: { latitude: 52.51, longitude: 13.45, accuracy: 120 },
     permissions: ["geolocation"],
+  });
+  await context.addInitScript(() => {
+    const original = navigator.geolocation.getCurrentPosition.bind(
+      navigator.geolocation,
+    );
+    window.exploreLocationRequests = [];
+    navigator.geolocation.getCurrentPosition = (success, failure, options) => {
+      window.exploreLocationRequests.push(options);
+      return original(success, failure, options);
+    };
   });
   await context.route("https://tiles.openfreemap.org/**", (route) =>
     failMap ? route.abort() : route.fulfill({ json: style }),
@@ -219,9 +229,71 @@ try {
     if (request.headers().rsc && new URL(request.url()).pathname === "/explore")
       routeReads++;
   });
+  assert.equal(
+    await page.evaluate(() => window.exploreLocationRequests.length),
+    0,
+    "Profiles must not request permission on load",
+  );
+  await expect(
+    page.getByText("Nearest to Berlin centre", { exact: true }),
+  ).toBeVisible();
+  await expect(profiles.locator("h3").first()).toHaveText("Near Coach");
+  await page
+    .getByRole("button", { name: "Use current location", exact: true })
+    .focus();
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByText("Nearest to Current location", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Accuracy about 120 m", { exact: true }),
+  ).toBeVisible();
+  await expect(profiles.locator("h3").first()).toHaveText("Group Coach");
+  const options = await page.evaluate(() => window.exploreLocationRequests);
+  assert.equal(options.length, 1);
+  assert.equal(options[0].enableHighAccuracy, true);
+  assert.equal(options[0].maximumAge, 0);
+  assert.doesNotMatch(page.url(), /52\.51|13\.45/);
+  assert.equal(
+    await page.evaluate(() =>
+      Object.values(localStorage).some((value) =>
+        /52\.51|13\.45|accuracyMeters/.test(value),
+      ),
+    ),
+    false,
+  );
+  report(
+    "Profiles-first explicit fresh high-accuracy location changes nearest order without a Map detour or stored coordinates",
+  );
   await controls.getByRole("link", { name: "Map", exact: true }).click();
   await map.waitFor();
   await page.locator(".location-map-marker").first().waitFor();
+  const device = page.locator(".location-device-dot");
+  await expect(device).toHaveCount(1);
+  await expect(device).toBeVisible();
+  await expect(device).toHaveAttribute("aria-label", /Accuracy about 120 m/);
+  await expect(page.locator(".location-map-marker")).toHaveCount(3);
+  const assertDeviceCentred = async () => {
+    await expect
+      .poll(async () => {
+        const pin = await device.boundingBox(),
+          viewport = await page.locator(".coach-map-canvas").boundingBox();
+        return Boolean(
+          pin &&
+          viewport &&
+          Math.abs(pin.x + pin.width / 2 - viewport.x - viewport.width / 2) <
+            3 &&
+          Math.abs(pin.y + pin.height / 2 - viewport.y - viewport.height / 2) <
+            3,
+        );
+      })
+      .toBe(true);
+  };
+  await assertDeviceCentred();
+  await page.screenshot({
+    path: path.join(evidence, "device-desktop.png"),
+    fullPage: true,
+  });
   await controls.getByRole("link", { name: "Profiles", exact: true }).click();
   await profiles.waitFor();
   assert.equal(
@@ -235,6 +307,77 @@ try {
   await profiles.waitFor();
   report(
     "desktop result-heading control, distinct views, native history and zero directory reloads",
+  );
+  assert.equal(
+    await page.evaluate(() => window.exploreLocationRequests.length),
+    1,
+    "View/history changes must reuse the chosen location",
+  );
+  await context.setGeolocation({
+    latitude: 52.56,
+    longitude: 13.52,
+    accuracy: 8000,
+  });
+  await page
+    .getByRole("button", { name: "Use current location", exact: true })
+    .click();
+  await expect(profiles.locator("h3").first()).toHaveText("Far Coach");
+  await expect(
+    page.getByText("Accuracy about 8.0 km", { exact: true }),
+  ).toBeVisible();
+  await controls.getByRole("link", { name: "Map", exact: true }).click();
+  await expect(device).toHaveCount(1);
+  await assertDeviceCentred();
+  const ring = await page.locator(".location-device-accuracy").boundingBox(),
+    viewport = await page.locator(".coach-map-canvas").boundingBox();
+  assert.ok(
+    ring &&
+      viewport &&
+      ring.width > 18 &&
+      ring.height <= viewport.height &&
+      ring.width <= viewport.width,
+    "Camera must show the reported uncertainty, not imply street-level precision",
+  );
+  const panCanvas = await page
+    .locator(".coach-map-canvas canvas")
+    .boundingBox();
+  assert.ok(panCanvas);
+  await page.mouse.move(
+    panCanvas.x + panCanvas.width / 3,
+    panCanvas.y + panCanvas.height / 3,
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    panCanvas.x + panCanvas.width / 3 + 110,
+    panCanvas.y + panCanvas.height / 3 + 50,
+    { steps: 8 },
+  );
+  await page.mouse.up();
+  await page.setViewportSize({ width: 1360, height: 1000 });
+  await page.evaluate(
+    () =>
+      new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      ),
+  );
+  const panned = await device.boundingBox(),
+    resized = await page.locator(".coach-map-canvas").boundingBox();
+  assert.ok(
+    panned &&
+      resized &&
+      Math.abs(panned.x + panned.width / 2 - resized.x - resized.width / 2) >
+        30,
+    "Resizing must not reapply an already completed location camera request",
+  );
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await controls.getByRole("link", { name: "Profiles", exact: true }).click();
+  await context.setGeolocation({
+    latitude: 52.51,
+    longitude: 13.45,
+    accuracy: 120,
+  });
+  report(
+    "one device marker remains geographically centred across repeated requests, hidden-map fitting and mode/history changes",
   );
   await profiles
     .getByRole("button", { name: "Save Near Coach", exact: true })
@@ -314,6 +457,7 @@ try {
     .click();
   await page.getByText("Nearest to Home", { exact: true }).waitFor();
   assert.doesNotMatch(page.url(), /Fixture|52\.51|13\.45/);
+  await expect(page.locator(".location-device-dot")).toHaveCount(0);
   await page.reload();
   await page
     .getByRole("button", { name: "Search near home", exact: true })
@@ -352,6 +496,7 @@ try {
   report(
     "a late device-location response cannot replace a newer Home selection",
   );
+  await expect(page.locator(".location-device-dot")).toHaveCount(0);
   assert.equal(addressReads, 0, "No address search without explicit action");
   await page
     .getByRole("button", { name: "Manage Home and Work locations" })
@@ -445,6 +590,72 @@ try {
   report(
     "desktop/tablet/375/320 bounds, keyboard and floating control placement",
   );
+  for (const width of [375, 320]) {
+    await page.setViewportSize({ width, height: 852 });
+    await page.goto(base + "/explore?view=list");
+    await page
+      .getByRole("button", { name: "Use current location", exact: true })
+      .focus();
+    await page.keyboard.press("Enter");
+    await expect(
+      page.getByText("Accuracy about 120 m", { exact: true }),
+    ).toBeVisible();
+    await floating.click();
+    await expect(device).toBeVisible();
+    await assertDeviceCentred();
+    const dot = await device.boundingBox(),
+      sheet = await page.locator(".explore-map-sheet").boundingBox();
+    assert.ok(
+      dot && sheet && dot.y + dot.height <= sheet.y,
+      "The device pin must be above the sheet",
+    );
+    await page.screenshot({
+      path: path.join(evidence, `device-${width}.png`),
+      fullPage: true,
+    });
+    await page.goto(base + "/explore?view=map");
+    await page
+      .getByRole("button", { name: "Use current location", exact: true })
+      .click();
+    await expect(
+      page.getByText("Accuracy about 120 m", { exact: true }),
+    ).toBeVisible();
+    await assertDeviceCentred();
+    await expect
+      .poll(async () => {
+        const action = await page
+            .locator(".explore-map-sheet")
+            .getByRole("link", { name: "View profile", exact: true })
+            .boundingBox(),
+          toggle = await floating.boundingBox();
+        return Boolean(
+          action && toggle && action.y + action.height <= toggle.y,
+        );
+      })
+      .toBe(true);
+    await page.locator(".explore-sheet-handle").click();
+    await expect(page.locator(".explore-sheet-handle")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    await floating.click();
+    await page
+      .getByRole("button", { name: "Use current location", exact: true })
+      .click();
+    await expect(
+      page.getByText("Accuracy about 120 m", { exact: true }),
+    ).toBeVisible();
+    await floating.click();
+    await expect(page.locator(".explore-sheet-handle")).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    await assertDeviceCentred();
+  }
+  report(
+    "Profiles-first keyboard location and visible centred mobile device markers at375/320",
+  );
+
   await page.setViewportSize({ width: 1440, height: 1040 });
   await page.goto(base + "/explore?view=map");
   await map.waitFor();
@@ -473,6 +684,13 @@ try {
   await page.getByText(/Map unavailable\. The same coach results/).waitFor();
   await profiles.waitFor();
   await expect(profiles.locator(".compact-coach-card.result")).toHaveCount(3);
+  await page
+    .getByRole("button", { name: "Use current location", exact: true })
+    .click();
+  await expect(
+    page.getByText("Nearest to Current location", { exact: true }),
+  ).toBeVisible();
+  await expect(device).toHaveCount(0);
   failMap = false;
   await page.getByRole("button", { name: "Retry map", exact: true }).click();
   await page.locator(".location-map-marker").first().waitFor();
@@ -489,8 +707,15 @@ try {
   await profiles
     .getByRole("button", { name: "Save Near Coach", exact: true })
     .click();
+  await page
+    .getByRole("button", { name: "Use current location", exact: true })
+    .click();
+  await controls.getByRole("link", { name: "Map", exact: true }).click();
+  await expect(device).toBeVisible();
+  await controls.getByRole("link", { name: "Profiles", exact: true }).click();
   viewer = "b";
   await page.getByRole("button", { name: "Fixture b", exact: true }).click();
+  await expect(device).toHaveCount(0);
   await profiles
     .getByRole("button", { name: "Save Near Coach", exact: true })
     .waitFor();
@@ -548,15 +773,68 @@ try {
     route.fulfill({ json: style }),
   );
   const deniedPage = await denied.newPage();
-  await deniedPage.goto(base + "/explore?view=map");
+  await deniedPage.goto(base + "/explore?view=list");
   await deniedPage
     .getByRole("button", { name: "Use current location", exact: true })
     .click();
   await deniedPage.getByText(/Location permission was denied/).waitFor();
-  await deniedPage.locator(".explore-floating-view").click();
-  await deniedPage.locator(".explore-profiles").waitFor();
+  await expect(deniedPage.locator(".explore-profiles")).toBeVisible();
+  await expect(deniedPage.locator(".location-device-dot")).toHaveCount(0);
   await denied.close();
   report("denied location permission retains normal profile discovery");
+  const invalid = await browser.newContext();
+  await invalid.route("https://tiles.openfreemap.org/**", (route) =>
+    route.fulfill({ json: style }),
+  );
+  await invalid.addInitScript(() => {
+    window.exploreCoordinates = {
+      latitude: NaN,
+      longitude: 13.45,
+      accuracy: 120,
+    };
+    Object.defineProperty(navigator, "geolocation", {
+      value: {
+        getCurrentPosition(success) {
+          success({ coords: window.exploreCoordinates });
+        },
+      },
+    });
+  });
+  const invalidPage = await invalid.newPage();
+  await invalidPage.goto(base + "/explore?view=list");
+  await invalidPage
+    .getByRole("button", { name: "Use current location", exact: true })
+    .click();
+  await expect(
+    invalidPage.getByText(/Your device returned an invalid location/),
+  ).toBeVisible();
+  await expect(
+    invalidPage.getByText("Nearest to Berlin centre", { exact: true }),
+  ).toBeVisible();
+  await expect(invalidPage.locator(".location-device-dot")).toHaveCount(0);
+  await invalidPage.evaluate(() => {
+    window.exploreCoordinates = {
+      latitude: 52.52,
+      longitude: 13.405,
+      accuracy: NaN,
+    };
+  });
+  await invalidPage
+    .getByRole("button", { name: "Use current location", exact: true })
+    .click();
+  await expect(
+    invalidPage.getByText("Accuracy unavailable", { exact: true }),
+  ).toBeVisible();
+  await invalidPage
+    .getByRole("navigation", { name: "Explore results view" })
+    .getByRole("link", { name: "Map", exact: true })
+    .click();
+  await expect(invalidPage.locator(".location-device-dot")).toBeVisible();
+  await expect(invalidPage.locator(".location-device-accuracy")).toBeHidden();
+  await invalid.close();
+  report(
+    "invalid coordinates never invent a point, and missing accuracy never invents an uncertainty area",
+  );
   const blocked = await browser.newContext();
   await blocked.addInitScript(() => {
     Storage.prototype.getItem = () => {
