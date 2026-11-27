@@ -1,79 +1,40 @@
+"use client";
+
 import Link from "next/link";
-import { Search, UserRoundSearch } from "lucide-react";
-import { MarketplaceHero } from "@/features/public/marketplace-hero";
+import { UserRoundSearch } from "lucide-react";
 import { type CoachDirectoryState } from "@/domain/coaches";
-import type { StaticImageData } from "next/image";
 import { CoachExploreResults } from "./coach-explore-results";
-import { PublicMarketplaceSearch } from "./public-marketplace-search";
+import { useActor } from "@/auth/client/actor-provider";
+import { useAuthSession } from "@/auth/client/session-provider";
+import type { LocationSearchConfiguration } from "@/location";
 import {
-  coachDirectoryHref,
-  type CoachExploreView,
-} from "./marketplace-search-contract";
+  explorePreferenceScope,
+  exploreVisitScope,
+} from "./explore-discovery-model";
+import { type CoachExploreView } from "./marketplace-search-contract";
 
 export function CoachDirectory({
   state,
-  background,
   view = "list",
   searchView = null,
+  locationSearchConfiguration = { status: "missing" },
 }: {
   state: CoachDirectoryState;
-  background: StaticImageData;
   view?: CoachExploreView;
   searchView?: CoachExploreView | null;
+  locationSearchConfiguration?: LocationSearchConfiguration;
 }) {
+  const { actor } = useActor();
+  const { session } = useAuthSession();
+  const scope = explorePreferenceScope(session, actor);
   return (
-    <div className="coach-discovery">
-      <MarketplaceHero
-        image={background}
-        alt="Two athletes greeting each other beside training sleds and ropes."
-        titleId="explore-hero-title"
-        className="marketplace-explore-hero"
-      >
-        <span>Find your discipline.</span> <span>Meet your coach.</span>
-      </MarketplaceHero>
-      <PublicMarketplaceSearch filters={state.filters} view={searchView} />
-      <div className="explore-directory-content">
-        {state.status === "unavailable" ? (
-          <section className="coach-directory-state" role="alert">
-            <UserRoundSearch size={29} aria-hidden="true" />
-            <h2>Coach discovery is temporarily unavailable.</h2>
-            <p>
-              Coach profiles could not be loaded. Please try your search again.
-            </p>
-            <Link
-              className="button secondary"
-              href={coachDirectoryHref(state.filters, {}, searchView)}
-            >
-              Try again
-            </Link>
-          </section>
-        ) : state.entries.length === 0 ? (
-          <section className="coach-directory-state">
-            <Search size={29} aria-hidden="true" />
-            <h2>No coaches match these filters.</h2>
-            <p>
-              Try another discipline or clear your filters to see all coaches.
-            </p>
-            <Link
-              className="button secondary"
-              href={coachDirectoryHref(
-                state.filters,
-                { query: "", discipline: null, location: "" },
-                searchView,
-              )}
-            >
-              Clear filters
-            </Link>
-          </section>
-        ) : (
-          <CoachExploreResults
-            entries={state.entries}
-            filters={state.filters}
-            view={view}
-          />
-        )}
-      </div>
-    </div>
+    <CoachExploreResults
+      key={exploreVisitScope(session, actor)}
+      state={state}
+      preferenceScope={scope}
+      requestedView={searchView ?? (view === "map" ? "map" : null)}
+      locationSearchConfiguration={locationSearchConfiguration}
+    />
   );
 }
 

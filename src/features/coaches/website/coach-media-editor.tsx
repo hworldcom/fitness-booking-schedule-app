@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useId, useRef, useState } from "react";
+import { useRefreshOnReturn } from "@/components/use-refresh-on-return";
 import { ArrowLeft, ArrowRight, Trash2, Upload } from "lucide-react";
 import { useActor } from "@/auth/client/actor-provider";
 import { useAuthSession } from "@/auth/client/session-provider";
@@ -59,6 +60,7 @@ function ScopedCoachMediaEditor({
     onChange?.(media);
   }, [media, onChange]);
   const [message, setMessage] = useState("");
+  const [needsReload, setNeedsReload] = useState(false);
   const [busy, setBusy] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [description, setDescription] = useState("");
@@ -116,6 +118,7 @@ function ScopedCoachMediaEditor({
             : "We couldn’t confirm this change. Reload media to check its saved state before retrying.",
       );
     const next = parseOwnedCoachMedia(value.media);
+    setNeedsReload(false);
     setMedia(next);
     return next;
   }
@@ -130,11 +133,25 @@ function ScopedCoachMediaEditor({
         request,
       );
       if (!disposed.current && request === fence.current) setMessage("");
-    } catch (error) {
-      if (!disposed.current && request === fence.current)
-        setMessage((error as Error).message);
+    } catch {
+      if (!disposed.current && request === fence.current) {
+        setNeedsReload(true);
+        setMessage("Training media could not be refreshed. Try again.");
+      }
     }
   }
+  useRefreshOnReturn(
+    () => void load(),
+    !!media &&
+      !busy &&
+      !dirty &&
+      !file &&
+      !replaceId &&
+      !pendingId &&
+      !videoId &&
+      !needsReload,
+  );
+
   function disposeTransfers() {
     disposed.current = true;
     fence.current++;
@@ -183,7 +200,10 @@ function ScopedCoachMediaEditor({
             : "Media draft updated.",
         );
     } catch (error) {
-      if (!disposed.current) setMessage((error as Error).message);
+      if (!disposed.current) {
+        setNeedsReload(true);
+        setMessage((error as Error).message);
+      }
     } finally {
       if (!disposed.current) setBusy(false);
     }
@@ -304,12 +324,14 @@ function ScopedCoachMediaEditor({
         }
       }
     } catch (error) {
-      if (current())
+      if (current()) {
+        setNeedsReload(true);
         setMessage(
           (error as Error).name === "AbortError"
             ? "Upload stopped. Reload media to check its state before retrying."
             : (error as Error).message,
         );
+      }
     } finally {
       if (current()) {
         cancelPromise.current = null;
@@ -347,18 +369,23 @@ function ScopedCoachMediaEditor({
             stay separate.
           </p>
         </div>
-        <button
-          type="button"
-          className="button secondary"
-          disabled={busy}
-          onClick={() => void load()}
-        >
-          Reload media
-        </button>
       </div>
       {message && (
         <p role="status" className="coach-media-notice">
           {message}
+          {needsReload && (
+            <>
+              {" "}
+              <button
+                type="button"
+                className="button secondary"
+                disabled={busy}
+                onClick={() => void load()}
+              >
+                Check saved media
+              </button>
+            </>
+          )}
         </p>
       )}
       {!media ? (

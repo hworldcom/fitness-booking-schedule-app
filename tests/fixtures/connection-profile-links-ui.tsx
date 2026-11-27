@@ -117,7 +117,6 @@ export default function ConnectionProfileLinksFixture() {
         pages={shown}
         busy={false}
         mayInitiate
-        onRefresh={() => setUnavailable(false)}
         onPage={() => setUnavailable(false)}
         onHistory={() => {}}
         renderHistory={() => null}

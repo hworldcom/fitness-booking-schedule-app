@@ -61,7 +61,7 @@ export async function rehearseExternalClients({
       name: "Refresh connections",
       exact: true,
     }),
-  ).toBeVisible();
+  ).toHaveCount(0);
   await athleteActions
     .getByRole("link", { name: "External athletes", exact: true })
     .click();

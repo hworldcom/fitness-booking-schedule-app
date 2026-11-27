@@ -581,7 +581,7 @@ export async function rehearseBookingRescheduling({
     ).toBeVisible();
     await expect(
       coach.page.getByRole("link", {
-        name: "Reload current details",
+        name: "Load latest changes",
         exact: true,
       }),
     ).toHaveAttribute("href", "/coach/sessions/" + bookingId);
@@ -595,7 +595,7 @@ export async function rehearseBookingRescheduling({
     );
     await coach.page.unroute(detailRoute);
     await coach.page
-      .getByRole("link", { name: "Reload current details", exact: true })
+      .getByRole("link", { name: "Load latest changes", exact: true })
       .click();
     await expect(
       coach.page.getByRole("heading", {

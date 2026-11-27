@@ -43,6 +43,7 @@ type BookingRow = Readonly<{
   coach_portrait_path: string | null;
   coach_portrait_updated_at: string | Date | null;
   client_profile_id: string | null;
+  external_client_id: string | null;
   client_display_name: string;
   client_avatar_updated_at: string | Date | null;
   status: string;
@@ -199,7 +200,18 @@ function mapBooking(row: BookingRow): PrivateBookingProjection {
           row.id,
           isoTimestamp(row.client_avatar_updated_at),
         ),
-    athleteProfileHref: accepted ? privateAthleteHref(accepted.pairId) : null,
+    ...(row.viewer_is_coach
+      ? { externalClientId: row.external_client_id }
+      : {}),
+    athleteProfileHref: row.viewer_is_coach
+      ? accepted
+        ? privateAthleteHref(accepted.pairId)
+        : row.external_client_id
+          ? `/coach/athletes/external/${row.external_client_id}`
+          : row.client_profile_id
+            ? `/members/${row.client_profile_id}`
+            : null
+      : null,
     status: row.status,
     scheduledStartAt,
     scheduledEndAt,
@@ -258,6 +270,9 @@ async function bookingRecords(
   transaction: ActorDatabaseTransaction,
   whereClause: ReturnType<typeof sql>,
 ) {
+  const [capability] = await transaction.execute<{ available: boolean }>(
+    sql`select to_regprocedure('app.current_owned_booking_external_client(uuid)') is not null as available`,
+  );
   const rows = await transaction.execute<BookingRow>(sql`
     select
       app.current_session_title_details(booking.id) as session_details,
@@ -274,6 +289,12 @@ async function bookingRecords(
       coach.portrait_path as coach_portrait_path,
       coach.portrait_updated_at as coach_portrait_updated_at,
       booking.client_profile_id,
+      ${
+        capability?.available
+          ? sql`case when booking.coach_profile_id::text = current_setting('app.current_profile_id', true)
+        then app.current_owned_booking_external_client(booking.id) else null end`
+          : sql`null::uuid`
+      } as external_client_id,
       booking.client_display_name,
       client_avatar.avatar_updated_at as client_avatar_updated_at,
       booking.status,

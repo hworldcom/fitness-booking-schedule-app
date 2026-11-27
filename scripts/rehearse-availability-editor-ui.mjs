@@ -312,7 +312,7 @@ try {
     "13:00",
   );
   await page
-    .getByRole("button", { name: "Reload saved version", exact: true })
+    .getByRole("button", { name: "Load latest changes", exact: true })
     .click();
   await dialog()
     .getByRole("button", { name: "Discard changes", exact: true })
@@ -376,7 +376,7 @@ try {
     "lost response retries the identical operation/payload; denied action clears private drafts",
   );
 
-  for (const width of [375, 430]) {
+  for (const width of [375, 430, 320]) {
     await page.setViewportSize({ width, height: 932 });
     await open();
     assert.equal(

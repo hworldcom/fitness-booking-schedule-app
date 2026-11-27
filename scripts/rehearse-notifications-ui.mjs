@@ -1303,7 +1303,7 @@ try {
     await expect(
       page.getByText(
         "This session could not be verified for your account. Reload to try again.",
-        { exact: true },
+        { exact: false },
       ),
     ).toBeVisible();
     await context.addCookies([

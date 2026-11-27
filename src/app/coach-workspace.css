@@ -5,6 +5,52 @@
   margin: 0 auto;
 }
 
+.coach-client-external-label {
+  display: inline-flex;
+  padding: 4px 8px;
+  border-radius: 7px;
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.coach-athletes-workspace .coach-workspace-header {
+  align-items: center;
+  gap: 12px;
+}
+.coach-athletes-workspace .coach-workspace-header h1 {
+  margin: 7px 0 0;
+  font-size: clamp(26px, 3vw, 38px);
+  line-height: 1.2;
+}
+.coach-athletes-workspace .coach-workspace-header-actions {
+  width: auto;
+}
+@media (max-width: 650px) {
+  .coach-athletes-workspace .coach-workspace-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+  .coach-athletes-workspace .coach-workspace-header-actions .button {
+    padding: 10px 12px;
+    font-size: 12px;
+    gap: 6px;
+  }
+  .coach-athletes-workspace .workspace-section-navigation {
+    gap: 7px;
+  }
+  .coach-athletes-workspace .workspace-section-navigation > a {
+    padding: 10px;
+    gap: 6px;
+    font-size: 12px;
+  }
+  .coach-athletes-workspace .workspace-section-navigation > a > svg {
+    display: none;
+  }
+}
+
 .coach-workspace-header {
   display: flex;
   align-items: flex-end;

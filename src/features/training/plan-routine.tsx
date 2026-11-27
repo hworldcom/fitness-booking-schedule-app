@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useRefreshOnReturn } from "@/components/use-refresh-on-return";
 import { ArrowLeft, ArrowRight, Clock3, Plus, Trash2 } from "lucide-react";
 import { Modal } from "@/components/ui";
 import {
@@ -45,6 +46,10 @@ export function PlanRoutine({
     weekly: boolean;
   } | null>(null);
   const [removing, setRemoving] = useState<TrainingItem | null>(null);
+  useRefreshOnReturn(
+    workspace.refresh,
+    workspace.visible && !paused && !editor && !removing,
+  );
   const period = calendarPeriod(date, "week");
   function save(command: TrainingCommand) {
     return workspace.save(command, () => {
@@ -129,13 +134,6 @@ export function PlanRoutine({
             <ArrowRight size={16} aria-hidden="true" />
           </Link>
         </nav>
-        <button
-          className="routine-text-button"
-          disabled={busy || !!pending}
-          onClick={workspace.refresh}
-        >
-          Reload saved version
-        </button>
       </div>
       <form
         className="routine-settings"

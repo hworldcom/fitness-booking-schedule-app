@@ -72,6 +72,12 @@ export async function mutateConnectionAction(
 ): Promise<ConnectionActionState> {
   if (!(form instanceof FormData))
     return state("invalid", "Choose a valid connection action.");
+  const ownerScope = form.get("ownerScope");
+  if (
+    ownerScope !== null &&
+    (typeof ownerScope !== "string" || !ownerScope || ownerScope.length > 180)
+  )
+    return state("invalid", "Choose a valid coach account.");
   const action = form.get("intent");
   let result;
   if (action === "send") {
@@ -82,11 +88,13 @@ export async function mutateConnectionAction(
       String(form.get("bookingId") ?? ""),
       String(form.get("operationId") ?? ""),
       previous || null,
+      ownerScope ?? undefined,
     );
   } else if (isConnectionDecision(action)) {
     result = await decideCoachAthleteConnection(
       String(form.get("connectionId") ?? ""),
       action,
+      ownerScope ?? undefined,
     );
   } else return state("invalid", "Choose a valid connection action.");
   if (result.status !== "ready") {

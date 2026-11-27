@@ -541,7 +541,9 @@ try {
     "Unsaved reviewed change",
   );
   cp.once("dialog", (dialog) => dialog.accept());
-  await cp.getByRole("button", { name: "Reload catalog", exact: true }).click();
+  await cp
+    .getByRole("button", { name: "Load latest changes", exact: true })
+    .click();
   await expect(
     cp.getByRole("heading", { name: privateType.name, exact: true }),
   ).toBeVisible();

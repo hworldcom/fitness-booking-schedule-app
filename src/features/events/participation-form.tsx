@@ -3,11 +3,7 @@ import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import type { GroupRegistration, GroupSession } from "@/domain/group-sessions";
 import { submitGroupParticipationAction } from "@/app/events/actions";
-import {
-  eventHref,
-  registrationStatus,
-  unavailableJoinReason,
-} from "./event-contract";
+import { registrationStatus, unavailableJoinReason } from "./event-contract";
 
 export function ParticipationForm({
   session,
@@ -22,7 +18,6 @@ export function ParticipationForm({
   joinId: string;
   history?: boolean;
 }) {
-  const permalink = eventHref(session);
   const active =
     registration?.status === "active" || registration?.status === "pending";
   const mayWithdraw = active && registration.canWithdraw;
@@ -95,11 +90,6 @@ export function ParticipationForm({
           <input type="hidden" name="actorScope" value={scope} />
           <ParticipationButton withdraw={!!mayWithdraw} />
         </form>
-      )}
-      {!history && (
-        <p>
-          <a href={permalink}>Refresh session status</a>
-        </p>
       )}
       {!history && (
         <Link href="/sessions/groups" className="event-history-link">

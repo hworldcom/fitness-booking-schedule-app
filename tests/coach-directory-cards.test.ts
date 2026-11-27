@@ -41,6 +41,32 @@ const render = (
     }),
   );
 
+test("Group discovery keeps the coach identity and reviews without implying private-session rates or times are group offers", () => {
+  const value = {
+    ...entry,
+    todaySlots: directoryEntry(1, "Public Coach", { withAvailability: true })
+      .todaySlots,
+  };
+  const html = renderToStaticMarkup(
+    createElement(CompactCoachCard, {
+      entry: value,
+      variant: "result",
+      formatLabel: "Published group sessions",
+      hidePrivateSessionDetails: true,
+    }),
+  );
+  assert.match(html, /Published group sessions/);
+  assert.match(html, /4.5 out of 5 from 2 reviews/);
+  assert.match(html, /href="\/@public_coach"/);
+  assert.doesNotMatch(
+    html,
+    /Sessions start from|coach-today-availability|open time/,
+  );
+  const privateHtml = render(value, "result");
+  assert.match(privateHtml, /Sessions start from €60.50/);
+  assert.match(privateHtml, /coach-today-availability/);
+});
+
 test("all public card consumers use saved content, public rates, pair summaries and canonical links", () => {
   for (const variant of ["marketplace", "result", "preview"] as const) {
     const html = render(entry, variant);

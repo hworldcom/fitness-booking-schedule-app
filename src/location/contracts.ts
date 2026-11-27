@@ -45,6 +45,28 @@ export type LocationMapPoint = Readonly<{
   }>;
 }>;
 
+export type LocationMapViewport = Readonly<{
+  latitude: number;
+  longitude: number;
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+}>;
+export type LocationMapCamera = Readonly<{
+  latitude: number;
+  longitude: number;
+  zoom: number;
+  revision: number;
+  accuracyMeters?: number | null;
+}>;
+
+export type LocationDevicePosition = Readonly<{
+  latitude: number;
+  longitude: number;
+  accuracyMeters: number | null;
+}>;
+
 export type LocationSearchFailure =
   "configuration" | "quota" | "provider" | "response";
 

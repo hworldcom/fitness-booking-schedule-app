@@ -64,7 +64,7 @@ test("mobile Explore view state is bounded and defaults safely to list", () => {
   assert.equal(canonicalCoachExploreView({ view: "grid" }), null);
 });
 
-test("canonical search rejects blank, repeated, legacy and unknown parameters", () => {
+test("canonical search rejects blank, repeated scalar, legacy and unknown parameters", () => {
   assert.equal(
     isCanonicalCoachDirectorySearch(
       {
@@ -117,7 +117,7 @@ test("canonical search rejects blank, repeated, legacy and unknown parameters", 
   );
 });
 
-test("shared search renders one GET contract and supported discipline links", () => {
+test("Explore search renders one GET contract and selected native category checkboxes", () => {
   const html = renderToStaticMarkup(
     createElement(PublicMarketplaceSearch, { filters: FILTERS }),
   );
@@ -131,30 +131,27 @@ test("shared search renders one GET contract and supported discipline links", ()
     /<form[^>]*>[\s\S]*<input[^>]*id="explore-query"[^>]*name="q"[\s\S]*<\/form>/,
   );
   assert.equal([...html.matchAll(/name="q"/g)].length, 1);
-  assert.match(html, /type="hidden" name="discipline" value="Muay Thai"/);
+  assert.ok(
+    [...html.matchAll(/<input[^>]*>/g)].some(
+      ([input]) =>
+        input.includes('value="Muay Thai"') && input.includes('checked=""'),
+    ),
+  );
   assert.doesNotMatch(
     html,
     /id="explore-discipline"|<datalist|explore-query-refinement/,
   );
   assert.match(html, /name="discipline"/);
   assert.match(html, /name="location"/);
-  assert.match(html, /aria-label="Browse coaches by discipline"/);
-  const disciplineLinks = [
-    ...html.matchAll(/<a[^>]*class="([^"]*)"[^>]*>/g),
-  ].filter(([, classes]) =>
-    classes.split(/\s+/).includes("home-discipline-shortcut"),
-  );
-  assert.equal(disciplineLinks.length, COACH_DISCIPLINES.length + 1);
-  assert.match(html, /aria-current="page"[^>]*>[\s\S]*?Muay Thai/);
-  assert.match(
-    html,
-    /href="\/explore\?q=patient\+footwork&amp;discipline=Boxing&amp;location=Kreuzberg"/,
-  );
+  for (const discipline of COACH_DISCIPLINES)
+    assert.ok(html.includes(`value="${discipline}"`));
+  assert.match(html, /name="session"/);
+  assert.doesNotMatch(html, /home-discipline-shortcut/);
   assert.doesNotMatch(html, /name="service"/);
   assert.doesNotMatch(html, /name="when"|price|rating|distance/i);
 });
 
-test("Explore has one coach/focus search and no empty hidden discipline", () => {
+test("Explore has one coach/focus search and all categories when no checkbox is selected", () => {
   const html = renderToStaticMarkup(
     createElement(PublicMarketplaceSearch, {
       filters: normalizeCoachDirectoryFilters({
@@ -167,9 +164,10 @@ test("Explore has one coach/focus search and no empty hidden discipline", () => 
   assert.match(html, /name="q"[^>]*value="footwork"/);
   assert.match(html, /name="location"[^>]*value="Berlin"/);
   assert.match(html, /Search coach or focus/);
-  assert.doesNotMatch(
-    html,
-    /name="discipline"|id="explore-discipline"|<datalist/,
+  assert.doesNotMatch(html, /type="hidden" name="discipline"|<datalist/);
+  assert.equal(
+    [...html.matchAll(/<input[^>]*type="checkbox"[^>]*checked=""/g)].length,
+    0,
   );
   assert.match(html, /href="\/explore"/);
 });
@@ -210,7 +208,7 @@ test("Explore typed disciplines use Home's aliases without accepting unsupported
   }
 });
 
-test("Explore's search, clear and discipline navigation retain explicit mobile view and applied filters", () => {
+test("Explore's search and clear retain the explicit view and applied category", () => {
   for (const view of ["list", "map"] as const) {
     const html = renderToStaticMarkup(
       createElement(PublicMarketplaceSearch, { filters: FILTERS, view }),
@@ -218,12 +216,58 @@ test("Explore's search, clear and discipline navigation retain explicit mobile v
     assert.match(html, new RegExp('name="view"[^>]*value="' + view + '"'));
     assert.ok(html.includes('href="/explore?view=' + view + '"'));
     assert.ok(
-      html.includes(
-        'href="/explore?q=patient+footwork&amp;discipline=Boxing&amp;location=Kreuzberg&amp;view=' +
-          view +
-          '"',
+      [...html.matchAll(/<input[^>]*>/g)].some(
+        ([input]) =>
+          input.includes('value="Muay Thai"') && input.includes('checked=""'),
       ),
     );
     assert.doesNotMatch(html, /id="home-discipline"|name="page"/);
   }
+});
+
+test("session and saved filters are canonical, bounded and preserved by view URLs", () => {
+  const filters = normalizeCoachExploreFilters({
+    q: "coach",
+    session: "group",
+    saved: "1",
+  });
+  assert.equal(
+    coachDirectoryHref(filters, {}, "map"),
+    "/explore?q=coach&session=group&saved=1&view=map",
+  );
+  assert.equal(
+    coachDirectoryHref(
+      filters,
+      { sessionFormat: null, savedOnly: false },
+      "list",
+    ),
+    "/explore?q=coach&view=list",
+  );
+  assert.equal(
+    isCanonicalCoachDirectorySearch(
+      { q: "coach", session: "group", saved: "1", view: "map" },
+      filters,
+      "map",
+    ),
+    true,
+  );
+  for (const search of [
+    { session: "anything" },
+    { session: ["private", "group"] },
+    { saved: "false" },
+    { saved: ["1", "1"] },
+  ])
+    assert.equal(
+      isCanonicalCoachDirectorySearch(
+        search,
+        normalizeCoachExploreFilters(search),
+      ),
+      false,
+    );
+  const html = renderToStaticMarkup(
+    createElement(PublicMarketplaceSearch, { filters, view: "map" }),
+  );
+  assert.match(html, /<option value="group" selected="">Group/);
+  assert.match(html, /name="saved" value="1"/);
+  assert.match(html, /href="\/explore\?view=map"/);
 });

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { returnToVisiblePage } from "./lib/browser-visibility.mjs";
 import { mkdir } from "node:fs/promises";
 import { chromium, expect as defaultExpect, type Page } from "@playwright/test";
 import sharp from "sharp";
@@ -56,12 +57,11 @@ async function openConnectionList(page: Page) {
 }
 async function refresh(page: Page) {
   await openConnectionList(page);
-  await page
-    .getByRole("button", { name: "Refresh connections", exact: true })
-    .click();
-  await expect(
-    page.getByRole("button", { name: "Refresh connections", exact: true }),
-  ).toBeEnabled();
+  await returnToVisiblePage(page);
+  await expect(page.locator(".coach-connections-workspace")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
 }
 async function sendThrough(page: Page, id: string, role: "athlete" | "coach") {
   if (role === "athlete" && new URL(page.url()).pathname !== "/sessions")
@@ -73,10 +73,7 @@ async function sendThrough(page: Page, id: string, role: "athlete" | "coach") {
     exact: true,
   });
   if (await options.count()) await options.click();
-  else
-    await session
-      .getByRole("button", { name: "Refresh connection status", exact: true })
-      .click();
+  else await returnToVisiblePage(page);
   await session
     .getByRole("button", {
       name: /^(Send connection request|Request reconnection)$/,
@@ -88,9 +85,10 @@ async function sendThrough(page: Page, id: string, role: "athlete" | "coach") {
   await openConnectionList(page);
   if (role === "athlete")
     await page.goto(base + "/my-coaches?section=requests");
-  await expect(
-    page.getByRole("button", { name: "Refresh connections", exact: true }),
-  ).toBeEnabled();
+  await expect(page.locator(".coach-connections-workspace")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
 }
 async function acceptThrough(page: Page, id: string) {
   if (new URL(page.url()).pathname === "/my-coaches")
@@ -102,9 +100,10 @@ async function acceptThrough(page: Page, id: string) {
     .getByRole("button", { name: "Accept connection", exact: true })
     .click();
   await expect(feedback(page)).toHaveText("Connected.");
-  await expect(
-    page.getByRole("button", { name: "Refresh connections", exact: true }),
-  ).toBeEnabled();
+  await expect(page.locator(".coach-connections-workspace")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
 }
 async function disconnectThrough(page: Page, id: string) {
   if (
@@ -133,9 +132,10 @@ async function disconnectThrough(page: Page, id: string) {
     "Disconnected. Shared history is retained.",
   );
   await expect(feedback(page)).toBeFocused();
-  await expect(
-    page.getByRole("button", { name: "Refresh connections", exact: true }),
-  ).toBeEnabled();
+  await expect(page.locator(".coach-connections-workspace")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
   await expect(
     card(page, id).getByRole("button", { name: "View shared history" }),
   ).toHaveCount(0);
@@ -309,11 +309,8 @@ try {
     );
     await openConnectionList(athletePage);
     await expect(
-      athletePage.getByRole("button", {
-        name: "Refresh connections",
-        exact: true,
-      }),
-    ).toBeEnabled();
+      athletePage.locator(".coach-connections-workspace"),
+    ).toHaveAttribute("aria-busy", "false");
     assert.equal(bodies.length, 2);
     assert.deepEqual(
       bodies[0],
@@ -340,11 +337,8 @@ try {
       "Connection request withdrawn.",
     );
     await expect(
-      athletePage.getByRole("button", {
-        name: "Refresh connections",
-        exact: true,
-      }),
-    ).toBeEnabled();
+      athletePage.locator(".coach-connections-workspace"),
+    ).toHaveAttribute("aria-busy", "false");
     await sendThrough(athletePage, main.bookingId, "athlete");
     first = (await context(athlete, main.bookingId)).connection;
     assert.ok(first);

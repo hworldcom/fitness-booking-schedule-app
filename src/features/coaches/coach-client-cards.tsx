@@ -136,6 +136,11 @@ export function CoachClientCards({
                       {booking.location.publicLabel}
                     </span>
                   </AthleteIdentity>
+                  {!booking.clientProfileId && (
+                    <span className="coach-client-external-label">
+                      External athlete
+                    </span>
+                  )}
                 </header>
                 {booking.sessionType && (
                   <p>

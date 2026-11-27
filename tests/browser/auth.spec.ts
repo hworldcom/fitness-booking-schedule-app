@@ -55,7 +55,7 @@ test("password-first entry offers registration and recovery while public browsin
   await page
     .getByRole("link", { name: "Browse coaches without signing in" })
     .click();
-  await expect(page).toHaveURL(/\/explore$/);
+  await expect(page).toHaveURL(/\/explore(?:\?view=(?:list|map))?$/);
   expect(identityRequests).toBe(0);
 });
 

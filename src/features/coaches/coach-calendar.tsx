@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useRefreshOnReturn } from "@/components/use-refresh-on-return";
 import { accountSectionHref } from "@/account/sections";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -254,13 +255,19 @@ export function CoachCalendar({
   const [stale, setStale] = useState(false);
   const [selected, setSelected] = useState<CalendarItem | null>(null);
   const feedback = useRef<HTMLParagraphElement>(null);
+  const focusFeedback = useRef(true);
+  useRefreshOnReturn(
+    () => void read(false, true),
+    !busy && !!data && !selected,
+  );
   useEffect(() => {
-    if (message) feedback.current?.focus();
+    if (message && focusFeedback.current) feedback.current?.focus();
   }, [message]);
   const period = calendarPeriod(selection);
   const dates = calendarDates(period.from, period.through);
-  async function read(more = false) {
+  async function read(more = false, background = false) {
     if (busy || !data) return;
+    focusFeedback.current = !background;
     setBusy(true);
     setMessage(null);
     try {
@@ -468,9 +475,6 @@ export function CoachCalendar({
           Private session <span className="coach-calendar-dot group" />
           Group
         </p>
-        <button type="button" disabled={busy} onClick={() => void read()}>
-          Reload calendar
-        </button>
       </div>
       {message && (
         <p
@@ -479,7 +483,15 @@ export function CoachCalendar({
           tabIndex={-1}
           role="alert"
         >
-          {message}
+          {message}{" "}
+          <button
+            type="button"
+            className="button secondary"
+            disabled={busy}
+            onClick={() => void read()}
+          >
+            {stale ? "Load latest changes" : "Try again"}
+          </button>
         </p>
       )}
       {!data.mayEditAvailability && (

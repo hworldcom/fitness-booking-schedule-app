@@ -28,7 +28,7 @@ function renderWorkspace(props: Parameters<typeof CoachAthletesWorkspace>[0]) {
   );
 }
 
-test("My athletes defaults safely to connected; only a single explicit requests value selects requests", () => {
+test("My athletes keeps its legacy default key for All athletes; only explicit requests selects requests", () => {
   assert.equal(coachAthletesSection("requests"), "requests");
   for (const value of [
     undefined,
@@ -61,22 +61,17 @@ test("My athletes sections preserve URLs, one page heading/current tab and pendi
     const html = renderWorkspace({ active });
     assert.deepEqual(
       [...html.matchAll(/href="([^"]+)"/g)].map((x) => x[1]),
-      [
-        "/coach/athletes",
-        "/coach/athletes/external",
-        "/coach/athletes?section=requests",
-      ],
+      ["/coach/athletes", "/coach/athletes?section=requests"],
     );
     assert.equal((html.match(/aria-current="page"/g) ?? []).length, 1);
     assert.equal((html.match(/<h1>/g) ?? []).length, 1);
-    assert.ok(
-      html.indexOf("Connected athletes") < html.indexOf("External athletes"),
-    );
+    assert.ok(html.includes("All athletes"));
+    assert.doesNotMatch(html, /Connected athletes|>External athletes</);
   }
   const blocked = renderWorkspace({
     active: "external",
     navigationDisabled: true,
   });
-  assert.equal((blocked.match(/aria-disabled="true"/g) ?? []).length, 3);
-  assert.equal((blocked.match(/tabindex="-1"/g) ?? []).length, 3);
+  assert.equal((blocked.match(/aria-disabled="true"/g) ?? []).length, 2);
+  assert.equal((blocked.match(/tabindex="-1"/g) ?? []).length, 2);
 });

@@ -1,5 +1,6 @@
 // Actual route/components with isolated Auth/service/API fixtures; no .env, SQL or hosted writes.
 import assert from "node:assert/strict";
+import { returnToVisiblePage } from "./lib/browser-visibility.mjs";
 import { spawn } from "node:child_process";
 import {
   cp,
@@ -14,7 +15,8 @@ import path from "node:path";
 import { tmpdir } from "node:os";
 import { chromium, expect } from "@playwright/test";
 
-const countsOnly = process.argv.includes("--connection-counts");
+const refreshOnly = process.argv.includes("--refresh-recovery");
+const countsOnly = process.argv.includes("--connection-counts") || refreshOnly;
 const myCoachesOnly = process.argv.includes("--my-coaches") || countsOnly;
 const root = process.cwd(),
   port = 3196,
@@ -146,6 +148,7 @@ try {
     export async function currentConnectionPage(role:any,section:any,options:any={}){const {fault}=await fixtureScenario();if(fault==="connections-unavailable"||(fault==="incoming-unavailable"&&section==="incoming")||(fault==="connection-page-unavailable"&&options.cursor))return {status:"unavailable"};const all=await rows();if(section==="accepted"&&options.cursor)return {status:"ready",value:{items:[all.row(2,"accepted","Older connected athlete")],nextCursor:null}};return {status:"ready",value:{items:all[section as keyof typeof all],nextCursor:section==="accepted"?{createdAt:"2026-11-01T10:00:00Z",id:uuid(1)}:null}};}
     export async function decideCoachAthleteConnection(id:string,action:string){const {fault}=await fixtureScenario();if(fault==="connection-mutation-unavailable")return {status:"unavailable"};const jar=await cookies();if(action==="disconnect")jar.set("mov210-disconnected","yes");else if(action==="withdraw")jar.set("mov210-withdrawn","yes");else jar.set("mov210-incoming",action);if(fault==="connection-mutation-lost")return {status:"unavailable"};const data=await rows();return {status:"ready",value:data.row(id===uuid(1)?1:id===uuid(12)?12:11,action==="accept"?"accepted":action==="disconnect"?"removed":action==="withdraw"?"withdrawn":"declined","Incoming fixture athlete")};}
     export async function sendCoachAthleteConnection(){throw Error("Not rehearsed");}
+    export async function currentCoachAthletes(){return {status:"unavailable"};}
     export async function currentConnectionHistory(){return {status:"ready",value:{items:[],nextCursor:null}};}
     export async function currentBookingConnectionContext(){return {status:"unavailable"};}
   `,
@@ -179,11 +182,21 @@ try {
     path.join(checkout, "src/app/api/auth/session/route.ts"),
     `import{initialAuthorizationState}from"@/tests-fixtures/schedule-auth";export async function GET(){return Response.json((await initialAuthorizationState()).session,{headers:{"cache-control":"private, no-store"}})}`,
   );
+  for (const route of [
+    "src/app/api/messages/route.ts",
+    "src/app/api/notifications/route.ts",
+  ]) {
+    await writeFile(
+      path.join(checkout, route),
+      'export async function GET(){return Response.json({status:"unavailable"},{status:503,headers:{"cache-control":"private, no-store"}})}',
+    );
+  }
   for (const name of [
     "src/app/coach/page.tsx",
     "src/app/coach/workspace-page.tsx",
     "src/app/coach-marketplace-actions.ts",
     "src/app/coach/athletes/page.tsx",
+    "src/app/coach/athletes/actions.ts",
     "src/app/my-coaches/page.tsx",
     "src/app/connections/actions.ts",
     "src/app/api/connections/pending-count/route.ts",
@@ -228,10 +241,15 @@ try {
         : source;
     await writeFile(
       file,
-      myCoachesSource.replaceAll(
-        'from "@/server/connections/service"',
-        'from "@/tests-fixtures/connection-services"',
-      ),
+      myCoachesSource
+        .replaceAll(
+          'from "@/server/connections/coach-athletes-service"',
+          'from "@/tests-fixtures/connection-services"',
+        )
+        .replaceAll(
+          'from "@/server/connections/service"',
+          'from "@/tests-fixtures/connection-services"',
+        ),
     );
   }
   await writeFile(
@@ -320,7 +338,9 @@ try {
     createdAt: "2026-11-01T12:00:00Z",
     updatedAt: "2026-11-01T12:00:00Z",
   };
-  let rosterMode = "off";
+  let rosterMode = "off",
+    catalogReads = 0;
+  const catalogCommands = [];
   let failCatalog = false,
     failOptions = false,
     emptyClients = false,
@@ -380,11 +400,19 @@ try {
             : { status: "unavailable" },
       });
     }
+    if (
+      url.pathname === "/api/coach/session-types" &&
+      request.method() === "POST"
+    ) {
+      catalogCommands.push(request.postDataJSON());
+      return route.fulfill({ status: 503, json: { status: "unavailable" } });
+    }
     if (request.method() !== "GET") {
       writes.push(url.pathname);
       return route.fulfill({ status: 503, json: { status: "unavailable" } });
     }
-    if (url.pathname === "/api/coach/session-types")
+    if (url.pathname === "/api/coach/session-types") {
+      catalogReads++;
       return route.fulfill({
         json: failCatalog
           ? { status: "unavailable" }
@@ -394,6 +422,7 @@ try {
               locations: [{ id, name: "Fixture studio" }],
             },
       });
+    }
     if (url.pathname === "/api/session-bookings") {
       if (!url.searchParams.has("options"))
         return route.fulfill({ status: 503, json: { status: "unavailable" } });
@@ -434,6 +463,75 @@ try {
     page
       .getByRole("button", { name: "Refresh fixture account", exact: true })
       .click();
+  if (refreshOnly) {
+    await cookie();
+    for (const width of [1440, 375, 320]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await open("/coach/session-types");
+      const create = page.getByRole("button", {
+        name: "Create session type",
+        exact: true,
+      });
+      await expect(create).toBeEnabled();
+      await expect(
+        page.getByRole("button", { name: "Reload catalog", exact: true }),
+      ).toHaveCount(0);
+      const beforeReturn = catalogReads,
+        beforeWrites = catalogCommands.length;
+      await returnToVisiblePage(page);
+      await expect.poll(() => catalogReads).toBe(beforeReturn + 1);
+      await expect(create).toBeEnabled();
+      assert.equal(catalogCommands.length, beforeWrites);
+      await create.click();
+      await page
+        .getByLabel("Name", { exact: true })
+        .fill("Retained catalog draft");
+      const drafting = catalogReads;
+      await returnToVisiblePage(page);
+      await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
+        "Retained catalog draft",
+      );
+      assert.equal(catalogReads, drafting);
+      await page
+        .getByRole("button", { name: "Save type", exact: true })
+        .click();
+      await expect(
+        page.getByRole("button", { name: "Retry the same save", exact: true }),
+      ).toBeVisible();
+      const unknown = catalogCommands.at(-1),
+        pendingReads = catalogReads;
+      await returnToVisiblePage(page);
+      assert.equal(catalogReads, pendingReads);
+      await page
+        .getByRole("button", { name: "Retry the same save", exact: true })
+        .click();
+      await expect.poll(() => catalogCommands.length).toBe(beforeWrites + 2);
+      assert.deepEqual(catalogCommands.at(-1), unknown);
+      failCatalog = true;
+      await open("/coach/session-types");
+      await expect(
+        page.getByRole("button", { name: "Try again", exact: true }),
+      ).toBeVisible();
+      failCatalog = false;
+      await page
+        .getByRole("button", { name: "Try again", exact: true })
+        .click();
+      await expect(create).toBeEnabled();
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        true,
+      );
+      await page.screenshot({
+        path: path.join(output, `catalog-refresh-${width}.png`),
+      });
+      record(
+        `${width}px catalog: no normal reload, one return GET, retained draft/unknown command and contextual failed-read retry`,
+      );
+    }
+    assert.equal(catalogCommands.length, 6);
+  }
   if (!myCoachesOnly) {
     const tabs = [
       ["Schedule", "/coach?view=schedule&section=calendar"],
@@ -794,15 +892,21 @@ try {
     failCatalog = true;
     await open(tabs[2][1]);
     await expect(
-      page.getByText(
-        "We couldn’t verify the save. Retry the same action or reload to check.",
-        { exact: true },
-      ),
+      page.getByText("Session types could not be loaded. Try again.", {
+        exact: true,
+      }),
     ).toBeVisible();
     await expect(nav()).toBeVisible();
     failCatalog = false;
+    await page.getByRole("button", { name: "Try again", exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: "Create session type", exact: true }),
+    ).toBeEnabled();
+    await expect(
+      page.getByRole("button", { name: "Reload catalog", exact: true }),
+    ).toHaveCount(0);
     record(
-      "catalog/options errors retain shared navigation and truthful recovery states",
+      "catalog/options errors retain shared navigation and contextual retry restores the catalog",
     );
     await open(tabs[2][1]);
     await page
@@ -811,6 +915,10 @@ try {
     await page
       .getByLabel("Name", { exact: true })
       .fill("Retained layout draft");
+    await returnToVisiblePage(page);
+    await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
+      "Retained layout draft",
+    );
     await cookie("owner", "checking");
     await refresh();
     await expect(
@@ -897,268 +1005,18 @@ try {
       ).toBeVisible();
     }
 
-    const athletesNav = () =>
-      page.getByRole("navigation", {
-        name: "My athletes sections",
-        exact: true,
-      });
-    const athleteTabs = [
-      ["Connected athletes", "/coach/athletes"],
-      ["External athletes", "/coach/athletes/external"],
-      ["Connection requests", "/coach/athletes?section=requests"],
-    ];
-    rosterMode = "ready";
-    for (const width of [1440, 375, 320]) {
-      await cookie();
-      await page.context().clearCookies({ name: /^mov210-/ });
-      await page.setViewportSize({ width, height: 1000 });
-      await open(athleteTabs[0][1]);
-      let reference;
-      for (const [index, [name, href]] of athleteTabs.entries()) {
-        if (index) {
-          await athletesNav()
-            .getByRole("link", {
-              name:
-                name === "Connection requests" ? /^Connection requests,/ : name,
-              exact: true,
-            })
-            .focus();
-          await page.keyboard.press("Enter");
-          await page.waitForURL(base + href);
-        }
-        await expect(
-          athletesNav().locator('[aria-current="page"]'),
-        ).toHaveCount(1);
-        await expect(
-          athletesNav().getByRole("link", {
-            name:
-              name === "Connection requests" ? /^Connection requests,/ : name,
-            exact: true,
-          }),
-        ).toHaveAttribute("aria-current", "page");
-        await expect(
-          page.getByRole("heading", {
-            name: "My athletes",
-            level: 1,
-            exact: true,
-          }),
-        ).toBeVisible();
-        assert.equal(await page.locator("main h1").count(), 1);
-        await expect(
-          page
-            .getByRole("navigation", {
-              name: width > 760 ? "Main navigation" : "Mobile navigation",
-              exact: true,
-            })
-            .getByRole("link", { name: "My athletes", exact: true }),
-        ).toHaveAttribute("aria-current", "page");
-        const frame = await page
-          .locator(".coach-workspace-header")
-          .boundingBox();
-        assert.ok(frame);
-        if (reference)
-          for (const key of ["x", "y", "width", "height"])
-            assert.ok(
-              Math.abs(frame[key] - reference[key]) < 1,
-              `${width} ${name} frame ${key}`,
-            );
-        reference = frame;
-        if (index === 0) {
-          await expect(
-            page.getByText("Connected fixture athlete", { exact: true }),
-          ).toBeVisible();
-          await expect(
-            page.getByText("Incoming fixture athlete", { exact: true }),
-          ).toHaveCount(0);
-        }
-        if (index === 1) {
-          await expect(
-            page.getByRole("button", { name: "Save athlete", exact: true }),
-          ).toBeVisible();
-          await expect(page.locator("#my-athletes")).toHaveCount(0);
-        }
-        if (index === 2) {
-          for (const text of [
-            "Incoming fixture athlete",
-            "Outgoing fixture athlete",
-            "Previous fixture athlete",
-          ])
-            await expect(page.getByText(text, { exact: true })).toBeVisible();
-          await expect(
-            page.getByText("Connected fixture athlete", { exact: true }),
-          ).toHaveCount(0);
-        }
-        assert.ok(
-          await page.evaluate(
-            () => document.documentElement.scrollWidth <= innerWidth,
-          ),
-        );
-        await page.screenshot({
-          path: path.join(output, `${width}-athletes-${index}.png`),
-          fullPage: true,
-        });
-      }
-      await page.goBack({ waitUntil: "networkidle" });
-      await expect(
-        athletesNav().getByRole("link", {
-          name: "External athletes",
-          exact: true,
-        }),
-      ).toHaveAttribute("aria-current", "page");
-      await page.goForward({ waitUntil: "networkidle" });
-      await expect(
-        athletesNav().getByRole("link", {
-          name: /^Connection requests,/,
-          exact: true,
-        }),
-      ).toHaveAttribute("aria-current", "page");
-      record(
-        `${width}px My athletes ordered tabs/default, matching frame, one H1/panel/primary, keyboard/history/overflow`,
-      );
-    }
-    await open(athleteTabs[0][1]);
-    await page
-      .getByRole("button", { name: "Load more athletes", exact: true })
-      .click();
-    await expect(
-      page.getByText("Older connected athlete", { exact: true }),
-    ).toBeVisible();
-    await cookie("owner", "incoming-unavailable");
-    await open(athleteTabs[2][1]);
-    await expect(
-      page.getByText(
-        "Incoming connection requests could not be verified. No connection data is shown.",
-        { exact: true },
-      ),
-    ).toBeVisible();
-    await expect(
-      page.getByText("Outgoing fixture athlete", { exact: true }),
-    ).toBeVisible();
-    await cookie();
-    await page
-      .getByRole("button", {
-        name: "Retry incoming connection requests",
-        exact: true,
-      })
-      .click();
-    await expect(
-      page.getByText("Incoming fixture athlete", { exact: true }),
-    ).toBeVisible();
-    for (const action of [
-      "Decline connection",
-      "Accept connection",
-      "Withdraw request",
-    ]) {
-      await page.context().clearCookies({ name: /^mov210-/ });
-      await open(athleteTabs[2][1]);
-      await page.getByRole("button", { name: action, exact: true }).click();
-      await expect(page.locator(".coach-connection-feedback")).toContainText(
-        action === "Accept connection"
-          ? "Connected."
-          : action === "Decline connection"
-            ? "declined"
-            : "withdrawn",
-      );
-      if (action === "Accept connection") {
-        await athletesNav()
-          .getByRole("link", { name: "Connected athletes", exact: true })
-          .click();
-        await expect(
-          page.getByText("Incoming fixture athlete", { exact: true }),
-        ).toBeVisible();
-      }
-    }
-    await page.context().clearCookies({ name: /^mov210-/ });
-    await open(athleteTabs[0][1]);
-    await page
-      .getByRole("button", { name: /Disconnect/, exact: false })
-      .click();
-    await page
-      .getByRole("button", { name: "Stay connected", exact: true })
-      .click();
-    await expect(
-      page.getByText("Connected fixture athlete", { exact: true }),
-    ).toBeVisible();
-    for (const href of [athleteTabs[0][1], athleteTabs[2][1]]) {
-      await cookie();
-      await open(href);
-      await cookie("owner", "checking");
-      await refresh();
-      await expect(athletesNav()).toBeHidden();
-      await cookie();
-      await refresh();
-      await expect(athletesNav()).toBeVisible();
-      await cookie("dataset");
-      await refresh();
-      await expect(athletesNav()).toHaveCount(0);
-    }
-    await cookie("suspended");
-    await open(athleteTabs[2][1]);
-    await expect(athletesNav()).toBeVisible();
-    assert.equal(await page.locator("main h1").count(), 1);
-    await expect(
-      page.getByRole("button", { name: "Accept connection", exact: true }),
-    ).toHaveCount(0);
-    await cookie("signed-out");
-    await open(athleteTabs[2][1]);
-    assert.equal(
-      new URL(page.url()).searchParams.get("returnTo"),
-      athleteTabs[2][1],
+    const rosterCheck = spawn(
+      process.execPath,
+      ["scripts/rehearse-coach-athletes-ui.mjs"],
+      { cwd: root, stdio: "inherit" },
     );
-    await cookie();
+    const rosterExit = await new Promise((resolve, reject) => {
+      rosterCheck.once("error", reject);
+      rosterCheck.once("close", resolve);
+    });
+    assert.equal(rosterExit, 0, "Unified My athletes rehearsal");
     record(
-      "My athletes scoped paging/partial error/retry/three decisions/disconnect cancel and suspended/guest/account fences",
-    );
-    rosterMode = "empty";
-    await open(athleteTabs[1][1]);
-    await expect(
-      page.getByText("No external athletes yet.", { exact: true }),
-    ).toBeVisible();
-    await page
-      .getByLabel("Name", { exact: true })
-      .fill("Roster pending athlete");
-    clientSave = "unavailable";
-    await page
-      .getByRole("button", { name: "Save athlete", exact: true })
-      .click();
-    await expect(
-      page.getByRole("button", { name: "Retry exact save", exact: true }),
-    ).toBeVisible();
-    for (const link of await athletesNav().getByRole("link").all())
-      await expect(link).toHaveAttribute("aria-disabled", "true");
-    const pendingRosterUrl = page.url();
-    await athletesNav()
-      .getByRole("link", { name: "Connected athletes", exact: true })
-      .dispatchEvent("click");
-    assert.equal(page.url(), pendingRosterUrl);
-    clientSave = "ready";
-    await page
-      .getByRole("button", { name: "Retry exact save", exact: true })
-      .click();
-    await expect(
-      athletesNav().getByRole("link", {
-        name: "Connected athletes",
-        exact: true,
-      }),
-    ).not.toHaveAttribute("aria-disabled", "true");
-    assert.deepEqual(clientWrites.at(-1), clientWrites.at(-2));
-    rosterMode = "unavailable";
-    await open(athleteTabs[1][1]);
-    await expect(
-      page.getByText(
-        "Athlete records could not be verified. Reload to try again.",
-        { exact: true },
-      ),
-    ).toBeVisible();
-    await expect(athletesNav()).toBeVisible();
-    rosterMode = "ready";
-    await open(`/coach/athletes/external/${id}`);
-    await expect(athletesNav()).toHaveCount(0);
-    await expect(
-      page.getByRole("link", { name: "← External athletes", exact: true }),
-    ).toHaveAttribute("href", athleteTabs[1][1]);
-    record(
-      "embedded external roster keeps empty/unavailable states, exact pending-save navigation fence/retry and standalone details",
+      "unified My athletes uses its maintained actual-route roster/recovery rehearsal",
     );
   }
 
@@ -1502,9 +1360,7 @@ try {
     await page
       .context()
       .addCookies([{ name: "mov210-incoming", value: "decline", url: base }]);
-    await page
-      .getByRole("button", { name: "Refresh connections", exact: true })
-      .click();
+    await returnToVisiblePage(page);
     await expect(count()).toHaveText("0");
     record(
       `${actor} count123 desktop/375/320/keyboard, exact incoming decisions/withdraw, zero, independent unavailable/retry/refresh`,

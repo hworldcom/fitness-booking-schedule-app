@@ -1,6 +1,7 @@
 // DEV0254: explicitly invoked real Auth/runtime/browser validation on hosted dev.
 // No email, migration, seed, Docker or application authorization replacement.
 import assert from "node:assert/strict";
+import { returnToVisiblePage } from "./lib/browser-visibility.mjs";
 import { randomUUID } from "node:crypto";
 import { execFileSync, spawn } from "node:child_process";
 import {
@@ -618,9 +619,7 @@ try {
       .getByRole("alert")
       .filter({ hasText: "calendar changed while you were browsing" }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Reload calendar", exact: true })
-    .click();
+  await returnToVisiblePage(page);
   await expect(calendar).toHaveAttribute("aria-busy", "false");
   while (
     await page.getByRole("button", { name: "Load more calendar items" }).count()
@@ -696,9 +695,7 @@ try {
   query(
     `update app.coach_booking_requests set created_at=clock_timestamp()-interval '13 hours',decision_deadline_at=clock_timestamp()-interval '1 second' where id=${quote(requestId)}::uuid and client_profile_id=${quote(athlete.profileId)}::uuid`,
   );
-  await page
-    .getByRole("button", { name: "Reload calendar", exact: true })
-    .click();
+  await returnToVisiblePage(page);
   await expect(calendar).toHaveAttribute("aria-busy", "false");
   await expect(
     agenda().getByText("1 pending · time is still open", { exact: true }),
@@ -708,9 +705,7 @@ try {
       ? route.abort("failed")
       : route.continue(),
   );
-  await page
-    .getByRole("button", { name: "Reload calendar", exact: true })
-    .click();
+  await returnToVisiblePage(page);
   await expect(
     page
       .getByRole("alert")
@@ -718,9 +713,7 @@ try {
   ).toBeVisible();
   await expect(agenda().getByRole("button").first()).toBeVisible();
   await page.unroute("**/coach?**");
-  await page
-    .getByRole("button", { name: "Reload calendar", exact: true })
-    .click();
+  await returnToVisiblePage(page);
   await expect(
     page
       .getByRole("alert")
@@ -826,9 +819,7 @@ try {
   await goto(href(datePlus(3), "day", "&type=group"));
   await owner.context.clearCookies();
   try {
-    await page
-      .getByRole("button", { name: "Reload calendar" })
-      .click({ timeout: 2000 });
+    await returnToVisiblePage(page);
   } catch (error) {
     // The real actor refresh can revoke the calendar before this click runs.
     // A missing control is acceptable only when its private calendar is gone.

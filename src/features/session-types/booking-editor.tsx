@@ -93,6 +93,7 @@ export function BookingEditor({
         {(identity, canUseInitial) => (
           <Editor
             key={`${identity}:${bookingId ?? "new"}`}
+            coachView={coachView}
             bookingId={bookingId}
             initialExternalClientId={initialExternalClientId}
             initialDetail={
@@ -109,10 +110,12 @@ export function BookingEditor({
   );
 }
 function Editor({
+  coachView,
   bookingId,
   initialExternalClientId,
   initialDetail,
 }: {
+  coachView: boolean;
   bookingId?: string;
   initialExternalClientId?: string;
   initialDetail?: SessionBookingDetail;
@@ -161,6 +164,7 @@ function Editor({
   const rescheduleHandled = useRef(false);
   const [outsideWorkingHours, setOutsideWorkingHours] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [savedSessionHref, setSavedSessionHref] = useState<string | null>(null);
   const [detailsNeedRefresh, setDetailsNeedRefresh] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState(false);
   const saveNotice = useRef<HTMLParagraphElement>(null);
@@ -186,6 +190,7 @@ function Editor({
             : null;
         if (!active) return;
         if (d && d.status !== "ready") {
+          setDetailsNeedRefresh(true);
           setMessage(
             "This session could not be verified for your account. Reload to try again.",
           );
@@ -216,14 +221,18 @@ function Editor({
             (bookingId || (r.athletes && r.externalClients))
           )
             setOptions(r);
-          else if (active)
+          else if (active) {
+            setDetailsNeedRefresh(true);
             setMessage(
               "Coach scheduling options are unavailable. Check your access and reload.",
             );
+          }
         }
       } catch {
-        if (active)
+        if (active) {
+          setDetailsNeedRefresh(true);
           setMessage("The session could not be verified. Reload to try again.");
+        }
       } finally {
         if (active) {
           setLoading(false);
@@ -328,8 +337,11 @@ function Editor({
         setUncertain(false);
         setSaved(true);
         setMessage("Session saved. Checking the latest details…");
-        if (!bookingId) router.push(`/coach/sessions/${r.bookingId}`);
-        else {
+        if (!bookingId) {
+          const href = `/coach/sessions/${r.bookingId}`;
+          setSavedSessionHref(href);
+          router.push(href);
+        } else {
           try {
             const current = await reloadSavedBooking(bookingId, r.revision, {
               signal: controller.signal,
@@ -352,6 +364,9 @@ function Editor({
           "Working hours changed again. Your draft is kept. Save again to check the current time.",
         );
       } else {
+        setDetailsNeedRefresh(
+          ["conflict", "forbidden", "signed-out"].includes(r.status),
+        );
         setUncertain(
           !["invalid", "conflict", "forbidden", "signed-out"].includes(
             r.status,
@@ -425,9 +440,11 @@ function Editor({
   }, [message, invalidStartStep]);
   const activeTypes =
     options?.types.filter((t) => t.format === "private" && !t.archived) ?? [];
-  const reloadHref = bookingId
-    ? `${detail?.viewerIsCoach ? "/coach/sessions/" : "/sessions/"}${bookingId}`
-    : "/coach/bookings/new";
+  const reloadHref =
+    savedSessionHref ??
+    (bookingId
+      ? `${coachView ? "/coach/sessions/" : "/sessions/"}${bookingId}`
+      : "/coach/bookings/new");
   return (
     <>
       {loading && (
@@ -504,7 +521,7 @@ function Editor({
         aria-live="polite"
       >
         {message}
-        {saveFeedback && message && (
+        {!busy && !loading && message && (uncertain || detailsNeedRefresh) && (
           <span className="session-booking-feedback-actions">
             {uncertain && (
               <button
@@ -520,9 +537,15 @@ function Editor({
                     : "Retry same session"}
               </button>
             )}
-            <a className="button secondary" href={reloadHref}>
-              Reload current details
-            </a>
+            {!uncertain && (
+              <a className="button secondary" href={reloadHref}>
+                {savedSessionHref
+                  ? "View session"
+                  : saveFeedback
+                    ? "Load latest changes"
+                    : "Try again"}
+              </a>
+            )}
           </span>
         )}
       </p>
@@ -806,11 +829,6 @@ function Editor({
             setPickingStart(false);
           }}
         />
-      )}
-      {!loading && !(saveFeedback && message) && (
-        <a className="button secondary" href={reloadHref}>
-          Reload current details
-        </a>
       )}
     </>
   );

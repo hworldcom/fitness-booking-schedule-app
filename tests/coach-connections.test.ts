@@ -68,7 +68,6 @@ function markup(value: ConnectionPages, mayInitiate = true) {
       pages: value,
       busy: false,
       mayInitiate,
-      onRefresh: noop,
       onPage: noop,
       onDecision: noop,
       onHistory: noop,
@@ -76,6 +75,18 @@ function markup(value: ConnectionPages, mayInitiate = true) {
     }),
   );
 }
+test("connection lists omit the permanent refresh and keep failed-list recovery", () => {
+  const healthy = markup(pages());
+  assert.doesNotMatch(
+    healthy,
+    /Refresh connections|Retry incoming connection requests/,
+  );
+  assert.match(
+    markup(pages({ incoming: null })),
+    /Retry incoming connection requests/,
+  );
+});
+
 const booking: PrivateBookingProjection = {
   id: id(200),
   slotId: id(201),
@@ -471,7 +482,6 @@ test("public coach identity and profile actions remain available after disconnec
           }),
           busy: false,
           mayInitiate: true,
-          onRefresh: noop,
           onPage: noop,
           onDecision: noop,
           onHistory: noop,
@@ -516,7 +526,6 @@ test("My coaches uses retained counterpart identity, server flags and no hidden-
       pages: pages({ accepted: { items: [row], nextCursor: null } }),
       busy: false,
       mayInitiate: true,
-      onRefresh: noop,
       onPage: noop,
       onDecision: noop,
       onHistory: noop,
@@ -542,7 +551,6 @@ test("My coaches uses retained counterpart identity, server flags and no hidden-
       }),
       busy: false,
       mayInitiate: true,
-      onRefresh: noop,
       onPage: noop,
       onDecision: noop,
       onHistory: noop,
@@ -697,7 +705,6 @@ test("connected and requests panels keep distinct identities, history and per-li
         pages: value,
         busy: false,
         mayInitiate: true,
-        onRefresh: noop,
         onPage: noop,
         onDecision: noop,
         onHistory: noop,
@@ -768,7 +775,6 @@ test("athlete connected/request sections preserve coach identity/public links an
         pages: value,
         busy: false,
         mayInitiate: true,
-        onRefresh: noop,
         onPage: noop,
         onDecision: noop,
         onHistory: noop,

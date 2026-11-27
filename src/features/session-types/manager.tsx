@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { SessionActorBoundary } from "./actor-boundary";
+import { useRefreshOnReturn } from "@/components/use-refresh-on-return";
 
 import {
   SESSION_DURATIONS,
@@ -63,6 +64,7 @@ function Catalog() {
   const [pending, setPending] = useState<SessionTypeCommand | null>(null);
   const mounted = useRef(true);
   const loadVersion = useRef(0);
+  const [needsReload, setNeedsReload] = useState(false);
   const load = async () => {
     const version = ++loadVersion.current;
     setBusy(true);
@@ -76,19 +78,28 @@ function Catalog() {
         setDraft(null);
         setReview(null);
         setPending(null);
+        setNeedsReload(result.status !== "ready");
         setMessage(
           result.status === "ready"
             ? ""
-            : (errors[result.status as keyof typeof errors] ?? ""),
+            : result.status === "unavailable"
+              ? "Session types could not be loaded. Try again."
+              : (errors[result.status as keyof typeof errors] ?? ""),
         );
       }
     } catch {
-      if (mounted.current && version === loadVersion.current)
-        setMessage(errors.unavailable);
+      if (mounted.current && version === loadVersion.current) {
+        setNeedsReload(true);
+        setMessage("Session types could not be loaded. Try again.");
+      }
     } finally {
       if (mounted.current && version === loadVersion.current) setBusy(false);
     }
   };
+  useRefreshOnReturn(
+    () => void load(),
+    !!state && "types" in state && !busy && !draft && !review && !pending,
+  );
   useEffect(() => {
     mounted.current = true;
     void Promise.resolve().then(load);
@@ -109,12 +120,18 @@ function Catalog() {
       const result = (await r.json()) as SessionTypeResult;
       if (!mounted.current) return;
       if (result.status === "saved") {
+        setNeedsReload(false);
         setState(result);
         setDraft(null);
         setReview(null);
         setPending(null);
         setMessage("Saved.");
       } else {
+        setNeedsReload(
+          ["conflict", "forbidden", "not-found", "signed-out"].includes(
+            result.status,
+          ),
+        );
         setMessage(
           errors[result.status as keyof typeof errors] ?? errors.unavailable,
         );
@@ -142,16 +159,6 @@ function Catalog() {
         >
           Create session type
         </button>
-        <button
-          className="button secondary"
-          disabled={busy}
-          onClick={() => {
-            if (!draft || confirm("Discard your unsaved changes and reload?"))
-              void load();
-          }}
-        >
-          Reload catalog
-        </button>
         {state && "types" in state && types.length === 0 && (
           <button
             className="button secondary"
@@ -172,6 +179,23 @@ function Catalog() {
           ? "Working…"
           : message || (!state ? "Loading your session types…" : "")}
       </p>
+      {needsReload && !pending && (
+        <button
+          className="button secondary"
+          disabled={busy}
+          onClick={() => {
+            if (
+              !draft ||
+              confirm(
+                "Discard your unsaved changes and load the latest version?",
+              )
+            )
+              void load();
+          }}
+        >
+          {draft ? "Load latest changes" : "Try again"}
+        </button>
+      )}
       {pending && !busy && (
         <button
           className="button secondary"

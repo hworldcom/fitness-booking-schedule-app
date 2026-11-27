@@ -36,16 +36,18 @@ test("Wellness stays visible and selected through keyboard discovery and reload"
   await expect(explore).toHaveAttribute("href", "/explore?discipline=Wellness");
   await explore.focus();
   await page.keyboard.press("Enter");
-  await expect(page).toHaveURL(/\/explore\?discipline=Wellness$/);
-  await expect(wellness).toHaveAttribute("aria-current", "page");
+  await expect(page).toHaveURL(
+    /\/explore\?discipline=Wellness(?:&view=(?:list|map))?$/,
+  );
+  const category = page.locator('input[name="discipline"][value="Wellness"]');
+  await expect(category).toBeChecked();
   await page.reload();
-  await expect(wellness).toHaveAttribute("aria-current", "page");
-  await wellness.focus();
-  await expect(wellness).toBeFocused();
-  await expect(wellness).toHaveCSS("outline-style", "solid");
-  await expect(
-    page.locator(".coach-results, .coach-directory-state"),
-  ).toBeVisible();
+  await expect(category).toBeChecked();
+  await page.locator(".explore-category-filter summary").press("Enter");
+  await category.focus();
+  await expect(category).toBeFocused();
+  await expect(category).toHaveCSS("outline-style", "solid");
+  await expect(page.locator(".coach-results")).toBeVisible();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,

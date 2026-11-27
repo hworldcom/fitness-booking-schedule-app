@@ -2,7 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as maplibregl from "maplibre-gl";
-import type { LocationMapPoint } from "../contracts";
+import type {
+  LocationMapPoint,
+  LocationMapViewport,
+  LocationMapCamera,
+  LocationDevicePosition,
+} from "../contracts";
+import { deviceAccuracyLabel, deviceAccuracyBounds } from "../device-position";
 import { layoutLocationMapMarkers } from "../marker-layout";
 import { MAPLIBRE_WORKER_URL } from "../providers/maplibre";
 import { OPENFREEMAP_STYLE_URL } from "../providers/openfreemap";
@@ -32,6 +38,11 @@ export function LocationResultsMap({
   coincidentItemLabel = "Coach",
   recenterOnSelection = true,
   markerVariant = "badge",
+  camera,
+  autoFit = true,
+  onViewportChange,
+  cooperativeGestures = true,
+  devicePosition = null,
 }: {
   points: readonly LocationMapPoint[];
   selectedPointId: string | null;
@@ -41,12 +52,22 @@ export function LocationResultsMap({
   coincidentItemLabel?: string;
   recenterOnSelection?: boolean;
   markerVariant?: "badge" | "pin";
+  camera?: LocationMapCamera | null;
+  autoFit?: boolean;
+  onViewportChange?: (
+    viewport: LocationMapViewport,
+    userInitiated: boolean,
+  ) => void;
+  cooperativeGestures?: boolean;
+  devicePosition?: LocationDevicePosition | null;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef(new Map<string, MarkerEntry>());
   const onSelectRef = useRef(onSelectPoint);
   const onUnavailableRef = useRef(onUnavailable);
+  const onViewportRef = useRef(onViewportChange);
+  const deviceCleanupRef = useRef<(() => void) | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -55,6 +76,9 @@ export function LocationResultsMap({
   useEffect(() => {
     onUnavailableRef.current = onUnavailable;
   }, [onUnavailable]);
+  useEffect(() => {
+    onViewportRef.current = onViewportChange;
+  }, [onViewportChange]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -68,7 +92,7 @@ export function LocationResultsMap({
         center: [13.405, 52.52],
         zoom: 10.5,
         attributionControl: { compact: false },
-        cooperativeGestures: true,
+        cooperativeGestures,
       });
       mapRef.current = map;
       const resizeObserver =
@@ -81,14 +105,41 @@ export function LocationResultsMap({
         "top-right",
       );
       map.getCanvas().setAttribute("aria-label", canvasAriaLabel);
-      const handleLoad = () => active && setReady(true);
+      const reportViewport = (userInitiated: boolean) => {
+        if (!active || !onViewportRef.current) return;
+        const bounds = map.getBounds(),
+          center = map.getCenter();
+        onViewportRef.current(
+          {
+            latitude: center.lat,
+            longitude: center.lng,
+            west: bounds.getWest(),
+            south: bounds.getSouth(),
+            east: bounds.getEast(),
+            north: bounds.getNorth(),
+          },
+          userInitiated,
+        );
+      };
+      const handleLoad = () => {
+        if (active) {
+          setReady(true);
+          reportViewport(false);
+        }
+      };
+      const handleMove = (
+        event: maplibregl.MapLibreEvent & { originalEvent?: Event },
+      ) => reportViewport(Boolean(event.originalEvent));
       const handleError = () => active && onUnavailableRef.current();
       map.once("load", handleLoad);
       map.on("error", handleError);
+      map.on("moveend", handleMove);
       return () => {
         active = false;
         resizeObserver?.disconnect();
+        deviceCleanupRef.current?.();
         map.off("error", handleError);
+        map.off("moveend", handleMove);
         for (const entry of markers.values()) removeMarkerEntry(entry);
         markers.clear();
         map.remove();
@@ -97,7 +148,7 @@ export function LocationResultsMap({
     } catch {
       onUnavailableRef.current();
     }
-  }, [canvasAriaLabel]);
+  }, [canvasAriaLabel, cooperativeGestures]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -195,6 +246,7 @@ export function LocationResultsMap({
       bounds.extend(coordinates);
     }
 
+    if (!autoFit) return;
     if (points.length === 1) {
       map.jumpTo({
         center: [points[0]!.longitude, points[0]!.latitude],
@@ -203,7 +255,116 @@ export function LocationResultsMap({
     } else if (!bounds.isEmpty()) {
       map.fitBounds(bounds, { padding: 54, maxZoom: 13, duration: 0 });
     }
-  }, [coincidentItemLabel, markerVariant, points, ready]);
+  }, [autoFit, coincidentItemLabel, markerVariant, points, ready]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !camera) return;
+    let applied = false;
+    const applyCamera = () => {
+      // Profiles can request location while the retained Map is hidden.
+      // Fit only once it has a real viewport; ordinary resizing must not
+      // undo a later user pan.
+      if (
+        applied ||
+        map.getContainer().clientWidth === 0 ||
+        map.getContainer().clientHeight === 0
+      )
+        return;
+      applied = true;
+      map.off("resize", applyCamera);
+      if (
+        camera.accuracyMeters &&
+        Number.isFinite(camera.accuracyMeters) &&
+        camera.accuracyMeters > 0
+      ) {
+        map.fitBounds(
+          deviceAccuracyBounds({
+            latitude: camera.latitude,
+            longitude: camera.longitude,
+            accuracyMeters: camera.accuracyMeters,
+          })!,
+          {
+            padding: 30,
+            maxZoom: camera.zoom,
+            duration: 0,
+          },
+        );
+      } else {
+        map.jumpTo({
+          center: [camera.longitude, camera.latitude],
+          zoom: camera.zoom,
+        });
+      }
+    };
+    map.on("resize", applyCamera);
+    map.resize();
+    applyCamera();
+    return () => {
+      map.off("resize", applyCamera);
+    };
+  }, [camera, ready]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !devicePosition) return;
+    const coordinates = new maplibregl.LngLat(
+      devicePosition.longitude,
+      devicePosition.latitude,
+    );
+    const dot = document.createElement("div");
+    dot.className = "location-device-dot";
+    dot.setAttribute("role", "img");
+    dot.setAttribute(
+      "aria-label",
+      `Your last requested device location. ${deviceAccuracyLabel(devicePosition.accuracyMeters)}.`,
+    );
+    const circle = document.createElement("div");
+    circle.className = "location-device-accuracy";
+    circle.setAttribute("aria-hidden", "true");
+    const accuracyMarker = new maplibregl.Marker({
+      element: circle,
+      anchor: "center",
+      pitchAlignment: "map",
+    })
+      .setLngLat(coordinates)
+      .addTo(map);
+    const positionMarker = new maplibregl.Marker({
+      element: dot,
+      anchor: "center",
+    })
+      .setLngLat(coordinates)
+      .addTo(map);
+    const resizeAccuracy = () => {
+      const accuracy = devicePosition.accuracyMeters;
+      circle.hidden = accuracy === null || map.getContainer().clientWidth === 0;
+      if (circle.hidden || accuracy === null) return;
+      // Use the same local map scale as MapLibre's GeolocateControl.
+      const screen = map.project(coordinates);
+      const metersPerPixel =
+        coordinates.distanceTo(map.unproject([screen.x + 100, screen.y])) / 100;
+      const diameter = (2 * accuracy) / metersPerPixel;
+      if (!Number.isFinite(diameter) || diameter <= 0) {
+        circle.hidden = true;
+        return;
+      }
+      circle.style.width = `${diameter}px`;
+      circle.style.height = `${diameter}px`;
+    };
+    const events = ["zoom", "move", "rotate", "pitch", "resize"] as const;
+    for (const event of events) map.on(event, resizeAccuracy);
+    resizeAccuracy();
+    let disposed = false;
+    const cleanup = () => {
+      if (disposed) return;
+      disposed = true;
+      for (const event of events) map.off(event, resizeAccuracy);
+      positionMarker.remove();
+      accuracyMarker.remove();
+    };
+    deviceCleanupRef.current = cleanup;
+    return cleanup;
+  }, [devicePosition, ready]);
 
   useEffect(() => {
     for (const [pointId, entry] of markersRef.current) {
