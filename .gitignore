@@ -87,6 +87,6 @@ Thumbs.db
 /previews/
 /docs/previews/
 
-# Optional standalone UX rehearsal retained locally (MOV-274)
+# Retired standalone UX rehearsal paths (MOV-274; archived by MOV-297)
 /scripts/rehearse-direct-submissions-ui.mjs
 /tests/fixtures/direct-submissions-ui.tsx
