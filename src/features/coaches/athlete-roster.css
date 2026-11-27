@@ -1,0 +1,257 @@
+.coach-athlete-roster {
+  margin-top: 24px;
+  min-width: 0;
+}
+.coach-athlete-roster-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.coach-athlete-roster-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.coach-athlete-roster-toolbar select {
+  min-height: 44px;
+  max-width: 100%;
+  background: var(--white);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 30px 9px 12px;
+  font: inherit;
+}
+.coach-athlete-roster-list {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--white);
+}
+.coach-athlete-roster-columns,
+.coach-athlete-roster-row {
+  display: grid;
+  grid-template-columns:
+    minmax(150px, 1.5fr) minmax(125px, 1fr) minmax(100px, 1fr)
+    minmax(95px, auto);
+  gap: 14px;
+  align-items: center;
+  padding: 18px;
+}
+.coach-athlete-roster-columns {
+  font-size: 12px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+.coach-athlete-roster-row {
+  min-height: 88px;
+}
+.coach-athlete-roster-row + .coach-athlete-roster-row {
+  border-top: 1px solid var(--line);
+}
+.coach-athlete-roster-person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.coach-athlete-roster-person a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  min-width: 44px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  text-underline-offset: 4px;
+}
+.coach-athlete-roster-person .coach-connection-avatar {
+  flex-shrink: 0;
+}
+.coach-athlete-roster-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 7px;
+  width: fit-content;
+  max-width: 100%;
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 12px;
+}
+.coach-athlete-roster-status.connected {
+  background: #e7f1e4;
+  color: #2e5332;
+}
+.coach-athlete-roster-status.pending {
+  background: var(--lilac);
+  color: #513f70;
+}
+.coach-athlete-roster-date {
+  color: var(--muted);
+  font-size: 12px;
+}
+.coach-athlete-roster-date-label {
+  display: none;
+}
+.coach-athlete-roster-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.coach-athlete-roster-actions .button {
+  min-height: 44px;
+  padding: 9px 12px;
+  font-size: 12px;
+}
+.coach-athlete-request-link {
+  color: var(--ink);
+  font-size: 12px;
+  padding-block: 12px;
+  text-underline-offset: 4px;
+}
+.coach-athlete-roster-menu {
+  position: relative;
+}
+.coach-athlete-roster-menu summary {
+  width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.coach-athlete-roster-menu summary::-webkit-details-marker {
+  display: none;
+}
+.coach-athlete-roster-menu > div {
+  position: absolute;
+  z-index: 8;
+  right: 0;
+  top: calc(100% + 6px);
+  width: min(290px, calc(100vw - 70px));
+  padding: 16px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 8px 26px #22251f16;
+  display: grid;
+  gap: 12px;
+}
+.coach-athlete-roster-menu .coach-connection-confirmation {
+  margin: 0;
+  padding: 0;
+}
+.coach-athlete-roster-menu .coach-connection-confirmation p {
+  font-size: 12px;
+}
+.coach-athlete-roster-empty {
+  padding: 30px 18px;
+  color: var(--muted);
+}
+.coach-athlete-roster-more {
+  margin-top: 18px;
+}
+.coach-athlete-roster-order {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.coach-athlete-roster-feedback {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+  margin-bottom: 18px;
+}
+.coach-athlete-roster-feedback .button {
+  margin: 8px 0 0 8px;
+}
+.coach-athlete-create-dialog {
+  width: min(460px, calc(100% - 32px));
+  max-height: calc(100dvh - 40px);
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  color: var(--ink);
+  background: var(--white);
+}
+.coach-athlete-create-dialog::backdrop {
+  background: #22251f55;
+}
+.coach-athlete-create-dialog > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.coach-athlete-create-dialog > header h2 {
+  font-size: 23px;
+  margin: 0;
+}
+.coach-athlete-create-dialog .session-type-editor {
+  margin: 0;
+}
+@media (max-width: 850px) {
+  .coach-athlete-roster-columns,
+  .coach-athlete-roster-row {
+    grid-template-columns: minmax(120px, 1.3fr) minmax(100px, 1fr) 98px 90px;
+    gap: 10px;
+    padding: 16px 14px;
+  }
+}
+@media (max-width: 650px) {
+  .coach-athlete-roster-columns {
+    display: none;
+  }
+  .coach-athlete-roster-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 12px;
+    padding: 16px;
+  }
+  .coach-athlete-roster-person {
+    grid-column: 1 / -1;
+  }
+  .coach-athlete-roster-status {
+    grid-column: 1;
+    margin-left: 52px;
+    font-size: 11px;
+  }
+  .coach-athlete-roster-date {
+    grid-column: 1;
+    font-size: 11px;
+  }
+  .coach-athlete-roster-date-label {
+    display: inline;
+  }
+  .coach-athlete-roster-actions {
+    grid-column: 2;
+    grid-row: 2 / span 2;
+    align-self: center;
+  }
+  .coach-athlete-roster-toolbar label {
+    font-size: 0;
+  }
+  .coach-athlete-roster-toolbar select {
+    font-size: 16px;
+    width: 150px;
+  }
+  .coach-athlete-roster-row .coach-connection-avatar {
+    width: 40px;
+    height: 40px;
+  }
+  .coach-athlete-create-dialog {
+    padding: 18px;
+  }
+}

@@ -393,19 +393,24 @@ export function ConnectionWorkspace({
         <SessionCards
           bookings={bookings}
           referenceTime={referenceTime}
-          renderConnection={(booking) => (
-            <BookingConnectionOptions
-              key={`${booking.id}:${booking.status}:${contextRevision}`}
-              role={role}
-              booking={booking}
-              context={contextEntries[booking.id]?.value}
-              error={contextEntries[booking.id]?.message ?? null}
-              busy={busy}
-              mayInitiate={mayInitiate}
-              onLoad={() => loadContext(booking)}
-              onMutation={mutate}
-            />
-          )}
+          renderConnection={
+            role === "coach"
+              ? undefined
+              : (booking) =>
+                  booking.clientProfileId ? (
+                    <BookingConnectionOptions
+                      key={`${booking.id}:${booking.status}:${contextRevision}`}
+                      role={role}
+                      booking={booking}
+                      context={contextEntries[booking.id]?.value}
+                      error={contextEntries[booking.id]?.message ?? null}
+                      busy={busy}
+                      mayInitiate={mayInitiate}
+                      onLoad={() => loadContext(booking)}
+                      onMutation={mutate}
+                    />
+                  ) : null
+          }
         />
       )}
       {view !== "sessions" && (

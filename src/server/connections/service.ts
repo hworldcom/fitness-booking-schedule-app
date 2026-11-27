@@ -66,6 +66,7 @@ export function sendCoachAthleteConnection(
   bookingId: string,
   operationId: string,
   previousId: string | null,
+  expectedScope?: string,
 ) {
   if (
     !validId(bookingId) ||
@@ -73,17 +74,34 @@ export function sendCoachAthleteConnection(
     (previousId !== null && !validId(previousId))
   )
     return Promise.resolve({ status: "invalid" as const });
-  return connectionWork((tx) =>
-    sendConnectionRecord(tx, bookingId, operationId, previousId),
-  );
+  return connectionWork((tx, actor) => {
+    if (
+      expectedScope !== undefined &&
+      [actor.authUserId, actor.profileId, actor.runId, actor.runRole].join(
+        ":",
+      ) !== expectedScope
+    )
+      throw new ConnectionConflictError();
+    return sendConnectionRecord(tx, bookingId, operationId, previousId);
+  });
 }
 export function decideCoachAthleteConnection(
   id: string,
   action: ConnectionDecision,
+  expectedScope?: string,
 ) {
   if (!validId(id) || !isConnectionDecision(action))
     return Promise.resolve({ status: "invalid" as const });
-  return connectionWork((tx) => decideConnectionRecord(tx, id, action));
+  return connectionWork((tx, actor) => {
+    if (
+      expectedScope !== undefined &&
+      [actor.authUserId, actor.profileId, actor.runId, actor.runRole].join(
+        ":",
+      ) !== expectedScope
+    )
+      throw new ConnectionConflictError();
+    return decideConnectionRecord(tx, id, action);
+  });
 }
 export function currentConnectionPage(
   role: ConnectionRole,

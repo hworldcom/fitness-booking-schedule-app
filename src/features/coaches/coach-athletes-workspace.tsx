@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ClipboardList, UserPlus, UsersRound } from "lucide-react";
+import { ClipboardList, UsersRound } from "lucide-react";
 import {
   coachAthletesHref,
   type CoachAthletesSection,
@@ -19,23 +19,26 @@ export function CoachAthletesWorkspace({
   active,
   children,
   navigationDisabled = false,
+  headingActions,
 }: {
   active: CoachAthletesSection;
   children?: ReactNode;
   navigationDisabled?: boolean;
+  headingActions?: ReactNode;
 }) {
   return (
     <ConnectionRequestCountProvider role="coach" viewKey={active}>
-      <div className="coach-workspace">
+      <div className="coach-workspace coach-athletes-workspace">
         <header className="coach-workspace-header">
           <div>
             <span className="eyebrow">YOUR ATHLETES</span>
             <h1>My athletes</h1>
-            <p>
-              Manage your connected athletes, external athletes and connection
-              requests.
-            </p>
           </div>
+          {headingActions && (
+            <div className="coach-workspace-header-actions">
+              {headingActions}
+            </div>
+          )}
         </header>
         <CoachAthletesNavigation
           active={active}
@@ -62,15 +65,22 @@ export function CoachAthletesNavigation({
     >
       {(
         [
-          ["connected", "Connected athletes", UsersRound],
-          ["external", "External athletes", UserPlus],
+          ["connected", "All athletes", UsersRound],
           ["requests", "Connection requests", ClipboardList],
         ] as const
       ).map(([section, label, Icon]) => (
         <Link
           key={section}
           href={coachAthletesHref(section)}
-          aria-current={active === section ? "page" : undefined}
+          aria-current={
+            (
+              section === "connected"
+                ? active !== "requests"
+                : active === section
+            )
+              ? "page"
+              : undefined
+          }
           aria-label={
             section === "requests"
               ? connectionRequestCountLabel(count)

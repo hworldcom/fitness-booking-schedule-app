@@ -280,6 +280,7 @@ function Workspace({
             onPendingChange={pendingChanged}
           />
           <section
+            id="external-athlete-invitation"
             className="session-type-editor external-client-invitation"
             aria-label="Athlete invitation"
           >
