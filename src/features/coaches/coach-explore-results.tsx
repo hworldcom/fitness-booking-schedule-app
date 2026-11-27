@@ -246,6 +246,9 @@ export function CoachExploreResults({
     visible[0] ??
     null;
   const selectedId = selected?.entry.coach.profileId ?? null;
+  const showSelectedPreview = visible.some(
+    ({ entry }) => entry.coach.profileId === selectedCoachId,
+  );
   const listHref = coachDirectoryHref(filters, {}, "list");
   const mapHref = coachDirectoryHref(filters, {}, "map");
   useEffect(() => {
@@ -284,40 +287,75 @@ export function CoachExploreResults({
     const navigation = document.querySelector<HTMLElement>(".mobile-nav");
     const toolbar = root.querySelector<HTMLElement>(".explore-search-toolbar");
     const summary = root.querySelector<HTMLElement>(".coach-results-summary");
+    const header = document.querySelector<HTMLElement>(".public-header");
+    if (view === "map") window.scrollTo({ top: 0, behavior: "instant" });
     const measure = () => {
-      const clearance = (navigation?.getBoundingClientRect().height ?? 0) + 16;
+      const navigationHeight = navigation?.getBoundingClientRect().height ?? 0;
+      const clearance = navigationHeight + 16;
       root.style.setProperty("--explore-nav-clearance", `${clearance}px`);
-      if (view === "map" && mapSurfaceRef.current)
-        root.style.setProperty(
-          "--explore-map-height",
-          `${Math.max(280, window.innerHeight - mapSurfaceRef.current.getBoundingClientRect().top - clearance)}px`,
+      if (view === "map") {
+        const viewport = window.visualViewport;
+        const top = Math.max(
+          0,
+          root.getBoundingClientRect().top - (viewport?.offsetTop ?? 0),
         );
+        root.style.setProperty(
+          "--explore-workspace-height",
+          `${Math.max(180, (viewport?.height ?? window.innerHeight) - top - navigationHeight)}px`,
+        );
+      }
     };
-    const observer = new ResizeObserver(measure);
+    let frame = 0;
+    const schedule = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    };
+    const observer = new ResizeObserver(schedule);
     if (toolbar) observer.observe(toolbar);
     if (summary) observer.observe(summary);
     if (navigation) observer.observe(navigation);
-    window.addEventListener("resize", measure);
+    if (header) observer.observe(header);
+    window.addEventListener("resize", schedule);
+    window.visualViewport?.addEventListener("resize", schedule);
+    window.visualViewport?.addEventListener("scroll", schedule);
     measure();
     return () => {
       observer.disconnect();
-      window.removeEventListener("resize", measure);
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", schedule);
+      window.visualViewport?.removeEventListener("resize", schedule);
+      window.visualViewport?.removeEventListener("scroll", schedule);
     };
   }, [mobile, hydrated, view, locationMessage, saved.notice]);
   useEffect(() => {
     if (!sheetRef.current || !rootRef.current) return;
     const sheet = sheetRef.current,
       root = rootRef.current;
-    const measure = () =>
-      root.style.setProperty(
-        "--explore-sheet-height",
-        `${sheet.getBoundingClientRect().height}px`,
-      );
-    const observer = new ResizeObserver(measure);
+    const measure = () => {
+      const height = `${sheet.getBoundingClientRect().height}px`;
+      if (root.style.getPropertyValue("--explore-sheet-height") !== height)
+        root.style.setProperty("--explore-sheet-height", height);
+    };
+    let frame = 0;
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    });
     observer.observe(sheet);
     measure();
-    return () => observer.disconnect();
-  }, [view, expanded, selectedId, visible.length]);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [
+    hydrated,
+    view,
+    expanded,
+    selectedId,
+    visible.length,
+    providerUnavailable,
+    mapAttempt,
+  ]);
   useEffect(() => {
     if (!focusSelection.current || view !== "map") return;
     focusSelection.current = false;
@@ -397,6 +435,7 @@ export function CoachExploreResults({
     const label =
       kind === "home" ? "Home" : kind === "work" ? "Work" : "Current location";
     setOrigin({ latitude: place.latitude, longitude: place.longitude, label });
+    setSelectedCoachId(null);
     setExpanded(false);
     if (kind !== "current") setDevicePosition(null);
     setArea(null);
@@ -512,6 +551,21 @@ export function CoachExploreResults({
     </section>
   );
   const mapAvailable = state.status === "ready" && !providerUnavailable;
+  const locationFeedback = locationMessage ? (
+    <div className="explore-notice" role="alert">
+      <span>{locationMessage}</span>
+      {locationMessage.includes("permission") && (
+        <details className="explore-location-permission-help">
+          <summary>Allow location on iPhone</summary>
+          <p>
+            In Safari, open the page menu, choose Website Settings, then set
+            Location to Allow. Also check that iPhone Location Services allows
+            Safari Websites. Return here and tap the location button again.
+          </p>
+        </details>
+      )}
+    </div>
+  ) : null;
 
   return (
     <div
@@ -580,11 +634,7 @@ export function CoachExploreResults({
           )}
         </div>
       )}
-      {locationMessage && (
-        <p className="explore-notice" role="alert">
-          {locationMessage}
-        </p>
-      )}
+      {(!mobile || view !== "map") && locationFeedback}
       <section
         className="coach-results"
         aria-label={
@@ -718,6 +768,24 @@ export function CoachExploreResults({
                     cooperativeGestures={false}
                     onViewportChange={onViewportChange}
                   />
+                  {mobile && (
+                    <>
+                      <p className="explore-map-origin">
+                        Nearest to {origin.label}
+                        {devicePosition &&
+                          origin.label === "Current location" && (
+                            <small>
+                              {deviceAccuracyLabel(
+                                devicePosition.accuracyMeters,
+                              )}
+                            </small>
+                          )}
+                      </p>
+                      <div className="explore-map-feedback">
+                        {locationFeedback}
+                      </div>
+                    </>
+                  )}
                   {areaChanged && viewport && (
                     <button
                       className="explore-search-area"
@@ -800,6 +868,7 @@ export function CoachExploreResults({
                       )}
                     </button>
                     <section
+                      hidden={mobile && !expanded && !showSelectedPreview}
                       ref={selectedPreviewRef}
                       tabIndex={-1}
                       aria-label={

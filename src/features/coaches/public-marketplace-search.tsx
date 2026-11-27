@@ -2,7 +2,7 @@
 
 import Form from "next/form";
 import Link from "next/link";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { ChevronDown, Search, SlidersHorizontal, X } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 import {
   coachDirectoryDisciplines,
@@ -130,6 +130,7 @@ export function PublicMarketplaceSearch({
               <option value="private">Private</option>
               <option value="group">Group</option>
             </select>
+            <ChevronDown size={14} aria-hidden="true" />
           </label>
           <details className="explore-location-filter">
             <summary>
@@ -164,11 +165,12 @@ export function PublicMarketplaceSearch({
           {hasActiveFilters && (
             <Link
               className="explore-clear-search"
+              aria-label="Clear search"
               href={clearHref}
               scroll={false}
             >
               <X size={15} aria-hidden="true" />
-              Clear search
+              <span>Clear search</span>
             </Link>
           )}
         </div>
