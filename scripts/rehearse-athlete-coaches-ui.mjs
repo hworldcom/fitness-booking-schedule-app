@@ -14,10 +14,19 @@ import path from "node:path";
 import { tmpdir } from "node:os";
 import { chromium, expect } from "@playwright/test";
 import { returnToVisiblePage } from "./lib/browser-visibility.mjs";
+const allRequests = process.argv[2] === "--all-requests";
+assert.ok(
+  process.argv.length === 2 || (process.argv.length === 3 && allRequests),
+);
 const root = process.cwd(),
   scratch = await mkdtemp(path.join(tmpdir(), "mov292-ui-"));
 const dataScratch = await mkdtemp(path.join(tmpdir(), "mov292-data-"));
-const output = path.join(root, "test-results/athlete-coaches-ui"),
+const output = path.join(
+    root,
+    allRequests
+      ? "test-results/athlete-coach-requests-ui"
+      : "test-results/athlete-coaches-ui",
+  ),
   base = "http://127.0.0.1:3221",
   checks = [],
   errors = [];
@@ -148,6 +157,7 @@ try {
   );
   env.NEXT_TELEMETRY_DISABLED = "1";
   env.MOV292_UI_STORE = path.join(dataScratch, "store.json");
+  if (allRequests) env.MOV293_UI_REQUESTS = "1";
   server = spawn(
     process.execPath,
     [
@@ -228,6 +238,22 @@ try {
       group.getByRole("button", { name: "Connect", exact: true }),
     ).toHaveCount(0);
     await expect(group).toContainText("Next:");
+    if (allRequests) {
+      const requestOnly = page.getByRole("article", {
+        name: "Request-only Coach, Not connected",
+        exact: true,
+      });
+      await expect(requestOnly).toContainText("No sessions yet");
+      await expect(
+        requestOnly.getByRole("button", { name: "Connect", exact: true }),
+      ).toHaveCount(0);
+      await expect(
+        requestOnly.getByRole("link", {
+          name: "Request-only Coach",
+          exact: true,
+        }),
+      ).toHaveAttribute("href", "/coaches/fixture-8");
+    }
     const hidden = page.getByRole("article", {
       name: "Hidden Coach, Connected",
       exact: true,

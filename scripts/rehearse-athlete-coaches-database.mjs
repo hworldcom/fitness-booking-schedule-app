@@ -8,14 +8,23 @@ import {
   LOCAL_SUPABASE_DATABASE_CONTAINER as container,
   assertLocalSupabaseConfiguration,
 } from "./lib/local-supabase-project.mjs";
-assert.equal(process.argv.length, 2);
+const allRequests = process.argv[2] === "--all-requests";
+assert.ok(
+  process.argv.length === 2 || (process.argv.length === 3 && allRequests),
+);
+const issue = allRequests ? "mov293" : "mov292";
 assertLocalSupabaseConfiguration(readFileSync("supabase/config.toml", "utf8"));
-const target = "20261127000200_athlete_coach_roster.sql";
+const target = allRequests
+  ? "20261127000300_athlete_coaches_all_requests.sql"
+  : "20261127000200_athlete_coach_roster.sql";
+const contractTest = allRequests
+  ? "tests/database/athlete-coach-requests.test.ts"
+  : "tests/database/athlete-coaches.test.ts";
 const files = readdirSync("supabase/migrations")
   .filter((f) => f.endsWith(".sql") && f <= target)
   .sort();
 assert.equal(files.at(-1), target);
-const temporary = mkdtempSync("/tmp/mov292-sql-"),
+const temporary = mkdtempSync(`/tmp/${issue}-sql-`),
   created = [],
   logins = [];
 const docker = (args, input) =>
@@ -69,7 +78,7 @@ try {
     "--schema-only",
   ]);
   for (const mode of ["fresh", "upgrade"]) {
-    const name = `mov292_${randomUUID().replaceAll("-", "").slice(0, 12)}_${mode}`;
+    const name = `${issue}_${randomUUID().replaceAll("-", "").slice(0, 12)}_${mode}`;
     docker(["createdb", "-U", "supabase_admin", "-O", "postgres", name]);
     created.push(name);
     query(name, infrastructure + "\nDROP SCHEMA app CASCADE;");
@@ -77,7 +86,7 @@ try {
       query(name, readFileSync("supabase/migrations/" + file, "utf8"));
     query(name, readFileSync("supabase/seed.sql", "utf8"));
     const login =
-        "mov292_runtime_" + randomUUID().replaceAll("-", "").slice(0, 12),
+        issue + "_runtime_" + randomUUID().replaceAll("-", "").slice(0, 12),
       password = randomUUID();
     query(
       name,
@@ -123,6 +132,22 @@ try {
         maxBuffer: 16 * 1024 * 1024,
       },
     );
+    if (allRequests)
+      execFileSync(
+        process.execPath,
+        [
+          "--import",
+          "tsx",
+          "--conditions=react-server",
+          "--test",
+          contractTest,
+        ],
+        {
+          encoding: "utf8",
+          env: { ...env, ATHLETE_COACH_REQUEST_PREPARE: "1" },
+          maxBuffer: 16 * 1024 * 1024,
+        },
+      );
     const before = snapshot(name);
     if (mode === "upgrade") {
       docker(
@@ -145,28 +170,35 @@ try {
     }
     assert.deepEqual(snapshot(name), before, "Migration must not rewrite rows");
     const current = JSON.parse(query(name, attrs));
-    for (const item of JSON.parse(prior))
-      assert.deepEqual(
-        current.find((x) => x.name === item.name),
-        item,
-        "Changed existing authority: " + item.name,
-      );
+    for (const item of JSON.parse(prior)) {
+      const actual = current.find((x) => x.name === item.name);
+      if (allRequests && item.name.startsWith("app.current_athlete_coaches(")) {
+        const { sourceHash: beforeSource, ...authority } = item;
+        const { sourceHash: afterSource, ...newAuthority } = actual;
+        assert.deepEqual(
+          newAuthority,
+          authority,
+          "Roster signature/owner/ACL changed",
+        );
+        assert.notEqual(afterSource, beforeSource);
+      } else
+        assert.deepEqual(
+          actual,
+          item,
+          "Changed existing authority: " + item.name,
+        );
+    }
+    if (allRequests) assert.equal(current.length, JSON.parse(prior).length);
     query(name, migration);
     assert.deepEqual(snapshot(name), before, "Reapply must preserve rows");
     const output = execFileSync(
       process.execPath,
-      [
-        "--import",
-        "tsx",
-        "--conditions=react-server",
-        "--test",
-        "tests/database/athlete-coaches.test.ts",
-      ],
+      ["--import", "tsx", "--conditions=react-server", "--test", contractTest],
       { encoding: "utf8", env, maxBuffer: 16 * 1024 * 1024 },
     );
     console.log(output);
     console.log(
-      `PASS MOV-292 ${mode}: migration/reapply, original authority/data preservation and restricted roster contracts`,
+      `PASS ${issue.toUpperCase()} ${mode}: migration/reapply, original authority/data preservation and restricted roster contracts`,
     );
   }
 } catch (error) {

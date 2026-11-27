@@ -85,7 +85,10 @@ function read(): Store {
             6: "Outgoing Coach",
             7: "Reconnect Coach",
           } as Record<number, string>
-        )[n] ?? `Group Coach ${n}`;
+        )[n] ??
+        (process.env.MOV293_UI_REQUESTS === "1" && n === 8
+          ? "Request-only Coach"
+          : `Group Coach ${n}`);
       const initialConnection =
         status === "connected"
           ? connection(n, "accepted")
@@ -103,7 +106,10 @@ function read(): Store {
         name,
         status,
         lastSessionAt: n === 1 ? "2026-11-20T10:00:00Z" : null,
-        nextSessionAt: "2035-01-01T10:00:00Z",
+        nextSessionAt:
+          process.env.MOV293_UI_REQUESTS === "1" && n === 8
+            ? null
+            : "2035-01-01T10:00:00Z",
         sortAt: `2026-11-27T10:00:00.${String(100000 - n).padStart(6, "0")}+00:00`,
         bookingId: [1, 2, 4, 5, 6, 7].includes(n) ? uuid(n + 300) : null,
         connection: c,
