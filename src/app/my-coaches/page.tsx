@@ -12,7 +12,9 @@ import { ConnectionWorkspace } from "@/features/connections/connection-workspace
 import "@/features/connections/connections.css";
 import { ProtectedAccessUnavailable } from "@/features/auth/protected-access";
 import { protectedPageAccess } from "@/server/authorization/page-access";
-import { currentClientCoachMarketplaceWorkspace } from "@/server/coaches/booking-request-service";
+import { currentAthleteCoachWorkspace } from "@/server/connections/athlete-coaches-service";
+import { AthleteCoachRoster } from "@/features/connections/athlete-coach-roster";
+import { isAthleteCoachFilter } from "@/domain/athlete-coaches";
 import { connectionWorkspaceVersion } from "@/server/connections/workspace-version";
 import { currentPendingCoachInvitation } from "@/server/external-clients/pending-invitation";
 import { PendingInvitationNotice } from "@/features/external-clients/pending-invitation-notice";
@@ -24,8 +26,10 @@ export default async function Page({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const section = myCoachesSection((await searchParams).section);
-  const returnHref = myCoachesHref(section);
+  const params = await searchParams;
+  const section = myCoachesSection(params.section);
+  const filter = isAthleteCoachFilter(params.status) ? params.status : "all";
+  const returnHref = myCoachesHref(section, filter);
   const access = await protectedPageAccess(returnHref);
   if (access.status === "unavailable") return <ProtectedAccessUnavailable />;
   if (access.status === "preview") {
@@ -44,8 +48,10 @@ export default async function Page({
   }
 
   const [workspace, pages, invitation] = await Promise.all([
-    currentClientCoachMarketplaceWorkspace([]),
-    loadConnectionPagesAction("athlete", section),
+    currentAthleteCoachWorkspace(section === "connected" ? filter : null),
+    section === "requests"
+      ? loadConnectionPagesAction("athlete", "requests")
+      : null,
     currentPendingCoachInvitation(),
   ]);
   if (workspace.status === "signed-out") redirect(signInHref(returnHref));
@@ -56,27 +62,36 @@ export default async function Page({
   const scope = [workspace.subject, workspace.actorIdentity].join(":");
   return (
     <MyCoachesWorkspace
+      key={`${scope}:${section}:${filter}`}
       active={section}
       subject={workspace.subject}
       actorIdentity={workspace.actorIdentity}
+      filter={filter}
     >
       <PendingInvitationNotice invitation={invitation} />
-      <ConnectionWorkspace
-        key={`${scope}:${section}`}
-        role="athlete"
-        view="connections"
-        connectionView={section}
-        connectionHeadingLevel={2}
-        mayInitiate={true}
-        initialPages={pages}
-        sourceVersion={connectionWorkspaceVersion(scope, "athlete", [
-          section,
-          pages,
-          workspace.bookings,
-        ])}
-        bookings={workspace.bookings}
-        referenceTime={new Date().toISOString()}
-      />
+      {section === "connected" ? (
+        <AthleteCoachRoster
+          scope={workspace.scope}
+          filter={filter}
+          initialPage={workspace.page}
+        />
+      ) : (
+        <ConnectionWorkspace
+          key={`${scope}:${section}`}
+          role="athlete"
+          view="connections"
+          connectionView={section}
+          connectionHeadingLevel={2}
+          mayInitiate={true}
+          initialPages={pages!}
+          sourceVersion={connectionWorkspaceVersion(scope, "athlete", [
+            section,
+            pages,
+          ])}
+          bookings={null}
+          referenceTime={new Date().toISOString()}
+        />
+      )}
     </MyCoachesWorkspace>
   );
 }

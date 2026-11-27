@@ -37,17 +37,20 @@ export function ExploreCategoryFilter({
       ref={root}
       className="explore-category-filter"
       onKeyDown={(event) => {
+        if (event.key === "Tab") {
+          // Only keyboard navigation dismisses on focus departure. Safari can
+          // blur to the page during native checkbox activation on a touch tap.
+          requestAnimationFrame(() => {
+            const element = root.current;
+            if (element?.open && !element.contains(document.activeElement))
+              element.open = false;
+          });
+          return;
+        }
         if (event.key !== "Escape") return;
         event.preventDefault();
         event.currentTarget.open = false;
         event.currentTarget.querySelector("summary")?.focus();
-      }}
-      onBlur={(event) => {
-        if (
-          event.relatedTarget instanceof Node &&
-          !event.currentTarget.contains(event.relatedTarget)
-        )
-          event.currentTarget.open = false;
       }}
     >
       <summary

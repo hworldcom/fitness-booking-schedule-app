@@ -86,7 +86,7 @@ export function WorkspaceNavigationItems({
           aria-hidden="true"
           fill={href === "/" && active ? "currentColor" : "none"}
         />
-        <span>{mobile && label === "My coaches" ? "Coaches" : label}</span>
+        <span>{label}</span>
       </Link>
     );
   });

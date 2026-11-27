@@ -6,8 +6,14 @@ export function myCoachesSection(
   return value === "requests" ? "requests" : "connected";
 }
 
-export function myCoachesHref(section: MyCoachesSection) {
+export function myCoachesHref(
+  section: MyCoachesSection,
+  filter: AthleteCoachFilter = "all",
+) {
   return section === "requests"
     ? "/my-coaches?section=requests"
-    : "/my-coaches";
+    : filter === "all"
+      ? "/my-coaches"
+      : `/my-coaches?status=${filter}`;
 }
+import type { AthleteCoachFilter } from "./athlete-coaches";

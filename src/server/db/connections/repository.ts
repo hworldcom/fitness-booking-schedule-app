@@ -67,6 +67,38 @@ function boolean(value: unknown) {
   if (typeof value !== "boolean") throw new ConnectionConflictError();
   return value;
 }
+export function parseConnectionCoachPortrait(
+  value: unknown,
+  coachProfileId: string,
+): string | null {
+  let coachPortraitUrl: string | null = null;
+  if (value !== null) {
+    const portrait = row(value);
+    if (portrait.source !== null) {
+      if (
+        portrait.source !== "fixture" &&
+        portrait.source !== "storage" &&
+        portrait.source !== "account"
+      )
+        throw new ConnectionConflictError();
+      const reference: CoachPortraitReference = {
+        source: portrait.source,
+        path: text(portrait.path, 512),
+        updatedAt: timestamp(portrait.updatedAt),
+      };
+      if (
+        (reference.source === "account" && reference.path !== coachProfileId) ||
+        (reference.source === "storage" &&
+          !isOwnedProfileImageStoragePath(reference.path, coachProfileId))
+      )
+        throw new ConnectionConflictError();
+      coachPortraitUrl = profileImageStorage.publicPortraitUrl(reference);
+      if (coachPortraitUrl && !isPublicCoachPortraitUrl(coachPortraitUrl))
+        throw new ConnectionConflictError();
+    }
+  }
+  return coachPortraitUrl;
+}
 function mapConnection(value: unknown): ConnectionProjection {
   const r = row(value);
   if (
@@ -93,32 +125,10 @@ function mapConnection(value: unknown): ConnectionProjection {
     (r.status === "removed") !== (removedAt !== null)
   )
     throw new ConnectionConflictError();
-  let coachPortraitUrl: string | null = null;
-  if (r.coachPortrait !== null) {
-    const portrait = row(r.coachPortrait);
-    if (portrait.source !== null) {
-      if (
-        portrait.source !== "fixture" &&
-        portrait.source !== "storage" &&
-        portrait.source !== "account"
-      )
-        throw new ConnectionConflictError();
-      const reference: CoachPortraitReference = {
-        source: portrait.source,
-        path: text(portrait.path, 512),
-        updatedAt: timestamp(portrait.updatedAt),
-      };
-      if (
-        (reference.source === "account" && reference.path !== coachProfileId) ||
-        (reference.source === "storage" &&
-          !isOwnedProfileImageStoragePath(reference.path, coachProfileId))
-      )
-        throw new ConnectionConflictError();
-      coachPortraitUrl = profileImageStorage.publicPortraitUrl(reference);
-      if (coachPortraitUrl && !isPublicCoachPortraitUrl(coachPortraitUrl))
-        throw new ConnectionConflictError();
-    }
-  }
+  const coachPortraitUrl = parseConnectionCoachPortrait(
+    r.coachPortrait,
+    coachProfileId,
+  );
   return Object.freeze({
     id: uuid(r.id),
     pairId: uuid(r.pairId),

@@ -37,8 +37,20 @@ export function readDeviceLocation(): Promise<
       );
       return;
     }
+    // A browser permission prompt is not covered consistently by the native
+    // position timeout. Always return control to the visitor after 15 seconds.
+    const deadline = setTimeout(
+      () =>
+        reject(
+          new Error(
+            "Location is taking too long. Check this website’s location permission, then try again or search by area.",
+          ),
+        ),
+      15_000,
+    );
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
+        clearTimeout(deadline);
         const point = readDeviceCoordinates(coords);
         if (!point) {
           reject(
@@ -50,14 +62,18 @@ export function readDeviceLocation(): Promise<
         }
         resolve({ ...point, label: "Current location" });
       },
-      (error) =>
+      (error) => {
+        clearTimeout(deadline);
         reject(
           new Error(
             error.code === 1
-              ? "Location permission was denied. You can search by area or use a saved place."
-              : "Your location could not be found. Try again or choose a saved place.",
+              ? "Location permission was denied. Allow location for this website in your browser settings, then try again."
+              : error.code === 3
+                ? "Finding your location timed out. Try again or search by area."
+                : "Your location could not be found. Try again or choose a saved place.",
           ),
-        ),
+        );
+      },
       { enableHighAccuracy: true, timeout: 10_000, maximumAge: 0 },
     );
   });

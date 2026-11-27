@@ -2989,3 +2989,35 @@
 .location-device-accuracy[hidden] {
   display: none;
 }
+
+/* A chosen private shortcut is separate from coach markers and device accuracy. */
+.location-saved-place-marker {
+  width: 42px;
+  height: 54px;
+  color: #61417b;
+  pointer-events: none;
+  z-index: 2;
+  filter: drop-shadow(0 2px 3px #2b163a40);
+}
+.location-saved-place-marker[data-kind="work"] {
+  color: #286765;
+}
+.location-saved-place-marker > svg {
+  display: block;
+  width: 42px;
+  height: 54px;
+}
+.location-saved-place-marker > span {
+  position: absolute;
+  top: 10px;
+  left: 43px;
+  padding: 3px 8px;
+  border: 1px solid currentColor;
+  border-radius: 7px;
+  background: #fff;
+  color: inherit;
+  font:
+    700 12px/18px "Manrope Variable",
+    sans-serif;
+  white-space: nowrap;
+}

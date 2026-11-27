@@ -4,11 +4,14 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ActorSnapshot } from "@/auth/actor-contracts";
 import type { AuthSessionSnapshot } from "@/auth/contracts";
-import { myCoachesSection } from "@/domain/my-coaches-navigation";
+import {
+  myCoachesSection,
+  myCoachesHref,
+} from "@/domain/my-coaches-navigation";
 import { MyCoachesNavigation } from "@/features/connections/my-coaches-workspace";
 import { myCoachesOwnerAccess } from "@/features/connections/my-coaches-model";
 
-test("My coaches defaults to connected and exposes exactly two stable URL-backed sections", () => {
+test("My coaches defaults to All coaches and exposes exactly two stable URL-backed sections", () => {
   for (const value of [
     undefined,
     "connected",
@@ -18,6 +21,18 @@ test("My coaches defaults to connected and exposes exactly two stable URL-backed
   ])
     assert.equal(myCoachesSection(value), "connected");
   assert.equal(myCoachesSection("requests"), "requests");
+  assert.equal(
+    myCoachesHref("connected", "connected"),
+    "/my-coaches?status=connected",
+  );
+  assert.equal(
+    myCoachesHref("connected", "unconnected"),
+    "/my-coaches?status=unconnected",
+  );
+  assert.equal(
+    myCoachesHref("requests", "unconnected"),
+    "/my-coaches?section=requests",
+  );
   for (const active of ["connected", "requests"] as const) {
     const html = renderToStaticMarkup(
       createElement(MyCoachesNavigation, { active }),
@@ -28,7 +43,7 @@ test("My coaches defaults to connected and exposes exactly two stable URL-backed
     );
     assert.equal((html.match(/aria-current="page"/g) ?? []).length, 1);
     assert.ok(
-      html.indexOf("Connected coaches") < html.indexOf("Connection requests"),
+      html.indexOf("All coaches") < html.indexOf("Connection requests"),
     );
     assert.doesNotMatch(html, /External/);
   }
