@@ -66,6 +66,8 @@ export function ExploreDiscoveryFixture({
 }) {
   const [viewer, setViewer] = useState("guest");
   const [failure, setFailure] = useState(false);
+  const [withBanner, setWithBanner] = useState(false);
+  const [withMissingPortrait, setWithMissingPortrait] = useState(false);
   const actor: ActorSnapshot =
     viewer === "guest"
       ? { status: "signed-out" }
@@ -94,19 +96,44 @@ export function ExploreDiscoveryFixture({
             email: `${viewer}@fixture.movx.test`,
             expiresAt: null,
           };
-  const entries = filterCoachDirectoryDisciplines(rows, filters).filter(
-    (entry) =>
-      (!filters.query ||
-        `${entry.coach.displayName} ${entry.coach.bio}`
-          .toLowerCase()
-          .includes(filters.query.toLowerCase())) &&
-      (!filters.location ||
-        entry.primaryLocation.location.label
-          .toLowerCase()
-          .includes(filters.location.toLowerCase())) &&
-      (filters.sessionFormat !== "group" ||
-        entry.coach.displayName === "Group Coach"),
-  );
+  const entries = filterCoachDirectoryDisciplines(rows, filters)
+    .filter(
+      (entry) =>
+        (!filters.query ||
+          `${entry.coach.displayName} ${entry.coach.bio}`
+            .toLowerCase()
+            .includes(filters.query.toLowerCase())) &&
+        (!filters.location ||
+          entry.primaryLocation.location.label
+            .toLowerCase()
+            .includes(filters.location.toLowerCase())) &&
+        (filters.sessionFormat !== "group" ||
+          entry.coach.displayName === "Group Coach"),
+    )
+    .map((entry) =>
+      entry.coach.displayName === "Near Coach"
+        ? {
+            ...entry,
+            coach: withMissingPortrait
+              ? {
+                  ...entry.coach,
+                  portraitUrl: "/fixture-missing-portrait.webp",
+                }
+              : entry.coach,
+            website:
+              withBanner && entry.website
+                ? {
+                    ...entry.website,
+                    banner: {
+                      url: "/images/coaches/jake-miller.webp",
+                      width: 1024,
+                      height: 1024,
+                    },
+                  }
+                : entry.website,
+          }
+        : entry,
+    );
   return (
     <>
       <AuthSessionProvider key={viewer} initialSession={session}>
@@ -143,6 +170,15 @@ export function ExploreDiscoveryFixture({
         ))}
         <button type="button" onClick={() => setFailure((value) => !value)}>
           Toggle directory failure
+        </button>
+        <button type="button" onClick={() => setWithBanner((value) => !value)}>
+          Toggle fixture banner
+        </button>
+        <button
+          type="button"
+          onClick={() => setWithMissingPortrait((value) => !value)}
+        >
+          Toggle missing fixture portrait
         </button>
       </fieldset>
     </>

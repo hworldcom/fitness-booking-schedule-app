@@ -340,6 +340,7 @@
   bottom: -28px;
 }
 .explore-discovery .explore-profiles .coach-card-media:not(.has-banner) {
+  aspect-ratio: 1;
   margin-bottom: 16px;
 }
 .explore-profiles .coach-card-media:not(.has-banner) > .avatar {
@@ -353,7 +354,10 @@
   font-size: 42px;
 }
 .explore-profiles .coach-card-media:not(.has-banner) > .avatar img {
-  object-position: center 35%;
+  min-width: 0;
+  min-height: 0;
+  object-fit: contain;
+  object-position: center;
 }
 .explore-discovery .compact-coach-card .pill {
   min-height: 22px;

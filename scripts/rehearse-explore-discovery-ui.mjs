@@ -234,6 +234,152 @@ try {
   page = await context.newPage();
   page.setDefaultTimeout(15_000);
   page.on("pageerror", (error) => errors.push(error.message));
+  const portraits = await context.newPage();
+  portraits.on("pageerror", (error) => errors.push(error.message));
+  try {
+    const card = portraits
+      .locator(".explore-profiles .compact-coach-card")
+      .filter({
+        has: portraits.getByRole("heading", {
+          name: "Near Coach",
+          exact: true,
+        }),
+      });
+    const portrait = card.locator(".coach-card-media > .avatar img");
+    const expectWholePhoto = async () => {
+      await expect(portrait).toBeVisible();
+      await portrait.evaluate((image) => image.decode());
+      const visible = await portrait.evaluate((image) => {
+        const box = image.getBoundingClientRect();
+        const style = getComputedStyle(image);
+        const horizontal = box.width / image.naturalWidth;
+        const vertical = box.height / image.naturalHeight;
+        const scale =
+          style.objectFit === "contain"
+            ? Math.min(horizontal, vertical)
+            : style.objectFit === "cover"
+              ? Math.max(horizontal, vertical)
+              : style.objectFit === "scale-down"
+                ? Math.min(1, horizontal, vertical)
+                : 1;
+        const width =
+          style.objectFit === "fill" ? box.width : image.naturalWidth * scale;
+        const height =
+          style.objectFit === "fill" ? box.height : image.naturalHeight * scale;
+        const position = style.objectPosition.split(" ").map(parseFloat);
+        const x = box.x + ((box.width - width) * position[0]) / 100;
+        const y = box.y + ((box.height - height) * position[1]) / 100;
+        const clips = [
+          box,
+          image.parentElement.getBoundingClientRect(),
+          image.closest(".coach-card-media").getBoundingClientRect(),
+        ];
+        return {
+          complete: clips.every(
+            (clip) =>
+              x >= clip.x - 1 &&
+              y >= clip.y - 1 &&
+              x + width <= clip.right + 1 &&
+              y + height <= clip.bottom + 1,
+          ),
+          proportional:
+            Math.abs(
+              width / height / (image.naturalWidth / image.naturalHeight) - 1,
+            ) < 0.01,
+          renderedWidth: box.width,
+          renderedHeight: box.height,
+          naturalWidth: image.naturalWidth,
+          naturalHeight: image.naturalHeight,
+        };
+      });
+      assert(visible.complete && visible.proportional, JSON.stringify(visible));
+    };
+    for (const width of [1440, 375]) {
+      await portraits.setViewportSize({ width, height: 1000 });
+      await portraits.goto(base + "/explore?view=list");
+      await expectWholePhoto();
+      await card.screenshot({
+        path: path.join(evidence, `portrait-real-${width}.png`),
+      });
+    }
+    let shape = [512, 512];
+    const portraitPath = "**/images/coaches/daniel-park.webp";
+    await portraits.route(portraitPath, (route) =>
+      route.fulfill({
+        contentType: "image/svg+xml",
+        body: `<svg xmlns="http://www.w3.org/2000/svg" width="${shape[0]}" height="${shape[1]}"><rect width="100%" height="100%" fill="#dceac2"/><rect width="100%" height="25%" fill="#60417c"/><rect y="75%" width="100%" height="25%" fill="#cbdce9"/></svg>`,
+      }),
+    );
+    for (const width of [1440, 1024, 768, 375, 320]) {
+      await portraits.setViewportSize({ width, height: 1000 });
+      for (shape of [
+        [512, 512],
+        [400, 800],
+        [800, 400],
+      ]) {
+        await portraits.goto(base + "/explore?view=list");
+        await expectWholePhoto();
+        assert(
+          await portraits.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
+        );
+      }
+      const missing = portraits
+        .locator(".explore-profiles .compact-coach-card")
+        .filter({
+          has: portraits.getByRole("heading", {
+            name: "Far Coach",
+            exact: true,
+          }),
+        });
+      await expect(missing.locator(".avatar")).toHaveText("FC");
+      const profile = card.getByRole("link", {
+        name: "View profile",
+        exact: true,
+      });
+      await profile.focus();
+      await expect(profile).toBeFocused();
+      await expect(profile).toHaveAttribute("href", /near-coach/);
+      await card
+        .getByRole("button", { name: "Save Near Coach", exact: true })
+        .focus();
+      await expect(
+        card.getByRole("button", { name: "Save Near Coach", exact: true }),
+      ).toBeFocused();
+    }
+    await portraits.unroute(portraitPath);
+    await portraits.goto(base + "/explore?view=list");
+    await portraits
+      .getByRole("button", { name: "Toggle fixture banner", exact: true })
+      .click();
+    const banner = card.locator(".coach-card-banner");
+    await expect(banner).toBeVisible();
+    const mediaBox = await card.locator(".coach-card-media").boundingBox();
+    const avatarBox = await card.locator(".avatar").boundingBox();
+    assert(mediaBox && mediaBox.width / mediaBox.height > 2);
+    assert(avatarBox && avatarBox.width < mediaBox.width / 2);
+    await portraits.route("**/fixture-missing-portrait.webp", (route) =>
+      route.fulfill({ status: 404, body: "Missing fixture image" }),
+    );
+    await portraits.goto(base + "/explore?view=list");
+    await portraits
+      .getByRole("button", {
+        name: "Toggle missing fixture portrait",
+        exact: true,
+      })
+      .click();
+    await expect(card.locator(".avatar img")).toHaveCount(0);
+    await expect(card.locator(".avatar")).toHaveText("NC");
+    await expect(
+      card.getByRole("link", { name: "View profile", exact: true }),
+    ).toBeVisible();
+    report(
+      "complete proportional square/tall/wide portraits, initials/errors, banner compatibility and keyboard profile actions at desktop/tablet/phone widths",
+    );
+  } finally {
+    await portraits.close();
+  }
   await page.goto(base + "/explore", {
     waitUntil: "networkidle",
     timeout: 90_000,
