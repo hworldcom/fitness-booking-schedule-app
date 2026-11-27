@@ -13,7 +13,8 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import { tmpdir } from "node:os";
-import { chromium, expect } from "@playwright/test";
+import { chromium, expect as playwrightExpect } from "@playwright/test";
+const expect = playwrightExpect.configure({ timeout: 15000 });
 
 const refreshOnly = process.argv.includes("--refresh-recovery");
 const countsOnly = process.argv.includes("--connection-counts") || refreshOnly;
@@ -149,6 +150,8 @@ try {
     export async function decideCoachAthleteConnection(id:string,action:string){const {fault}=await fixtureScenario();if(fault==="connection-mutation-unavailable")return {status:"unavailable"};const jar=await cookies();if(action==="disconnect")jar.set("mov210-disconnected","yes");else if(action==="withdraw")jar.set("mov210-withdrawn","yes");else jar.set("mov210-incoming",action);if(fault==="connection-mutation-lost")return {status:"unavailable"};const data=await rows();return {status:"ready",value:data.row(id===uuid(1)?1:id===uuid(12)?12:11,action==="accept"?"accepted":action==="disconnect"?"removed":action==="withdraw"?"withdrawn":"declined","Incoming fixture athlete")};}
     export async function sendCoachAthleteConnection(){throw Error("Not rehearsed");}
     export async function currentCoachAthletes(){return {status:"unavailable"};}
+    export async function currentAthleteCoaches(_scope:any,filter:any,cursor:any=null){const first=await currentConnectionPage("athlete","accepted",{cursor:cursor?{createdAt:cursor.at,id:cursor.key.slice(2)}:null});if(first.status!=="ready")return first;const data=await rows();const connections=cursor?first.value.items:[...first.value.items,...data.incoming,...data.outgoing,...data.history];const items=connections.map((c:any)=>({key:"p:"+c.id,profileId:c.id,name:c.coachDisplayName,status:c.status==="accepted"?"connected":c.status==="pending"?"pending":"unconnected",lastSessionAt:null,nextSessionAt:null,sortAt:c.createdAt,bookingId:null,connection:c,canSend:false,profileHref:c.coachPublic?"/coaches/"+c.coachSlug:null,portraitUrl:c.coachPortraitUrl})).filter((c:any)=>filter==="all"||c.status===filter||(filter==="unconnected"&&c.status==="pending"));return {status:"ready",page:{items,nextCursor:first.value.nextCursor?{at:first.value.nextCursor.createdAt,key:"p:"+first.value.nextCursor.id}:null}};}
+    export async function currentAthleteCoachWorkspace(filter:any){const {session,actor}=await initialAuthorizationState(),{fault}=await fixtureScenario();if(session.status!=="signed-in"||actor.status!=="authorized")return {status:actor.status};if(fault==="workspace-unavailable")return {status:"unavailable"};const scope=[session.subject,uuid(500),uuid(501),"member"].join(":");const roster=filter===null?null:await currentAthleteCoaches(scope,filter);return {status:"authorized",subject:session.subject,actorIdentity:[actor.profile.slug,actor.demoRun.slug,actor.role].join(":"),scope,page:roster?.status==="ready"?roster.page:null};}
     export async function currentConnectionHistory(){return {status:"ready",value:{items:[],nextCursor:null}};}
     export async function currentBookingConnectionContext(){return {status:"unavailable"};}
   `,
@@ -198,6 +201,7 @@ try {
     "src/app/coach/athletes/page.tsx",
     "src/app/coach/athletes/actions.ts",
     "src/app/my-coaches/page.tsx",
+    "src/app/my-coaches/actions.ts",
     "src/app/connections/actions.ts",
     "src/app/api/connections/pending-count/route.ts",
   ]) {
@@ -242,6 +246,10 @@ try {
     await writeFile(
       file,
       myCoachesSource
+        .replaceAll(
+          'from "@/server/connections/athlete-coaches-service"',
+          'from "@/tests-fixtures/connection-services"',
+        )
         .replaceAll(
           'from "@/server/connections/coach-athletes-service"',
           'from "@/tests-fixtures/connection-services"',
@@ -1023,7 +1031,7 @@ try {
   const coachesNav = () =>
     page.getByRole("navigation", { name: "My coaches sections", exact: true });
   const coachTabs = [
-    ["Connected coaches", "/my-coaches"],
+    ["All coaches", "/my-coaches"],
     ["Connection requests", "/my-coaches?section=requests"],
   ];
   if (!countsOnly) {
@@ -1083,10 +1091,10 @@ try {
           ).toBeVisible();
           await expect(
             page.getByText("Incoming fixture coach", { exact: true }),
-          ).toHaveCount(0);
+          ).toBeVisible();
           await expect(
             page.getByRole("link", {
-              name: "View Connected fixture coach’s coach profile",
+              name: "Connected fixture coach",
               exact: true,
             }),
           ).toHaveAttribute("href", "/coaches/fixture-coach");
@@ -1171,7 +1179,7 @@ try {
       );
       if (action === "Accept connection") {
         await coachesNav()
-          .getByRole("link", { name: "Connected coaches", exact: true })
+          .getByRole("link", { name: "All coaches", exact: true })
           .click();
         await expect(
           page.getByText("Incoming fixture coach", { exact: true }),
@@ -1181,7 +1189,10 @@ try {
     await page.context().clearCookies({ name: /^mov210-/ });
     await open(coachTabs[0][1]);
     await page
-      .getByRole("button", { name: "View shared history", exact: true })
+      .locator('summary[aria-label="Manage Connected fixture coach"]')
+      .click();
+    await page
+      .getByRole("button", { name: "Shared history", exact: true })
       .click();
     await expect(page.locator(".coach-connection-history")).toBeVisible();
     await page.getByRole("button", { name: "Disconnect", exact: true }).click();
