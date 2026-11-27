@@ -7,6 +7,7 @@ import type {
   LocationMapViewport,
   LocationMapCamera,
   LocationDevicePosition,
+  LocationSavedPlaceMarker,
 } from "../contracts";
 import { deviceAccuracyLabel, deviceAccuracyBounds } from "../device-position";
 import { layoutLocationMapMarkers } from "../marker-layout";
@@ -43,6 +44,7 @@ export function LocationResultsMap({
   onViewportChange,
   cooperativeGestures = true,
   devicePosition = null,
+  savedPlace = null,
 }: {
   points: readonly LocationMapPoint[];
   selectedPointId: string | null;
@@ -60,6 +62,7 @@ export function LocationResultsMap({
   ) => void;
   cooperativeGestures?: boolean;
   devicePosition?: LocationDevicePosition | null;
+  savedPlace?: LocationSavedPlaceMarker | null;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -68,6 +71,7 @@ export function LocationResultsMap({
   const onUnavailableRef = useRef(onUnavailable);
   const onViewportRef = useRef(onViewportChange);
   const deviceCleanupRef = useRef<(() => void) | null>(null);
+  const savedPlaceCleanupRef = useRef<(() => void) | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -138,6 +142,7 @@ export function LocationResultsMap({
         active = false;
         resizeObserver?.disconnect();
         deviceCleanupRef.current?.();
+        savedPlaceCleanupRef.current?.();
         map.off("error", handleError);
         map.off("moveend", handleMove);
         for (const entry of markers.values()) removeMarkerEntry(entry);
@@ -365,6 +370,60 @@ export function LocationResultsMap({
     deviceCleanupRef.current = cleanup;
     return cleanup;
   }, [devicePosition, ready]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !savedPlace) return;
+    const name = savedPlace.kind === "home" ? "Home" : "Work";
+    const element = document.createElement("div");
+    element.className = "location-saved-place-marker";
+    element.dataset.kind = savedPlace.kind;
+    element.setAttribute("role", "img");
+    element.setAttribute(
+      "aria-label",
+      `${name} saved place. Your search origin.`,
+    );
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 42 54");
+    svg.setAttribute("aria-hidden", "true");
+    const outline = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "path",
+    );
+    outline.setAttribute(
+      "d",
+      "M21 52S3 32 3 21a18 18 0 1 1 36 0c0 11-18 31-18 31Z",
+    );
+    outline.setAttribute("fill", "currentColor");
+    outline.setAttribute("stroke", "#fff");
+    outline.setAttribute("stroke-width", "2");
+    const icon = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    icon.setAttribute(
+      "d",
+      savedPlace.kind === "home"
+        ? "m12 20 9-7 9 7v10H12Z M18 30v-8h6v8"
+        : "M14 17h14v12H14Z M18 17v-4h6v4 M14 22h14 M21 21v3",
+    );
+    icon.setAttribute("fill", "none");
+    icon.setAttribute("stroke", "#fff");
+    icon.setAttribute("stroke-width", "1.8");
+    icon.setAttribute("stroke-linejoin", "round");
+    svg.append(outline, icon);
+    const label = document.createElement("span");
+    label.textContent = name;
+    element.append(svg, label);
+    const marker = new maplibregl.Marker({ element, anchor: "bottom" })
+      .setLngLat([savedPlace.longitude, savedPlace.latitude])
+      .addTo(map);
+    let disposed = false;
+    const cleanup = () => {
+      if (disposed) return;
+      disposed = true;
+      marker.remove();
+    };
+    savedPlaceCleanupRef.current = cleanup;
+    return cleanup;
+  }, [savedPlace, ready]);
 
   useEffect(() => {
     for (const [pointId, entry] of markersRef.current) {

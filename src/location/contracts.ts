@@ -67,6 +67,13 @@ export type LocationDevicePosition = Readonly<{
   accuracyMeters: number | null;
 }>;
 
+/** The explicitly selected private search shortcut, never a public coach. */
+export type LocationSavedPlaceMarker = Readonly<{
+  kind: "home" | "work";
+  latitude: number;
+  longitude: number;
+}>;
+
 export type LocationSearchFailure =
   "configuration" | "quota" | "provider" | "response";
 

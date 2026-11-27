@@ -1089,6 +1089,18 @@ try {
       "no-JavaScript map URLs retain profiles and native GET search with multiple categories",
     );
   }
+  const { checkExploreSavedPlaces } =
+    await import("./lib/explore-saved-place-checks.mjs");
+  await checkExploreSavedPlaces({
+    page,
+    base,
+    evidence,
+    report,
+    touch,
+    setViewer: (value) => {
+      viewer = value;
+    },
+  });
   assert.deepEqual(errors, []);
   passed = true;
 } catch (error) {

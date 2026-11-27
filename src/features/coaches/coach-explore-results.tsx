@@ -33,6 +33,7 @@ import type {
 import type {
   LocationMapCamera,
   LocationDevicePosition,
+  LocationSavedPlaceMarker,
   LocationMapViewport,
   LocationSearchConfiguration,
 } from "@/location/contracts";
@@ -173,6 +174,20 @@ export function CoachExploreResults({
   const [selectedCoachId, setSelectedCoachId] = useState<string | null>(null);
   const [selectionRequest, setSelectionRequest] = useState(0);
   const [origin, setOrigin] = useState<ExplorePlace>(BERLIN_SEARCH_ORIGIN);
+  const [savedPlaceKind, setSavedPlaceKind] = useState<"home" | "work" | null>(
+    null,
+  );
+  const savedPlaceMarker = useMemo<LocationSavedPlaceMarker | null>(
+    () =>
+      savedPlaceKind
+        ? {
+            kind: savedPlaceKind,
+            latitude: origin.latitude,
+            longitude: origin.longitude,
+          }
+        : null,
+    [savedPlaceKind, origin],
+  );
   const [devicePosition, setDevicePosition] =
     useState<LocationDevicePosition | null>(null);
   const [camera, setCamera] = useState<LocationMapCamera | null>(null);
@@ -435,6 +450,7 @@ export function CoachExploreResults({
     const label =
       kind === "home" ? "Home" : kind === "work" ? "Work" : "Current location";
     setOrigin({ latitude: place.latitude, longitude: place.longitude, label });
+    setSavedPlaceKind(kind === "current" ? null : kind);
     setSelectedCoachId(null);
     setExpanded(false);
     if (kind !== "current") setDevicePosition(null);
@@ -449,6 +465,23 @@ export function CoachExploreResults({
       revision: (previous?.revision ?? 0) + 1,
     }));
     setPlacesOpen(false);
+  };
+  const resetSearchOrigin = () => {
+    generation.current++;
+    setLocating(false);
+    setSavedPlaceKind(null);
+    setDevicePosition(null);
+    setOrigin(BERLIN_SEARCH_ORIGIN);
+    setArea(null);
+    setAreaChanged(false);
+    setSelectedCoachId(null);
+    setExpanded(false);
+    setLocationMessage("");
+    setCamera((previous) => ({
+      ...BERLIN_SEARCH_ORIGIN,
+      zoom: 10.5,
+      revision: (previous?.revision ?? 0) + 1,
+    }));
   };
   const locate = async () => {
     const token = ++generation.current;
@@ -628,7 +661,13 @@ export function CoachExploreResults({
         <div className="explore-notice" role="status">
           <span>{saved.notice}</span>
           {preferenceScope && (
-            <button type="button" onClick={saved.reset}>
+            <button
+              type="button"
+              onClick={() => {
+                saved.reset();
+                if (savedPlaceKind) resetSearchOrigin();
+              }}
+            >
               Reset browser settings
             </button>
           )}
@@ -763,6 +802,7 @@ export function CoachExploreResults({
                     onUnavailable={unavailable}
                     camera={camera}
                     devicePosition={devicePosition}
+                    savedPlace={savedPlaceMarker}
                     autoFit={false}
                     recenterOnSelection={false}
                     cooperativeGestures={false}
@@ -794,6 +834,7 @@ export function CoachExploreResults({
                         generation.current++;
                         setLocating(false);
                         setDevicePosition(null);
+                        setSavedPlaceKind(null);
                         setArea(viewport);
                         setOrigin({
                           latitude: viewport.latitude,
@@ -922,12 +963,16 @@ export function CoachExploreResults({
           initialEdit={placeEdit}
           configuration={locationSearchConfiguration}
           mapCentre={viewport ?? origin}
-          onSave={(kind, place) =>
+          onSave={(kind, place) => {
             saved.update((previous) => ({
               ...previous,
               places: { ...previous.places, [kind]: place },
-            }))
-          }
+            }));
+            if (savedPlaceKind === kind) {
+              if (place) applyPlace(kind, place);
+              else resetSearchOrigin();
+            }
+          }}
           onUse={applyPlace}
           onClose={() => setPlacesOpen(false)}
         />
