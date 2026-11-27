@@ -78,6 +78,42 @@ export async function checkExploreMobile({
       "Map fits the visible screen",
     );
     await openCategories();
+    // Model Safari moving focus to the page before its native label activation.
+    // Focus and pointer cancellation alone must never remove the tap target.
+    await page.locator("main").evaluate((main) => {
+      main.tabIndex = -1;
+      main.focus();
+    });
+    await expect(categories).toHaveAttribute("open", "");
+    const boxing = categories.getByRole("checkbox", {
+      name: "Boxing",
+      exact: true,
+    });
+    await boxing.tap();
+    await expect(boxing).toBeChecked();
+    await boxing.tap();
+    await expect(boxing).not.toBeChecked();
+    await categories.locator("summary").focus();
+    await categories
+      .locator("label")
+      .filter({ hasText: /^Boxing$/ })
+      .evaluate((label) => {
+        label.dispatchEvent(
+          new PointerEvent("pointercancel", {
+            bubbles: true,
+            pointerType: "touch",
+          }),
+        );
+        label.addEventListener(
+          "pointerdown",
+          () => {
+            const main = document.querySelector("main");
+            main?.focus();
+          },
+          { once: true, capture: true },
+        );
+      });
+    await expect(categories).toHaveAttribute("open", "");
     await categories
       .locator("label")
       .filter({ hasText: /^Boxing$/ })
@@ -187,6 +223,18 @@ export async function checkExploreMobile({
   await page.keyboard.press("Escape");
   await expect(categories).not.toHaveAttribute("open", "");
   await expect(categories.locator("summary")).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(categories).toHaveAttribute("open", "");
+  await categories
+    .getByRole("button", { name: "Apply categories", exact: true })
+    .focus();
+  await page.keyboard.press("Tab");
+  await expect(categories).not.toHaveAttribute("open", "");
+  await categories.locator("summary").focus();
+  await page.keyboard.press("Enter");
+  await expect(categories).toHaveAttribute("open", "");
+  await page.keyboard.press("Shift+Tab");
+  await expect(categories).not.toHaveAttribute("open", "");
   await openCategories();
   await page.touchscreen.tap(3, 3);
   await expect(categories).not.toHaveAttribute("open", "");

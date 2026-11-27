@@ -20,51 +20,37 @@ export function ExploreCategoryFilter({
     getServerHydrated,
   );
   const root = useRef<HTMLDetailsElement>(null);
-  const pointerInside = useRef(false);
   useEffect(() => {
     const closeOutside = (event: PointerEvent) => {
-      pointerInside.current =
+      if (
+        root.current?.open &&
         event.target instanceof Node &&
-        Boolean(root.current?.contains(event.target));
-      if (root.current?.open && !pointerInside.current)
+        !root.current.contains(event.target)
+      )
         root.current.open = false;
     };
-    let release: ReturnType<typeof setTimeout>;
-    const releasePointer = () => {
-      // Safari blurs a summary to the page when a native checkbox is tapped.
-      // Keep that pointer interaction intact through its synthetic click.
-      release = setTimeout(() => {
-        pointerInside.current = false;
-      }, 0);
-    };
     document.addEventListener("pointerdown", closeOutside);
-    document.addEventListener("pointerup", releasePointer);
-    document.addEventListener("pointercancel", releasePointer);
-    return () => {
-      document.removeEventListener("pointerdown", closeOutside);
-      document.removeEventListener("pointerup", releasePointer);
-      document.removeEventListener("pointercancel", releasePointer);
-      clearTimeout(release);
-    };
+    return () => document.removeEventListener("pointerdown", closeOutside);
   }, []);
   return (
     <details
       ref={root}
       className="explore-category-filter"
       onKeyDown={(event) => {
-        pointerInside.current = false;
+        if (event.key === "Tab") {
+          // Only keyboard navigation dismisses on focus departure. Safari can
+          // blur to the page during native checkbox activation on a touch tap.
+          requestAnimationFrame(() => {
+            const element = root.current;
+            if (element?.open && !element.contains(document.activeElement))
+              element.open = false;
+          });
+          return;
+        }
         if (event.key !== "Escape") return;
         event.preventDefault();
         event.currentTarget.open = false;
         event.currentTarget.querySelector("summary")?.focus();
-      }}
-      onBlur={(event) => {
-        if (
-          !pointerInside.current &&
-          event.relatedTarget instanceof Node &&
-          !event.currentTarget.contains(event.relatedTarget)
-        )
-          event.currentTarget.open = false;
       }}
     >
       <summary
@@ -80,17 +66,7 @@ export function ExploreCategoryFilter({
         <fieldset className="explore-category-options">
           <legend className="sr-only">Choose coach categories</legend>
           {COACH_DISCIPLINES.map((discipline) => (
-            <label
-              key={discipline}
-              onPointerDown={(event) => {
-                // Focus the actual control before native label activation.
-                // Cancelling pointerdown would suppress that click in Safari.
-                if (event.pointerType === "touch")
-                  event.currentTarget
-                    .querySelector("input")
-                    ?.focus({ preventScroll: true });
-              }}
-            >
+            <label key={discipline}>
               <input
                 type="checkbox"
                 name="discipline"
